@@ -895,6 +895,9 @@ export class UIController {
      * Initialize the UI
      */
     async initialize(): Promise<void> {
+        // Populate example scripts dropdown
+        this.populateExampleScripts();
+
         // Pre-fetch official data in background
         fetchOfficialData().then(data => {
             this.officialData = data;
@@ -903,6 +906,33 @@ export class UIController {
         });
 
         console.log('UI Controller initialized');
+    }
+
+    /**
+     * Populate example scripts dropdown from config
+     */
+    private populateExampleScripts(): void {
+        const select = this.elements.exampleScripts;
+        if (!select) {
+            console.warn('[populateExampleScripts] Example scripts select element not found');
+            return;
+        }
+
+        // Clear existing options except the first (placeholder)
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+
+        // Add options from config
+        CONFIG.EXAMPLE_SCRIPTS.forEach(filename => {
+            const option = document.createElement('option');
+            option.value = filename;
+            // Display name without .json extension
+            option.textContent = filename.replace(/\.json$/, '');
+            select.appendChild(option);
+        });
+
+        console.log(`[populateExampleScripts] Loaded ${CONFIG.EXAMPLE_SCRIPTS.length} example scripts`);
     }
 }
 

@@ -56,6 +56,7 @@ export const CONFIG: Config = {
 
     // Example Scripts
     EXAMPLE_SCRIPTS: [
+        'Catfishing.json',
         'Uncertain Death.json',
         'Fall of Rome.json'
     ],
