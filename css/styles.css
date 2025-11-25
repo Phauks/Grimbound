@@ -131,11 +131,13 @@ body {
     color: var(--color-accent);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     margin-bottom: var(--spacing-xs);
+    padding-right: 50px; /* Space for GitHub link */
 }
 
 .app-header .subtitle {
     color: var(--text-secondary);
     font-size: 1rem;
+    padding-right: 50px; /* Match title padding */
 }
 
 /* GitHub Link */
@@ -814,6 +816,11 @@ body {
 @media (max-width: 768px) {
     .app-header h1 {
         font-size: 1.5rem;
+        padding-right: var(--spacing-xl);
+    }
+    
+    .app-header .subtitle {
+        padding-right: var(--spacing-xl);
     }
     
     .input-methods {
@@ -869,6 +876,10 @@ body {
     
     .app-header h1 {
         font-size: 1.25rem;
+        padding-right: var(--spacing-xl);
+    }
+    
+    .app-header .subtitle {
         padding-right: var(--spacing-xl);
     }
     
