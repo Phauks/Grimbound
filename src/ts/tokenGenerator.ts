@@ -584,67 +584,6 @@ export class TokenGenerator {
     clearCache(): void {
         this.imageCache.clear();
     }
-
-    /**
-     * Generate trademark/credit token
-     * @returns Generated canvas element
-     */
-    async generateTrademarkToken(): Promise<HTMLCanvasElement> {
-        const diameter = this.options.roleDiameter;
-        const canvas = document.createElement('canvas');
-        canvas.width = diameter;
-        canvas.height = diameter;
-        const ctx = canvas.getContext('2d');
-
-        if (!ctx) {
-            throw new Error('Failed to get canvas context');
-        }
-
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        const radius = diameter / 2;
-        const center = { x: radius, y: radius };
-
-        ctx.save();
-
-        // Create circular clipping path
-        ctx.beginPath();
-        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-
-        // Draw character background
-        try {
-            const bgPath = `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}${this.options.characterBackground}.png`;
-            const bgImage = await this.getLocalImage(bgPath);
-            this.drawImageCover(ctx, bgImage, diameter, diameter);
-        } catch {
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fill();
-        }
-
-        // TBI: Draw Pandemonium Institute or BotC logo
-        // Placeholder circle in center where logo will go
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.beginPath();
-        ctx.arc(center.x, center.y - diameter * 0.1, diameter * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw "TBI" text as placeholder for logo
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.font = `${diameter * 0.08}px "${this.options.characterNameFont}", Georgia, serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('TBI', center.x, center.y - diameter * 0.1);
-
-        ctx.restore();
-
-        // Draw ability text (trademark notice)
-        this.drawAbilityText(ctx, CONFIG.TRADEMARK.TEXT, diameter);
-
-        return canvas;
-    }
 }
 
 /**

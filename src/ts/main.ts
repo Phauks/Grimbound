@@ -31,6 +31,9 @@ class TokenGeneratorApp {
             });
         }
 
+        // Display version number
+        await this.displayVersion();
+
         // Load custom fonts
         await this.loadFonts();
 
@@ -39,6 +42,26 @@ class TokenGeneratorApp {
         await this.ui.initialize();
 
         console.log('Application initialized successfully');
+    }
+
+    /**
+     * Load and display version number from version.json
+     */
+    private async displayVersion(): Promise<void> {
+        const versionElement = document.getElementById('versionNumber');
+        if (!versionElement) return;
+
+        try {
+            const response = await fetch('./version.json');
+            if (response.ok) {
+                const versionData = await response.json();
+                if (versionData.version) {
+                    versionElement.textContent = `v${versionData.version}`;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load version from version.json:', error);
+        }
     }
 
     /**
