@@ -40,6 +40,12 @@ export class UIController {
     private elements: UIElements;
     private scriptMeta: ScriptMeta | null;
 
+    // UI Size settings constants
+    private static readonly UI_SIZE_MIN = 50;
+    private static readonly UI_SIZE_MAX = 200;
+    private static readonly UI_SIZE_DEFAULT = 100;
+    private static readonly BASE_FONT_SIZE_PX = 16;
+
     constructor() {
         this.tokens = [];
         this.filteredTokens = [];
@@ -992,9 +998,9 @@ export class UIController {
      * @param size - UI size percentage (50-200)
      */
     private applyUiScale(size: number): void {
-        const scale = size / 100;
+        const scale = size / UIController.UI_SIZE_DEFAULT;
         document.documentElement.style.setProperty('--ui-scale', scale.toString());
-        document.documentElement.style.fontSize = `calc(16px * ${scale})`;
+        document.documentElement.style.fontSize = `calc(${UIController.BASE_FONT_SIZE_PX}px * ${scale})`;
         console.log(`[Settings] Applied UI scale: ${size}% (scale factor: ${scale})`);
     }
 
@@ -1006,7 +1012,7 @@ export class UIController {
             const storedUiSize = localStorage.getItem('uiSize');
             if (storedUiSize) {
                 const uiSize = parseInt(storedUiSize, 10);
-                if (uiSize >= 50 && uiSize <= 200) {
+                if (uiSize >= UIController.UI_SIZE_MIN && uiSize <= UIController.UI_SIZE_MAX) {
                     // Update slider
                     if (this.elements.uiSizeSlider) {
                         this.elements.uiSizeSlider.value = uiSize.toString();
