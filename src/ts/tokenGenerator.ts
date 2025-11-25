@@ -888,7 +888,7 @@ export class TokenGenerator {
  * @param characters - Array of character objects
  * @param options - Generation options
  * @param progressCallback - Progress callback function
- * @param scriptMeta - Optional script metadata for special tokens
+ * @param scriptMeta - Optional script metadata for meta tokens
  * @returns Array of token objects with canvas and metadata
  */
 export async function generateAllTokens(
@@ -901,25 +901,25 @@ export async function generateAllTokens(
     const tokens: Token[] = [];
     const nameCount = new Map<string, number>();
 
-    // Calculate total including special tokens
-    let specialTokenCount = 0;
+    // Calculate total including meta tokens
+    let metaTokenCount = 0;
     if (options.pandemoniumToken) {
-        specialTokenCount++;
+        metaTokenCount++;
     }
     if (options.scriptNameToken && scriptMeta?.name) {
-        specialTokenCount++;
+        metaTokenCount++;
     }
     if (options.almanacToken && scriptMeta?.almanac) {
-        specialTokenCount++;
+        metaTokenCount++;
     }
 
     let processed = 0;
-    // Calculate total: characters + reminders + trademark token
+    // Calculate total: characters + reminders + meta tokens
     let total = characters.reduce((sum, char) => {
         return sum + 1 + (char.reminders?.length ?? 0);
-    }, 0) + specialTokenCount;
+    }, 0) + metaTokenCount;
 
-    // Generate special tokens first
+    // Generate meta tokens first
     if (options.pandemoniumToken) {
         try {
             const pandemoniumCanvas = await generator.generatePandemoniumToken();
@@ -927,7 +927,7 @@ export async function generateAllTokens(
                 type: 'pandemonium',
                 name: 'Pandemonium Institute',
                 filename: 'pandemonium_institute',
-                team: 'special',
+                team: 'meta',
                 canvas: pandemoniumCanvas
             });
         } catch (error) {
@@ -950,7 +950,7 @@ export async function generateAllTokens(
                 type: 'script-name',
                 name: scriptMeta.name,
                 filename: 'script_name',
-                team: 'special',
+                team: 'meta',
                 canvas: scriptNameCanvas
             });
         } catch (error) {
@@ -973,7 +973,7 @@ export async function generateAllTokens(
                 type: 'almanac',
                 name: `${scriptMeta.name} Almanac`,
                 filename: 'almanac_qr',
-                team: 'special',
+                team: 'meta',
                 canvas: almanacCanvas
             });
         } catch (error) {

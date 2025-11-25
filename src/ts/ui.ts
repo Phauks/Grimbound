@@ -172,7 +172,7 @@ export class UIController {
             countTraveller: document.getElementById('countTraveller'),
             countFabled: document.getElementById('countFabled'),
             countLoric: document.getElementById('countLoric'),
-            countSpecial: document.getElementById('countSpecial'),
+            countMeta: document.getElementById('countMeta'),
             countTotal: document.getElementById('countTotal')
         };
     }
@@ -536,7 +536,7 @@ export class UIController {
                 this.officialData = await fetchOfficialData();
             }
 
-            // Extract script metadata for special tokens
+            // Extract script metadata for meta tokens
             this.scriptMeta = extractScriptMeta(validation.data);
 
             // Parse script data
@@ -589,7 +589,7 @@ export class UIController {
             traveller: 'countTraveller',
             fabled: 'countFabled',
             loric: 'countLoric',
-            special: 'countSpecial'
+            meta: 'countMeta'
         };
 
         CONFIG.TEAMS.forEach(team => {
@@ -619,7 +619,7 @@ export class UIController {
                 return false;
             }
 
-            // Type filter - special tokens (script-name, almanac, pandemonium) show with 'all' or 'character'
+            // Type filter - meta tokens (script-name, almanac, pandemonium) show with 'all' or 'character'
             if (typeFilter !== 'all') {
                 if (typeFilter === 'character') {
                     if (token.type !== 'character' && token.type !== 'script-name' && token.type !== 'almanac' && token.type !== 'pandemonium') {
@@ -682,7 +682,7 @@ export class UIController {
             this.elements.emptyState.style.display = 'none';
         }
 
-        // Separate tokens by type - special tokens go with character tokens
+        // Separate tokens by type - meta tokens go with character tokens
         const characterTokens = this.filteredTokens.filter(t => 
             t.type === 'character' || t.type === 'script-name' || t.type === 'almanac' || t.type === 'pandemonium'
         );
@@ -697,7 +697,7 @@ export class UIController {
         this.showSection(characterSection, showCharacters);
         this.showSection(reminderSection, showReminders);
 
-        // Render character tokens (including special tokens)
+        // Render character tokens (including meta tokens)
         for (const token of characterTokens) {
             const card = this.createTokenCard(token);
             characterGrid.appendChild(card);
