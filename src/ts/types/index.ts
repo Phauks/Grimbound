@@ -4,7 +4,7 @@
  */
 
 // Team types
-export type Team = 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled' | 'loric';
+export type Team = 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled' | 'loric' | 'meta';
 
 // Character data from BotC API
 export interface Character {
@@ -41,12 +41,11 @@ export interface TokenConfig {
     displayAbilityText: boolean;
     roleDiameter: number;
     reminderDiameter: number;
-    generateOfficialCharacters: boolean;
-    generateCustomCharacters: boolean;
     tokenCount: boolean;
     applyScriptName: boolean;
     scriptNameToken: boolean;
     almanacToken: boolean;
+    pandemoniumToken: boolean;
 
     // Style Options
     leafGeneration: string;
@@ -77,11 +76,12 @@ export interface GenerationOptions {
     characterReminderFont: string;
     scriptNameToken: boolean;
     almanacToken: boolean;
+    pandemoniumToken: boolean;
 }
 
 // Generated token
 export interface Token {
-    type: 'character' | 'reminder' | 'script-name' | 'almanac';
+    type: 'character' | 'reminder' | 'script-name' | 'almanac' | 'pandemonium';
     name: string;
     filename: string;
     team: Team | string;
@@ -133,6 +133,7 @@ export interface TokenCounts {
     traveller: TeamCounts;
     fabled: TeamCounts;
     loric: TeamCounts;
+    meta: TeamCounts;
     total: TeamCounts;
 }
 
@@ -236,6 +237,7 @@ export interface UIElements {
     tokenCount: HTMLInputElement | null;
     scriptNameToken: HTMLInputElement | null;
     almanacToken: HTMLInputElement | null;
+    pandemoniumToken: HTMLInputElement | null;
 
     // Style Options
     setupFlowerStyle: HTMLSelectElement | null;
@@ -263,6 +265,7 @@ export interface UIElements {
     outputSection: HTMLElement | null;
     teamFilter: HTMLSelectElement | null;
     tokenTypeFilter: HTMLSelectElement | null;
+    displayFilter: HTMLSelectElement | null;
     reminderFilter: HTMLSelectElement | null;
     tokenSections: HTMLElement | null;
     characterTokensSection: HTMLElement | null;
@@ -283,7 +286,17 @@ export interface UIElements {
     countTraveller: HTMLElement | null;
     countFabled: HTMLElement | null;
     countLoric: HTMLElement | null;
+    countMeta: HTMLElement | null;
     countTotal: HTMLElement | null;
+
+    // Settings Modal
+    settingsButton: HTMLButtonElement | null;
+    settingsModal: HTMLElement | null;
+    modalBackdrop: HTMLElement | null;
+    modalClose: HTMLButtonElement | null;
+    uiSizeSlider: HTMLInputElement | null;
+    uiSizeValue: HTMLElement | null;
+    colorSchema: HTMLSelectElement | null;
 }
 
 // Team color mapping
@@ -310,6 +323,7 @@ export interface PresetConfig {
         tokenCount?: boolean;
         scriptNameToken?: boolean;
         almanacToken?: boolean;
+        pandemoniumToken?: boolean;
     };
 }
 

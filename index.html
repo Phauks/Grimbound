@@ -12,6 +12,14 @@
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
+            <button type="button" 
+               class="settings-link" 
+               id="settingsButton"
+               aria-label="Open settings">
+                <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+                    <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                </svg>
+            </button>
             <a href="https://github.com/Phauks/Clocktower_Token_Generator" 
                target="_blank" 
                rel="noopener noreferrer" 
@@ -138,6 +146,42 @@
                                 </label>
                                 <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
                             </div>
+                        <div class="option-group">
+                            <label class="option-label" for="tokenCount">
+                                <span>Show Reminder Count</span>
+                                <span class="tooltip" title="Show reminder count on character tokens">ⓘ</span>
+                            </label>
+                            <input type="checkbox" id="tokenCount" class="toggle-switch">
+                        </div>
+
+                        <div class="option-group disabled-tbi">
+                            <label class="option-label" for="applyScriptName">
+                                <span>Apply Script Name</span>
+                                <span class="badge-tbi">TBI</span>
+                            </label>
+                            <input type="checkbox" id="applyScriptName" checked disabled>
+                        </div>
+                    </section>
+
+                    <!-- Meta Tokens Section -->
+                    <section class="option-section">
+                        <h3 class="section-header">Meta Tokens</h3>
+
+                        <div class="option-group">
+                            <label class="option-label" for="pandemoniumToken">
+                                <span>Pandemonium Institute Token</span>
+                                <span class="tooltip" title="Generate official game branding token">ⓘ</span>
+                            </label>
+                            <input type="checkbox" id="pandemoniumToken" class="toggle-switch" checked>
+                        </div>
+
+                        <div class="option-group">
+                            <label class="option-label" for="scriptNameToken">
+                                <span>Script Name Token</span>
+                                <span class="tooltip" title="Generate a meta token showing script name and author">ⓘ</span>
+                            </label>
+                            <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
+                        </div>
 
                             <div class="option-group">
                                 <label class="option-label" for="almanacToken">
@@ -377,6 +421,7 @@
                                 <option value="traveller">Travellers</option>
                                 <option value="fabled">Fabled</option>
                                 <option value="loric">Loric</option>
+                                <option value="meta">Meta</option>
                             </select>
                         </div>
 
@@ -386,6 +431,15 @@
                                 <option value="all">All Tokens</option>
                                 <option value="character">Characters Only</option>
                                 <option value="reminder">Reminders Only</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="displayFilter">Display:</label>
+                            <select id="displayFilter" class="select-input">
+                                <option value="all">All</option>
+                                <option value="official">Official</option>
+                                <option value="custom">Custom</option>
                             </select>
                         </div>
 
@@ -428,6 +482,10 @@
                         <div class="count-item">
                             <span class="count-label">Loric:</span>
                             <span class="count-value" id="countLoric">0 / 0</span>
+                        </div>
+                        <div class="count-item">
+                            <span class="count-label">Meta:</span>
+                            <span class="count-value" id="countMeta">0 / 0</span>
                         </div>
                         <div class="count-item total">
                             <span class="count-label">Total:</span>
@@ -484,6 +542,38 @@
         <footer class="app-footer">
             <p>Blood on the Clocktower Token Generator &copy; 2025</p>
         </footer>
+
+        <!-- Settings Modal -->
+        <div class="settings-modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle" hidden>
+            <div class="modal-backdrop" id="modalBackdrop"></div>
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h2 id="settingsModalTitle">User Interface Settings</h2>
+                    <button type="button" class="modal-close" id="modalClose" aria-label="Close settings">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="option-group">
+                        <label class="option-label" for="uiSizeSlider">
+                            <span>UI Size</span>
+                            <span class="ui-size-value" id="uiSizeValue">100%</span>
+                        </label>
+                        <input type="range" id="uiSizeSlider" class="range-slider" min="50" max="200" step="25" value="100">
+                    </div>
+                    
+                    <div class="option-group disabled-tbi">
+                        <label class="option-label" for="colorSchema">
+                            <span>Color Schema</span>
+                            <span class="badge-tbi">TBI</span>
+                        </label>
+                        <select id="colorSchema" class="select-input" disabled>
+                            <option value="dark">Dark (Default)</option>
+                            <option value="light">Light</option>
+                            <option value="high-contrast">High Contrast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts with integrity checks for security -->

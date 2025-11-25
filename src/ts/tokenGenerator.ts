@@ -549,6 +549,100 @@ export class TokenGenerator {
     }
 
     /**
+     * Generate a Pandemonium Institute token
+     * @returns Generated canvas element
+     */
+    async generatePandemoniumToken(): Promise<HTMLCanvasElement> {
+        const diameter = this.options.roleDiameter;
+        const canvas = document.createElement('canvas');
+        canvas.width = diameter;
+        canvas.height = diameter;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('Failed to get canvas context');
+        }
+
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const radius = diameter / 2;
+        const center = { x: radius, y: radius };
+
+        // Save initial state before clipping
+        ctx.save();
+
+        // Create circular clipping path for background
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Draw character background
+        try {
+            const bgPath = `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}${this.options.characterBackground}.png`;
+            const bgImage = await this.getLocalImage(bgPath);
+            this.drawImageCover(ctx, bgImage, diameter, diameter);
+        } catch {
+            // Fallback to solid color if background fails
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fill();
+        }
+
+        // Restore context to remove clipping path before drawing text
+        ctx.restore();
+
+        // Draw "PANDEMONIUM" and "INSTITUTE" in center (two lines)
+        this.drawPandemoniumText(ctx, diameter);
+
+        // Draw "BLOOD ON THE CLOCKTOWER" curved at bottom
+        this.drawCurvedText(
+            ctx,
+            'BLOOD ON THE CLOCKTOWER',
+            center.x,
+            center.y,
+            radius * 0.85,
+            this.options.characterNameFont,
+            diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO * 0.75,
+            'bottom'
+        );
+
+        return canvas;
+    }
+
+    /**
+     * Draw Pandemonium Institute text (two lines centered)
+     * @param ctx - Canvas context
+     * @param diameter - Token diameter
+     */
+    private drawPandemoniumText(ctx: CanvasRenderingContext2D, diameter: number): void {
+        ctx.save();
+
+        const fontSize = diameter * 0.11;
+        ctx.font = `bold ${fontSize}px "${this.options.characterNameFont}", Georgia, serif`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Add shadow for readability
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
+        const lineHeight = fontSize * 1.3;
+        const centerY = diameter / 2;
+
+        // Draw "PANDEMONIUM" on first line
+        ctx.fillText('PANDEMONIUM', diameter / 2, centerY - lineHeight / 2);
+        // Draw "INSTITUTE" on second line
+        ctx.fillText('INSTITUTE', diameter / 2, centerY + lineHeight / 2);
+
+        ctx.restore();
+    }
+
+    /**
      * Draw centered text with word wrapping
      * @param ctx - Canvas context
      * @param text - Text to draw
@@ -794,7 +888,7 @@ export class TokenGenerator {
  * @param characters - Array of character objects
  * @param options - Generation options
  * @param progressCallback - Progress callback function
- * @param scriptMeta - Optional script metadata for special tokens
+ * @param scriptMeta - Optional script metadata for meta tokens
  * @returns Array of token objects with canvas and metadata
  */
 export async function generateAllTokens(
@@ -807,22 +901,45 @@ export async function generateAllTokens(
     const tokens: Token[] = [];
     const nameCount = new Map<string, number>();
 
-    // Calculate total including special tokens
-    let specialTokenCount = 0;
+    // Calculate total including meta tokens
+    let metaTokenCount = 0;
+    if (options.pandemoniumToken) {
+        metaTokenCount++;
+    }
     if (options.scriptNameToken && scriptMeta?.name) {
-        specialTokenCount++;
+        metaTokenCount++;
     }
     if (options.almanacToken && scriptMeta?.almanac) {
-        specialTokenCount++;
+        metaTokenCount++;
     }
 
     let processed = 0;
-    // Calculate total: characters + reminders + trademark token
+    // Calculate total: characters + reminders + meta tokens
     let total = characters.reduce((sum, char) => {
         return sum + 1 + (char.reminders?.length ?? 0);
-    }, 0) + specialTokenCount;
+    }, 0) + metaTokenCount;
 
-    // Generate special tokens first
+    // Generate meta tokens first
+    if (options.pandemoniumToken) {
+        try {
+            const pandemoniumCanvas = await generator.generatePandemoniumToken();
+            tokens.push({
+                type: 'pandemonium',
+                name: 'Pandemonium Institute',
+                filename: 'pandemonium_institute',
+                team: 'meta',
+                canvas: pandemoniumCanvas
+            });
+        } catch (error) {
+            console.error('Failed to generate pandemonium token:', error);
+        }
+
+        processed++;
+        if (progressCallback) {
+            progressCallback(processed, total);
+        }
+    }
+
     if (options.scriptNameToken && scriptMeta?.name) {
         try {
             const scriptNameCanvas = await generator.generateScriptNameToken(
@@ -833,7 +950,7 @@ export async function generateAllTokens(
                 type: 'script-name',
                 name: scriptMeta.name,
                 filename: 'script_name',
-                team: 'fabled',
+                team: 'meta',
                 canvas: scriptNameCanvas
             });
         } catch (error) {
@@ -856,7 +973,7 @@ export async function generateAllTokens(
                 type: 'almanac',
                 name: `${scriptMeta.name} Almanac`,
                 filename: 'almanac_qr',
-                team: 'fabled',
+                team: 'meta',
                 canvas: almanacCanvas
             });
         } catch (error) {

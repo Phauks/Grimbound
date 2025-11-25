@@ -179,6 +179,180 @@ body {
     outline-offset: 2px;
 }
 
+/* Settings Link */
+.settings-link {
+    position: absolute;
+    top: var(--spacing-md);
+    right: calc(var(--spacing-xl) + var(--spacing-lg));
+    color: var(--color-accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+}
+
+.settings-link:hover {
+    color: var(--color-accent-light);
+    transform: scale(1.1);
+}
+
+.settings-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Settings Modal */
+.settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal[hidden] {
+    display: none;
+}
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-container {
+    position: relative;
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 1.125rem;
+    color: var(--color-accent);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    line-height: 1;
+    border-radius: var(--border-radius-sm);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.modal-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+}
+
+/* Range Slider */
+.range-slider {
+    width: 100%;
+    height: 8px;
+    appearance: none;
+    background-color: var(--bg-input);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: var(--spacing-sm);
+}
+
+.range-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    background-color: var(--color-accent-light);
+    transform: scale(1.1);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-accent);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.range-slider::-moz-range-thumb:hover {
+    background-color: var(--color-accent-light);
+    transform: scale(1.1);
+}
+
+.range-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background-color: var(--bg-input);
+    border-radius: 4px;
+}
+
+.range-slider::-moz-range-track {
+    height: 8px;
+    background-color: var(--bg-input);
+    border-radius: 4px;
+}
+
+.range-slider:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.ui-size-value {
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Body scroll lock when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
 /* Main Content */
 .main-content {
     display: flex;
@@ -818,6 +992,7 @@ body {
 .token-team.traveller { background-color: #5f4f1a; }
 .token-team.fabled { background-color: #4f1a5f; }
 .token-team.loric { background-color: #2a5f5f; }
+.token-team.meta { background-color: #808080; }
 
 .token-actions {
     display: flex;
@@ -982,6 +1157,16 @@ body {
     }
     
     .github-link svg {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .settings-link {
+        top: var(--spacing-sm);
+        right: calc(var(--spacing-sm) + var(--spacing-xl));
+    }
+    
+    .settings-link svg {
         width: 24px;
         height: 24px;
     }
