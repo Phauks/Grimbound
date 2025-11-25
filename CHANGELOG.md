@@ -18,6 +18,14 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 
 ## [Unreleased]
 
+### Added
+- Trademark/credit token: Automatic token generation for Blood on the Clocktower attribution
+  - Displays trademark text: "Blood on the Clocktower is a product of the Pandemonium Institute"
+  - Generated automatically with every token set
+  - Uses same styling as other character tokens
+  - Filename: `botc_trademark.png`
+  - Includes placeholder for future Pandemonium Institute logo (marked TBI)
+
 ## [0.1.0] - 2025-01-25
 
 ### Added

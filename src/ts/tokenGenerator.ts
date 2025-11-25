@@ -484,6 +484,68 @@ export class TokenGenerator {
     clearCache(): void {
         this.imageCache.clear();
     }
+
+    /**
+     * Generate trademark/credit token
+     * @returns Generated canvas element
+     */
+    async generateTrademarkToken(): Promise<HTMLCanvasElement> {
+        const diameter = this.options.roleDiameter;
+        const canvas = document.createElement('canvas');
+        canvas.width = diameter;
+        canvas.height = diameter;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('Failed to get canvas context');
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const radius = diameter / 2;
+        const center = { x: radius, y: radius };
+
+        ctx.save();
+
+        // Create circular clipping path
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Draw character background
+        try {
+            const bgPath = `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}${this.options.characterBackground}.png`;
+            const bgImage = await this.getLocalImage(bgPath);
+            this.drawImageCover(ctx, bgImage, diameter, diameter);
+        } catch {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fill();
+        }
+
+        // TBI: Draw Pandemonium Institute or BotC logo
+        // Placeholder circle in center where logo will go
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.arc(center.x, center.y - diameter * 0.1, diameter * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw "TBI" text as placeholder for logo
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = `${diameter * 0.08}px "${this.options.characterNameFont}", Georgia, serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('TBI', center.x, center.y - diameter * 0.1);
+
+        ctx.restore();
+
+        // Draw ability text (trademark notice)
+        const trademarkText = "Blood on the Clocktower is a product of the Pandemonium Institute";
+        this.drawAbilityText(ctx, trademarkText, diameter);
+
+        return canvas;
+    }
 }
 
 /**
@@ -503,9 +565,27 @@ export async function generateAllTokens(
     const nameCount = new Map<string, number>();
 
     let processed = 0;
-    const total = characters.reduce((sum, char) => {
+    // Calculate total: characters + reminders + trademark token
+    let total = characters.reduce((sum, char) => {
         return sum + 1 + (char.reminders?.length ?? 0);
     }, 0);
+    total++; // Always add trademark token
+
+    // Generate trademark token (always)
+    try {
+        const trademarkCanvas = await generator.generateTrademarkToken();
+        tokens.push({
+            type: 'character',
+            name: 'Trademark',
+            filename: 'botc_trademark',
+            team: 'fabled' as Team,
+            canvas: trademarkCanvas
+        });
+        processed++;
+        if (progressCallback) progressCallback(processed, total);
+    } catch (error) {
+        console.error('Failed to generate trademark token:', error);
+    }
 
     for (const character of characters) {
         if (!character.name) continue;
