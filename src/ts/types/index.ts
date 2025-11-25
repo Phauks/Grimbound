@@ -208,6 +208,9 @@ export interface Config {
         ABILITY_TEXT: FontSettings;
         TOKEN_COUNT: FontSettings;
     };
+    TRADEMARK: {
+        TEXT: string;
+    };
 }
 
 // Element references for UI

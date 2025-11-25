@@ -541,8 +541,7 @@ export class TokenGenerator {
         ctx.restore();
 
         // Draw ability text (trademark notice)
-        const trademarkText = "Blood on the Clocktower is a product of the Pandemonium Institute";
-        this.drawAbilityText(ctx, trademarkText, diameter);
+        this.drawAbilityText(ctx, CONFIG.TRADEMARK.TEXT, diameter);
 
         return canvas;
     }
