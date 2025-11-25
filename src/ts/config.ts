@@ -29,7 +29,6 @@ export const CONFIG: Config = {
     // PDF Generation Defaults
     PDF: {
         TOKEN_PADDING: 75,
-        TOKEN_LAYOUT: 'grid',
         X_OFFSET: 0,
         Y_OFFSET: 0,
         PAGE_WIDTH: 8.5,  // inches

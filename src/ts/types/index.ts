@@ -59,7 +59,6 @@ export interface TokenConfig {
 
     // PDF Generation
     tokenPadding: number;
-    tokenLayout: string;
     xOffset: number;
     yOffset: number;
 }
@@ -99,7 +98,6 @@ export interface PDFOptions {
     tokenPadding: number;
     xOffset: number;
     yOffset: number;
-    layout: string;
 }
 
 // Token layout item for PDF
@@ -184,7 +182,6 @@ export interface Config {
     };
     PDF: {
         TOKEN_PADDING: number;
-        TOKEN_LAYOUT: string;
         X_OFFSET: number;
         Y_OFFSET: number;
         PAGE_WIDTH: number;
