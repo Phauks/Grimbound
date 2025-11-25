@@ -257,6 +257,7 @@ export interface UIElements {
     formatJson: HTMLButtonElement | null;
     clearJson: HTMLButtonElement | null;
     generateTokens: HTMLButtonElement | null;
+    autoGenerate: HTMLInputElement | null;
 
     // Output Section
     outputSection: HTMLElement | null;
