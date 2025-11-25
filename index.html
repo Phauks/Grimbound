@@ -105,11 +105,24 @@
                             </label>
                             <input type="checkbox" id="applyScriptName" checked disabled>
                         </div>
+                    </section>
+
+                    <!-- Meta Tokens Section -->
+                    <section class="option-section">
+                        <h3 class="section-header">Meta Tokens</h3>
+
+                        <div class="option-group">
+                            <label class="option-label" for="pandemoniumToken">
+                                <span>Pandemonium Institute Token</span>
+                                <span class="tooltip" title="Generate official game branding token">ⓘ</span>
+                            </label>
+                            <input type="checkbox" id="pandemoniumToken" class="toggle-switch" checked>
+                        </div>
 
                         <div class="option-group">
                             <label class="option-label" for="scriptNameToken">
                                 <span>Script Name Token</span>
-                                <span class="tooltip" title="Generate a special token showing script name and author">ⓘ</span>
+                                <span class="tooltip" title="Generate a meta token showing script name and author">ⓘ</span>
                             </label>
                             <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
                         </div>
@@ -321,6 +334,7 @@
                                 <option value="traveller">Travellers</option>
                                 <option value="fabled">Fabled</option>
                                 <option value="loric">Loric</option>
+                                <option value="meta">Meta</option>
                             </select>
                         </div>
 
@@ -381,6 +395,10 @@
                         <div class="count-item">
                             <span class="count-label">Loric:</span>
                             <span class="count-value" id="countLoric">0 / 0</span>
+                        </div>
+                        <div class="count-item">
+                            <span class="count-label">Meta:</span>
+                            <span class="count-value" id="countMeta">0 / 0</span>
                         </div>
                         <div class="count-item total">
                             <span class="count-label">Total:</span>
