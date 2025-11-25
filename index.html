@@ -93,20 +93,20 @@
                             <input type="checkbox" id="applyScriptName" checked disabled>
                         </div>
 
-                        <div class="option-group disabled-tbi">
+                        <div class="option-group">
                             <label class="option-label" for="scriptNameToken">
                                 <span>Script Name Token</span>
-                                <span class="badge-tbi">TBI</span>
+                                <span class="tooltip" title="Generate a special token showing script name and author">ⓘ</span>
                             </label>
-                            <input type="checkbox" id="scriptNameToken" checked disabled>
+                            <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
                         </div>
 
-                        <div class="option-group disabled-tbi">
+                        <div class="option-group">
                             <label class="option-label" for="almanacToken">
                                 <span>Almanac QR Token</span>
-                                <span class="badge-tbi">TBI</span>
+                                <span class="tooltip" title="Generate a QR code token linking to the almanac">ⓘ</span>
                             </label>
-                            <input type="checkbox" id="almanacToken" checked disabled>
+                            <input type="checkbox" id="almanacToken" class="toggle-switch" checked>
                         </div>
                     </section>
 
@@ -432,6 +432,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" 
             integrity="sha512-Qlv6VSKh1gDKGoJbnyA5RMXYcvnpIqhO++MhIM2fStMcGT9i2T//tXHwSXVWLqGf8S8rkHoVWwKmHjwTmWQgg==" 
             crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+            integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+            crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
     <script type="module" src="./dist/js/main.js"></script>
 </body>

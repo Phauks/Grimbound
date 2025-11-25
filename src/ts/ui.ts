@@ -10,7 +10,8 @@ import {
     loadJsonFile,
     parseScriptData,
     fetchOfficialData,
-    calculateTokenCounts
+    calculateTokenCounts,
+    extractScriptMeta
 } from './dataLoader.js';
 import { generateAllTokens } from './tokenGenerator.js';
 import { PDFGenerator, createTokensZip, downloadTokenPNG } from './pdfGenerator.js';
@@ -20,7 +21,9 @@ import type {
     GenerationOptions,
     UIElements,
     Team,
-    ProgressCallback
+    ProgressCallback,
+    ScriptMeta,
+    ScriptEntry
 } from './types/index.js';
 
 /**
@@ -33,6 +36,7 @@ export class UIController {
     private officialData: Character[];
     private pdfGenerator: PDFGenerator;
     private elements: UIElements;
+    private scriptMeta: ScriptMeta | null;
 
     constructor() {
         this.tokens = [];
@@ -40,6 +44,7 @@ export class UIController {
         this.characters = [];
         this.officialData = [];
         this.pdfGenerator = new PDFGenerator();
+        this.scriptMeta = null;
 
         this.elements = this.initializeElements();
         this.setupEventListeners();
@@ -59,6 +64,8 @@ export class UIController {
             roleDiameter: document.getElementById('roleDiameter') as HTMLInputElement | null,
             reminderDiameter: document.getElementById('reminderDiameter') as HTMLInputElement | null,
             tokenCount: document.getElementById('tokenCount') as HTMLInputElement | null,
+            scriptNameToken: document.getElementById('scriptNameToken') as HTMLInputElement | null,
+            almanacToken: document.getElementById('almanacToken') as HTMLInputElement | null,
 
             // Style Options
             setupFlowerStyle: document.getElementById('setupFlowerStyle') as HTMLSelectElement | null,
@@ -342,7 +349,9 @@ export class UIController {
             reminderBackground: this.elements.reminderBackground?.value ?? CONFIG.STYLE.REMINDER_BACKGROUND,
             characterBackground: this.elements.characterBackground?.value ?? CONFIG.STYLE.CHARACTER_BACKGROUND,
             characterNameFont: this.elements.characterNameFont?.value ?? CONFIG.STYLE.CHARACTER_NAME_FONT,
-            characterReminderFont: this.elements.characterReminderFont?.value ?? CONFIG.STYLE.CHARACTER_REMINDER_FONT
+            characterReminderFont: this.elements.characterReminderFont?.value ?? CONFIG.STYLE.CHARACTER_REMINDER_FONT,
+            scriptNameToken: this.elements.scriptNameToken?.checked ?? false,
+            almanacToken: this.elements.almanacToken?.checked ?? false
         };
     }
 
@@ -365,6 +374,9 @@ export class UIController {
                 this.officialData = await fetchOfficialData();
             }
 
+            // Extract script metadata for special tokens
+            this.scriptMeta = extractScriptMeta(validation.data);
+
             // Parse script data
             this.characters = parseScriptData(validation.data, this.officialData);
 
@@ -378,7 +390,7 @@ export class UIController {
             const progressCallback: ProgressCallback = (current, total) => {
                 this.updateLoadingProgress(current, total);
             };
-            this.tokens = await generateAllTokens(this.characters, options, progressCallback);
+            this.tokens = await generateAllTokens(this.characters, options, progressCallback, this.scriptMeta);
 
             // Update counts
             this.updateTokenCounts();
@@ -443,9 +455,15 @@ export class UIController {
                 return false;
             }
 
-            // Type filter
-            if (typeFilter !== 'all' && token.type !== typeFilter) {
-                return false;
+            // Type filter - special tokens (script-name, almanac) show with 'all' or 'character'
+            if (typeFilter !== 'all') {
+                if (typeFilter === 'character') {
+                    if (token.type !== 'character' && token.type !== 'script-name' && token.type !== 'almanac') {
+                        return false;
+                    }
+                } else if (token.type !== typeFilter) {
+                    return false;
+                }
             }
 
             // Reminder filter (only applies to character tokens)
@@ -500,8 +518,10 @@ export class UIController {
             this.elements.emptyState.style.display = 'none';
         }
 
-        // Separate tokens by type
-        const characterTokens = this.filteredTokens.filter(t => t.type === 'character');
+        // Separate tokens by type - special tokens go with character tokens
+        const characterTokens = this.filteredTokens.filter(t => 
+            t.type === 'character' || t.type === 'script-name' || t.type === 'almanac'
+        );
         const reminderTokens = this.filteredTokens.filter(t => t.type === 'reminder');
 
         // Show/hide sections based on content and filters
@@ -513,7 +533,7 @@ export class UIController {
         this.showSection(characterSection, showCharacters);
         this.showSection(reminderSection, showReminders);
 
-        // Render character tokens
+        // Render character tokens (including special tokens)
         for (const token of characterTokens) {
             const card = this.createTokenCard(token);
             characterGrid.appendChild(card);

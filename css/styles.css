@@ -39,6 +39,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'LHF Unlovable';
+    src: url('../assets/fonts/LHF_Unlovable.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* CSS Variables */
 :root {
     /* Colors */

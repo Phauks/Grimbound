@@ -243,8 +243,8 @@ export async function createTokensZip(
         const blob = await canvasToBlob(token.canvas);
         const filename = `${token.filename}.png`;
 
-        // Add to appropriate folder
-        if (token.type === 'character') {
+        // Add to appropriate folder - special tokens go in character_tokens
+        if (token.type === 'character' || token.type === 'script-name' || token.type === 'almanac') {
             charFolder.file(filename, blob);
         } else {
             reminderFolder.file(filename, blob);

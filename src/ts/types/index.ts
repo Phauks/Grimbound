@@ -29,6 +29,7 @@ export interface ScriptMeta {
     name?: string;
     author?: string;
     logo?: string;
+    almanac?: string;
 }
 
 // Script entry can be a string, meta object, or character reference
@@ -74,11 +75,13 @@ export interface GenerationOptions {
     characterBackground: string;
     characterNameFont: string;
     characterReminderFont: string;
+    scriptNameToken: boolean;
+    almanacToken: boolean;
 }
 
 // Generated token
 export interface Token {
-    type: 'character' | 'reminder';
+    type: 'character' | 'reminder' | 'script-name' | 'almanac';
     name: string;
     filename: string;
     team: Team | string;
@@ -221,6 +224,8 @@ export interface UIElements {
     roleDiameter: HTMLInputElement | null;
     reminderDiameter: HTMLInputElement | null;
     tokenCount: HTMLInputElement | null;
+    scriptNameToken: HTMLInputElement | null;
+    almanacToken: HTMLInputElement | null;
 
     // Style Options
     setupFlowerStyle: HTMLSelectElement | null;
@@ -287,7 +292,21 @@ declare global {
         };
         JSZip: new () => JSZipInstance;
         TokenGeneratorApp: unknown;
+        QRCode: new (element: HTMLElement, options?: {
+            text?: string;
+            width?: number;
+            height?: number;
+            colorDark?: string;
+            colorLight?: string;
+            correctLevel?: number;
+        }) => QRCodeInstance;
     }
+}
+
+// QRCode instance type
+export interface QRCodeInstance {
+    clear(): void;
+    makeCode(text: string): void;
 }
 
 // jsPDF document type

@@ -6,7 +6,7 @@
 import CONFIG from './config.js';
 import { loadImage, loadLocalImage, getContrastColor } from './utils.js';
 import { getCharacterImageUrl, countReminders } from './dataLoader.js';
-import type { Character, Token, GenerationOptions, ProgressCallback, Team } from './types/index.js';
+import type { Character, Token, GenerationOptions, ProgressCallback, Team, ScriptMeta } from './types/index.js';
 
 /**
  * Token generator options
@@ -479,6 +479,305 @@ export class TokenGenerator {
     }
 
     /**
+     * Generate a script name token
+     * @param scriptName - Script name to display
+     * @param author - Optional author name
+     * @returns Generated canvas element
+     */
+    async generateScriptNameToken(scriptName: string, author?: string): Promise<HTMLCanvasElement> {
+        const diameter = this.options.roleDiameter;
+        const canvas = document.createElement('canvas');
+        canvas.width = diameter;
+        canvas.height = diameter;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('Failed to get canvas context');
+        }
+
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const radius = diameter / 2;
+        const center = { x: radius, y: radius };
+
+        // Save initial state before clipping
+        ctx.save();
+
+        // Create circular clipping path for background
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Draw character background
+        try {
+            const bgPath = `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}${this.options.characterBackground}.png`;
+            const bgImage = await this.getLocalImage(bgPath);
+            this.drawImageCover(ctx, bgImage, diameter, diameter);
+        } catch {
+            // Fallback to solid color if background fails
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fill();
+        }
+
+        // Restore context to remove clipping path before drawing text
+        ctx.restore();
+
+        // Draw script name in center (large, word-wrapped)
+        this.drawCenteredText(ctx, scriptName.toUpperCase(), diameter);
+
+        // Draw author curved at bottom if provided
+        if (author) {
+            this.drawCurvedText(
+                ctx,
+                author,
+                center.x,
+                center.y,
+                radius * 0.85,
+                this.options.characterNameFont,
+                diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO * 0.7,
+                'bottom'
+            );
+        }
+
+        return canvas;
+    }
+
+    /**
+     * Draw centered text with word wrapping
+     * @param ctx - Canvas context
+     * @param text - Text to draw
+     * @param diameter - Token diameter
+     */
+    private drawCenteredText(ctx: CanvasRenderingContext2D, text: string, diameter: number): void {
+        ctx.save();
+
+        const fontSize = diameter * 0.12;
+        ctx.font = `bold ${fontSize}px "${this.options.characterNameFont}", Georgia, serif`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Add shadow for readability
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
+        // Word wrap the text
+        const maxWidth = diameter * 0.75;
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+
+        // Draw lines centered vertically
+        const lineHeight = fontSize * 1.3;
+        const totalHeight = lines.length * lineHeight;
+        const startY = (diameter - totalHeight) / 2 + fontSize / 2;
+
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], diameter / 2, startY + i * lineHeight);
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Generate an almanac QR code token
+     * @param almanacUrl - URL for the QR code
+     * @param scriptName - Script name to overlay
+     * @returns Generated canvas element
+     */
+    async generateAlmanacQRToken(almanacUrl: string, scriptName: string): Promise<HTMLCanvasElement> {
+        const diameter = this.options.roleDiameter;
+        const canvas = document.createElement('canvas');
+        canvas.width = diameter;
+        canvas.height = diameter;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('Failed to get canvas context');
+        }
+
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const radius = diameter / 2;
+        const center = { x: radius, y: radius };
+
+        // Create circular clipping path
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Fill with white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+
+        // Generate QR code
+        const qrSize = Math.floor(diameter * 0.8);
+        const qrCanvas = await this.generateQRCode(almanacUrl, qrSize);
+
+        // Draw QR code centered
+        const qrOffset = (diameter - qrSize) / 2;
+        ctx.drawImage(qrCanvas, qrOffset, qrOffset - diameter * 0.05, qrSize, qrSize);
+
+        // Restore context
+        ctx.restore();
+
+        // Draw white box behind script name text
+        const boxWidth = diameter * 0.45;
+        const boxHeight = diameter * 0.15;
+        const boxX = (diameter - boxWidth) / 2;
+        const boxY = (diameter - boxHeight) / 2 - diameter * 0.05;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Draw script name in center using LHF Unlovable font
+        this.drawQROverlayText(ctx, scriptName.toUpperCase(), diameter);
+
+        // Draw "ALMANAC" curved at bottom
+        this.drawCurvedText(
+            ctx,
+            'ALMANAC',
+            center.x,
+            center.y,
+            radius * 0.85,
+            this.options.characterNameFont,
+            diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
+            'bottom',
+            '#000000'
+        );
+
+        return canvas;
+    }
+
+    /**
+     * Generate QR code canvas
+     * @param text - Text to encode
+     * @param size - QR code size
+     * @returns Canvas with QR code
+     */
+    private async generateQRCode(text: string, size: number): Promise<HTMLCanvasElement> {
+        return new Promise((resolve, reject) => {
+            const QRCodeLib = window.QRCode;
+            if (!QRCodeLib) {
+                reject(new Error('QRCode library not loaded'));
+                return;
+            }
+
+            // Create a temporary container
+            const container = document.createElement('div');
+            container.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+            document.body.appendChild(container);
+
+            try {
+                // Generate QR code with high error correction
+                new QRCodeLib(container, {
+                    text: text,
+                    width: size,
+                    height: size,
+                    colorDark: '#000000',
+                    colorLight: '#FFFFFF',
+                    correctLevel: 3 // QRCode.CorrectLevel.H = 3 (30% error recovery)
+                });
+
+                // Wait a bit for the QR code to be generated
+                setTimeout(() => {
+                    const qrCanvas = container.querySelector('canvas');
+                    if (qrCanvas) {
+                        // Clone the canvas
+                        const resultCanvas = document.createElement('canvas');
+                        resultCanvas.width = qrCanvas.width;
+                        resultCanvas.height = qrCanvas.height;
+                        const resultCtx = resultCanvas.getContext('2d');
+                        if (resultCtx) {
+                            resultCtx.drawImage(qrCanvas, 0, 0);
+                        }
+                        document.body.removeChild(container);
+                        resolve(resultCanvas);
+                    } else {
+                        document.body.removeChild(container);
+                        reject(new Error('Failed to generate QR code canvas'));
+                    }
+                }, 100);
+            } catch (error) {
+                document.body.removeChild(container);
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Draw text overlay on QR code
+     * @param ctx - Canvas context
+     * @param text - Text to draw
+     * @param diameter - Token diameter
+     */
+    private drawQROverlayText(ctx: CanvasRenderingContext2D, text: string, diameter: number): void {
+        ctx.save();
+
+        const fontSize = diameter * 0.08;
+        ctx.font = `bold ${fontSize}px "LHF Unlovable", Georgia, serif`;
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Word wrap the text for long names
+        const maxWidth = diameter * 0.4;
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+
+        // Draw lines centered vertically (slightly above center)
+        const lineHeight = fontSize * 1.2;
+        const totalHeight = lines.length * lineHeight;
+        const startY = (diameter - totalHeight) / 2 + fontSize / 2 - diameter * 0.05;
+
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], diameter / 2, startY + i * lineHeight);
+        }
+
+        ctx.restore();
+    }
+
+    /**
      * Clear image cache
      */
     clearCache(): void {
@@ -491,21 +790,79 @@ export class TokenGenerator {
  * @param characters - Array of character objects
  * @param options - Generation options
  * @param progressCallback - Progress callback function
+ * @param scriptMeta - Optional script metadata for special tokens
  * @returns Array of token objects with canvas and metadata
  */
 export async function generateAllTokens(
     characters: Character[],
     options: Partial<GenerationOptions> = {},
-    progressCallback: ProgressCallback | null = null
+    progressCallback: ProgressCallback | null = null,
+    scriptMeta: ScriptMeta | null = null
 ): Promise<Token[]> {
     const generator = new TokenGenerator(options);
     const tokens: Token[] = [];
     const nameCount = new Map<string, number>();
 
+    // Calculate total including special tokens
+    let specialTokenCount = 0;
+    if (options.scriptNameToken && scriptMeta?.name) {
+        specialTokenCount++;
+    }
+    if (options.almanacToken && scriptMeta?.almanac) {
+        specialTokenCount++;
+    }
+
     let processed = 0;
     const total = characters.reduce((sum, char) => {
         return sum + 1 + (char.reminders?.length ?? 0);
-    }, 0);
+    }, 0) + specialTokenCount;
+
+    // Generate special tokens first
+    if (options.scriptNameToken && scriptMeta?.name) {
+        try {
+            const scriptNameCanvas = await generator.generateScriptNameToken(
+                scriptMeta.name,
+                scriptMeta.author
+            );
+            tokens.push({
+                type: 'script-name',
+                name: scriptMeta.name,
+                filename: 'script_name',
+                team: 'fabled',
+                canvas: scriptNameCanvas
+            });
+        } catch (error) {
+            console.error('Failed to generate script name token:', error);
+        }
+
+        processed++;
+        if (progressCallback) {
+            progressCallback(processed, total);
+        }
+    }
+
+    if (options.almanacToken && scriptMeta?.almanac && scriptMeta?.name) {
+        try {
+            const almanacCanvas = await generator.generateAlmanacQRToken(
+                scriptMeta.almanac,
+                scriptMeta.name
+            );
+            tokens.push({
+                type: 'almanac',
+                name: `${scriptMeta.name} Almanac`,
+                filename: 'almanac_qr',
+                team: 'fabled',
+                canvas: almanacCanvas
+            });
+        } catch (error) {
+            console.error('Failed to generate almanac QR token:', error);
+        }
+
+        processed++;
+        if (progressCallback) {
+            progressCallback(processed, total);
+        }
+    }
 
     for (const character of characters) {
         if (!character.name) continue;
