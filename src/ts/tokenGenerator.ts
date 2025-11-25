@@ -479,6 +479,106 @@ export class TokenGenerator {
     }
 
     /**
+     * Generate a trademark/credit token with the Pandemonium Institute logo
+     * @returns Generated canvas element
+     */
+    async generateTrademarkToken(): Promise<HTMLCanvasElement> {
+        const diameter = this.options.roleDiameter;
+        const canvas = document.createElement('canvas');
+        canvas.width = diameter;
+        canvas.height = diameter;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('Failed to get canvas context');
+        }
+
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const radius = diameter / 2;
+        const center = { x: radius, y: radius };
+
+        // Save initial state before clipping
+        ctx.save();
+
+        // Create circular clipping path for background
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // 1. Draw background
+        try {
+            const bgPath = `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}${this.options.characterBackground}.png`;
+            const bgImage = await this.getLocalImage(bgPath);
+            this.drawImageCover(ctx, bgImage, diameter, diameter);
+        } catch {
+            // Fallback to solid color if background fails
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fill();
+        }
+
+        // 2. Draw Pandemonium Institute logo (centered, slightly above center)
+        const logoPath = 'assets/images/Pandemonium_Institute/the_pandemonium_institute.png';
+        const logoTargetDiameter = diameter * 0.5;
+        const logoY = center.y - diameter * 0.1;
+
+        try {
+            const logoImage = await this.getLocalImage(logoPath);
+            
+            // Calculate draw dimensions to preserve aspect ratio and fit within target diameter
+            const imgRatio = logoImage.width / logoImage.height;
+            let drawWidth: number, drawHeight: number;
+            
+            if (imgRatio > 1) {
+                // Image is wider than tall
+                drawWidth = logoTargetDiameter;
+                drawHeight = logoTargetDiameter / imgRatio;
+            } else {
+                // Image is taller than wide or square
+                drawHeight = logoTargetDiameter;
+                drawWidth = logoTargetDiameter * imgRatio;
+            }
+
+            const drawX = center.x - drawWidth / 2;
+            const drawY = logoY - drawHeight / 2;
+
+            ctx.drawImage(logoImage, drawX, drawY, drawWidth, drawHeight);
+        } catch {
+            // Fallback: Draw placeholder circle with "TBI" text
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(center.x, logoY, logoTargetDiameter / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${diameter * 0.1}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('TBI', center.x, logoY);
+        }
+
+        // Restore context to remove clipping path before drawing text
+        ctx.restore();
+
+        // 3. Draw trademark text curved along bottom
+        this.drawCurvedText(
+            ctx,
+            'TRADEMARK',
+            center.x,
+            center.y,
+            radius * 0.85,
+            this.options.characterNameFont,
+            diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
+            'bottom'
+        );
+
+        return canvas;
+    }
+
+    /**
      * Clear image cache
      */
     clearCache(): void {
@@ -658,6 +758,22 @@ export async function generateAllTokens(
                 }
             }
         }
+    }
+
+    // Generate trademark token
+    try {
+        const trademarkCanvas = await generator.generateTrademarkToken();
+        tokens.push({
+            type: 'character',
+            name: 'Trademark',
+            filename: 'pandemonium_institute',
+            team: 'fabled' as Team,
+            canvas: trademarkCanvas,
+            hasReminders: false,
+            reminderCount: 0
+        });
+    } catch (error) {
+        console.error('Failed to generate trademark token:', error);
     }
 
     return tokens;
