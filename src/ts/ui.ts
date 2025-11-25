@@ -48,6 +48,56 @@ export class UIController {
     }
 
     /**
+     * Get the JSON editor element, with direct DOM access fallback
+     * This ensures we always get a fresh reference to the element
+     * @returns The JSON editor textarea element or null if not found
+     */
+    private getJsonEditor(): HTMLTextAreaElement | null {
+        // Try cached reference first
+        if (this.elements.jsonEditor) {
+            return this.elements.jsonEditor;
+        }
+        
+        // Fallback to direct DOM access
+        const element = document.getElementById('jsonEditor') as HTMLTextAreaElement | null;
+        if (element) {
+            // Update the cached reference
+            this.elements.jsonEditor = element;
+            console.log('[getJsonEditor] Retrieved jsonEditor via direct DOM access');
+        } else {
+            console.error('[getJsonEditor] Failed to find jsonEditor element in DOM');
+        }
+        
+        return element;
+    }
+
+    /**
+     * Set the JSON editor value with defensive checks
+     * @param value - The value to set in the editor
+     * @returns true if successful, false otherwise
+     */
+    private setJsonEditorValue(value: string): boolean {
+        const editor = this.getJsonEditor();
+        
+        if (!editor) {
+            console.error('[setJsonEditorValue] Cannot set value - jsonEditor element not found');
+            return false;
+        }
+        
+        // Set the value
+        editor.value = value;
+        
+        // Verify the value was set correctly
+        if (editor.value !== value) {
+            console.error('[setJsonEditorValue] Value was not set correctly. Expected length:', value.length, 'Actual length:', editor.value.length);
+            return false;
+        }
+        
+        console.log('[setJsonEditorValue] Successfully set jsonEditor value, length:', value.length);
+        return true;
+    }
+
+    /**
      * Initialize DOM element references
      */
     private initializeElements(): UIElements {
@@ -302,10 +352,15 @@ export class UIController {
             const data = await loadJsonFile(file);
             console.log('[handleFileUpload] File loaded successfully:', data);
             
-            if (this.elements.jsonEditor) {
-                this.elements.jsonEditor.value = JSON.stringify(data, null, 2);
-                console.log('[handleFileUpload] JSON editor populated');
+            const jsonString = JSON.stringify(data, null, 2);
+            const success = this.setJsonEditorValue(jsonString);
+            
+            if (!success) {
+                console.error('[handleFileUpload] Failed to populate JSON editor');
+                this.showValidationError('Failed to display file content in editor');
+                return;
             }
+            
             this.validateJsonInput();
             if (this.elements.exampleScripts) {
                 this.elements.exampleScripts.value = '';
@@ -338,10 +393,15 @@ export class UIController {
             const data = await loadExampleScript(filename);
             console.log('[handleExampleSelect] Example script loaded successfully:', data);
             
-            if (this.elements.jsonEditor) {
-                this.elements.jsonEditor.value = JSON.stringify(data, null, 2);
-                console.log('[handleExampleSelect] JSON editor populated');
+            const jsonString = JSON.stringify(data, null, 2);
+            const success = this.setJsonEditorValue(jsonString);
+            
+            if (!success) {
+                console.error('[handleExampleSelect] Failed to populate JSON editor');
+                this.showValidationError('Failed to display example script content in editor');
+                return;
             }
+            
             this.validateJsonInput();
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
@@ -356,7 +416,8 @@ export class UIController {
      * Validate JSON input
      */
     private validateJsonInput(): void {
-        const value = this.elements.jsonEditor?.value ?? '';
+        const editor = this.getJsonEditor();
+        const value = editor?.value ?? '';
         const result = validateJson(value);
 
         if (this.elements.jsonValidation) {
@@ -389,9 +450,10 @@ export class UIController {
      * Format JSON in editor
      */
     private formatJsonEditor(): void {
-        if (this.elements.jsonEditor) {
-            const formatted = formatJson(this.elements.jsonEditor.value);
-            this.elements.jsonEditor.value = formatted;
+        const editor = this.getJsonEditor();
+        if (editor) {
+            const formatted = formatJson(editor.value);
+            this.setJsonEditorValue(formatted);
             this.validateJsonInput();
         }
     }
@@ -400,9 +462,7 @@ export class UIController {
      * Clear JSON editor
      */
     private clearJsonEditor(): void {
-        if (this.elements.jsonEditor) {
-            this.elements.jsonEditor.value = '';
-        }
+        this.setJsonEditorValue('');
         if (this.elements.jsonValidation) {
             this.elements.jsonValidation.className = 'validation-message';
             this.elements.jsonValidation.textContent = '';
@@ -440,7 +500,8 @@ export class UIController {
      * Handle token generation
      */
     private async handleGenerateTokens(): Promise<void> {
-        const value = this.elements.jsonEditor?.value ?? '';
+        const editor = this.getJsonEditor();
+        const value = editor?.value ?? '';
         const validation = validateJson(value);
         if (!validation.valid || !validation.data) {
             this.showValidationError(validation.error ?? 'Invalid JSON');
