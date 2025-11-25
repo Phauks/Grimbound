@@ -216,6 +216,7 @@ export class UIController {
         // Option changes - trigger regeneration
         const optionElements: (keyof UIElements)[] = [
             'displayAbilityText', 'roleDiameter', 'reminderDiameter', 'tokenCount',
+            'scriptNameToken', 'almanacToken',
             'setupFlowerStyle', 'reminderBackground', 'characterBackground',
             'characterNameFont', 'characterReminderFont'
         ];
