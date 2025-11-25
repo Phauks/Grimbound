@@ -40,13 +40,28 @@ export class UIController {
             optionsPanel: document.getElementById('optionsPanel'),
             panelToggle: document.getElementById('panelToggle'),
             
+            // Settings Modal
+            settingsBtn: document.getElementById('settingsBtn'),
+            settingsModal: document.getElementById('settingsModal'),
+            settingsModalOverlay: document.getElementById('settingsModalOverlay'),
+            settingsModalClose: document.getElementById('settingsModalClose'),
+            settingsModalCancel: document.getElementById('settingsModalCancel'),
+            settingsModalApply: document.getElementById('settingsModalApply'),
+            
+            // Modal Style Options
+            modalSetupFlowerStyle: document.getElementById('modalSetupFlowerStyle'),
+            modalReminderBackground: document.getElementById('modalReminderBackground'),
+            modalCharacterBackground: document.getElementById('modalCharacterBackground'),
+            modalCharacterNameFont: document.getElementById('modalCharacterNameFont'),
+            modalCharacterReminderFont: document.getElementById('modalCharacterReminderFont'),
+            
             // Token Generation Options
             displayAbilityText: document.getElementById('displayAbilityText'),
             roleDiameter: document.getElementById('roleDiameter'),
             reminderDiameter: document.getElementById('reminderDiameter'),
             tokenCount: document.getElementById('tokenCount'),
             
-            // Style Options
+            // Style Options (sidebar - keeping for backwards compatibility)
             setupFlowerStyle: document.getElementById('setupFlowerStyle'),
             reminderBackground: document.getElementById('reminderBackground'),
             characterBackground: document.getElementById('characterBackground'),
@@ -96,6 +111,20 @@ export class UIController {
     setupEventListeners() {
         // Panel toggle
         this.elements.panelToggle?.addEventListener('click', () => this.togglePanel());
+
+        // Settings modal
+        this.elements.settingsBtn?.addEventListener('click', () => this.openSettingsModal());
+        this.elements.settingsModalOverlay?.addEventListener('click', () => this.closeSettingsModal());
+        this.elements.settingsModalClose?.addEventListener('click', () => this.closeSettingsModal());
+        this.elements.settingsModalCancel?.addEventListener('click', () => this.closeSettingsModal());
+        this.elements.settingsModalApply?.addEventListener('click', () => this.applySettingsAndClose());
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.elements.settingsModal?.classList.contains('open')) {
+                this.closeSettingsModal();
+            }
+        });
 
         // File upload
         this.elements.fileUpload?.addEventListener('change', (e) => this.handleFileUpload(e));
@@ -158,6 +187,74 @@ export class UIController {
                 this.handleGenerateTokens();
             }
         });
+    }
+
+    /**
+     * Open settings modal
+     */
+    openSettingsModal() {
+        // Sync current values to modal
+        this.syncSettingsToModal();
+        this.elements.settingsModal?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Close settings modal
+     */
+    closeSettingsModal() {
+        this.elements.settingsModal?.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    /**
+     * Sync current settings to modal inputs
+     */
+    syncSettingsToModal() {
+        if (this.elements.modalSetupFlowerStyle && this.elements.setupFlowerStyle) {
+            this.elements.modalSetupFlowerStyle.value = this.elements.setupFlowerStyle.value;
+        }
+        if (this.elements.modalReminderBackground && this.elements.reminderBackground) {
+            this.elements.modalReminderBackground.value = this.elements.reminderBackground.value;
+        }
+        if (this.elements.modalCharacterBackground && this.elements.characterBackground) {
+            this.elements.modalCharacterBackground.value = this.elements.characterBackground.value;
+        }
+        if (this.elements.modalCharacterNameFont && this.elements.characterNameFont) {
+            this.elements.modalCharacterNameFont.value = this.elements.characterNameFont.value;
+        }
+        if (this.elements.modalCharacterReminderFont && this.elements.characterReminderFont) {
+            this.elements.modalCharacterReminderFont.value = this.elements.characterReminderFont.value;
+        }
+    }
+
+    /**
+     * Apply settings from modal to main inputs and close modal
+     */
+    applySettingsAndClose() {
+        // Apply modal values to main inputs
+        if (this.elements.setupFlowerStyle && this.elements.modalSetupFlowerStyle) {
+            this.elements.setupFlowerStyle.value = this.elements.modalSetupFlowerStyle.value;
+        }
+        if (this.elements.reminderBackground && this.elements.modalReminderBackground) {
+            this.elements.reminderBackground.value = this.elements.modalReminderBackground.value;
+        }
+        if (this.elements.characterBackground && this.elements.modalCharacterBackground) {
+            this.elements.characterBackground.value = this.elements.modalCharacterBackground.value;
+        }
+        if (this.elements.characterNameFont && this.elements.modalCharacterNameFont) {
+            this.elements.characterNameFont.value = this.elements.modalCharacterNameFont.value;
+        }
+        if (this.elements.characterReminderFont && this.elements.modalCharacterReminderFont) {
+            this.elements.characterReminderFont.value = this.elements.modalCharacterReminderFont.value;
+        }
+        
+        this.closeSettingsModal();
+        
+        // Regenerate tokens if there are characters loaded
+        if (this.characters.length > 0) {
+            this.handleGenerateTokens();
+        }
     }
 
     /**

@@ -120,11 +120,23 @@ body {
 .app-header {
     background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
     padding: var(--spacing-lg);
-    text-align: center;
     box-shadow: var(--shadow-md);
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-title {
+    text-align: center;
+    flex: 1;
 }
 
 .app-header h1 {
@@ -138,6 +150,160 @@ body {
 .app-header .subtitle {
     color: var(--text-secondary);
     font-size: 1rem;
+}
+
+/* Settings Button */
+.settings-btn {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.settings-btn:hover {
+    background: var(--color-accent);
+    transform: rotate(45deg);
+}
+
+.settings-btn:hover .settings-icon {
+    stroke: var(--color-primary-dark);
+}
+
+.settings-icon {
+    width: 24px;
+    height: 24px;
+    stroke: var(--color-accent);
+    transition: stroke var(--transition-fast);
+}
+
+/* Settings Modal */
+.settings-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.settings-modal.open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.settings-modal-content {
+    position: relative;
+    background: var(--bg-panel);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.settings-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.settings-modal-header h2 {
+    color: var(--color-accent);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.settings-modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.settings-modal-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.settings-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.settings-group:last-child {
+    margin-bottom: 0;
+}
+
+.settings-group-title {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 /* Main Content */

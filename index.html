@@ -12,9 +12,137 @@
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
-            <h1>Blood on the Clocktower Token Generator</h1>
-            <p class="subtitle">Generate custom character and reminder tokens for your scripts</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>Blood on the Clocktower Token Generator</h1>
+                    <p class="subtitle">Generate custom character and reminder tokens for your scripts</p>
+                </div>
+                <button class="settings-btn" id="settingsBtn" aria-label="Open style settings" title="Style Settings">
+                    <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
         </header>
+
+        <!-- Settings Modal -->
+        <div class="settings-modal" id="settingsModal">
+            <div class="settings-modal-overlay" id="settingsModalOverlay"></div>
+            <div class="settings-modal-content">
+                <div class="settings-modal-header">
+                    <h2>Style Settings</h2>
+                    <button class="settings-modal-close" id="settingsModalClose" aria-label="Close settings">×</button>
+                </div>
+                <div class="settings-modal-body">
+                    <!-- Leaf Options (TBI) -->
+                    <div class="settings-group">
+                        <h4 class="settings-group-title">Leaf Options</h4>
+                        <div class="option-group disabled-tbi">
+                            <label class="option-label" for="modalLeafGeneration">
+                                <span>Leaf Style</span>
+                                <span class="badge-tbi">TBI</span>
+                            </label>
+                            <select id="modalLeafGeneration" class="select-input" disabled>
+                                <option value="leaves_1">Leaves 1</option>
+                                <option value="leaves_2">Leaves 2</option>
+                                <option value="leaves_3">Leaves 3</option>
+                                <option value="leaves_4">Leaves 4</option>
+                                <option value="leaves_5">Leaves 5</option>
+                                <option value="leaves_6">Leaves 6</option>
+                                <option value="leaves_7">Leaves 7</option>
+                            </select>
+                        </div>
+                        <div class="option-group disabled-tbi">
+                            <label class="option-label" for="modalMaximumLeaves">
+                                <span>Maximum Leaves</span>
+                                <span class="badge-tbi">TBI</span>
+                            </label>
+                            <input type="number" id="modalMaximumLeaves" value="3" min="0" max="10" class="number-input" disabled>
+                        </div>
+                        <div class="option-group disabled-tbi">
+                            <label class="option-label" for="modalLeafProbability">
+                                <span>Leaf Probability (%)</span>
+                                <span class="badge-tbi">TBI</span>
+                            </label>
+                            <input type="number" id="modalLeafProbability" value="30" min="0" max="100" class="number-input" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Token Appearance -->
+                    <div class="settings-group">
+                        <h4 class="settings-group-title">Token Appearance</h4>
+                        <div class="option-group">
+                            <label class="option-label" for="modalSetupFlowerStyle">
+                                <span>Setup Flower Style</span>
+                                <span class="tooltip" title="Select setup flower overlay style">ⓘ</span>
+                            </label>
+                            <select id="modalSetupFlowerStyle" class="select-input">
+                                <option value="setup_flower_1">Setup Flower 1</option>
+                                <option value="setup_flower_2">Setup Flower 2</option>
+                                <option value="setup_flower_3">Setup Flower 3</option>
+                                <option value="setup_flower_4">Setup Flower 4</option>
+                                <option value="setup_flower_5">Setup Flower 5</option>
+                                <option value="setup_flower_6">Setup Flower 6</option>
+                                <option value="setup_flower_7">Setup Flower 7</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label class="option-label" for="modalReminderBackground">
+                                <span>Reminder Background</span>
+                                <span class="tooltip" title="Background color for reminder tokens">ⓘ</span>
+                            </label>
+                            <input type="color" id="modalReminderBackground" value="#FFFFFF" class="color-input">
+                        </div>
+                        <div class="option-group">
+                            <label class="option-label" for="modalCharacterBackground">
+                                <span>Character Background</span>
+                                <span class="tooltip" title="Select character background pattern">ⓘ</span>
+                            </label>
+                            <select id="modalCharacterBackground" class="select-input">
+                                <option value="character_background_1">Background 1</option>
+                                <option value="character_background_2">Background 2</option>
+                                <option value="character_background_3">Background 3</option>
+                                <option value="character_background_4">Background 4</option>
+                                <option value="character_background_5">Background 5</option>
+                                <option value="character_background_6">Background 6</option>
+                                <option value="character_background_7">Background 7</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Font Options -->
+                    <div class="settings-group">
+                        <h4 class="settings-group-title">Fonts</h4>
+                        <div class="option-group">
+                            <label class="option-label" for="modalCharacterNameFont">
+                                <span>Character Name Font</span>
+                                <span class="tooltip" title="Font for character names">ⓘ</span>
+                            </label>
+                            <select id="modalCharacterNameFont" class="select-input">
+                                <option value="Dumbledor">Dumbledor</option>
+                                <option value="DumbledorThin">Dumbledor Thin</option>
+                                <option value="DumbledorWide">Dumbledor Wide</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label class="option-label" for="modalCharacterReminderFont">
+                                <span>Reminder Text Font</span>
+                                <span class="tooltip" title="Font for reminder text">ⓘ</span>
+                            </label>
+                            <select id="modalCharacterReminderFont" class="select-input">
+                                <option value="TradeGothic">Trade Gothic</option>
+                                <option value="TradeGothicBold">Trade Gothic Bold</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-modal-footer">
+                    <button class="btn-secondary" id="settingsModalCancel">Cancel</button>
+                    <button class="btn-primary" id="settingsModalApply">Apply Settings</button>
+                </div>
+            </div>
+        </div>
 
         <main class="main-content">
             <!-- Options Panel (Left Sidebar) -->
