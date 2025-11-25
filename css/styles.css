@@ -122,6 +122,7 @@ body {
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-md);
     text-align: center;
+    position: relative;
 }
 
 .app-header h1 {
@@ -135,6 +136,30 @@ body {
 .app-header .subtitle {
     color: var(--text-secondary);
     font-size: 1rem;
+}
+
+/* GitHub Link */
+.github-link {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    color: var(--color-accent);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+}
+
+.github-link:hover {
+    color: var(--color-accent-light);
+    transform: scale(1.1);
+}
+
+.github-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 /* Main Content */
@@ -818,6 +843,17 @@ body {
     
     .app-header h1 {
         font-size: 1.25rem;
+        padding-right: var(--spacing-xl);
+    }
+    
+    .github-link {
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+    }
+    
+    .github-link svg {
+        width: 24px;
+        height: 24px;
     }
     
     .token-grid {
