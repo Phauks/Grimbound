@@ -1,6 +1,6 @@
 {
   "name": "clocktower-token-generator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blood on the Clocktower Token Generator",
   "type": "module",
   "scripts": {
