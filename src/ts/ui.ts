@@ -90,15 +90,6 @@ export class UIController {
         // Verify the value was set correctly
         if (editor.value !== value) {
             console.error('[setJsonEditorValue] Value was not set correctly. Expected length:', value.length, 'Actual length:', editor.value.length);
-            
-            // Try direct DOM access as last resort
-            const directElement = document.getElementById('jsonEditor') as HTMLTextAreaElement | null;
-            if (directElement && directElement !== editor) {
-                console.log('[setJsonEditorValue] Attempting direct DOM access fallback');
-                directElement.value = value;
-                this.elements.jsonEditor = directElement;
-                return directElement.value === value;
-            }
             return false;
         }
         
