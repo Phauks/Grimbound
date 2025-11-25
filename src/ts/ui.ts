@@ -145,7 +145,7 @@ export class UIController {
             formatJson: document.getElementById('formatJson') as HTMLButtonElement | null,
             clearJson: document.getElementById('clearJson') as HTMLButtonElement | null,
             generateTokens: document.getElementById('generateTokens') as HTMLButtonElement | null,
-            autoGenerate: document.getElementById('autoGenerate') as HTMLInputElement | null,
+            autoGenerate: document.getElementById('autoGenerate') as HTMLButtonElement | null,
 
             // Output Section
             outputSection: document.getElementById('outputSection'),
@@ -195,6 +195,9 @@ export class UIController {
 
         // JSON editor
         this.elements.jsonEditor?.addEventListener('input', debounce(() => this.validateJsonInput(true), 300));
+
+        // Auto-generate toggle button
+        this.elements.autoGenerate?.addEventListener('click', () => this.toggleAutoGenerate());
 
         // Format JSON button
         this.elements.formatJson?.addEventListener('click', () => this.formatJsonEditor());
@@ -445,7 +448,8 @@ export class UIController {
         }
 
         // Auto-generate if enabled and JSON is valid
-        if (autoGenerate && result.valid && this.elements.autoGenerate?.checked) {
+        const isAutoGenerateActive = this.elements.autoGenerate?.getAttribute('aria-pressed') === 'true';
+        if (autoGenerate && result.valid && isAutoGenerateActive) {
             this.handleGenerateTokens();
         }
     }
@@ -490,6 +494,25 @@ export class UIController {
         }
         if (this.elements.fileUpload) {
             this.elements.fileUpload.value = '';
+        }
+    }
+
+    /**
+     * Toggle auto-generate state
+     */
+    private toggleAutoGenerate(): void {
+        const button = this.elements.autoGenerate;
+        if (!button) return;
+        
+        const isPressed = button.getAttribute('aria-pressed') === 'true';
+        const newState = !isPressed;
+        
+        button.setAttribute('aria-pressed', newState.toString());
+        
+        if (newState) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
         }
     }
 
