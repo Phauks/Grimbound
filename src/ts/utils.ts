@@ -36,7 +36,7 @@ export async function loadImage(url: string): Promise<HTMLImageElement> {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = (): void => resolve(img);
-        img.onerror = (): void => reject(new Error(`Failed to load image: ${url}`));
+        img.onerror = (): void => reject(new Error(`Failed to load image from: ${url}. This may be due to CORS restrictions or the image not being accessible.`));
         img.src = url;
     });
 }
