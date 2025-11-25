@@ -7,6 +7,7 @@ A web-based tool for generating custom Blood on the Clocktower character and rem
 ## Features
 
 - **Token Generation**: Generate character tokens and reminder tokens from custom or official scripts
+- **Trademark Token**: Automatic credit token for Blood on the Clocktower (generated with every token set)
 - **Customizable Appearance**: Adjust token diameters, backgrounds, fonts, and colors
 - **PDF Export**: Generate print-ready PDFs at 300 DPI with proper margins
 - **ZIP Download**: Download all tokens as a ZIP archive organized by type
@@ -181,6 +182,7 @@ External libraries loaded via CDN:
 - Blood on the Clocktower is a trademark of The Pandemonium Institute
 - Character data sourced from the official Blood on the Clocktower API
 - Fonts: Dumbledor, Trade Gothic
+- A trademark token is automatically generated with every token set to credit The Pandemonium Institute
 
 ## Changelog
 

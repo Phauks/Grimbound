@@ -80,6 +80,11 @@ export const CONFIG: Config = {
         TOKEN_COUNT: {
             SIZE_RATIO: 0.08
         }
+    },
+
+    // Trademark Token
+    TRADEMARK: {
+        TEXT: 'Blood on the Clocktower is a product of the Pandemonium Institute'
     }
 };
 
