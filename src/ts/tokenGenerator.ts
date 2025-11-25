@@ -148,8 +148,7 @@ export class TokenGenerator {
                 const imgOffset = (diameter - imgSize) / 2;
                 ctx.drawImage(charImage, imgOffset, imgOffset - diameter * 0.05, imgSize, imgSize);
             } catch (error) {
-                console.warn(`Could not load character image for ${character.name}:`, error);
-                console.warn(`This may be due to CORS restrictions. Token will be generated without portrait image.`);
+                console.warn(`Could not load character image for ${character.name}. This may be due to CORS restrictions. Token will be generated without portrait image.`, error);
             }
         }
 
@@ -240,8 +239,7 @@ export class TokenGenerator {
                 const imgOffset = (diameter - imgSize) / 2;
                 ctx.drawImage(charImage, imgOffset, imgOffset - diameter * 0.05, imgSize, imgSize);
             } catch (error) {
-                console.warn(`Could not load character image for reminder: ${character.name}:`, error);
-                console.warn(`This may be due to CORS restrictions. Token will be generated without portrait image.`);
+                console.warn(`Could not load character image for reminder: ${character.name}. This may be due to CORS restrictions. Token will be generated without portrait image.`, error);
             }
         }
 
