@@ -182,6 +182,10 @@ External libraries loaded via CDN:
 - Character data sourced from the official Blood on the Clocktower API
 - Fonts: Dumbledor, Trade Gothic
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
 ## License
 
 See [LICENSE](LICENSE) file for details.

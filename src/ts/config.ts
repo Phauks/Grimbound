@@ -6,6 +6,9 @@
 import type { Config, Team, TeamColors, TeamLabels } from './types/index.js';
 
 export const CONFIG: Config = {
+    // Application Version
+    VERSION: '0.1.0',
+
     // Token Generation Defaults
     TOKEN: {
         ROLE_DIAMETER: 300,
