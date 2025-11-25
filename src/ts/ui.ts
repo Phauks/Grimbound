@@ -20,8 +20,10 @@ import type {
     GenerationOptions,
     UIElements,
     Team,
-    ProgressCallback
+    ProgressCallback,
+    PresetName
 } from './types/index.js';
+import { getPreset } from './presets.js';
 
 /**
  * UI Controller class
@@ -53,6 +55,12 @@ export class UIController {
             // Panel
             optionsPanel: document.getElementById('optionsPanel'),
             panelToggle: document.getElementById('panelToggle') as HTMLButtonElement | null,
+
+            // Presets
+            presetDefault: document.getElementById('presetDefault') as HTMLButtonElement | null,
+            presetFullBloom: document.getElementById('presetFullBloom') as HTMLButtonElement | null,
+            presetMinimal: document.getElementById('presetMinimal') as HTMLButtonElement | null,
+            presetDescription: document.getElementById('presetDescription'),
 
             // Token Generation Options
             displayAbilityText: document.getElementById('displayAbilityText') as HTMLInputElement | null,
@@ -114,6 +122,11 @@ export class UIController {
     private setupEventListeners(): void {
         // Panel toggle
         this.elements.panelToggle?.addEventListener('click', () => this.togglePanel());
+
+        // Preset buttons
+        this.elements.presetDefault?.addEventListener('click', () => this.applyPreset('default'));
+        this.elements.presetFullBloom?.addEventListener('click', () => this.applyPreset('fullbloom'));
+        this.elements.presetMinimal?.addEventListener('click', () => this.applyPreset('minimal'));
 
         // File upload
         this.elements.fileUpload?.addEventListener('change', (e) => this.handleFileUpload(e));
@@ -190,6 +203,82 @@ export class UIController {
     private togglePanel(): void {
         this.elements.optionsPanel?.classList.toggle('collapsed');
         this.elements.optionsPanel?.classList.toggle('open');
+    }
+
+    /**
+     * Apply a preset configuration
+     * @param presetName - Name of preset to apply
+     */
+    private applyPreset(presetName: PresetName): void {
+        const preset = getPreset(presetName);
+        const settings = preset.settings;
+
+        // Update UI elements with preset values
+        if (this.elements.displayAbilityText) {
+            this.elements.displayAbilityText.checked = settings.displayAbilityText ?? false;
+        }
+        if (this.elements.roleDiameter && settings.roleDiameter) {
+            this.elements.roleDiameter.value = settings.roleDiameter.toString();
+        }
+        if (this.elements.reminderDiameter && settings.reminderDiameter) {
+            this.elements.reminderDiameter.value = settings.reminderDiameter.toString();
+        }
+        if (this.elements.tokenCount) {
+            this.elements.tokenCount.checked = settings.tokenCount ?? false;
+        }
+        if (this.elements.setupFlowerStyle && settings.setupFlowerStyle) {
+            this.elements.setupFlowerStyle.value = settings.setupFlowerStyle;
+        }
+        if (this.elements.reminderBackground && settings.reminderBackground) {
+            this.elements.reminderBackground.value = settings.reminderBackground;
+        }
+        if (this.elements.characterBackground && settings.characterBackground) {
+            this.elements.characterBackground.value = settings.characterBackground;
+        }
+        if (this.elements.characterNameFont && settings.characterNameFont) {
+            this.elements.characterNameFont.value = settings.characterNameFont;
+        }
+        if (this.elements.characterReminderFont && settings.characterReminderFont) {
+            this.elements.characterReminderFont.value = settings.characterReminderFont;
+        }
+
+        // Update active button state using element references
+        const presetButtons = [
+            this.elements.presetDefault,
+            this.elements.presetFullBloom,
+            this.elements.presetMinimal
+        ];
+        presetButtons.forEach(btn => {
+            if (btn) {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Set active state on the selected preset button
+        switch (presetName) {
+            case 'default':
+                this.elements.presetDefault?.classList.add('active');
+                break;
+            case 'fullbloom':
+                this.elements.presetFullBloom?.classList.add('active');
+                break;
+            case 'minimal':
+                this.elements.presetMinimal?.classList.add('active');
+                break;
+        }
+
+        // Update description
+        if (this.elements.presetDescription) {
+            const p = this.elements.presetDescription.querySelector('p');
+            if (p) {
+                p.textContent = preset.description;
+            }
+        }
+
+        // Regenerate tokens if script is loaded
+        if (this.characters.length > 0) {
+            this.handleGenerateTokens();
+        }
     }
 
     /**

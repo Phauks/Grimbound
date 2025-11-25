@@ -216,6 +216,12 @@ export interface UIElements {
     optionsPanel: HTMLElement | null;
     panelToggle: HTMLButtonElement | null;
 
+    // Presets
+    presetDefault: HTMLButtonElement | null;
+    presetFullBloom: HTMLButtonElement | null;
+    presetMinimal: HTMLButtonElement | null;
+    presetDescription: HTMLElement | null;
+
     // Token Generation Options
     displayAbilityText: HTMLInputElement | null;
     roleDiameter: HTMLInputElement | null;
@@ -274,6 +280,27 @@ export type TeamColors = Record<Team, string>;
 
 // Team labels
 export type TeamLabels = Record<Team, string>;
+
+// Preset configurations
+export type PresetName = 'default' | 'fullbloom' | 'minimal';
+
+export interface PresetConfig {
+    name: string;
+    description: string;
+    icon: string;
+    settings: Partial<GenerationOptions> & {
+        // Additional preset-specific settings
+        characterBackground?: string;
+        setupFlowerStyle?: string;
+        reminderBackground?: string;
+        characterNameFont?: string;
+        characterReminderFont?: string;
+        displayAbilityText?: boolean;
+        tokenCount?: boolean;
+        scriptNameToken?: boolean;
+        almanacToken?: boolean;
+    };
+}
 
 // Declare global jsPDF and JSZip
 declare global {

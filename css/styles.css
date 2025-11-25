@@ -898,6 +898,82 @@ body {
     }
 }
 
+/* Preset Buttons */
+.preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background-color: var(--bg-input);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.btn-preset:hover:not(:disabled) {
+    background-color: var(--bg-hover);
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+.btn-preset.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px rgba(240, 230, 210, 0.3);
+}
+
+.btn-preset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-preset .preset-icon {
+    font-size: 1.5rem;
+}
+
+.btn-preset .preset-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.btn-preset.active .preset-name {
+    color: var(--color-accent);
+}
+
+.btn-preset .badge-tbi {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.625rem;
+    padding: 2px 4px;
+}
+
+.preset-description {
+    padding: var(--spacing-sm);
+    background-color: var(--bg-input);
+    border-radius: var(--border-radius-sm);
+    border-left: 3px solid var(--color-accent);
+}
+
+.preset-description p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;
