@@ -26,8 +26,7 @@ export class PDFGenerator {
             margin: options.margin ?? CONFIG.PDF.MARGIN,
             tokenPadding: options.tokenPadding ?? CONFIG.PDF.TOKEN_PADDING,
             xOffset: options.xOffset ?? CONFIG.PDF.X_OFFSET,
-            yOffset: options.yOffset ?? CONFIG.PDF.Y_OFFSET,
-            layout: options.layout ?? CONFIG.PDF.TOKEN_LAYOUT
+            yOffset: options.yOffset ?? CONFIG.PDF.Y_OFFSET
         };
 
         // Calculate usable area in pixels at 300 DPI
