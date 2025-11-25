@@ -372,6 +372,29 @@ body {
     margin-bottom: var(--spacing-md);
 }
 
+/* Collapsible Sections */
+.collapsible-section {
+    width: 100%;
+}
+
+.collapsible-section > summary {
+    cursor: pointer;
+    list-style: revert;
+}
+
+.collapsible-section > summary > h2 {
+    display: inline;
+}
+
+.collapsible-section > summary > h3 {
+    display: inline;
+    margin: 0;
+}
+
+.collapsible-section[open] > summary {
+    margin-bottom: var(--spacing-md);
+}
+
 /* Content Area */
 .content-area {
     flex: 1;
@@ -676,6 +699,7 @@ body {
     border-radius: var(--border-radius-sm);
     border-left: 4px solid var(--color-accent);
     margin: 0;
+    cursor: pointer;
 }
 
 .token-grid {

@@ -278,7 +278,8 @@
             <div class="content-area">
                 <!-- Input Section -->
                 <section class="input-section">
-                    <h2>Script Input</h2>
+                    <details class="collapsible-section" open>
+                        <summary><h2>Script Input</h2></summary>
                     
                     <div class="input-methods">
                         <div class="input-method">
@@ -316,6 +317,7 @@
                             Generate Tokens
                         </button>
                     </div>
+                    </details>
                 </section>
 
                 <!-- Output Section -->
@@ -397,16 +399,20 @@
                     <div class="token-sections" id="tokenSections">
                         <!-- Character Tokens Section -->
                         <div class="token-section" id="characterTokensSection" style="display: none;">
-                            <h3 class="token-section-header">Character Tokens</h3>
-                            <div class="token-grid" id="characterTokenGrid">
-                            </div>
+                            <details class="collapsible-section" open>
+                                <summary class="token-section-header"><h3>Character Tokens</h3></summary>
+                                <div class="token-grid" id="characterTokenGrid">
+                                </div>
+                            </details>
                         </div>
                         
                         <!-- Reminder Tokens Section -->
                         <div class="token-section" id="reminderTokensSection" style="display: none;">
-                            <h3 class="token-section-header">Reminder Tokens</h3>
-                            <div class="token-grid" id="reminderTokenGrid">
-                            </div>
+                            <details class="collapsible-section" open>
+                                <summary class="token-section-header"><h3>Reminder Tokens</h3></summary>
+                                <div class="token-grid" id="reminderTokenGrid">
+                                </div>
+                            </details>
                         </div>
                         
                         <!-- Loading/Empty States -->
