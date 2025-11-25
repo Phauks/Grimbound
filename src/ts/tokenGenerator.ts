@@ -346,6 +346,9 @@ export class TokenGenerator {
             let rotation = currentAngle + Math.PI / 2;
             if (position === 'top') {
                 rotation -= Math.PI;
+            } else {
+                // For bottom text, flip 180 degrees to face outward
+                rotation += Math.PI;
             }
             ctx.rotate(rotation);
 
