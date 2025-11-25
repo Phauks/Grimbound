@@ -4,7 +4,7 @@
  */
 
 // Team types
-export type Team = 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled';
+export type Team = 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled' | 'loric';
 
 // Character data from BotC API
 export interface Character {
@@ -129,6 +129,7 @@ export interface TokenCounts {
     demon: TeamCounts;
     traveller: TeamCounts;
     fabled: TeamCounts;
+    loric: TeamCounts;
     total: TeamCounts;
 }
 
@@ -272,6 +273,7 @@ export interface UIElements {
     countDemon: HTMLElement | null;
     countTraveller: HTMLElement | null;
     countFabled: HTMLElement | null;
+    countLoric: HTMLElement | null;
     countTotal: HTMLElement | null;
 }
 

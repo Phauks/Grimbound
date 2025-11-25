@@ -277,7 +277,8 @@ export function groupByTeam(characters: Character[]): Record<Team, Character[]> 
         minion: [],
         demon: [],
         traveller: [],
-        fabled: []
+        fabled: [],
+        loric: []
     };
 
     characters.forEach(char => {
@@ -304,7 +305,8 @@ export function calculateTokenCounts(characters: Character[]): TokenCounts {
         minion: { characters: 0, reminders: 0 },
         demon: { characters: 0, reminders: 0 },
         traveller: { characters: 0, reminders: 0 },
-        fabled: { characters: 0, reminders: 0 }
+        fabled: { characters: 0, reminders: 0 },
+        loric: { characters: 0, reminders: 0 }
     };
 
     characters.forEach(char => {

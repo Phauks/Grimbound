@@ -112,6 +112,7 @@ export class UIController {
             countDemon: document.getElementById('countDemon'),
             countTraveller: document.getElementById('countTraveller'),
             countFabled: document.getElementById('countFabled'),
+            countLoric: document.getElementById('countLoric'),
             countTotal: document.getElementById('countTotal')
         };
     }
@@ -502,7 +503,8 @@ export class UIController {
             minion: 'countMinion',
             demon: 'countDemon',
             traveller: 'countTraveller',
-            fabled: 'countFabled'
+            fabled: 'countFabled',
+            loric: 'countLoric'
         };
 
         CONFIG.TEAMS.forEach(team => {

@@ -120,7 +120,7 @@ This project uses TypeScript with strict type checking enabled. All data structu
 |-------|------|-------------|
 | `id` | string | Unique identifier (required) |
 | `name` | string | Display name (required) |
-| `team` | string | Team type: townsfolk, outsider, minion, demon, traveller, fabled |
+| `team` | string | Team type: townsfolk, outsider, minion, demon, traveller, fabled, loric |
 | `ability` | string | Character ability text |
 | `image` | string/array | URL to character image |
 | `setup` | boolean | Whether character affects game setup |

@@ -725,6 +725,7 @@ body {
 .token-team.demon { background-color: #8b0000; }
 .token-team.traveller { background-color: #5f4f1a; }
 .token-team.fabled { background-color: #4f1a5f; }
+.token-team.loric { background-color: #2a5f5f; }
 
 .token-actions {
     display: flex;
