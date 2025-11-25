@@ -145,6 +145,7 @@ export class UIController {
             formatJson: document.getElementById('formatJson') as HTMLButtonElement | null,
             clearJson: document.getElementById('clearJson') as HTMLButtonElement | null,
             generateTokens: document.getElementById('generateTokens') as HTMLButtonElement | null,
+            autoGenerate: document.getElementById('autoGenerate') as HTMLInputElement | null,
 
             // Output Section
             outputSection: document.getElementById('outputSection'),
@@ -193,7 +194,7 @@ export class UIController {
         this.elements.exampleScripts?.addEventListener('change', (e) => this.handleExampleSelect(e));
 
         // JSON editor
-        this.elements.jsonEditor?.addEventListener('input', debounce(() => this.validateJsonInput(), 300));
+        this.elements.jsonEditor?.addEventListener('input', debounce(() => this.validateJsonInput(true), 300));
 
         // Format JSON button
         this.elements.formatJson?.addEventListener('click', () => this.formatJsonEditor());
@@ -369,7 +370,7 @@ export class UIController {
                 return;
             }
             
-            this.validateJsonInput();
+            this.validateJsonInput(true);
             if (this.elements.exampleScripts) {
                 this.elements.exampleScripts.value = '';
             }
@@ -410,7 +411,7 @@ export class UIController {
                 return;
             }
             
-            this.validateJsonInput();
+            this.validateJsonInput(true);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             console.error('[handleExampleSelect] Error:', message);
@@ -422,8 +423,9 @@ export class UIController {
 
     /**
      * Validate JSON input
+     * @param autoGenerate - When true, auto-generates tokens if checkbox is checked and JSON is valid
      */
-    private validateJsonInput(): void {
+    private validateJsonInput(autoGenerate: boolean = false): void {
         const editor = this.getJsonEditor();
         const value = editor?.value ?? '';
         const result = validateJson(value);
@@ -440,6 +442,11 @@ export class UIController {
 
         if (this.elements.generateTokens) {
             this.elements.generateTokens.disabled = !result.valid;
+        }
+
+        // Auto-generate if enabled and JSON is valid
+        if (autoGenerate && result.valid && this.elements.autoGenerate?.checked) {
+            this.handleGenerateTokens();
         }
     }
 
