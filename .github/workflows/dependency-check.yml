@@ -1,0 +1,69 @@
+# Dependency Security and Updates Workflow
+# Runs on a schedule (weekly) and manual trigger
+# Checks for security vulnerabilities and outdated dependencies
+
+name: Dependency Security Check
+
+on:
+  # Run weekly on Mondays at 9:00 AM UTC
+  schedule:
+    - cron: '0 9 * * 1'
+  # Allow manual trigger
+  workflow_dispatch:
+
+# Limit permissions for security
+permissions:
+  contents: read
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Run npm audit to check for vulnerabilities
+      # Uses exit codes for reliable detection of security issues
+      - name: Run security audit
+        id: audit
+        run: |
+          echo "## Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Capture audit output (allow non-zero exit for reporting)
+          npm audit 2>&1 | tee audit-results.txt || true
+          
+          # Use exit code to reliably detect high/critical vulnerabilities
+          if npm audit --audit-level=high > /dev/null 2>&1; then
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+            echo "✅ No high or critical vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+            echo "⚠️ High or critical vulnerabilities found - see details below" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat audit-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Fail the workflow if high/critical vulnerabilities exist
+          npm audit --audit-level=high
+
+      # Check for outdated dependencies
+      - name: Check for outdated dependencies
+        run: |
+          echo "## Outdated Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npm outdated 2>&1 | tee outdated-results.txt || true
+          cat outdated-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

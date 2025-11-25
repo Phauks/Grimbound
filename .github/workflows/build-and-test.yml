@@ -1,0 +1,52 @@
+# Build and Test Workflow
+# Runs on push to all branches and pull requests
+# Tests the TypeScript compilation and validates the project builds correctly
+
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+# Limit permissions for security
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    
+    # Test on multiple Node.js versions for compatibility
+    strategy:
+      matrix:
+        node-version: ['18.x', '20.x']
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      # Upload build artifacts for potential debugging or downstream usage
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-node-${{ matrix.node-version }}
+          path: dist/
+          retention-days: 7
