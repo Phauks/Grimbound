@@ -107,22 +107,6 @@
                                 <input type="number" id="reminderDiameter" value="525" min="100" max="1000" class="number-input">
                             </div>
 
-                            <div class="option-group disabled-tbi">
-                                <label class="option-label" for="generateOfficialCharacters">
-                                    <span>Generate Official Characters</span>
-                                    <span class="badge-tbi">TBI</span>
-                                </label>
-                                <input type="checkbox" id="generateOfficialCharacters" checked disabled>
-                            </div>
-
-                            <div class="option-group disabled-tbi">
-                                <label class="option-label" for="generateCustomCharacters">
-                                    <span>Generate Custom Characters</span>
-                                    <span class="badge-tbi">TBI</span>
-                                </label>
-                                <input type="checkbox" id="generateCustomCharacters" checked disabled>
-                            </div>
-
                             <div class="option-group">
                                 <label class="option-label" for="tokenCount">
                                     <span>Show Reminder Count</span>
@@ -138,50 +122,32 @@
                                 </label>
                                 <input type="checkbox" id="applyScriptName" checked disabled>
                             </div>
-
-                            <div class="option-group">
-                                <label class="option-label" for="scriptNameToken">
-                                    <span>Script Name Token</span>
-                                    <span class="tooltip" title="Generate a special token showing script name and author">ⓘ</span>
-                                </label>
-                                <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
-                            </div>
-                        <div class="option-group">
-                            <label class="option-label" for="tokenCount">
-                                <span>Show Reminder Count</span>
-                                <span class="tooltip" title="Show reminder count on character tokens">ⓘ</span>
-                            </label>
-                            <input type="checkbox" id="tokenCount" class="toggle-switch">
-                        </div>
-
-                        <div class="option-group disabled-tbi">
-                            <label class="option-label" for="applyScriptName">
-                                <span>Apply Script Name</span>
-                                <span class="badge-tbi">TBI</span>
-                            </label>
-                            <input type="checkbox" id="applyScriptName" checked disabled>
-                        </div>
+                        </details>
                     </section>
 
                     <!-- Meta Tokens Section -->
                     <section class="option-section">
-                        <h3 class="section-header">Meta Tokens</h3>
+                        <details open>
+                            <summary class="section-header">
+                                <span class="section-arrow">▼</span>
+                                Meta Tokens
+                            </summary>
 
-                        <div class="option-group">
-                            <label class="option-label" for="pandemoniumToken">
-                                <span>Pandemonium Institute Token</span>
-                                <span class="tooltip" title="Generate official game branding token">ⓘ</span>
-                            </label>
-                            <input type="checkbox" id="pandemoniumToken" class="toggle-switch" checked>
-                        </div>
+                            <div class="option-group">
+                                <label class="option-label" for="pandemoniumToken">
+                                    <span>Pandemonium Institute Token</span>
+                                    <span class="tooltip" title="Generate official game branding token">ⓘ</span>
+                                </label>
+                                <input type="checkbox" id="pandemoniumToken" class="toggle-switch" checked>
+                            </div>
 
-                        <div class="option-group">
-                            <label class="option-label" for="scriptNameToken">
-                                <span>Script Name Token</span>
-                                <span class="tooltip" title="Generate a meta token showing script name and author">ⓘ</span>
-                            </label>
-                            <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
-                        </div>
+                            <div class="option-group">
+                                <label class="option-label" for="scriptNameToken">
+                                    <span>Script Name Token</span>
+                                    <span class="tooltip" title="Generate a meta token showing script name and author">ⓘ</span>
+                                </label>
+                                <input type="checkbox" id="scriptNameToken" class="toggle-switch" checked>
+                            </div>
 
                             <div class="option-group">
                                 <label class="option-label" for="almanacToken">

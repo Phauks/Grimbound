@@ -42,7 +42,6 @@ export interface TokenConfig {
     roleDiameter: number;
     reminderDiameter: number;
     tokenCount: boolean;
-    applyScriptName: boolean;
     scriptNameToken: boolean;
     almanacToken: boolean;
     pandemoniumToken: boolean;
