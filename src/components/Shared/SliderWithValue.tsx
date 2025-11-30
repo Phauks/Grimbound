@@ -1,3 +1,5 @@
+import styles from '../../styles/components/shared/Slider.module.css'
+
 interface SliderWithValueProps {
   value: number
   onChange: (value: number) => void
@@ -40,13 +42,13 @@ export function SliderWithValue({
   })
 
   return (
-    <div className="slider-control">
-      <div className="slider-input-row">
+    <div className={styles.control}>
+      <div className={styles.inputRow}>
         <input
           type="text"
           inputMode="numeric"
           pattern="[0-9-]*"
-          className="slider-value-input"
+          className={styles.valueInput}
           value={value}
           onChange={handleInputChange}
           onDoubleClick={handleDoubleClick}
@@ -54,12 +56,12 @@ export function SliderWithValue({
           aria-label={ariaLabel}
           title={defaultValue !== undefined ? `Double-click to reset to ${defaultValue}` : undefined}
         />
-        {unit && <span className="slider-unit">{unit}</span>}
+        {unit && <span className={styles.unit}>{unit}</span>}
       </div>
-      <div className="slider-track-container">
+      <div className={styles.trackContainer}>
         <input
           type="range"
-          className="slider-range"
+          className={styles.range}
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
           onDoubleClick={handleDoubleClick}
@@ -68,9 +70,9 @@ export function SliderWithValue({
           step={step}
           title={defaultValue !== undefined ? `Double-click to reset to ${defaultValue}` : undefined}
         />
-        <div className="slider-ticks">
+        <div className={styles.ticks}>
           {ticks.map((tick, index) => (
-            <span key={index} className="slider-tick" />
+            <span key={index} className={styles.tick} />
           ))}
         </div>
       </div>

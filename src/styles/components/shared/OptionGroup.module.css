@@ -1,0 +1,75 @@
+/* ============================================
+   Component: OptionGroup
+   Form field groups with labels
+   ============================================ */
+
+.group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  gap: var(--spacing-md);
+}
+
+.groupSlider {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---- Label ---- */
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: help;
+  position: relative;
+}
+
+.label[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Control Container ---- */
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ---- Slider Header ---- */
+.sliderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.sliderHeader .label {
+  flex-shrink: 0;
+}
+
+/* ---- Disabled State ---- */
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.disabled .label::after {
+  content: ' (TBI)';
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}

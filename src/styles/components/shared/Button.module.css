@@ -1,0 +1,190 @@
+/* ============================================
+   Component: Button
+   Shared button styles with variants
+   ============================================ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  font-family: var(--font-system);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: 
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Size Variants ---- */
+.sizeSmall {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+}
+
+.sizeMedium {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.sizeLarge {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+}
+
+/* ---- Color Variants ---- */
+.variantPrimary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.variantPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+  border-color: var(--color-primary-light);
+}
+
+.variantPrimary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.variantSecondary {
+  background-color: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.variantSecondary:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  border-color: var(--color-accent);
+}
+
+.variantAccent {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  border-color: var(--color-accent);
+  color: var(--color-secondary-dark);
+}
+
+.variantAccent:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent));
+}
+
+.variantGhost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.variantGhost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.variantDanger {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  color: white;
+}
+
+.variantDanger:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+/* ---- Special Variants ---- */
+.iconOnly {
+  padding: var(--spacing-sm);
+  aspect-ratio: 1;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* ---- Button Icon ---- */
+.icon {
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+}
+
+.iconLeft {
+  order: -1;
+}
+
+.iconRight {
+  order: 1;
+}
+
+/* ---- Button Group ---- */
+.group {
+  display: inline-flex;
+  gap: 0;
+}
+
+.group .button {
+  border-radius: 0;
+}
+
+.group .button:first-child {
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+
+.group .button:last-child {
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.group .button:not(:last-child) {
+  border-right-width: 0;
+}
+
+/* ---- Toggle Button ---- */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: var(--font-system);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  transition: 
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.toggle:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  border-color: var(--color-accent);
+}
+
+.toggle.active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-secondary-dark);
+}

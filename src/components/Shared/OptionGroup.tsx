@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import styles from '../../styles/components/shared/OptionGroup.module.css'
 
 interface OptionGroupProps {
   label: string
@@ -13,10 +14,10 @@ export function OptionGroup({ label, description, helpText, children, isSlider }
   
   if (isSlider) {
     return (
-      <div className="option-group option-group-slider">
-        <div className="option-slider-header">
+      <div className={`${styles.group} ${styles.groupSlider}`}>
+        <div className={styles.sliderHeader}>
           <span 
-            className="option-label"
+            className={styles.label}
             data-tooltip={tooltipText}
           >
             {label}
@@ -28,14 +29,14 @@ export function OptionGroup({ label, description, helpText, children, isSlider }
   }
   
   return (
-    <div className="option-group">
+    <div className={styles.group}>
       <span 
-        className="option-label"
+        className={styles.label}
         data-tooltip={tooltipText}
       >
         {label}
       </span>
-      <div className="option-control">
+      <div className={styles.control}>
         {children}
       </div>
     </div>

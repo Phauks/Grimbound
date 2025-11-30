@@ -1,0 +1,16 @@
+/* ============================================
+   Shared Components Index
+   
+   Note: CSS Modules are imported directly in 
+   their respective component files, not here.
+   This file serves as documentation of available
+   shared component styles.
+   ============================================ */
+
+/*
+ * Available CSS Modules:
+ * - Button.module.css     - Button variants and styles
+ * - Toast.module.css      - Toast notification styles
+ * - OptionGroup.module.css - Form field group styles
+ * - Slider.module.css     - Range slider styles
+ */

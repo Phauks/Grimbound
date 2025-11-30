@@ -1,4 +1,5 @@
 import { useToast, type Toast as ToastType } from '../../contexts/ToastContext'
+import styles from '../../styles/components/shared/Toast.module.css'
 
 const icons: Record<string, string> = {
   success: '✓',
@@ -7,15 +8,22 @@ const icons: Record<string, string> = {
   info: 'ℹ',
 }
 
+const variantClasses: Record<string, string> = {
+  success: styles.success,
+  error: styles.error,
+  warning: styles.warning,
+  info: styles.info,
+}
+
 function ToastItem({ toast }: { toast: ToastType }) {
   const { removeToast } = useToast()
 
   return (
-    <div className={`toast toast-${toast.type}`} role="alert">
-      <span className="toast-icon">{icons[toast.type]}</span>
-      <span className="toast-message">{toast.message}</span>
+    <div className={`${styles.toast} ${variantClasses[toast.type]}`} role="alert">
+      <span className={styles.icon}>{icons[toast.type]}</span>
+      <span className={styles.message}>{toast.message}</span>
       <button
-        className="toast-close"
+        className={styles.close}
         onClick={() => removeToast(toast.id)}
         aria-label="Dismiss notification"
       >
@@ -31,7 +39,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="toast-container" aria-live="polite">
+    <div className={styles.container} aria-live="polite">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}
