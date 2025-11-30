@@ -1,0 +1,143 @@
+/* ============================================
+   Component: Modal
+   Modal dialog overlay
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+/* ---- Backdrop ---- */
+.backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* ---- Container ---- */
+.container {
+  position: relative;
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.containerLarge {
+  max-width: 600px;
+}
+
+.containerXL {
+  max-width: 800px;
+}
+
+.containerFull {
+  max-width: 95vw;
+  width: 95vw;
+  max-height: 95vh;
+}
+
+/* ---- Header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.title {
+  font-size: 1.125rem;
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  line-height: 1;
+  border-radius: var(--border-radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.close:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Body ---- */
+.body {
+  padding: var(--spacing-lg);
+}
+
+.bodyCompact {
+  padding: var(--spacing-md);
+}
+
+/* ---- Actions/Footer ---- */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.actionsSpread {
+  justify-content: space-between;
+}
+
+.actionsEnd {
+  justify-content: flex-end;
+}
+
+/* ---- Drag Over State ---- */
+.dragOver::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(201, 162, 39, 0.1);
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--border-radius);
+  z-index: 10;
+  pointer-events: none;
+}

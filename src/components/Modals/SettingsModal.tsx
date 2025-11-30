@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useToast } from '../../contexts/ToastContext'
 import { useTokenContext } from '../../contexts/TokenContext'
 import type { DPIOption } from '../../ts/types/index'
+import styles from '../../styles/components/layout/Modal.module.css'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -51,21 +52,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
 
   return (
-    <div className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
-      <div className="modal-backdrop" onClick={handleBackdropClick} />
-      <div className="modal-container" ref={contentRef}>
-        <div className="modal-header">
-          <h2 id="settingsModalTitle">Global Settings</h2>
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <div className={styles.backdrop} onClick={handleBackdropClick} />
+      <div className={styles.container} ref={contentRef}>
+        <div className={styles.header}>
+          <h2 id="settingsModalTitle" className={styles.title}>Global Settings</h2>
           <button
             type="button"
-            className="modal-close"
+            className={styles.close}
             onClick={onClose}
             aria-label="Close settings"
           >
             ×
           </button>
         </div>
-        <div className="modal-body">
+        <div className={styles.body}>
           <div className="option-group">
             <label className="option-label" htmlFor="dpiSetting">
               <span>Image Quality (DPI)</span>

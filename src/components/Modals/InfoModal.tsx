@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import styles from '../../styles/components/layout/Modal.module.css'
 
 interface InfoModalProps {
   isOpen: boolean
@@ -33,21 +34,21 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
   }
 
   return (
-    <div className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
-      <div className="modal-backdrop" onClick={handleBackdropClick} />
-      <div className="modal-container">
-        <div className="modal-header">
-          <h2 id="infoModalTitle">About this Tool</h2>
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+      <div className={styles.backdrop} onClick={handleBackdropClick} />
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h2 id="infoModalTitle" className={styles.title}>About this Tool</h2>
           <button
             type="button"
-            className="modal-close"
+            className={styles.close}
             onClick={onClose}
             aria-label="Close info"
           >
             ×
           </button>
         </div>
-        <div className="modal-body">
+        <div className={styles.body}>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)', lineHeight: '1.6' }}>
             Blood on the Clocktower Token Generator is a tool for creating custom tokens for the Blood on the Clocktower game.
           </p>

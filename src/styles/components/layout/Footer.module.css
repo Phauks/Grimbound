@@ -1,0 +1,18 @@
+/* ============================================
+   Component: Footer
+   Application footer
+   ============================================ */
+
+.footer {
+  background-color: var(--bg-panel);
+  padding: var(--spacing-md);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.footer p {
+  margin: 0;
+}

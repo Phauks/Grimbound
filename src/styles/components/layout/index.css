@@ -1,0 +1,14 @@
+/* ============================================
+   Layout Components Index
+   
+   Note: CSS Modules are imported directly in 
+   their respective component files, not here.
+   ============================================ */
+
+/*
+ * Available CSS Modules:
+ * - Header.module.css   - App header with branding
+ * - Footer.module.css   - App footer
+ * - Sidebar.module.css  - Left sidebar panel
+ * - Modal.module.css    - Modal dialog overlay
+ */

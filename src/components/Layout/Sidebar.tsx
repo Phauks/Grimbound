@@ -7,6 +7,7 @@ import { CharacterTab } from '../Options/CharacterTab'
 import { ReminderTab } from '../Options/ReminderTab'
 import { MetaTab } from '../Options/MetaTab'
 import { ExportTab } from '../Options/ExportTab'
+import styles from '../../styles/components/layout/Sidebar.module.css'
 
 export function Sidebar() {
   const { generationOptions, updateGenerationOptions } = useTokenContext()
@@ -14,11 +15,11 @@ export function Sidebar() {
   const [customPresets, setCustomPresets] = useState<CustomPreset[]>([])
 
   return (
-    <aside className="options-panel">
-      <div className="panel-content">
-        <div className="sidebar-card">
-          <h2 className="section-header">Presets</h2>
-          <div className="option-section">
+    <aside className={styles.sidebar}>
+      <div className={styles.content}>
+        <div className={styles.card}>
+          <h2 className={styles.cardHeader}>Presets</h2>
+          <div className={styles.cardBody}>
             <PresetSection
               customPresets={customPresets}
               onCustomPresetsChange={setCustomPresets}
@@ -27,9 +28,9 @@ export function Sidebar() {
           </div>
         </div>
 
-        <div className="sidebar-card">
-          <h2 className="section-header">Options</h2>
-          <div className="option-section">
+        <div className={styles.card}>
+          <h2 className={styles.cardHeader}>Options</h2>
+          <div className={styles.cardBody}>
             <div className="tabs-container">
               <OptionsTabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
