@@ -1,0 +1,100 @@
+/* ============================================
+   Base Styles: Typography
+   Global typography styles
+   ============================================ */
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+}
+
+/* Headings */
+h1 {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+}
+
+h2 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+}
+
+h3 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+h4 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+}
+
+h5 {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+}
+
+h6 {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* Display font (game title) */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Monospace for code/JSON */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Text color utilities */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+/* Text alignment */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* Text transform */
+.uppercase { text-transform: uppercase; }
+.lowercase { text-transform: lowercase; }
+.capitalize { text-transform: capitalize; }
+
+/* Truncation */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--bg-main);
+}

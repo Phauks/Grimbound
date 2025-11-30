@@ -1,0 +1,33 @@
+/* ============================================
+   Design Tokens: Effects (Shadows, Borders, Radii)
+   ============================================ */
+
+:root {
+  /* ---- Border Radius ---- */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-none: none;
+
+  /* ---- Focus Ring ---- */
+  --ring-width: 2px;
+  --ring-offset: 2px;
+  --ring-color: var(--color-accent);
+
+  /* ---- Border Widths ---- */
+  --border-width-none: 0;
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 4px;
+}

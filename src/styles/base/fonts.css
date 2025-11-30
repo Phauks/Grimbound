@@ -1,0 +1,79 @@
+/* ============================================
+   Base Styles: Font Faces
+   Custom font declarations
+   
+   Note: Vite serves the 'assets' folder at root,
+   so /assets/fonts becomes /fonts
+   ============================================ */
+
+@font-face {
+  font-family: 'Dumbledor';
+  src: url('/fonts/Dumbledor/Dumbledor.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DumbledorThin';
+  src: url('/fonts/Dumbledor/DumbledorThin.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DumbledorWide';
+  src: url('/fonts/Dumbledor/DumbledorWide.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TradeGothic';
+  src: url('/fonts/TradeGothic/TradeGothic.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TradeGothicBold';
+  src: url('/fonts/TradeGothic/TradeGothicBold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LHF Unlovable';
+  src: url('/fonts/LHF_Unlovable.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Goudy Old Style';
+  src: url('/fonts/GoudyOldStyle/GoudyOldStyle.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Goudy Old Style';
+  src: url('/fonts/GoudyOldStyle/GoudyOldStyleBold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Goudy Old Style';
+  src: url('/fonts/GoudyOldStyle/GoudyOldStyleItalic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}

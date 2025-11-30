@@ -1,0 +1,22 @@
+/* ============================================
+   Design Tokens: Spacing
+   ============================================ */
+
+:root {
+  /* ---- Base Spacing Scale ---- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* ---- Component-Specific Spacing ---- */
+  --panel-width: 320px;
+  --panel-width-collapsed: 0px;
+  --header-height: 60px;
+  --footer-height: 40px;
+  --tab-height: 44px;
+  --sidebar-width: 280px;
+}
