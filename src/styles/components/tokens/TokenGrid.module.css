@@ -9,19 +9,26 @@
   gap: var(--spacing-md);
 }
 
+.tokenContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
 /* ---- Grid ---- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 200px));
   gap: var(--spacing-md);
   align-content: start;
+  justify-content: center;
   padding: var(--spacing-md);
   padding-top: var(--spacing-lg);
 }
 
-/* Reminder Token Grid - 6 per row */
+/* Reminder Token Grid - smaller min/max for reminder tokens */
 .gridReminders {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 140px));
   gap: var(--spacing-sm);
 }
 
@@ -112,33 +119,25 @@
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .gridReminders {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
+/* With auto-fill and minmax, the grid is naturally responsive.
+   These breakpoints adjust the minimum sizes for smaller screens. */
 @media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(150px, 200px));
   }
 
   .gridReminders {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(80px, 120px));
   }
 }
 
 @media (max-width: 480px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   }
 
   .gridReminders {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(70px, 100px));
   }
 }
 

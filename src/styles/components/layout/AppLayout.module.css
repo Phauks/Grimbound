@@ -12,11 +12,12 @@
 .mainContent {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  min-height: 0; /* Important for nested flex scrolling */
 }
 
 .tabViewContent {
   padding: 0;
   display: flex;
-  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Important for nested flex scrolling */
 }

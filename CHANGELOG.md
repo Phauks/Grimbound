@@ -18,6 +18,120 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-05
+
+### 🎉 Major Feature: GitHub Data Sync Integration
+
+#### Added
+- **Automatic Character Data Updates**: Syncs with official character data from GitHub releases
+  - Background sync checks for updates without blocking user workflow
+  - Non-blocking initialization - app loads instantly with cached data
+  - Version-aware updates (only downloads when new version available)
+  - ETag support for efficient conditional requests
+
+- **Offline-First Architecture**: Works fully without internet after initial sync
+  - IndexedDB storage for character data (~2-5 MB)
+  - Cache API for character icons (~15-20 MB)
+  - Graceful fallback when GitHub unavailable
+  - Persistent cache survives page refreshes and browser restarts
+
+- **New Sync Module (`src/ts/sync/`)**: Complete data synchronization system
+  - `DataSyncService`: Main orchestrator with event system
+  - `GitHubReleaseClient`: GitHub API client with rate limiting and retry logic
+  - `PackageExtractor`: ZIP extraction and validation with content integrity checks
+  - `StorageManager`: IndexedDB + Cache API wrapper with quota management
+  - `VersionManager`: Version comparison logic (vYYYY.MM.DD-rN format)
+  - `MigrationHelper`: Legacy data migration and first-time setup
+
+- **Character Lookup Service**: Fast character validation and search
+  - O(1) character ID validation via Map
+  - Fuzzy search by ID or name with tiered scoring
+  - Integrated with script parser for validation warnings
+  - Core infrastructure for future autocomplete UI
+
+- **Sync UI Components**:
+  - `SyncStatusIndicator`: Header status indicator with color-coded states
+  - `SyncDetailsModal`: Full sync dashboard with cache statistics
+  - `SyncProgressBar`: Real-time download progress with size tracking
+  - Settings integration: Auto-sync toggle and sync management controls
+
+- **Event System**: Subscribe to sync events for real-time updates
+  - Events: checking, downloading, extracting, success, error
+  - Progress tracking with byte-level granularity
+  - Error details and retry functionality
+
+#### Changed
+- **Data Loading**: Now uses synced character data when available
+  - `useScriptData` hook integrated with DataSyncService
+  - Fallback to legacy API if sync service not ready
+  - Character images loaded from Cache API for faster rendering
+
+- **Script Parser**: Enhanced validation against official character data
+  - Validates character IDs against synced dataset
+  - Provides helpful warnings for invalid IDs
+  - Improved error messages with suggestions
+
+- **Storage Architecture**: Moved from API-only to offline-first
+  - First-time users: Automatic download on app load
+  - Returning users: Instant load with cached data
+  - Background update checks every hour (configurable)
+
+#### Fixed
+- TypeScript compilation errors in `tokenGenerator.ts`
+  - Fixed boolean type coercion for `hasAbilityText`
+  - Added proper fallback for missing layout properties
+  - Improved type safety for layout constants
+- Package extractor validation: Character count mismatch now properly detected
+
+#### Technical
+- **New Dependencies**:
+  - `jszip` 3.10.1 - ZIP extraction for GitHub release packages
+  - React 18 - UI framework (migrated from vanilla JS)
+  - TypeScript 5.3+ - Enhanced type safety
+
+- **Test Coverage**: 92 unit tests passing
+  - Storage Manager: 19 tests
+  - Version Manager: 30 tests
+  - GitHub Client: 14 tests
+  - Package Extractor: 19 tests
+  - Data Sync Service: 10 tests
+
+- **Performance Benchmarks**:
+  - IndexedDB read latency: < 50ms
+  - Full sync time: < 5s for typical release
+  - App load with cache: < 1s to interactive
+  - Memory usage during sync: < 50 MB
+
+- **Browser Compatibility**:
+  - Chrome/Edge: Full support
+  - Firefox: Full support
+  - Safari: Full support (may prompt for storage permission)
+
+- **Storage Requirements**:
+  - Total: ~25 MB maximum
+  - Character data: ~2-5 MB (IndexedDB)
+  - Character icons: ~15-20 MB (Cache API)
+
+#### Documentation
+- Updated README.md with comprehensive sync feature documentation
+- Updated CLAUDE.md with sync module architecture and integration points
+- Added E2E_TEST_CHECKLIST.md with 15 manual test scenarios
+- Enhanced troubleshooting section with sync-related FAQs
+
+#### Deferred (Non-blocking)
+- Visual autocomplete dropdown in JSON editor (requires CodeMirror 6 integration)
+- Hover tooltips for character IDs (requires CodeMirror 6)
+- Inline validation indicators (requires CodeMirror 6)
+- *Note*: Core validation logic is complete; UI enhancements can be added incrementally
+
+### Migration Notes
+- **First-Time Users**: Initial sync happens automatically on app load
+- **Existing Users**: No action required; sync happens in background
+- **Storage Permissions**: Safari users may see storage permission dialog (normal)
+- **Internet Required**: Only for initial download and periodic updates
+
+## [0.2.3] - 2025-12-05
+
 ### Added
 - Trademark/credit token: Automatic token generation for Blood on the Clocktower attribution
   - Displays trademark text: "Blood on the Clocktower is a product of the Pandemonium Institute"
@@ -49,5 +163,7 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - Support for CORS-restricted external images with graceful fallback
 - CDN-based dependencies (jsPDF, JSZip, FileSaver.js)
 
-[Unreleased]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.2.3...v0.3.0
+[0.2.3]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.1.0...v0.2.3
 [0.1.0]: https://github.com/Phauks/Clocktower_Token_Generator/releases/tag/v0.1.0

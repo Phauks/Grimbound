@@ -1,0 +1,224 @@
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Tab Navigation */
+.tabsNav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.75rem;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tabButton.active {
+  background: var(--color-accent);
+  color: var(--text-primary);
+}
+
+/* Tab Content */
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Sub-Tab Navigation (second level) */
+.subTabsNav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.subTabButton {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subTabButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.subTabButton.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* Section (details element) */
+.section {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section[open] > .sectionHeader {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  list-style: none;
+}
+
+.sectionHeader::-webkit-details-marker {
+  display: none;
+}
+
+.sectionHeader::before {
+  content: '▸';
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.section[open] > .sectionHeader::before {
+  transform: rotate(90deg);
+}
+
+.sectionHeader:hover {
+  background: var(--bg-hover);
+}
+
+/* Section Content */
+.sectionContent {
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Form Inputs */
+.colorInput {
+  width: 60px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+}
+
+.colorInput::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.colorInput::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-xs);
+}
+
+.selectInput {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.selectInput:hover {
+  border-color: var(--accent-color);
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+/* Checkbox Label */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.checkboxLabel:hover {
+  color: var(--text-primary);
+}
+
+/* TBI (To Be Implemented) Label */
+.tbiLabel {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Nested Options (indented sub-options) */
+.nestedOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 1rem;
+  margin-left: 0.25rem;
+  border-left: 2px solid var(--border-color);
+}
+
+/* Empty message */
+.emptyMessage {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}

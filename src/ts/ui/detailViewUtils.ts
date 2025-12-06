@@ -36,10 +36,14 @@ export async function regenerateSingleToken(
 /**
  * Regenerate character token and all associated reminder tokens
  * Returns the new tokens that should replace the old ones
+ * @param editedCharacter - The character data to generate tokens for
+ * @param generationOptions - Token generation options
+ * @param imageOverride - Optional specific image URL to use (for variant preview)
  */
 export async function regenerateCharacterAndReminders(
   editedCharacter: Character,
-  generationOptions: GenerationOptions
+  generationOptions: GenerationOptions,
+  imageOverride?: string
 ): Promise<{ characterToken: Token; reminderTokens: Token[] }> {
   const generatorOptions = {
     ...generationOptions,
@@ -49,8 +53,8 @@ export async function regenerateCharacterAndReminders(
   const dpi = generationOptions.dpi ?? CONFIG.PDF.DPI
 
   try {
-    // Generate character token
-    const charCanvas = await generator.generateCharacterToken(editedCharacter)
+    // Generate character token (with optional image override for variant preview)
+    const charCanvas = await generator.generateCharacterToken(editedCharacter, imageOverride)
     const charFilename = sanitizeFilename(editedCharacter.name)
     
     const characterToken: Token = {
@@ -60,6 +64,7 @@ export async function regenerateCharacterAndReminders(
       team: (editedCharacter.team || 'townsfolk') as Team,
       canvas: charCanvas,
       diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
+      parentUuid: editedCharacter.uuid,
     }
 
     // Generate reminder tokens
@@ -90,6 +95,7 @@ export async function regenerateCharacterAndReminders(
             canvas,
             diameter: CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * dpi,
             parentCharacter: editedCharacter.name,
+            parentUuid: editedCharacter.uuid,
             reminderText: reminder,
           })
         } catch (error) {
@@ -132,6 +138,39 @@ export function updateCharacterInJson(
     return JSON.stringify(parsed, null, 2)
   } catch (error) {
     console.error('Failed to update character in JSON:', error)
+    throw error
+  }
+}
+
+/**
+ * Update the _meta entry in the script JSON
+ * If no _meta exists, it will be added at the beginning
+ */
+export function updateMetaInJson(
+  jsonString: string,
+  updatedMeta: { id: '_meta'; name?: string; author?: string; version?: string; logo?: string; almanac?: string; background?: string }
+): string {
+  try {
+    const parsed = JSON.parse(jsonString)
+
+    // Handle array-based scripts
+    if (Array.isArray(parsed)) {
+      const index = parsed.findIndex((item: any) => {
+        return typeof item === 'object' && item !== null && item.id === '_meta'
+      })
+
+      if (index !== -1) {
+        // Update existing _meta
+        parsed[index] = updatedMeta
+      } else {
+        // Add _meta at the beginning
+        parsed.unshift(updatedMeta)
+      }
+    }
+
+    return JSON.stringify(parsed, null, 2)
+  } catch (error) {
+    console.error('Failed to update meta in JSON:', error)
     throw error
   }
 }

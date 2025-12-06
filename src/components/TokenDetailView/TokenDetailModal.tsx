@@ -6,6 +6,7 @@ import { TokenPreview } from './TokenPreview'
 import { TokenEditor } from './TokenEditor'
 import { ActionButtons } from './ActionButtons'
 import { updateCharacterInJson, downloadCharacterTokensAsZip, downloadCharacterTokenOnly, downloadReminderTokensOnly, regenerateCharacterAndReminders } from '../../ts/ui/detailViewUtils'
+import { generateRandomName, nameToId, generateUuid } from '../../ts/utils/nameGenerator'
 import type { Token, Character } from '../../ts/types/index.js'
 import styles from '../../styles/components/tokenDetail/TokenDetailModal.module.css'
 
@@ -16,7 +17,7 @@ interface TokenDetailModalProps {
 }
 
 export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailModalProps) {
-  const { characters, tokens, jsonInput, setJsonInput, setCharacters, setTokens, generationOptions } = useTokenContext()
+  const { characters, tokens, jsonInput, setJsonInput, setCharacters, setTokens, generationOptions, setMetadata, deleteMetadata, getMetadata, officialData } = useTokenContext()
   const { addToast } = useToast()
   
   // Determine the initial character ID from the clicked token
@@ -43,19 +44,23 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
   const [editedCharacter, setEditedCharacter] = useState<Character | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true)
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false)
   const [previewCharacterToken, setPreviewCharacterToken] = useState<Token | null>(null)
   const [previewReminderTokens, setPreviewReminderTokens] = useState<Token[]>([])
   
-  // Debounce timer for live updates
-  const liveUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Debounce timer for auto-save
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Track previous character ID for unsaved changes detection
+  // Debounce timer for regeneration
+  const regenerateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Debounce timer for immediate save
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Track previous character ID
   const previousCharacterIdRef = useRef<string>(selectedCharacterId)
-  // Track if we just auto-saved to prevent effect loops
-  const justAutoSavedRef = useRef(false)
+  // Track original ID for finding character when ID changes
+  const originalCharacterIdRef = useRef<string>(selectedCharacterId)
+  // Ref for jsonInput to avoid dependency cycles
+  const jsonInputRef = useRef(jsonInput)
+  jsonInputRef.current = jsonInput
+  // Ref for characters to avoid dependency cycles
+  const charactersRef = useRef(characters)
+  charactersRef.current = characters
 
   // Update selected character when modal opens with a new token
   useEffect(() => {
@@ -73,11 +78,6 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
 
   useEffect(() => {
     if (selectedCharacterId && characters.length > 0) {
-      // Skip if we just auto-saved (prevents loop)
-      if (justAutoSavedRef.current) {
-        justAutoSavedRef.current = false
-        return
-      }
       const char = characters.find((c) => c.id === selectedCharacterId)
       if (char) {
         setEditedCharacter(JSON.parse(JSON.stringify(char)))
@@ -91,22 +91,22 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     [editedCharacter, selectedCharacterId, characters]
   )
 
-  // Find the character token - match by name since tokens use character name, not id
+  // Find the character token - match by UUID only (UUID is required on all characters)
   const characterTokens = useMemo(
     () => {
       const char = characters.find((c) => c.id === selectedCharacterId)
-      if (!char) return []
-      return tokens.filter((t) => t.type === 'character' && t.name === char.name)
+      if (!char?.uuid) return []
+      return tokens.filter((t) => t.type === 'character' && t.parentUuid === char.uuid)
     },
     [tokens, selectedCharacterId, characters]
   )
 
-  // Find reminder tokens - parentCharacter contains the character NAME, not ID
+  // Find reminder tokens - match by UUID only (UUID is required on all characters)
   const reminderTokens = useMemo(
     () => {
       const char = characters.find((c) => c.id === selectedCharacterId)
-      if (!char) return []
-      return tokens.filter((t) => t.type === 'reminder' && t.parentCharacter === char.name)
+      if (!char?.uuid) return []
+      return tokens.filter((t) => t.type === 'reminder' && t.parentUuid === char.uuid)
     },
     [tokens, selectedCharacterId, characters]
   )
@@ -117,9 +117,9 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     setPreviewReminderTokens([])
   }, [selectedCharacterId])
 
-  // Live update regeneration function
+  // Regeneration function
   const regeneratePreview = useCallback(async () => {
-    if (!editedCharacter || !liveUpdateEnabled) return
+    if (!editedCharacter) return
     
     try {
       const { characterToken, reminderTokens: newReminderTokens } = await regenerateCharacterAndReminders(
@@ -131,80 +131,79 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     } catch (error) {
       console.error('Failed to regenerate preview:', error)
     }
-  }, [editedCharacter, liveUpdateEnabled, generationOptions])
+  }, [editedCharacter, generationOptions])
 
-  // Debounced live update effect
+  // Regenerate on every edit
   useEffect(() => {
-    if (!liveUpdateEnabled || !isDirty || !editedCharacter) return
+    if (!editedCharacter) return
     
     // Clear any existing timer
-    if (liveUpdateTimerRef.current) {
-      clearTimeout(liveUpdateTimerRef.current)
+    if (regenerateTimerRef.current) {
+      clearTimeout(regenerateTimerRef.current)
     }
     
     // Set a new debounced timer (300ms delay)
-    liveUpdateTimerRef.current = setTimeout(() => {
+    regenerateTimerRef.current = setTimeout(() => {
       regeneratePreview()
     }, 300)
     
     return () => {
-      if (liveUpdateTimerRef.current) {
-        clearTimeout(liveUpdateTimerRef.current)
+      if (regenerateTimerRef.current) {
+        clearTimeout(regenerateTimerRef.current)
       }
     }
-  }, [editedCharacter, liveUpdateEnabled, isDirty, regeneratePreview])
+  }, [editedCharacter, regeneratePreview])
 
-  // Auto-save: update JSON when edits happen and auto-save is enabled
+  // Immediate save: update JSON when edits happen
   useEffect(() => {
-    if (!autoSaveEnabled || !isDirty || !editedCharacter) return
+    if (!isDirty || !editedCharacter) return
     
-    // Debounce auto-save slightly to batch rapid changes
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current)
+    // Debounce save slightly to batch rapid changes
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
     }
     
-    autoSaveTimerRef.current = setTimeout(() => {
-      // Mark that we're auto-saving to prevent the character load effect from resetting
-      justAutoSavedRef.current = true
-      
+    saveTimerRef.current = setTimeout(() => {
       // Update the JSON input with the edited character
       try {
-        const updatedJson = updateCharacterInJson(jsonInput, selectedCharacterId, editedCharacter)
+        const origId = originalCharacterIdRef.current
+        const updatedJson = updateCharacterInJson(jsonInputRef.current, origId, editedCharacter)
         setJsonInput(updatedJson)
         
-        // Update the characters array in context
-        const updatedCharacters = characters.map((c: Character) => 
-          c.id === selectedCharacterId ? editedCharacter : c
+        // Update the characters array in context using ref
+        const updatedCharacters = charactersRef.current.map((c: Character) => 
+          c.id === origId ? editedCharacter : c
         )
         setCharacters(updatedCharacters)
         
-        // Mark as clean since we auto-saved
+        // If ID changed, update refs
+        if (editedCharacter.id !== origId) {
+          setSelectedCharacterId(editedCharacter.id)
+          originalCharacterIdRef.current = editedCharacter.id
+          previousCharacterIdRef.current = editedCharacter.id
+        }
+        
+        // Mark as clean since we saved
         setIsDirty(false)
       } catch (error) {
-        console.error('Auto-save failed:', error)
-        justAutoSavedRef.current = false
+        console.error('Save failed:', error)
       }
     }, 100)
     
     return () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current)
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
       }
     }
-  }, [autoSaveEnabled, isDirty, editedCharacter, selectedCharacterId, setJsonInput, setCharacters])
+  }, [isDirty, editedCharacter, setJsonInput, setCharacters])
 
-  // Handle character selection with unsaved changes prompt
+  // Handle character selection
   // Must be defined before early return to follow rules of hooks
   const handleSelectCharacter = useCallback((newCharacterId: string) => {
-    if (isDirty && !autoSaveEnabled && previousCharacterIdRef.current !== newCharacterId) {
-      const confirmDiscard = window.confirm(
-        'You have unsaved changes. Do you want to discard them?'
-      )
-      if (!confirmDiscard) return
-    }
     previousCharacterIdRef.current = newCharacterId
+    originalCharacterIdRef.current = newCharacterId
     setSelectedCharacterId(newCharacterId)
-  }, [isDirty, autoSaveEnabled])
+  }, [])
 
   if (!isOpen) return null
 
@@ -223,27 +222,15 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     setIsDirty(true)
   }
 
-  const handleReset = () => {
-    const char = characters.find((c) => c.id === selectedCharacterId)
-    if (char) {
-      setEditedCharacter(JSON.parse(JSON.stringify(char)))
-      setIsDirty(false)
-      setPreviewCharacterToken(null)
-      setPreviewReminderTokens([])
-    }
+  const handleReplaceCharacter = (newCharacter: Character) => {
+    setEditedCharacter(newCharacter)
+    setIsDirty(true)
   }
 
-  const handleToggleLiveUpdate = () => {
-    setLiveUpdateEnabled(prev => !prev)
-    // Clear preview when disabling
-    if (liveUpdateEnabled) {
-      setPreviewCharacterToken(null)
-      setPreviewReminderTokens([])
-    }
-  }
-
-  const handleToggleAutoSave = () => {
-    setAutoSaveEnabled(prev => !prev)
+  // Strip internal fields (uuid) from character for clean JSON export
+  const getExportableCharacter = (char: Character): Omit<Character, 'uuid'> => {
+    const { uuid, ...exportable } = char
+    return exportable
   }
 
   const handleDownloadJson = () => {
@@ -252,7 +239,9 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     const charData = editedCharacter || selectedCharacter
     if (!charData) return
     
-    const jsonText = JSON.stringify(charData, null, 2)
+    // Export clean JSON without internal fields
+    const exportable = getExportableCharacter(charData)
+    const jsonText = JSON.stringify(exportable, null, 2)
     const blob = new Blob([jsonText], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -267,15 +256,21 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
 
   const handleAddCharacter = () => {
     // Create a new blank character with a unique ID
-    const newId = `custom_${Date.now()}`
+    const randomName = generateRandomName()
+    const newId = nameToId(randomName)
+    const newUuid = generateUuid()
     const newCharacter: Character = {
       id: newId,
-      name: 'New Character',
+      name: randomName,
       team: 'townsfolk',
       ability: '',
       image: '',
       reminders: [],
+      uuid: newUuid,
     }
+    
+    // Initialize metadata with default idLinkedToName: true
+    setMetadata(newUuid, { idLinkedToName: true })
     
     // Add to characters array
     const updatedCharacters = [...characters, newCharacter]
@@ -306,6 +301,11 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     
     const charToDelete = characters.find(c => c.id === idToDelete)
     if (!charToDelete) return
+    
+    // Delete metadata for this character
+    if (charToDelete.uuid) {
+      deleteMetadata(charToDelete.uuid)
+    }
     
     // Remove from characters array
     const updatedCharacters = characters.filter(c => c.id !== idToDelete)
@@ -347,10 +347,20 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
     if (!charToDuplicate) return
 
     const newId = `${charToDuplicate.id}_copy_${Date.now()}`
+    const newUuid = generateUuid()
     const newCharacter: Character = {
       ...JSON.parse(JSON.stringify(charToDuplicate)),
       id: newId,
       name: `${charToDuplicate.name} (Copy)`,
+      uuid: newUuid,  // New UUID for duplicate
+    }
+    
+    // Copy metadata from original character
+    if (charToDuplicate.uuid) {
+      const originalMetadata = getMetadata(charToDuplicate.uuid)
+      setMetadata(newUuid, { ...originalMetadata })
+    } else {
+      setMetadata(newUuid, { idLinkedToName: true })
     }
     
     // Add to characters array
@@ -538,6 +548,7 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
           characters={characters}
           tokens={tokens}
           selectedCharacterId={selectedCharacterId}
+          officialCharacterIds={useMemo(() => new Set(officialData.map(c => c.id)), [officialData])}
           onSelectCharacter={handleSelectCharacter}
           onAddCharacter={handleAddCharacter}
           onDeleteCharacter={handleDeleteCharacter}
@@ -549,19 +560,12 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
           <header className={styles.header}>
             <h2 id="tokenDetailTitle">{selectedCharacter?.name || 'Token Details'}</h2>
             <ActionButtons
-              isDirty={isDirty}
               isLoading={isLoading}
-              liveUpdateEnabled={liveUpdateEnabled}
-              autoSaveEnabled={autoSaveEnabled}
-              onReset={handleReset}
+              hasReminderTokens={displayReminderTokens.length > 0}
               onDownloadAll={handleDownloadAll}
               onDownloadCharacter={handleDownloadCharacter}
               onDownloadReminders={handleDownloadReminders}
               onDownloadJson={handleDownloadJson}
-              onApply={handleApplyToScript}
-              onToggleLiveUpdate={handleToggleLiveUpdate}
-              onToggleAutoSave={handleToggleAutoSave}
-              onDelete={() => handleDeleteCharacter()}
             />
             <button
               type="button"
@@ -593,7 +597,12 @@ export function TokenDetailModal({ isOpen, onClose, initialToken }: TokenDetailM
 
               {/* Right column: Editor */}
               <div className={styles.right}>
-                <TokenEditor character={selectedCharacter} onEditChange={handleEditChange} />
+                <TokenEditor 
+                  character={selectedCharacter} 
+                  onEditChange={handleEditChange}
+                  onReplaceCharacter={handleReplaceCharacter}
+                  onRefreshPreview={regeneratePreview}
+                />
               </div>
             </div>
           )}

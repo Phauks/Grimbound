@@ -7,8 +7,52 @@
   border-right: 1px solid var(--border-color);
   width: 280px;
   min-width: 280px;
-  height: 100%;
+  max-width: 280px;
   overflow: hidden;
+  flex-shrink: 0;
+  /* Fill available height from parent flex container */
+}
+
+/* Project Section */
+.projectSection {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.projectHeading {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.projectButtons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.projectBtn {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  cursor: not-allowed;
+  text-align: left;
+  transition: all var(--transition-fast);
+  opacity: 0.6;
+}
+
+.projectBtn:hover {
+  background: var(--bg-hover);
 }
 
 /* Navigation header */
@@ -23,13 +67,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-sm);
 }
 
 .headerTop h3 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.headerButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+  background: var(--bg-input);
   color: var(--text-primary);
 }
 
@@ -42,6 +111,7 @@
   border: none;
   font-size: 1.125rem;
   font-weight: var(--font-weight-bold);
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -53,30 +123,21 @@
   background: var(--color-primary-light);
 }
 
-.headerActions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.textBtn {
-  background: none;
-  border: none;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color var(--transition-fast);
-}
-
-.textBtn:hover {
-  color: var(--text-primary);
-}
-
-/* Navigation list */
+/* Navigation list with invisible scrollbar */
 .list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--spacing-sm);
+  /* Invisible scrollbar for WebKit browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* Team sections */
@@ -105,14 +166,14 @@
 }
 
 /* Team colors */
-.teamTownsfolk { border-left: 3px solid var(--color-team-townsfolk); }
-.teamOutsider { border-left: 3px solid var(--color-team-outsider); }
-.teamMinion { border-left: 3px solid var(--color-team-minion); }
-.teamDemon { border-left: 3px solid var(--color-team-demon); }
-.teamTraveller { border-left: 3px solid var(--color-team-traveller); }
-.teamFabled { border-left: 3px solid var(--color-team-fabled); }
-.teamLoric { border-left: 3px solid var(--color-team-loric); }
-.teamMeta { border-left: 3px solid var(--text-muted); }
+.teamTownsfolk { border-left: 6px solid var(--color-team-townsfolk); }
+.teamOutsider { border-left: 6px solid var(--color-team-outsider); }
+.teamMinion { border-left: 6px solid var(--color-team-minion); }
+.teamDemon { border-left: 6px solid var(--color-team-demon); }
+.teamTraveller { border-left: 6px solid var(--color-team-traveller); }
+.teamFabled { border-left: 6px solid var(--color-team-fabled); }
+.teamLoric { border-left: 6px solid var(--color-team-loric); }
+.teamMeta { border-left: 6px solid var(--text-muted); }
 
 .collapseIcon {
   font-size: 10px;
@@ -182,6 +243,11 @@
 .item.teamLoric { border-left-color: var(--color-team-loric); }
 .item.teamMeta { border-left-color: var(--text-muted); }
 
+/* Official character indicator - right border accent */
+.item.official {
+  border-right-color: var(--color-accent);
+}
+
 .thumbnail {
   width: 40px;
   height: 40px;
@@ -189,11 +255,18 @@
   border-radius: 50%;
   overflow: hidden;
   background: var(--color-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .thumbnail canvas {
   width: 100%;
   height: 100%;
+}
+
+.metaIcon {
+  font-size: 1.5rem;
 }
 
 .info {
@@ -270,4 +343,74 @@
   box-shadow: 0 0 0 2px var(--color-primary);
 }
 
+/* Delete Confirmation Modal */
+.confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
+.confirmModal {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.confirmModal h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.confirmModal p {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn:hover {
+  background: var(--bg-tertiary);
+}
+
+.dangerBtn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-danger);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dangerBtn:hover {
+  background: var(--color-danger-dark, #b91c1c);
+}

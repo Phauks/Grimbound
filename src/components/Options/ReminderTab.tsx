@@ -1,6 +1,7 @@
 import { memo, useState } from 'react'
 import type { GenerationOptions } from '../../ts/types/index'
 import { OptionGroup } from '../Shared/OptionGroup'
+import { SegmentedControl } from '../Shared/SegmentedControl'
 import { SliderWithValue } from '../Shared/SliderWithValue'
 import styles from '../../styles/components/options/OptionsTab.module.css'
 
@@ -19,6 +20,7 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
       characterName: 0,
       abilityText: 0,
       reminderText: 0,
+      metaText: 0,
     }
     onOptionChange({
       fontSpacing: {
@@ -33,6 +35,7 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
       characterName: 4,
       abilityText: 3,
       reminderText: 4,
+      metaText: 4,
     }
     onOptionChange({
       textShadow: {
@@ -64,31 +67,44 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
         {activeSubTab === 'background' && (
           <div className={styles.subtabContent}>
             <div className={styles.subsection}>
-              <OptionGroup label="Background Color" helpText="Background color for reminder tokens">
-                <input
-                  type="color"
-                  className={styles.colorInput}
-                  value={generationOptions.reminderBackground}
-                  onChange={(e) => onOptionChange({ reminderBackground: e.target.value })}
+              <OptionGroup label="Background Type" description="Choose between a solid color or image background.">
+                <SegmentedControl
+                  options={[
+                    { value: 'color', label: 'Color' },
+                    { value: 'image', label: 'Image' },
+                  ]}
+                  value={generationOptions.reminderBackgroundType || 'color'}
+                  onChange={(value) => onOptionChange({ reminderBackgroundType: value as 'color' | 'image' })}
                 />
               </OptionGroup>
 
-              <OptionGroup
-                label="Background Image"
-                helpText="Select reminder background pattern"
-              >
-                <select
-                  className={styles.selectInput}
-                  value={generationOptions.reminderBackgroundImage || 'character_background_1'}
-                  onChange={(e) => onOptionChange({ reminderBackgroundImage: e.target.value })}
+              {generationOptions.reminderBackgroundType === 'color' ? (
+                <OptionGroup label="Background Color" description="Choose a solid background color for reminder tokens.">
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={generationOptions.reminderBackground}
+                    onChange={(e) => onOptionChange({ reminderBackground: e.target.value })}
+                  />
+                </OptionGroup>
+              ) : (
+                <OptionGroup
+                  label="Background Image"
+                  description="Choose the decorative pattern for reminder tokens."
                 >
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <option key={i + 1} value={`character_background_${i + 1}`}>
-                      Background {i + 1}
-                    </option>
-                  ))}
-                </select>
-              </OptionGroup>
+                  <select
+                    className={styles.selectInput}
+                    value={generationOptions.reminderBackgroundImage || 'character_background_1'}
+                    onChange={(e) => onOptionChange({ reminderBackgroundImage: e.target.value })}
+                  >
+                    {Array.from({ length: 7 }, (_, i) => (
+                      <option key={i + 1} value={`character_background_${i + 1}`}>
+                        Background {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </OptionGroup>
+              )}
             </div>
           </div>
         )}

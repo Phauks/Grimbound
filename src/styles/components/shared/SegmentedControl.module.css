@@ -1,0 +1,41 @@
+/* ============================================
+   Component: SegmentedControl
+   Styled toggle/pill selector for options
+   ============================================ */
+
+.container {
+  display: inline-flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 2px;
+  gap: 2px;
+}
+
+.segment {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.segment:hover:not(.active) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.active {
+  background: var(--color-accent);
+  color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.active:hover {
+  background: var(--color-accent);
+}

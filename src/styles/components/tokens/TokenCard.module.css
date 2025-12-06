@@ -26,6 +26,21 @@
   outline-offset: 2px;
 }
 
+/* ---- Count Badge for Duplicates ---- */
+.countBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: var(--color-accent);
+  color: var(--text-on-accent);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-bold);
+  padding: 2px 6px;
+  border-radius: 10px;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
 /* ---- Reminder Card Variant ---- */
 .cardReminder {
   padding: var(--spacing-sm);
@@ -130,6 +145,18 @@
 .teamLoric { background-color: #2a5f5f; }
 .teamMeta { background-color: #4a4a4a; }
 
+/* ---- Official Badge ---- */
+.official {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-bold);
+  background-color: #8c92ac;
+  color: white;
+}
+
 /* ---- Actions ---- */
 .actions {
   display: flex;
@@ -207,6 +234,52 @@
 
 .downloadMenu button:hover {
   background-color: var(--bg-hover);
+}
+
+/* ---- Variant Navigation ---- */
+.variantNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-color);
+}
+
+.variantButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 0.625rem;
+  background-color: var(--bg-tertiary, rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.variantButton:hover {
+  background-color: var(--color-accent);
+  color: var(--text-primary);
+  border-color: var(--color-accent);
+}
+
+.variantButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.variantIndicator {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  min-width: 40px;
+  text-align: center;
 }
 
 

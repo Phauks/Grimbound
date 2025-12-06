@@ -1,11 +1,13 @@
-import { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react'
+import { createContext, useContext, ReactNode, useState, useCallback } from 'react'
 import type {
   Token,
   Character,
   GenerationOptions,
   ScriptMeta,
+  CharacterMetadata,
+  SyncStatus,
 } from '../ts/types/index.js'
-import { setCorsProxySetting } from '../ts/utils/imageUtils.js'
+import { useDataSync } from './DataSyncContext'
 
 interface TokenContextType {
   // Token state
@@ -21,6 +23,13 @@ interface TokenContextType {
 
   officialData: Character[]
   setOfficialData: (data: Character[]) => void
+
+  // Character metadata (internal generator state, separate from character JSON)
+  characterMetadata: Map<string, CharacterMetadata>
+  getMetadata: (uuid: string) => CharacterMetadata
+  setMetadata: (uuid: string, metadata: Partial<CharacterMetadata>) => void
+  deleteMetadata: (uuid: string) => void
+  clearAllMetadata: () => void
 
   // Script metadata
   scriptMeta: ScriptMeta | null
@@ -57,6 +66,10 @@ interface TokenContextType {
   // Generation progress
   generationProgress: { current: number; total: number } | null
   setGenerationProgress: (progress: { current: number; total: number } | null) => void
+
+  // Sync status (from DataSyncContext)
+  syncStatus: SyncStatus
+  isSyncInitialized: boolean
 }
 
 const TokenContext = createContext<TokenContextType | undefined>(undefined)
@@ -64,6 +77,9 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined)
 interface TokenProviderProps {
   children: ReactNode
 }
+
+// Default metadata for new characters - defined outside component to avoid recreation on every render
+const DEFAULT_CHARACTER_METADATA: CharacterMetadata = { idLinkedToName: true }
 
 export function TokenProvider({ children }: TokenProviderProps) {
   const [tokens, setTokens] = useState<Token[]>([])
@@ -77,15 +93,54 @@ export function TokenProvider({ children }: TokenProviderProps) {
   const [warnings, setWarnings] = useState<string[]>([])
   const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number } | null>(null)
 
+  // Get sync status from DataSyncContext
+  const { status: syncStatus, isInitialized: isSyncInitialized } = useDataSync()
+
+  // Character metadata store (keyed by character UUID)
+  const [characterMetadata, setCharacterMetadata] = useState<Map<string, CharacterMetadata>>(new Map())
+
+  // Get metadata for a character (returns default if not found)
+  const getMetadata = useCallback((uuid: string): CharacterMetadata => {
+    return characterMetadata.get(uuid) || DEFAULT_CHARACTER_METADATA
+  }, [characterMetadata])
+
+  // Set or update metadata for a character
+  const setMetadataForChar = useCallback((uuid: string, metadata: Partial<CharacterMetadata>) => {
+    setCharacterMetadata(prev => {
+      const newMap = new Map(prev)
+      const existing = prev.get(uuid) || DEFAULT_CHARACTER_METADATA
+      newMap.set(uuid, { ...existing, ...metadata })
+      return newMap
+    })
+  }, [])
+
+  // Delete metadata for a character
+  const deleteMetadata = useCallback((uuid: string) => {
+    setCharacterMetadata(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(uuid)
+      return newMap
+    })
+  }, [])
+
+  // Clear all metadata (e.g., when loading a new script)
+  const clearAllMetadata = useCallback(() => {
+    setCharacterMetadata(new Map())
+  }, [])
+
   const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
     displayAbilityText: false,
     tokenCount: false,
     setupFlowerStyle: 'setup_flower_1',
-    reminderBackground: '#FFFFFF',
+    reminderBackground: '#6C3BAA',
     reminderBackgroundImage: 'character_background_1',
+    reminderBackgroundType: 'color',
     characterBackground: 'character_background_1',
     characterBackgroundColor: '#FFFFFF',
+    characterBackgroundType: 'image',
     metaBackground: 'character_background_1',
+    metaBackgroundColor: '#FFFFFF',
+    metaBackgroundType: 'image',
     characterNameFont: 'Dumbledor',
     characterNameColor: '#000000',
     characterReminderFont: 'TradeGothic',
@@ -102,11 +157,13 @@ export function TokenProvider({ children }: TokenProviderProps) {
       characterName: 0,
       abilityText: 0,
       reminderText: 0,
+      metaText: 0,
     },
     textShadow: {
       characterName: 4,
       abilityText: 3,
       reminderText: 4,
+      metaText: 4,
     },
     pandemoniumToken: true,
     scriptNameToken: true,
@@ -122,15 +179,12 @@ export function TokenProvider({ children }: TokenProviderProps) {
       includeScriptJson: false,
       compressionLevel: 'normal',
     },
-    corsProxy: 'allorigins',
+    iconSettings: {
+      character: { scale: 1.0, offsetX: 0, offsetY: 0 },
+      reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
+      meta: { scale: 1.0, offsetX: 0, offsetY: 0 },
+    },
   })
-
-  // Sync CORS proxy setting to global singleton for non-React code
-  useEffect(() => {
-    if (generationOptions.corsProxy) {
-      setCorsProxySetting(generationOptions.corsProxy)
-    }
-  }, [generationOptions.corsProxy])
 
   const [filters, setFilters] = useState({
     teams: [] as string[],
@@ -156,6 +210,11 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setCharacters,
     officialData,
     setOfficialData,
+    characterMetadata,
+    getMetadata,
+    setMetadata: setMetadataForChar,
+    deleteMetadata,
+    clearAllMetadata,
     scriptMeta,
     setScriptMeta,
     generationOptions,
@@ -172,6 +231,8 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setWarnings,
     generationProgress,
     setGenerationProgress,
+    syncStatus,
+    isSyncInitialized,
   }
 
   return (

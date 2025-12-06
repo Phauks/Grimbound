@@ -1,11 +1,13 @@
 import { useCallback, useRef } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 import { generateAllTokens } from '../ts/generation/batchGenerator.js'
+import { clearDataUrlCache } from '../components/TokenGrid/TokenCard'
 import type { ProgressCallback, Token, TokenCallback } from '../ts/types/index.js'
 
 export function useTokenGenerator() {
   const {
     characters,
+    officialData,
     generationOptions,
     scriptMeta,
     setTokens,
@@ -41,6 +43,9 @@ export function useTokenGenerator() {
         // Reset tokens array for new generation
         tokensRef.current = []
         setTokens([])
+        
+        // Clear the data URL cache since we're regenerating tokens
+        clearDataUrlCache()
 
         const progressCallback: ProgressCallback = (current, total) => {
           setGenerationProgress({ current, total })
@@ -62,7 +67,8 @@ export function useTokenGenerator() {
           progressCallback,
           scriptMeta || undefined,
           tokenCallback,
-          signal
+          signal,
+          officialData
         )
 
         setError(null)
@@ -81,7 +87,7 @@ export function useTokenGenerator() {
         abortControllerRef.current = null
       }
     },
-    [characters, generationOptions, scriptMeta, setTokens, setIsLoading, setError, setGenerationProgress]
+    [characters, officialData, generationOptions, scriptMeta, setTokens, setIsLoading, setError, setGenerationProgress]
   )
 
   // Cancel function for external use

@@ -3,12 +3,24 @@
  * PDF Generator - PDF export functionality
  */
 
-import CONFIG from '../config.js';
-import type { Token, PDFOptions, TokenLayoutItem, ProgressCallback, jsPDFDocument } from '../types/index.js';
+import CONFIG, { AVERY_TEMPLATES } from '../config.js';
+import type { Token, PDFOptions, TokenLayoutItem, ProgressCallback, jsPDFDocument, AveryTemplate, AveryTemplateId } from '../types/index.js';
 
 // Re-export ZIP and PNG functions for backward compatibility
 export { createTokensZip } from './zipExporter.js';
 export { downloadTokenPNG } from './pngExporter.js';
+
+/**
+ * Get template for a given token type
+ * Character tokens use 94500 (1.75"), reminder tokens use 94509 (1")
+ */
+function getTemplateForTokenType(tokenType: Token['type']): AveryTemplate {
+    if (tokenType === 'reminder') {
+        return AVERY_TEMPLATES['avery-94509'];
+    }
+    // Character, script-name, almanac, pandemonium all use character template
+    return AVERY_TEMPLATES['avery-94500'];
+}
 
 /**
  * PDFGenerator class handles PDF creation and layout
@@ -18,8 +30,25 @@ export class PDFGenerator {
     private pageWidthPx: number;
     private pageHeightPx: number;
     private marginPx: number;
+    private xOffsetPx: number;
+    private yOffsetPx: number;
     private usableWidth: number;
     private usableHeight: number;
+
+    /**
+     * Convert millimeters to pixels at given DPI
+     * Formula: pixels = mm * (dpi / 25.4)
+     */
+    private static mmToPixels(mm: number, dpi: number): number {
+        return mm * (dpi / 25.4);
+    }
+
+    /**
+     * Convert inches to pixels at given DPI
+     */
+    private static inchesToPixels(inches: number, dpi: number): number {
+        return inches * dpi;
+    }
 
     constructor(options: Partial<PDFOptions> = {}) {
         this.options = {
@@ -29,13 +58,20 @@ export class PDFGenerator {
             margin: options.margin ?? CONFIG.PDF.MARGIN,
             tokenPadding: options.tokenPadding ?? CONFIG.PDF.TOKEN_PADDING,
             xOffset: options.xOffset ?? CONFIG.PDF.X_OFFSET,
-            yOffset: options.yOffset ?? CONFIG.PDF.Y_OFFSET
+            yOffset: options.yOffset ?? CONFIG.PDF.Y_OFFSET,
+            imageQuality: options.imageQuality ?? CONFIG.PDF.IMAGE_QUALITY,
+            template: options.template ?? CONFIG.PDF.DEFAULT_TEMPLATE,
+            bleed: options.bleed ?? 0.125  // Default 1/8" bleed for cutting
         };
 
         // Calculate usable area in pixels at 300 DPI
         this.pageWidthPx = this.options.pageWidth * this.options.dpi;
         this.pageHeightPx = this.options.pageHeight * this.options.dpi;
         this.marginPx = this.options.margin * this.options.dpi;
+
+        // Convert offsets from inches to pixels
+        this.xOffsetPx = PDFGenerator.inchesToPixels(this.options.xOffset, this.options.dpi);
+        this.yOffsetPx = PDFGenerator.inchesToPixels(this.options.yOffset, this.options.dpi);
 
         // Usable area
         this.usableWidth = this.pageWidthPx - (2 * this.marginPx);
@@ -53,6 +89,8 @@ export class PDFGenerator {
         this.pageWidthPx = this.options.pageWidth * this.options.dpi;
         this.pageHeightPx = this.options.pageHeight * this.options.dpi;
         this.marginPx = this.options.margin * this.options.dpi;
+        this.xOffsetPx = PDFGenerator.inchesToPixels(this.options.xOffset, this.options.dpi);
+        this.yOffsetPx = PDFGenerator.inchesToPixels(this.options.yOffset, this.options.dpi);
         this.usableWidth = this.pageWidthPx - (2 * this.marginPx);
         this.usableHeight = this.pageHeightPx - (2 * this.marginPx);
     }
@@ -61,11 +99,12 @@ export class PDFGenerator {
      * Calculate grid layout for tokens
      * @param tokens - Array of token objects with canvas
      * @param separateByType - Whether to separate character and reminder tokens onto different pages
-     * @returns Array of pages with token positions
+     * @returns Object with pages array and metadata about each page's template
      */
-    calculateGridLayout(tokens: Token[], separateByType: boolean = true): TokenLayoutItem[][] {
+    calculateGridLayout(tokens: Token[], separateByType: boolean = true): { pages: TokenLayoutItem[][], pageTemplates: (AveryTemplate | null)[] } {
         if (!separateByType) {
-            return this.calculateSingleLayout(tokens);
+            const pages = this.calculateSingleLayout(tokens, null);
+            return { pages, pageTemplates: pages.map(() => null) };
         }
 
         // Separate tokens by type
@@ -75,24 +114,96 @@ export class PDFGenerator {
         );
         const reminderTokens = tokens.filter(t => t.type === 'reminder');
 
-        // Layout each group separately
-        const charPages = this.calculateSingleLayout(characterTokens);
-        const reminderPages = this.calculateSingleLayout(reminderTokens);
+        // Layout each group with its appropriate template
+        // Character tokens use Avery 94500 (1.75"), reminders use Avery 94509 (1")
+        const charTemplate = this.options.template === 'custom' ? null : AVERY_TEMPLATES['avery-94500'];
+        const reminderTemplate = this.options.template === 'custom' ? null : AVERY_TEMPLATES['avery-94509'];
+
+        const charPages = this.calculateSingleLayout(characterTokens, charTemplate);
+        const reminderPages = this.calculateSingleLayout(reminderTokens, reminderTemplate);
+
+        // Build template array for each page
+        const pageTemplates: (AveryTemplate | null)[] = [
+            ...charPages.map(() => charTemplate),
+            ...reminderPages.map(() => reminderTemplate)
+        ];
 
         // Character pages first, then reminder pages
-        return [...charPages, ...reminderPages];
+        return { pages: [...charPages, ...reminderPages], pageTemplates };
     }
 
     /**
-     * Calculate grid layout for a single array of tokens
+     * Calculate grid layout for a single array of tokens using template
+     * @param tokens - Array of token objects with canvas
+     * @param template - Avery template to use, or null for legacy layout
+     * @returns Array of pages with token positions
+     */
+    private calculateSingleLayout(tokens: Token[], template: AveryTemplate | null): TokenLayoutItem[][] {
+        if (!template) {
+            return this.calculateLegacyLayout(tokens);
+        }
+
+        const pages: TokenLayoutItem[][] = [];
+        let currentPage: TokenLayoutItem[] = [];
+        
+        // Convert template dimensions to pixels
+        const dpi = this.options.dpi;
+        const leftMarginPx = PDFGenerator.inchesToPixels(template.leftMargin, dpi);
+        const topMarginPx = PDFGenerator.inchesToPixels(template.topMargin, dpi);
+        const gapPx = PDFGenerator.inchesToPixels(template.gap, dpi);
+        const labelDiameterPx = PDFGenerator.inchesToPixels(template.labelDiameter, dpi);
+        
+        let col = 0;
+        let row = 0;
+
+        for (const token of tokens) {
+            // Check if we need a new page
+            if (row >= template.rows) {
+                pages.push(currentPage);
+                currentPage = [];
+                col = 0;
+                row = 0;
+            }
+
+            // Calculate position based on grid
+            // Position is relative to page origin (0,0), margins applied in renderPDF
+            const x = col * (labelDiameterPx + gapPx);
+            const y = row * (labelDiameterPx + gapPx);
+
+            currentPage.push({
+                token,
+                x,
+                y,
+                width: labelDiameterPx,
+                height: labelDiameterPx
+            });
+
+            // Move to next cell
+            col++;
+            if (col >= template.columns) {
+                col = 0;
+                row++;
+            }
+        }
+
+        // Add last page if not empty
+        if (currentPage.length > 0) {
+            pages.push(currentPage);
+        }
+
+        return pages;
+    }
+
+    /**
+     * Legacy layout algorithm (for custom/no template)
      * @param tokens - Array of token objects with canvas
      * @returns Array of pages with token positions
      */
-    private calculateSingleLayout(tokens: Token[]): TokenLayoutItem[][] {
+    private calculateLegacyLayout(tokens: Token[]): TokenLayoutItem[][] {
         const pages: TokenLayoutItem[][] = [];
         let currentPage: TokenLayoutItem[] = [];
-        let currentX = this.options.xOffset;
-        let currentY = this.options.yOffset;
+        let currentX = 0;
+        let currentY = 0;
         let rowHeight = 0;
 
         for (const token of tokens) {
@@ -102,7 +213,7 @@ export class PDFGenerator {
             // Check if token fits on current row
             if (currentX + tokenSize > this.usableWidth) {
                 // Move to next row
-                currentX = this.options.xOffset;
+                currentX = 0;
                 currentY += rowHeight + this.options.tokenPadding;
                 rowHeight = 0;
             }
@@ -112,8 +223,8 @@ export class PDFGenerator {
                 // Save current page and start new one
                 pages.push(currentPage);
                 currentPage = [];
-                currentX = this.options.xOffset;
-                currentY = this.options.yOffset;
+                currentX = 0;
+                currentY = 0;
                 rowHeight = 0;
             }
 
@@ -142,7 +253,7 @@ export class PDFGenerator {
     /**
      * Generate PDF from tokens
      * @param tokens - Array of token objects with canvas
-     * @param progressCallback - Progress callback (page, totalPages)
+     * @param progressCallback - Progress callback (current token, total tokens)
      * @param separatePages - Whether to separate character and reminder tokens onto different pages (default: true)
      * @returns Generated PDF document
      */
@@ -156,48 +267,137 @@ export class PDFGenerator {
         const pdf = new jspdfLib.jsPDF({
             orientation: 'portrait',
             unit: 'in',
-            format: [this.options.pageWidth, this.options.pageHeight]
-        });
+            format: [this.options.pageWidth, this.options.pageHeight],
+            compress: true  // Enable PDF stream compression (type not in @types but supported)
+        } as any);
 
         // Calculate layout
-        const pages = this.calculateGridLayout(tokens, separatePages);
+        const { pages, pageTemplates } = this.calculateGridLayout(tokens, separatePages);
 
         if (pages.length === 0) {
             return pdf;
         }
 
+        // Track tokens processed for progress reporting
+        let tokensProcessed = 0;
+        const totalTokens = tokens.length;
+
         // Generate each page
         for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
             const page = pages[pageIndex];
+            const template = pageTemplates[pageIndex];
 
             if (pageIndex > 0) {
                 pdf.addPage();
             }
 
-            if (progressCallback) {
-                progressCallback(pageIndex + 1, pages.length);
-            }
+            // Determine margins based on template or fallback to options
+            const leftMarginInches = template ? template.leftMargin : this.options.margin;
+            const topMarginInches = template ? template.topMargin : this.options.margin;
+
+            // Calculate bleed in pixels
+            const bleedInches = this.options.bleed ?? 0;
+            const bleedPx = Math.round(bleedInches * this.options.dpi);
 
             // Add tokens to page
             for (const item of page) {
-                // Convert canvas to base64 image
-                const dataUrl = item.token.canvas.toDataURL('image/png');
+                const originalSize = item.token.canvas.width;
+                const bleedSize = originalSize + (bleedPx * 2);
+                
+                // Create a canvas with bleed area
+                const bleedCanvas = document.createElement('canvas');
+                bleedCanvas.width = bleedSize;
+                bleedCanvas.height = bleedSize;
+                const bleedCtx = bleedCanvas.getContext('2d');
 
-                // Calculate position in inches (from pixels at 300 DPI)
-                const xInches = (this.marginPx + item.x) / this.options.dpi;
-                const yInches = (this.marginPx + item.y) / this.options.dpi;
-                const widthInches = item.width / this.options.dpi;
-                const heightInches = item.height / this.options.dpi;
+                if (bleedCtx) {
+                    // Fill with white background
+                    bleedCtx.fillStyle = '#FFFFFF';
+                    bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+
+                    // If bleed is enabled, stretch edge colors outward
+                    if (bleedPx > 0) {
+                        const tokenCtx = item.token.canvas.getContext('2d');
+                        if (tokenCtx) {
+                            const imageData = tokenCtx.getImageData(0, 0, originalSize, originalSize);
+                            const center = originalSize / 2;
+                            const radius = originalSize / 2;
+                            
+                            // Sample edge colors and draw radial lines outward
+                            const steps = 720; // Sample every 0.5 degrees for smooth coverage
+                            for (let i = 0; i < steps; i++) {
+                                const angle = (i / steps) * Math.PI * 2;
+                                
+                                // Sample 2 pixels inside the edge to avoid anti-aliased pixels
+                                const sampleRadius = radius - 2;
+                                const edgeX = Math.round(center + Math.cos(angle) * sampleRadius);
+                                const edgeY = Math.round(center + Math.sin(angle) * sampleRadius);
+                                
+                                // Clamp to valid range
+                                const clampedX = Math.max(0, Math.min(originalSize - 1, edgeX));
+                                const clampedY = Math.max(0, Math.min(originalSize - 1, edgeY));
+                                
+                                // Sample pixel color at edge
+                                const pixelIndex = (clampedY * originalSize + clampedX) * 4;
+                                const r = imageData.data[pixelIndex];
+                                const g = imageData.data[pixelIndex + 1];
+                                const b = imageData.data[pixelIndex + 2];
+                                const a = imageData.data[pixelIndex + 3];
+                                
+                                // Only draw if pixel is not transparent
+                                if (a > 128) {
+                                    bleedCtx.strokeStyle = `rgb(${r},${g},${b})`;
+                                    bleedCtx.lineWidth = 4; // Thick lines for good coverage
+                                    bleedCtx.beginPath();
+                                    // Start from edge of token (in bleed canvas coordinates)
+                                    const startX = (center + bleedPx) + Math.cos(angle) * radius;
+                                    const startY = (center + bleedPx) + Math.sin(angle) * radius;
+                                    // End at outer edge of bleed zone
+                                    const endX = (center + bleedPx) + Math.cos(angle) * (radius + bleedPx);
+                                    const endY = (center + bleedPx) + Math.sin(angle) * (radius + bleedPx);
+                                    bleedCtx.moveTo(startX, startY);
+                                    bleedCtx.lineTo(endX, endY);
+                                    bleedCtx.stroke();
+                                }
+                            }
+                        }
+                    }
+
+                    // Draw the original token centered on bleed canvas
+                    bleedCtx.drawImage(item.token.canvas, bleedPx, bleedPx);
+                }
+
+                // Convert composite canvas to base64 JPEG image with quality setting
+                const dataUrl = bleedCanvas.toDataURL('image/jpeg', this.options.imageQuality);
+
+                // Calculate position in inches
+                // item.x and item.y are in pixels, template margins are in inches
+                // xOffset and yOffset are already in inches
+                const xOffsetInches = this.options.xOffset;
+                const yOffsetInches = this.options.yOffset;
+                
+                // Offset position by bleed so token CENTER stays in same place
+                const xInches = leftMarginInches + xOffsetInches + (item.x / this.options.dpi) - bleedInches;
+                const yInches = topMarginInches + yOffsetInches + (item.y / this.options.dpi) - bleedInches;
+                // Include bleed in dimensions
+                const widthInches = (item.width + bleedPx * 2) / this.options.dpi;
+                const heightInches = (item.height + bleedPx * 2) / this.options.dpi;
 
                 // Add image to PDF
                 pdf.addImage(
                     dataUrl,
-                    'PNG',
+                    'JPEG',
                     xInches,
                     yInches,
                     widthInches,
                     heightInches
                 );
+
+                // Report progress by token
+                tokensProcessed++;
+                if (progressCallback) {
+                    progressCallback(tokensProcessed, totalTokens);
+                }
             }
         }
 

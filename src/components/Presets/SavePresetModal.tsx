@@ -133,7 +133,7 @@ export function SavePresetModal({ isOpen, onClose, onSave, onImport, importError
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
                 placeholder="My Custom Preset"
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     handleSave()

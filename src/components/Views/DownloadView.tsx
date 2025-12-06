@@ -20,6 +20,8 @@ export function DownloadView() {
   const { downloadZip, downloadPdf, downloadJson, downloadStyleFormat, downloadAll, cancelExport, isExporting, exportProgress, exportStep } = useExport()
   const { addToast } = useToast()
   const [activeSubTab, setActiveSubTab] = useState<'png' | 'zip' | 'pdf'>('zip')
+  const [activeZipSubTab, setActiveZipSubTab] = useState<'structure' | 'quality'>('structure')
+  const [activePdfSubTab, setActivePdfSubTab] = useState<'layout' | 'quality'>('layout')
 
   // Ensure zipSettings has all required fields
   const zipSettings = useMemo(() => ({
@@ -29,6 +31,7 @@ export function DownloadView() {
 
   const handleDownloadZip = async () => {
     try {
+      addToast('Preparing ZIP download...', 'info')
       await downloadZip()
       addToast('ZIP file downloaded successfully', 'success')
     } catch (error) {
@@ -39,6 +42,7 @@ export function DownloadView() {
 
   const handleDownloadPdf = async () => {
     try {
+      addToast('Preparing PDF download...', 'info')
       await downloadPdf()
       addToast('PDF downloaded successfully', 'success')
     } catch (error) {
@@ -49,6 +53,7 @@ export function DownloadView() {
 
   const handleDownloadJson = () => {
     try {
+      addToast('Preparing JSON download...', 'info')
       downloadJson()
       addToast('JSON downloaded successfully', 'success')
     } catch (error) {
@@ -59,6 +64,7 @@ export function DownloadView() {
 
   const handleDownloadStyleFormat = () => {
     try {
+      addToast('Preparing style format download...', 'info')
       downloadStyleFormat()
       addToast('Style format downloaded successfully', 'success')
     } catch (error) {
@@ -69,22 +75,13 @@ export function DownloadView() {
 
   const handleDownloadAll = async () => {
     try {
+      addToast('Preparing complete package...', 'info')
       await downloadAll()
       addToast('All files downloaded successfully', 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       addToast(`Failed to download all: ${message}`, 'error')
     }
-  }
-
-  const getButtonText = (type: 'zip' | 'pdf') => {
-    if (!isExporting) {
-      return type === 'zip' ? 'Download ZIP' : 'Download PDF'
-    }
-    if (exportProgress) {
-      return `Exporting ${exportProgress.current}/${exportProgress.total}...`
-    }
-    return 'Exporting...'
   }
 
   const hasTokens = tokens.length > 0
@@ -164,148 +161,214 @@ export function DownloadView() {
             {/* ZIP Settings */}
             {activeSubTab === 'zip' && (
               <div className={styles.subtabContent}>
-                <div className={styles.subsection}>
-                  <OptionGroup
-                    label="Save in Team Folders"
-                    helpText="Organize exported tokens by team (Townsfolk, Outsider, etc.)"
+                {/* Nested sub-tabs for ZIP */}
+                <div className={styles.nestedSubtabs}>
+                  <button
+                    className={`${styles.nestedSubtabButton} ${activeZipSubTab === 'structure' ? styles.active : ''}`}
+                    onClick={() => setActiveZipSubTab('structure')}
                   >
-                    <input
-                      type="checkbox"
-                      className={styles.toggleSwitch}
-                      checked={zipSettings.saveInTeamFolders}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          saveInTeamFolders: e.target.checked,
-                        }
-                      })}
-                    />
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="Save Reminders Separately"
-                    helpText="Place reminder tokens in a separate folder from character tokens"
+                    📁 Structure
+                  </button>
+                  <button
+                    className={`${styles.nestedSubtabButton} ${activeZipSubTab === 'quality' ? styles.active : ''}`}
+                    onClick={() => setActiveZipSubTab('quality')}
                   >
-                    <input
-                      type="checkbox"
-                      className={styles.toggleSwitch}
-                      checked={zipSettings.saveRemindersSeparately}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          saveRemindersSeparately: e.target.checked,
-                        }
-                      })}
-                    />
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="Meta Token Folder"
-                    helpText="Place script name, almanac, and pandemonium tokens in a _meta folder"
-                  >
-                    <input
-                      type="checkbox"
-                      className={styles.toggleSwitch}
-                      checked={zipSettings.metaTokenFolder}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          metaTokenFolder: e.target.checked,
-                        }
-                      })}
-                    />
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="Include Script JSON"
-                    helpText="Bundle the source script.json file in the ZIP"
-                  >
-                    <input
-                      type="checkbox"
-                      className={styles.toggleSwitch}
-                      checked={zipSettings.includeScriptJson}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          includeScriptJson: e.target.checked,
-                        }
-                      })}
-                    />
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="Compression Level"
-                    helpText="Higher compression = smaller file but slower export"
-                  >
-                    <select
-                      className={styles.selectInput}
-                      value={zipSettings.compressionLevel}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          compressionLevel: e.target.value as CompressionLevel
-                        }
-                      })}
-                    >
-                      <option value="fast">Fast (larger file)</option>
-                      <option value="normal">Normal (balanced)</option>
-                      <option value="maximum">Maximum (smaller file)</option>
-                    </select>
-                  </OptionGroup>
+                    ⚙️ Quality
+                  </button>
                 </div>
+
+                {activeZipSubTab === 'structure' && (
+                  <div className={styles.subsection}>
+                    <OptionGroup
+                      label="Save in Team Folders"
+                      helpText="Organize exported tokens by team (Townsfolk, Outsider, etc.)"
+                    >
+                      <input
+                        type="checkbox"
+                        className={styles.toggleSwitch}
+                        checked={zipSettings.saveInTeamFolders}
+                        onChange={(e) => updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            saveInTeamFolders: e.target.checked,
+                          }
+                        })}
+                      />
+                    </OptionGroup>
+
+                    <OptionGroup
+                      label="Save Reminders Separately"
+                      helpText="Place reminder tokens in a separate folder from character tokens"
+                    >
+                      <input
+                        type="checkbox"
+                        className={styles.toggleSwitch}
+                        checked={zipSettings.saveRemindersSeparately}
+                        onChange={(e) => updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            saveRemindersSeparately: e.target.checked,
+                          }
+                        })}
+                      />
+                    </OptionGroup>
+
+                    <OptionGroup
+                      label="Meta Token Folder"
+                      helpText="Place script name, almanac, and pandemonium tokens in a _meta folder"
+                    >
+                      <input
+                        type="checkbox"
+                        className={styles.toggleSwitch}
+                        checked={zipSettings.metaTokenFolder}
+                        onChange={(e) => updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            metaTokenFolder: e.target.checked,
+                          }
+                        })}
+                      />
+                    </OptionGroup>
+                  </div>
+                )}
+
+                {activeZipSubTab === 'quality' && (
+                  <div className={styles.subsection}>
+                    <OptionGroup
+                      label="Compression Level"
+                      helpText="Higher compression = smaller file but slower export"
+                    >
+                      <select
+                        className={styles.selectInput}
+                        value={zipSettings.compressionLevel}
+                        onChange={(e) => updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            compressionLevel: e.target.value as CompressionLevel
+                          }
+                        })}
+                      >
+                        <option value="fast">Fast (larger file)</option>
+                        <option value="normal">Normal (balanced)</option>
+                        <option value="maximum">Maximum (smaller file)</option>
+                      </select>
+                    </OptionGroup>
+                  </div>
+                )}
               </div>
             )}
 
             {/* PDF Settings */}
             {activeSubTab === 'pdf' && (
               <div className={styles.subtabContent}>
-                <div className={styles.subsection}>
-                  <OptionGroup label="Padding" helpText="Padding around PDF content">
-                    <div className={styles.inputWithUnit}>
-                      <input
-                        type="number"
-                        className={styles.numberInput}
-                        value={generationOptions.pdfPadding || 75}
-                        onChange={(e) => updateGenerationOptions({ pdfPadding: parseInt(e.target.value) || 0 })}
-                        min={0}
-                        max={100}
-                      />
-                      <span className={styles.inputUnit}>px</span>
-                    </div>
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="X Offset"
-                    helpText="Horizontal offset for PDF content"
-                    isSlider
+                {/* Nested sub-tabs for PDF */}
+                <div className={styles.nestedSubtabs}>
+                  <button
+                    className={`${styles.nestedSubtabButton} ${activePdfSubTab === 'layout' ? styles.active : ''}`}
+                    onClick={() => setActivePdfSubTab('layout')}
                   >
-                    <SliderWithValue
-                      value={generationOptions.pdfXOffset || 0}
-                      onChange={(value) => updateGenerationOptions({ pdfXOffset: value })}
-                      min={-20}
-                      max={20}
-                      defaultValue={0}
-                      unit="mm"
-                      ariaLabel="PDF X Offset value"
-                    />
-                  </OptionGroup>
-
-                  <OptionGroup
-                    label="Y Offset"
-                    helpText="Vertical offset for PDF content"
-                    isSlider
+                    📐 Layout
+                  </button>
+                  <button
+                    className={`${styles.nestedSubtabButton} ${activePdfSubTab === 'quality' ? styles.active : ''}`}
+                    onClick={() => setActivePdfSubTab('quality')}
                   >
-                    <SliderWithValue
-                      value={generationOptions.pdfYOffset || 0}
-                      onChange={(value) => updateGenerationOptions({ pdfYOffset: value })}
-                      min={-20}
-                      max={20}
-                      defaultValue={0}
-                      unit="mm"
-                      ariaLabel="PDF Y Offset value"
-                    />
-                  </OptionGroup>
+                    ✨ Quality
+                  </button>
                 </div>
+
+                {activePdfSubTab === 'layout' && (
+                  <div className={styles.subsection}>
+                    <OptionGroup
+                      label="Padding"
+                      helpText="Padding between tokens on PDF"
+                      isSlider
+                    >
+                      <SliderWithValue
+                        value={(generationOptions.pdfPadding ?? 0.25) * 8}
+                        onChange={(value) => updateGenerationOptions({ pdfPadding: value / 8 })}
+                        min={0}
+                        max={4}
+                        step={1}
+                        defaultValue={2}
+                        unit="/8 in"
+                        ariaLabel="PDF Padding value"
+                      />
+                    </OptionGroup>
+
+                    <OptionGroup
+                      label="X Offset"
+                      helpText="Horizontal offset for fine-tuning alignment"
+                      isSlider
+                    >
+                      <SliderWithValue
+                        value={(generationOptions.pdfXOffset ?? 0) * 16}
+                        onChange={(value) => updateGenerationOptions({ pdfXOffset: value / 16 })}
+                        min={-8}
+                        max={8}
+                        step={1}
+                        defaultValue={0}
+                        unit="/16 in"
+                        ariaLabel="PDF X Offset value"
+                      />
+                    </OptionGroup>
+
+                    <OptionGroup
+                      label="Y Offset"
+                      helpText="Vertical offset for fine-tuning alignment"
+                      isSlider
+                    >
+                      <SliderWithValue
+                        value={(generationOptions.pdfYOffset ?? 0) * 16}
+                        onChange={(value) => updateGenerationOptions({ pdfYOffset: value / 16 })}
+                        min={-8}
+                        max={8}
+                        step={1}
+                        defaultValue={0}
+                        unit="/16 in"
+                        ariaLabel="PDF Y Offset value"
+                      />
+                    </OptionGroup>
+
+                    <OptionGroup
+                      label="Print Bleed"
+                      helpText="Extends edge colors outward for clean cutting - prevents white edges"
+                      isSlider
+                    >
+                      <SliderWithValue
+                        value={(generationOptions.pdfBleed ?? 0.125) * 32}
+                        onChange={(value) => updateGenerationOptions({ pdfBleed: value / 32 })}
+                        min={0}
+                        max={4}
+                        step={1}
+                        defaultValue={4}
+                        unit="/32 in"
+                        ariaLabel="PDF Print Bleed value"
+                      />
+                    </OptionGroup>
+                  </div>
+                )}
+
+                {activePdfSubTab === 'quality' && (
+                  <div className={styles.subsection}>
+                    <OptionGroup
+                      label="Image Quality"
+                      helpText="JPEG quality for PDF images (higher = larger file, better quality)"
+                      isSlider
+                    >
+                      <SliderWithValue
+                        value={(generationOptions.pdfImageQuality ?? 0.90) * 100}
+                        onChange={(value) => updateGenerationOptions({ pdfImageQuality: value / 100 })}
+                        min={70}
+                        max={100}
+                        step={5}
+                        defaultValue={90}
+                        unit="%"
+                        ariaLabel="PDF image quality percentage"
+                      />
+                    </OptionGroup>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -324,82 +387,45 @@ export function DownloadView() {
               <p className={styles.noTokensHint}>Generate tokens in the Editor or Gallery tab first, then come back here to download them.</p>
             </div>
           )}
-          
-          {/* Progress bar - shown during export */}
-          {isExporting && (
-            <div className={styles.exportProgressContainer}>
-              <div className={styles.exportProgressBar}>
-                <div 
-                  className={`${styles.exportProgressFill} ${!exportProgress ? styles.indeterminate : ''}`}
-                  style={exportProgress ? { width: `${Math.round((exportProgress.current / exportProgress.total) * 100)}%` } : undefined}
-                />
-              </div>
-              <span className={styles.exportProgressText}>
-                {exportProgress 
-                  ? `${exportProgress.current}/${exportProgress.total} (${Math.round((exportProgress.current / exportProgress.total) * 100)}%)`
-                  : 'Processing...'
-                }
-              </span>
-              {exportStep && (
-                <div className={styles.exportStepIndicator}>
-                  <span className={`${styles.exportStepItem} ${exportStep === 'json' ? styles.active : styles.completed}`}>
-                    {exportStep === 'json' ? '⏳' : '✓'} JSON
-                  </span>
-                  <span className={`${styles.exportStepItem} ${exportStep === 'style' ? styles.active : exportStep === 'json' ? '' : styles.completed}`}>
-                    {exportStep === 'style' ? '⏳' : exportStep === 'json' ? '○' : '✓'} Style
-                  </span>
-                  <span className={`${styles.exportStepItem} ${exportStep === 'zip' ? styles.active : exportStep === 'pdf' ? styles.completed : ''}`}>
-                    {exportStep === 'zip' ? '⏳' : (exportStep === 'json' || exportStep === 'style') ? '○' : '✓'} Tokens
-                  </span>
-                  <span className={`${styles.exportStepItem} ${exportStep === 'pdf' ? styles.active : ''}`}>
-                    {exportStep === 'pdf' ? '⏳' : '○'} PDF
-                  </span>
-                </div>
-              )}
-              <button
-                className={`btn-secondary ${styles.cancelExportBtn}`}
-                onClick={cancelExport}
-                title="Cancel export"
-              >
-                ✕ Cancel
-              </button>
-            </div>
-          )}
-          
+
           <div className={styles.exportButtons}>
             <button
               className={`btn-primary ${styles.btnExport} ${styles.btnExportAll}`}
               onClick={handleDownloadAll}
-              disabled={isExporting || !hasTokens}
+              disabled={!hasTokens}
             >
               <span className={styles.btnIcon}>📥</span>
-              <span className={styles.btnText}>{isExporting ? 'Downloading...' : 'Download All'}</span>
-              <span className={styles.btnHint}>ZIP + PDF + JSON + Style</span>
+              <span className={styles.btnText}>Download All</span>
             </button>
             
             <div className={styles.exportButtonsGrid}>
               <button
                 className={`btn-secondary ${styles.btnExportSmall}`}
                 onClick={handleDownloadZip}
-                disabled={isExporting || !hasTokens}
+                disabled={!hasTokens}
               >
                 <span className={styles.btnIcon}>📦</span>
                 <span className={styles.btnText}>Download Token Images</span>
               </button>
               
-              <button
-                className={`btn-secondary ${styles.btnExportSmall}`}
-                onClick={handleDownloadPdf}
-                disabled={isExporting || !hasTokens}
-              >
-                <span className={styles.btnIcon}>🖨️</span>
-                <span className={styles.btnText}>Download Token Print Sheet</span>
-              </button>
+              <div className={styles.btnWithInfo}>
+                <button
+                  className={`btn-secondary ${styles.btnExportSmall}`}
+                  onClick={handleDownloadPdf}
+                  disabled={!hasTokens}
+                >
+                  <span className={styles.btnIcon}>🖨️</span>
+                  <span className={styles.btnText}>Download Token Print Sheet</span>
+                </button>
+                <span className={styles.infoIconCorner} title="Compatible with Avery 94500 (1.75” character tokens) and Avery 94509 (1” reminder tokens) label sheets">
+                  ℹ️
+                </span>
+              </div>
               
               <button
                 className={`btn-secondary ${styles.btnExportSmall}`}
                 onClick={handleDownloadJson}
-                disabled={isExporting || !hasTokens}
+                disabled={!hasTokens}
               >
                 <span className={styles.btnIcon}>📋</span>
                 <span className={styles.btnText}>Download JSON</span>
@@ -408,7 +434,7 @@ export function DownloadView() {
               <button
                 className={`btn-secondary ${styles.btnExportSmall}`}
                 onClick={handleDownloadStyleFormat}
-                disabled={isExporting || !hasTokens}
+                disabled={!hasTokens}
               >
                 <span className={styles.btnIcon}>🎨</span>
                 <span className={styles.btnText}>Download Style Format</span>

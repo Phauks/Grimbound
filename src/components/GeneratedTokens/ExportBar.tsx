@@ -93,7 +93,6 @@ export function ExportBar() {
         <button
           className={styles.primaryBtn}
           onClick={handleDownloadZip}
-          disabled={isExporting}
         >
           <span className={styles.icon}>📦</span>
           {getButtonText('zip')}
@@ -101,7 +100,6 @@ export function ExportBar() {
         <button
           className={styles.secondaryBtn}
           onClick={handleDownloadPdf}
-          disabled={isExporting}
         >
           <span className={styles.icon}>📄</span>
           {getButtonText('pdf')}

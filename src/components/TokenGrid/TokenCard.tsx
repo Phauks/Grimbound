@@ -1,13 +1,52 @@
-import { useRef, useEffect, useState, memo } from 'react'
-import { downloadTokenPNG } from '../../ts/export/pngExporter.js'
-import { useTokenContext } from '../../contexts/TokenContext.js'
+import { useEffect, useState, memo, useMemo } from 'react'
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver.js'
 import { TEAM_LABELS } from '../../ts/config.js'
 import type { Token, Team } from '../../ts/types/index.js'
 import styles from '../../styles/components/tokens/TokenCard.module.css'
 
+// Module-level cache for data URLs - persists across tab switches
+// Key: token filename, Value: data URL
+const dataUrlCache = new Map<string, string>()
+
+// Clear cache when tokens are regenerated (called from outside)
+export function clearDataUrlCache(): void {
+  dataUrlCache.clear()
+}
+
+// Pre-render data URLs for tokens (called on gallery tab hover)
+// Only encodes first N tokens to avoid blocking
+let isPreRenderingGallery = false
+export function preRenderGalleryTokens(tokens: Token[], maxTokens: number = 20): void {
+  if (isPreRenderingGallery) return
+  isPreRenderingGallery = true
+  
+  // Use requestIdleCallback or setTimeout to avoid blocking
+  const encode = () => {
+    let count = 0
+    for (const token of tokens) {
+      if (count >= maxTokens) break
+      if (!token.canvas) continue
+      if (dataUrlCache.has(token.filename)) continue
+      
+      // Encode and cache
+      dataUrlCache.set(token.filename, token.canvas.toDataURL('image/png'))
+      count++
+    }
+    isPreRenderingGallery = false
+  }
+  
+  // Use requestIdleCallback if available, otherwise setTimeout
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(encode, { timeout: 100 })
+  } else {
+    setTimeout(encode, 0)
+  }
+}
+
 interface TokenCardProps {
   token: Token
+  count?: number
+  variants?: Token[]  // Array of variant tokens for cycling
   onCardClick: (token: Token) => void
 }
 
@@ -32,85 +71,88 @@ const teamClassMap: Record<string, string> = {
 function arePropsEqual(prevProps: TokenCardProps, nextProps: TokenCardProps): boolean {
   return (
     prevProps.token.filename === nextProps.token.filename &&
+    prevProps.count === nextProps.count &&
+    prevProps.variants?.length === nextProps.variants?.length &&
     prevProps.onCardClick === nextProps.onCardClick
   )
 }
 
-function TokenCardComponent({ token, onCardClick }: TokenCardProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: TokenCardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasRendered, setHasRendered] = useState(false)
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
-  const { generationOptions } = useTokenContext()
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0)
 
-  // Lazy rendering: only draw canvas when token scrolls into view
+  // Determine the currently displayed token (considering variants)
+  const hasVariants = variants.length > 1
+  const displayToken = hasVariants ? variants[activeVariantIndex] || token : token
+
+  // Check if we have a cached data URL (instant on tab switch)
+  const cachedDataUrl = dataUrlCache.get(displayToken.filename)
+
+  // Lazy rendering: only render when token scrolls into view
   // Uses 200px rootMargin to pre-render tokens before they're visible
-  // triggerOnce: true keeps the canvas rendered after scrolling away
+  // triggerOnce: true keeps the image rendered after scrolling away
   const { ref: containerRef, isVisible } = useIntersectionObserver<HTMLDivElement>({
     rootMargin: '200px',
     threshold: 0.1,
     triggerOnce: true
   })
 
-  useEffect(() => {
-    // Only draw canvas when visible and not already rendered
-    if (!isVisible || hasRendered) return
-    if (!canvasRef.current || !token.canvas) return
+  // Generate data URL from canvas only when visible (lazy encoding)
+  // Uses cache to avoid re-encoding on tab switches
+  const imageDataUrl = useMemo(() => {
+    // Return cached value immediately if available
+    if (cachedDataUrl) return cachedDataUrl
+    
+    // Only encode when visible and not cached
+    if (!displayToken.canvas || !isVisible) return null
+    
+    const dataUrl = displayToken.canvas.toDataURL('image/png')
+    // Store in cache for future tab switches
+    dataUrlCache.set(displayToken.filename, dataUrl)
+    return dataUrl
+  }, [displayToken.canvas, displayToken.filename, isVisible, cachedDataUrl])
 
-    const ctx = canvasRef.current.getContext('2d')
-    if (ctx) {
-      // Scale down the canvas for display
-      // Reminder tokens are smaller (100x100) since they fit 6 per row
-      // Other tokens are 140x140
-      const size = token.type === 'reminder' ? 100 : 140
-      canvasRef.current.width = size
-      canvasRef.current.height = size
-      ctx.drawImage(token.canvas, 0, 0, size, size)
+  useEffect(() => {
+    // If we have cached data or newly generated data, mark as rendered
+    if ((cachedDataUrl || (isVisible && imageDataUrl)) && !hasRendered) {
       setIsLoading(false)
       setHasRendered(true)
     }
-  }, [isVisible, token, hasRendered])
+  }, [isVisible, imageDataUrl, hasRendered, cachedDataUrl])
 
-  const handleDownloadClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    downloadTokenPNG(token, generationOptions.pngSettings)
-  }
-
-  const handleToggleMenu = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setShowDownloadMenu(!showDownloadMenu)
-  }
-
-  const handleCopyToClipboard = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        token.canvas.toBlob((b) => {
-          if (b) resolve(b)
-          else reject(new Error('Failed to create blob'))
-        }, 'image/png')
-      })
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
-      ])
-      setShowDownloadMenu(false)
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
+  // Reset loading state when variant changes
+  useEffect(() => {
+    if (hasVariants) {
+      const variantCached = dataUrlCache.get(displayToken.filename)
+      if (!variantCached) {
+        setIsLoading(true)
+        setHasRendered(false)
+      }
     }
-  }
+  }, [activeVariantIndex, hasVariants, displayToken.filename])
 
   const handleCardClick = () => {
-    setShowDownloadMenu(false)
-    onCardClick(token)
+    onCardClick(displayToken)
+  }
+
+  const handlePrevVariant = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    setActiveVariantIndex((prev) => (prev - 1 + variants.length) % variants.length)
+  }
+
+  const handleNextVariant = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    setActiveVariantIndex((prev) => (prev + 1) % variants.length)
   }
 
   // Get team display name for character, reminder, and meta tokens
   const getTeamDisplay = () => {
-    if (token.type === 'character' || token.type === 'reminder') {
-      const teamKey = token.team.toLowerCase() as Team
-      return TEAM_LABELS[teamKey] || token.team
+    if (displayToken.type === 'character' || displayToken.type === 'reminder') {
+      const teamKey = displayToken.team.toLowerCase() as Team
+      return TEAM_LABELS[teamKey] || displayToken.team
     }
-    if (token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium') {
+    if (displayToken.type === 'script-name' || displayToken.type === 'almanac' || displayToken.type === 'pandemonium') {
       return 'Meta'
     }
     return null
@@ -120,11 +162,11 @@ function TokenCardComponent({ token, onCardClick }: TokenCardProps) {
 
   // Get team class for styling
   const getTeamClass = (): string => {
-    if (token.type === 'character' || token.type === 'reminder') {
-      const teamKey = token.team.toLowerCase()
+    if (displayToken.type === 'character' || displayToken.type === 'reminder') {
+      const teamKey = displayToken.team.toLowerCase()
       return teamClassMap[teamKey] || ''
     }
-    if (token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium') {
+    if (displayToken.type === 'script-name' || displayToken.type === 'almanac' || displayToken.type === 'pandemonium') {
       return teamClassMap['meta'] || ''
     }
     return ''
@@ -144,49 +186,63 @@ function TokenCardComponent({ token, onCardClick }: TokenCardProps) {
           handleCardClick()
         }
       }}
-      title={`Click to view details: ${token.name}`}
+      title={`Click to view details: ${displayToken.name}${count > 1 ? ` (×${count})` : ''}${hasVariants ? ` (variant ${activeVariantIndex + 1}/${variants.length})` : ''}`}
     >
-      <div className={styles.downloadWrapper}>
-        <button
-          className={styles.downloadBtn}
-          onClick={handleDownloadClick}
-          title={`Download ${token.filename}.png`}
-          aria-label={`Download ${token.name} token`}
-        >
-          ⬇ <span className={styles.downloadCaret} onClick={handleToggleMenu}>▼</span>
-        </button>
-        {showDownloadMenu && (
-          <div className={styles.downloadMenu}>
-            <button onClick={handleDownloadClick}>
-              💾 Download PNG
-            </button>
-            <button onClick={handleCopyToClipboard}>
-              📋 Copy to Clipboard
-            </button>
-          </div>
-        )}
-      </div>
+      {count > 1 && (
+        <span className={styles.countBadge} title={`${count} copies`}>×{count}</span>
+      )}
       <div className={styles.canvasContainer}>
         {/* Show skeleton when not visible, loading text when drawing */}
         {!isVisible && <div className={styles.skeleton} />}
         {isVisible && isLoading && <div className={styles.loading}>Loading...</div>}
-        <canvas
-          ref={canvasRef}
-          className={`${styles.canvas} ${!isVisible ? styles.canvasHidden : ''}`}
-          title={token.filename}
-        />
+        {isVisible && imageDataUrl && (
+          <img
+            src={imageDataUrl}
+            alt={displayToken.name}
+            className={styles.canvas}
+            title={displayToken.filename}
+          />
+        )}
       </div>
 
       <div className={styles.footer}>
         <div className={styles.info}>
-          <div className={styles.name}>{token.name}</div>
+          <div className={styles.name}>{displayToken.name}</div>
           <div className={styles.metadata}>
             {teamDisplay && (
               <span className={`${styles.team} ${teamClass}`}>{teamDisplay}</span>
             )}
+            {displayToken.isOfficial && (
+              <span className={styles.official}>Official</span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Variant navigation */}
+      {hasVariants && (
+        <div className={styles.variantNav}>
+          <button 
+            className={styles.variantButton} 
+            onClick={handlePrevVariant}
+            aria-label="Previous variant"
+            title="Previous variant"
+          >
+            ◀
+          </button>
+          <span className={styles.variantIndicator}>
+            v{activeVariantIndex + 1}/{variants.length}
+          </span>
+          <button 
+            className={styles.variantButton} 
+            onClick={handleNextVariant}
+            aria-label="Next variant"
+            title="Next variant"
+          >
+            ▶
+          </button>
+        </div>
+      )}
     </div>
   )
 }

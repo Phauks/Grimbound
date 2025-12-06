@@ -8,6 +8,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+  overflow: visible;
 }
 
 /* Preset Action Buttons (Save & Import) */

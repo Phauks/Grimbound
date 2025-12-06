@@ -19,6 +19,7 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    exclude: ['jspdf', 'jszip', 'file-saver', 'qrcodejs']
+    exclude: ['jspdf', 'file-saver', 'qrcodejs'],
+    include: ['jszip']  // Include JSZip for proper CommonJS-to-ESM conversion
   }
 });

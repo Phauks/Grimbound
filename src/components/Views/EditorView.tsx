@@ -15,7 +15,7 @@ interface EditorViewProps {
 
 export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProps) {
   const { jsonInput, setJsonInput, characters, isLoading, error, setError, warnings, setWarnings, scriptMeta } = useTokenContext()
-  const { loadScript, loadExampleScriptByName, parseJson, clearScript } = useScriptData()
+  const { loadScript, loadExampleScriptByName, parseJson, clearScript, addMetaToScript, hasUnderscoresInIds, removeUnderscoresFromIds } = useScriptData()
   const { generateTokens } = useTokenGenerator()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -23,12 +23,14 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
   const [autoGenerate, setAutoGenerate] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [selectedExample, setSelectedExample] = useState<string>('')
-  const [showMessages, setShowMessages] = useState(false)
+  const [showAllMessages, setShowAllMessages] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousJsonRef = useRef<string>('')
   const isUndoRedoRef = useRef(false)
   const isExternalChangeRef = useRef(false)
+
+  const VISIBLE_MESSAGES_COUNT = 3
 
   // Get example scripts from config, strip .json extension for display
   const exampleScripts = CONFIG.EXAMPLE_SCRIPTS.map((filename: string) =>
@@ -44,6 +46,11 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
       undoStack.set(jsonInput)
     }
   }, [jsonInput, undoStack])
+
+  // Reset "show all messages" when warnings/error change
+  useEffect(() => {
+    setShowAllMessages(false)
+  }, [warnings, error])
 
   // Debounced parsing of JSON input when user edits manually
   useEffect(() => {
@@ -221,6 +228,27 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
         {/* Left Panel - Create New Character & Load Scripts */}
         <div className={styles.editorLeftPanel}>
           <div className={styles.leftPanelSection}>
+            <h3 className={styles.leftPanelTitle}>Project</h3>
+            <p className={styles.leftPanelDesc}>
+              Manage your token generator projects.
+            </p>
+            <button
+              className={`btn-secondary ${styles.btnLeftPanelAction}`}
+              disabled
+              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+            >
+              Create New Project
+            </button>
+            <button
+              className={`btn-secondary ${styles.btnLeftPanelAction}`}
+              disabled
+              style={{ marginTop: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }}
+            >
+              Load Project
+            </button>
+          </div>
+
+          <div className={styles.leftPanelSection}>
             <h3 className={styles.leftPanelTitle}>Create Custom Character</h3>
             <p className={styles.leftPanelDesc}>
               Design your own custom character token from scratch.
@@ -230,6 +258,13 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
               onClick={onNavigateToCustomize}
             >
               ✨ Create New Character
+            </button>
+            <button
+              className={`btn-secondary ${styles.btnLeftPanelAction}`}
+              disabled
+              style={{ marginTop: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }}
+            >
+              📚 Add Official Character
             </button>
           </div>
 
@@ -284,31 +319,53 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
         {/* Right Panel - JSON Editor */}
         <div className={styles.editorRightPanel}>
           <div className={styles.editorContainer}>
-            {/* Unified Toolbar */}
+            {/* Unified Single-Row Toolbar */}
             <div className={styles.editorUnifiedToolbar}>
-              <div className={styles.toolbarLeft}>
+              <div className={styles.generateGroup}>
                 <button
                   className={`btn-primary ${styles.btnGenerateSmall}`}
                   onClick={handleManualGenerate}
                   disabled={isLoading || !characters.length}
                 >
-                  {isLoading ? '⚡ Generating...' : '⚡ Generate'}
+                  {isLoading ? 'Generating...' : 'Generate'}
                 </button>
                 <button
                   className={`${styles.btnToggleSmall} ${autoGenerate ? styles.active : ''}`}
                   onClick={() => setAutoGenerate(!autoGenerate)}
-                  title={autoGenerate ? 'Auto-generate is ON' : 'Auto-generate is OFF'}
+                  title={autoGenerate ? 'Auto-regenerate is ON' : 'Auto-regenerate is OFF'}
                 >
-                  {autoGenerate ? '🔄 Auto' : '🔄 Auto'}
+                  🔄
                 </button>
               </div>
-              <div className={styles.toolbarRight}>
+
+              <div className={styles.scriptMetaInline}>
+                <strong>{scriptMeta?.name || 'No Script Loaded'}</strong>
+                {scriptMeta?.author && <span className={styles.metaAuthor}> by {scriptMeta.author}</span>}
+              </div>
+
+              <div className={styles.toolbarActions}>
                 <button
                   className={`btn-secondary ${styles.btnIconOnly}`}
                   onClick={handleFormat}
                   title="Format JSON"
                 >
                   🎨
+                </button>
+                <button
+                  className={`btn-secondary ${styles.btnIconOnly}`}
+                  onClick={() => {
+                    navigator.clipboard.writeText(jsonInput)
+                      .then(() => {
+                        // Successfully copied
+                      })
+                      .catch((err) => {
+                        console.error('Failed to copy JSON:', err)
+                        setError('Failed to copy to clipboard')
+                      })
+                  }}
+                  title="Copy JSON to clipboard"
+                >
+                  📋
                 </button>
                 <button
                   className={`btn-secondary ${styles.btnIconOnly}`}
@@ -335,19 +392,6 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
                 </button>
               </div>
             </div>
-
-            {/* Script Meta Info */}
-            {scriptMeta && (
-              <div className={styles.scriptMetaBar}>
-                <span className={styles.metaItem}>
-                  <strong>{scriptMeta.name || 'Unnamed Script'}</strong>
-                  {scriptMeta.author && <span className={styles.metaAuthor}> by {scriptMeta.author}</span>}
-                </span>
-                <span className={`${styles.metaItem} ${styles.metaCount}`}>
-                  {characters.length} characters
-                </span>
-              </div>
-            )}
 
             {/* Editor Area */}
             <div
@@ -376,32 +420,72 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
             </div>
 
             {/* Messages indicator (errors/warnings) - below editor */}
-            {(error || warnings.length > 0) && (
+            {(error || warnings.length > 0 || (characters.length > 0 && !scriptMeta) || hasUnderscoresInIds()) && (
               <div className={styles.messagesBar}>
-                <button 
-                  className={`${styles.messagesToggle} ${error ? styles.hasError : styles.hasWarning}`}
-                  onClick={() => setShowMessages(!showMessages)}
-                >
-                  <span className={styles.messagesIcon}>{error ? '⚠️' : 'ℹ️'}</span>
-                  <span className={styles.messagesCount}>
-                    {error ? '1 error' : `${warnings.length} warning${warnings.length !== 1 ? 's' : ''}`}
-                  </span>
-                  <span className={styles.messagesChevron}>{showMessages ? '▲' : '▼'}</span>
-                </button>
-                {showMessages && (
-                  <div className={styles.messagesDropdownUp}>
-                    {error && (
-                      <div className={styles.messageItem + ' ' + styles.errorItem}>
-                        ⚠️ {error}
-                      </div>
-                    )}
-                    {warnings.map((warning, i) => (
-                      <div key={i} className={styles.messageItem + ' ' + styles.warningItem}>
-                        ℹ️ {warning}
-                      </div>
-                    ))}
+                {/* Missing _meta recommendation */}
+                {characters.length > 0 && !scriptMeta && !error && (
+                  <div className={`${styles.messageItem} ${styles.infoItem}`}>
+                    <span>💡 This script doesn't have a <code>_meta</code> entry. Adding one enables script name tokens and better organization.</span>
+                    <button
+                      className={styles.addMetaBtn}
+                      onClick={() => addMetaToScript()}
+                      title="Add _meta entry to script"
+                    >
+                      Add _meta
+                    </button>
                   </div>
                 )}
+                {/* Underscore in IDs recommendation */}
+                {hasUnderscoresInIds() && !error && (
+                  <div className={`${styles.messageItem} ${styles.infoItem}`}>
+                    <span>💡 Some character IDs contain underscores. Official IDs don't use underscores (e.g., <code>fortune_teller</code> → <code>fortuneteller</code>).</span>
+                    <button
+                      className={styles.addMetaBtn}
+                      onClick={removeUnderscoresFromIds}
+                      title="Remove underscores from character IDs"
+                    >
+                      Remove underscores
+                    </button>
+                  </div>
+                )}
+                {/* Build combined messages list */}
+                {(error || warnings.length > 0) && (() => {
+                  const allMessages = [
+                    ...(error ? [{ type: 'error', text: error }] : []),
+                    ...warnings.map(w => ({ type: 'warning', text: w }))
+                  ]
+                  const visibleMessages = allMessages.slice(0, VISIBLE_MESSAGES_COUNT)
+                  const hiddenMessages = allMessages.slice(VISIBLE_MESSAGES_COUNT)
+                  const hasMore = hiddenMessages.length > 0
+
+                  return (
+                    <>
+                      <div className={styles.messagesDropdownUp}>
+                        {visibleMessages.map((msg, i) => (
+                          <div key={i} className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}>
+                            {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
+                          </div>
+                        ))}
+                        {showAllMessages && hiddenMessages.map((msg, i) => (
+                          <div key={i + VISIBLE_MESSAGES_COUNT} className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}>
+                            {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
+                          </div>
+                        ))}
+                      </div>
+                      {hasMore && (
+                        <button 
+                          className={styles.showMoreBtn}
+                          onClick={() => setShowAllMessages(!showAllMessages)}
+                        >
+                          {showAllMessages 
+                            ? '▲ Show less' 
+                            : `▼ Show ${hiddenMessages.length} more`
+                          }
+                        </button>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             )}
           </div>

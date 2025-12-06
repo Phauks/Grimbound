@@ -3,7 +3,7 @@
  * PNG Exporter - Single PNG download functionality
  */
 
-import { canvasToBlob } from '../utils/index.js';
+import { canvasToBlob, downloadFile } from '../utils/index.js';
 import { embedPngMetadata, buildTokenMetadata } from './pngMetadata.js';
 import type { Token, PngExportOptions } from '../types/index.js';
 
@@ -24,14 +24,5 @@ export async function downloadTokenPNG(
         blob = await embedPngMetadata(blob, metadata);
     }
 
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${token.filename}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
+    downloadFile(blob, `${token.filename}.png`);
 }

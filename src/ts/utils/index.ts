@@ -25,16 +25,26 @@ export {
     canvasToBlob,
     downloadFile,
     checkFontsLoaded,
-    setCorsProxySetting,
-    getCorsProxySetting
+    applyCorsProxy
 } from './imageUtils.js';
 
 // JSON utilities
 export {
     formatJson,
     validateJson,
-    deepClone
+    deepClone,
+    stripInternalFields,
+    getCleanJsonForExport
 } from './jsonUtils.js';
+
+// Storage utilities
+export {
+    STORAGE_KEYS,
+    getStorageItem,
+    setStorageItem,
+    removeStorageItem,
+    type StorageKey
+} from './storageKeys.js';
 
 // Color utilities
 export {
@@ -57,8 +67,22 @@ export {
     getProgressPercentage
 } from './progressUtils.js';
 
+// Name generation utilities
+export {
+    generateRandomName,
+    generateMultipleNames,
+    nameToId,
+    generateUuid
+} from './nameGenerator.js';
+
 // Global image cache
 export { globalImageCache } from './imageCache.js';
+
+// Class name utilities
+export {
+    cn,
+    createVariantClasses
+} from './classNames.js';
 
 // Re-export types
 export type { DebouncedFunction } from './asyncUtils.js';

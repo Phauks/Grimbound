@@ -3,7 +3,37 @@
  * Configuration and Constants
  */
 
-import type { Config, Team, TeamColors, TeamLabels } from './types/index.js';
+import type { Config, Team, TeamColors, TeamLabels, AveryTemplate, AveryTemplateId } from './types/index.js';
+import { EXAMPLE_SCRIPT_LIST } from './data/exampleScripts.js';
+
+/**
+ * Avery label template specifications
+ * Based on Avery Presta templates for round labels
+ */
+export const AVERY_TEMPLATES: Record<Exclude<AveryTemplateId, 'custom'>, AveryTemplate> = {
+    'avery-94500': {
+        id: 'avery-94500',
+        name: 'Avery 94500 (1.75" Round)',
+        labelDiameter: 1.75,          // inches - matches character tokens
+        columns: 4,
+        rows: 5,
+        leftMargin: 0.375,            // 3/8 inch
+        topMargin: 0.625,             // 5/8 inch
+        gap: 0.25,                    // 1/4 inch between labels
+        labelsPerSheet: 20
+    },
+    'avery-94509': {
+        id: 'avery-94509',
+        name: 'Avery 94509 (1" Round)',
+        labelDiameter: 1.0,           // inches - matches reminder tokens
+        columns: 6,
+        rows: 8,
+        leftMargin: 0.625,            // 5/8 inch
+        topMargin: 0.625,             // 5/8 inch
+        gap: 0.25,                    // 1/4 inch between labels
+        labelsPerSheet: 48
+    }
+};
 
 export const CONFIG: Config = {
     // Application Version
@@ -26,7 +56,7 @@ export const CONFIG: Config = {
         LEAF_ARC_SPAN: 120,
         LEAF_SLOTS: 7,
         SETUP_FLOWER_STYLE: 'setup_flower_1',
-        REMINDER_BACKGROUND: '#FFFFFF',
+        REMINDER_BACKGROUND: '#6C3BAA',
         CHARACTER_BACKGROUND: 'character_background_1',
         CHARACTER_NAME_FONT: 'Dumbledor',
         CHARACTER_NAME_COLOR: '#000000',
@@ -36,29 +66,33 @@ export const CONFIG: Config = {
         REMINDER_TEXT_COLOR: '#FFFFFF'
     },
 
-    // PDF Generation Defaults
+    // PDF Generation Defaults (based on Avery 94500 template for character tokens)
     PDF: {
-        TOKEN_PADDING: 75,
-        X_OFFSET: 0,
-        Y_OFFSET: 0,
-        PAGE_WIDTH: 8.5,  // inches
-        PAGE_HEIGHT: 11,   // inches
+        TOKEN_PADDING: 75,   // pixels between tokens (legacy, template gap used when template set)
+        X_OFFSET: 0,         // horizontal offset in mm (fine-tuning)
+        Y_OFFSET: 0,         // vertical offset in mm (fine-tuning)
+        PAGE_WIDTH: 8.5,     // inches
+        PAGE_HEIGHT: 11,     // inches
         DPI: 300,
-        MARGIN: 0.25       // inches
+        MARGIN: 0.375,       // inches (Avery 94500 left/right margin)
+        IMAGE_QUALITY: 0.90, // JPEG quality (0.0-1.0, default 90%)
+        DEFAULT_TEMPLATE: 'avery-94500' as const  // Default to Avery 94500 for character tokens
     },
 
     // Font Spacing Defaults
     FONT_SPACING: {
         CHARACTER_NAME: 0,    // 0px = normal spacing
         ABILITY_TEXT: 0,
-        REMINDER_TEXT: 0
+        REMINDER_TEXT: 0,
+        META_TEXT: 0
     },
 
     // Text Shadow Defaults
     TEXT_SHADOW: {
         CHARACTER_NAME: 4,    // 4px blur radius
         ABILITY_TEXT: 3,      // 3px blur radius
-        REMINDER_TEXT: 4      // 4px blur radius
+        REMINDER_TEXT: 4,     // 4px blur radius
+        META_TEXT: 4          // 4px blur radius
     },
 
     // ZIP Export Settings
@@ -80,12 +114,45 @@ export const CONFIG: Config = {
         MAX_BATCH_SIZE: 8
     },
 
+    // Data Synchronization Settings
+    SYNC: {
+        // GitHub repository for official data releases
+        GITHUB_REPO: 'Phauks/Blood-on-the-Clocktower---Official-Data-Sync',
+        GITHUB_API_BASE: 'https://api.github.com',
+
+        // How often to check for updates (1 hour in milliseconds)
+        CHECK_INTERVAL_MS: 3600000,
+
+        // Cache time-to-live (24 hours in milliseconds)
+        CACHE_TTL_MS: 86400000,
+
+        // Storage quota warning threshold (in MB)
+        STORAGE_QUOTA_WARNING_MB: 20,
+
+        // Maximum storage allowed (in MB, soft limit)
+        MAX_STORAGE_MB: 50,
+
+        // Enable automatic background sync
+        ENABLE_AUTO_SYNC: true,
+
+        // Retry settings for failed requests
+        MAX_RETRIES: 3,
+        RETRY_DELAY_MS: 1000,  // Initial delay, uses exponential backoff
+
+        // IndexedDB configuration
+        DB_NAME: 'botc-token-generator',
+        DB_VERSION: 1,
+
+        // Cache API configuration
+        CACHE_NAME: 'botc-character-icons-v1',
+    },
+
     // Auto-generation Default
     AUTO_GENERATE_DEFAULT: true,
 
     // API Endpoints
     API: {
-        BOTC_DATA: 'https://script.bloodontheclocktower.com/data.json'
+        CORS_PROXY: 'https://cors-header-proxy.infiniteinstants.com/?'   // Cloudflare Workers CORS proxy
     },
 
     // Asset Paths
@@ -97,12 +164,9 @@ export const CONFIG: Config = {
         LEAVES: './assets/images/'
     },
 
-    // Example Scripts
-    EXAMPLE_SCRIPTS: [
-        'Catfishing.json',
-        'Uncertain_Death.json',
-        'Fall_of_Rome.json'
-    ],
+    // Example Scripts (auto-populated from example_scripts folder)
+    // To add a new script, simply add a .json file to the example_scripts/ folder
+    EXAMPLE_SCRIPTS: EXAMPLE_SCRIPT_LIST,
 
     // Team Types
     TEAMS: ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric', 'meta'] as Team[],

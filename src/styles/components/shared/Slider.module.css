@@ -65,6 +65,8 @@
   border-radius: 3px;
   outline: none;
   cursor: pointer;
+  position: relative;
+  z-index: 2;
 }
 
 .range::-webkit-slider-thumb {
@@ -111,6 +113,8 @@
   display: flex;
   justify-content: space-between;
   padding: 0 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .tick {

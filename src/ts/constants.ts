@@ -12,20 +12,30 @@
  * All values are relative to the token diameter
  */
 export const CHARACTER_LAYOUT = {
-    /** Size of character image relative to diameter */
-    IMAGE_SIZE_RATIO: 0.65,
-    /** Vertical offset for character image (pushes image up slightly) */
-    IMAGE_VERTICAL_OFFSET: 0.05,
-    /** Y position for ability text from top of token */
-    ABILITY_TEXT_Y_POSITION: 0.15,
-    /** Y position for token count badge from top */
-    TOKEN_COUNT_Y_POSITION: 0.12,
+
     /** Radius ratio for curved text placement */
     CURVED_TEXT_RADIUS: 0.85,
     /** Maximum arc span for curved text (~126 degrees) */
     MAX_TEXT_ARC_SPAN: Math.PI * 0.7,
+
+    /** Y position for ability text from top of token */
+    ABILITY_TEXT_Y_POSITION: 0.15,
     /** Width ratio for ability text wrapping */
-    ABILITY_TEXT_MAX_WIDTH: 0.7,
+    ABILITY_TEXT_MAX_WIDTH: 0.65,
+    /** Padding ratio for ability text within circular bounds (0.9 = 90% of calculated circular width) */
+    ABILITY_TEXT_CIRCULAR_PADDING: 0.80,
+    /** Multiplier for how much of available space the icon uses when ability text is present (0.8 = 80%) */
+    ICON_SPACE_RATIO_WITH_ABILITY: 1.5,
+    /** Multiplier for how much of available space the icon uses when no ability text (0.9 = 90%) */
+    ICON_SPACE_RATIO_NO_ABILITY: 1.2,
+    /** Top margin when no ability text (distance from top of token to start of icon space) */
+    NO_ABILITY_TOP_MARGIN: 0.1,
+
+    /** Y position for token count badge from top */
+    TOKEN_COUNT_Y_POSITION: 0.12,    
+
+
+
 } as const;
 
 /**
@@ -33,7 +43,7 @@ export const CHARACTER_LAYOUT = {
  */
 export const REMINDER_LAYOUT = {
     /** Size of character image on reminder tokens (smaller than character tokens) */
-    IMAGE_SIZE_RATIO: 0.5,
+    IMAGE_SIZE_RATIO: 1.0,
     /** Vertical offset for character image */
     IMAGE_VERTICAL_OFFSET: 0.05,
     /** Radius ratio for curved text placement */

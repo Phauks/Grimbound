@@ -1,0 +1,307 @@
+/**
+ * Blood on the Clocktower Token Generator
+ * Sync Details Modal - Detailed sync information and controls
+ *
+ * Features:
+ * - Display current version and data source
+ * - Show cache statistics
+ * - Manual update check button
+ * - Clear cache option
+ * - Error details and retry button
+ */
+
+import { useState, useCallback, useEffect } from 'react';
+import { useDataSync } from '../../contexts/DataSyncContext';
+import { storageManager } from '../../ts/sync/index.js';
+import CONFIG from '../../ts/config.js';
+import styles from '../../styles/components/modals/SyncDetailsModal.module.css';
+
+interface SyncDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface CacheStats {
+  characterCount: number;
+  storageUsed: number;
+  storageQuota: number;
+  cacheAge: string | null;
+}
+
+export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
+  const { status, isInitialized, checkForUpdates, downloadUpdate, clearCacheAndResync } = useDataSync();
+  const [isChecking, setIsChecking] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [cacheStats, setCacheStats] = useState<CacheStats>({
+    characterCount: 0,
+    storageUsed: 0,
+    storageQuota: 0,
+    cacheAge: null,
+  });
+
+  // Load cache statistics
+  useEffect(() => {
+    if (isOpen && isInitialized) {
+      loadCacheStats();
+    }
+  }, [isOpen, isInitialized]);
+
+  const loadCacheStats = async () => {
+    try {
+      const characters = await storageManager.getAllCharacters();
+      const quota = await storageManager.getStorageQuota();
+      const lastSyncTimestamp = await storageManager.getMetadata('lastSync') as number | null;
+
+      setCacheStats({
+        characterCount: characters.length,
+        storageUsed: quota.usage,
+        storageQuota: quota.quota,
+        cacheAge: lastSyncTimestamp ? formatTimeSince(new Date(lastSyncTimestamp)) : null,
+      });
+    } catch (error) {
+      console.error('[SyncDetailsModal] Failed to load cache stats:', error);
+    }
+  };
+
+  const handleCheckForUpdates = useCallback(async () => {
+    try {
+      setIsChecking(true);
+      const hasUpdate = await checkForUpdates();
+      if (!hasUpdate) {
+        alert('You are already on the latest version!');
+      }
+    } catch (error) {
+      console.error('[SyncDetailsModal] Update check failed:', error);
+      alert('Failed to check for updates. Please try again.');
+    } finally {
+      setIsChecking(false);
+    }
+  }, [checkForUpdates]);
+
+  const handleDownloadUpdate = useCallback(async () => {
+    try {
+      setIsDownloading(true);
+      await downloadUpdate();
+      await loadCacheStats(); // Refresh stats after download
+      alert('Update installed successfully!');
+    } catch (error) {
+      console.error('[SyncDetailsModal] Download failed:', error);
+      alert('Failed to download update. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [downloadUpdate]);
+
+  const handleClearCache = useCallback(async () => {
+    if (!confirm('Are you sure you want to clear the cache? This will re-download all character data.')) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      await clearCacheAndResync();
+      await loadCacheStats(); // Refresh stats after clearing
+      alert('Cache cleared and data resynced successfully!');
+    } catch (error) {
+      console.error('[SyncDetailsModal] Clear cache failed:', error);
+      alert('Failed to clear cache. Please try again.');
+    } finally {
+      setIsClearing(false);
+    }
+  }, [clearCacheAndResync]);
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  };
+
+  const getDataSourceLabel = () => {
+    switch (status.dataSource) {
+      case 'github':
+        return 'GitHub Releases';
+      case 'cache':
+        return 'Local Cache';
+      case 'api':
+        return 'Legacy API';
+      case 'offline':
+      default:
+        return 'Offline';
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (status.state) {
+      case 'success':
+        return 'Synced';
+      case 'checking':
+        return 'Checking for updates...';
+      case 'downloading':
+        return 'Downloading...';
+      case 'extracting':
+        return 'Installing...';
+      case 'error':
+        return 'Error';
+      case 'idle':
+      default:
+        return 'Idle';
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.header}>
+          <h2>Data Synchronization</h2>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className={styles.content}>
+          {/* Status Section */}
+          <section className={styles.section}>
+            <h3>Status</h3>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Current Status:</span>
+                <span className={`${styles.value} ${styles[status.state]}`}>
+                  {getStatusLabel()}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Data Source:</span>
+                <span className={styles.value}>{getDataSourceLabel()}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Current Version:</span>
+                <span className={styles.value}>
+                  {status.currentVersion ? (
+                    <a 
+                      href={`https://github.com/${CONFIG.SYNC.GITHUB_REPO}/releases/tag/${status.currentVersion}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.versionLink}
+                    >
+                      {status.currentVersion}
+                    </a>
+                  ) : 'Unknown'}
+                </span>
+              </div>
+              {status.lastSync && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Last Sync:</span>
+                  <span className={styles.value}>
+                    {status.lastSync.toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Update Available */}
+            {status.availableVersion && status.availableVersion !== status.currentVersion && (
+              <div className={styles.updateNotice}>
+                <strong>Update Available:</strong> {status.availableVersion}
+                <button
+                  type="button"
+                  className={styles.downloadButton}
+                  onClick={handleDownloadUpdate}
+                  disabled={isDownloading || status.state === 'downloading'}
+                >
+                  {isDownloading ? 'Downloading...' : 'Download Now'}
+                </button>
+              </div>
+            )}
+
+            {/* Error */}
+            {status.error && (
+              <div className={styles.errorNotice}>
+                <strong>Error:</strong> {status.error}
+              </div>
+            )}
+          </section>
+
+          {/* Cache Statistics */}
+          <section className={styles.section}>
+            <h3>Cache Statistics</h3>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Characters Cached:</span>
+                <span className={styles.value}>{cacheStats.characterCount}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.label}>Storage Used:</span>
+                <span className={styles.value}>
+                  {formatBytes(cacheStats.storageUsed)}
+                </span>
+              </div>
+              {cacheStats.cacheAge && (
+                <div className={styles.infoItem}>
+                  <span className={styles.label}>Cache Age:</span>
+                  <span className={styles.value}>{cacheStats.cacheAge}</span>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Actions */}
+          <section className={styles.section}>
+            <h3>Actions</h3>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={handleCheckForUpdates}
+                disabled={isChecking || status.state === 'checking'}
+              >
+                {isChecking ? 'Checking...' : 'Check for Updates'}
+              </button>
+              <button
+                type="button"
+                className={`${styles.actionButton} ${styles.danger}`}
+                onClick={handleClearCache}
+                disabled={isClearing}
+              >
+                {isClearing ? 'Clearing...' : 'Clear Cache & Resync'}
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Format time difference in human-readable format
+ */
+function formatTimeSince(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 60) {
+    return 'just now';
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  return `${days} day${days !== 1 ? 's' : ''} ago`;
+}

@@ -31,11 +31,13 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
                 characterName: 0,
                 abilityText: 0,
                 reminderText: 0,
+                metaText: 0,
             },
             textShadow: {
                 characterName: 4,
                 abilityText: 3,
                 reminderText: 4,
+                metaText: 4,
             },
             pngSettings: {
                 embedMetadata: false,
@@ -74,11 +76,13 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
                 characterName: 2,
                 abilityText: 1,
                 reminderText: 1,
+                metaText: 2,
             },
             textShadow: {
                 characterName: 6,
                 abilityText: 4,
                 reminderText: 5,
+                metaText: 6,
             },
             pngSettings: {
                 embedMetadata: true,
@@ -117,11 +121,13 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
                 characterName: 0,
                 abilityText: 0,
                 reminderText: 0,
+                metaText: 0,
             },
             textShadow: {
                 characterName: 2,
                 abilityText: 2,
                 reminderText: 2,
+                metaText: 2,
             },
             pngSettings: {
                 embedMetadata: false,

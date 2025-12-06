@@ -1,8 +1,11 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
-import { fetchOfficialData, loadExampleScript } from '../ts/data/dataLoader.js'
+import { useDataSync } from '../contexts/DataSyncContext'
+import { loadExampleScript } from '../ts/data/dataLoader.js'
 import { validateAndParseScript, extractScriptMeta } from '../ts/data/scriptParser.js'
 import { validateJson } from '../ts/utils/index.js'
+import { characterLookup } from '../ts/data/characterLookup.js'
+import type { SyncEvent } from '../ts/sync/index.js'
 
 export function useScriptData() {
   const {
@@ -14,7 +17,24 @@ export function useScriptData() {
     setIsLoading,
     setWarnings,
     officialData,
+    clearAllMetadata,
+    setMetadata,
+    setTokens,
+    jsonInput,
   } = useTokenContext()
+
+  const { getCharacters, isInitialized, subscribeToEvents } = useDataSync()
+  
+  // Track if we've loaded official data to avoid double-loading
+  const hasLoadedRef = useRef(false)
+
+  // Update character lookup service when official data changes
+  useEffect(() => {
+    if (officialData.length > 0) {
+      characterLookup.updateCharacters(officialData)
+      console.log('[useScriptData] Updated character lookup with', officialData.length, 'characters')
+    }
+  }, [officialData])
 
   const loadScript = useCallback(
     async (jsonString: string) => {
@@ -37,6 +57,16 @@ export function useScriptData() {
         // Extract metadata if present
         const meta = extractScriptMeta(parsed)
 
+        // Clear existing metadata when loading a new script
+        clearAllMetadata()
+        
+        // Initialize metadata for each character with defaults
+        for (const char of scriptChars) {
+          if (char.uuid) {
+            setMetadata(char.uuid, { idLinkedToName: true })
+          }
+        }
+
         // Update state
         setJsonInput(jsonString)
         setCharacters(scriptChars)
@@ -51,7 +81,7 @@ export function useScriptData() {
         setIsLoading(false)
       }
     },
-    [setJsonInput, setCharacters, setScriptMeta, setError, setIsLoading, setWarnings, officialData]
+    [setJsonInput, setCharacters, setScriptMeta, setError, setIsLoading, setWarnings, officialData, clearAllMetadata, setMetadata]
   )
 
   const loadExampleScriptByName = useCallback(
@@ -74,14 +104,44 @@ export function useScriptData() {
 
   const loadOfficialData = useCallback(async () => {
     try {
-      const official = await fetchOfficialData()
+      if (!isInitialized) {
+        console.log('[useScriptData] Sync service not initialized yet, skipping load')
+        return []
+      }
+      
+      console.log('[useScriptData] Loading official data from sync service...')
+      const official = await getCharacters()
       setOfficialData(official)
+      console.log('[useScriptData] Loaded', official.length, 'official characters')
       return official
     } catch (err) {
-      console.error('Failed to fetch official data:', err)
+      console.error('[useScriptData] Failed to fetch official data:', err)
       return []
     }
-  }, [setOfficialData])
+  }, [isInitialized, getCharacters, setOfficialData])
+
+  // Auto-load official data when sync service is initialized
+  useEffect(() => {
+    if (isInitialized && !hasLoadedRef.current) {
+      hasLoadedRef.current = true
+      console.log('[useScriptData] Sync service initialized, loading official data...')
+      loadOfficialData()
+    }
+  }, [isInitialized, loadOfficialData])
+
+  // Subscribe to sync events and reload data on successful sync
+  useEffect(() => {
+    const handleSyncEvent = (event: SyncEvent) => {
+      // Reload official data after a successful sync (new data downloaded)
+      if (event.type === 'success' && event.status.state === 'success') {
+        console.log('[useScriptData] Sync completed, reloading official data...')
+        loadOfficialData()
+      }
+    }
+
+    const unsubscribe = subscribeToEvents(handleSyncEvent)
+    return unsubscribe
+  }, [subscribeToEvents, loadOfficialData])
 
   /**
    * Parse JSON string and update characters/warnings without setting jsonInput
@@ -132,10 +192,132 @@ export function useScriptData() {
   const clearScript = useCallback(() => {
     setJsonInput('')
     setCharacters([])
+    setTokens([])
     setScriptMeta(null)
     setWarnings([])
     setError(null)
-  }, [setJsonInput, setCharacters, setScriptMeta, setWarnings, setError])
+    clearAllMetadata()
+  }, [setJsonInput, setCharacters, setTokens, setScriptMeta, setWarnings, setError, clearAllMetadata])
+
+  /**
+   * Add a _meta entry to the current script JSON
+   * Creates a new _meta object with default properties (id, name, author, version)
+   */
+  const addMetaToScript = useCallback(
+    (metaData: { name?: string; author?: string; version?: string } = {}) => {
+      if (!jsonInput.trim()) return
+
+      try {
+        const parsed = JSON.parse(jsonInput)
+        if (!Array.isArray(parsed)) return
+
+        // Check if _meta already exists
+        const hasExistingMeta = parsed.some(
+          (entry: unknown) => typeof entry === 'object' && entry !== null && 'id' in entry && (entry as { id: string }).id === '_meta'
+        )
+        if (hasExistingMeta) return
+
+        // Create new _meta entry with provided values or defaults
+        const newMeta = {
+          id: '_meta' as const,
+          name: metaData.name || 'My Custom Script',
+          author: metaData.author || '',
+          version: metaData.version || '1.0.0',
+        }
+
+        // Insert _meta at the beginning of the array
+        const updatedScript = [newMeta, ...parsed]
+        const updatedJson = JSON.stringify(updatedScript, null, 2)
+
+        setJsonInput(updatedJson)
+        setScriptMeta(newMeta)
+      } catch (err) {
+        console.error('Failed to add _meta to script:', err)
+        setError('Failed to add metadata: Invalid JSON')
+      }
+    },
+    [jsonInput, setJsonInput, setScriptMeta, setError]
+  )
+
+  /**
+   * Check if the script contains character IDs with underscores that match official characters
+   * Returns true only if an ID with underscores removed would match an official character ID
+   * (e.g., "fortune_teller" -> "fortuneteller" matches official)
+   */
+  const hasUnderscoresInIds = useCallback((): boolean => {
+    if (!jsonInput.trim()) return false
+    if (officialData.length === 0) return false
+
+    // Create a set of official character IDs for fast lookup
+    const officialIds = new Set(officialData.map(c => c.id.toLowerCase()))
+
+    try {
+      const parsed = JSON.parse(jsonInput)
+      if (!Array.isArray(parsed)) return false
+
+      return parsed.some((entry: unknown) => {
+        let id: string | null = null
+        
+        // Check string IDs (e.g., "fortune_teller")
+        if (typeof entry === 'string' && entry !== '_meta' && entry.includes('_')) {
+          id = entry
+        }
+        // Check object entries with id field
+        else if (typeof entry === 'object' && entry !== null && 'id' in entry) {
+          const entryId = (entry as { id: string }).id
+          if (typeof entryId === 'string' && entryId !== '_meta' && entryId.includes('_')) {
+            id = entryId
+          }
+        }
+        
+        // If we found an ID with underscore, check if removing underscores matches an official ID
+        if (id) {
+          const withoutUnderscores = id.replace(/_/g, '').toLowerCase()
+          return officialIds.has(withoutUnderscores)
+        }
+        return false
+      })
+    } catch {
+      return false
+    }
+  }, [jsonInput, officialData])
+
+  /**
+   * Remove underscores from all character IDs in the script
+   * Converts IDs like "fortune_teller" to "fortuneteller" to match official character IDs
+   */
+  const removeUnderscoresFromIds = useCallback(() => {
+    if (!jsonInput.trim()) return
+
+    try {
+      const parsed = JSON.parse(jsonInput)
+      if (!Array.isArray(parsed)) return
+
+      const updatedScript = parsed.map((entry: unknown) => {
+        // Handle string IDs (e.g., "fortune_teller" -> "fortuneteller")
+        if (typeof entry === 'string' && entry !== '_meta') {
+          return entry.replace(/_/g, '')
+        }
+        // Handle object entries with id field
+        if (typeof entry === 'object' && entry !== null && 'id' in entry) {
+          const obj = entry as { id: string; [key: string]: unknown }
+          if (typeof obj.id === 'string' && obj.id !== '_meta') {
+            return { ...obj, id: obj.id.replace(/_/g, '') }
+          }
+        }
+        return entry
+      })
+
+      const updatedJson = JSON.stringify(updatedScript, null, 2)
+      setJsonInput(updatedJson)
+      
+      // Re-parse to update characters
+      parseJson(updatedJson)
+    } catch (err) {
+      console.error('Failed to remove underscores from IDs:', err)
+      setError('Failed to update IDs: Invalid JSON')
+    }
+  }, [jsonInput, setJsonInput, parseJson, setError])
 
   return {
     loadScript,
@@ -143,5 +325,8 @@ export function useScriptData() {
     loadOfficialData,
     parseJson,
     clearScript,
+    addMetaToScript,
+    hasUnderscoresInIds,
+    removeUnderscoresFromIds,
   }
 }

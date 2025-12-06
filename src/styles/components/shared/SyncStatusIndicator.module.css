@@ -1,0 +1,147 @@
+/**
+ * Sync Status Indicator Styles
+ */
+
+.indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.indicator:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.indicator:active {
+  transform: translateY(0);
+}
+
+/* Status colors */
+.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.success:hover {
+  background: #c8e6c9;
+}
+
+.info {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.info:hover {
+  background: #bbdefb;
+}
+
+.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.error:hover {
+  background: #ffcdd2;
+}
+
+.idle {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.idle:hover {
+  background: #eeeeee;
+}
+
+/* Icon */
+.icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rotate animation for checking/downloading states */
+.info .icon {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Label */
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Update badge */
+.updateBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #ff6b6b;
+  color: white;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  min-width: 200px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip > div {
+  margin: 2px 0;
+}
+
+.tooltip > div:first-child {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Responsive - hide label on small screens */
+@media (max-width: 768px) {
+  .label {
+    display: none;
+  }
+
+  .indicator {
+    padding: 6px 10px;
+  }
+}

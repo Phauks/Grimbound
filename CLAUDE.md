@@ -12,6 +12,7 @@
    - `src/ts/utils/` - Domain-specific utilities (strings, images, JSON, colors, async)
    - `src/ts/canvas/` - Canvas rendering utilities (text, shapes, images, QR codes)
    - `src/ts/data/` - Data loading and script parsing utilities
+   - `src/ts/sync/` - 🆕 GitHub data synchronization (IndexedDB, Cache API, GitHub releases)
    - `src/ts/export/` - Export utilities (PDF, PNG, ZIP)
    - `src/ts/generation/` - Token generation and presets
    - `src/ts/ui/` - UI utility functions
@@ -48,7 +49,25 @@ src/ts/
 │   ├── index.ts           # Barrel export
 │   ├── dataLoader.ts      # I/O operations (fetch, file loading)
 │   ├── scriptParser.ts    # Script JSON parsing
-│   └── characterUtils.ts  # Character validation and utilities
+│   ├── characterUtils.ts  # Character validation and utilities
+│   ├── characterLookup.ts # 🆕 Character search & validation service
+│   └── exampleScripts.ts  # 🆕 Example script definitions
+│
+├── sync/           # 🆕 GitHub data synchronization (v0.3.0)
+│   ├── index.ts               # Barrel export
+│   ├── dataSyncService.ts     # Main sync orchestrator with event system
+│   ├── githubReleaseClient.ts # GitHub API client with rate limiting
+│   ├── packageExtractor.ts    # ZIP extraction and validation
+│   ├── storageManager.ts      # IndexedDB + Cache API wrapper
+│   ├── versionManager.ts      # Version comparison logic (vYYYY.MM.DD-rN)
+│   ├── migrationHelper.ts     # Legacy data migration
+│   └── __tests__/             # Unit tests (92 tests total)
+│       ├── dataSyncService.test.ts      (10 tests)
+│       ├── githubReleaseClient.test.ts  (14 tests)
+│       ├── packageExtractor.test.ts     (19 tests)
+│       ├── storageManager.test.ts       (19 tests)
+│       ├── versionManager.test.ts       (30 tests)
+│       └── __mocks__/         # Test mocks and fixtures
 │
 ├── export/         # Export functionality
 │   ├── index.ts           # Barrel export
@@ -79,8 +98,13 @@ src/ts/
 │   ├── jsonUtils.ts       # JSON operations
 │   ├── colorUtils.ts      # Color manipulation
 │   ├── asyncUtils.ts      # Async patterns
-│   └── progressUtils.ts   # Progress tracking
+│   ├── progressUtils.ts   # Progress tracking
+│   ├── classNames.ts      # 🆕 CSS className utility
+│   ├── nameGenerator.ts   # 🆕 Unique name generation
+│   ├── storageKeys.ts     # 🆕 localStorage key constants
+│   └── tokenGrouping.ts   # 🆕 Token grouping logic
 │
+├── themes.ts       # 🆕 Theme definitions and utilities
 ├── index.ts        # Root barrel export (all modules)
 ├── config.ts       # Application configuration
 ├── constants.ts    # Layout constants, colors
@@ -130,6 +154,43 @@ import {
 | `dataLoader.ts` | I/O operations | `fetchOfficialData`, `loadExampleScript`, `loadJsonFile` |
 | `scriptParser.ts` | Script parsing | `parseScriptData`, `validateAndParseScript`, `extractScriptMeta` |
 | `characterUtils.ts` | Character utilities | `validateCharacter`, `getCharacterImageUrl`, `countReminders`, `groupByTeam` |
+| `characterLookup.ts` | Character search & validation | `CharacterLookupService` class with O(1) validation and fuzzy search |
+| `exampleScripts.ts` | Example script definitions | `EXAMPLE_SCRIPTS` array with predefined scripts |
+
+### Sync Module (`src/ts/sync/`) 🆕 v0.3.0
+
+**Purpose:** GitHub data synchronization with offline-first architecture
+
+| Module | Purpose | Key Functions |
+|--------|---------|---------------|
+| `dataSyncService.ts` | Main orchestrator | `DataSyncService` class - initialize, checkForUpdates, downloadAndInstall, getCharacters, clearCacheAndResync |
+| `githubReleaseClient.ts` | GitHub API client | `GitHubReleaseClient` class - fetchLatestRelease, downloadAsset, ETag caching, rate limit handling |
+| `packageExtractor.ts` | ZIP extraction | `PackageExtractor` class - extract, validateStructure, verifyContentHash |
+| `storageManager.ts` | IndexedDB + Cache API | `StorageManager` class - character CRUD, metadata ops, image caching, quota management |
+| `versionManager.ts` | Version comparison | `VersionManager` class - parse, compare, getCurrentVersion (vYYYY.MM.DD-rN format) |
+| `migrationHelper.ts` | Legacy migration | `MigrationHelper` class - detectFirstTime, runMigration, cleanup |
+
+**Key Features:**
+- **Event System**: Subscribe to sync events (checking, downloading, extracting, success, error)
+- **Non-blocking**: Background updates don't interrupt user workflow
+- **Fallback Strategy**: Cache → GitHub → graceful degradation
+- **Storage Management**: IndexedDB (~2-5 MB) + Cache API (~15-20 MB)
+- **Version Tracking**: Metadata stored in IndexedDB
+- **Rate Limiting**: Exponential backoff for GitHub API (60 req/hour unauthenticated)
+
+**Data Flow:**
+```
+App Load → StorageManager.getCharacters() → Load from IndexedDB
+         → DataSyncService.checkForUpdates() → GitHub API (background)
+         → If update available → Download ZIP → Extract → Store
+         → CharacterLookupService.populate() → Ready for validation
+```
+
+**Integration Points:**
+- `src/contexts/DataSyncContext.tsx` - React context for sync state
+- `src/hooks/useScriptData.ts` - Uses sync service when initialized
+- `src/components/Shared/SyncStatusIndicator.tsx` - UI status display
+- `src/components/Modals/SyncDetailsModal.tsx` - Sync management UI
 
 ### Export Module (`src/ts/export/`)
 
@@ -325,61 +386,6 @@ try {
 }
 ```
 
----
-
-## ✅ Refactoring Completed (November 2025)
-
-### Phase 1: File-Level Refactoring
-
-The following refactoring was applied to reduce file sizes:
-
-1. ✅ **`tokenGenerator.ts` reduced from 1,276 → 363 lines**
-   - Extracted batch generation to `batchGenerator.ts`
-   - Extracted QR code logic to `canvas/qrGeneration.ts`
-   - Extracted token options to `types/tokenOptions.ts`
-
-2. ✅ **`pdfGenerator.ts` reduced from 430 → 203 lines**
-   - Extracted ZIP creation to `zipExporter.ts`
-   - Extracted PNG download to `pngExporter.ts`
-
-3. ✅ **`dataLoader.ts` split into three modules**
-   - `dataLoader.ts` (144 lines) - I/O operations only
-   - `scriptParser.ts` (256 lines) - Script parsing logic
-   - `characterUtils.ts` (160 lines) - Character utilities
-
-### Phase 2: Folder Reorganization
-
-The codebase was reorganized into domain-specific folders with backward compatibility:
-
-1. ✅ **`canvas/` folder** - Canvas drawing utilities
-   - `canvasUtils.ts`, `textDrawing.ts`, `leafDrawing.ts`, `qrGeneration.ts`
-   - Consolidated from `canvas-utils.ts`, `text-drawing.ts`, `leaf-drawing.ts`, `qr-generation.ts`
-
-2. ✅ **`data/` folder** - Data loading and parsing
-   - `dataLoader.ts`, `scriptParser.ts`, `characterUtils.ts`
-   - All data operations in one logical location
-
-3. ✅ **`export/` folder** - Export functionality
-   - `pdfGenerator.ts`, `zipExporter.ts`, `pngExporter.ts`, `pngMetadata.ts`
-   - All export formats consolidated
-
-4. ✅ **`generation/` folder** - Token generation
-   - `tokenGenerator.ts`, `batchGenerator.ts`, `presets.ts`
-   - Token creation logic centralized
-
-5. ✅ **`ui/` folder** - UI utilities
-   - `detailViewUtils.ts`, `jsonHighlighter.ts`
-   - UI-specific helper functions
-
-6. ✅ **Root `index.ts`** - Barrel export for all modules
-   - Convenient single import point for all public APIs
-
-7. ✅ **Legacy stubs removed** - All backward compatibility re-exports deleted
-   - All imports now use module paths directly (e.g., `./canvas/index.js`)
-   - `utils.ts` removed; use `./utils/index.js`
-
----
-
 ## 📋 Before Adding New Code
 
 Ask these questions:
@@ -426,74 +432,6 @@ Create new types when:
 - An object shape is used in multiple places
 - Type safety would catch potential bugs
 - Documentation would help understanding
-
----
-
-## 🚀 Performance Optimization Plan
-
-### Planned Improvements
-
-The rendering pipeline has been analyzed and the following optimizations are planned:
-
-#### Tier 1: High Impact, Moderate Effort
-
-1. **React.memo for TokenCard** - Prevent re-renders of unchanged cards
-   - Location: `src/components/TokenGrid/TokenCard.tsx`
-   - Add `memo()` wrapper with custom comparison on `token.filename`
-
-2. **Global image cache singleton** - Share cache across TokenGenerator instances
-   - Create: `src/ts/utils/imageCache.ts`
-   - Update: `src/ts/generation/tokenGenerator.ts` to use shared instance
-
-3. **Parallel batch generation with adaptive sizing**
-   - Location: `src/ts/generation/batchGenerator.ts`
-   - Replace sequential `for...of` with `Promise.all()` chunked batches
-   - Add to `config.ts`:
-     ```typescript
-     GENERATION: {
-         BATCH_SIZE: Math.min(8, Math.max(2, (navigator.hardwareConcurrency || 4) - 1)),
-         MIN_BATCH_SIZE: 2,
-         MAX_BATCH_SIZE: 8,
-     }
-     ```
-
-4. **Incremental token updates**
-   - Location: `src/hooks/useTokenGenerator.ts`
-   - Convert to async generator, update state per-token instead of all-at-once
-
-5. **AbortController for cancellation**
-   - Location: `src/hooks/useTokenGenerator.ts`, `src/ts/generation/batchGenerator.ts`
-   - Allow canceling in-progress generation
-
-#### Tier 2: High Impact, High Effort
-
-6. **Image cache persistence with IndexedDB**
-   - Create: `src/ts/utils/persistentCache.ts`
-   - Cache character images (50-200KB each) for 7 days
-   - Use `idb` library for async IndexedDB access
-   - LRU eviction when cache exceeds 100MB
-   - Benefits: Instant reload, offline support, reduced API calls
-
-7. **Token hash caching**
-   - Location: `src/ts/generation/batchGenerator.ts`
-   - Skip regeneration when character + options hash matches cached token
-
-#### Tier 3: Quick Wins
-
-8. **Lazy rendering with IntersectionObserver**
-   - Location: `src/components/TokenGrid/TokenCard.tsx`
-   - Only render tokens when they enter viewport
-
-### TODO: Future Optimizations
-
-- [ ] **OffscreenCanvas + Web Workers** - Move canvas ops off main thread
-  - Browser support: ~93% (Baseline since March 2023)
-  - Safari 17+ fully supported, Safari 16.x partial (2D only)
-  - Requires progressive enhancement with fallback:
-    1. Best: Web Worker + OffscreenCanvas
-    2. Good: Main thread + `requestIdleCallback` chunking
-    3. Fallback: Current blocking approach
-  - Challenge: Workers can't use `new Image()` - need `fetch()` + `createImageBitmap()`
 
 ---
 

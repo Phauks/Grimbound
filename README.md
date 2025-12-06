@@ -6,6 +6,7 @@ A web-based tool for generating custom Blood on the Clocktower character and rem
 
 ## Features
 
+### Core Features
 - **Token Generation**: Generate character tokens and reminder tokens from custom or official scripts
 - **Trademark Token**: Automatic credit token for Blood on the Clocktower (generated with every token set)
 - **Customizable Appearance**: Adjust token diameters, backgrounds, fonts, and colors
@@ -16,9 +17,38 @@ A web-based tool for generating custom Blood on the Clocktower character and rem
 - **Setup Flower Overlay**: Characters with setup modifications display decorative overlays
 - **No Installation Required**: Runs entirely in your browser!
 
+### 🆕 GitHub Data Sync (v0.3.0)
+- **Automatic Character Data Updates**: Syncs with official character data from GitHub releases
+- **Offline Support**: Works without internet using cached character data (IndexedDB + Cache API)
+- **Smart Caching**: Only downloads updates when new versions are available
+- **Version Tracking**: Always know which character dataset you're using
+- **Background Updates**: Non-blocking sync checks don't interrupt your workflow
+- **Character Validation**: Script parser validates character IDs against official data
+- **Storage Management**: View cache statistics and storage usage in Settings
+
 ## Usage
 
 Simply visit the link above - no download or installation needed!
+
+### First-Time Setup (Automatic)
+
+When you first load the app:
+1. The app automatically downloads official character data from GitHub
+2. Data is cached locally in your browser (IndexedDB + Cache API)
+3. You can immediately start generating tokens
+
+**Internet Required:** Only for the initial download and periodic updates. After that, the app works fully offline!
+
+### Sync Status
+
+The sync status indicator in the top-right corner of the app shows:
+- **Synced**: Latest data cached and ready
+- **Checking**: Checking for updates in background
+- **Downloading**: New data being downloaded
+- **Offline**: Using cached data (no internet connection)
+- **Error**: Issue with sync (fallback to cached data)
+
+Click the sync indicator to view details, check for updates manually, or manage your cache.
 
 ## Development
 
@@ -250,18 +280,34 @@ This project uses TypeScript with strict type checking enabled. All data structu
 
 ## Browser Support
 
-- Google Chrome (recommended)
-- Mozilla Firefox
-- Safari
-- Microsoft Edge
+The app works in all modern browsers with full IndexedDB and Cache API support:
+
+- **Google Chrome** (recommended) - Full support
+- **Mozilla Firefox** - Full support
+- **Microsoft Edge** - Full support
+- **Safari** - Full support (may prompt for storage permission)
+
+**Storage Requirements:**
+- IndexedDB: ~2-5 MB for character data
+- Cache API: ~15-20 MB for character icons
+- Total: ~25 MB maximum
+
+**Note:** Safari may show a storage permission dialog on first use. This is normal and required for offline functionality.
 
 ## Dependencies
 
-External libraries loaded via CDN:
+### Production Dependencies
+- [JSZip](https://stuk.github.io/jszip/) 3.10.1 - ZIP file creation and package extraction
+- **React 18** - UI framework
+- **TypeScript 5.3+** - Type-safe development
+
+### External Libraries (CDN)
 - [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 - PDF generation
-- [JSZip](https://stuk.github.io/jszip/) 3.10.1 - ZIP file creation
 - [FileSaver.js](https://github.com/eligrey/FileSaver.js/) 2.0.5 - File downloads
 - [QRCode.js](https://davidshimjs.github.io/qrcodejs/) 1.0.0 - QR code generation for almanac tokens
+
+### Data Source
+- Official character data: [GitHub Releases](https://github.com/Phauks/Blood-on-the-Clocktower---Official-Data-Sync)
 
 ## Credits
 
@@ -283,24 +329,58 @@ External libraries loaded via CDN:
 
 ```
 src/ts/
-├── main.ts              - Application entry point and initialization
-├── ui.ts                - UI controller and event handling
-├── tokenGenerator.ts    - Canvas-based token rendering engine
-├── pdfGenerator.ts      - PDF and ZIP export functionality
-├── dataLoader.ts        - Data fetching and JSON parsing
-├── config.ts            - Configuration constants and defaults
-├── presets.ts           - UI preset configurations
-├── utils.ts             - Utility functions (debounce, image loading, etc.)
-└── types/index.ts       - TypeScript type definitions
+├── main.tsx             - React app entry point
+├── App.tsx              - Main application component
+├── sync/                - 🆕 GitHub data synchronization module
+│   ├── dataSyncService.ts      - Main sync orchestrator
+│   ├── githubReleaseClient.ts  - GitHub API client
+│   ├── packageExtractor.ts     - ZIP extraction and validation
+│   ├── storageManager.ts       - IndexedDB + Cache API wrapper
+│   ├── versionManager.ts       - Version comparison logic
+│   └── migrationHelper.ts      - Legacy data migration
+├── generation/          - Token generation engine
+│   ├── tokenGenerator.ts       - Canvas-based token rendering
+│   ├── batchGenerator.ts       - Batch token creation
+│   └── presets.ts              - Preset configurations
+├── export/              - Export functionality
+│   ├── pdfGenerator.ts         - PDF generation
+│   ├── zipExporter.ts          - ZIP file creation
+│   └── pngExporter.ts          - PNG download
+├── data/                - Data loading and parsing
+│   ├── dataLoader.ts           - I/O operations
+│   ├── scriptParser.ts         - Script JSON parsing
+│   ├── characterUtils.ts       - Character validation
+│   └── characterLookup.ts      - 🆕 Character search & validation
+├── contexts/            - React contexts
+│   ├── TokenContext.tsx        - Token state management
+│   └── DataSyncContext.tsx     - 🆕 Sync state management
+├── components/          - React components
+├── hooks/               - Custom React hooks
+├── canvas/              - Canvas drawing utilities
+├── utils/               - General utilities
+├── types/               - TypeScript type definitions
+├── config.ts            - Configuration constants
+├── constants.ts         - Layout constants and colors
+└── errors.ts            - Custom error classes
 ```
 
 ### Data Flow
 
+#### Sync Flow (v0.3.0+)
+1. **App Load**: DataSyncService initializes
+2. **Cache Check**: Load cached character data from IndexedDB (if available)
+3. **Background Update**: Check GitHub for newer version (non-blocking)
+4. **Download**: If update available, download ZIP package from GitHub release
+5. **Extract**: Validate and extract characters.json + character icons
+6. **Store**: Save to IndexedDB (characters) and Cache API (icons)
+7. **Populate**: CharacterLookupService populated for validation
+
+#### Token Generation Flow
 1. **Input**: User provides JSON (upload/paste/example)
-2. **Parsing**: `dataLoader.ts` validates and merges with official character data
+2. **Parsing**: `scriptParser.ts` validates and merges with synced character data
 3. **Generation**: `tokenGenerator.ts` creates canvas elements for each token
-4. **Display**: `ui.ts` filters and renders tokens in grid view
-5. **Export**: `pdfGenerator.ts` converts tokens to PNG/ZIP/PDF
+4. **Display**: React components filter and render tokens in grid view
+5. **Export**: Export modules convert tokens to PNG/ZIP/PDF
 
 ### CI/CD Workflows
 
@@ -314,17 +394,42 @@ The project uses GitHub Actions for:
 
 ## Troubleshooting
 
+### Data Sync Issues
+
+**Q: Sync status shows "Error"**
+- Check your internet connection
+- The app will use cached data if available
+- Click the sync indicator → "Clear Cache & Resync" to force re-download
+- If GitHub is temporarily unavailable, try again later
+
+**Q: Character data not updating**
+- Click sync indicator → "Check for Updates"
+- Updates only occur when new versions are released
+- Manual update check available in Sync Details modal
+
+**Q: Storage quota exceeded**
+- Open Settings → Data Synchronization
+- Click "Clear Cache & Resync" to free up space
+- The app needs ~25 MB total storage
+
+**Q: Offline mode not working**
+- Ensure data was synced at least once while online
+- Check browser storage permissions (especially in Safari)
+- Try clearing cache and resyncing while online
+
 ### Common Issues
 
 **Q: Tokens are not generating**
 - Ensure your JSON is valid (use the "Beautify JSON" button)
 - Check browser console for error messages
 - Verify character IDs match official characters or include full character objects
+- Wait for initial data sync to complete (first-time users)
 
 **Q: Character images not loading**
 - Images must be publicly accessible URLs
 - CORS restrictions may block some images
 - Try using images from official sources or CORS-enabled hosts
+- Check if character data sync completed successfully
 
 **Q: PDF is blank or incomplete**
 - Ensure all images have loaded before generating PDF

@@ -1,6 +1,7 @@
 import { memo, useState } from 'react'
 import type { GenerationOptions } from '../../ts/types/index'
 import { OptionGroup } from '../Shared/OptionGroup'
+import { SegmentedControl } from '../Shared/SegmentedControl'
 import styles from '../../styles/components/options/OptionsTab.module.css'
 
 interface MetaTabProps {
@@ -84,22 +85,47 @@ export const MetaTab = memo(({ generationOptions, onOptionChange }: MetaTabProps
         {activeSubTab === 'background' && (
           <div className={styles.subtabContent}>
             <div className={styles.subsection}>
-              <OptionGroup
-                label="Background"
-                helpText="Select meta token background pattern"
-              >
-                <select
-                  className={styles.selectInput}
-                  value={generationOptions.metaBackground || 'character_background_1'}
-                  onChange={(e) => onOptionChange({ metaBackground: e.target.value })}
-                >
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <option key={i + 1} value={`character_background_${i + 1}`}>
-                      Background {i + 1}
-                    </option>
-                  ))}
-                </select>
+              <OptionGroup label="Background Type" description="Choose between a solid color or image background.">
+                <SegmentedControl
+                  options={[
+                    { value: 'image', label: 'Image' },
+                    { value: 'color', label: 'Color' },
+                  ]}
+                  value={generationOptions.metaBackgroundType || 'image'}
+                  onChange={(value) => onOptionChange({ metaBackgroundType: value as 'color' | 'image' })}
+                />
               </OptionGroup>
+
+              {generationOptions.metaBackgroundType === 'color' ? (
+                <OptionGroup
+                  label="Background Color"
+                  description="Choose a solid background color for meta tokens."
+                >
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={generationOptions.metaBackgroundColor || '#FFFFFF'}
+                    onChange={(e) => onOptionChange({ metaBackgroundColor: e.target.value })}
+                  />
+                </OptionGroup>
+              ) : (
+                <OptionGroup
+                  label="Background Image"
+                  description="Choose the decorative pattern for meta tokens."
+                >
+                  <select
+                    className={styles.selectInput}
+                    value={generationOptions.metaBackground || 'character_background_1'}
+                    onChange={(e) => onOptionChange({ metaBackground: e.target.value })}
+                  >
+                    {Array.from({ length: 7 }, (_, i) => (
+                      <option key={i + 1} value={`character_background_${i + 1}`}>
+                        Background {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </OptionGroup>
+              )}
             </div>
           </div>
         )}

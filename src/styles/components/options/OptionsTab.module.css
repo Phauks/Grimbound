@@ -17,6 +17,7 @@
 
 .subtabsNav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-xs);
   border-bottom: 1px solid var(--border-color);
   padding-bottom: var(--spacing-sm);
@@ -31,6 +32,8 @@
   cursor: pointer;
   font-size: 0.875rem;
   transition: var(--transition);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .subtabButton:hover {

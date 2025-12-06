@@ -1,6 +1,7 @@
 import { memo, useState } from 'react'
 import type { GenerationOptions } from '../../ts/types/index'
 import { OptionGroup } from '../Shared/OptionGroup'
+import { SegmentedControl } from '../Shared/SegmentedControl'
 import { SliderWithValue } from '../Shared/SliderWithValue'
 import styles from '../../styles/components/options/OptionsTab.module.css'
 
@@ -19,6 +20,7 @@ export const CharacterTab = memo(({ generationOptions, onOptionChange }: Charact
       characterName: 0,
       abilityText: 0,
       reminderText: 0,
+      metaText: 0,
     }
     onOptionChange({
       fontSpacing: {
@@ -33,6 +35,7 @@ export const CharacterTab = memo(({ generationOptions, onOptionChange }: Charact
       characterName: 4,
       abilityText: 3,
       reminderText: 4,
+      metaText: 4,
     }
     onOptionChange({
       textShadow: {
@@ -82,34 +85,47 @@ export const CharacterTab = memo(({ generationOptions, onOptionChange }: Charact
         {activeSubTab === 'background' && (
           <div className={styles.subtabContent}>
             <div className={styles.subsection}>
-              <OptionGroup
-                label="Background Image"
-                description="Choose the decorative pattern that appears behind the character icon. Each background offers a unique visual style."
-              >
-                <select
-                  className={styles.selectInput}
-                  value={generationOptions.characterBackground}
-                  onChange={(e) => onOptionChange({ characterBackground: e.target.value })}
-                >
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <option key={i + 1} value={`character_background_${i + 1}`}>
-                      Background {i + 1}
-                    </option>
-                  ))}
-                </select>
-              </OptionGroup>
-
-              <OptionGroup
-                label="Background Color"
-                description="Apply a color tint to the background image. This can help match your custom theme or improve contrast."
-              >
-                <input
-                  type="color"
-                  className={styles.colorInput}
-                  value={generationOptions.characterBackgroundColor || '#FFFFFF'}
-                  onChange={(e) => onOptionChange({ characterBackgroundColor: e.target.value })}
+              <OptionGroup label="Background Type" description="Choose between a solid color or image background.">
+                <SegmentedControl
+                  options={[
+                    { value: 'image', label: 'Image' },
+                    { value: 'color', label: 'Color' },
+                  ]}
+                  value={generationOptions.characterBackgroundType || 'image'}
+                  onChange={(value) => onOptionChange({ characterBackgroundType: value as 'color' | 'image' })}
                 />
               </OptionGroup>
+
+              {generationOptions.characterBackgroundType === 'color' ? (
+                <OptionGroup
+                  label="Background Color"
+                  description="Choose a solid background color for character tokens."
+                >
+                  <input
+                    type="color"
+                    className={styles.colorInput}
+                    value={generationOptions.characterBackgroundColor || '#FFFFFF'}
+                    onChange={(e) => onOptionChange({ characterBackgroundColor: e.target.value })}
+                  />
+                </OptionGroup>
+              ) : (
+                <OptionGroup
+                  label="Background Image"
+                  description="Choose the decorative pattern that appears behind the character icon."
+                >
+                  <select
+                    className={styles.selectInput}
+                    value={generationOptions.characterBackground}
+                    onChange={(e) => onOptionChange({ characterBackground: e.target.value })}
+                  >
+                    {Array.from({ length: 7 }, (_, i) => (
+                      <option key={i + 1} value={`character_background_${i + 1}`}>
+                        Background {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </OptionGroup>
+              )}
             </div>
           </div>
         )}

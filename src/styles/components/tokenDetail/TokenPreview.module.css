@@ -7,6 +7,7 @@
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
   background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
   /* Ensure overflow is visible for close button */
   overflow: visible;
 }
@@ -56,6 +57,8 @@
 /* Reminders section */
 .reminders {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .reminders h4 {
@@ -70,6 +73,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .galleryArrow {
@@ -94,6 +99,17 @@
   color: var(--color-primary);
 }
 
+.galleryArrow.hasMore {
+  background: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.galleryArrow.hasMore:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
 .galleryArrow:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -102,29 +118,9 @@
 .gallery {
   display: flex;
   gap: var(--spacing-sm);
-  overflow-x: auto;
-  scroll-behavior: smooth;
   flex: 1;
+  justify-content: center;
   padding: var(--spacing-xs) 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
-}
-
-.gallery::-webkit-scrollbar {
-  height: 4px;
-}
-
-.gallery::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.gallery::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 9999px;
-}
-
-.gallery.scrollable {
-  max-width: 100%;
 }
 
 /* Reminder token item */
@@ -151,9 +147,36 @@
 }
 
 .reminderItem canvas {
+  /* Display at 60x60 (canvas internal resolution is 120x120 for quality) */
   width: 60px;
   height: 60px;
   border-radius: 50%;
+}
+
+/* Container for reminder canvas with count badge */
+.reminderCanvasContainer {
+  position: relative;
+}
+
+.reminderImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.countBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: var(--color-accent);
+  color: var(--text-on-accent);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  padding: 1px 5px;
+  border-radius: 8px;
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .reminderText {

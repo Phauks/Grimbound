@@ -6,12 +6,16 @@ interface CharacterNavigationProps {
   characters: Character[]
   tokens: Token[]
   selectedCharacterId: string
+  isMetaSelected?: boolean
+  officialCharacterIds?: Set<string>
   onSelectCharacter: (characterId: string) => void
   onAddCharacter: () => void
   onDeleteCharacter: (characterId: string) => void
   onDuplicateCharacter: (characterId: string) => void
   onSelectMetaToken?: (token: Token) => void
+  onSelectMeta?: () => void
   onChangeTeam?: (characterId: string, newTeam: Team) => void
+  onHoverCharacter?: (characterId: string) => void
 }
 
 // Order teams for display
@@ -46,16 +50,24 @@ export function CharacterNavigation({
   characters,
   tokens,
   selectedCharacterId,
+  isMetaSelected,
+  officialCharacterIds,
   onSelectCharacter,
   onAddCharacter,
   onDeleteCharacter,
   onDuplicateCharacter,
   onSelectMetaToken,
+  onSelectMeta,
   onChangeTeam,
+  onHoverCharacter,
 }: CharacterNavigationProps) {
   const selectedRef = useRef<HTMLDivElement>(null)
-  const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set())
+  // Meta section is always visible so we don't collapse it by default
+  const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(
+    () => new Set([...TEAM_ORDER.map(t => t as string)])
+  )
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; characterId: string } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ characterId: string; characterName: string } | null>(null)
   const [draggedCharId, setDraggedCharId] = useState<string | null>(null)
   const [dropTargetTeam, setDropTargetTeam] = useState<Team | null>(null)
 
@@ -79,13 +91,16 @@ export function CharacterNavigation({
     setContextMenu({ x: e.clientX, y: e.clientY, characterId })
   }
 
-  const getCharacterToken = (characterName: string) => {
-    return tokens.find((t) => t.type === 'character' && t.name === characterName)
+  // Match by UUID only (UUID is required on all characters)
+  const getCharacterToken = (char: Character) => {
+    if (!char.uuid) return undefined
+    return tokens.find((t) => t.type === 'character' && t.parentUuid === char.uuid)
   }
 
-  // parentCharacter contains the character NAME, not ID
-  const getReminderCount = (characterName: string) => {
-    return tokens.filter((t) => t.type === 'reminder' && t.parentCharacter === characterName).length
+  // Match by UUID only (UUID is required on all characters)
+  const getReminderCount = (char: Character) => {
+    if (!char.uuid) return 0
+    return tokens.filter((t) => t.type === 'reminder' && t.parentUuid === char.uuid).length
   }
 
   // Get meta tokens (not character or reminder)
@@ -140,19 +155,21 @@ export function CharacterNavigation({
   }
 
   const renderCharacterItem = (char: Character, isLast: boolean) => {
-    const reminderCount = getReminderCount(char.name)
+    const reminderCount = getReminderCount(char)
     const isSelected = char.id === selectedCharacterId
-    const charToken = getCharacterToken(char.name)
+    const charToken = getCharacterToken(char)
     const teamClass = char.team?.toLowerCase() || 'townsfolk'
     const teamStyle = teamHeaderClassMap[teamClass] || ''
     const isDragging = draggedCharId === char.id
+    const isOfficial = officialCharacterIds?.has(char.id) || false
 
     return (
       <div key={char.id} className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}>
         <div
           ref={isSelected ? selectedRef : null}
-          className={`${styles.item} ${teamStyle} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
+          className={`${styles.item} ${teamStyle} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''} ${isOfficial ? styles.official : ''}`}
           onClick={() => onSelectCharacter(char.id)}
+          onMouseEnter={() => onHoverCharacter?.(char.id)}
           onContextMenu={(e) => handleContextMenu(e, char.id)}
           draggable={!!onChangeTeam}
           onDragStart={(e) => handleDragStart(e, char.id)}
@@ -230,13 +247,18 @@ export function CharacterNavigation({
     )
   }
 
-  const collapseAll = () => {
-    const allTeams = new Set([...TEAM_ORDER.map(t => t as string), 'meta'])
-    setCollapsedTeams(allTeams)
-  }
+  // Check if all teams are collapsed
+  const allCollapsed = TEAM_ORDER.every(team => collapsedTeams.has(team)) && collapsedTeams.has('meta')
 
-  const expandAll = () => {
-    setCollapsedTeams(new Set())
+  const toggleAllCollapse = () => {
+    if (allCollapsed) {
+      // Expand all
+      setCollapsedTeams(new Set())
+    } else {
+      // Collapse all
+      const allTeams = new Set([...TEAM_ORDER.map(t => t as string), 'meta'])
+      setCollapsedTeams(allTeams)
+    }
   }
 
   return (
@@ -244,30 +266,24 @@ export function CharacterNavigation({
       <div className={styles.header}>
         <div className={styles.headerTop}>
           <h3>Characters</h3>
-          <button
-            type="button"
-            className={styles.addBtn}
-            onClick={onAddCharacter}
-            title="Add new character"
-          >
-            +
-          </button>
-        </div>
-        <div className={styles.headerActions}>
-          <button
-            type="button"
-            className={styles.textBtn}
-            onClick={collapseAll}
-          >
-            Collapse
-          </button>
-          <button
-            type="button"
-            className={styles.textBtn}
-            onClick={expandAll}
-          >
-            Expand
-          </button>
+          <div className={styles.headerButtons}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={toggleAllCollapse}
+              title={allCollapsed ? "Expand all" : "Collapse all"}
+            >
+              {allCollapsed ? '▼' : '▲'}
+            </button>
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={onAddCharacter}
+              title="Create Character"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
       <div className={styles.list}>
@@ -303,7 +319,7 @@ export function CharacterNavigation({
           )
         })}
 
-        {/* Meta tokens section */}
+        {/* Meta tokens section - only visible when there are generated meta tokens */}
         {metaTokens.length > 0 && (
           <div className={styles.teamSection}>
             <button
@@ -346,12 +362,42 @@ export function CharacterNavigation({
             type="button"
             className={styles.danger}
             onClick={() => {
-              onDeleteCharacter(contextMenu.characterId)
+              const char = characters.find(c => c.id === contextMenu.characterId)
+              setDeleteConfirm({ characterId: contextMenu.characterId, characterName: char?.name || 'this character' })
               setContextMenu(null)
             }}
           >
             🗑️ Delete
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className={styles.confirmOverlay} onClick={() => setDeleteConfirm(null)}>
+          <div className={styles.confirmModal} onClick={e => e.stopPropagation()}>
+            <h3>Delete Character?</h3>
+            <p>Are you sure you want to delete "{deleteConfirm.characterName}"? This action cannot be undone.</p>
+            <div className={styles.confirmButtons}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.dangerBtn}
+                onClick={() => {
+                  onDeleteCharacter(deleteConfirm.characterId)
+                  setDeleteConfirm(null)
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>

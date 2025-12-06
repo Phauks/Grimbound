@@ -119,6 +119,67 @@ export class UIInitializationError extends TokenGeneratorError {
 }
 
 /**
+ * Error thrown during data synchronization
+ * Used for: Sync initialization, update checks, data fetching
+ */
+export class DataSyncError extends TokenGeneratorError {
+    constructor(
+        message: string,
+        public syncOperation?: string,
+        cause?: Error
+    ) {
+        super(message, cause);
+        this.name = 'DataSyncError';
+    }
+}
+
+/**
+ * Error thrown during storage operations
+ * Used for: IndexedDB operations, Cache API operations, quota exceeded
+ */
+export class StorageError extends TokenGeneratorError {
+    constructor(
+        message: string,
+        public storageType: 'indexeddb' | 'cache-api' | 'quota',
+        cause?: Error
+    ) {
+        super(message, cause);
+        this.name = 'StorageError';
+    }
+}
+
+/**
+ * Error thrown during GitHub API interactions
+ * Used for: API failures, rate limiting, network errors
+ */
+export class GitHubAPIError extends TokenGeneratorError {
+    constructor(
+        message: string,
+        public statusCode?: number,
+        public rateLimited?: boolean,
+        cause?: Error
+    ) {
+        super(message, cause);
+        this.name = 'GitHubAPIError';
+    }
+}
+
+/**
+ * Error thrown during package validation
+ * Used for: Invalid ZIP structure, hash mismatch, schema validation
+ */
+export class PackageValidationError extends TokenGeneratorError {
+    constructor(
+        message: string,
+        public validationType: 'structure' | 'hash' | 'schema',
+        cause?: Error
+    ) {
+        super(message, cause);
+        this.name = 'PackageValidationError';
+    }
+}
+
+/**
  * Error handler utility to extract user-friendly messages
  */
 export class ErrorHandler {
@@ -140,6 +201,29 @@ export class ErrorHandler {
 
         if (error instanceof ResourceNotFoundError) {
             return `${error.message}. Please ensure ${error.resourceName} is available.`;
+        }
+
+        if (error instanceof GitHubAPIError) {
+            if (error.rateLimited) {
+                return `${error.message}. GitHub API rate limit exceeded. Please try again later.`;
+            }
+            return error.message;
+        }
+
+        if (error instanceof StorageError) {
+            if (error.storageType === 'quota') {
+                return `${error.message}. Storage quota exceeded. Please clear some space.`;
+            }
+            return error.message;
+        }
+
+        if (error instanceof PackageValidationError) {
+            return `${error.message}. The data package may be corrupted.`;
+        }
+
+        if (error instanceof DataSyncError) {
+            const operation = error.syncOperation ? ` (${error.syncOperation})` : '';
+            return `${error.message}${operation}`;
         }
 
         if (error instanceof TokenGeneratorError) {
@@ -189,5 +273,9 @@ export default {
     ZipCreationError,
     ResourceNotFoundError,
     UIInitializationError,
+    DataSyncError,
+    StorageError,
+    GitHubAPIError,
+    PackageValidationError,
     ErrorHandler
 };

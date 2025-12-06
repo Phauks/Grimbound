@@ -6,6 +6,8 @@ import { AppFooter } from './components/Layout/AppFooter'
 import { TabNavigation, type TabType } from './components/Layout/TabNavigation'
 import { SettingsModal } from './components/Modals/SettingsModal'
 import { InfoModal } from './components/Modals/InfoModal'
+import { AnnouncementsModal } from './components/Modals/AnnouncementsModal'
+import { SyncDetailsModal } from './components/Modals/SyncDetailsModal'
 import { ToastContainer } from './components/Shared/Toast'
 import { EditorView } from './components/Views/EditorView'
 import { GalleryView } from './components/Views/GalleryView'
@@ -18,6 +20,8 @@ import layoutStyles from './styles/components/layout/AppLayout.module.css'
 function AppContent() {
   const [showSettings, setShowSettings] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [showAnnouncements, setShowAnnouncements] = useState(false)
+  const [showSyncDetails, setShowSyncDetails] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('editor')
   const [selectedTokenForCustomize, setSelectedTokenForCustomize] = useState<Token | undefined>(undefined)
   const [createNewCharacter, setCreateNewCharacter] = useState(false)
@@ -70,6 +74,8 @@ function AppContent() {
       <AppHeader
         onSettingsClick={() => setShowSettings(true)}
         onInfoClick={() => setShowInfo(true)}
+        onAnnouncementsClick={() => setShowAnnouncements(true)}
+        onSyncDetailsClick={() => setShowSyncDetails(true)}
       />
       <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
       <main className={`${layoutStyles.mainContent} ${layoutStyles.tabViewContent}`}>
@@ -78,9 +84,15 @@ function AppContent() {
       <AppFooter />
 
       {/* Modals */}
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onOpenSyncDetails={() => setShowSyncDetails(true)}
+      />
       <InfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
-      
+      <AnnouncementsModal isOpen={showAnnouncements} onClose={() => setShowAnnouncements(false)} />
+      <SyncDetailsModal isOpen={showSyncDetails} onClose={() => setShowSyncDetails(false)} />
+
       {/* Toast Notifications */}
       <ToastContainer />
     </div>

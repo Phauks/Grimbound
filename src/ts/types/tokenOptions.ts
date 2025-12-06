@@ -13,17 +13,30 @@ import type { Point } from '../canvas/index.js';
 /**
  * Token generator options interface
  */
+// Icon settings for image positioning
+export interface IconSettings {
+    scale: number;
+    offsetX: number;
+    offsetY: number;
+}
+
 export interface TokenGeneratorOptions {
     displayAbilityText: boolean;
     tokenCount: boolean;
     setupFlowerStyle: string;
     reminderBackground: string;
     reminderBackgroundImage?: string;
+    reminderBackgroundType?: 'color' | 'image';
     characterBackground: string;
     characterBackgroundColor?: string;
+    characterBackgroundType?: 'color' | 'image';
     metaBackground?: string;
+    metaBackgroundColor?: string;
+    metaBackgroundType?: 'color' | 'image';
     characterNameFont: string;
     characterNameColor: string;
+    metaNameFont?: string;
+    metaNameColor?: string;
     characterReminderFont: string;
     abilityTextFont: string;
     abilityTextColor: string;
@@ -39,11 +52,18 @@ export interface TokenGeneratorOptions {
         characterName: number;
         abilityText: number;
         reminderText: number;
+        metaText?: number;
     };
     textShadow?: {
         characterName: number;
         abilityText: number;
         reminderText: number;
+        metaText?: number;
+    };
+    iconSettings?: {
+        character: IconSettings;
+        reminder: IconSettings;
+        meta: IconSettings;
     };
 }
 
@@ -58,6 +78,8 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
     characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
     characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
     characterNameColor: CONFIG.STYLE.CHARACTER_NAME_COLOR,
+    metaNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
+    metaNameColor: CONFIG.STYLE.CHARACTER_NAME_COLOR,
     characterReminderFont: CONFIG.STYLE.CHARACTER_REMINDER_FONT,
     abilityTextFont: CONFIG.STYLE.ABILITY_TEXT_FONT,
     abilityTextColor: CONFIG.STYLE.ABILITY_TEXT_COLOR,
@@ -72,12 +94,14 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
     fontSpacing: {
         characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
         abilityText: CONFIG.FONT_SPACING.ABILITY_TEXT,
-        reminderText: CONFIG.FONT_SPACING.REMINDER_TEXT
+        reminderText: CONFIG.FONT_SPACING.REMINDER_TEXT,
+        metaText: CONFIG.FONT_SPACING.META_TEXT
     },
     textShadow: {
         characterName: CONFIG.TEXT_SHADOW.CHARACTER_NAME,
         abilityText: CONFIG.TEXT_SHADOW.ABILITY_TEXT,
-        reminderText: CONFIG.TEXT_SHADOW.REMINDER_TEXT
+        reminderText: CONFIG.TEXT_SHADOW.REMINDER_TEXT,
+        metaText: CONFIG.TEXT_SHADOW.META_TEXT
     }
 };
 

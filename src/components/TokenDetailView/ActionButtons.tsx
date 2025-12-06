@@ -2,23 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import styles from '../../styles/components/tokenDetail/ActionButtons.module.css'
 
 interface ActionButtonsProps {
-  isDirty: boolean
   isLoading: boolean
-  liveUpdateEnabled: boolean
-  autoSaveEnabled: boolean
+  hasReminderTokens?: boolean
   downloadProgress?: { current: number; total: number } | null
-  onReset: () => void
   onDownloadAll: () => void
   onDownloadCharacter: () => void
   onDownloadReminders: () => void
   onDownloadJson: () => void
-  onApply: () => void
-  onToggleLiveUpdate: () => void
-  onToggleAutoSave: () => void
-  onDelete: () => void
 }
 
-export function ActionButtons({ isDirty, isLoading, liveUpdateEnabled, autoSaveEnabled, downloadProgress, onReset, onDownloadAll, onDownloadCharacter, onDownloadReminders, onDownloadJson, onApply, onToggleLiveUpdate, onToggleAutoSave, onDelete }: ActionButtonsProps) {
+export function ActionButtons({ isLoading, hasReminderTokens = true, downloadProgress, onDownloadAll, onDownloadCharacter, onDownloadReminders, onDownloadJson }: ActionButtonsProps) {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -47,25 +40,6 @@ export function ActionButtons({ isDirty, isLoading, liveUpdateEnabled, autoSaveE
 
   return (
     <div className={styles.actions}>
-      <div className={styles.spacer}></div>
-      <button
-        type="button"
-        className={`${styles.toggleBtn} ${liveUpdateEnabled ? styles.active : ''}`}
-        onClick={onToggleLiveUpdate}
-        title={liveUpdateEnabled ? 'Live preview enabled - Click to disable' : 'Live preview disabled - Click to enable'}
-        aria-label={liveUpdateEnabled ? 'Disable live preview' : 'Enable live preview'}
-      >
-        <span className={styles.icon}>⚡</span>
-      </button>
-      <button
-        type="button"
-        className={styles.secondaryBtn}
-        onClick={onReset}
-        disabled={!isDirty || isLoading}
-        title="Reset all changes to the original values"
-      >
-        Reset
-      </button>
       <div className={styles.downloadDropdown} ref={dropdownRef}>
         <div className={styles.downloadButtonGroup}>
           <button
@@ -111,6 +85,8 @@ export function ActionButtons({ isDirty, isLoading, liveUpdateEnabled, autoSaveE
                 onDownloadReminders()
                 setShowDownloadMenu(false)
               }}
+              disabled={!hasReminderTokens}
+              title={!hasReminderTokens ? 'No reminder tokens to download' : undefined}
             >
               Reminder Tokens Only
             </button>
@@ -127,36 +103,6 @@ export function ActionButtons({ isDirty, isLoading, liveUpdateEnabled, autoSaveE
           </div>
         )}
       </div>
-      <div className={styles.saveGroup}>
-        <button
-          type="button"
-          className={`${styles.toggleBtn} ${autoSaveEnabled ? styles.active : ''}`}
-          onClick={onToggleAutoSave}
-          title={autoSaveEnabled ? 'Auto-save enabled - Click to disable' : 'Auto-save disabled - Click to enable'}
-          aria-label={autoSaveEnabled ? 'Disable auto-save' : 'Enable auto-save'}
-        >
-          <span className={styles.icon}>💾</span>
-        </button>
-        <button
-          type="button"
-          className={`${styles.primaryBtn} ${autoSaveEnabled ? styles.disabled : ''}`}
-          onClick={onApply}
-          disabled={autoSaveEnabled || isLoading}
-          title={autoSaveEnabled ? 'Auto-save is enabled' : 'Save changes to the script JSON'}
-        >
-          SAVE
-        </button>
-      </div>
-      <button
-        type="button"
-        className={`${styles.toggleBtn} ${styles.deleteBtn}`}
-        onClick={onDelete}
-        disabled={isLoading}
-        title="Delete this character"
-        aria-label="Delete character"
-      >
-        <span className={styles.icon}>🗑️</span>
-      </button>
     </div>
   )
 }

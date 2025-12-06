@@ -1,5 +1,10 @@
 // Shared Components
 export { Button, ToggleButton, ButtonGroup, type ButtonVariant, type ButtonSize } from './Button'
+export { ImageSelector, type ImageSelectorShape } from './ImageSelector'
+export { JsonEditorPanel } from './JsonEditorPanel'
 export { OptionGroup } from './OptionGroup'
+export { SegmentedControl } from './SegmentedControl'
 export { SliderWithValue } from './SliderWithValue'
+export { SyncProgressBar } from './SyncProgressBar'
+export { SyncStatusIndicator } from './SyncStatusIndicator'
 export { ToastContainer } from './Toast'

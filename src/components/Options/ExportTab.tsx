@@ -195,49 +195,54 @@ export const ExportTab = memo(({ generationOptions, onOptionChange }: ExportTabP
         {activeSubTab === 'pdf' && (
           <div className={styles.subtabContent}>
             <div className={styles.subsection}>
-              <OptionGroup label="Padding" helpText="Padding around PDF content">
-                <div className={styles.inputWithUnit}>
-                  <input
-                    type="number"
-                    className={styles.numberInput}
-                    value={generationOptions.pdfPadding || 75}
-                    onChange={(e) => onOptionChange({ pdfPadding: parseInt(e.target.value) || 0 })}
-                    min={0}
-                    max={100}
-                  />
-                  <span className={styles.inputUnit}>px</span>
-                </div>
-              </OptionGroup>
-
               <OptionGroup
                 label="X Offset"
-                helpText="Horizontal offset for PDF content"
+                helpText="Fine-tune horizontal alignment for your printer"
                 isSlider
               >
                 <SliderWithValue
-                  value={generationOptions.pdfXOffset || 0}
-                  onChange={(value) => onOptionChange({ pdfXOffset: value })}
-                  min={-20}
-                  max={20}
+                  value={(generationOptions.pdfXOffset ?? 0) * 16}
+                  onChange={(value) => onOptionChange({ pdfXOffset: value / 16 })}
+                  min={-8}
+                  max={8}
+                  step={1}
                   defaultValue={0}
-                  unit="mm"
+                  unit="/16 in"
                   ariaLabel="PDF X Offset value"
                 />
               </OptionGroup>
 
               <OptionGroup
                 label="Y Offset"
-                helpText="Vertical offset for PDF content"
+                helpText="Fine-tune vertical alignment for your printer"
                 isSlider
               >
                 <SliderWithValue
-                  value={generationOptions.pdfYOffset || 0}
-                  onChange={(value) => onOptionChange({ pdfYOffset: value })}
-                  min={-20}
-                  max={20}
+                  value={(generationOptions.pdfYOffset ?? 0) * 16}
+                  onChange={(value) => onOptionChange({ pdfYOffset: value / 16 })}
+                  min={-8}
+                  max={8}
+                  step={1}
                   defaultValue={0}
-                  unit="mm"
+                  unit="/16 in"
                   ariaLabel="PDF Y Offset value"
+                />
+              </OptionGroup>
+
+              <OptionGroup
+                label="Print Bleed"
+                helpText="Extends edge colors outward for clean cutting - prevents white edges"
+                isSlider
+              >
+                <SliderWithValue
+                  value={(generationOptions.pdfBleed ?? 0.125) * 32}
+                  onChange={(value) => onOptionChange({ pdfBleed: value / 32 })}
+                  min={0}
+                  max={4}
+                  step={1}
+                  defaultValue={4}
+                  unit="/32 in"
+                  ariaLabel="PDF Print Bleed value"
                 />
               </OptionGroup>
             </div>

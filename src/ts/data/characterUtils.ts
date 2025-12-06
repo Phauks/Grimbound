@@ -66,6 +66,22 @@ export function getCharacterImageUrl(imageField: string | string[] | undefined):
 }
 
 /**
+ * Get all image URLs from character image field
+ * Used for generating variant tokens
+ * @param imageField - Image field value
+ * @returns Array of image URLs
+ */
+export function getAllCharacterImageUrls(imageField: string | string[] | undefined): string[] {
+    if (typeof imageField === 'string') {
+        return imageField ? [imageField] : [];
+    }
+    if (Array.isArray(imageField) && imageField.length > 0) {
+        return imageField;
+    }
+    return [];
+}
+
+/**
  * Count reminders for a character
  * @param character - Character object
  * @returns Number of reminders
@@ -173,6 +189,7 @@ export function calculateTokenCounts(characters: Character[]): TokenCounts {
 export default {
     validateCharacter,
     getCharacterImageUrl,
+    getAllCharacterImageUrls,
     countReminders,
     getGlobalReminders,
     groupByTeam,

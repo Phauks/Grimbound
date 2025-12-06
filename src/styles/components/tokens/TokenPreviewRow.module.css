@@ -1,0 +1,249 @@
+/* TokenPreviewRow.module.css - Preview row with sample tokens and generation controls */
+
+.container {
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.previewSection {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.tokenPreview {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.tokenWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.tokenImage {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.reminderImage {
+  width: 100px;
+  height: 100px;
+}
+
+.tokenPlaceholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 2px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.reminderPlaceholder {
+  width: 100px;
+  height: 100px;
+}
+
+.tokenLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tokenColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-left: var(--spacing-lg);
+  border-left: 1px solid var(--border-color);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.totalsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.teamBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.teamRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  font-size: 0.8125rem;
+}
+
+.teamLabel {
+  color: var(--text-secondary);
+}
+
+.teamValue {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.totalValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.totalValue.metaValue {
+  color: var(--color-accent);
+  opacity: 0.7;
+}
+
+.totalLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.totalDivider {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Generate Button Group */
+.generateGroup {
+  display: flex;
+  align-items: stretch;
+}
+
+.generateBtn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.autoBtn {
+  padding: var(--spacing-sm) var(--spacing-sm);
+  background: var(--color-primary);
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.autoBtn:hover {
+  background: var(--color-primary-light);
+  color: white;
+}
+
+.autoBtnActive {
+  background: var(--color-accent);
+  color: white;
+  border-left-color: rgba(255, 255, 255, 0.4);
+}
+
+.autoBtnActive:hover {
+  background: var(--color-accent-hover, var(--color-accent));
+}
+
+.applyBtn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.applyBtn:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.applyBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.autoToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.autoToggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.toggleLabel {
+  user-select: none;
+}

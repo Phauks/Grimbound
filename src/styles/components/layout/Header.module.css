@@ -71,6 +71,17 @@
   height: 24px;
 }
 
+/* Disabled state */
+.iconButton.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.iconButton.disabled:hover {
+  color: var(--color-accent);
+  transform: none;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .title {

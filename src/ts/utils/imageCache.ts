@@ -4,6 +4,7 @@
  */
 
 import { loadImage, loadLocalImage } from './imageUtils.js';
+import { dataSyncService } from '../sync/index.js';
 
 // ============================================================================
 // TYPES
@@ -18,6 +19,53 @@ interface CacheEntry {
 interface ImageCacheOptions {
     maxSizeMB?: number;
     maxEntries?: number;
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Extract character ID from a URL or path
+ * Handles various URL formats:
+ * - https://example.com/icons/washerwoman.webp → washerwoman
+ * - icons/carousel/steward.webp → steward
+ * - /icons/chef.webp → chef
+ * - washerwoman.png → washerwoman
+ */
+function extractCharacterIdFromUrl(url: string): string | null {
+    // Get the filename from the path (last segment)
+    const segments = url.split('/');
+    const filename = segments[segments.length - 1];
+    
+    // Extract character ID from filename (remove extension)
+    const match = filename.match(/^([a-z_]+)\.(?:webp|png|jpg|jpeg|gif)$/i);
+    if (match) {
+        return match[1].toLowerCase();
+    }
+    return null;
+}
+
+/**
+ * Create an HTMLImageElement from a Blob
+ */
+async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(blob);
+        
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(img);
+        };
+        
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Failed to load image from blob'));
+        };
+        
+        img.src = objectUrl;
+    });
 }
 
 // ============================================================================
@@ -40,6 +88,8 @@ class ImageCache {
 
     /**
      * Get a cached image by URL, loading it if not present
+     * First checks sync storage (Cache API) for official character images,
+     * then falls back to network loading
      */
     async get(url: string, isLocal: boolean = false): Promise<HTMLImageElement> {
         const entry = this.cache.get(url);
@@ -49,8 +99,33 @@ class ImageCache {
             return entry.image;
         }
 
-        // Load the image
-        const image = isLocal ? await loadLocalImage(url) : await loadImage(url);
+        let image: HTMLImageElement;
+
+        // For non-local images, try to load from sync storage first
+        if (!isLocal) {
+            const characterId = extractCharacterIdFromUrl(url);
+            if (characterId) {
+                try {
+                    const cachedBlob = await dataSyncService.getCharacterImage(characterId);
+                    if (cachedBlob) {
+                        image = await blobToImage(cachedBlob);
+                        console.log(`[ImageCache] Loaded ${characterId} from sync storage`);
+                    } else {
+                        // Not in sync storage, load from network
+                        image = await loadImage(url);
+                    }
+                } catch (error) {
+                    console.warn(`[ImageCache] Failed to load ${characterId} from sync storage, falling back to network:`, error);
+                    image = await loadImage(url);
+                }
+            } else {
+                // Can't extract character ID, load from network
+                image = await loadImage(url);
+            }
+        } else {
+            // Local image
+            image = await loadLocalImage(url);
+        }
         
         // Estimate size (width * height * 4 bytes per pixel)
         const estimatedSize = (image.naturalWidth || 100) * (image.naturalHeight || 100) * 4;

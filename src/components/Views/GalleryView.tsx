@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useTokenContext } from '../../contexts/TokenContext'
-import type { CustomPreset } from '../../hooks/usePresets'
+import { usePresets, type CustomPreset } from '../../hooks/usePresets'
 import { PresetSection } from '../Presets/PresetSection'
-import { OptionsTabNavigation } from '../Options/OptionsTabNavigation'
-import { CharacterTab } from '../Options/CharacterTab'
-import { ReminderTab } from '../Options/ReminderTab'
-import { MetaTab } from '../Options/MetaTab'
+import { FilterBar } from '../TokenGrid/FilterBar'
+import { AppearancePanel } from '../Options/AppearancePanel'
+import { OptionsPanel } from '../Options/OptionsPanel'
 import { TokenGrid } from '../TokenGrid/TokenGrid'
+import { TokenPreviewRow } from '../TokenGrid/TokenPreviewRow'
 import type { Token } from '../../ts/types/index'
 import styles from '../../styles/components/views/Views.module.css'
 
@@ -16,16 +16,17 @@ interface GalleryViewProps {
 
 export function GalleryView({ onTokenClick }: GalleryViewProps) {
   const { generationOptions, updateGenerationOptions, generationProgress, isLoading } = useTokenContext()
-  const [activeTab, setActiveTab] = useState<'character' | 'reminder' | 'meta'>('character')
-  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([])
+  const { getCustomPresets } = usePresets()
+  // Initialize with presets directly to avoid flash of empty state
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>(() => getCustomPresets())
 
   return (
     <div className={styles.galleryView}>
       {/* Left Sidebar - Presets and Options */}
       <aside className={styles.gallerySidebar}>
         <div className={styles.panelContent}>
-          <div className={styles.sidebarCard}>
-            <h2 className={styles.sectionHeader}>Presets</h2>
+          <details className={styles.sidebarCard} open>
+            <summary className={styles.sectionHeader}>Presets</summary>
             <div className={styles.optionSection}>
               <PresetSection
                 customPresets={customPresets}
@@ -33,48 +34,40 @@ export function GalleryView({ onTokenClick }: GalleryViewProps) {
                 onShowSaveModal={() => {}}
               />
             </div>
-          </div>
+          </details>
 
-          <div className={styles.sidebarCard}>
-            <h2 className={styles.sectionHeader}>Options</h2>
+          <details className={styles.sidebarCard}>
+            <summary className={styles.sectionHeader}>Filters</summary>
             <div className={styles.optionSection}>
-              <div className={styles.tabsContainer}>
-                <OptionsTabNavigation 
-                  activeTab={activeTab} 
-                  onTabChange={(tab) => {
-                    if (tab !== 'export') {
-                      setActiveTab(tab as 'character' | 'reminder' | 'meta')
-                    }
-                  }}
-                  hideTabs={['export']}
-                />
-
-                {activeTab === 'character' && (
-                  <CharacterTab
-                    generationOptions={generationOptions}
-                    onOptionChange={updateGenerationOptions}
-                  />
-                )}
-                {activeTab === 'reminder' && (
-                  <ReminderTab
-                    generationOptions={generationOptions}
-                    onOptionChange={updateGenerationOptions}
-                  />
-                )}
-                {activeTab === 'meta' && (
-                  <MetaTab
-                    generationOptions={generationOptions}
-                    onOptionChange={updateGenerationOptions}
-                  />
-                )}
-              </div>
+              <FilterBar />
             </div>
-          </div>
+          </details>
+
+          <details className={styles.sidebarCard} open>
+            <summary className={styles.sectionHeader}>Appearance</summary>
+            <div className={styles.optionSection}>
+              <AppearancePanel
+                generationOptions={generationOptions}
+                onOptionChange={updateGenerationOptions}
+              />
+            </div>
+          </details>
+
+          <details className={styles.sidebarCard} open>
+            <summary className={styles.sectionHeader}>Options</summary>
+            <div className={styles.optionSection}>
+              <OptionsPanel
+                generationOptions={generationOptions}
+                onOptionChange={updateGenerationOptions}
+              />
+            </div>
+          </details>
         </div>
       </aside>
 
       {/* Right Content - Token Grid */}
       <div className={styles.galleryContent}>
+        <TokenPreviewRow />
         <div className={styles.galleryHeader}>
           {isLoading && generationProgress && (
             <div className={styles.generationProgress}>

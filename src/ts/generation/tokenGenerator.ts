@@ -114,13 +114,33 @@ export class TokenGenerator {
     // CHARACTER TOKEN GENERATION
     // ========================================================================
 
-    async generateCharacterToken(character: Character): Promise<HTMLCanvasElement> {
+    async generateCharacterToken(character: Character, imageOverride?: string): Promise<HTMLCanvasElement> {
         const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
         const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
         this.applyCircularClip(ctx, center, radius);
-        await this.drawBackground(ctx, this.options.characterBackground, diameter);
-        await this.drawCharacterImage(ctx, character, diameter, CHARACTER_LAYOUT);
+        
+        // Draw background based on type selection
+        if (this.options.characterBackgroundType === 'color') {
+            if (!this.options.transparentBackground) {
+                ctx.fillStyle = this.options.characterBackgroundColor || '#FFFFFF';
+                ctx.fill();
+            }
+        } else {
+            await this.drawBackground(ctx, this.options.characterBackground, diameter);
+        }
+        
+        // Determine if ability text will be displayed
+        const hasAbilityText = Boolean(this.options.displayAbilityText && character.ability);
+        
+        // Calculate optimal icon size when ability text is present
+        let abilityTextHeight = 0;
+        if (hasAbilityText) {
+            abilityTextHeight = this.calculateAbilityTextHeight(ctx, character.ability!, diameter);
+        }
+        
+        // Draw character image with adjusted layout based on ability text presence
+        await this.drawCharacterImage(ctx, character, diameter, CHARACTER_LAYOUT, 'character', imageOverride, hasAbilityText, abilityTextHeight);
 
         if (character.setup) {
             await this.drawSetupFlower(ctx, diameter);
@@ -132,8 +152,8 @@ export class TokenGenerator {
             await this.drawLeavesOnToken(ctx, diameter);
         }
 
-        if (this.options.displayAbilityText && character.ability) {
-            this.drawCharacterAbilityText(ctx, character.ability, diameter);
+        if (hasAbilityText) {
+            this.drawCharacterAbilityText(ctx, character.ability!, diameter);
         }
 
         if (character.name) {
@@ -150,23 +170,122 @@ export class TokenGenerator {
         return canvas;
     }
 
+    private calculateAbilityTextHeight(ctx: CanvasRenderingContext2D, ability: string, diameter: number): number {
+        ctx.save();
+        const fontSize = diameter * CONFIG.FONTS.ABILITY_TEXT.SIZE_RATIO;
+        ctx.font = `${fontSize}px "${this.options.abilityTextFont}", sans-serif`;
+        const lineHeight = fontSize * (CONFIG.FONTS.ABILITY_TEXT.LINE_HEIGHT ?? LINE_HEIGHTS.STANDARD);
+        
+        // Calculate how many lines the ability text will take
+        const radius = diameter / 2;
+        const centerY = diameter / 2;
+        const startY = diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+        const words = ability.split(' ');
+        let lineCount = 0;
+        let currentLine = '';
+        let currentY = startY;
+        
+        for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = ctx.measureText(testLine).width;
+            const distanceFromCenter = Math.abs(currentY + fontSize / 2 - centerY);
+            const halfWidth = distanceFromCenter < radius ? Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter) : 0;
+            const availableWidth = 2 * halfWidth * CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING;
+            
+            if (testWidth <= availableWidth || !currentLine) {
+                currentLine = testLine;
+            } else {
+                lineCount++;
+                currentLine = word;
+                currentY += lineHeight;
+            }
+        }
+        if (currentLine) lineCount++;
+        
+        ctx.restore();
+        return lineCount * lineHeight;
+    }
+
     private async drawCharacterImage(
         ctx: CanvasRenderingContext2D,
         character: Character,
         diameter: number,
-        layout: typeof CHARACTER_LAYOUT | typeof REMINDER_LAYOUT
+        layout: typeof CHARACTER_LAYOUT | typeof REMINDER_LAYOUT,
+        tokenType: 'character' | 'reminder' | 'meta',
+        imageOverride?: string,
+        hasAbilityText?: boolean,
+        abilityTextHeight?: number
     ): Promise<void> {
-        const imageUrl = getCharacterImageUrl(character.image);
+        const imageUrl = imageOverride || getCharacterImageUrl(character.image);
         if (!imageUrl) return;
 
         try {
             const charImage = await this.getCachedImage(imageUrl);
-            const imgSize = diameter * layout.IMAGE_SIZE_RATIO;
-            const imgOffset = (diameter - imgSize) / 2;
+
+            // Get icon settings for this token type
+            const defaultIconSettings = { scale: 1.0, offsetX: 0, offsetY: 0 };
+            const iconSettings = this.options.iconSettings?.[tokenType] || defaultIconSettings;
+
+            // Adjust size and position based on ability text presence (only for character tokens)
+            // Use default values if layout doesn't specify (CHARACTER_LAYOUT doesn't have these, REMINDER_LAYOUT does)
+            let imageSizeRatio = 'IMAGE_SIZE_RATIO' in layout ? layout.IMAGE_SIZE_RATIO : 1.0;
+            let verticalOffset = 'IMAGE_VERTICAL_OFFSET' in layout ? layout.IMAGE_VERTICAL_OFFSET : 0.05;
+            
+            if (tokenType === 'character' && hasAbilityText !== undefined) {
+                // Character name is at the bottom (curved text)
+                const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
+                
+                if (hasAbilityText && abilityTextHeight !== undefined) {
+                    // Dynamic sizing: maximize icon space between ability text and character name
+                    const abilityTextStartY = diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+                    const abilityTextEndY = abilityTextStartY + abilityTextHeight;
+                    
+                    // Calculate available vertical space for icon
+                    const availableHeight = characterNameY - abilityTextEndY;
+                    
+                    // Use configured ratio of available space for optimal appearance
+                    const optimalSize = availableHeight * CHARACTER_LAYOUT.ICON_SPACE_RATIO_WITH_ABILITY;
+                    
+                    // Calculate the ratio
+                    imageSizeRatio = optimalSize / diameter;
+                    
+                    // Center icon vertically in the available space
+                    const iconCenterY = abilityTextEndY + availableHeight / 2;
+                    verticalOffset = (diameter / 2 - iconCenterY) / diameter;
+                } else {
+                    // Without ability text: dynamic sizing between top margin and character name
+                    const topMargin = diameter * CHARACTER_LAYOUT.NO_ABILITY_TOP_MARGIN;
+                    
+                    // Calculate available vertical space for icon
+                    const availableHeight = characterNameY - topMargin;
+                    
+                    // Use configured ratio of available space for optimal appearance
+                    const optimalSize = availableHeight * CHARACTER_LAYOUT.ICON_SPACE_RATIO_NO_ABILITY;
+                    
+                    // Calculate the ratio
+                    imageSizeRatio = optimalSize / diameter;
+                    
+                    // Center icon vertically in the available space
+                    const iconCenterY = topMargin + availableHeight / 2;
+                    verticalOffset = (diameter / 2 - iconCenterY) / diameter;
+                }
+            }
+
+            // Apply icon scale
+            const imgSize = diameter * imageSizeRatio * iconSettings.scale;
+
+            // Calculate base offset (centers the image)
+            const baseOffsetX = (diameter - imgSize) / 2;
+            const baseOffsetY = (diameter - imgSize) / 2 - diameter * verticalOffset;
+
+            // Apply user-defined offsets
+            const offsetX = baseOffsetX + iconSettings.offsetX;
+            const offsetY = baseOffsetY + iconSettings.offsetY;
+
             ctx.drawImage(
                 charImage,
-                imgOffset,
-                imgOffset - diameter * layout.IMAGE_VERTICAL_OFFSET,
+                offsetX,
+                offsetY,
                 imgSize,
                 imgSize
             );
@@ -263,12 +382,18 @@ export class TokenGenerator {
 
         this.applyCircularClip(ctx, center, radius);
 
-        if (!this.options.transparentBackground) {
-            ctx.fillStyle = this.options.reminderBackground;
-            ctx.fill();
+        // Draw background based on type selection
+        if (this.options.reminderBackgroundType === 'image') {
+            const bgImage = this.options.reminderBackgroundImage || 'character_background_1';
+            await this.drawBackground(ctx, bgImage, diameter);
+        } else {
+            if (!this.options.transparentBackground) {
+                ctx.fillStyle = this.options.reminderBackground;
+                ctx.fill();
+            }
         }
 
-        await this.drawCharacterImage(ctx, character, diameter, REMINDER_LAYOUT);
+        await this.drawCharacterImage(ctx, character, diameter, REMINDER_LAYOUT, 'reminder');
         ctx.restore();
 
         drawCurvedText(ctx, {
@@ -299,8 +424,18 @@ export class TokenGenerator {
         const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
         this.applyCircularClip(ctx, center, radius);
-        const bgName = backgroundOverride || this.options.metaBackground || this.options.characterBackground;
-        await this.drawBackground(ctx, bgName, diameter);
+        
+        // Draw background based on type selection
+        if (this.options.metaBackgroundType === 'color') {
+            if (!this.options.transparentBackground) {
+                ctx.fillStyle = this.options.metaBackgroundColor || '#FFFFFF';
+                ctx.fill();
+            }
+        } else {
+            const bgName = backgroundOverride || this.options.metaBackground || this.options.characterBackground;
+            await this.drawBackground(ctx, bgName, diameter);
+        }
+        
         ctx.restore();
 
         await renderContent(ctx, diameter, center, radius);
@@ -308,15 +443,18 @@ export class TokenGenerator {
     }
 
     async generateScriptNameToken(scriptName: string, author?: string): Promise<HTMLCanvasElement> {
+        const metaFont = this.options.metaNameFont || this.options.characterNameFont;
+        const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
+        
         return this.generateMetaToken((ctx, diameter, center, radius) => {
             drawCenteredWrappedText(ctx, {
                 text: scriptName.toUpperCase(),
                 diameter,
-                fontFamily: this.options.characterNameFont,
+                fontFamily: metaFont,
                 fontSizeRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_SIZE,
                 maxWidthRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_MAX_WIDTH,
-                color: DEFAULT_COLORS.TEXT_PRIMARY,
-                shadowBlur: this.options.textShadow?.characterName ?? 4
+                color: metaColor,
+                shadowBlur: this.options.textShadow?.metaText ?? 4
             });
 
             if (author) {
@@ -325,25 +463,28 @@ export class TokenGenerator {
                     centerX: center.x,
                     centerY: center.y,
                     radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-                    fontFamily: this.options.characterNameFont,
+                    fontFamily: metaFont,
                     fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO * META_TOKEN_LAYOUT.AUTHOR_TEXT_SIZE_FACTOR,
                     position: 'bottom',
-                    color: DEFAULT_COLORS.TEXT_PRIMARY,
-                    letterSpacing: this.options.fontSpacing.characterName,
-                    shadowBlur: this.options.textShadow?.characterName ?? 4
+                    color: metaColor,
+                    letterSpacing: this.options.fontSpacing.metaText ?? 0,
+                    shadowBlur: this.options.textShadow?.metaText ?? 4
                 });
             }
         });
     }
 
     async generatePandemoniumToken(): Promise<HTMLCanvasElement> {
+        const metaFont = this.options.metaNameFont || this.options.characterNameFont;
+        const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
+        
         return this.generateMetaToken((ctx, diameter, center, radius) => {
             drawTwoLineCenteredText(
                 ctx, 'PANDEMONIUM', 'INSTITUTE', diameter,
-                this.options.characterNameFont,
+                metaFont,
                 META_TOKEN_LAYOUT.PANDEMONIUM_TEXT_SIZE,
-                DEFAULT_COLORS.TEXT_PRIMARY,
-                this.options.textShadow?.characterName ?? 4
+                metaColor,
+                this.options.textShadow?.metaText ?? 4
             );
 
             drawCurvedText(ctx, {
@@ -351,12 +492,12 @@ export class TokenGenerator {
                 centerX: center.x,
                 centerY: center.y,
                 radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-                fontFamily: this.options.characterNameFont,
+                fontFamily: metaFont,
                 fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO * META_TOKEN_LAYOUT.BOTC_TEXT_SIZE_FACTOR,
                 position: 'bottom',
-                color: DEFAULT_COLORS.TEXT_PRIMARY,
-                letterSpacing: this.options.fontSpacing.characterName,
-                shadowBlur: this.options.textShadow?.characterName ?? 4
+                color: metaColor,
+                letterSpacing: this.options.fontSpacing.metaText ?? 0,
+                shadowBlur: this.options.textShadow?.metaText ?? 4
             });
         });
     }
@@ -399,11 +540,11 @@ export class TokenGenerator {
             centerX: center.x,
             centerY: center.y,
             radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-            fontFamily: this.options.characterNameFont,
+            fontFamily: this.options.metaNameFont || this.options.characterNameFont,
             fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
             position: 'bottom',
             color: QR_COLORS.DARK,
-            letterSpacing: this.options.fontSpacing.characterName,
+            letterSpacing: this.options.fontSpacing.metaText ?? 0,
             shadowBlur: 0
         });
 

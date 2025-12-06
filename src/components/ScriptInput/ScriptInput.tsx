@@ -4,8 +4,11 @@ import { useScriptData } from '../../hooks/useScriptData'
 import { useTokenGenerator } from '../../hooks/useTokenGenerator'
 import { useUndoStack } from '../../hooks/useUndoStack'
 import { JsonHighlight } from './JsonHighlight'
+import { getCleanJsonForExport } from '../../ts/utils/index.js'
 import CONFIG from '../../ts/config.js'
 import styles from '../../styles/components/scriptInput/ScriptInput.module.css'
+
+const VISIBLE_WARNINGS_COUNT = 3
 
 export function ScriptInput() {
   const { jsonInput, setJsonInput, characters, isLoading, error, setError, warnings, setWarnings, scriptMeta, generationProgress } = useTokenContext()
@@ -17,6 +20,7 @@ export function ScriptInput() {
   const [autoGenerate, setAutoGenerate] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [selectedExample, setSelectedExample] = useState<string>('')
+  const [showAllWarnings, setShowAllWarnings] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousJsonRef = useRef<string>('')
@@ -64,6 +68,11 @@ export function ScriptInput() {
       }
     }
   }, [jsonInput, parseJson])
+
+  // Reset "show all warnings" when warnings change
+  useEffect(() => {
+    setShowAllWarnings(false)
+  }, [warnings])
 
   // Auto-generate tokens after 300ms debounce when JSON input changes and auto-generate is enabled
   useEffect(() => {
@@ -239,7 +248,9 @@ export function ScriptInput() {
       filename = scriptMeta.name.replace(/[^a-z0-9_\- ]/gi, '_') + '.json'
     }
 
-    const blob = new Blob([jsonInput], { type: 'application/json' })
+    // Strip internal fields (uuid) from exported JSON
+    const cleanJson = getCleanJsonForExport(jsonInput)
+    const blob = new Blob([cleanJson], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -408,12 +419,34 @@ export function ScriptInput() {
           {error && <div className={`${styles.validationMessage} ${styles.error}`}>{error}</div>}
           {warnings && warnings.length > 0 && (
             <div className={`${styles.validationMessage} ${styles.warning}`}>
-              ⚠️ {warnings.length} warning{warnings.length > 1 ? 's' : ''}:
+              <div className={styles.warningHeader}>
+                ⚠️ {warnings.length} warning{warnings.length > 1 ? 's' : ''}:
+              </div>
               <ul className={styles.warningList}>
-                {warnings.map((warning, index) => (
+                {warnings.slice(0, VISIBLE_WARNINGS_COUNT).map((warning, index) => (
                   <li key={index}>{warning}</li>
                 ))}
               </ul>
+              {warnings.length > VISIBLE_WARNINGS_COUNT && (
+                <>
+                  {showAllWarnings && (
+                    <ul className={styles.warningList}>
+                      {warnings.slice(VISIBLE_WARNINGS_COUNT).map((warning, index) => (
+                        <li key={index + VISIBLE_WARNINGS_COUNT}>{warning}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    className={styles.showMoreWarningsBtn}
+                    onClick={() => setShowAllWarnings(!showAllWarnings)}
+                  >
+                    {showAllWarnings 
+                      ? '▲ Show less' 
+                      : `▼ Show ${warnings.length - VISIBLE_WARNINGS_COUNT} more warning${warnings.length - VISIBLE_WARNINGS_COUNT > 1 ? 's' : ''}`
+                    }
+                  </button>
+                </>
+              )}
             </div>
           )}
           {characters.length > 0 && (

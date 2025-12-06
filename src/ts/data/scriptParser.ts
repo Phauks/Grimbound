@@ -4,6 +4,7 @@
  */
 
 import CONFIG from '../config.js';
+import { generateUuid } from '../utils/nameGenerator.js';
 import type {
     Character,
     ScriptEntry,
@@ -134,7 +135,7 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
     if (typeof entry === 'string') {
         const officialChar = officialMap.get(entry.toLowerCase());
         if (officialChar) {
-            return { character: { ...officialChar }, warning: null };
+            return { character: { ...officialChar, uuid: generateUuid() }, warning: null };
         }
         const warning = lenient
             ? `${position}: Character "${entry}" not found in official data`
@@ -165,7 +166,7 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
         }
         const officialChar = officialMap.get(entry.id.toLowerCase());
         if (officialChar) {
-            return { character: { ...officialChar }, warning: null };
+            return { character: { ...officialChar, uuid: generateUuid() }, warning: null };
         }
         const warning = lenient
             ? `${position}: Character "${entry.id}" not found in official data`
@@ -194,7 +195,8 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
         const officialChar = entryWithId.id ? officialMap.get(entryWithId.id.toLowerCase()) : null;
         const mergedChar = officialChar ? { ...officialChar, ...entryWithId } : entryWithId;
 
-        return { character: mergedChar as Character, warning };
+        // Ensure UUID is assigned (generate new one if not present)
+        return { character: { ...mergedChar, uuid: mergedChar.uuid || generateUuid() } as Character, warning };
     }
 
     return { character: null, warning: null };

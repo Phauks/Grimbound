@@ -41,6 +41,7 @@ export function PresetSection({
     loadDefaultPreset,
     exportPreset,
     importPreset,
+    reorderPresets,
   } = usePresets()
 
   const { addToast } = useToast()
@@ -56,10 +57,14 @@ export function PresetSection({
     onConfirm: () => void
   } | null>(null)
 
+  // Drag and drop state for custom presets
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
+
   // Load default preset on mount
   useEffect(() => {
     loadDefaultPreset()
-  }, [])
+  }, [loadDefaultPreset])
 
   const showConfirm = useCallback((title: string, message: string, onConfirm: () => void) => {
     setConfirmModal({ isOpen: true, title, message, onConfirm })
@@ -71,11 +76,11 @@ export function PresetSection({
 
   const handleDeleteCustomPreset = useCallback(
     (presetId: string) => {
+      setActivePresetMenu(null) // Close menu before showing confirm
       showConfirm('Delete Preset', 'Are you sure you want to delete this preset?', () => {
         try {
           deleteCustomPreset(presetId)
           onCustomPresetsChange(getCustomPresets())
-          setActivePresetMenu(null)
           if (activePresetId === presetId) {
             setActivePresetId('classic')
           }
@@ -91,11 +96,11 @@ export function PresetSection({
 
   const handleUpdateCustomPreset = useCallback(
     (presetId: string) => {
+      setActivePresetMenu(null) // Close menu before showing confirm
       showConfirm('Update Preset', 'Update this preset with current settings?', () => {
         try {
           updateCustomPreset(presetId)
           onCustomPresetsChange(getCustomPresets())
-          setActivePresetMenu(null)
           addToast('Preset updated', 'success')
         } catch (err) {
           addToast('Failed to update preset', 'error')
@@ -200,6 +205,42 @@ export function PresetSection({
     [setDefaultPreset, getCustomPresets, onCustomPresetsChange]
   )
 
+  // Drag and drop handlers for custom presets
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDropTargetIndex(index)
+    }
+  }, [draggedIndex])
+
+  const handleDragLeave = useCallback(() => {
+    setDropTargetIndex(null)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, toIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== toIndex) {
+      const success = reorderPresets(draggedIndex, toIndex)
+      if (success) {
+        onCustomPresetsChange(getCustomPresets())
+      }
+    }
+    setDraggedIndex(null)
+    setDropTargetIndex(null)
+  }, [draggedIndex, reorderPresets, getCustomPresets, onCustomPresetsChange])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIndex(null)
+    setDropTargetIndex(null)
+  }, [])
+
   const handleExportPreset = useCallback(
     (preset: CustomPreset) => {
       try {
@@ -277,7 +318,7 @@ export function PresetSection({
 
         {/* Custom Presets + Add button */}
         <div className={styles.presetButtons}>
-            {customPresets.map((preset) => {
+            {customPresets.map((preset, index) => {
                 const isDefault = defaultPresetId === preset.id
                 return (
                   <PresetCard
@@ -292,6 +333,15 @@ export function PresetSection({
                       setActivePresetMenu(activePresetMenu === preset.id ? null : preset.id)
                     }
                     menuIsOpen={activePresetMenu === preset.id}
+                    // Drag and drop props for custom presets
+                    draggable={true}
+                    isDragging={draggedIndex === index}
+                    isDropTarget={dropTargetIndex === index}
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
                     menuItems={[
                       {
                         icon: '✏️',

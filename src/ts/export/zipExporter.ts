@@ -103,8 +103,10 @@ export async function processTokenToBlob(token: Token, pngSettings?: PngExportOp
 
 /**
  * Batch size for parallel token processing
+ * Set to Infinity to process all tokens in parallel
+ * Modern browsers handle this efficiently
  */
-const EXPORT_BATCH_SIZE = 10;
+const EXPORT_BATCH_SIZE = Infinity;
 
 /**
  * Create a ZIP file with all token images
@@ -143,17 +145,25 @@ export async function createTokensZip(
     // Process tokens in parallel batches for better performance
     // Use smaller batch size for small token counts to show progress
     const effectiveBatchSize = tokens.length <= 5 ? 1 : EXPORT_BATCH_SIZE;
+    let processedCount = 0;
     
     for (let batchStart = 0; batchStart < tokens.length; batchStart += effectiveBatchSize) {
         const batchEnd = Math.min(batchStart + effectiveBatchSize, tokens.length);
         const batch = tokens.slice(batchStart, batchEnd);
 
-        // Process batch in parallel
+        // Process batch in parallel, reporting progress for each token
         const batchResults = await Promise.all(
             batch.map(async (token) => {
                 const blob = await processTokenToBlob(token, pngSettings);
                 const filename = getTokenFilename(token);
                 const folderPath = getTokenFolderPath(token, settings);
+                
+                // Report progress for each individual token
+                processedCount++;
+                if (progressCallback) {
+                    progressCallback(processedCount, tokens.length);
+                }
+                
                 return { blob, path: folderPath + filename };
             })
         );
@@ -161,10 +171,6 @@ export async function createTokensZip(
         // Add batch results to zip
         for (const { blob, path } of batchResults) {
             zip.file(path, blob);
-        }
-
-        if (progressCallback) {
-            progressCallback(batchEnd, tokens.length);
         }
     }
 

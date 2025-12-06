@@ -3,32 +3,30 @@
  * Image Utility Functions
  */
 
-import type { CorsProxyOption } from '../types/index.js';
+import CONFIG from '../config.js';
 
 // ============================================================================
 // CORS PROXY CONFIGURATION
 // ============================================================================
 
-// TODO: Replace allorigins with Cloudflare Workers proxy for better reliability
-const ALLORIGINS_PROXY = 'https://api.allorigins.win/raw?url=';
-
 /**
- * Global CORS proxy setting - singleton for non-React code access
+ * Apply CORS proxy to a URL for external resources
+ * Uses Cloudflare Workers proxy for loading external resources:
+ * - External character images
+ * - GitHub release downloads
+ * - Script almanac images
+ *
+ * @param url - Original URL
+ * @returns Proxied URL or original URL for local resources
  */
-let corsProxySetting: CorsProxyOption = 'allorigins';
+export function applyCorsProxy(url: string): string {
+    // Don't proxy local URLs or data URLs
+    if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
+        return url;
+    }
 
-/**
- * Set the global CORS proxy setting (called from React context)
- */
-export function setCorsProxySetting(setting: CorsProxyOption): void {
-    corsProxySetting = setting;
-}
-
-/**
- * Get the current CORS proxy setting
- */
-export function getCorsProxySetting(): CorsProxyOption {
-    return corsProxySetting;
+    // Always use Cloudflare Workers proxy for external URLs
+    return CONFIG.API.CORS_PROXY + encodeURIComponent(url);
 }
 
 // ============================================================================
@@ -63,7 +61,7 @@ function tryProxyLoad(url: string): Promise<HTMLImageElement> {
             img.src = ''; // Clean up to prevent memory leak
             reject(new Error(`Failed to load image via proxy: ${url}`));
         };
-        img.src = ALLORIGINS_PROXY + encodeURIComponent(url);
+        img.src = CONFIG.API.CORS_PROXY + encodeURIComponent(url);
     });
 }
 
@@ -77,21 +75,17 @@ export async function loadImage(url: string): Promise<HTMLImageElement> {
     if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
         return tryDirectLoad(url);
     }
-    
+
     try {
         // Try direct load first (faster when CORS works)
         return await tryDirectLoad(url);
     } catch (error) {
-        // If direct load failed and proxy is enabled, try proxy
-        if (corsProxySetting !== 'disabled') {
-            try {
-                return await tryProxyLoad(url);
-            } catch (proxyError) {
-                throw new Error(`Failed to load image from: ${url}. Direct load and proxy both failed.`);
-            }
+        // If direct load failed, try with Cloudflare Workers proxy
+        try {
+            return await tryProxyLoad(url);
+        } catch (proxyError) {
+            throw new Error(`Failed to load image from: ${url}. Direct load and proxy both failed.`);
         }
-        // Proxy disabled, throw original error
-        throw new Error(`Failed to load image from: ${url}. This may be due to CORS restrictions or the image not being accessible.`);
     }
 }
 

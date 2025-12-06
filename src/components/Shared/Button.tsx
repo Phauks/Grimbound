@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { cn } from '../../ts/utils'
 import styles from '../../styles/components/shared/Button.module.css'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger'
@@ -43,16 +44,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const classes = [
+    const classes = cn(
       styles.button,
       variantClasses[variant],
       sizeClasses[size],
       isIconOnly && styles.iconOnly,
       fullWidth && styles.fullWidth,
       className,
-    ]
-      .filter(Boolean)
-      .join(' ')
+    )
 
     return (
       <button ref={ref} className={classes} {...props}>
@@ -78,7 +77,7 @@ interface ToggleButtonProps extends ButtonProps {
 
 export const ToggleButton = forwardRef<HTMLButtonElement, ToggleButtonProps>(
   ({ active = false, className, ...props }, ref) => {
-    const classes = [styles.toggle, active && styles.active, className].filter(Boolean).join(' ')
+    const classes = cn(styles.toggle, active && styles.active, className)
 
     return <button ref={ref} className={classes} {...props} />
   }
@@ -93,6 +92,6 @@ interface ButtonGroupProps {
 }
 
 export function ButtonGroup({ children, className }: ButtonGroupProps) {
-  const classes = [styles.group, className].filter(Boolean).join(' ')
+  const classes = cn(styles.group, className)
   return <div className={classes}>{children}</div>
 }

@@ -58,7 +58,6 @@ export {
 // ============================================================================
 export {
     // Data loading
-    fetchOfficialData,
     loadExampleScript,
     loadJsonFile,
     // Script parsing

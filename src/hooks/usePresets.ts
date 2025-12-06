@@ -1,11 +1,8 @@
 import { useCallback } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 import { getPreset } from '../ts/generation/presets.js'
-import { sanitizeFilename } from '../ts/utils/index.js'
+import { sanitizeFilename, generateUuid, STORAGE_KEYS, getStorageItem, setStorageItem, removeStorageItem } from '../ts/utils/index.js'
 import type { GenerationOptions, PresetName } from '../ts/types/index.js'
-
-const STORAGE_KEY = 'clocktower_custom_presets'
-const DEFAULT_PRESET_KEY = 'clocktower_default_preset'
 
 export interface CustomPreset {
   id: string
@@ -13,6 +10,14 @@ export interface CustomPreset {
   description: string
   icon: string
   settings: GenerationOptions
+}
+
+/**
+ * Helper to save presets to localStorage
+ * Centralizes the localStorage.setItem call to avoid duplication
+ */
+function savePresetsToStorage(presets: CustomPreset[]): void {
+  setStorageItem(STORAGE_KEYS.CUSTOM_PRESETS, JSON.stringify(presets))
 }
 
 export function usePresets() {
@@ -37,13 +42,13 @@ export function usePresets() {
   const getCustomPresets = useCallback((): CustomPreset[] => {
     try {
       // Try new key first, then fallback to old key for migration
-      let data = localStorage.getItem(STORAGE_KEY)
+      let data = getStorageItem(STORAGE_KEYS.CUSTOM_PRESETS)
       if (!data) {
         // Check old key and migrate if found
-        const oldData = localStorage.getItem('bloodOnTheClockTower_presets')
+        const oldData = getStorageItem(STORAGE_KEYS.LEGACY_PRESETS)
         if (oldData) {
-          localStorage.setItem(STORAGE_KEY, oldData)
-          localStorage.removeItem('bloodOnTheClockTower_presets')
+          setStorageItem(STORAGE_KEYS.CUSTOM_PRESETS, oldData)
+          removeStorageItem(STORAGE_KEYS.LEGACY_PRESETS)
           data = oldData
         }
       }
@@ -53,19 +58,31 @@ export function usePresets() {
     }
   }, [])
 
+  const setDefaultPreset = useCallback((presetId: string) => {
+    try {
+      setStorageItem(STORAGE_KEYS.DEFAULT_PRESET, presetId)
+    } catch (err) {
+      console.error('Failed to set default preset:', err)
+    }
+  }, [])
+
+  const getDefaultPresetId = useCallback((): string => {
+    return getStorageItem(STORAGE_KEYS.DEFAULT_PRESET) || 'classic'
+  }, [])
+
   const saveCustomPreset = useCallback(
     (name: string, description: string, icon: string) => {
       try {
         const presets = getCustomPresets()
         const customPreset: CustomPreset = {
-          id: `custom_${Date.now()}`,
+          id: `custom_${generateUuid()}`,
           name,
           description,
           icon,
           settings: generationOptions,
         }
         presets.push(customPreset)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+        savePresetsToStorage(presets)
         return customPreset
       } catch (err) {
         console.error('Failed to save custom preset:', err)
@@ -79,7 +96,7 @@ export function usePresets() {
     try {
       const presets = getCustomPresets()
       const filtered = presets.filter((p: CustomPreset) => p.id !== presetId)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
+      savePresetsToStorage(filtered)
       
       // If deleted preset was default, reset to classic
       if (getDefaultPresetId() === presetId) {
@@ -89,7 +106,7 @@ export function usePresets() {
       console.error('Failed to delete custom preset:', err)
       throw err
     }
-  }, [])
+  }, [getCustomPresets, getDefaultPresetId, setDefaultPreset])
 
   const applyCustomPreset = useCallback(
     (preset: CustomPreset) => {
@@ -111,7 +128,7 @@ export function usePresets() {
         const index = presets.findIndex((p: CustomPreset) => p.id === presetId)
         if (index !== -1) {
           presets[index].settings = generationOptions
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+          savePresetsToStorage(presets)
           return true
         }
         return false
@@ -128,14 +145,14 @@ export function usePresets() {
       try {
         const presets = getCustomPresets()
         const newPreset: CustomPreset = {
-          id: `custom_${Date.now()}`,
+          id: `custom_${generateUuid()}`,
           name: `${preset.name} (Copy)`,
           description: preset.description,
           icon: preset.icon,
           settings: { ...preset.settings },
         }
         presets.push(newPreset)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+        savePresetsToStorage(presets)
         return newPreset
       } catch (err) {
         console.error('Failed to duplicate preset:', err)
@@ -151,14 +168,14 @@ export function usePresets() {
         const builtInPreset = getPreset(presetName)
         const presets = getCustomPresets()
         const newPreset: CustomPreset = {
-          id: `custom_${Date.now()}`,
+          id: `custom_${generateUuid()}`,
           name: `${builtInPreset.name} (Copy)`,
           description: builtInPreset.description,
           icon: builtInPreset.icon,
           settings: { ...builtInPreset.settings } as GenerationOptions,
         }
         presets.push(newPreset)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+        savePresetsToStorage(presets)
         return newPreset
       } catch (err) {
         console.error('Failed to duplicate built-in preset:', err)
@@ -179,7 +196,7 @@ export function usePresets() {
           if (description !== undefined) {
             presets[index].description = description
           }
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+          savePresetsToStorage(presets)
           return true
         }
         return false
@@ -190,18 +207,6 @@ export function usePresets() {
     },
     [getCustomPresets]
   )
-
-  const setDefaultPreset = useCallback((presetId: string) => {
-    try {
-      localStorage.setItem(DEFAULT_PRESET_KEY, presetId)
-    } catch (err) {
-      console.error('Failed to set default preset:', err)
-    }
-  }, [])
-
-  const getDefaultPresetId = useCallback((): string => {
-    return localStorage.getItem(DEFAULT_PRESET_KEY) || 'classic'
-  }, [])
 
   const loadDefaultPreset = useCallback(() => {
     try {
@@ -260,14 +265,14 @@ export function usePresets() {
             // Create new preset with fresh ID
             const presets = getCustomPresets()
             const newPreset: CustomPreset = {
-              id: `custom_${Date.now()}`,
+              id: `custom_${generateUuid()}`,
               name: imported.name,
               description: imported.description || '',
               icon: imported.icon || '📥',
               settings: imported.settings,
             }
             presets.push(newPreset)
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+            savePresetsToStorage(presets)
             resolve(newPreset)
           } catch (err) {
             reject(err)
@@ -276,6 +281,25 @@ export function usePresets() {
         reader.onerror = () => reject(new Error('Failed to read file'))
         reader.readAsText(file)
       })
+    },
+    [getCustomPresets]
+  )
+
+  const reorderPresets = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      try {
+        const presets = getCustomPresets()
+        if (fromIndex < 0 || fromIndex >= presets.length || toIndex < 0 || toIndex >= presets.length) {
+          return false
+        }
+        const [removed] = presets.splice(fromIndex, 1)
+        presets.splice(toIndex, 0, removed)
+        savePresetsToStorage(presets)
+        return true
+      } catch (err) {
+        console.error('Failed to reorder presets:', err)
+        return false
+      }
     },
     [getCustomPresets]
   )
@@ -295,5 +319,6 @@ export function usePresets() {
     loadDefaultPreset,
     exportPreset,
     importPreset,
+    reorderPresets,
   }
 }

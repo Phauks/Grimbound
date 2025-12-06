@@ -6,8 +6,41 @@
 // Token generator options
 export * from './tokenOptions.js';
 
+// UI Theme types
+export type { UITheme, ThemeId } from '../themes.js';
+export { UI_THEMES, DEFAULT_THEME_ID, getTheme, isValidThemeId, getThemeIds } from '../themes.js';
+
+// Image source types for visual selectors
+export type ImageSource = 'builtin' | 'user' | 'global';
+
+// Image option for visual selectors (backgrounds, flowers, leaves)
+export interface ImageOption {
+    id: string;
+    label: string;
+    src: string;
+    source: ImageSource;
+    thumbnail?: string;
+}
+
 // Team types
 export type Team = 'townsfolk' | 'outsider' | 'minion' | 'demon' | 'traveller' | 'fabled' | 'loric' | 'meta';
+
+// Decorative overrides for per-character styling
+export interface DecorativeOverrides {
+    useCustomLeaves?: boolean;
+    leafStyle?: string;
+    leafCount?: number;
+    leafProbability?: number;
+    hideSetupFlower?: boolean;
+    setupFlowerStyle?: string;
+}
+
+// Internal metadata stored separately from character JSON
+// This keeps the exported JSON clean while preserving generator state
+export interface CharacterMetadata {
+    idLinkedToName: boolean;    // Whether ID auto-updates with name (default: true)
+    decoratives?: DecorativeOverrides;
+}
 
 // Character data from BotC API
 export interface Character {
@@ -16,6 +49,10 @@ export interface Character {
     team: Team;
     ability?: string;
     flavor?: string;
+    overview?: string;
+    examples?: string;
+    howToRun?: string;
+    tips?: string;
     image: string | string[];
     setup?: boolean;
     reminders?: string[];
@@ -25,15 +62,22 @@ export interface Character {
     otherNight?: number;
     firstNightReminder?: string;
     otherNightReminder?: string;
+    // Internal field for the generator (stripped on export)
+    uuid?: string;              // Stable internal identifier
 }
 
 // Script meta information
 export interface ScriptMeta {
     id: '_meta';
     name?: string;
+    version?: string;
     author?: string;
     logo?: string;
     almanac?: string;
+    background?: string;
+    synopsis?: string;
+    overview?: string;
+    changelog?: string;
 }
 
 // Script entry can be a string, meta object, or character reference
@@ -70,6 +114,7 @@ export interface FontSpacingOptions {
     characterName: number;
     abilityText: number;
     reminderText: number;
+    metaText: number;
 }
 
 // Text shadow configuration
@@ -77,6 +122,7 @@ export interface TextShadowOptions {
     characterName: number;
     abilityText: number;
     reminderText: number;
+    metaText: number;
 }
 
 // PNG export configuration
@@ -109,23 +155,38 @@ export interface CustomPreset {
     isCustom: true;
 }
 
-// CORS proxy options for loading external images
-// TODO: Replace allorigins with Cloudflare Workers proxy for better reliability
-export type CorsProxyOption = 'allorigins' | 'disabled';
+// Icon settings for image positioning
+export interface IconSettings {
+    scale: number;
+    offsetX: number;
+    offsetY: number;
+}
+
+export interface IconSettingsOptions {
+    character: IconSettings;
+    reminder: IconSettings;
+    meta: IconSettings;
+}
 
 // Generation options (subset of TokenConfig)
 export interface GenerationOptions {
-    corsProxy?: CorsProxyOption;
     displayAbilityText: boolean;
     tokenCount: boolean;
+    generateImageVariants?: boolean;
     setupFlowerStyle: string;
     reminderBackground: string;
     reminderBackgroundImage?: string;
+    reminderBackgroundType?: 'color' | 'image';
     characterBackground: string;
     characterBackgroundColor?: string;
+    characterBackgroundType?: 'color' | 'image';
     metaBackground?: string;
+    metaBackgroundColor?: string;
+    metaBackgroundType?: 'color' | 'image';
     characterNameFont: string;
     characterNameColor?: string;
+    metaNameFont?: string;
+    metaNameColor?: string;
     characterReminderFont: string;
     abilityTextFont?: string;
     abilityTextColor?: string;
@@ -146,6 +207,9 @@ export interface GenerationOptions {
     pdfPadding?: number;
     pdfXOffset?: number;
     pdfYOffset?: number;
+    pdfImageQuality?: number;  // JPEG quality for PDF images (0.0-1.0)
+    pdfBleed?: number;         // Bleed in inches for cutting margin (default 1/8" = 0.125)
+    iconSettings?: IconSettingsOptions;  // Icon positioning per token type
 }
 
 // Generated token
@@ -158,19 +222,43 @@ export interface Token {
     diameter: number;  // Original diameter before DPI scaling
     hasReminders?: boolean;
     reminderCount?: number;
-    parentCharacter?: string;
+    parentCharacter?: string;  // Display name (kept for compatibility)
+    parentUuid?: string;       // Stable UUID reference
     reminderText?: string;
+    isOfficial?: boolean;      // Whether the character is from the official list
+    // Variant tracking for characters with multiple images
+    variantIndex?: number;     // 0-based index of this variant (undefined = not a variant)
+    totalVariants?: number;    // Total number of variants for this character
+}
+
+// Avery label template type
+export type AveryTemplateId = 'avery-94500' | 'avery-94509' | 'custom';
+
+// Avery template specification
+export interface AveryTemplate {
+    id: AveryTemplateId;
+    name: string;
+    labelDiameter: number;    // inches
+    columns: number;
+    rows: number;
+    leftMargin: number;       // inches
+    topMargin: number;        // inches
+    gap: number;              // inches between labels
+    labelsPerSheet: number;
 }
 
 // PDF options
 export interface PDFOptions {
-    pageWidth: number;
-    pageHeight: number;
-    dpi: number;
-    margin: number;
-    tokenPadding: number;
-    xOffset: number;
-    yOffset: number;
+    pageWidth: number;      // Page width in inches
+    pageHeight: number;     // Page height in inches
+    dpi: number;            // Dots per inch (resolution)
+    margin: number;         // Page margin in inches (deprecated, use template)
+    tokenPadding: number;   // Padding between tokens in inches (deprecated, use template gap)
+    xOffset: number;        // Horizontal offset in inches (fine-tuning)
+    yOffset: number;        // Vertical offset in inches (fine-tuning)
+    imageQuality: number;   // JPEG quality: 0.0-1.0 (0.90 = 90% quality)
+    template?: AveryTemplateId;  // Avery template to use for layout
+    bleed?: number;         // Bleed in inches for cutting margin (extends edge colors)
 }
 
 // Token layout item for PDF
@@ -233,6 +321,107 @@ export type ProgressCallback = (current: number, total: number) => void;
 // Incremental token callback - called as each token is generated
 export type TokenCallback = (token: Token) => void;
 
+// ============================================================================
+// Data Synchronization Types
+// ============================================================================
+
+// Sync state for UI feedback
+export type SyncState = 'idle' | 'checking' | 'downloading' | 'extracting' | 'success' | 'error';
+
+// Data source indicator
+export type DataSource = 'cache' | 'github' | 'api' | 'offline';
+
+// Sync status information
+export interface SyncStatus {
+    state: SyncState;
+    dataSource: DataSource;
+    currentVersion: string | null;
+    availableVersion: string | null;
+    lastSync: Date | null;
+    error: string | null;
+    progress?: {
+        current: number;
+        total: number;
+        message?: string;
+    };
+}
+
+// Version information parsed from date-based version strings (vYYYY.MM.DD-rN)
+export interface VersionInfo {
+    year: number;
+    month: number;
+    day: number;
+    revision: number;
+    raw: string;
+}
+
+// Character record stored in IndexedDB
+export interface CachedCharacter extends Character {
+    _storedAt: number;       // Timestamp when cached
+    _version: string;        // Version of the data package
+}
+
+// Metadata record for IndexedDB
+export interface SyncMetadata {
+    key: string;
+    value: string | number | boolean;
+}
+
+// Settings record for IndexedDB
+export interface SyncSettings {
+    key: string;
+    value: unknown;
+}
+
+// GitHub release metadata from API
+export interface GitHubRelease {
+    tag_name: string;
+    name: string;
+    published_at: string;
+    assets: GitHubAsset[];
+    body?: string;
+}
+
+// GitHub release asset
+export interface GitHubAsset {
+    name: string;
+    url: string;  // API URL for downloading with CORS support
+    browser_download_url: string;
+    size: number;
+    content_type: string;
+}
+
+// Package manifest from ZIP
+export interface PackageManifest {
+    version: string;
+    releaseDate?: string;
+    contentHash: string;
+    schemaVersion: number;
+    characterCount?: number;
+    reminderTokenCount?: number;
+    jinxCount?: number;
+    metadata?: {
+        author?: string;
+        repository?: string;
+    };
+}
+
+// Extracted package contents
+export interface ExtractedPackage {
+    characters: Character[];
+    manifest: PackageManifest;
+    icons: Map<string, Blob>;  // character-id -> WebP blob
+}
+
+// Storage quota information
+export interface StorageQuota {
+    usage: number;        // Bytes used
+    quota: number;        // Total bytes available
+    usageMB: number;      // MB used (derived)
+    quotaMB: number;      // Total MB available (derived)
+    percentUsed: number;  // Percentage (derived)
+}
+
 // Font settings
 export interface FontSettings {
     SIZE_RATIO: number;
@@ -273,16 +462,20 @@ export interface Config {
         PAGE_HEIGHT: number;
         DPI: number;
         MARGIN: number;
+        IMAGE_QUALITY: number;
+        DEFAULT_TEMPLATE: AveryTemplateId;
     };
     FONT_SPACING: {
         CHARACTER_NAME: number;
         ABILITY_TEXT: number;
         REMINDER_TEXT: number;
+        META_TEXT: number;
     };
     TEXT_SHADOW: {
         CHARACTER_NAME: number;
         ABILITY_TEXT: number;
         REMINDER_TEXT: number;
+        META_TEXT: number;
     };
     ZIP: {
         SAVE_IN_TEAM_FOLDERS: boolean;
@@ -293,9 +486,23 @@ export interface Config {
         MIN_BATCH_SIZE: number;
         MAX_BATCH_SIZE: number;
     };
+    SYNC: {
+        GITHUB_REPO: string;
+        GITHUB_API_BASE: string;
+        CHECK_INTERVAL_MS: number;
+        CACHE_TTL_MS: number;
+        STORAGE_QUOTA_WARNING_MB: number;
+        MAX_STORAGE_MB: number;
+        ENABLE_AUTO_SYNC: boolean;
+        MAX_RETRIES: number;
+        RETRY_DELAY_MS: number;
+        DB_NAME: string;
+        DB_VERSION: number;
+        CACHE_NAME: string;
+    };
     AUTO_GENERATE_DEFAULT: boolean;
     API: {
-        BOTC_DATA: string;
+        CORS_PROXY: string;
     };
     ASSETS: {
         FONTS: string;

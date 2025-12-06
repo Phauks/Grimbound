@@ -5,7 +5,6 @@
 
 // Data loading (I/O operations)
 export {
-    fetchOfficialData,
     loadExampleScript,
     loadJsonFile,
 } from './dataLoader.js';
@@ -30,3 +29,9 @@ export {
     groupByTeam,
     calculateTokenCounts,
 } from './characterUtils.js';
+
+// Character lookup service
+export {
+    characterLookup,
+    CharacterLookupService,
+} from './characterLookup.js';

@@ -12,6 +12,7 @@ import {
 } from '../utils/index.js';
 import type { ProgressState } from '../utils/index.js';
 import { TokenGenerator } from './tokenGenerator.js';
+import { getAllCharacterImageUrls } from '../data/characterUtils.js';
 import type { Character, Token, GenerationOptions, ProgressCallback, TokenCallback, Team, ScriptMeta } from '../types/index.js';
 
 // ============================================================================
@@ -32,7 +33,11 @@ function calculateTotalTokenCount(
     if (options.almanacToken && scriptMeta?.almanac) metaTokenCount++;
 
     const characterTokenCount = characters.reduce((sum, char) => {
-        return sum + 1 + (char.reminders?.length ?? 0);
+        // If generating variants, count all image variants for each character
+        const imageCount = options.generateImageVariants 
+            ? getAllCharacterImageUrls(char.image).length || 1
+            : 1;
+        return sum + imageCount + (char.reminders?.length ?? 0);
     }, 0);
 
     return characterTokenCount + metaTokenCount;
@@ -142,7 +147,8 @@ async function generateSingleCharacterToken(
     generator: TokenGenerator,
     character: Character,
     nameCount: Map<string, number>,
-    dpi: number
+    dpi: number,
+    officialData: Character[] = []
 ): Promise<Token | null> {
     if (!character.name) return null;
 
@@ -150,6 +156,9 @@ async function generateSingleCharacterToken(
         const canvas = await generator.generateCharacterToken(character);
         const baseName = sanitizeFilename(character.name);
         const filename = generateUniqueFilename(nameCount, baseName);
+
+        // Check if character is official by matching ID with official data
+        const isOfficial = officialData.some(official => official.id === character.id);
 
         return {
             type: 'character',
@@ -159,7 +168,9 @@ async function generateSingleCharacterToken(
             canvas,
             diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
             hasReminders: (character.reminders?.length ?? 0) > 0,
-            reminderCount: character.reminders?.length ?? 0
+            reminderCount: character.reminders?.length ?? 0,
+            parentUuid: character.uuid,
+            isOfficial,
         };
     } catch (error) {
         console.error(`Failed to generate token for ${character.name}:`, error);
@@ -179,6 +190,7 @@ async function generateReminderTokensForCharacter(
     character: Character,
     progress: ProgressState,
     dpi: number,
+    isCharacterOfficial: boolean,
     tokenCallback: TokenCallback | null = null,
     signal?: AbortSignal
 ): Promise<Token[]> {
@@ -206,7 +218,9 @@ async function generateReminderTokensForCharacter(
                 canvas,
                 diameter: CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * dpi,
                 parentCharacter: character.name,
-                reminderText: reminder
+                parentUuid: character.uuid,
+                reminderText: reminder,
+                isOfficial: isCharacterOfficial,
             };
             // Emit token immediately if callback provided
             if (tokenCallback) tokenCallback(token);
@@ -228,6 +242,8 @@ async function generateCharacterAndReminderTokens(
     characters: Character[],
     progress: ProgressState,
     dpi: number,
+    officialData: Character[],
+    generateImageVariants: boolean = false,
     tokenCallback: TokenCallback | null = null,
     signal?: AbortSignal
 ): Promise<Token[]> {
@@ -243,39 +259,67 @@ async function generateCharacterAndReminderTokens(
         }
 
         const batch = characters.slice(i, i + batchSize);
-        
-        // Pre-compute filenames for this batch (must be done sequentially to avoid collisions)
-        const batchFilenames = batch.map(character => {
-            if (!character.name) return null;
+
+        // Pre-compute filenames and official status for this batch
+        // When generating variants, each image needs a unique filename
+        const batchInfo = batch.map(character => {
+            if (!character.name) return { variants: [] as Array<{ filename: string; imageUrl: string | undefined; variantIndex: number; totalVariants: number }>, isOfficial: false };
+            const isOfficial = officialData.some(official => official.id === character.id);
+            
+            if (generateImageVariants) {
+                const imageUrls = getAllCharacterImageUrls(character.image);
+                if (imageUrls.length > 1) {
+                    // Multiple images - generate variant filenames
+                    const totalVariants = imageUrls.length;
+                    const variants = imageUrls.map((imageUrl, variantIndex) => {
+                        const baseName = sanitizeFilename(`${character.name}_v${variantIndex + 1}`);
+                        const filename = generateUniqueFilename(nameCount, baseName);
+                        return { filename, imageUrl, variantIndex, totalVariants };
+                    });
+                    return { variants, isOfficial };
+                }
+            }
+            
+            // Single image or variants disabled
             const baseName = sanitizeFilename(character.name);
-            return generateUniqueFilename(nameCount, baseName);
+            const filename = generateUniqueFilename(nameCount, baseName);
+            return { variants: [{ filename, imageUrl: undefined, variantIndex: 0, totalVariants: 1 }], isOfficial };
         });
 
-        // Generate character tokens in parallel
-        const charTokenPromises = batch.map(async (character, idx) => {
-            const filename = batchFilenames[idx];
-            if (!character.name || !filename) return null;
+        // Generate character tokens in parallel (including variants)
+        const charTokenPromises: Promise<Token | null>[] = [];
+        
+        batch.forEach((character, idx) => {
+            const { variants, isOfficial } = batchInfo[idx];
+            if (!character.name || variants.length === 0) return;
 
-            try {
-                const canvas = await generator.generateCharacterToken(character);
-                updateProgress(progress);
-                const token: Token = {
-                    type: 'character' as const,
-                    name: character.name,
-                    filename,
-                    team: (character.team || 'townsfolk') as Team,
-                    canvas,
-                    diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-                    hasReminders: (character.reminders?.length ?? 0) > 0,
-                    reminderCount: character.reminders?.length ?? 0
-                };
-                // Emit token immediately if callback provided
-                if (tokenCallback) tokenCallback(token);
-                return token;
-            } catch (error) {
-                console.error(`Failed to generate token for ${character.name}:`, error);
-                updateProgress(progress);
-                return null;
+            for (const { filename, imageUrl, variantIndex, totalVariants } of variants) {
+                charTokenPromises.push((async () => {
+                    try {
+                        const canvas = await generator.generateCharacterToken(character, imageUrl);
+                        updateProgress(progress);
+                        const token: Token = {
+                            type: 'character' as const,
+                            name: character.name,
+                            filename,
+                            team: (character.team || 'townsfolk') as Team,
+                            canvas,
+                            diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
+                            hasReminders: (character.reminders?.length ?? 0) > 0,
+                            reminderCount: character.reminders?.length ?? 0,
+                            isOfficial,
+                            // Only set variant properties if there are multiple variants
+                            ...(totalVariants > 1 && { variantIndex, totalVariants }),
+                        };
+                        // Emit token immediately if callback provided
+                        if (tokenCallback) tokenCallback(token);
+                        return token;
+                    } catch (error) {
+                        console.error(`Failed to generate token for ${character.name}:`, error);
+                        updateProgress(progress);
+                        return null;
+                    }
+                })());
             }
         });
 
@@ -284,9 +328,9 @@ async function generateCharacterAndReminderTokens(
             if (token !== null) tokens.push(token);
         }
 
-        // Generate reminder tokens in parallel for this batch
-        const reminderPromises = batch.map(character => 
-            generateReminderTokensForCharacter(generator, character, progress, dpi, tokenCallback, signal)
+        // Generate reminder tokens in parallel for this batch (only once per character, not per variant)
+        const reminderPromises = batch.map((character, idx) =>
+            generateReminderTokensForCharacter(generator, character, progress, dpi, batchInfo[idx].isOfficial, tokenCallback, signal)
         );
         const reminderResults = await Promise.all(reminderPromises);
         reminderResults.forEach(reminders => tokens.push(...reminders));
@@ -307,6 +351,7 @@ async function generateCharacterAndReminderTokens(
  * @param scriptMeta - Optional script metadata for meta tokens
  * @param tokenCallback - Optional callback for incremental token updates (called as each token is generated)
  * @param signal - Optional AbortSignal for cancellation
+ * @param officialData - Array of official characters for marking official tokens
  * @returns Promise resolving to array of generated tokens
  */
 export async function generateAllTokens(
@@ -315,7 +360,8 @@ export async function generateAllTokens(
     progressCallback: ProgressCallback | null = null,
     scriptMeta: ScriptMeta | null = null,
     tokenCallback: TokenCallback | null = null,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    officialData: Character[] = []
 ): Promise<Token[]> {
     // Check for cancellation before starting
     if (signal?.aborted) {
@@ -335,13 +381,13 @@ export async function generateAllTokens(
 
     // Generate meta tokens first (so they appear quickly)
     const metaTokens = await generateMetaTokens(generator, options, scriptMeta, progress, dpi, tokenCallback, signal);
-    
+
     // Check for cancellation between meta and character tokens
     if (signal?.aborted) {
         throw new DOMException('Token generation aborted', 'AbortError');
     }
-    
-    const characterTokens = await generateCharacterAndReminderTokens(generator, characters, progress, dpi, tokenCallback, signal);
+
+    const characterTokens = await generateCharacterAndReminderTokens(generator, characters, progress, dpi, officialData, options.generateImageVariants ?? false, tokenCallback, signal);
 
     // Return character tokens first, meta tokens last (for display ordering)
     return [...characterTokens, ...metaTokens];

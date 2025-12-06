@@ -1,30 +1,20 @@
 import { useState, useCallback, useRef } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 import { PDFGenerator } from '../ts/export/pdfGenerator.js'
-import { createTokensZip, getTokenFilename, getTokenFolderPath, processTokenToBlob } from '../ts/export/zipExporter.js'
-import { sanitizeFilename } from '../ts/utils/index.js'
-import type { ProgressCallback, JSZipInstance, ZipExportOptions } from '../ts/types/index.js'
+import { createTokensZip } from '../ts/export/zipExporter.js'
+import { createCompletePackage } from '../ts/export/completePackageExporter.js'
+import { sanitizeFilename, downloadFile, getCleanJsonForExport } from '../ts/utils/index.js'
+import type { ProgressCallback } from '../ts/types/index.js'
 
-// Extend Window interface for JSZip
-declare global {
-  interface Window {
-    JSZip: new () => JSZipInstance
-  }
+export type ExportStep = 'zip' | 'pdf' | 'json' | 'style' | 'tokens' | null
+
+interface DownloadOptions {
+  step: ExportStep
+  filename: string
+  requiresTokens?: boolean
+  requiresJson?: boolean
+  exportFn: (progressCallback?: ProgressCallback) => Promise<Blob | void>
 }
-
-// Helper to download a blob
-function downloadFile(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-export type ExportStep = 'zip' | 'pdf' | 'json' | 'style' | null
 
 export function useExport() {
   const { tokens, generationOptions, scriptMeta, jsonInput } = useTokenContext()
@@ -54,165 +44,143 @@ export function useExport() {
     setExportStep(null)
   }, [])
 
-  const downloadZip = useCallback(async () => {
-    if (tokens.length === 0) return
+  // Unified download function that handles all export types
+  const executeDownload = useCallback(async (options: DownloadOptions) => {
+    const { step, filename, requiresTokens = false, requiresJson = false, exportFn } = options
+
+    // Validation
+    if (requiresTokens && tokens.length === 0) return
+    if (requiresJson && !jsonInput) return
 
     const isPartOfDownloadAll = isDownloadingAllRef.current
 
-    // Only cancel/reset if this is a standalone call
+    // Only initialize state if this is a standalone call
     if (!isPartOfDownloadAll) {
       cancelExport()
       abortControllerRef.current = new AbortController()
       setIsExporting(true)
+      setExportStep(step)
     }
-    
-    setExportProgress({ current: 0, total: tokens.length })
 
     try {
-      const progressCallback: ProgressCallback = (current, total) => {
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new DOMException('Export cancelled', 'AbortError')
-        }
-        setExportProgress({ current, total })
+      // Create progress callback if needed
+      const progressCallback: ProgressCallback | undefined = requiresTokens
+        ? (current, total) => {
+            if (abortControllerRef.current?.signal.aborted) {
+              throw new DOMException('Export cancelled', 'AbortError')
+            }
+            setExportProgress({ current, total })
+          }
+        : undefined
+
+      // Set initial progress for token-based exports
+      if (requiresTokens && progressCallback) {
+        setExportProgress({ current: 0, total: tokens.length })
       }
 
-      const zipSettings = {
-        saveInTeamFolders: generationOptions.zipSettings?.saveInTeamFolders ?? true,
-        saveRemindersSeparately: generationOptions.zipSettings?.saveRemindersSeparately ?? true,
-        metaTokenFolder: generationOptions.zipSettings?.metaTokenFolder ?? true,
-        includeScriptJson: generationOptions.zipSettings?.includeScriptJson ?? false,
-        compressionLevel: generationOptions.zipSettings?.compressionLevel ?? 'normal' as const,
-      }
-
-      const blob = await createTokensZip(
-        tokens,
-        progressCallback,
-        zipSettings,
-        zipSettings.includeScriptJson ? jsonInput : undefined,
-        generationOptions.pngSettings
-      )
+      // Execute the export function
+      const result = await exportFn(progressCallback)
 
       // Check if cancelled before downloading
       if (abortControllerRef.current?.signal.aborted) {
         throw new DOMException('Export cancelled', 'AbortError')
       }
 
-      const filename = `${getBaseFilename()}.zip`
-      downloadFile(blob, filename)
+      // Download the file if a blob was returned
+      if (result instanceof Blob) {
+        downloadFile(result, filename)
+      }
     } catch (error) {
       // Don't log abort errors as they're intentional
       if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log('ZIP export cancelled')
+        console.log(`${step} export cancelled`)
         return
       }
-      console.error('ZIP creation error:', error)
+      console.error(`${step} export error:`, error)
       throw error
     } finally {
       // Only reset state if this is a standalone call
       if (!isPartOfDownloadAll) {
         setIsExporting(false)
         setExportProgress(null)
+        setExportStep(null)
         abortControllerRef.current = null
       }
     }
-  }, [tokens, generationOptions, jsonInput, getBaseFilename, cancelExport])
+  }, [tokens, jsonInput, cancelExport])
+
+  const downloadZip = useCallback(async () => {
+    const zipSettings = {
+      saveInTeamFolders: generationOptions.zipSettings?.saveInTeamFolders ?? true,
+      saveRemindersSeparately: generationOptions.zipSettings?.saveRemindersSeparately ?? true,
+      metaTokenFolder: generationOptions.zipSettings?.metaTokenFolder ?? true,
+      includeScriptJson: generationOptions.zipSettings?.includeScriptJson ?? false,
+      compressionLevel: generationOptions.zipSettings?.compressionLevel ?? 'normal' as const,
+    }
+
+    await executeDownload({
+      step: 'zip',
+      filename: `${getBaseFilename()}.zip`,
+      requiresTokens: true,
+      exportFn: async (progressCallback) => {
+        return await createTokensZip(
+          tokens,
+          progressCallback ?? null,
+          zipSettings,
+          zipSettings.includeScriptJson ? jsonInput : undefined,
+          generationOptions.pngSettings
+        )
+      },
+    })
+  }, [tokens, generationOptions, jsonInput, getBaseFilename, executeDownload])
 
   const downloadPdf = useCallback(async () => {
-    if (tokens.length === 0) return
+    const pdfGenerator = new PDFGenerator({
+      tokenPadding: generationOptions.pdfPadding ?? 0.25,  // Default 1/4" padding
+      xOffset: generationOptions.pdfXOffset ?? 0,         // Inches
+      yOffset: generationOptions.pdfYOffset ?? 0,         // Inches
+      imageQuality: generationOptions.pdfImageQuality ?? 0.90,
+      bleed: generationOptions.pdfBleed ?? 0.125,         // Default 1/8" bleed
+    })
 
-    const isPartOfDownloadAll = isDownloadingAllRef.current
+    await executeDownload({
+      step: 'pdf',
+      filename: `${getBaseFilename()}.pdf`,
+      requiresTokens: true,
+      exportFn: async (progressCallback) => {
+        await pdfGenerator.downloadPDF(tokens, `${getBaseFilename()}.pdf`, progressCallback ?? null)
+      },
+    })
+  }, [tokens, generationOptions, getBaseFilename, executeDownload])
 
-    // Only cancel/reset if this is a standalone call
-    if (!isPartOfDownloadAll) {
-      cancelExport()
-      abortControllerRef.current = new AbortController()
-      setIsExporting(true)
-    }
-    
-    setExportProgress({ current: 0, total: tokens.length })
+  const downloadJson = useCallback(async () => {
+    await executeDownload({
+      step: 'json',
+      filename: `${getBaseFilename()}.json`,
+      requiresJson: true,
+      exportFn: async () => {
+        // Strip internal fields (uuid) from exported JSON
+        const cleanJson = getCleanJsonForExport(jsonInput)
+        return new Blob([cleanJson], { type: 'application/json' })
+      },
+    })
+  }, [jsonInput, getBaseFilename, executeDownload])
 
-    try {
-      const pdfGenerator = new PDFGenerator({
-        tokenPadding: generationOptions.pdfPadding ?? 75,
-        xOffset: generationOptions.pdfXOffset ?? 0,
-        yOffset: generationOptions.pdfYOffset ?? 0,
-      })
-
-      const progressCallback: ProgressCallback = (current, total) => {
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new DOMException('Export cancelled', 'AbortError')
+  const downloadStyleFormat = useCallback(async () => {
+    await executeDownload({
+      step: 'style',
+      filename: `${getBaseFilename()}_style.json`,
+      exportFn: async () => {
+        const styleData = {
+          version: '1.0',
+          name: scriptMeta?.name ? `${scriptMeta.name} Style` : 'Custom Style',
+          generationOptions,
+          exportedAt: new Date().toISOString(),
         }
-        setExportProgress({ current, total })
-      }
-
-      const filename = `${getBaseFilename()}.pdf`
-      await pdfGenerator.downloadPDF(tokens, filename, progressCallback)
-    } catch (error) {
-      // Don't log abort errors as they're intentional
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log('PDF export cancelled')
-        return
-      }
-      console.error('PDF generation error:', error)
-      throw error
-    } finally {
-      // Only reset state if this is a standalone call
-      if (!isPartOfDownloadAll) {
-        setIsExporting(false)
-        setExportProgress(null)
-        abortControllerRef.current = null
-      }
-    }
-  }, [tokens, generationOptions, getBaseFilename, cancelExport])
-
-  const downloadJson = useCallback(() => {
-    if (!jsonInput) return
-
-    const isPartOfDownloadAll = isDownloadingAllRef.current
-    
-    if (!isPartOfDownloadAll) {
-      setIsExporting(true)
-      setExportStep('json')
-    }
-    
-    try {
-      const blob = new Blob([jsonInput], { type: 'application/json' })
-      const filename = `${getBaseFilename()}.json`
-      downloadFile(blob, filename)
-    } finally {
-      if (!isPartOfDownloadAll) {
-        setIsExporting(false)
-        setExportStep(null)
-      }
-    }
-  }, [jsonInput, getBaseFilename])
-
-  const downloadStyleFormat = useCallback(() => {
-    const isPartOfDownloadAll = isDownloadingAllRef.current
-    
-    if (!isPartOfDownloadAll) {
-      setIsExporting(true)
-      setExportStep('style')
-    }
-    
-    try {
-      // Export generation options as a style preset JSON
-      const styleData = {
-        version: '1.0',
-        name: scriptMeta?.name ? `${scriptMeta.name} Style` : 'Custom Style',
-        generationOptions: generationOptions,
-        exportedAt: new Date().toISOString(),
-      }
-      const blob = new Blob([JSON.stringify(styleData, null, 2)], { type: 'application/json' })
-      const filename = `${getBaseFilename()}_style.json`
-      downloadFile(blob, filename)
-    } finally {
-      if (!isPartOfDownloadAll) {
-        setIsExporting(false)
-        setExportStep(null)
-      }
-    }
-  }, [generationOptions, scriptMeta, getBaseFilename])
+        return new Blob([JSON.stringify(styleData, null, 2)], { type: 'application/json' })
+      },
+    })
+  }, [generationOptions, scriptMeta, getBaseFilename, executeDownload])
 
   const downloadAll = useCallback(async () => {
     if (tokens.length === 0) return
@@ -223,127 +191,31 @@ export function useExport() {
 
     try {
       setIsExporting(true)
-      
-      const JSZipConstructor = window.JSZip
-      if (!JSZipConstructor) {
-        throw new Error('JSZip library not loaded')
-      }
-      
-      const zip = new JSZipConstructor()
+
       const baseFilename = getBaseFilename()
-      
-      // Step 1: Add JSON
-      setExportStep('json')
-      if (jsonInput) {
-        zip.file(`${baseFilename}.json`, jsonInput)
-      }
-      
-      // Check for cancellation
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new DOMException('Export cancelled', 'AbortError')
-      }
-      
-      // Step 2: Add Style
-      setExportStep('style')
-      const styleData = {
-        version: '1.0',
-        name: scriptMeta?.name ? `${scriptMeta.name} Style` : 'Custom Style',
-        generationOptions: generationOptions,
-        exportedAt: new Date().toISOString(),
-      }
-      zip.file(`${baseFilename}_style.json`, JSON.stringify(styleData, null, 2))
-      
-      // Check for cancellation
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new DOMException('Export cancelled', 'AbortError')
-      }
-      
-      // Step 3: Add tokens to a tokens folder
-      setExportStep('zip')
-      setExportProgress({ current: 0, total: tokens.length })
-      
-      const zipSettings: ZipExportOptions = {
+      const zipSettings = {
         saveInTeamFolders: generationOptions.zipSettings?.saveInTeamFolders ?? true,
         saveRemindersSeparately: generationOptions.zipSettings?.saveRemindersSeparately ?? true,
         metaTokenFolder: generationOptions.zipSettings?.metaTokenFolder ?? true,
         includeScriptJson: false,
-        compressionLevel: generationOptions.zipSettings?.compressionLevel ?? 'normal',
+        compressionLevel: generationOptions.zipSettings?.compressionLevel ?? 'normal' as const,
       }
-      
-      // Process tokens in parallel batches for better performance
-      const BATCH_SIZE = 10
-      for (let batchStart = 0; batchStart < tokens.length; batchStart += BATCH_SIZE) {
-        // Check for cancellation
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new DOMException('Export cancelled', 'AbortError')
-        }
-        
-        const batchEnd = Math.min(batchStart + BATCH_SIZE, tokens.length)
-        const batch = tokens.slice(batchStart, batchEnd)
-        
-        // Process batch in parallel
-        const batchResults = await Promise.all(
-          batch.map(async (token) => {
-            const blob = await processTokenToBlob(token, generationOptions.pngSettings)
-            const filename = getTokenFilename(token)
-            const folderPath = getTokenFolderPath(token, zipSettings)
-            return { blob, path: `tokens/${folderPath}${filename}` }
-          })
-        )
-        
-        // Add batch results to zip
-        for (const { blob, path } of batchResults) {
-          zip.file(path, blob)
-        }
-        
-        setExportProgress({ current: batchEnd, total: tokens.length })
-        
-        // Yield to UI between batches
-        await new Promise(resolve => setTimeout(resolve, 0))
-      }
-      
-      // Check for cancellation
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new DOMException('Export cancelled', 'AbortError')
-      }
-      
-      // Step 4: Add PDF
-      setExportStep('pdf')
-      // PDF progress is by page, not token - we don't know page count yet, so show indeterminate briefly
-      setExportProgress(null)
-      
-      const pdfGenerator = new PDFGenerator({
-        tokenPadding: generationOptions.pdfPadding ?? 75,
-        xOffset: generationOptions.pdfXOffset ?? 0,
-        yOffset: generationOptions.pdfYOffset ?? 0,
+
+      const blob = await createCompletePackage({
+        tokens,
+        scriptJson: jsonInput,
+        generationOptions,
+        zipSettings,
+        scriptMeta,
+        baseFilename,
+        signal: abortControllerRef.current.signal,
+        progressCallback: (step, current, total) => {
+          setExportStep(step)
+          setExportProgress({ current, total })
+        },
       })
-      
-      const pdfProgressCallback: ProgressCallback = (currentPage, totalPages) => {
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new DOMException('Export cancelled', 'AbortError')
-        }
-        setExportProgress({ current: currentPage, total: totalPages })
-      }
-      
-      const pdfBlob = await pdfGenerator.getPDFBlob(tokens, pdfProgressCallback)
-      zip.file(`${baseFilename}.pdf`, pdfBlob)
-      
-      // Check for cancellation
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new DOMException('Export cancelled', 'AbortError')
-      }
-      
-      // Generate final ZIP
-      setExportStep(null)
-      setExportProgress(null)
-      
-      const finalBlob = await zip.generateAsync({
-        type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: { level: 6 }
-      })
-      
-      downloadFile(finalBlob, `${baseFilename}_complete.zip`)
+
+      downloadFile(blob, `${baseFilename}_complete.zip`)
     } catch (error) {
       // Don't log abort errors as they're intentional
       if (error instanceof DOMException && error.name === 'AbortError') {

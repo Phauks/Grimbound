@@ -1,6 +1,6 @@
 {
   "name": "clocktower-token-generator",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Blood on the Clocktower Token Generator",
   "type": "module",
   "scripts": {
@@ -27,10 +27,12 @@
     "clean:coverage": "rimraf coverage"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@types/jszip": "^3.4.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",

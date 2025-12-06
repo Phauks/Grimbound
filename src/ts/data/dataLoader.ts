@@ -3,46 +3,14 @@
  * Data Loader - I/O operations for loading script and character data
  */
 
-import CONFIG from '../config.js';
 import type {
     Character,
     ScriptEntry,
 } from '../types/index.js';
 
 // ============================================================================
-// Data Caching
-// ============================================================================
-
-/**
- * Cache for official character data
- */
-let officialDataCache: Character[] | null = null;
-
-// ============================================================================
 // Data Fetching
 // ============================================================================
-
-/**
- * Fetch official Blood on the Clocktower character data
- * @returns Array of character objects
- */
-export async function fetchOfficialData(): Promise<Character[]> {
-    if (officialDataCache) {
-        return officialDataCache;
-    }
-
-    try {
-        const response = await fetch(CONFIG.API.BOTC_DATA);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        officialDataCache = await response.json() as Character[];
-        return officialDataCache;
-    } catch (error) {
-        console.warn('Failed to fetch official data, continuing with script data only:', error);
-        return [];
-    }
-}
 
 /**
  * Load example script from file
@@ -135,7 +103,6 @@ export async function loadJsonFile(file: File): Promise<ScriptEntry[]> {
 // ============================================================================
 
 export default {
-    fetchOfficialData,
     loadExampleScript,
     loadJsonFile,
 };

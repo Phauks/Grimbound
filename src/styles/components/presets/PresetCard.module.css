@@ -16,12 +16,19 @@
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-width: 70px;
+  max-width: 70px;
 }
 
 .card:hover:not(:disabled) {
   background-color: var(--bg-hover);
   border-color: var(--color-accent);
   transform: translateY(-2px);
+}
+
+/* Disable transform when menu is open to prevent position issues */
+.card:has(.menuTrigger[aria-expanded="true"]) {
+  transform: none;
 }
 
 .card.active {
@@ -69,13 +76,26 @@
   color: var(--text-primary);
   text-align: center;
   width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Menu container - wraps trigger and dropdown for click-outside detection */
+.menuContainer {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  z-index: 100;
+}
+
+/* When menu is open, ensure container is above other cards */
+.menuContainer:has(.menuDropdown.active) {
+  z-index: 1001;
 }
 
 /* Menu trigger button */
 .menuTrigger {
-  position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,25 +116,25 @@
   opacity: 1;
 }
 
+/* Keep trigger visible when menu is open */
+.menuTrigger[aria-expanded="true"] {
+  opacity: 1;
+}
+
 .menuTrigger:hover {
   color: var(--text-primary);
   background: var(--bg-hover);
 }
 
-/* Dropdown menu */
+/* Dropdown menu - uses fixed positioning set via JS to escape all parent clipping */
 .menuDropdown {
-  position: absolute;
-  top: 0;
-  left: 100%;
-  z-index: 1000;
+  z-index: 9999;
   min-width: 150px;
-  margin-left: var(--spacing-xs);
   padding: var(--spacing-xs);
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
-  display: none;
 }
 
 .menuDropdown.active {
@@ -143,6 +163,29 @@
 
 .menuIcon {
   font-size: 1rem;
+}
+
+/* Drag and drop states */
+.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  background: var(--bg-tertiary);
+  transform: scale(0.95);
+}
+
+.dropTarget {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+  background: var(--color-primary-subtle, rgba(240, 230, 210, 0.1));
+}
+
+/* Show grab cursor for draggable cards */
+.card[draggable="true"] {
+  cursor: grab;
+}
+
+.card[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 

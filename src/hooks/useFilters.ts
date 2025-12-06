@@ -1,5 +1,8 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
+
+// Type for filter keys that have string array values
+type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders'
 
 export function useFilters() {
   const {
@@ -60,41 +63,29 @@ export function useFilters() {
     })
   }, [updateFilters])
 
-  const toggleTeam = useCallback((team: string) => {
-    const current = filters.teams
-    if (current.includes(team)) {
-      updateFilters({ teams: current.filter(t => t !== team) })
-    } else {
-      updateFilters({ teams: [...current, team] })
-    }
-  }, [filters.teams, updateFilters])
+  /**
+   * Factory function to create toggle handlers for filter arrays
+   * Reduces boilerplate by generalizing the toggle pattern
+   */
+  const createToggleHandler = useCallback(
+    <K extends FilterKey>(key: K) => {
+      return (value: string) => {
+        const current = filters[key]
+        if (current.includes(value)) {
+          updateFilters({ [key]: current.filter(v => v !== value) } as Partial<typeof filters>)
+        } else {
+          updateFilters({ [key]: [...current, value] } as Partial<typeof filters>)
+        }
+      }
+    },
+    [filters, updateFilters]
+  )
 
-  const toggleTokenType = useCallback((type: string) => {
-    const current = filters.tokenTypes
-    if (current.includes(type)) {
-      updateFilters({ tokenTypes: current.filter(t => t !== type) })
-    } else {
-      updateFilters({ tokenTypes: [...current, type] })
-    }
-  }, [filters.tokenTypes, updateFilters])
-
-  const toggleDisplay = useCallback((display: string) => {
-    const current = filters.display
-    if (current.includes(display)) {
-      updateFilters({ display: current.filter(d => d !== display) })
-    } else {
-      updateFilters({ display: [...current, display] })
-    }
-  }, [filters.display, updateFilters])
-
-  const toggleReminders = useCallback((reminder: string) => {
-    const current = filters.reminders
-    if (current.includes(reminder)) {
-      updateFilters({ reminders: current.filter(r => r !== reminder) })
-    } else {
-      updateFilters({ reminders: [...current, reminder] })
-    }
-  }, [filters.reminders, updateFilters])
+  // Memoize toggle handlers to maintain referential stability
+  const toggleTeam = useMemo(() => createToggleHandler('teams'), [createToggleHandler])
+  const toggleTokenType = useMemo(() => createToggleHandler('tokenTypes'), [createToggleHandler])
+  const toggleDisplay = useMemo(() => createToggleHandler('display'), [createToggleHandler])
+  const toggleReminders = useMemo(() => createToggleHandler('reminders'), [createToggleHandler])
 
   return {
     applyFilters,

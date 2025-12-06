@@ -28,8 +28,9 @@ export function SliderWithValue({
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value.replace(/[^0-9-]/g, '')
-    const numValue = parseInt(inputValue) || 0
+    // Support decimals by allowing dots in the input
+    const inputValue = e.target.value.replace(/[^0-9.-]/g, '')
+    const numValue = parseFloat(inputValue) || 0
     const clampedValue = Math.max(min, Math.min(max, numValue))
     onChange(clampedValue)
   }
@@ -63,7 +64,7 @@ export function SliderWithValue({
           type="range"
           className={styles.range}
           value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
           onDoubleClick={handleDoubleClick}
           min={min}
           max={max}

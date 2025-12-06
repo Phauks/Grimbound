@@ -235,14 +235,42 @@ export function drawTwoLineCenteredText(
 }
 
 /**
- * Draw ability text on token (horizontal, word-wrapped)
+ * Calculate the available width at a given Y position within a circle
+ * Uses the chord formula: width = 2 * sqrt(r² - d²)
+ * where r is radius and d is distance from center
+ * @param yPosition - Y coordinate position
+ * @param centerY - Y coordinate of circle center
+ * @param radius - Circle radius
+ * @param maxWidthRatio - Maximum width ratio to constrain (e.g., 0.9 = 90% of calculated width)
+ * @returns Available width at that Y position
+ */
+function calculateCircularWidth(yPosition: number, centerY: number, radius: number, maxWidthRatio: number = 0.9): number {
+    const distanceFromCenter = Math.abs(yPosition - centerY);
+    
+    // If outside the circle, return 0
+    if (distanceFromCenter > radius) {
+        return 0;
+    }
+    
+    // Calculate chord width at this height using Pythagorean theorem
+    // For a circle: x² + y² = r²
+    // So: x = sqrt(r² - y²), and width = 2x
+    const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
+    const fullWidth = 2 * halfWidth;
+    
+    // Apply max width ratio to add some padding from edges
+    return fullWidth * maxWidthRatio;
+}
+
+/**
+ * Draw ability text on token (horizontal, word-wrapped with adaptive width based on circular shape)
  * @param ctx - Canvas context
  * @param ability - Ability text
  * @param diameter - Token diameter
  * @param fontFamily - Font family name
  * @param fontSizeRatio - Font size as ratio of diameter
  * @param lineHeightMultiplier - Line height multiplier
- * @param maxWidthRatio - Max width as ratio of diameter
+ * @param maxWidthRatio - Max width as ratio of diameter (used as padding factor for circular calculation)
  * @param yPositionRatio - Y position as ratio of diameter
  * @param color - Text color
  * @param letterSpacing - Letter spacing in pixels
@@ -280,15 +308,47 @@ export function drawAbilityText(
     ctx.shadowOffsetX = shadowBlur / 3;
     ctx.shadowOffsetY = shadowBlur / 3;
 
-    // Word wrap the text
-    const maxWidth = diameter * maxWidthRatio;
+    // Calculate circle properties
+    const radius = diameter / 2;
+    const centerY = diameter / 2;
     const lineHeight = fontSize * lineHeightMultiplier;
-    const lines = wrapText(ability, ctx, maxWidth);
-
-    // Draw lines
     const startY = diameter * yPositionRatio;
-    for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], diameter / 2, startY + i * lineHeight);
+
+    // Split text into words for adaptive wrapping
+    const words = ability.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    let currentY = startY;
+
+    for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const testWidth = ctx.measureText(testLine).width;
+        
+        // Calculate available width at current Y position
+        // Use CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING for consistent padding from circle edges
+        const availableWidth = calculateCircularWidth(currentY + fontSize / 2, centerY, radius, CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING);
+        
+        if (testWidth <= availableWidth || !currentLine) {
+            // Word fits on current line (or it's the first word on the line)
+            currentLine = testLine;
+        } else {
+            // Word doesn't fit, save current line and start new one
+            lines.push(currentLine);
+            currentLine = word;
+            currentY += lineHeight;
+        }
+    }
+    
+    // Add the last line
+    if (currentLine) {
+        lines.push(currentLine);
+    }
+
+    // Draw lines with their adaptive widths
+    currentY = startY;
+    for (const line of lines) {
+        ctx.fillText(line, diameter / 2, currentY);
+        currentY += lineHeight;
     }
 
     ctx.restore();
