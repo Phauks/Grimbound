@@ -18,43 +18,36 @@ const canvasToDataUrl = (canvas: HTMLCanvasElement | undefined): string | null =
 }
 
 export function TokenPreview({ characterToken, reminderTokens, onReminderClick }: TokenPreviewProps) {
-  const [selectedReminder, setSelectedReminder] = useState<Token | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [startIndex, setStartIndex] = useState(0)
+
+  // Group reminder tokens to show count badges for duplicates
+  const groupedReminders = useMemo(() => groupTokensByIdentity(reminderTokens), [reminderTokens])
+  
+  // Derive selected reminder from index - automatically updates when tokens regenerate
+  const selectedReminder = selectedIndex !== null ? groupedReminders[selectedIndex]?.token ?? null : null
 
   // Convert canvases to data URLs for high-quality img rendering
   const characterImageUrl = useMemo(() => canvasToDataUrl(characterToken.canvas), [characterToken.canvas])
   const selectedReminderImageUrl = useMemo(() => canvasToDataUrl(selectedReminder?.canvas), [selectedReminder?.canvas])
-
-  // Group reminder tokens to show count badges for duplicates
-  const groupedReminders = useMemo(() => groupTokensByIdentity(reminderTokens), [reminderTokens])
 
   // Calculate visible reminders based on pagination (using grouped reminders)
   const visibleReminders = groupedReminders.slice(startIndex, startIndex + REMINDERS_PER_PAGE)
   const canGoLeft = startIndex > 0
   const canGoRight = startIndex + REMINDERS_PER_PAGE < groupedReminders.length
 
-  // Reset pagination when character changes
+  // Reset when character changes
   useEffect(() => {
     setStartIndex(0)
-  }, [characterToken])
-  
-  // Reset selected reminder when character changes
+    setSelectedIndex(null)
+  }, [characterToken.parentUuid])
+
+  // Clear if index out of bounds (reminder deleted)
   useEffect(() => {
-    setSelectedReminder(null)
-  }, [characterToken])
-  
-  const handleReminderClick = (reminder: Token) => {
-    // Toggle: deselect if already selected, otherwise select
-    if (selectedReminder?.filename === reminder.filename) {
-      setSelectedReminder(null)
-    } else {
-      setSelectedReminder(reminder)
+    if (selectedIndex !== null && selectedIndex >= groupedReminders.length) {
+      setSelectedIndex(null)
     }
-  }
-  
-  const handleCloseReminder = () => {
-    setSelectedReminder(null)
-  }
+  }, [groupedReminders.length, selectedIndex])
 
   return (
     <div className={styles.previewArea}>
@@ -71,7 +64,7 @@ export function TokenPreview({ characterToken, reminderTokens, onReminderClick }
             <button
               type="button"
               className={styles.closeBtn}
-              onClick={handleCloseReminder}
+              onClick={() => setSelectedIndex(null)}
               aria-label="Close reminder preview"
             >
               ×
@@ -102,18 +95,19 @@ export function TokenPreview({ characterToken, reminderTokens, onReminderClick }
           </button>
           <div className={styles.gallery}>
             {visibleReminders.length > 0 ? (
-              visibleReminders.map(({ token: reminder, count }) => {
+              visibleReminders.map(({ token: reminder, count }, i) => {
+                const globalIndex = startIndex + i
                 const reminderImageUrl = canvasToDataUrl(reminder.canvas)
                 return (
                   <div
-                    key={reminder.filename}
-                    className={`${styles.reminderItem} ${selectedReminder?.filename === reminder.filename ? styles.selected : ''}`}
-                    onClick={() => handleReminderClick(reminder)}
+                    key={globalIndex}
+                    className={`${styles.reminderItem} ${selectedIndex === globalIndex ? styles.selected : ''}`}
+                    onClick={() => setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
-                        handleReminderClick(reminder)
+                        setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)
                       }
                     }}
                     title={reminder.reminderText || reminder.filename}

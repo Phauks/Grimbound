@@ -274,6 +274,81 @@
   border: 1px solid var(--success-color);
 }
 
+.validationMessage.info {
+  background-color: var(--info-light, rgba(59, 130, 246, 0.1));
+  color: var(--info-color, #3b82f6);
+  border: 1px solid var(--info-color, #3b82f6);
+}
+
+.infoContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.infoIcon {
+  font-size: 1rem;
+}
+
+.infoActionBtn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--info-color, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.infoActionBtn:hover {
+  opacity: 0.9;
+}
+
+.infoHelpBtn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background-color: transparent;
+  color: var(--info-color, #3b82f6);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.infoHelpBtn:hover {
+  background-color: var(--info-color, #3b82f6);
+  color: white;
+}
+
+.infoTooltip {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--bg-panel);
+  border-radius: var(--border-radius);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.infoTooltip strong {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.infoTooltip a {
+  color: var(--info-color, #3b82f6);
+  margin-left: var(--spacing-xs);
+}
+
 .warningList {
   margin: var(--spacing-xs) 0 0 var(--spacing-md);
   padding: 0;

@@ -22,6 +22,9 @@ export interface IconSettings {
 
 export interface TokenGeneratorOptions {
     displayAbilityText: boolean;
+    generateBootleggerRules: boolean;
+    bootleggerRules?: string;
+    logoUrl?: string;
     tokenCount: boolean;
     setupFlowerStyle: string;
     reminderBackground: string;
@@ -72,6 +75,7 @@ export interface TokenGeneratorOptions {
  */
 export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
     displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
+    generateBootleggerRules: false,
     tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
     setupFlowerStyle: CONFIG.STYLE.SETUP_FLOWER_STYLE,
     reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,

@@ -1,5 +1,8 @@
 import { useEffect, useState, memo, useMemo } from 'react'
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver.js'
+import { useContextMenu } from '../../hooks/useContextMenu'
+import { ContextMenu } from '../Shared/ContextMenu'
+import type { ContextMenuItem } from '../Shared/ContextMenu'
 import { TEAM_LABELS } from '../../ts/config.js'
 import type { Token, Team } from '../../ts/types/index.js'
 import styles from '../../styles/components/tokens/TokenCard.module.css'
@@ -47,7 +50,9 @@ interface TokenCardProps {
   token: Token
   count?: number
   variants?: Token[]  // Array of variant tokens for cycling
-  onCardClick: (token: Token) => void
+  onCardClick?: (token: Token) => void
+  onSetAsExample?: (token: Token) => void
+  onDelete?: (token: Token) => void
 }
 
 // Map team names to CSS Module class names
@@ -73,14 +78,19 @@ function arePropsEqual(prevProps: TokenCardProps, nextProps: TokenCardProps): bo
     prevProps.token.filename === nextProps.token.filename &&
     prevProps.count === nextProps.count &&
     prevProps.variants?.length === nextProps.variants?.length &&
-    prevProps.onCardClick === nextProps.onCardClick
+    prevProps.onCardClick === nextProps.onCardClick &&
+    prevProps.onSetAsExample === nextProps.onSetAsExample &&
+    prevProps.onDelete === nextProps.onDelete
   )
 }
 
-function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: TokenCardProps) {
+function TokenCardComponent({ token, count = 1, variants = [], onCardClick, onSetAsExample, onDelete }: TokenCardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasRendered, setHasRendered] = useState(false)
   const [activeVariantIndex, setActiveVariantIndex] = useState(0)
+  
+  // Context menu state using shared hook
+  const contextMenu = useContextMenu()
 
   // Determine the currently displayed token (considering variants)
   const hasVariants = variants.length > 1
@@ -133,7 +143,7 @@ function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: To
   }, [activeVariantIndex, hasVariants, displayToken.filename])
 
   const handleCardClick = () => {
-    onCardClick(displayToken)
+    onCardClick?.(displayToken)
   }
 
   const handlePrevVariant = (e: React.MouseEvent) => {
@@ -145,6 +155,33 @@ function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: To
     e.stopPropagation() // Prevent card click
     setActiveVariantIndex((prev) => (prev + 1) % variants.length)
   }
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (onSetAsExample || onDelete) {
+      contextMenu.onContextMenu(e)
+    }
+  }
+
+  // Build context menu items
+  const contextMenuItems: ContextMenuItem[] = useMemo(() => {
+    const items: ContextMenuItem[] = []
+    if (onSetAsExample) {
+      items.push({
+        icon: '⭐',
+        label: 'Set as Example',
+        onClick: () => onSetAsExample(displayToken),
+      })
+    }
+    if (onDelete) {
+      items.push({
+        icon: '🗑️',
+        label: 'Delete',
+        variant: 'danger',
+        onClick: () => onDelete(displayToken),
+      })
+    }
+    return items
+  }, [onSetAsExample, onDelete, displayToken])
 
   // Get team display name for character, reminder, and meta tokens
   const getTeamDisplay = () => {
@@ -175,19 +212,21 @@ function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: To
   const teamClass = getTeamClass()
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.card}
-      onClick={handleCardClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          handleCardClick()
-        }
-      }}
-      title={`Click to view details: ${displayToken.name}${count > 1 ? ` (×${count})` : ''}${hasVariants ? ` (variant ${activeVariantIndex + 1}/${variants.length})` : ''}`}
-    >
+    <>
+      <div
+        ref={containerRef}
+        className={styles.card}
+        onClick={handleCardClick}
+        onContextMenu={handleContextMenu}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleCardClick()
+          }
+        }}
+        title={`Click to view details: ${displayToken.name}${count > 1 ? ` (×${count})` : ''}${hasVariants ? ` (variant ${activeVariantIndex + 1}/${variants.length})` : ''}`}
+      >
       {count > 1 && (
         <span className={styles.countBadge} title={`${count} copies`}>×{count}</span>
       )}
@@ -244,6 +283,16 @@ function TokenCardComponent({ token, count = 1, variants = [], onCardClick }: To
         </div>
       )}
     </div>
+
+    {/* Context menu */}
+    <ContextMenu
+      ref={contextMenu.menuRef}
+      isOpen={contextMenu.isOpen}
+      position={contextMenu.position}
+      items={contextMenuItems}
+      onClose={contextMenu.close}
+    />
+  </>
   )
 }
 

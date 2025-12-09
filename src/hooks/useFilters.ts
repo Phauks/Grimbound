@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 
 // Type for filter keys that have string array values
-type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders'
+type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders' | 'origin'
 
 export function useFilters() {
   const {
@@ -46,6 +46,16 @@ export function useFilters() {
       })
     }
 
+    // Filter by origin (official vs custom)
+    if (filters.origin.length > 0) {
+      result = result.filter((token) => {
+        const isOfficial = token.isOfficial === true
+        if (filters.origin.includes('official') && isOfficial) return true
+        if (filters.origin.includes('custom') && !isOfficial) return true
+        return false
+      })
+    }
+
     setFilteredTokens(result)
   }, [tokens, filters, setFilteredTokens])
 
@@ -60,6 +70,7 @@ export function useFilters() {
       tokenTypes: [],
       display: [],
       reminders: [],
+      origin: [],
     })
   }, [updateFilters])
 
@@ -86,6 +97,7 @@ export function useFilters() {
   const toggleTokenType = useMemo(() => createToggleHandler('tokenTypes'), [createToggleHandler])
   const toggleDisplay = useMemo(() => createToggleHandler('display'), [createToggleHandler])
   const toggleReminders = useMemo(() => createToggleHandler('reminders'), [createToggleHandler])
+  const toggleOrigin = useMemo(() => createToggleHandler('origin'), [createToggleHandler])
 
   return {
     applyFilters,
@@ -94,5 +106,6 @@ export function useFilters() {
     toggleTokenType,
     toggleDisplay,
     toggleReminders,
+    toggleOrigin,
   }
 }

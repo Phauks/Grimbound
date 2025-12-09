@@ -1,0 +1,138 @@
+/* ============================================
+   Component: Pages
+   Shared styles for page-level components
+   ============================================ */
+
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Important for flex scrolling */
+  width: 100%;
+}
+
+.pageContent {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* Important for nested flex scrolling */
+  overflow: auto;
+}
+
+/* Unified view (left sidebar + right panel) */
+.unifiedView {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Placeholder page styles (for TownSquare and empty states) */
+.placeholderPage {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 40px;
+  text-align: center;
+}
+
+.placeholderIcon {
+  font-size: 120px;
+  margin-bottom: 20px;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.placeholderTitle {
+  font-family: 'Dumbledor', Georgia, serif;
+  font-size: 48px;
+  color: var(--color-accent);
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.placeholderDescription {
+  font-size: 18px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.placeholderFeatures {
+  background: var(--bg-panel);
+  border: 2px solid var(--color-primary-dark);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.placeholderFeatures h2 {
+  font-family: 'TradeGothicBold', sans-serif;
+  font-size: 24px;
+  color: var(--color-accent);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.placeholderFeatures ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.placeholderFeatures li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.placeholderFeatures li:last-child {
+  border-bottom: none;
+}
+
+.placeholderFeatures li::before {
+  content: '✨';
+  margin-right: 12px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.placeholderNote {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .placeholderPage {
+    padding: 20px;
+    margin: 30px auto;
+  }
+
+  .placeholderIcon {
+    font-size: 80px;
+  }
+
+  .placeholderTitle {
+    font-size: 36px;
+  }
+
+  .placeholderDescription {
+    font-size: 16px;
+  }
+
+  .placeholderFeatures {
+    padding: 20px;
+  }
+
+  .placeholderFeatures h2 {
+    font-size: 20px;
+  }
+
+  .placeholderFeatures li {
+    font-size: 14px;
+  }
+}

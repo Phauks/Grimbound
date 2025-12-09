@@ -1,0 +1,74 @@
+/**
+ * Context Menu Component Styles
+ * Unified right-click menu styling used throughout the app
+ */
+
+.contextMenu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 150px;
+  padding: var(--spacing-xs, 4px);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  width: 100%;
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm, 4px);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast, 150ms ease);
+}
+
+.contextMenuItem:hover:not(.disabled) {
+  background-color: var(--bg-hover);
+}
+
+.contextMenuItem:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* Danger variant for destructive actions */
+.contextMenuItem.danger {
+  color: var(--color-danger);
+}
+
+.contextMenuItem.danger:hover:not(.disabled) {
+  background-color: var(--color-danger-subtle);
+}
+
+/* Disabled state */
+.contextMenuItem.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icon styling */
+.menuIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Label styling */
+.menuLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

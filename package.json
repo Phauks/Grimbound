@@ -27,11 +27,15 @@
     "clean:coverage": "rimraf coverage"
   },
   "dependencies": {
+    "dexie": "^4.2.1",
+    "fast-deep-equal": "^3.1.3",
+    "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/jszip": "^3.4.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

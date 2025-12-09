@@ -16,11 +16,15 @@ export interface GroupedToken {
 /**
  * Generate a unique identity key for a token to identify duplicates
  * - Character tokens: name + type + variantIndex (so variants are NOT grouped as duplicates)
- * - Reminder tokens: parentCharacter + reminderText + type
+ * - Reminder tokens: parentCharacter + reminderText + type + variantIndex (so variants are NOT grouped as duplicates)
  * - Meta tokens: name + type
  */
 function getTokenIdentityKey(token: Token): string {
   if (token.type === 'reminder') {
+    // Reminder tokens include variantIndex so each variant is separate
+    if (token.variantIndex !== undefined) {
+      return `reminder_${token.parentCharacter || ''}_${token.reminderText || ''}_v${token.variantIndex}`
+    }
     return `reminder_${token.parentCharacter || ''}_${token.reminderText || ''}`
   }
   // Character tokens include variantIndex so each variant is separate
@@ -33,11 +37,14 @@ function getTokenIdentityKey(token: Token): string {
 
 /**
  * Generate a base identity key for grouping variants together
- * Used to collect all variants of the same character
+ * Used to collect all variants of the same character or reminder
  */
 function getVariantGroupKey(token: Token): string {
   if (token.type === 'character') {
     return `character_${token.name}`
+  }
+  if (token.type === 'reminder') {
+    return `reminder_${token.parentCharacter || ''}_${token.reminderText || ''}`
   }
   return getTokenIdentityKey(token)
 }

@@ -7,20 +7,20 @@ import { TokenEditor } from '../TokenDetailView/TokenEditor'
 import { MetaEditor } from '../TokenDetailView/MetaEditor'
 import { updateCharacterInJson, updateMetaInJson, downloadCharacterTokensAsZip, downloadCharacterTokenOnly, downloadReminderTokensOnly, regenerateCharacterAndReminders } from '../../ts/ui/detailViewUtils'
 import { generateRandomName, nameToId, generateUuid } from '../../ts/utils/nameGenerator'
-import { getPreRenderedTokens } from '../../utils/customizePreRenderCache'
+import { getPreRenderedTokens, hashOptions } from '../../utils/customizePreRenderCache'
 import styles from '../../styles/components/views/Views.module.css'
 import previewStyles from '../../styles/components/tokenDetail/TokenPreview.module.css'
 import type { Token, Character, Team, ScriptMeta } from '../../ts/types/index.js'
 
 interface CustomizeViewProps {
   initialToken?: Token
-  selectedCharacterId?: string
-  onCharacterSelect?: (characterId: string) => void
+  selectedCharacterUuid?: string
+  onCharacterSelect?: (characterUuid: string) => void
   onGoToGallery?: () => void
   createNewCharacter?: boolean
 }
 
-export function CustomizeView({ initialToken, selectedCharacterId: externalSelectedId, onCharacterSelect, onGoToGallery, createNewCharacter }: CustomizeViewProps) {
+export function CustomizeView({ initialToken, selectedCharacterUuid: externalSelectedUuid, onCharacterSelect, onGoToGallery, createNewCharacter }: CustomizeViewProps) {
   const { characters, tokens, jsonInput, setJsonInput, setCharacters, setTokens, generationOptions, setMetadata, deleteMetadata, getMetadata, scriptMeta, setScriptMeta, officialData } = useTokenContext()
   const { addToast } = useToast()
   
@@ -29,28 +29,28 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     return token && token.type !== 'character' && token.type !== 'reminder'
   }
   
-  // Determine the initial character ID from the clicked token or external prop
-  const getInitialCharacterId = () => {
+  // Determine the initial character UUID from the clicked token or external prop
+  const getInitialCharacterUuid = () => {
     // If initial token is a meta token, don't select any character
     if (isMetaToken(initialToken)) return ''
     
-    if (externalSelectedId) return externalSelectedId
-    if (!initialToken) return characters[0]?.id || ''
+    if (externalSelectedUuid) return externalSelectedUuid
+    if (!initialToken) return characters[0]?.uuid || ''
     
     if (initialToken.parentCharacter) {
       const char = characters.find(c => c.name === initialToken.parentCharacter)
-      if (char) return char.id
+      if (char) return char.uuid || ''
     }
     
     if (initialToken.type === 'character') {
       const char = characters.find(c => c.name === initialToken.name)
-      if (char) return char.id
+      if (char) return char.uuid || ''
     }
     
-    return characters[0]?.id || ''
+    return characters[0]?.uuid || ''
   }
   
-  const [selectedCharacterId, setSelectedCharacterId] = useState<string>(getInitialCharacterId())
+  const [selectedCharacterUuid, setSelectedCharacterUuid] = useState<string>(getInitialCharacterUuid())
   const [editedCharacter, setEditedCharacter] = useState<Character | null>(null)
   const [selectedMetaToken, setSelectedMetaToken] = useState<Token | null>(
     initialToken && isMetaToken(initialToken) ? initialToken : null
@@ -65,9 +65,9 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     if (initialToken?.type === 'character') return initialToken
     
     // Then check shared pre-render cache (from hovering over Customize tab)
-    const initialCharId = getInitialCharacterId()
-    if (initialCharId && !isMetaToken(initialToken)) {
-      const cached = getPreRenderedTokens(initialCharId, generationOptions)
+    const initialCharUuid = getInitialCharacterUuid()
+    if (initialCharUuid && !isMetaToken(initialToken)) {
+      const cached = getPreRenderedTokens(initialCharUuid, generationOptions)
       if (cached) return cached.characterToken
     }
     return null
@@ -85,9 +85,9 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     }
     
     // Then check shared pre-render cache
-    const initialCharId = getInitialCharacterId()
-    if (initialCharId && !isMetaToken(initialToken)) {
-      const cached = getPreRenderedTokens(initialCharId, generationOptions)
+    const initialCharUuid = getInitialCharacterUuid()
+    if (initialCharUuid && !isMetaToken(initialToken)) {
+      const cached = getPreRenderedTokens(initialCharUuid, generationOptions)
       if (cached) return cached.reminderTokens
     }
     return []
@@ -99,27 +99,29 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
   const [previewReminderTokens, setPreviewReminderTokens] = useState<Token[]>(getInitialReminderTokens)
   
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const previousCharacterIdRef = useRef<string>(selectedCharacterId)
+  const previousCharacterUuidRef = useRef<string>(selectedCharacterUuid)
   const hasCreatedNewCharacterRef = useRef(false)
-  // Pre-render cache for hover optimization
+  // Pre-render cache for hover optimization - keyed by UUID+optionsHash for proper invalidation
   const preRenderCacheRef = useRef<Map<string, { characterToken: Token; reminderTokens: Token[] }>>(new Map())
   const preRenderingRef = useRef<Set<string>>(new Set())
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Skip regeneration for a specific character ID when we just applied cached tokens
-  // Initialize with the initial character ID if coming from gallery with a token OR from shared pre-render cache
-  const skipRegenerateForIdRef = useRef<string | null>((() => {
-    if (initialToken?.type === 'character') return getInitialCharacterId()
+  // Current options hash for cache key generation
+  const currentOptionsHashRef = useRef<string>(hashOptions(generationOptions))
+  // Skip regeneration for a specific character UUID when we just applied cached tokens
+  // Initialize with the initial character UUID if coming from gallery with a token OR from shared pre-render cache
+  const skipRegenerateForUuidRef = useRef<string | null>((() => {
+    if (initialToken?.type === 'character') return getInitialCharacterUuid()
     // Also skip if we got tokens from shared pre-render cache
-    const initialCharId = getInitialCharacterId()
-    if (initialCharId && getPreRenderedTokens(initialCharId, generationOptions)) {
-      return initialCharId
+    const initialCharUuid = getInitialCharacterUuid()
+    if (initialCharUuid && getPreRenderedTokens(initialCharUuid, generationOptions)) {
+      return initialCharUuid
     }
     return null
   })())
-  // Track the original ID when we started editing (for finding character in list when ID changes)
-  const originalCharacterIdRef = useRef<string>(selectedCharacterId)
+  // Track the original UUID when we started editing (for finding character in list when ID changes)
+  const originalCharacterUuidRef = useRef<string>(selectedCharacterUuid)
   // Track character UUID for preview clearing (only clear when switching to a different character)
-  const previousCharacterUuidRef = useRef<string | undefined>(undefined)
+  const prevCharacterUuidRef = useRef<string | undefined>(undefined)
   // Track if we just saved to prevent sync effect from overwriting editedCharacter
   const justSavedRef = useRef(false)
   // Ref for jsonInput to avoid dependency cycles in save effect
@@ -153,10 +155,13 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
         firstNightReminder: '',
         otherNightReminder: '',
         uuid: newUuid,
+        source: 'custom',
       }
       
-      // Initialize metadata with default idLinkedToName: true
-      setMetadata(newUuid, { idLinkedToName: true })
+      // Initialize metadata - check if ID matches name-derived ID
+      const expectedId = nameToId(newCharacter.name)
+      const isLinked = newCharacter.id === expectedId
+      setMetadata(newUuid, { idLinkedToName: isLinked })
       
       const updatedCharacters = [...characters, newCharacter]
       setCharacters(updatedCharacters)
@@ -177,7 +182,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
         setJsonInput(JSON.stringify([newCharacter], null, 2))
       }
       
-      setSelectedCharacterId(newId)
+      setSelectedCharacterUuid(newUuid)
       setEditedCharacter(newCharacter)
       
       // Generate token for the new character
@@ -194,19 +199,19 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     }
   }, [createNewCharacter, characters, jsonInput, setCharacters, setJsonInput, addToast, generationOptions, tokens, setTokens])
 
-  // Sync with external selected ID
+  // Sync with external selected UUID
   useEffect(() => {
-    if (externalSelectedId && externalSelectedId !== selectedCharacterId) {
-      setSelectedCharacterId(externalSelectedId)
+    if (externalSelectedUuid && externalSelectedUuid !== selectedCharacterUuid) {
+      setSelectedCharacterUuid(externalSelectedUuid)
     }
-  }, [externalSelectedId])
+  }, [externalSelectedUuid])
 
   // Notify parent of character selection changes
   useEffect(() => {
-    if (onCharacterSelect && selectedCharacterId) {
-      onCharacterSelect(selectedCharacterId)
+    if (onCharacterSelect && selectedCharacterUuid) {
+      onCharacterSelect(selectedCharacterUuid)
     }
-  }, [selectedCharacterId, onCharacterSelect])
+  }, [selectedCharacterUuid, onCharacterSelect])
 
   useEffect(() => {
     // Skip if we just saved - the editedCharacter is already up to date
@@ -214,59 +219,69 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       justSavedRef.current = false
       return
     }
-    if (selectedCharacterId && characters.length > 0) {
-      const char = characters.find((c) => c.id === selectedCharacterId)
+    if (selectedCharacterUuid && characters.length > 0) {
+      const char = characters.find((c) => c.uuid === selectedCharacterUuid)
       if (char) {
         setEditedCharacter(JSON.parse(JSON.stringify(char)))
         setIsDirty(false)
       }
     }
-  }, [selectedCharacterId, characters])
+  }, [selectedCharacterUuid, characters])
 
   const selectedCharacter = useMemo(
-    () => editedCharacter || characters.find((c) => c.id === selectedCharacterId),
-    [editedCharacter, selectedCharacterId, characters]
+    () => editedCharacter || characters.find((c) => c.uuid === selectedCharacterUuid),
+    [editedCharacter, selectedCharacterUuid, characters]
   )
 
-  // Check if selected character is official
+  // Check if selected character is official based on source field
   const isSelectedCharacterOfficial = useMemo(() => {
     if (!selectedCharacter) return false
-    return officialData.some(official => official.id === selectedCharacter.id)
-  }, [selectedCharacter, officialData])
+    return selectedCharacter.source === 'official'
+  }, [selectedCharacter])
 
   // Match by UUID only (UUID is required on all characters)
   const characterTokens = useMemo(
     () => {
-      const char = characters.find((c) => c.id === selectedCharacterId)
+      const char = characters.find((c) => c.uuid === selectedCharacterUuid)
       if (!char?.uuid) return []
       return tokens.filter((t) => t.type === 'character' && t.parentUuid === char.uuid)
     },
-    [tokens, selectedCharacterId, characters]
+    [tokens, selectedCharacterUuid, characters]
   )
 
   // Match by UUID only (UUID is required on all characters)
   const reminderTokens = useMemo(
     () => {
-      const char = characters.find((c) => c.id === selectedCharacterId)
+      const char = characters.find((c) => c.uuid === selectedCharacterUuid)
       if (!char?.uuid) return []
       return tokens.filter((t) => t.type === 'reminder' && t.parentUuid === char.uuid)
     },
-    [tokens, selectedCharacterId, characters]
+    [tokens, selectedCharacterUuid, characters]
   )
+
+  // Track previous character and update options hash when generationOptions change
+  // Clear pre-render cache when options change since cached tokens would be stale
+  useEffect(() => {
+    const newHash = hashOptions(generationOptions)
+    if (currentOptionsHashRef.current !== newHash) {
+      currentOptionsHashRef.current = newHash
+      // Clear cache since options changed - cached tokens are now invalid
+      preRenderCacheRef.current.clear()
+    }
+  }, [generationOptions])
 
   // Track previous character for reference updates (but don't clear preview tokens)
   // Preview tokens are now directly replaced by new generation, no need to clear
-  const prevSelectedIdRef = useRef<string>(selectedCharacterId)
   useEffect(() => {
-    const currentChar = characters.find(c => c.id === selectedCharacterId)
+    const currentChar = characters.find(c => c.uuid === selectedCharacterUuid)
     const currentUuid = currentChar?.uuid
     
     // Update refs for tracking
-    prevSelectedIdRef.current = selectedCharacterId
+    previousCharacterUuidRef.current = selectedCharacterUuid
     if (currentUuid) {
-      previousCharacterUuidRef.current = currentUuid
+      prevCharacterUuidRef.current = currentUuid
     }
-  }, [selectedCharacterId, characters])
+  }, [selectedCharacterUuid, characters])
 
   const regeneratePreview = useCallback(async () => {
     if (!editedCharacter) return
@@ -305,8 +320,8 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     if (!editedCharacter) return
     
     // Skip if we just applied cached tokens from hover pre-render for this character
-    if (skipRegenerateForIdRef.current === editedCharacter.id) {
-      skipRegenerateForIdRef.current = null
+    if (skipRegenerateForUuidRef.current === editedCharacter.uuid) {
+      skipRegenerateForUuidRef.current = null
       return
     }
     
@@ -334,22 +349,25 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
         // Mark that we're saving to prevent the sync effect from resetting editedCharacter
         justSavedRef.current = true
         
-        // Use originalCharacterIdRef to find the character (in case ID was changed)
-        const origId = originalCharacterIdRef.current
+        // Use originalCharacterUuidRef to find the character (in case ID was changed)
+        const origUuid = originalCharacterUuidRef.current
+        const origChar = charactersRef.current.find(c => c.uuid === origUuid)
+        const origId = origChar?.id || editedCharacter.id
+        
         // Use ref to get current jsonInput without causing dependency cycle
         const updatedJson = updateCharacterInJson(jsonInputRef.current, origId, editedCharacter)
         setJsonInput(updatedJson)
-        // Use ref to get current characters without causing dependency cycle
+        // Use ref to get current characters without causing dependency cycle - match by UUID
         const updatedChars = charactersRef.current.map(c => 
-          c.id === origId ? editedCharacter : c
+          c.uuid === origUuid ? editedCharacter : c
         )
         setCharacters(updatedChars)
         
-        // If ID changed, update selectedCharacterId and originalCharacterIdRef
-        if (editedCharacter.id !== origId) {
-          setSelectedCharacterId(editedCharacter.id)
-          originalCharacterIdRef.current = editedCharacter.id
-          previousCharacterIdRef.current = editedCharacter.id
+        // Update metadata - check if ID still matches name-derived ID
+        if (editedCharacter.uuid) {
+          const expectedId = nameToId(editedCharacter.name)
+          const isLinked = editedCharacter.id === expectedId
+          setMetadata(editedCharacter.uuid, { idLinkedToName: isLinked })
         }
         
         setIsDirty(false)
@@ -367,61 +385,66 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
   }, [isDirty, editedCharacter, setJsonInput, setCharacters])
 
   // Hover handler - pre-render character token on hover
-  const handleHoverCharacter = useCallback((characterId: string) => {
+  // Uses UUID + optionsHash as cache key for proper invalidation across projects
+  const handleHoverCharacter = useCallback((characterUuid: string) => {
     // Clear any pending hover timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current)
     }
     
+    const cacheKey = `${characterUuid}:${currentOptionsHashRef.current}`
+    
     // Skip if already selected, cached, or currently rendering
-    if (characterId === selectedCharacterId) return
-    if (preRenderCacheRef.current.has(characterId)) return
-    if (preRenderingRef.current.has(characterId)) return
+    if (characterUuid === selectedCharacterUuid) return
+    if (preRenderCacheRef.current.has(cacheKey)) return
+    if (preRenderingRef.current.has(cacheKey)) return
     
     // Small delay to avoid pre-rendering on quick mouse-overs
     hoverTimeoutRef.current = setTimeout(() => {
-      const char = characters.find(c => c.id === characterId)
+      const char = characters.find(c => c.uuid === characterUuid)
       if (!char) return
       
       // Double-check still not cached/rendering after delay
-      if (preRenderCacheRef.current.has(characterId)) return
-      if (preRenderingRef.current.has(characterId)) return
+      if (preRenderCacheRef.current.has(cacheKey)) return
+      if (preRenderingRef.current.has(cacheKey)) return
       
-      preRenderingRef.current.add(characterId)
+      preRenderingRef.current.add(cacheKey)
       
       regenerateCharacterAndReminders(char, generationOptions)
         .then(({ characterToken, reminderTokens }) => {
-          preRenderCacheRef.current.set(characterId, { characterToken, reminderTokens })
+          preRenderCacheRef.current.set(cacheKey, { characterToken, reminderTokens })
         })
         .catch((err) => console.error('Pre-render failed:', err))
         .finally(() => {
-          preRenderingRef.current.delete(characterId)
+          preRenderingRef.current.delete(cacheKey)
         })
     }, 100) // 100ms delay
-  }, [characters, generationOptions, selectedCharacterId])
+  }, [characters, generationOptions, selectedCharacterUuid])
 
-  const handleSelectCharacter = useCallback((newCharacterId: string) => {
+  const handleSelectCharacter = useCallback((newCharacterUuid: string) => {
     // Clear hover timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current)
       hoverTimeoutRef.current = null
     }
     
-    previousCharacterIdRef.current = newCharacterId
-    originalCharacterIdRef.current = newCharacterId // Reset original ID when switching characters
-    setSelectedCharacterId(newCharacterId)
+    const cacheKey = `${newCharacterUuid}:${currentOptionsHashRef.current}`
+    
+    previousCharacterUuidRef.current = newCharacterUuid
+    originalCharacterUuidRef.current = newCharacterUuid // Reset original UUID when switching characters
+    setSelectedCharacterUuid(newCharacterUuid)
     setSelectedMetaToken(null) // Clear meta token selection when selecting character
     setIsMetaSelected(false) // Clear meta selection when selecting character
     
     // Check pre-render cache for instant display
-    const cached = preRenderCacheRef.current.get(newCharacterId)
+    const cached = preRenderCacheRef.current.get(cacheKey)
     if (cached) {
       setPreviewCharacterToken(cached.characterToken)
       setPreviewReminderTokens(cached.reminderTokens)
       // Remove from cache after use
-      preRenderCacheRef.current.delete(newCharacterId)
+      preRenderCacheRef.current.delete(cacheKey)
       // Skip the next regeneration for this specific character since we already have the tokens
-      skipRegenerateForIdRef.current = newCharacterId
+      skipRegenerateForUuidRef.current = newCharacterUuid
     }
   }, [])
 
@@ -436,7 +459,8 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       })
       setIsDirty(true)
       // Invalidate pre-render cache for this character since it changed
-      preRenderCacheRef.current.delete(selectedCharacterId)
+      const cacheKey = `${selectedCharacterUuid}:${currentOptionsHashRef.current}`
+      preRenderCacheRef.current.delete(cacheKey)
     }
   }
 
@@ -445,6 +469,8 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     setIsDirty(true)
   }
 
+  // handleChangeTeam receives character ID from CharacterNavigation (via char.id)
+  // We need to look up the character by ID to get its UUID
   const handleChangeTeam = (characterId: string, newTeam: Team) => {
     const char = characters.find(c => c.id === characterId)
     if (!char) return
@@ -476,8 +502,8 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
         console.error('Failed to regenerate tokens:', error)
       })
 
-    // If this was the selected character, update its edited state
-    if (characterId === selectedCharacterId && editedCharacter) {
+    // If this was the selected character (by UUID), update its edited state
+    if (char.uuid === selectedCharacterUuid && editedCharacter) {
       setEditedCharacter({ ...editedCharacter, team: newTeam })
     }
 
@@ -504,10 +530,13 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       firstNightReminder: '',
       otherNightReminder: '',
       uuid: newUuid,
+      source: 'custom',
     }
     
-    // Initialize metadata with default idLinkedToName: true
-    setMetadata(newUuid, { idLinkedToName: true })
+    // Initialize metadata - check if ID matches name-derived ID
+    const expectedId = nameToId(newCharacter.name)
+    const isLinked = newCharacter.id === expectedId
+    setMetadata(newUuid, { idLinkedToName: isLinked })
     
     const updatedCharacters = [...characters, newCharacter]
     setCharacters(updatedCharacters)
@@ -528,9 +557,9 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       setJsonInput(JSON.stringify([newCharacter], null, 2))
     }
     
-    setSelectedCharacterId(newId)
+    setSelectedCharacterUuid(newUuid)
     setEditedCharacter(newCharacter)
-    originalCharacterIdRef.current = newId
+    originalCharacterUuidRef.current = newUuid
     
     // Generate token for the new character
     regenerateCharacterAndReminders(newCharacter, generationOptions)
@@ -545,13 +574,14 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     addToast('New character created', 'success')
   }
 
+  // handleDeleteCharacter receives character ID from CharacterNavigation
+  // We look up by ID to find the character, but track selection by UUID
   const handleDeleteCharacter = (characterId?: string) => {
-    const idToDelete = characterId || selectedCharacterId
-    if (!idToDelete) {
-      return
-    }
+    // If no characterId provided, delete the currently selected character
+    const charToDelete = characterId 
+      ? characters.find(c => c.id === characterId)
+      : characters.find(c => c.uuid === selectedCharacterUuid)
     
-    const charToDelete = characters.find(c => c.id === idToDelete)
     if (!charToDelete) return
     
     // Delete metadata for this character
@@ -559,7 +589,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       deleteMetadata(charToDelete.uuid)
     }
     
-    const updatedCharacters = characters.filter(c => c.id !== idToDelete)
+    const updatedCharacters = characters.filter(c => c.uuid !== charToDelete.uuid)
     setCharacters(updatedCharacters)
     
     // Filter tokens by UUID
@@ -570,8 +600,8 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       const parsed = JSON.parse(jsonInput)
       if (Array.isArray(parsed)) {
         const updatedParsed = parsed.filter((item: any) => {
-          if (typeof item === 'string') return item !== idToDelete
-          if (typeof item === 'object') return item.id !== idToDelete
+          if (typeof item === 'string') return item !== charToDelete.id
+          if (typeof item === 'object') return item.id !== charToDelete.id
           return true
         })
         setJsonInput(JSON.stringify(updatedParsed, null, 2))
@@ -580,11 +610,12 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       console.error('Failed to update JSON:', e)
     }
     
-    if (idToDelete === selectedCharacterId) {
+    // If we deleted the selected character, select another one
+    if (charToDelete.uuid === selectedCharacterUuid) {
       if (updatedCharacters.length > 0) {
-        setSelectedCharacterId(updatedCharacters[0].id)
+        setSelectedCharacterUuid(updatedCharacters[0].uuid || '')
       } else {
-        setSelectedCharacterId('')
+        setSelectedCharacterUuid('')
         setEditedCharacter(null)
       }
     }
@@ -592,6 +623,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     addToast(`Deleted ${charToDelete.name}`, 'success')
   }
 
+  // handleDuplicateCharacter receives character ID from CharacterNavigation
   const handleDuplicateCharacter = (characterId: string) => {
     const charToDuplicate = characters.find(c => c.id === characterId)
     if (!charToDuplicate) return
@@ -603,14 +635,21 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       id: newId,
       name: `${charToDuplicate.name} (Copy)`,
       uuid: newUuid,  // New UUID for duplicate
+      source: 'custom',  // Duplicates are always custom
     }
     
-    // Copy metadata from original character
+    // Copy metadata from original character, but verify idLinkedToName
     if (charToDuplicate.uuid) {
       const originalMetadata = getMetadata(charToDuplicate.uuid)
-      setMetadata(newUuid, { ...originalMetadata })
+      // Check if the duplicate's ID matches its name-derived ID
+      const expectedId = nameToId(newCharacter.name)
+      const isLinked = newCharacter.id === expectedId
+      setMetadata(newUuid, { ...originalMetadata, idLinkedToName: isLinked })
     } else {
-      setMetadata(newUuid, { idLinkedToName: true })
+      // Check if ID matches name-derived ID
+      const expectedId = nameToId(newCharacter.name)
+      const isLinked = newCharacter.id === expectedId
+      setMetadata(newUuid, { idLinkedToName: isLinked })
     }
     
     const charIndex = characters.findIndex(c => c.id === characterId)
@@ -635,7 +674,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       console.error('Failed to update JSON:', e)
     }
     
-    setSelectedCharacterId(newId)
+    setSelectedCharacterUuid(newUuid)
     addToast(`Duplicated ${charToDuplicate.name}`, 'success')
     
     regenerateCharacterAndReminders(newCharacter, generationOptions)
@@ -650,13 +689,13 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
 
   const handleSelectMetaToken = (token: Token) => {
     setSelectedMetaToken(token)
-    setSelectedCharacterId('') // Deselect character when viewing meta token
+    setSelectedCharacterUuid('') // Deselect character when viewing meta token
     setIsMetaSelected(true)
   }
 
   const handleSelectMeta = useCallback(() => {
     setSelectedMetaToken(null) // No specific token
-    setSelectedCharacterId('') // Deselect character
+    setSelectedCharacterUuid('') // Deselect character
     setIsMetaSelected(true)
   }, [])
 
@@ -665,13 +704,16 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     
     setIsLoading(true)
     try {
-      // Use originalCharacterIdRef to find the character (in case ID was changed)
-      const origId = originalCharacterIdRef.current
+      // Use originalCharacterUuidRef to find the character (in case ID was changed)
+      const origUuid = originalCharacterUuidRef.current
+      const origChar = characters.find(c => c.uuid === origUuid)
+      const origId = origChar?.id || editedCharacter.id
+      
       const updatedJson = updateCharacterInJson(jsonInput, origId, editedCharacter)
       setJsonInput(updatedJson)
       
       const updatedCharacters = characters.map(c => 
-        c.id === origId ? editedCharacter : c
+        c.uuid === origUuid ? editedCharacter : c
       )
       setCharacters(updatedCharacters)
       
@@ -680,8 +722,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
         generationOptions
       )
       
-      const originalChar = characters.find(c => c.id === origId)
-      const originalName = originalChar?.name || editedCharacter.name
+      const originalName = origChar?.name || editedCharacter.name
       
       const updatedTokens = tokens.filter(t => {
         if (t.type === 'character' && t.name === originalName) return false
@@ -691,13 +732,6 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       
       updatedTokens.push(characterToken, ...newReminderTokens)
       setTokens(updatedTokens)
-      
-      // If ID changed, update selectedCharacterId and originalCharacterIdRef
-      if (editedCharacter.id !== origId) {
-        setSelectedCharacterId(editedCharacter.id)
-        originalCharacterIdRef.current = editedCharacter.id
-        previousCharacterIdRef.current = editedCharacter.id
-      }
       
       setIsDirty(false)
       addToast(`Regenerated ${editedCharacter.name} tokens`, 'success')
@@ -718,7 +752,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       await downloadCharacterTokensAsZip(
         characterTokens[0],
         reminderTokens,
-        selectedCharacter?.name || selectedCharacterId,
+        selectedCharacter?.name || charData?.name || 'character',
         generationOptions.pngSettings,
         charData
       )
@@ -738,7 +772,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     try {
       await downloadCharacterTokenOnly(
         characterTokens[0],
-        selectedCharacter?.name || selectedCharacterId,
+        selectedCharacter?.name || 'character',
         generationOptions.pngSettings
       )
       addToast(`Downloaded ${selectedCharacter?.name} character token`, 'success')
@@ -760,7 +794,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
     try {
       await downloadReminderTokensOnly(
         reminderTokens,
-        selectedCharacter?.name || selectedCharacterId,
+        selectedCharacter?.name || 'character',
         generationOptions.pngSettings
       )
       addToast(`Downloaded ${selectedCharacter?.name} reminder tokens`, 'success')
@@ -799,12 +833,11 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
       <CharacterNavigation
         characters={characters}
         tokens={tokens}
-        selectedCharacterId={selectedCharacterId}
+        selectedCharacterUuid={selectedCharacterUuid}
         isMetaSelected={isMetaSelected}
-        officialCharacterIds={useMemo(() => new Set(officialData.map(c => c.id)), [officialData])}
         onSelectCharacter={handleSelectCharacter}
         onAddCharacter={() => {
-          setSelectedCharacterId('')
+          setSelectedCharacterUuid('')
           setEditedCharacter(null)
           setIsMetaSelected(false)
           setSelectedMetaToken(null)
@@ -873,7 +906,7 @@ export function CustomizeView({ initialToken, selectedCharacterId: externalSelec
                           const parentCharName = reminder.parentCharacter
                           if (parentCharName) {
                             const char = characters.find(c => c.name === parentCharName)
-                            if (char) setSelectedCharacterId(char.id)
+                            if (char?.uuid) setSelectedCharacterUuid(char.uuid)
                           }
                         }}
                       />

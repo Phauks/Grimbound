@@ -1,5 +1,8 @@
 // Shared Components
+export { AutoSaveIndicator } from './AutoSaveIndicator'
 export { Button, ToggleButton, ButtonGroup, type ButtonVariant, type ButtonSize } from './Button'
+export { ContextMenu, type ContextMenuItem, type ContextMenuProps } from './ContextMenu'
+export { IconUploader } from './IconUploader'
 export { ImageSelector, type ImageSelectorShape } from './ImageSelector'
 export { JsonEditorPanel } from './JsonEditorPanel'
 export { OptionGroup } from './OptionGroup'

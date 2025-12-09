@@ -7,7 +7,6 @@ import type { ProgressCallback, Token, TokenCallback } from '../ts/types/index.j
 export function useTokenGenerator() {
   const {
     characters,
-    officialData,
     generationOptions,
     scriptMeta,
     setTokens,
@@ -61,14 +60,14 @@ export function useTokenGenerator() {
         }
 
         // Generate tokens with incremental updates and abort support
+        // Characters have source field set during parsing
         await generateAllTokens(
           characters,
           generationOptions,
           progressCallback,
           scriptMeta || undefined,
           tokenCallback,
-          signal,
-          officialData
+          signal
         )
 
         setError(null)
@@ -87,7 +86,7 @@ export function useTokenGenerator() {
         abortControllerRef.current = null
       }
     },
-    [characters, officialData, generationOptions, scriptMeta, setTokens, setIsLoading, setError, setGenerationProgress]
+    [characters, generationOptions, scriptMeta, setTokens, setIsLoading, setError, setGenerationProgress]
   )
 
   // Cancel function for external use

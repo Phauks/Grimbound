@@ -1,5 +1,6 @@
 import styles from '../../styles/components/layout/Header.module.css'
 import { SyncStatusIndicator } from '../Shared/SyncStatusIndicator'
+import { AutoSaveIndicator } from '../Shared/AutoSaveIndicator'
 
 interface AppHeaderProps {
   onSettingsClick: () => void
@@ -7,13 +8,22 @@ interface AppHeaderProps {
   onAnnouncementsClick: () => void
   onSyncDetailsClick?: () => void
   version?: string
+  currentProjectName?: string | null
 }
 
-export function AppHeader({ onSettingsClick, onInfoClick, onAnnouncementsClick, onSyncDetailsClick, version = '0.2.0' }: AppHeaderProps) {
+export function AppHeader({ onSettingsClick, onInfoClick, onAnnouncementsClick, onSyncDetailsClick, version = '0.3.0', currentProjectName }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         <h1 className={styles.title}>Blood on the Clocktower Token Generator</h1>
+        {currentProjectName && (
+          <span style={{ marginLeft: '16px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            {currentProjectName}
+          </span>
+        )}
+        <div style={{ marginLeft: '16px' }}>
+          <AutoSaveIndicator showSaveButton={true} />
+        </div>
       </div>
       <div className={styles.headerRight}>
         <button

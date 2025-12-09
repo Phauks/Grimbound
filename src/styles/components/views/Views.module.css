@@ -500,6 +500,51 @@
   background: color-mix(in srgb, var(--color-info, #17a2b8) 85%, black);
 }
 
+.infoHelpBtn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-info, #17a2b8);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.infoHelpBtn:hover {
+  background: var(--color-info, #17a2b8);
+  color: white;
+}
+
+.infoTooltipInline {
+  flex-basis: 100%;
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: var(--bg-panel);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.infoTooltipInline strong {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.infoTooltipInline a {
+  color: var(--color-info, #3b82f6);
+  margin-left: var(--spacing-xs);
+}
+
 .showMoreBtn {
   display: block;
   width: 100%;
@@ -1084,27 +1129,22 @@
   text-align: left;
 }
 
-.btnWithInfo {
-  position: relative;
+.btnWithDescription {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
-.btnWithInfo .btnExportSmall {
+.btnWithDescription .btnExportSmall {
   width: 100%;
 }
 
-.infoIconCorner {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  cursor: help;
+.btnDescription {
+  margin: 0;
   font-size: 0.75rem;
-  opacity: 0.6;
-  transition: opacity var(--transition-fast);
-  line-height: 1;
-}
-
-.infoIconCorner:hover {
-  opacity: 1;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding: 0 var(--spacing-sm);
 }
 
 .btnHint {

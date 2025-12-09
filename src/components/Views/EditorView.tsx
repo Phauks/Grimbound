@@ -1,9 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTokenContext } from '../../contexts/TokenContext'
+import { useProjectContext } from '../../contexts/ProjectContext'
 import { useScriptData } from '../../hooks/useScriptData'
 import { useTokenGenerator } from '../../hooks/useTokenGenerator'
 import { useUndoStack } from '../../hooks/useUndoStack'
+import { useProjects } from '../../hooks/useProjects'
 import { JsonHighlight } from '../ScriptInput/JsonHighlight'
+import { sortScriptJsonBySAO, isScriptJsonSortedBySAO } from '../../ts/utils/index.js'
 import CONFIG from '../../ts/config.js'
 import styles from '../../styles/components/views/Views.module.css'
 import scriptStyles from '../../styles/components/scriptInput/ScriptInput.module.css'
@@ -11,10 +14,14 @@ import scriptStyles from '../../styles/components/scriptInput/ScriptInput.module
 interface EditorViewProps {
   onGenerate?: () => void
   onNavigateToCustomize?: () => void
+  onNavigateToProjects?: () => void
+  onCreateProject?: () => void
 }
 
-export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProps) {
-  const { jsonInput, setJsonInput, characters, isLoading, error, setError, warnings, setWarnings, scriptMeta } = useTokenContext()
+export function EditorView({ onGenerate, onNavigateToCustomize, onNavigateToProjects, onCreateProject }: EditorViewProps) {
+  const { jsonInput, setJsonInput, characters, isLoading, error, setError, warnings, setWarnings, scriptMeta, officialData } = useTokenContext()
+  const { currentProject } = useProjectContext()
+  const { projects, activateProject } = useProjects()
   const { loadScript, loadExampleScriptByName, parseJson, clearScript, addMetaToScript, hasUnderscoresInIds, removeUnderscoresFromIds } = useScriptData()
   const { generateTokens } = useTokenGenerator()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -24,6 +31,7 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
   const [isDragging, setIsDragging] = useState(false)
   const [selectedExample, setSelectedExample] = useState<string>('')
   const [showAllMessages, setShowAllMessages] = useState(false)
+  const [forceRegenerate, setForceRegenerate] = useState(0)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousJsonRef = useRef<string>('')
@@ -36,6 +44,12 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
   const exampleScripts = CONFIG.EXAMPLE_SCRIPTS.map((filename: string) =>
     filename.replace(/\.json$/, '')
   )
+
+  // Check if script is sorted by SAO (memoized to avoid recalculating on every render)
+  const isScriptSorted = useMemo(() => {
+    if (!jsonInput.trim() || characters.length === 0) return true
+    return isScriptJsonSortedBySAO(jsonInput, { officialData }) ?? true
+  }, [jsonInput, characters.length, officialData])
 
   // Undo/redo stack for JSON input
   const undoStack = useUndoStack(jsonInput)
@@ -80,7 +94,8 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
       return
     }
 
-    if (previousJsonRef.current === jsonInput) {
+    // Skip if JSON hasn't changed and not force regenerating
+    if (previousJsonRef.current === jsonInput && forceRegenerate === 0) {
       return
     }
 
@@ -100,7 +115,7 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [jsonInput, characters.length, autoGenerate, isLoading, generateTokens, onGenerate])
+  }, [jsonInput, characters.length, autoGenerate, isLoading, generateTokens, onGenerate, forceRegenerate])
 
   const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value
@@ -147,6 +162,20 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
       setError('Cannot format: Invalid JSON')
     }
   }, [jsonInput, setJsonInput, undoStack, setError])
+
+  const handleSort = useCallback(() => {
+    try {
+      const sorted = sortScriptJsonBySAO(jsonInput, { officialData })
+      setJsonInput(sorted)
+      undoStack.push(sorted)
+      // Parse the sorted JSON to update characters array
+      parseJson(sorted)
+      // Trigger force regeneration after React updates state
+      setForceRegenerate(prev => prev + 1)
+    } catch {
+      setError('Cannot sort: Invalid JSON')
+    }
+  }, [jsonInput, setJsonInput, undoStack, setError, officialData, parseJson])
 
   const handleUndo = useCallback(() => {
     if (undoStack.canUndo) {
@@ -234,18 +263,35 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
             </p>
             <button
               className={`btn-secondary ${styles.btnLeftPanelAction}`}
-              disabled
-              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              onClick={onCreateProject}
             >
               Create New Project
             </button>
             <button
               className={`btn-secondary ${styles.btnLeftPanelAction}`}
-              disabled
-              style={{ marginTop: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }}
+              onClick={onNavigateToProjects}
+              style={{ marginTop: '0.5rem' }}
             >
               Load Project
             </button>
+            {(() => {
+              // Find the most recently accessed project (excluding current if any)
+              const lastProject = projects
+                .filter(p => !currentProject || p.id !== currentProject.id)
+                .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt)[0]
+              
+              if (!lastProject) return null
+              
+              return (
+                <button
+                  className={`btn-secondary ${styles.btnLeftPanelAction}`}
+                  onClick={() => activateProject(lastProject.id)}
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  Load Last Project: {lastProject.name}
+                </button>
+              )
+            })()}
           </div>
 
           <div className={styles.leftPanelSection}>
@@ -321,23 +367,6 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
           <div className={styles.editorContainer}>
             {/* Unified Single-Row Toolbar */}
             <div className={styles.editorUnifiedToolbar}>
-              <div className={styles.generateGroup}>
-                <button
-                  className={`btn-primary ${styles.btnGenerateSmall}`}
-                  onClick={handleManualGenerate}
-                  disabled={isLoading || !characters.length}
-                >
-                  {isLoading ? 'Generating...' : 'Generate'}
-                </button>
-                <button
-                  className={`${styles.btnToggleSmall} ${autoGenerate ? styles.active : ''}`}
-                  onClick={() => setAutoGenerate(!autoGenerate)}
-                  title={autoGenerate ? 'Auto-regenerate is ON' : 'Auto-regenerate is OFF'}
-                >
-                  🔄
-                </button>
-              </div>
-
               <div className={styles.scriptMetaInline}>
                 <strong>{scriptMeta?.name || 'No Script Loaded'}</strong>
                 {scriptMeta?.author && <span className={styles.metaAuthor}> by {scriptMeta.author}</span>}
@@ -420,7 +449,7 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
             </div>
 
             {/* Messages indicator (errors/warnings) - below editor */}
-            {(error || warnings.length > 0 || (characters.length > 0 && !scriptMeta) || hasUnderscoresInIds()) && (
+            {(error || warnings.length > 0 || (characters.length > 0 && !scriptMeta) || hasUnderscoresInIds() || (characters.length > 0 && !isScriptSorted)) && (
               <div className={styles.messagesBar}>
                 {/* Missing _meta recommendation */}
                 {characters.length > 0 && !scriptMeta && !error && (
@@ -445,6 +474,19 @@ export function EditorView({ onGenerate, onNavigateToCustomize }: EditorViewProp
                       title="Remove underscores from character IDs"
                     >
                       Remove underscores
+                    </button>
+                  </div>
+                )}
+                {/* Script not sorted recommendation */}
+                {characters.length > 0 && !isScriptSorted && !error && (
+                  <div className={`${styles.messageItem} ${styles.infoItem}`}>
+                    <span>💡 Script not sorted in Standard Order.</span>
+                    <button
+                      className={styles.addMetaBtn}
+                      onClick={handleSort}
+                      title="Sort characters by Standard Amy Order"
+                    >
+                      Sort
                     </button>
                   </div>
                 )}

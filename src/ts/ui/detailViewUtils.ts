@@ -75,7 +75,7 @@ export async function regenerateCharacterAndReminders(
       
       for (const reminder of editedCharacter.reminders) {
         try {
-          const canvas = await generator.generateReminderToken(editedCharacter, reminder)
+          const canvas = await generator.generateReminderToken(editedCharacter, reminder, imageOverride)
           const reminderBaseName = sanitizeFilename(`${editedCharacter.name}_${reminder}`)
           
           // Handle duplicate reminders

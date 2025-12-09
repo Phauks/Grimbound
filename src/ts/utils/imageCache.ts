@@ -88,8 +88,8 @@ class ImageCache {
 
     /**
      * Get a cached image by URL, loading it if not present
-     * First checks sync storage (Cache API) for official character images,
-     * then falls back to network loading
+     * For relative paths (no http/https), tries sync storage first for official character images.
+     * For external URLs (http/https), loads directly from network to ensure custom images are used.
      */
     async get(url: string, isLocal: boolean = false): Promise<HTMLImageElement> {
         const entry = this.cache.get(url);
@@ -100,9 +100,20 @@ class ImageCache {
         }
 
         let image: HTMLImageElement;
+        
+        // Check if this is an external URL (http:// or https://)
+        const isExternalUrl = url.startsWith('http://') || url.startsWith('https://');
 
-        // For non-local images, try to load from sync storage first
-        if (!isLocal) {
+        // For local files, load directly
+        if (isLocal) {
+            image = await loadLocalImage(url);
+        }
+        // For external URLs, always load from network (custom images)
+        else if (isExternalUrl) {
+            image = await loadImage(url);
+        }
+        // For relative paths (official images), try sync storage first
+        else {
             const characterId = extractCharacterIdFromUrl(url);
             if (characterId) {
                 try {
@@ -122,9 +133,6 @@ class ImageCache {
                 // Can't extract character ID, load from network
                 image = await loadImage(url);
             }
-        } else {
-            // Local image
-            image = await loadLocalImage(url);
         }
         
         // Estimate size (width * height * 4 bytes per pixel)

@@ -1,8 +1,16 @@
-import { memo, useRef, useEffect, useLayoutEffect, useId, useState } from 'react'
-import type { CustomPreset } from '../../hooks/usePresets'
-import type { PresetName } from '../../ts/types/index'
+import { memo, useRef, useMemo } from 'react'
+import { useContextMenu } from '../../hooks/useContextMenu'
+import { ContextMenu } from '../Shared/ContextMenu'
+import type { ContextMenuItem } from '../Shared/ContextMenu'
 import { cn } from '../../ts/utils'
 import styles from '../../styles/components/presets/PresetCard.module.css'
+
+interface MenuItemConfig {
+  icon: string
+  label: string
+  description?: string
+  onClick: () => void
+}
 
 interface PresetCardProps {
   icon: string
@@ -10,7 +18,7 @@ interface PresetCardProps {
   title: string
   isActive?: boolean
   onApply: () => void
-  onMenuToggle: () => void
+  onMenuToggle: (e?: React.MouseEvent) => void
   menuIsOpen?: boolean
   menuItems?: MenuItemConfig[]
   defaultStar?: boolean
@@ -24,13 +32,6 @@ interface PresetCardProps {
   onDragLeave?: (e: React.DragEvent) => void
   onDrop?: (e: React.DragEvent) => void
   onDragEnd?: (e: React.DragEvent) => void
-}
-
-interface MenuItemConfig {
-  icon: string
-  label: string
-  description?: string
-  onClick: () => void
 }
 
 export const PresetCard = memo(
@@ -54,73 +55,27 @@ export const PresetCard = memo(
     onDrop,
     onDragEnd,
   }: PresetCardProps) => {
-    const menuContainerRef = useRef<HTMLDivElement>(null)
-    const dropdownRef = useRef<HTMLDivElement>(null)
-    const triggerRef = useRef<HTMLButtonElement>(null)
-    const menuId = useId()
-    const triggerId = useId()
-    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null)
+    const cardRef = useRef<HTMLDivElement>(null)
 
-    // Calculate menu position synchronously after DOM update
-    useLayoutEffect(() => {
-      if (menuIsOpen && triggerRef.current) {
-        const rect = triggerRef.current.getBoundingClientRect()
-        // Only set position if the element has been laid out (non-zero dimensions)
-        if (rect.width > 0 && rect.height > 0) {
-          setMenuPosition({
-            top: rect.top,
-            left: rect.right + 8,
-          })
-        } else {
-          // Element not yet laid out, try again on next frame
-          requestAnimationFrame(() => {
-            if (triggerRef.current) {
-              const retryRect = triggerRef.current.getBoundingClientRect()
-              setMenuPosition({
-                top: retryRect.top,
-                left: retryRect.right + 8,
-              })
-            }
-          })
-        }
-      } else {
-        setMenuPosition(null)
-      }
-    }, [menuIsOpen])
+    // Use context menu hook in controlled mode (parent manages open state)
+    const contextMenu = useContextMenu({
+      isOpen: menuIsOpen,
+      onToggle: (open) => {
+        if (!open) onMenuToggle()
+      },
+      positionMode: 'element',
+      elementOffset: { x: 8, y: 0 },
+    })
 
-    // Close menu on click outside or Escape key
-    useEffect(() => {
-      if (!menuIsOpen) return
-
-      const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as Node
-        // Check if click is outside both the container and the dropdown
-        const isOutsideContainer = !menuContainerRef.current?.contains(target)
-        const isOutsideDropdown = !dropdownRef.current?.contains(target)
-        
-        if (isOutsideContainer && isOutsideDropdown) {
-          onMenuToggle()
-        }
-      }
-
-      const handleEscape = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          onMenuToggle()
-        }
-      }
-
-      // Delay adding click listener to avoid catching the opening click
-      const timeoutId = requestAnimationFrame(() => {
-        document.addEventListener('mousedown', handleClickOutside)
-      })
-      document.addEventListener('keydown', handleEscape)
-
-      return () => {
-        cancelAnimationFrame(timeoutId)
-        document.removeEventListener('mousedown', handleClickOutside)
-        document.removeEventListener('keydown', handleEscape)
-      }
-    }, [menuIsOpen, onMenuToggle])
+    // Convert MenuItemConfig to ContextMenuItem format
+    const contextMenuItems: ContextMenuItem[] = useMemo(() => {
+      return menuItems.map((item) => ({
+        icon: item.icon,
+        label: item.label,
+        description: item.description,
+        onClick: item.onClick,
+      }))
+    }, [menuItems])
 
     const cardClasses = cn(
       styles.card,
@@ -130,10 +85,31 @@ export const PresetCard = memo(
       isDropTarget && styles.dropTarget,
     )
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+      if (menuItems.length > 0) {
+        e.preventDefault()
+        // Open context menu positioned relative to the card element
+        contextMenu.open(e, undefined, cardRef.current)
+        onMenuToggle(e)
+      }
+    }
+
+    // Calculate position for element-based positioning
+    const menuPosition = useMemo(() => {
+      if (!menuIsOpen || !cardRef.current) return null
+      const rect = cardRef.current.getBoundingClientRect()
+      return {
+        x: rect.right + 8,
+        y: rect.top,
+      }
+    }, [menuIsOpen])
+
     return (
       <div
+        ref={cardRef}
         className={cardClasses}
         onClick={onApply}
+        onContextMenu={handleContextMenu}
         title={title}
         role="button"
         tabIndex={0}
@@ -153,55 +129,15 @@ export const PresetCard = memo(
         {defaultStar && <span className={styles.defaultStar}>⭐</span>}
         <span className={styles.icon}>{icon}</span>
         <span className={styles.name}>{name}</span>
-        {menuItems.length > 0 && (
-          <div ref={menuContainerRef} className={styles.menuContainer}>
-            <button
-              ref={triggerRef}
-              id={triggerId}
-              className={styles.menuTrigger}
-              title="Preset options"
-              aria-haspopup="menu"
-              aria-expanded={menuIsOpen}
-              aria-controls={menuId}
-              onClick={(e) => {
-                e.stopPropagation()
-                onMenuToggle()
-              }}
-            >
-              ⋮
-            </button>
-            {menuIsOpen && menuPosition && (
-              <div
-                ref={dropdownRef}
-                id={menuId}
-                role="menu"
-                aria-labelledby={triggerId}
-                className={cn(styles.menuDropdown, styles.active)}
-                style={{
-                  position: 'fixed',
-                  top: menuPosition.top,
-                  left: menuPosition.left,
-                }}
-              >
-                {menuItems.map((item) => (
-                  <button
-                    key={item.label}
-                    role="menuitem"
-                    className={styles.menuItem}
-                    data-tooltip={item.description}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      item.onClick()
-                    }}
-                  >
-                    <span className={styles.menuIcon}>{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+
+        {/* Context menu using shared component */}
+        <ContextMenu
+          ref={contextMenu.menuRef}
+          isOpen={menuIsOpen}
+          position={menuPosition}
+          items={contextMenuItems}
+          onClose={() => onMenuToggle()}
+        />
       </div>
     )
   }

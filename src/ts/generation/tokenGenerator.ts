@@ -130,13 +130,19 @@ export class TokenGenerator {
             await this.drawBackground(ctx, this.options.characterBackground, diameter);
         }
         
-        // Determine if ability text will be displayed
-        const hasAbilityText = Boolean(this.options.displayAbilityText && character.ability);
+        // Determine ability text to display:
+        // - Bootlegger rules take priority when enabled and present (replaces regular ability text)
+        // - Otherwise use regular ability text if enabled
+        const bootleggerText = this.options.bootleggerRules?.trim();
+        const abilityTextToDisplay = bootleggerText 
+            ? bootleggerText 
+            : (this.options.displayAbilityText ? character.ability : undefined);
+        const hasAbilityText = Boolean(abilityTextToDisplay?.trim());
         
         // Calculate optimal icon size when ability text is present
         let abilityTextHeight = 0;
         if (hasAbilityText) {
-            abilityTextHeight = this.calculateAbilityTextHeight(ctx, character.ability!, diameter);
+            abilityTextHeight = this.calculateAbilityTextHeight(ctx, abilityTextToDisplay!, diameter);
         }
         
         // Draw character image with adjusted layout based on ability text presence
@@ -153,7 +159,7 @@ export class TokenGenerator {
         }
 
         if (hasAbilityText) {
-            this.drawCharacterAbilityText(ctx, character.ability!, diameter);
+            this.drawCharacterAbilityText(ctx, abilityTextToDisplay!, diameter);
         }
 
         if (character.name) {
@@ -279,8 +285,9 @@ export class TokenGenerator {
             const baseOffsetY = (diameter - imgSize) / 2 - diameter * verticalOffset;
 
             // Apply user-defined offsets
+            // Note: offsetY is negated so positive values move the icon up (more intuitive for users)
             const offsetX = baseOffsetX + iconSettings.offsetX;
-            const offsetY = baseOffsetY + iconSettings.offsetY;
+            const offsetY = baseOffsetY - iconSettings.offsetY;
 
             ctx.drawImage(
                 charImage,
@@ -376,7 +383,7 @@ export class TokenGenerator {
     // REMINDER TOKEN GENERATION
     // ========================================================================
 
-    async generateReminderToken(character: Character, reminderText: string): Promise<HTMLCanvasElement> {
+    async generateReminderToken(character: Character, reminderText: string, imageOverride?: string): Promise<HTMLCanvasElement> {
         const diameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * this.options.dpi;
         const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
@@ -393,7 +400,7 @@ export class TokenGenerator {
             }
         }
 
-        await this.drawCharacterImage(ctx, character, diameter, REMINDER_LAYOUT, 'reminder');
+        await this.drawCharacterImage(ctx, character, diameter, REMINDER_LAYOUT, 'reminder', imageOverride);
         ctx.restore();
 
         drawCurvedText(ctx, {
@@ -442,22 +449,55 @@ export class TokenGenerator {
         return canvas;
     }
 
-    async generateScriptNameToken(scriptName: string, author?: string): Promise<HTMLCanvasElement> {
+    async generateScriptNameToken(scriptName: string, author?: string, hideAuthor?: boolean): Promise<HTMLCanvasElement> {
         const metaFont = this.options.metaNameFont || this.options.characterNameFont;
         const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
         
-        return this.generateMetaToken((ctx, diameter, center, radius) => {
-            drawCenteredWrappedText(ctx, {
-                text: scriptName.toUpperCase(),
-                diameter,
-                fontFamily: metaFont,
-                fontSizeRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_SIZE,
-                maxWidthRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_MAX_WIDTH,
-                color: metaColor,
-                shadowBlur: this.options.textShadow?.metaText ?? 4
-            });
+        // Try to load custom logo if provided
+        let logoImage: HTMLImageElement | null = null;
+        if (this.options.logoUrl) {
+            try {
+                logoImage = await this.getCachedImage(this.options.logoUrl);
+            } catch {
+                // Silently fall back to text-only token
+                logoImage = null;
+            }
+        }
+        
+        return this.generateMetaToken(async (ctx, diameter, center, radius) => {
+            if (logoImage) {
+                // Draw logo image centered on token
+                const maxSize = diameter * 0.7;
+                const aspectRatio = logoImage.width / logoImage.height;
+                let drawWidth: number, drawHeight: number;
+                
+                if (aspectRatio > 1) {
+                    // Wider than tall
+                    drawWidth = Math.min(logoImage.width, maxSize);
+                    drawHeight = drawWidth / aspectRatio;
+                } else {
+                    // Taller than wide or square
+                    drawHeight = Math.min(logoImage.height, maxSize);
+                    drawWidth = drawHeight * aspectRatio;
+                }
+                
+                const x = center.x - drawWidth / 2;
+                const y = center.y - drawHeight / 2;
+                ctx.drawImage(logoImage, x, y, drawWidth, drawHeight);
+            } else {
+                // Fall back to text-only
+                drawCenteredWrappedText(ctx, {
+                    text: scriptName.toUpperCase(),
+                    diameter,
+                    fontFamily: metaFont,
+                    fontSizeRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_SIZE,
+                    maxWidthRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_MAX_WIDTH,
+                    color: metaColor,
+                    shadowBlur: this.options.textShadow?.metaText ?? 4
+                });
+            }
 
-            if (author) {
+            if (author && !hideAuthor) {
                 drawCurvedText(ctx, {
                     text: author,
                     centerX: center.x,
@@ -475,30 +515,28 @@ export class TokenGenerator {
     }
 
     async generatePandemoniumToken(): Promise<HTMLCanvasElement> {
-        const metaFont = this.options.metaNameFont || this.options.characterNameFont;
-        const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
+        // Load the Pandemonium Institute image
+        const pandemoniumImage = await this.getCachedImage('/images/Pandemonium_Institute/the_pandemonium_institute.webp');
         
-        return this.generateMetaToken((ctx, diameter, center, radius) => {
-            drawTwoLineCenteredText(
-                ctx, 'PANDEMONIUM', 'INSTITUTE', diameter,
-                metaFont,
-                META_TOKEN_LAYOUT.PANDEMONIUM_TEXT_SIZE,
-                metaColor,
-                this.options.textShadow?.metaText ?? 4
-            );
-
-            drawCurvedText(ctx, {
-                text: 'BLOOD ON THE CLOCKTOWER',
-                centerX: center.x,
-                centerY: center.y,
-                radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-                fontFamily: metaFont,
-                fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO * META_TOKEN_LAYOUT.BOTC_TEXT_SIZE_FACTOR,
-                position: 'bottom',
-                color: metaColor,
-                letterSpacing: this.options.fontSpacing.metaText ?? 0,
-                shadowBlur: this.options.textShadow?.metaText ?? 4
-            });
+        return this.generateMetaToken(async (ctx, diameter, center) => {
+            // Draw image centered on token
+            const maxSize = diameter * 0.75;
+            const aspectRatio = pandemoniumImage.width / pandemoniumImage.height;
+            let drawWidth: number, drawHeight: number;
+            
+            if (aspectRatio > 1) {
+                // Wider than tall
+                drawWidth = Math.min(pandemoniumImage.width, maxSize);
+                drawHeight = drawWidth / aspectRatio;
+            } else {
+                // Taller than wide or square
+                drawHeight = Math.min(pandemoniumImage.height, maxSize);
+                drawWidth = drawHeight * aspectRatio;
+            }
+            
+            const x = center.x - drawWidth / 2;
+            const y = center.y - drawHeight / 2;
+            ctx.drawImage(pandemoniumImage, x, y, drawWidth, drawHeight);
         });
     }
 
@@ -508,8 +546,16 @@ export class TokenGenerator {
 
         this.applyCircularClip(ctx, center, radius);
 
-        const bgName = this.options.metaBackground || this.options.characterBackground;
-        await this.drawBackground(ctx, bgName, diameter, QR_COLORS.LIGHT);
+        // Draw background based on type selection (same logic as generateMetaToken)
+        if (this.options.metaBackgroundType === 'color') {
+            if (!this.options.transparentBackground) {
+                ctx.fillStyle = this.options.metaBackgroundColor || '#FFFFFF';
+                ctx.fill();
+            }
+        } else {
+            const bgName = this.options.metaBackground || this.options.characterBackground;
+            await this.drawBackground(ctx, bgName, diameter, QR_COLORS.LIGHT);
+        }
 
         // Generate and draw QR code
         const qrSize = Math.floor(diameter * QR_TOKEN_LAYOUT.QR_CODE_SIZE);

@@ -1,21 +1,23 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { Token, Character, Team } from '../../ts/types/index.js'
+import { useContextMenu } from '../../hooks/useContextMenu'
+import { ContextMenu } from '../Shared/ContextMenu'
+import type { ContextMenuItem } from '../Shared/ContextMenu'
 import styles from '../../styles/components/tokenDetail/CharacterNavigation.module.css'
 
 interface CharacterNavigationProps {
   characters: Character[]
   tokens: Token[]
-  selectedCharacterId: string
+  selectedCharacterUuid: string
   isMetaSelected?: boolean
-  officialCharacterIds?: Set<string>
-  onSelectCharacter: (characterId: string) => void
+  onSelectCharacter: (characterUuid: string) => void
   onAddCharacter: () => void
   onDeleteCharacter: (characterId: string) => void
   onDuplicateCharacter: (characterId: string) => void
   onSelectMetaToken?: (token: Token) => void
   onSelectMeta?: () => void
   onChangeTeam?: (characterId: string, newTeam: Team) => void
-  onHoverCharacter?: (characterId: string) => void
+  onHoverCharacter?: (characterUuid: string) => void
 }
 
 // Order teams for display
@@ -49,9 +51,8 @@ const teamHeaderClassMap: Record<string, string> = {
 export function CharacterNavigation({
   characters,
   tokens,
-  selectedCharacterId,
+  selectedCharacterUuid,
   isMetaSelected,
-  officialCharacterIds,
   onSelectCharacter,
   onAddCharacter,
   onDeleteCharacter,
@@ -66,7 +67,8 @@ export function CharacterNavigation({
   const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(
     () => new Set([...TEAM_ORDER.map(t => t as string)])
   )
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; characterId: string } | null>(null)
+  // Context menu state using shared hook
+  const contextMenu = useContextMenu<string>()
   const [deleteConfirm, setDeleteConfirm] = useState<{ characterId: string; characterName: string } | null>(null)
   const [draggedCharId, setDraggedCharId] = useState<string | null>(null)
   const [dropTargetTeam, setDropTargetTeam] = useState<Team | null>(null)
@@ -75,21 +77,33 @@ export function CharacterNavigation({
     if (selectedRef.current) {
       selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-  }, [selectedCharacterId])
-
-  // Close context menu on click outside
-  useEffect(() => {
-    const handleClickOutside = () => setContextMenu(null)
-    if (contextMenu) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [contextMenu])
+  }, [selectedCharacterUuid])
 
   const handleContextMenu = (e: React.MouseEvent, characterId: string) => {
-    e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, characterId })
+    contextMenu.onContextMenu(e, characterId)
   }
+
+  // Build context menu items dynamically based on the right-clicked character
+  const contextMenuItems: ContextMenuItem[] = useMemo(() => {
+    if (!contextMenu.data) return []
+    const characterId = contextMenu.data
+    const char = characters.find(c => c.id === characterId)
+    return [
+      {
+        icon: '📋',
+        label: 'Duplicate',
+        onClick: () => onDuplicateCharacter(characterId),
+      },
+      {
+        icon: '🗑️',
+        label: 'Delete',
+        variant: 'danger' as const,
+        onClick: () => {
+          setDeleteConfirm({ characterId, characterName: char?.name || 'this character' })
+        },
+      },
+    ]
+  }, [contextMenu.data, characters, onDuplicateCharacter])
 
   // Match by UUID only (UUID is required on all characters)
   const getCharacterToken = (char: Character) => {
@@ -156,20 +170,21 @@ export function CharacterNavigation({
 
   const renderCharacterItem = (char: Character, isLast: boolean) => {
     const reminderCount = getReminderCount(char)
-    const isSelected = char.id === selectedCharacterId
+    const isSelected = char.uuid === selectedCharacterUuid
     const charToken = getCharacterToken(char)
     const teamClass = char.team?.toLowerCase() || 'townsfolk'
     const teamStyle = teamHeaderClassMap[teamClass] || ''
     const isDragging = draggedCharId === char.id
-    const isOfficial = officialCharacterIds?.has(char.id) || false
+    // Official based on character source field
+    const isOfficial = char.source === 'official'
 
     return (
-      <div key={char.id} className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}>
+      <div key={char.uuid || char.id} className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}>
         <div
           ref={isSelected ? selectedRef : null}
           className={`${styles.item} ${teamStyle} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''} ${isOfficial ? styles.official : ''}`}
-          onClick={() => onSelectCharacter(char.id)}
-          onMouseEnter={() => onHoverCharacter?.(char.id)}
+          onClick={() => char.uuid && onSelectCharacter(char.uuid)}
+          onMouseEnter={() => char.uuid && onHoverCharacter?.(char.uuid)}
           onContextMenu={(e) => handleContextMenu(e, char.id)}
           draggable={!!onChangeTeam}
           onDragStart={(e) => handleDragStart(e, char.id)}
@@ -178,7 +193,7 @@ export function CharacterNavigation({
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-              onSelectCharacter(char.id)
+              char.uuid && onSelectCharacter(char.uuid)
             }
           }}
           title={`${char.name} (${reminderCount} reminders) - Right-click for options${onChangeTeam ? ' - Drag to change team' : ''}`}
@@ -344,33 +359,13 @@ export function CharacterNavigation({
       </div>
 
       {/* Context menu */}
-      {contextMenu && (
-        <div
-          className={styles.contextMenu}
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              onDuplicateCharacter(contextMenu.characterId)
-              setContextMenu(null)
-            }}
-          >
-            📋 Duplicate
-          </button>
-          <button
-            type="button"
-            className={styles.danger}
-            onClick={() => {
-              const char = characters.find(c => c.id === contextMenu.characterId)
-              setDeleteConfirm({ characterId: contextMenu.characterId, characterName: char?.name || 'this character' })
-              setContextMenu(null)
-            }}
-          >
-            🗑️ Delete
-          </button>
-        </div>
-      )}
+      <ContextMenu
+        ref={contextMenu.menuRef}
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        items={contextMenuItems}
+        onClose={contextMenu.close}
+      />
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

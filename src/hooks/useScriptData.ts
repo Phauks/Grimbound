@@ -5,6 +5,7 @@ import { loadExampleScript } from '../ts/data/dataLoader.js'
 import { validateAndParseScript, extractScriptMeta } from '../ts/data/scriptParser.js'
 import { validateJson } from '../ts/utils/index.js'
 import { characterLookup } from '../ts/data/characterLookup.js'
+import { nameToId } from '../ts/utils/nameGenerator'
 import type { SyncEvent } from '../ts/sync/index.js'
 
 export function useScriptData() {
@@ -58,14 +59,8 @@ export function useScriptData() {
         const meta = extractScriptMeta(parsed)
 
         // Clear existing metadata when loading a new script
+        // (getMetadata will compute correct defaults based on character id/name)
         clearAllMetadata()
-        
-        // Initialize metadata for each character with defaults
-        for (const char of scriptChars) {
-          if (char.uuid) {
-            setMetadata(char.uuid, { idLinkedToName: true })
-          }
-        }
 
         // Update state
         setJsonInput(jsonString)

@@ -6,6 +6,9 @@
 // Token generator options
 export * from './tokenOptions.js';
 
+// Project management types
+export * from './project.js';
+
 // UI Theme types
 export type { UITheme, ThemeId } from '../themes.js';
 export { UI_THEMES, DEFAULT_THEME_ID, getTheme, isValidThemeId, getThemeIds } from '../themes.js';
@@ -62,8 +65,9 @@ export interface Character {
     otherNight?: number;
     firstNightReminder?: string;
     otherNightReminder?: string;
-    // Internal field for the generator (stripped on export)
+    // Internal fields for the generator (stripped on export)
     uuid?: string;              // Stable internal identifier
+    source?: 'official' | 'custom';  // Whether character is official or custom
 }
 
 // Script meta information
@@ -78,6 +82,10 @@ export interface ScriptMeta {
     synopsis?: string;
     overview?: string;
     changelog?: string;
+    bootlegger?: string;
+    gameplay?: string;
+    difficulty?: string;
+    storytellerTips?: string;
 }
 
 // Script entry can be a string, meta object, or character reference
@@ -171,8 +179,10 @@ export interface IconSettingsOptions {
 // Generation options (subset of TokenConfig)
 export interface GenerationOptions {
     displayAbilityText: boolean;
+    generateBootleggerRules: boolean;
     tokenCount: boolean;
     generateImageVariants?: boolean;
+    generateReminderVariants?: boolean;
     setupFlowerStyle: string;
     reminderBackground: string;
     reminderBackgroundImage?: string;
@@ -192,6 +202,7 @@ export interface GenerationOptions {
     abilityTextColor?: string;
     reminderTextColor?: string;
     scriptNameToken: boolean;
+    hideScriptNameAuthor?: boolean;
     almanacToken: boolean;
     pandemoniumToken: boolean;
     leafGeneration?: string;
@@ -229,6 +240,7 @@ export interface Token {
     // Variant tracking for characters with multiple images
     variantIndex?: number;     // 0-based index of this variant (undefined = not a variant)
     totalVariants?: number;    // Total number of variants for this character
+    order?: number;            // Original order index from JSON for preserving script order
 }
 
 // Avery label template type

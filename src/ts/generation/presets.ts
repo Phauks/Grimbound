@@ -58,6 +58,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
         icon: '🌸',
         settings: {
             displayAbilityText: true,
+            generateBootleggerRules: false,
             tokenCount: true,
             setupFlowerStyle: 'setup_flower_3',
             reminderBackground: '#FFF8DC',
@@ -103,6 +104,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
         icon: '⬜',
         settings: {
             displayAbilityText: false,
+            generateBootleggerRules: false,
             tokenCount: false,
             setupFlowerStyle: 'setup_flower_1',
             reminderBackground: '#FFFFFF',

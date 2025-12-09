@@ -84,6 +84,18 @@ export {
     createVariantClasses
 } from './classNames.js';
 
+// Script sorting utilities
+export {
+    sortScriptBySAO,
+    sortScriptJsonBySAO,
+    isScriptSortedBySAO,
+    isScriptJsonSortedBySAO,
+    getScriptSortStats,
+    SAO_TEAM_ORDER,
+    SAO_ABILITY_PREFIXES
+} from './scriptSorting.js';
+
 // Re-export types
 export type { DebouncedFunction } from './asyncUtils.js';
 export type { ProgressCallback, ProgressState } from './progressUtils.js';
+export type { SortOrder, ScriptSortOptions } from './scriptSorting.js';

@@ -35,7 +35,7 @@ function hashOptions(options: object, charId: string): string {
 }
 
 export function TokenPreviewRow() {
-  const { characters, tokens, generationOptions, isLoading } = useTokenContext()
+  const { characters, tokens, generationOptions, isLoading, scriptMeta, exampleToken } = useTokenContext()
   const { generateTokens } = useTokenGenerator()
   
   const [previewCharCanvas, setPreviewCharCanvas] = useState<HTMLCanvasElement | null>(previewCache?.charCanvas ?? null)
@@ -46,9 +46,15 @@ export function TokenPreviewRow() {
   
   const optionsRef = useRef(generationOptions)
 
-  // Get sample character (prioritize one with reminders)
+  // Get sample character (prioritize example token, then one with reminders)
   const sampleCharacter = (() => {
     if (characters.length === 0) return SAMPLE_CHARACTER
+
+    // If an example token is set and it's a character, use its character data
+    if (exampleToken && exampleToken.type === 'character') {
+      const exampleChar = characters.find(char => char.name === exampleToken.name)
+      if (exampleChar) return exampleChar
+    }
 
     // Try to find a character with reminders
     const charWithReminders = characters.find(char =>
@@ -62,7 +68,7 @@ export function TokenPreviewRow() {
   // Generate preview tokens
   const generatePreview = useCallback(async () => {
     // Check if we have valid cached previews for current options
-    const currentHash = hashOptions(generationOptions, sampleCharacter.id)
+    const currentHash = hashOptions({ ...generationOptions, scriptMeta, exampleToken }, sampleCharacter.id)
     if (previewCache && previewCache.optionsHash === currentHash) {
       // Use cached canvases
       setPreviewCharCanvas(previewCache.charCanvas)
@@ -73,7 +79,12 @@ export function TokenPreviewRow() {
 
     setIsGeneratingPreview(true)
     try {
-      const generator = new TokenGenerator(generationOptions)
+      // Pass scriptMeta logo to generator options
+      const generatorOptions = {
+        ...generationOptions,
+        logoUrl: scriptMeta?.logo
+      }
+      const generator = new TokenGenerator(generatorOptions)
       
       const charCanvas = await generator.generateCharacterToken(sampleCharacter)
       setPreviewCharCanvas(charCanvas)
@@ -89,8 +100,35 @@ export function TokenPreviewRow() {
         setPreviewReminderCanvas(null)
       }
 
-      // Generate meta token (Script Name preview)
-      const metaCanvas = await generator.generateScriptNameToken('Script Name', 'Author')
+      // Generate meta token - use example token if it's a meta token, otherwise use Script Name
+      let metaCanvas: HTMLCanvasElement
+      if (exampleToken && (exampleToken.type === 'script-name' || exampleToken.type === 'almanac' || exampleToken.type === 'pandemonium')) {
+        // Use the example token's canvas directly
+        const exampleMetaToken = tokens.find(t => t.filename === exampleToken.filename)
+        if (exampleMetaToken?.canvas) {
+          metaCanvas = exampleMetaToken.canvas
+        } else {
+          // Fallback to generating the specific meta token type
+          if (exampleToken.type === 'almanac') {
+            const almanacUrl = scriptMeta?.almanac || ''
+            const scriptName = scriptMeta?.name || 'Script Name'
+            metaCanvas = await generator.generateAlmanacQRToken(almanacUrl, scriptName)
+          } else if (exampleToken.type === 'pandemonium') {
+            metaCanvas = await generator.generatePandemoniumToken()
+          } else {
+            const scriptName = scriptMeta?.name || 'Script Name'
+            const scriptAuthor = scriptMeta?.author || 'Author'
+            const hideAuthor = generationOptions.hideScriptNameAuthor ?? false
+            metaCanvas = await generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor)
+          }
+        }
+      } else {
+        // Default: generate Script Name token
+        const scriptName = scriptMeta?.name || 'Script Name'
+        const scriptAuthor = scriptMeta?.author || 'Author'
+        const hideAuthor = generationOptions.hideScriptNameAuthor ?? false
+        metaCanvas = await generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor)
+      }
       setPreviewMetaCanvas(metaCanvas)
 
       // Update cache
@@ -106,7 +144,7 @@ export function TokenPreviewRow() {
     } finally {
       setIsGeneratingPreview(false)
     }
-  }, [generationOptions, sampleCharacter])
+  }, [generationOptions, sampleCharacter, scriptMeta, exampleToken, tokens])
 
   // Generate preview on mount and when options change
   useEffect(() => {

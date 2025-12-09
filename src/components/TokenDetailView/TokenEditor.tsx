@@ -4,6 +4,7 @@ import type { Character, DecorativeOverrides } from '../../ts/types/index.js'
 import { generateRandomName, nameToId } from '../../ts/utils/nameGenerator'
 import { useTokenContext } from '../../contexts/TokenContext'
 import styles from '../../styles/components/tokenDetail/TokenEditor.module.css'
+import viewStyles from '../../styles/components/views/Views.module.css'
 
 interface TokenEditorProps {
   character: Character
@@ -79,6 +80,14 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
   // JSON editing state (strip internal fields from display)
   const [jsonText, setJsonText] = useState(() => JSON.stringify(getExportableCharacter(character), null, 2))
   const [jsonError, setJsonError] = useState<string | null>(null)
+  
+  // Drag and drop state for image URLs
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
+  
+  // Drag and drop state for reminders
+  const [draggedReminderIndex, setDraggedReminderIndex] = useState<number | null>(null)
+  const [dragOverReminderIndex, setDragOverReminderIndex] = useState<number | null>(null)
   
   // Debounce timer refs
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -322,16 +331,10 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
     onEditChange('reminders', updated)
   }
 
-  // Convert official character to custom by changing ID
+  // Convert official character to custom by changing source field
+  // This allows the user to keep the original ID while treating it as a custom character
   const handleConvertToCustom = () => {
-    const newId = `${character.id}_custom_${Date.now()}`
-    setLocalId(newId)
-    onEditChange('id', newId)
-    // Unlink ID from name when converting
-    setIsIdLinked(false)
-    if (charUuid) {
-      setMetadata(charUuid, { idLinkedToName: false })
-    }
+    onEditChange('source', 'custom')
   }
 
   return (
@@ -576,11 +579,67 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
             </div>
 
             <div className={styles.formGroup}>
-              <label>Image URLs</label>
-              <p className={styles.fieldHint}>Add one or more image URLs. Multiple URLs provide fallback options.</p>
+              <label>Image</label>
+              <p className={styles.fieldHint}>Add one or more image URLs. Drag to reorder.</p>
               <div className={styles.imageUrlsList}>
                 {localImages.map((url, index) => (
-                  <div key={index} className={styles.imageUrlRow}>
+                  <div
+                    key={index}
+                    className={`${styles.imageUrlRow} ${draggedImageIndex === index ? styles.dragging : ''} ${dragOverImageIndex === index ? styles.dragOver : ''}`}
+                    draggable={!isOfficial && localImages.length > 1}
+                    onDragStart={(e) => {
+                      if (isOfficial) return
+                      setDraggedImageIndex(index)
+                      e.dataTransfer.effectAllowed = 'move'
+                    }}
+                    onDragEnd={() => {
+                      setDraggedImageIndex(null)
+                      setDragOverImageIndex(null)
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      if (draggedImageIndex !== null && draggedImageIndex !== index) {
+                        setDragOverImageIndex(index)
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverImageIndex(null)
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      if (draggedImageIndex !== null && draggedImageIndex !== index) {
+                        const newImages = [...localImages]
+                        const [removed] = newImages.splice(draggedImageIndex, 1)
+                        newImages.splice(index, 0, removed)
+                        setLocalImages(newImages)
+                        onEditChange('image', newImages.length === 1 ? newImages[0] : newImages)
+                      }
+                      setDraggedImageIndex(null)
+                      setDragOverImageIndex(null)
+                    }}
+                  >
+                    <span className={styles.dragHandle} title={localImages.length > 1 ? 'Drag to reorder' : ''}>⋮⋮</span>
+                    {url.trim() && (
+                      <button
+                        type="button"
+                        className={`${styles.inlineThumbnail} ${previewVariantIndex === index ? styles.thumbnailActive : ''} ${previewVariantIndex === null && index === 0 ? styles.thumbnailActive : ''}`}
+                        onClick={() => {
+                          if (onPreviewVariant) {
+                            setPreviewVariantIndex(index)
+                            onPreviewVariant(url)
+                          }
+                        }}
+                        title="Click to preview this variant"
+                      >
+                        <img
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23333" width="100" height="100"/><text fill="%23999" x="50" y="55" text-anchor="middle" font-size="14">?</text></svg>'
+                          }}
+                        />
+                      </button>
+                    )}
                     <input
                       type="text"
                       value={url}
@@ -600,13 +659,19 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
                       type="button"
                       className={`${styles.btnIcon} ${styles.btnDanger}`}
                       onClick={() => {
-                        if (isOfficial || localImages.length <= 1) return
-                        const newImages = localImages.filter((_, i) => i !== index)
-                        setLocalImages(newImages)
-                        onEditChange('image', newImages.length === 1 ? newImages[0] : newImages)
+                        if (isOfficial) return
+                        if (localImages.length <= 1) {
+                          // Clear the field instead of removing
+                          setLocalImages([''])
+                          onEditChange('image', '')
+                        } else {
+                          const newImages = localImages.filter((_, i) => i !== index)
+                          setLocalImages(newImages)
+                          onEditChange('image', newImages.length === 1 ? newImages[0] : newImages)
+                        }
                       }}
-                      disabled={localImages.length <= 1 || isOfficial}
-                      title={isOfficial ? 'Official character - cannot edit' : 'Remove URL'}
+                      disabled={isOfficial}
+                      title={isOfficial ? 'Official character - cannot edit' : localImages.length <= 1 ? 'Clear URL' : 'Remove URL'}
                     >
                       ✕
                     </button>
@@ -638,36 +703,7 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
                 </button>
               </div>
 
-              {/* Variant Preview Thumbnails - show when multiple images exist */}
-              {localImages.filter(url => url.trim()).length > 1 && onPreviewVariant && (
-                <div className={styles.variantPreviewSection}>
-                  <label>Preview Variant</label>
-                  <p className={styles.fieldHint}>Click a thumbnail to preview that variant without affecting the character list.</p>
-                  <div className={styles.variantThumbnails}>
-                    {localImages.filter(url => url.trim()).map((url, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        className={`${styles.variantThumbnail} ${previewVariantIndex === index ? styles.variantThumbnailActive : ''} ${previewVariantIndex === null && index === 0 ? styles.variantThumbnailActive : ''}`}
-                        onClick={() => {
-                          setPreviewVariantIndex(index)
-                          onPreviewVariant(url)
-                        }}
-                        title={`Preview variant ${index + 1}`}
-                      >
-                        <img 
-                          src={url} 
-                          alt={`Variant ${index + 1}`}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23333" width="100" height="100"/><text fill="%23999" x="50" y="55" text-anchor="middle" font-size="14">?</text></svg>'
-                          }}
-                        />
-                        <span className={styles.variantLabel}>v{index + 1}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+
             </div>
 
             <div className={styles.formGroup}>
@@ -690,11 +726,12 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
               />
             </div>
 
-            <div className={`${styles.formGroup} ${styles.setupCheckboxGroup}`}>
+            <div className={styles.formGroup}>
               <label htmlFor="edit-setup">Setup Character</label>
               <input
                 id="edit-setup"
                 type="checkbox"
+                className={viewStyles.toggleSwitch}
                 checked={character.setup || false}
                 disabled={isOfficial}
                 onChange={(e) => {
@@ -706,10 +743,53 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
 
             <div className={styles.formGroup}>
               <label>Reminders</label>
-              <p className={styles.fieldHint}>Add reminder text that appears on reminder tokens. Use count to create multiple copies.</p>
+              <p className={styles.fieldHint}>Add reminder text that appears on reminder tokens. Use count to create multiple copies. Drag to reorder.</p>
               <div className={styles.remindersUrlsList}>
-                {groupedReminders.map(({ text, count }) => (
-                  <div key={text || `empty-${count}`} className={styles.reminderUrlRow}>
+                {groupedReminders.map(({ text, count }, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.reminderUrlRow} ${draggedReminderIndex === index ? styles.dragging : ''} ${dragOverReminderIndex === index ? styles.dragOver : ''}`}
+                    draggable={!isOfficial && groupedReminders.length > 1}
+                    onDragStart={(e) => {
+                      if (isOfficial) return
+                      setDraggedReminderIndex(index)
+                      e.dataTransfer.effectAllowed = 'move'
+                    }}
+                    onDragEnd={() => {
+                      setDraggedReminderIndex(null)
+                      setDragOverReminderIndex(null)
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      if (draggedReminderIndex !== null && draggedReminderIndex !== index) {
+                        setDragOverReminderIndex(index)
+                      }
+                    }}
+                    onDragLeave={() => {
+                      setDragOverReminderIndex(null)
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      if (draggedReminderIndex !== null && draggedReminderIndex !== index) {
+                        // Reorder grouped reminders and rebuild flat array
+                        const newGrouped = [...groupedReminders]
+                        const [removed] = newGrouped.splice(draggedReminderIndex, 1)
+                        newGrouped.splice(index, 0, removed)
+                        // Rebuild flat reminders array from reordered groups
+                        const newReminders: string[] = []
+                        for (const group of newGrouped) {
+                          for (let i = 0; i < group.count; i++) {
+                            newReminders.push(group.text)
+                          }
+                        }
+                        setReminders(newReminders)
+                        onEditChange('reminders', newReminders)
+                      }
+                      setDraggedReminderIndex(null)
+                      setDragOverReminderIndex(null)
+                    }}
+                  >
+                    <span className={styles.dragHandle} title={groupedReminders.length > 1 ? 'Drag to reorder' : ''}>⋮⋮</span>
                     <input
                       type="text"
                       value={text}
@@ -1139,15 +1219,14 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
               <h4>Leaf Decorations</h4>
               
               <div className={styles.formGroup}>
-                <label htmlFor="use-custom-leaves">
-                  <input
-                    id="use-custom-leaves"
-                    type="checkbox"
-                    checked={decoratives.useCustomLeaves || false}
-                    onChange={(e) => updateDecoratives({ useCustomLeaves: e.target.checked })}
-                  />
-                  Use custom leaf settings for this character
-                </label>
+                <label htmlFor="use-custom-leaves">Use custom leaf settings for this character</label>
+                <input
+                  id="use-custom-leaves"
+                  type="checkbox"
+                  className={viewStyles.toggleSwitch}
+                  checked={decoratives.useCustomLeaves || false}
+                  onChange={(e) => updateDecoratives({ useCustomLeaves: e.target.checked })}
+                />
               </div>
               
               {decoratives.useCustomLeaves && (
@@ -1199,15 +1278,14 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
                 <h4>Setup Flower</h4>
                 
                 <div className={styles.formGroup}>
-                  <label htmlFor="hide-setup-flower">
-                    <input
-                      id="hide-setup-flower"
-                      type="checkbox"
-                      checked={decoratives.hideSetupFlower || false}
-                      onChange={(e) => updateDecoratives({ hideSetupFlower: e.target.checked })}
-                    />
-                    Hide setup flower for this character
-                  </label>
+                  <label htmlFor="hide-setup-flower">Hide setup flower for this character</label>
+                  <input
+                    id="hide-setup-flower"
+                    type="checkbox"
+                    className={viewStyles.toggleSwitch}
+                    checked={decoratives.hideSetupFlower || false}
+                    onChange={(e) => updateDecoratives({ hideSetupFlower: e.target.checked })}
+                  />
                 </div>
                 
                 {!decoratives.hideSetupFlower && (
@@ -1332,6 +1410,7 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
                         onClick={() => {
                           const metadataExport = {
                             uuid: charUuid,
+                            source: character?.source,
                             ...metadata
                           }
                           navigator.clipboard.writeText(JSON.stringify(metadataExport, null, 2))
@@ -1346,6 +1425,10 @@ export function TokenEditor({ character, onEditChange, onReplaceCharacter, onRef
                     <div className={styles.metadataField}>
                       <label>UUID</label>
                       <code>{charUuid || '(none)'}</code>
+                    </div>
+                    <div className={styles.metadataField}>
+                      <label>Source</label>
+                      <code>{character?.source || '(none)'}</code>
                     </div>
                     <div className={styles.metadataField}>
                       <label>ID Linked to Name</label>

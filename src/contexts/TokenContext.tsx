@@ -8,6 +8,7 @@ import type {
   SyncStatus,
 } from '../ts/types/index.js'
 import { useDataSync } from './DataSyncContext'
+import { nameToId } from '../ts/utils/nameGenerator'
 
 interface TokenContextType {
   // Token state
@@ -49,8 +50,13 @@ interface TokenContextType {
     tokenTypes: string[]
     display: string[]
     reminders: string[]
+    origin: string[]
   }
   updateFilters: (filters: Partial<TokenContextType['filters']>) => void
+
+  // Example token state
+  exampleToken: Token | null
+  setExampleToken: (token: Token | null) => void
 
   // UI state
   isLoading: boolean
@@ -99,10 +105,25 @@ export function TokenProvider({ children }: TokenProviderProps) {
   // Character metadata store (keyed by character UUID)
   const [characterMetadata, setCharacterMetadata] = useState<Map<string, CharacterMetadata>>(new Map())
 
-  // Get metadata for a character (returns default if not found)
+  // Get metadata for a character
+  // If no metadata exists, dynamically compute idLinkedToName based on whether id === nameToId(name)
   const getMetadata = useCallback((uuid: string): CharacterMetadata => {
-    return characterMetadata.get(uuid) || DEFAULT_CHARACTER_METADATA
-  }, [characterMetadata])
+    const existing = characterMetadata.get(uuid)
+    if (existing) {
+      return existing
+    }
+    
+    // No metadata stored - compute default based on character's actual id and name
+    const char = characters.find(c => c.uuid === uuid)
+    if (char) {
+      const expectedId = nameToId(char.name)
+      const isLinked = char.id === expectedId
+      return { ...DEFAULT_CHARACTER_METADATA, idLinkedToName: isLinked }
+    }
+    
+    // Fallback if character not found
+    return DEFAULT_CHARACTER_METADATA
+  }, [characterMetadata, characters])
 
   // Set or update metadata for a character
   const setMetadataForChar = useCallback((uuid: string, metadata: Partial<CharacterMetadata>) => {
@@ -130,6 +151,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
 
   const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
     displayAbilityText: false,
+    generateBootleggerRules: false,
     tokenCount: false,
     setupFlowerStyle: 'setup_flower_1',
     reminderBackground: '#6C3BAA',
@@ -191,7 +213,10 @@ export function TokenProvider({ children }: TokenProviderProps) {
     tokenTypes: [] as string[],
     display: [] as string[],
     reminders: [] as string[],
+    origin: [] as string[],
   })
+
+  const [exampleToken, setExampleToken] = useState<Token | null>(null)
 
   const updateGenerationOptions = useCallback((options: Partial<GenerationOptions>) => {
     setGenerationOptions((prev) => ({ ...prev, ...options }))
@@ -223,6 +248,8 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setJsonInput,
     filters,
     updateFilters,
+    exampleToken,
+    setExampleToken,
     isLoading,
     setIsLoading,
     error,

@@ -280,23 +280,6 @@ export function DownloadView() {
                 {activePdfSubTab === 'layout' && (
                   <div className={styles.subsection}>
                     <OptionGroup
-                      label="Padding"
-                      helpText="Padding between tokens on PDF"
-                      isSlider
-                    >
-                      <SliderWithValue
-                        value={(generationOptions.pdfPadding ?? 0.25) * 8}
-                        onChange={(value) => updateGenerationOptions({ pdfPadding: value / 8 })}
-                        min={0}
-                        max={4}
-                        step={1}
-                        defaultValue={2}
-                        unit="/8 in"
-                        ariaLabel="PDF Padding value"
-                      />
-                    </OptionGroup>
-
-                    <OptionGroup
                       label="X Offset"
                       helpText="Horizontal offset for fine-tuning alignment"
                       isSlider
@@ -408,19 +391,14 @@ export function DownloadView() {
                 <span className={styles.btnText}>Download Token Images</span>
               </button>
               
-              <div className={styles.btnWithInfo}>
-                <button
-                  className={`btn-secondary ${styles.btnExportSmall}`}
-                  onClick={handleDownloadPdf}
-                  disabled={!hasTokens}
-                >
-                  <span className={styles.btnIcon}>🖨️</span>
-                  <span className={styles.btnText}>Download Token Print Sheet</span>
-                </button>
-                <span className={styles.infoIconCorner} title="Compatible with Avery 94500 (1.75” character tokens) and Avery 94509 (1” reminder tokens) label sheets">
-                  ℹ️
-                </span>
-              </div>
+              <button
+                className={`btn-secondary ${styles.btnExportSmall}`}
+                onClick={handleDownloadPdf}
+                disabled={!hasTokens}
+              >
+                <span className={styles.btnIcon}>🖨️</span>
+                <span className={styles.btnText}>Download Token Print Sheet</span>
+              </button>
               
               <button
                 className={`btn-secondary ${styles.btnExportSmall}`}
@@ -450,6 +428,10 @@ export function DownloadView() {
                 <span className={styles.btnBadge}>Soon</span>
               </button>
             </div>
+            
+            <p className={styles.btnDescription}>
+              Token Print Sheets are compatible with Avery 94500 (1.75" character tokens) and Avery 94509 (1" reminder tokens) label sheets.
+            </p>
           </div>
         </div>
       </div>

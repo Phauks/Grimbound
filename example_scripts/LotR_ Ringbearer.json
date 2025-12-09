@@ -1,0 +1,421 @@
+[
+  {
+    "id": "_meta",
+    "author": "Bim",
+    "name": "LotR: Ringbearer",
+    "almanac": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/almanac.html",
+    "firstNight": [
+      "dusk",
+      "lobelia_lotrringbearerv7",
+      "theonering_lotrringbearerv7",
+      "witchking_lotrringbearerv7",
+      "merry_lotrringbearerv7",
+      "pippin_lotrringbearerv7",
+      "legolas_lotrringbearerv7",
+      "galadriel_lotrringbearerv7",
+      "aragorn_lotrringbearerv7",
+      "minioninfo",
+      "demoninfo",
+      "dawn"
+    ],
+    "otherNight": [
+      "dusk",
+      "lobelia_lotrringbearerv7",
+      "theonering_lotrringbearerv7",
+      "gollum_lotrringbearerv7",
+      "ferny_lotrringbearerv7",
+      "boromir_lotrringbearerv7",
+      "frodo_lotrringbearerv7",
+      "faramir_lotrringbearerv7",
+      "gandalf_lotrringbearerv7",
+      "witchking_lotrringbearerv7",
+      "treebeard_lotrringbearerv7",
+      "aragorn_lotrringbearerv7",
+      "galadriel_lotrringbearerv7",
+      "gimli_lotrringbearerv7",
+      "dawn"
+    ]
+  },
+  {
+    "id": "merry_lotrringbearerv7",
+    "name": "Merry",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/merry_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "You start knowing a true statement. If Pippin is in play, 1 of you receives reversed info.",
+    "flavor": "Don't think he knows about second breakfast, Pip.",
+    "firstNight": 14,
+    "otherNight": 0,
+    "firstNightReminder": "Show Merry something true.",
+    "reminders": [
+      "Reversed"
+    ]
+  },
+  {
+    "id": "pippin_lotrringbearerv7",
+    "name": "Pippin",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/pippin_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "You start knowing a false statement.",
+    "flavor": "You need people of intelligence on this sort of mission...quest...thing.",
+    "firstNight": 15,
+    "otherNight": 0,
+    "firstNightReminder": "Show Pippin something false."
+  },
+  {
+    "id": "legolas_lotrringbearerv7",
+    "name": "Legolas",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/legolas_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "You start knowing 2 players, at least one of which is not a Townsfolk.",
+    "flavor": "A red sun rises. Blood has been spilled this night.",
+    "firstNight": 16,
+    "otherNight": 0,
+    "firstNightReminder": "Show Legolas 2 players.",
+    "reminders": [
+      "Know",
+      "Know"
+    ]
+  },
+  {
+    "id": "aragorn_lotrringbearerv7",
+    "name": "Aragorn",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/aragorn_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Each night, you learn 2 characters: at least 1 is in play. Ringbearer: learn only 1 instead.",
+    "flavor": "Hold your ground, hold your ground! Sons of Gondor, of Rohan, my brothers! I see in your eyes the same fear that would take the heart of me. A day may come when the courage of men fails, when we forsake our friends and break all bonds of fellowship, but it is not this day. An hour of wolves and shattered shields, when the age of men comes crashing down! But it is not this day! This day we fight! By all that you hold dear on this good Earth, I bid you: stand, Men of the West!",
+    "firstNight": 18,
+    "otherNight": 12,
+    "firstNightReminder": "Show Aragorn 2 characters (or 1 if they bear).",
+    "otherNightReminder": "Show Aragorn 2 characters (or 1 if they bear).",
+    "reminders": [
+      "Learned",
+      "Learned"
+    ]
+  },
+  {
+    "id": "galadriel_lotrringbearerv7",
+    "name": "Galadriel",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/galadriel_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Each night, learn a player of a different character type than last night. The Ringbearer might misregister to you.",
+    "flavor": "In place of a Dark Lord, you would have a queen! Not dark, but beautiful and terrible as the dawn! Treacherous as the sea! Stronger than the foundations of the earth! All shall love me, and despair!",
+    "firstNight": 17,
+    "otherNight": 13,
+    "firstNightReminder": "Show Galadriel a player.",
+    "otherNightReminder": "Show Galadriel a player.",
+    "reminders": [
+      "Know"
+    ]
+  },
+  {
+    "id": "treebeard_lotrringbearerv7",
+    "name": "Treebeard",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/treebeard_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Each night*, if you only voted for exactly 1 player today, you learn their alignment.",
+    "flavor": "We must not be hasty. I have become too hot. I must cool myself and think; for it is easier to shout 'stop!' than to do it.",
+    "firstNight": 0,
+    "otherNight": 11,
+    "otherNightReminder": "Show Treebeard Good or Evil (if they wake).",
+    "reminders": [
+      "Hasty",
+      "Burárum"
+    ]
+  },
+  {
+    "id": "gimli_lotrringbearerv7",
+    "name": "Gimli",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/gimli_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Each night*, if the Ringbearer died since last night, you learn the character most responsible.",
+    "flavor": "Faithless is he who says farewell when the road darkens.",
+    "firstNight": 0,
+    "otherNight": 14,
+    "otherNightReminder": "If the Ringbearer died, show Gimli a character.",
+    "reminders": [
+      "Mourning"
+    ]
+  },
+  {
+    "id": "samwise_lotrringbearerv7",
+    "name": "Samwise",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/samwise_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Each day, privately choose 2 players: you learn something true about only 1 of them (you don't learn which).",
+    "flavor": "I ain't been droppin' no eaves sir, honest. I was just cutting the grass under the window there, if you'll follow me.",
+    "firstNight": 0,
+    "otherNight": 0
+  },
+  {
+    "id": "faramir_lotrringbearerv7",
+    "name": "Faramir",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/faramir_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Once per game, at night*, choose that the executee you nominated is resurrected if good.",
+    "flavor": "I would not take this thing, if it lay by the highway. Not were Minas Tirith falling in ruin and I alone could save her, so, using the weapon of the Dark Lord for her good and my glory. No, I do not wish for such triumphs.",
+    "firstNight": 0,
+    "otherNight": 8,
+    "otherNightReminder": "Wake Faramir if they nominated the executee.",
+    "reminders": [
+      "Mercy?",
+      "Alive",
+      "No Ability"
+    ]
+  },
+  {
+    "id": "boromir_lotrringbearerv7",
+    "name": "Boromir",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/boromir_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "While evil bears the Ring, you might die at anytime.",
+    "flavor": "I would have followed you, my brother...my captain...my King.",
+    "firstNight": 0,
+    "otherNight": 6,
+    "otherNightReminder": "Boromir might die if evil bears the Ring.",
+    "reminders": [
+      "Dead"
+    ]
+  },
+  {
+    "id": "bilbo_lotrringbearerv7",
+    "name": "Bilbo",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/bilbo_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "Evil players always pass the Ring to you, then learn who you are.",
+    "flavor": "It's a dangerous business, Frodo, going out your door...there's no knowing where you might be swept off to.",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "No Ability"
+    ]
+  },
+  {
+    "id": "owyn_lotrringbearerv7",
+    "name": "Éowyn",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/owyn_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "The 1st time you nominate a player, if they are the nearest mortal evil player, they are executed immediately.",
+    "flavor": "No living man am I!",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "No Ability"
+    ]
+  },
+  {
+    "id": "gandalf_lotrringbearerv7",
+    "name": "Gandalf",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/gandalf_lotrringbearerv7.png",
+    "team": "townsfolk",
+    "ability": "If the Demon kills you, you are resurrected that night (Once). Ringbearer: Once per game, during the day, privately make a wish.",
+    "flavor": "I am a servant of the Secret Fire, wielder of the flame of Anor. You cannot pass! The dark fire will not avail you, flame of Udûn. Go back to the Shadow! You cannot pass.",
+    "firstNight": 0,
+    "otherNight": 9,
+    "otherNightReminder": "If Gandalf died by the Demon today or last night, he is resurrected.",
+    "reminders": [
+      "Resurrected",
+      "Wish Used"
+    ]
+  },
+  {
+    "id": "frodo_lotrringbearerv7",
+    "name": "Frodo",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/frodo_lotrringbearerv7.png",
+    "team": "outsider",
+    "ability": "Each night*, if you do not bear the Ring, Sauron learns which character does. [You are the starting Ringbearer]",
+    "flavor": "I will take the ring, though I do not know the way.",
+    "firstNight": 0,
+    "otherNight": 7,
+    "otherNightReminder": "Show Sauron the Ringbearer (Not Frodo)",
+    "setup": true
+  },
+  {
+    "id": "denethor_lotrringbearerv7",
+    "name": "Denethor",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/denethor_lotrringbearerv7.png",
+    "team": "outsider",
+    "ability": "Once while you are alive, and once while you are dead, a townsfolk ability might yield false info or succeed when it shouldn't.",
+    "flavor": "Gondor has no King.",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "Once (Alive)",
+      "Once (Dead)"
+    ]
+  },
+  {
+    "id": "gollum_lotrringbearerv7",
+    "name": "Gollum",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/gollum_lotrringbearerv7.png",
+    "team": "outsider",
+    "ability": "If you die with the Ring, only you win. Each night*, you might lose the Ring. Greedy Ringbearers might become Gollum.",
+    "flavor": "My...Precious...",
+    "firstNight": 0,
+    "otherNight": 4,
+    "otherNightReminder": "Gollum might lose the Ring. Greedy Ringbearers might turn."
+  },
+  {
+    "id": "oathbreaker_lotrringbearerv7",
+    "name": "Oathbreaker",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/oathbreaker_lotrringbearerv7.png",
+    "team": "outsider",
+    "ability": "You are evil. (as long as you have this ability)",
+    "flavor": "None but the king of Gondor may command me.",
+    "firstNight": 0,
+    "otherNight": 0
+  },
+  {
+    "id": "mouthofsauron_lotrringbearerv7",
+    "name": "Mouth of Sauron",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/mouthofsauron_lotrringbearerv7.png",
+    "team": "minion",
+    "ability": "While evil bears the Ring, Townsfolk abilities yield false info. [+1 Outsider]",
+    "flavor": "The rider was robed all in black, and black was his lofty helm...and his name is remembered in no tale; for he himself had forgotten it, and he said: ‘I am the Mouth of Sauron.'",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "All is Lost!"
+    ]
+  },
+  {
+    "id": "saruman_lotrringbearerv7",
+    "name": "Saruman",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/saruman_lotrringbearerv7.png",
+    "team": "minion",
+    "ability": "Once per game, if the dead equal or outnumber the living, privately make a wish. Until then, you might register as good.",
+    "flavor": "Against the power of Mordor, there can be no victory. ",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "No Ability"
+    ],
+    "setup": true
+  },
+  {
+    "id": "wormtongue_lotrringbearerv7",
+    "name": "Wormtongue",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/wormtongue_lotrringbearerv7.png",
+    "team": "minion",
+    "ability": "The Ringbearer 'babysits' Wormtongue and 'is a minion'. At night, Sauron may make 1 player evil. [+1 Outsider]",
+    "flavor": "Why do you lay these troubles on an already troubled mind?",
+    "firstNight": 0,
+    "otherNight": 0,
+    "remindersGlobal": [
+      "Advisor"
+    ],
+    "setup": true
+  },
+  {
+    "id": "witchking_lotrringbearerv7",
+    "name": "Witch-King",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/witchking_lotrringbearerv7.png",
+    "team": "minion",
+    "ability": "Each night, choose a player: you learn if they are poisoned. One of the Ringbearer's Townsfolk neighbors is poisoned.",
+    "flavor": "No living man may hinder me!",
+    "firstNight": 13,
+    "otherNight": 10,
+    "firstNightReminder": "The Witch-King chooses a player.",
+    "otherNightReminder": "The Witch-King chooses a player.",
+    "reminders": [
+      "Poisoned"
+    ]
+  },
+  {
+    "id": "sauron_lotrringbearerv7",
+    "name": "Sauron",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/sauron_lotrringbearerv7.png",
+    "team": "demon",
+    "ability": "At the end of each day, publicly choose a player: they die. You die if & only if there are no living Minions.",
+    "flavor": "Concealed within his fortress, the Lord of Mordor sees all. His gaze pierces cloud, shadow, earth, and flesh.",
+    "firstNight": 0,
+    "otherNight": 0
+  },
+  {
+    "id": "lobelia_lotrringbearerv7",
+    "name": "Lobelia",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/lobelia_lotrringbearerv7.png",
+    "team": "traveller",
+    "ability": "Each night, you learn a player: when they die today, your alive vote permanently doubles.",
+    "flavor": "Lobelia Sackville­-Baggins. She had all my spoons stuffed in her pockets. Hah! Dreadful woman; make sure you keep an eye on her after I'm... when I'm... when I'm...",
+    "firstNight": 11,
+    "otherNight": 2,
+    "firstNightReminder": "Show Lobelia a player.",
+    "otherNightReminder": "Show Lobelia a player.",
+    "reminders": [
+      "Learned",
+      "Doubled",
+      "Doubled",
+      "Doubled",
+      "Doubled"
+    ]
+  },
+  {
+    "id": "balrog_lotrringbearerv7",
+    "name": "Balrog",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/balrog_lotrringbearerv7.png",
+    "team": "traveller",
+    "ability": "Each day, you may move a step for each used vote token: the last player you passed dies.",
+    "flavor": "Moria...You fear to go into those mines. The dwarves delved too greedily and too deep. You know what they awoke in the darkness of Khazad-dûm...shadow and flame.",
+    "firstNight": 0,
+    "otherNight": 0
+  },
+  {
+    "id": "ferny_lotrringbearerv7",
+    "name": "Ferny",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/ferny_lotrringbearerv7.png",
+    "team": "traveller",
+    "ability": "Each day, you may offer another player a reminder token. Tonight, they use it, but it might misfire.",
+    "flavor": "As for Ferny, he would sell anything to anybody, or make mischief for amusement.",
+    "firstNight": 0,
+    "otherNight": 5,
+    "otherNightReminder": "The offered player uses their token.",
+    "reminders": [
+      "Poisoned?",
+      "Dead?",
+      "Learned?",
+      "Safe?"
+    ]
+  },
+  {
+    "id": "bombadil_lotrringbearerv7",
+    "name": "Bombadil",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/bombadil_lotrringbearerv7.png",
+    "team": "traveller",
+    "ability": "Once per game, at dusk, you may silence all players, look at the Grimoire, whisper 1 word to 1 player, and leave.",
+    "flavor": "Hey dol! merry dol! ring a dong dillo!\nRing a dong! hop along! fal lal the willow!\nTom Bom, jolly Tom, Tom Bombadillo!",
+    "firstNight": 0,
+    "otherNight": 0
+  },
+  {
+    "id": "radagast_lotrringbearerv7",
+    "name": "Radagast",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/radagast_lotrringbearerv7.png",
+    "team": "traveller",
+    "ability": "You don't learn the Demon. Once per game, if Sauron agrees, you may privately visit the Storyteller and make a wish.",
+    "flavor": "I think he’s a very great Wizard, in his own way. He’s a gentle soul who prefers the company of animals to others. He keeps a watchful eye over the vast forest lands to the east. And a good thing too. For always evil will look to find a foothold in this world.",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "No Ability"
+    ]
+  },
+  "bootlegger",
+  {
+    "id": "theonering_lotrringbearerv7",
+    "name": "The One Ring",
+    "image": "https://www.bloodstar.xyz/p/Bim/LOTR-Ringbearer-v7/theonering_lotrringbearerv7.png",
+    "team": "fabled",
+    "ability": "A Townsfolk is the Ringbearer. Each night*, the Ringbearer may pass the Ring to another alive player (who learns they bear). If the Demon bears, evil wins. When the Ringbearer dies, they pass the Ring to an opposing player tonight.",
+    "flavor": "One Ring to rule them all, One Ring to find them,\n\nOne Ring to bring them all...and in the darkness, bind them.",
+    "firstNight": 12,
+    "otherNight": 3,
+    "firstNightReminder": "Inform the Ringbearer that they bear the Ring.",
+    "otherNightReminder": "Ask the Ringbearer to pass the Ring. Inform the new Ringbearer (if any).",
+    "reminders": [
+      "Ringbearer"
+    ],
+    "remindersGlobal": [
+      "Ringbearer"
+    ]
+  }
+]

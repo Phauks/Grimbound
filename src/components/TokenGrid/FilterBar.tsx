@@ -23,13 +23,19 @@ const REMINDERS_OPTIONS = [
   { value: 'none', label: 'No Reminders' },
 ]
 
+const ORIGIN_OPTIONS = [
+  { value: 'official', label: 'Official' },
+  { value: 'custom', label: 'Custom' },
+]
+
 export function FilterBar() {
   const { filters, updateFilters } = useTokenContext()
-  const { toggleTeam, toggleTokenType, toggleReminders } = useFilters()
+  const { toggleTeam, toggleTokenType, toggleReminders, toggleOrigin } = useFilters()
 
   const clearTeams = () => updateFilters({ teams: [] })
   const clearTokenTypes = () => updateFilters({ tokenTypes: [] })
   const clearReminders = () => updateFilters({ reminders: [] })
+  const clearOrigin = () => updateFilters({ origin: [] })
 
   return (
     <div className={styles.container}>
@@ -85,6 +91,24 @@ export function FilterBar() {
         </div>
         {filters.reminders.length > 0 && (
           <button className={styles.clearBtn} onClick={clearReminders} title="Clear reminders filter">✕</button>
+        )}
+      </div>
+
+      <div className={styles.filterSection}>
+        <span className={styles.filterLabel}>Origin:</span>
+        <div className={styles.chipGroup}>
+          {ORIGIN_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value}
+              className={`${styles.chip} ${filters.origin.includes(value) ? styles.chipActive : ''}`}
+              onClick={() => toggleOrigin(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {filters.origin.length > 0 && (
+          <button className={styles.clearBtn} onClick={clearOrigin} title="Clear origin filter">✕</button>
         )}
       </div>
     </div>

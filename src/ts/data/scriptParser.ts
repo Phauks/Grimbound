@@ -135,7 +135,7 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
     if (typeof entry === 'string') {
         const officialChar = officialMap.get(entry.toLowerCase());
         if (officialChar) {
-            return { character: { ...officialChar, uuid: generateUuid() }, warning: null };
+            return { character: { ...officialChar, uuid: generateUuid(), source: 'official' }, warning: null };
         }
         const warning = lenient
             ? `${position}: Character "${entry}" not found in official data`
@@ -166,7 +166,7 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
         }
         const officialChar = officialMap.get(entry.id.toLowerCase());
         if (officialChar) {
-            return { character: { ...officialChar, uuid: generateUuid() }, warning: null };
+            return { character: { ...officialChar, uuid: generateUuid(), source: 'official' }, warning: null };
         }
         const warning = lenient
             ? `${position}: Character "${entry.id}" not found in official data`
@@ -194,9 +194,12 @@ function processScriptEntry(options: ProcessEntryOptions): EntryProcessResult {
         // Merge with official data if ID matches
         const officialChar = entryWithId.id ? officialMap.get(entryWithId.id.toLowerCase()) : null;
         const mergedChar = officialChar ? { ...officialChar, ...entryWithId } : entryWithId;
+        
+        // Determine source: official if ID matches official data, otherwise custom
+        const source = officialChar ? 'official' : 'custom';
 
         // Ensure UUID is assigned (generate new one if not present)
-        return { character: { ...mergedChar, uuid: mergedChar.uuid || generateUuid() } as Character, warning };
+        return { character: { ...mergedChar, uuid: mergedChar.uuid || generateUuid(), source } as Character, warning };
     }
 
     return { character: null, warning: null };

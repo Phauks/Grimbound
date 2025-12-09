@@ -9,7 +9,7 @@ import { regenerateCharacterAndReminders } from '../ts/ui/detailViewUtils'
 interface PreRenderCacheEntry {
   characterToken: Token
   reminderTokens: Token[]
-  characterId: string
+  characterUuid: string
   optionsHash: string
 }
 
@@ -20,7 +20,7 @@ let isPreRendering = false
  * Hash only the appearance-affecting properties of GenerationOptions
  * This is more efficient than hashing the entire options object
  */
-function hashOptions(options: GenerationOptions): string {
+export function hashOptions(options: GenerationOptions): string {
   // Extract only properties that affect token appearance
   const appearanceProps = {
     displayAbilityText: options.displayAbilityText,
@@ -57,19 +57,20 @@ function hashOptions(options: GenerationOptions): string {
 
 /**
  * Pre-render a character's tokens and cache them
+ * Uses character UUID for unique identification across projects
  */
 export async function preRenderFirstCharacter(
   character: Character,
   options: GenerationOptions
 ): Promise<void> {
-  // Don't start if already pre-rendering
-  if (isPreRendering) return
+  // Don't start if already pre-rendering or missing UUID
+  if (isPreRendering || !character.uuid) return
   
   const optionsHash = hashOptions(options)
   
-  // Skip if already cached for this character and options
+  // Skip if already cached for this character UUID and options
   if (preRenderCache && 
-      preRenderCache.characterId === character.id && 
+      preRenderCache.characterUuid === character.uuid && 
       preRenderCache.optionsHash === optionsHash) {
     return
   }
@@ -85,7 +86,7 @@ export async function preRenderFirstCharacter(
     preRenderCache = {
       characterToken,
       reminderTokens,
-      characterId: character.id,
+      characterUuid: character.uuid,
       optionsHash
     }
   } catch (error) {
@@ -100,14 +101,14 @@ export async function preRenderFirstCharacter(
  * Returns null if not cached or options changed
  */
 export function getPreRenderedTokens(
-  characterId: string,
+  characterUuid: string,
   options: GenerationOptions
 ): { characterToken: Token; reminderTokens: Token[] } | null {
   if (!preRenderCache) return null
   
   const optionsHash = hashOptions(options)
   
-  if (preRenderCache.characterId === characterId && 
+  if (preRenderCache.characterUuid === characterUuid && 
       preRenderCache.optionsHash === optionsHash) {
     return {
       characterToken: preRenderCache.characterToken,

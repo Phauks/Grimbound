@@ -1,0 +1,151 @@
+/**
+ * Auto-Save Indicator Styles
+ */
+
+.container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Status colors */
+.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.info {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.warning {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.idle {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+/* Icon */
+.icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinning animation for saving state */
+.icon.spinning {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Label */
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Save Now Button */
+.saveButton {
+  padding: 6px 12px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #1565c0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+}
+
+.saveButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.saveButton:disabled {
+  background: #bbbbbb;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  min-width: 200px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip > div {
+  margin: 2px 0;
+}
+
+.tooltip > div:first-child {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Responsive - hide label on small screens */
+@media (max-width: 768px) {
+  .label {
+    display: none;
+  }
+
+  .indicator {
+    padding: 6px 10px;
+  }
+
+  .saveButton {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

@@ -216,7 +216,7 @@ export const TEXT_SHADOW = {
  */
 export const ABILITY_TEXT_SHADOW = {
     /** Shadow blur radius in pixels */
-    BLUR: 3,
+    BLUR: 0,
     /** Shadow horizontal offset */
     OFFSET_X: 1,
     /** Shadow vertical offset */
