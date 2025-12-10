@@ -1,0 +1,227 @@
+/* AssetThumbnail Component Styles */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--primary-color, #1976d2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--primary-color, #1976d2);
+  outline-offset: 2px;
+}
+
+.card.selected {
+  border-color: var(--primary-color, #1976d2);
+  background: rgba(25, 118, 210, 0.05);
+}
+
+.card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Size Variants */
+.card.small {
+  width: 120px;
+}
+
+.card.small .thumbnailWrapper {
+  height: 80px;
+}
+
+.card.medium {
+  width: 160px;
+}
+
+.card.medium .thumbnailWrapper {
+  height: 120px;
+}
+
+.card.large {
+  width: 200px;
+}
+
+.card.large .thumbnailWrapper {
+  height: 160px;
+}
+
+/* Thumbnail */
+.thumbnailWrapper {
+  position: relative;
+  background: var(--bg-tertiary, #f5f5f5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.card:hover .thumbnail {
+  transform: scale(1.05);
+}
+
+.imageFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary, #f0f0f0);
+}
+
+/* Checkbox */
+.checkboxWrapper {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color, #1976d2);
+}
+
+/* Hover Actions */
+.actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.actionButton {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.actionButton:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.deleteButton:hover {
+  background: #ffebee;
+}
+
+/* Info Section */
+.info {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filename {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typeBadge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--bg-tertiary, #e8e8e8);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.size {
+  font-size: 11px;
+  color: var(--text-tertiary, #999);
+}
+
+.scopeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.globalBadge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+  border-radius: 3px;
+}
+
+.projectBadge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(33, 150, 243, 0.15);
+  color: #1565c0;
+  border-radius: 3px;
+}
+
+.usedBy {
+  font-size: 10px;
+  color: var(--text-tertiary, #999);
+}
+
+/* Promote Button */
+.promoteButton {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  border: none;
+  background: rgba(25, 118, 210, 0.9);
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.promoteButton:hover {
+  background: rgba(25, 118, 210, 1);
+}
