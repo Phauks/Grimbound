@@ -1,0 +1,107 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # NPM dependency updates
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+
+    # Limit number of open PRs to avoid overwhelming
+    open-pull-requests-limit: 10
+
+    # Add labels for easy filtering
+    labels:
+      - "dependencies"
+      - "automated"
+
+    # Group non-security updates to reduce PR noise
+    groups:
+      # React ecosystem updates
+      react-core:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Testing framework updates
+      testing-tools:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "jsdom"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Build tools
+      build-tools:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # TypeScript definitions
+      type-definitions:
+        patterns:
+          - "@types/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Utility packages
+      utilities:
+        patterns:
+          - "dexie"
+          - "jszip"
+          - "file-saver"
+          - "fast-deep-equal"
+          - "npm-run-all2"
+          - "rimraf"
+        update-types:
+          - "minor"
+          - "patch"
+
+    # Allow all dependency types
+    allow:
+      - dependency-type: "all"
+
+    # Versioning strategy
+    versioning-strategy: "increase"
+
+    # Commit message prefix
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+
+    # Ignore specific versions (if needed)
+    # ignore:
+    #   - dependency-name: "package-name"
+    #     versions: ["x.x.x"]
+
+    # Automatically rebase PRs when conflicts occur
+    rebase-strategy: "auto"
+
+  # GitHub Actions workflow updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"

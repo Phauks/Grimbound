@@ -1,0 +1,210 @@
+# Automated dependency security audit workflow
+# Runs on schedule, PR changes, and manual trigger
+# Checks for vulnerabilities and license compliance
+
+name: Dependency Security Audit
+
+on:
+  # Run daily at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+  # Run on dependency file changes
+  push:
+    paths:
+      - 'package*.json'
+      - '.github/workflows/dependency-audit.yml'
+    branches:
+      - main
+
+  pull_request:
+    paths:
+      - 'package*.json'
+      - '.github/workflows/dependency-audit.yml'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+# Cancel in-progress runs when new push occurs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write  # To create issues for critical vulnerabilities
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        id: npm-audit
+        run: |
+          # Run audit and capture JSON output
+          npm audit --json > audit-results.json || true
+
+          # Extract vulnerability counts
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical' audit-results.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high' audit-results.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate' audit-results.json)
+          LOW=$(jq '.metadata.vulnerabilities.low' audit-results.json)
+          TOTAL=$(jq '.metadata.vulnerabilities.total' audit-results.json)
+
+          # Set outputs for later steps
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+          echo "low=$LOW" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+          # Print summary
+          echo "## Vulnerability Summary"
+          echo "- Critical: $CRITICAL"
+          echo "- High: $HIGH"
+          echo "- Moderate: $MODERATE"
+          echo "- Low: $LOW"
+          echo "- **Total: $TOTAL**"
+
+      - name: Check for critical/high vulnerabilities
+        if: steps.npm-audit.outputs.critical > 0 || steps.npm-audit.outputs.high > 0
+        run: |
+          echo "::error::Found ${{ steps.npm-audit.outputs.critical }} critical and ${{ steps.npm-audit.outputs.high }} high severity vulnerabilities"
+
+          # Print detailed vulnerability information
+          echo "## Critical and High Severity Vulnerabilities:"
+          jq -r '.vulnerabilities | to_entries[] | select(.value.severity == "critical" or .value.severity == "high") | "- \(.key): \(.value.severity) - \(.value.via[0].title // .value.via[0])"' audit-results.json
+
+          exit 1
+
+      - name: Check license compliance
+        run: |
+          # Install license checker
+          npx license-checker --json --production > licenses.json
+
+          # Check for problematic licenses (GPL without dual-license option)
+          echo "## License Compliance Check"
+          if jq -e '.[] | select(.licenses | type == "string" and (contains("GPL") and (contains("MIT") | not) and (contains("Apache") | not)))' licenses.json > /dev/null; then
+            echo "::warning::Found potentially incompatible GPL-licensed dependencies"
+            jq -r '.[] | select(.licenses | type == "string" and (contains("GPL") and (contains("MIT") | not) and (contains("Apache") | not))) | "\(.name): \(.licenses)"' licenses.json
+          else
+            echo "✅ All licenses are compatible with MIT"
+          fi
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-results-${{ github.run_number }}
+          path: |
+            audit-results.json
+            licenses.json
+          retention-days: 30
+
+      - name: Create issue for critical vulnerabilities
+        if: failure() && (steps.npm-audit.outputs.critical > 0 || steps.npm-audit.outputs.high > 0)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.npm-audit.outputs.critical }};
+            const high = ${{ steps.npm-audit.outputs.high }};
+            const total = ${{ steps.npm-audit.outputs.total }};
+
+            const title = `🚨 ${critical} critical and ${high} high severity vulnerabilities found`;
+            const body = `
+            ## Security Vulnerability Alert
+
+            The automated dependency audit found **${total} total vulnerabilities**:
+            - 🔴 **Critical**: ${critical}
+            - 🟠 **High**: ${high}
+            - 🟡 **Moderate**: ${{ steps.npm-audit.outputs.moderate }}
+            - 🟢 **Low**: ${{ steps.npm-audit.outputs.low }}
+
+            ### Action Required
+
+            Please review the vulnerability details in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            ### Recommended Steps
+
+            1. Review the audit report artifact
+            2. Update affected packages: \`npm audit fix\`
+            3. For breaking changes, update manually: \`npm install package@latest\`
+            4. Run tests: \`npm test\`
+            5. Verify build: \`npm run build\`
+
+            ### Auto-Fix Command
+
+            \`\`\`bash
+            npm audit fix
+            npm test
+            npm run build
+            \`\`\`
+
+            ---
+            **Workflow**: ${context.workflow}
+            **Run**: #${context.runNumber}
+            **Triggered by**: ${context.eventName}
+            `;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'security,dependencies,critical',
+              state: 'open'
+            });
+
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'dependencies', 'critical']
+              });
+              console.log('Created new security issue');
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `## New Audit Results (${new Date().toISOString()})\n\n${body}`
+              });
+              console.log('Updated existing security issue');
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🔒 Dependency Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Vulnerabilities**: ${{ steps.npm-audit.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical: ${{ steps.npm-audit.outputs.critical }}" >> $GITHUB_STEP_SUMMARY
+          echo "- High: ${{ steps.npm-audit.outputs.high }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Moderate: ${{ steps.npm-audit.outputs.moderate }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Low: ${{ steps.npm-audit.outputs.low }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.npm-audit.outputs.total }}" -eq 0 ]; then
+            echo "✅ **Status**: All clear! No vulnerabilities found." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.npm-audit.outputs.critical }}" -gt 0 ] || [ "${{ steps.npm-audit.outputs.high }}" -gt 0 ]; then
+            echo "🚨 **Status**: Critical action required!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Status**: Review recommended." >> $GITHUB_STEP_SUMMARY
+          fi
