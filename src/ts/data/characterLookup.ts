@@ -10,6 +10,7 @@
  */
 
 import type { Character } from '../types/index.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Character Lookup Service
@@ -35,7 +36,7 @@ export class CharacterLookupService {
     }
 
     this.lastUpdate = Date.now();
-    console.log(`[CharacterLookup] Updated with ${characters.length} characters`);
+    logger.info('CharacterLookup', `Updated with ${characters.length} characters`);
   }
 
   /**

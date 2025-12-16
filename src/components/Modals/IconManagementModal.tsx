@@ -7,9 +7,9 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { Modal } from '../Shared/Modal/Modal';
-import { Button } from '../Shared/Button';
-import { IconUploader } from '../Shared/IconUploader';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
+import { IconUploader } from '../Shared/Controls/IconUploader';
 import type { Character } from '../../ts/types/index.js';
 import type { CustomIconMetadata } from '../../ts/types/project.js';
 import styles from '../../styles/components/modals/IconManagementModal.module.css';

@@ -26,38 +26,53 @@ export interface LeafDrawingOptions {
     leafGeneration: string;
     leafArcSpan: number;
     leafSlots: number;
+    // Side leaf options
+    enableLeftLeaf?: boolean;
+    enableRightLeaf?: boolean;
+    sideLeafProbability?: number;
 }
 
 /**
  * Build array of all possible leaf positions
  * @param leafArcSpan - Arc span in degrees
  * @param leafSlots - Number of positions along the arc
+ * @param enableLeftLeaf - Whether to include left side leaf position
+ * @param enableRightLeaf - Whether to include right side leaf position
  * @returns Array of leaf positions
  */
-function buildLeafPositions(leafArcSpan: number, leafSlots: number): LeafPosition[] {
+function buildLeafPositions(
+    leafArcSpan: number,
+    leafSlots: number,
+    enableLeftLeaf: boolean = true,
+    enableRightLeaf: boolean = true
+): LeafPosition[] {
     const positions: LeafPosition[] = [];
 
     // Add left side position (at 270 degrees / -90 degrees from top)
-    positions.push({
-        type: 'left',
-        angle: -Math.PI / 2, // -90 degrees (left side)
-        scale: LEAF_LAYOUT.SIDE_LEAVES.SCALE,
-        radialOffset: LEAF_LAYOUT.SIDE_LEAVES.RADIAL_OFFSET,
-    });
+    if (enableLeftLeaf) {
+        positions.push({
+            type: 'left',
+            angle: -Math.PI / 2, // -90 degrees (left side)
+            scale: LEAF_LAYOUT.SIDE_LEAVES.SCALE,
+            radialOffset: LEAF_LAYOUT.SIDE_LEAVES.RADIAL_OFFSET,
+        });
+    }
 
     // Add right side position (at 90 degrees from top)
-    positions.push({
-        type: 'right',
-        angle: Math.PI / 2, // 90 degrees (right side)
-        scale: LEAF_LAYOUT.SIDE_LEAVES.SCALE,
-        radialOffset: LEAF_LAYOUT.SIDE_LEAVES.RADIAL_OFFSET,
-    });
+    if (enableRightLeaf) {
+        positions.push({
+            type: 'right',
+            angle: Math.PI / 2, // 90 degrees (right side)
+            scale: LEAF_LAYOUT.SIDE_LEAVES.SCALE,
+            radialOffset: LEAF_LAYOUT.SIDE_LEAVES.RADIAL_OFFSET,
+        });
+    }
 
     // Add arc positions along the top
     // Arc is centered at top (0 degrees), spanning leafArcSpan degrees
     const arcSpanRad = (leafArcSpan * Math.PI) / 180;
     const startAngle = -arcSpanRad / 2; // Start from left side of arc
-    const angleStep = arcSpanRad / (leafSlots - 1);
+    const angleStep = leafSlots > 1 ? arcSpanRad / (leafSlots - 1) : 0;
 
     for (let i = 0; i < leafSlots; i++) {
         const angle = startAngle + (i * angleStep);
@@ -93,7 +108,7 @@ async function detectLeafVariants(leafGeneration: string): Promise<number> {
     for (let i = 1; i <= 20; i++) { // Check up to 20 variants
         try {
             await getCachedLocalImage(
-                `${basePath}${LEAF_LAYOUT.ASSETS.LEAF_FILENAME}_${i}.png`
+                `${basePath}${LEAF_LAYOUT.ASSETS.LEAF_FILENAME}_${i}.webp`
             );
             availableVariants = i;
         } catch {
@@ -160,7 +175,10 @@ export async function drawLeaves(
         leafPopulationProbability,
         leafGeneration,
         leafArcSpan,
-        leafSlots
+        leafSlots,
+        enableLeftLeaf = true,
+        enableRightLeaf = true,
+        sideLeafProbability = leafPopulationProbability // Default to arc probability
     } = options;
 
     // Detect available leaf variants
@@ -171,8 +189,8 @@ export async function drawLeaves(
         return;
     }
 
-    // Build and shuffle positions
-    const positions = buildLeafPositions(leafArcSpan, leafSlots);
+    // Build and shuffle positions (respecting side leaf settings)
+    const positions = buildLeafPositions(leafArcSpan, leafSlots, enableLeftLeaf, enableRightLeaf);
     const shuffledPositions = shuffleArray(positions);
 
     let leavesDrawn = 0;
@@ -183,9 +201,14 @@ export async function drawLeaves(
             break;
         }
 
+        // Use different probability for side leaves vs arc leaves
+        const probability = (position.type === 'left' || position.type === 'right')
+            ? sideLeafProbability
+            : leafPopulationProbability;
+
         // Roll probability check
         const roll = Math.random() * 100;
-        if (roll >= leafPopulationProbability) {
+        if (roll >= probability) {
             continue; // Skip this leaf position
         }
 
@@ -194,7 +217,7 @@ export async function drawLeaves(
 
         // Load and draw the leaf
         try {
-            const leafPath = `${CONFIG.ASSETS.LEAVES}${LEAF_LAYOUT.ASSETS.LEAVES_PATH}${leafGeneration}/${LEAF_LAYOUT.ASSETS.LEAF_FILENAME}_${variantIndex}.png`;
+            const leafPath = `${CONFIG.ASSETS.LEAVES}${LEAF_LAYOUT.ASSETS.LEAVES_PATH}${leafGeneration}/${LEAF_LAYOUT.ASSETS.LEAF_FILENAME}_${variantIndex}.webp`;
             const leafImage = await getCachedLocalImage(leafPath);
 
             drawSingleLeaf(ctx, leafImage, position, diameter);

@@ -12,6 +12,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTokenContext } from '../contexts/TokenContext.js'
 import { resolveCharacterImages, getFirstImageUrl } from '../ts/utils/characterImageResolver.js'
+import { logger } from '../ts/utils/logger.js'
 import type { Character } from '../ts/types/index.js'
 
 interface UseCharacterImageResolverOptions {
@@ -98,7 +99,7 @@ export function useCharacterImageResolver({
           setResolvedUrls(urls)
         }
       } catch (error) {
-        console.error('[useCharacterImageResolver] Failed to resolve images:', error)
+        logger.error('useCharacterImageResolver', 'Failed to resolve images:', error)
       } finally {
         if (isMounted) {
           setIsLoading(false)

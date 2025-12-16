@@ -13,9 +13,9 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { Modal } from '../Shared/Modal/Modal';
-import { Button } from '../Shared/Button';
-import { Alert } from '../Shared/Alert';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
+import { Alert } from '../Shared/UI/Alert';
 import { useDataSync } from '../../contexts/DataSyncContext';
 import { storageManager } from '../../ts/sync/index.js';
 import CONFIG from '../../ts/config.js';

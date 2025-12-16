@@ -66,3 +66,61 @@ export const TOKEN_CLASS_MAP: Record<HighlightToken['type'], string> = {
   null: 'json-null',
   text: '',
 }
+
+/**
+ * Represents a single line of highlighted JSON
+ * Used for line-based rendering to reduce DOM nodes
+ */
+export interface HighlightLine {
+  lineNumber: number
+  tokens: HighlightToken[]
+  html: string // Pre-rendered HTML string for dangerouslySetInnerHTML
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHTML(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/**
+ * Render tokens to an HTML string for a single line
+ * Pre-rendering reduces React reconciliation overhead
+ */
+function renderTokensToHTML(tokens: HighlightToken[]): string {
+  return tokens
+    .map((token) => {
+      const className = TOKEN_CLASS_MAP[token.type]
+      const escaped = escapeHTML(token.value)
+      return className ? `<span class="${className}">${escaped}</span>` : escaped
+    })
+    .join('')
+}
+
+/**
+ * Tokenize JSON into line-based chunks for efficient rendering
+ * Reduces DOM nodes from ~3000 spans to ~100 divs (one per line)
+ *
+ * @param json - The JSON string to tokenize
+ * @returns Array of line objects with pre-rendered HTML
+ */
+export function tokenizeJSONByLine(json: string): HighlightLine[] {
+  if (!json) return []
+
+  const lines = json.split('\n')
+
+  return lines.map((line, index) => {
+    const tokens = tokenizeJSON(line)
+    return {
+      lineNumber: index,
+      tokens,
+      html: renderTokensToHTML(tokens),
+    }
+  })
+}

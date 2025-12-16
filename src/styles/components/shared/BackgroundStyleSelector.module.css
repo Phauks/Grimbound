@@ -1,0 +1,695 @@
+/**
+ * BackgroundStyleSelector Component Styles
+ *
+ * Compact two-panel layout for comprehensive background styling.
+ * Left panel: Base color/gradient + effects
+ * Right panel: Texture overlays
+ * No scrolling - all controls visible at once.
+ */
+
+/* ============================================
+   Preview (used in selector base)
+   ============================================ */
+
+.previewContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.previewCanvas {
+  border-radius: 50%;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.textureIndicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   Panel Container - contained, no overflow
+   ============================================ */
+
+.panel {
+  overflow: hidden;
+  min-width: 640px;
+}
+
+/* ============================================
+   Preset Selector - Quick Start
+   ============================================ */
+
+.presetSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.presetLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.presetSelect {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  max-width: 200px;
+}
+
+.presetSelect:hover {
+  border-color: var(--color-accent);
+}
+
+.presetSelect:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ============================================
+   Two Panel Layout - Side by Side
+   ============================================ */
+
+.twoPanelLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.leftPanel,
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.leftPanel {
+  border-right: 1px solid var(--border-color);
+  padding-right: 1rem;
+}
+
+/* ============================================
+   Section Headers
+   ============================================ */
+
+.sectionHeader {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+/* ============================================
+   Base Section (Solid/Gradient)
+   ============================================ */
+
+.baseSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* Mode tabs (Solid | Gradient) */
+.modeTabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.modeTab {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modeTab:hover {
+  color: var(--text-primary);
+}
+
+.modeTabActive {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Color Controls
+   ============================================ */
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.colorInput {
+  width: 36px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.colorInput:hover {
+  border-color: var(--color-accent);
+}
+
+.colorInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.colorHex {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.colorArrow {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   Gradient Controls
+   ============================================ */
+
+.gradientControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controlLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+.typeSelect {
+  flex: 1;
+  padding: 0.3125rem 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.typeSelect:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ============================================
+   Sliders - Larger for better usability
+   ============================================ */
+
+.slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+}
+
+.slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sliderValue {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Effects Section - Compact Fixed Layout
+   ============================================ */
+
+.effectsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* Effect item - single row with all controls inline */
+.effectItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 28px; /* Fixed height prevents layout shift */
+}
+
+.effectCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.effectCheckbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.effectCheckbox:hover {
+  color: var(--color-accent);
+}
+
+.effectSlider {
+  flex: 1;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-secondary);
+  border-radius: 2.5px;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.effectSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.effectSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+}
+
+.effectSlider:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Smaller slider for multiple controls on same line */
+.effectSliderSmall {
+  width: 50px;
+  flex-shrink: 0;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-secondary);
+  border-radius: 2.5px;
+  cursor: pointer;
+}
+
+.effectSliderSmall::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.effectSliderSmall::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+}
+
+.effectSliderSmall:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.effectColorInput {
+  width: 26px;
+  height: 20px;
+  padding: 1px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.effectColorInput:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.effectValue {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Multi-row effect container (for Inner Glow with labeled sliders) */
+.effectItemMultiRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin: 0.125rem 0;
+}
+
+/* Sub-row for sliders within multi-row effect */
+.effectSubRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.effectSubLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+/* Ensure sliders in sub-rows have visible track */
+.effectSubRow .effectSlider {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+/* ============================================
+   Image Selection
+   ============================================ */
+
+.imageSelectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.imageThumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.noImage {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.selectImageButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.selectImageButton:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+/* ============================================
+   Light & Color Section
+   ============================================ */
+
+.lightSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Image Mode Placeholder
+   ============================================ */
+
+.imageModePlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  min-height: 200px;
+}
+
+.imageModePlaceholder p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.imageModePlaceholder .hint {
+  font-size: 0.75rem;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* ============================================
+   Texture Section
+   ============================================ */
+
+.textureSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.textureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.375rem;
+}
+
+.textureOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 32px;
+}
+
+.textureOption:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-secondary);
+}
+
+.textureOptionActive {
+  border-color: var(--color-accent);
+  background: rgba(var(--accent-rgb), 0.15);
+}
+
+.textureLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.textureOptionActive .textureLabel {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.textureControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* Seed input styling */
+.seedInput {
+  width: 70px;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.seedInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.seedInput:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Randomize button */
+.randomizeButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.randomizeButton:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+.randomizeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Control hint text - shows state info */
+.controlHint {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ============================================
+   Responsive (narrow screens)
+   ============================================ */
+
+@media (max-width: 480px) {
+  .twoPanelLayout {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .leftPanel {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding-right: 0;
+    padding-bottom: 0.75rem;
+  }
+}

@@ -1,0 +1,655 @@
+/**
+ * BackgroundDrawer Component Styles
+ *
+ * Wide horizontal panel for background settings that positions itself
+ * below the TokenPreviewRow. Uses 3-column layout for all settings
+ * visible at once WITHOUT scrolling.
+ */
+
+/* ============================================
+   Overlay - Dims background when drawer is open
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  /* Transparent - no darkening so user can see preview changes clearly */
+  background: transparent;
+  z-index: 899;
+  /* Still captures clicks to close drawer */
+}
+
+.overlayVisible {
+  /* No visual change needed since overlay is transparent */
+}
+
+/* ============================================
+   Drawer Container - Wide Horizontal Panel
+   ============================================ */
+
+.drawer {
+  position: fixed;
+  /* Match the width of the right panel exactly */
+  right: var(--drawer-right, 16px);
+  top: var(--drawer-top, 200px);
+  left: var(--drawer-left, 320px);
+  background: var(--bg-secondary, #2a2a2a);
+  border-radius: 10px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 900;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+
+  /* Animation - fade in */
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  /* NO scrolling */
+  overflow: visible;
+}
+
+.drawerOpen {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   Drawer Header - Compact
+   ============================================ */
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 10px 10px 0 0;
+}
+
+.drawerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #f0f0f0);
+  margin: 0;
+}
+
+.drawerTitleIcon {
+  font-size: 0.875rem;
+}
+
+.tokenTypeLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent, #8B5CF6);
+  padding: 0.125rem 0.375rem;
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: 3px;
+}
+
+/* Preset in header */
+.headerPreset {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  margin-right: 0.75rem;
+}
+
+.presetSelect {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-primary, #f0f0f0);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.presetSelect:hover {
+  border-color: var(--color-accent, #8B5CF6);
+}
+
+/* Header action buttons */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resetButton,
+.cancelButton,
+.applyButton {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.resetButton {
+  color: var(--text-muted, #888);
+  background: transparent;
+  border: none;
+}
+
+.resetButton:hover {
+  color: var(--color-danger, #f87171);
+}
+
+.cancelButton {
+  color: var(--text-secondary, #ccc);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.cancelButton:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+}
+
+.applyButton {
+  color: white;
+  background: var(--color-accent, #8B5CF6);
+  border: none;
+}
+
+.applyButton:hover {
+  background: var(--color-accent-hover, #7C3AED);
+}
+
+/* ============================================
+   Drawer Content - 3 Column Layout
+   ============================================ */
+
+.drawerContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  padding: 0;
+}
+
+/* Each column */
+.column {
+  padding: 0.625rem 0.75rem;
+  border-right: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.column:last-of-type {
+  border-right: none;
+}
+
+/* Actions column (rightmost) */
+.actionsColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
+  min-width: 80px;
+}
+
+/* ============================================
+   Section Headers - Very Compact
+   ============================================ */
+
+.sectionHeader {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.375rem;
+}
+
+/* ============================================
+   Compact Control Rows
+   ============================================ */
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.controlRow:last-child {
+  margin-bottom: 0;
+}
+
+.controlLabel {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #999);
+  min-width: 44px;
+  flex-shrink: 0;
+}
+
+/* Resettable label - clickable to reset value */
+.resettableLabel {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #999);
+  min-width: 44px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.1s ease;
+}
+
+.resettableLabel .labelText {
+  display: inline;
+}
+
+.resettableLabel .resetText {
+  display: none;
+  color: var(--color-accent, #8B5CF6);
+}
+
+.resettableLabel:hover {
+  color: var(--color-accent, #8B5CF6);
+}
+
+.resettableLabel:hover .labelText {
+  display: none;
+}
+
+.resettableLabel:hover .resetText {
+  display: inline;
+}
+
+/* ============================================
+   Mode Tabs - Inline Compact
+   ============================================ */
+
+.modeTabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border-radius: 4px;
+  padding: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.modeTab {
+  flex: 1;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.modeTab:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.modeTabActive {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f0f0f0);
+}
+
+/* ============================================
+   Compact Color Inputs
+   ============================================ */
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
+}
+
+.colorInput {
+  width: 28px;
+  height: 22px;
+  padding: 1px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.colorInput:hover {
+  border-color: var(--color-accent, #8B5CF6);
+}
+
+.colorArrow {
+  font-size: 0.75rem;
+  color: var(--text-muted, #666);
+}
+
+/* ============================================
+   Compact Sliders
+   ============================================ */
+
+.slider {
+  flex: 1;
+  height: 6px;
+  min-width: 50px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* WebKit (Chrome, Safari, Edge) track */
+.slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent, #8B5CF6);
+  cursor: pointer;
+  margin-top: -5px; /* Center thumb on track: (thumb height - track height) / 2 */
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: var(--color-accent-hover, #7C3AED);
+}
+
+/* Firefox track */
+.slider::-moz-range-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: var(--color-accent, #8B5CF6);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb:hover {
+  background: var(--color-accent-hover, #7C3AED);
+}
+
+.slider:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.slider:disabled::-webkit-slider-thumb {
+  background: #666;
+}
+
+.slider:disabled::-moz-range-thumb {
+  background: #666;
+}
+
+.sliderValue {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+  min-width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Editable slider value - looks identical to span but is clickable */
+.sliderValueInput {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+  min-width: 28px;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: text;
+  outline: none;
+}
+
+.sliderValueInput:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.sliderValueInput:focus {
+  color: var(--text-primary, #f0f0f0);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+/* ============================================
+   Compact Select
+   ============================================ */
+
+.typeSelect {
+  flex: 1;
+  padding: 0.1875rem 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-primary, #f0f0f0);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 3px;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+/* ============================================
+   Compact Checkboxes
+   ============================================ */
+
+.effectCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-primary, #f0f0f0);
+  cursor: pointer;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.effectCheckbox input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  accent-color: var(--color-accent, #8B5CF6);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Texture Grid - Compact Horizontal
+   ============================================ */
+
+.textureGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.textureOption {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  color: var(--text-muted, #999);
+}
+
+.textureOption:hover {
+  border-color: var(--text-muted, #666);
+}
+
+.textureOptionActive {
+  border-color: var(--color-accent, #8B5CF6);
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--color-accent, #8B5CF6);
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+
+.resetLink {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #888);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  transition: all 0.1s ease;
+}
+
+.resetLink:hover {
+  color: var(--color-danger, #f87171);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.footerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.cancelButton,
+.applyButton {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.cancelButton {
+  color: var(--text-secondary, #ccc);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.cancelButton:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+}
+
+.applyButton {
+  color: white;
+  background: var(--color-accent, #8B5CF6);
+  border: none;
+}
+
+.applyButton:hover {
+  background: var(--color-accent-hover, #7C3AED);
+}
+
+/* ============================================
+   Image Selection - Compact
+   ============================================ */
+
+.imageSelectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.imageThumbnail {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.selectImageButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.selectImageButton:hover {
+  border-color: var(--color-accent);
+}
+
+/* ============================================
+   Seed Input - Compact
+   ============================================ */
+
+.seedInput {
+  width: 70px;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.625rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  text-align: center;
+}
+
+.randomizeButton {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.randomizeButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+/* Legacy styles kept for compatibility */
+.drawerFooter {
+  display: none; /* Moved actions to column */
+}
+
+.presetSection {
+  display: none; /* Moved to header */
+}
+
+.twoPanelLayout {
+  display: none; /* Replaced with 3-column */
+}
+
+.leftPanel, .rightPanel {
+  display: none;
+}

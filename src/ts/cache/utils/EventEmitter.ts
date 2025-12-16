@@ -3,6 +3,8 @@
  * Provides basic pub/sub functionality without Node.js dependencies.
  */
 
+import { logger } from '../../utils/logger.js';
+
 /**
  * Type-safe event listener function
  * Uses rest parameters with unknown type for safety
@@ -66,9 +68,9 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
       ? EventListener<TEventMap[K]>
       : EventListener<unknown[]>
   ): this {
-    const onceListener = (...args: unknown[]) => {
-      (listener as EventListener)(...args)
-      this.off(event, onceListener as EventListener)
+    const onceListener: EventListener<unknown[]> = (...args: unknown[]) => {
+      (listener as EventListener<unknown[]>)(...args)
+      this.off(event, onceListener as K extends keyof TEventMap ? EventListener<TEventMap[K]> : EventListener<unknown[]>)
     }
     return this.on(event, onceListener as K extends keyof TEventMap
       ? EventListener<TEventMap[K]>
@@ -114,7 +116,7 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
       try {
         listener(...args)
       } catch (error) {
-        console.error(`Error in event listener for '${event}':`, error)
+        logger.error('EventEmitter', `Error in event listener for '${String(event)}'`, error)
       }
     }
 

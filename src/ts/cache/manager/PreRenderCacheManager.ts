@@ -64,10 +64,10 @@ export class PreRenderCacheManager extends EventEmitter {
         reason: event.reason
       })
 
-      // Clear customize cache (affected by character changes)
-      await this.clearCache('customize')
-      // Clear gallery cache (might contain affected characters)
-      await this.clearCache('gallery')
+      // Clear characters cache (affected by character changes)
+      await this.clearCache('characters')
+      // Clear tokens cache (might contain affected characters)
+      await this.clearCache('tokens')
     })
 
     // Project invalidation - clear project cache
@@ -107,7 +107,7 @@ export class PreRenderCacheManager extends EventEmitter {
 
   /**
    * Register a cache instance.
-   * @param name - Cache name (e.g., 'gallery', 'customize', 'project')
+   * @param name - Cache name (e.g., 'tokens', 'characters', 'project')
    * @param cache - Cache implementation
    */
   registerCache(name: string, cache: ICacheStrategy): void {

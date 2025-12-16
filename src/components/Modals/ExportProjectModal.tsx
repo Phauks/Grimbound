@@ -7,9 +7,9 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { Modal } from '../Shared/Modal/Modal';
-import { Button } from '../Shared/Button';
-import { Alert } from '../Shared/Alert';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
+import { Alert } from '../Shared/UI/Alert';
 import { ProjectExporter } from '../../ts/services/project/ProjectExporter';
 import type { Project, ExportOptions } from '../../ts/types/project.js';
 import styles from '../../styles/components/modals/ExportProjectModal.module.css';

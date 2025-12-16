@@ -272,7 +272,7 @@ export function useCombinedCacheStats(): CombinedCacheStats {
  * @example
  * ```tsx
  * function GlobalLoadingIndicator() {
- *   const isRendering = useAnyStrategyRendering(['gallery', 'customize', 'project'])
+ *   const isRendering = useAnyStrategyRendering(['tokens', 'characters', 'project'])
  *
  *   if (!isRendering) return null
  *

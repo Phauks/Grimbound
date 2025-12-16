@@ -8,9 +8,9 @@
 import { useState, useEffect } from 'react'
 import { useProjects } from '../../hooks/useProjects'
 import { useToast } from '../../contexts/ToastContext'
-import { Modal } from '../Shared/Modal/Modal'
-import { Button } from '../Shared/Button'
-import { Alert } from '../Shared/Alert'
+import { Modal } from '../Shared/ModalBase/Modal'
+import { Button } from '../Shared/UI/Button'
+import { Alert } from '../Shared/UI/Alert'
 import type { Project } from '../../ts/types/project.js'
 
 interface DeleteProjectModalProps {

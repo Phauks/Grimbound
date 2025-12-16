@@ -1,0 +1,129 @@
+/* ============================================
+   IconSettingsSelector Component Styles
+
+   Component-specific styles for the icon settings selector.
+   Uses SettingsSelectorBase.module.css for container, panel,
+   and footer styles.
+   ============================================ */
+
+/* ============================================
+   Preview Container (inside PreviewBox)
+   ============================================ */
+
+.previewContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-secondary) 100%
+  );
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* ============================================
+   Icon Preview Element
+   ============================================ */
+
+.iconPreview {
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+  transition: transform var(--transition-fast);
+}
+
+.iconPreview svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================
+   Custom Icon Image
+   ============================================ */
+
+.previewIconImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ============================================
+   Setting Value Display
+   ============================================ */
+
+.settingValue {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* ============================================
+   Compact Slider Group
+   ============================================ */
+
+.sliderGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.sliderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.125rem 0;
+}
+
+.sliderLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Compact slider wrapper - hides extra elements for tighter layout */
+.compactSlider {
+  margin: 0;
+}
+
+/* Hide text input and unit label */
+.compactSlider input[type="text"],
+.compactSlider input[inputmode="decimal"] {
+  display: none;
+}
+
+/* Hide the input row wrapper that contains the text input */
+.compactSlider > div > div:has(input[type="text"]),
+.compactSlider > div > div:has(input[inputmode="decimal"]) {
+  display: none;
+}
+
+/* Remove gap from the control container */
+.compactSlider > div {
+  gap: 0 !important;
+}
+
+/* Make range slider slightly thinner */
+.compactSlider input[type="range"] {
+  height: 4px;
+}
+
+/* Smaller thumb */
+.compactSlider input[type="range"]::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+}
+
+.compactSlider input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+}

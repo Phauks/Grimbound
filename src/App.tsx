@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
-import { TokenProvider } from './contexts/TokenContext'
+import { TokenProvider, useTokenContext } from './contexts/TokenContext'
 import { StudioProvider } from './contexts/StudioContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext'
+import { DownloadsProvider } from './contexts/DownloadsContext'
 import { AppHeader } from './components/Layout/AppHeader'
 import { useProjectAutoSave, useUnsavedChangesWarning } from './hooks/useProjectAutoSave'
 import { useStorageQuota } from './hooks/useStorageQuota'
@@ -13,14 +14,17 @@ import { AnnouncementsModal } from './components/Modals/AnnouncementsModal'
 import { SyncDetailsModal } from './components/Modals/SyncDetailsModal'
 import { AssetManagerModal } from './components/Modals/AssetManagerModal'
 import { TabConflictModal } from './components/Modals/TabConflictModal'
-import { StorageWarning } from './components/Shared/StorageWarning'
-import { ToastContainer } from './components/Shared/Toast'
-import { EditorPage } from './components/Pages'
+import { StorageWarning } from './components/Shared/Feedback/StorageWarning'
+import { ToastContainer } from './components/Shared/UI/Toast'
+import { DownloadsDrawer } from './components/Shared/Downloads'
+import { AppShell } from './components/Layout/AppShell'
 import { warmingPolicyManager } from './ts/cache/index.js'
+import { logger } from './ts/utils/logger.js'
 import layoutStyles from './styles/components/layout/AppLayout.module.css'
 
 function AppContent() {
   const { currentProject, setSaveNow } = useProjectContext()
+  const { generationOptions } = useTokenContext()
 
   // Enable auto-save and unsaved changes warning
   const { saveNow, conflictModalProps } = useProjectAutoSave() // Auto-save always enabled
@@ -44,12 +48,12 @@ function AppContent() {
   useEffect(() => {
     const warmAppStartCaches = async () => {
       try {
-        console.debug('[App] Warming caches on app start');
+        logger.debug('App', 'Warming caches on app start');
 
         await warmingPolicyManager.warm(
           { route: '/' },
           (policy, loaded, total, message) => {
-            console.debug(`[App] Warming progress - ${policy}:`, {
+            logger.debug('App', `Warming progress - ${policy}:`, {
               loaded,
               total,
               message
@@ -57,9 +61,9 @@ function AppContent() {
           }
         );
 
-        console.debug('[App] App start cache warming complete');
+        logger.debug('App', 'App start cache warming complete');
       } catch (error) {
-        console.warn('[App] App start cache warming failed:', error);
+        logger.warn('App', 'App start cache warming failed:', error);
       }
     };
 
@@ -109,7 +113,7 @@ function AppContent() {
       )}
 
       <main className={layoutStyles.mainContent}>
-        <EditorPage />
+        <AppShell />
       </main>
       <AppFooter />
 
@@ -129,10 +133,14 @@ function AppContent() {
         isOpen={showAssetManager}
         onClose={() => setShowAssetManager(false)}
         projectId={currentProject?.id}
+        generationOptions={generationOptions}
       />
 
       {/* Toast Notifications */}
       <ToastContainer />
+
+      {/* Downloads Drawer - slides in from right edge */}
+      <DownloadsDrawer />
     </div>
   )
 }
@@ -143,7 +151,9 @@ export default function App() {
       <ProjectProvider>
         <TokenProvider>
           <StudioProvider>
-            <AppContent />
+            <DownloadsProvider>
+              <AppContent />
+            </DownloadsProvider>
           </StudioProvider>
         </TokenProvider>
       </ProjectProvider>

@@ -15,113 +15,12 @@ import { debounce, logger } from '../ts/utils/index.js';
 import { retryOperation } from '../ts/utils/errorUtils.js';
 import { generateUuid } from '../ts/utils/nameGenerator.js';
 import { useTabSynchronization } from './useTabSynchronization.js';
+import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
 import type { Project, AutoSaveSnapshot, ProjectState } from '../ts/types/project.js';
 import type { DebouncedFunction } from '../ts/utils/asyncUtils.js';
 
 const AUTO_SAVE_DEBOUNCE_MS = 2000;
 const MAX_SNAPSHOTS = 10; // Keep last 10 snapshots
-const TELEMETRY_STORAGE_KEY = 'botc-autosave-telemetry';
-
-// ============================================================================
-// Telemetry Interface
-// ============================================================================
-
-/**
- * Auto-save telemetry metrics (privacy-friendly, stored locally)
- */
-interface AutoSaveTelemetry {
-  totalSaves: number;           // Successful saves
-  totalErrors: number;          // Failed saves
-  totalAttempts: number;        // Total attempts (saves + errors)
-  totalDurationMs: number;      // Sum of all save durations
-  lastSaveDurationMs: number;   // Duration of most recent save
-  firstSaveAt: number;          // Timestamp of first save (session start)
-  lastUpdatedAt: number;        // Last metrics update
-}
-
-// ============================================================================
-// Telemetry Helper Functions
-// ============================================================================
-
-/**
- * Load telemetry from localStorage
- */
-function loadTelemetry(): AutoSaveTelemetry {
-  try {
-    const stored = localStorage.getItem(TELEMETRY_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    logger.warn('AutoSaveTrigger', 'Failed to load telemetry from localStorage', { error });
-  }
-
-  // Return default telemetry
-  return {
-    totalSaves: 0,
-    totalErrors: 0,
-    totalAttempts: 0,
-    totalDurationMs: 0,
-    lastSaveDurationMs: 0,
-    firstSaveAt: Date.now(),
-    lastUpdatedAt: Date.now(),
-  };
-}
-
-/**
- * Save telemetry to localStorage
- */
-function saveTelemetry(telemetry: AutoSaveTelemetry): void {
-  try {
-    localStorage.setItem(TELEMETRY_STORAGE_KEY, JSON.stringify(telemetry));
-  } catch (error) {
-    logger.warn('AutoSaveTrigger', 'Failed to save telemetry to localStorage', { error });
-  }
-}
-
-/**
- * Update telemetry after a save attempt
- */
-function updateTelemetry(
-  telemetry: AutoSaveTelemetry,
-  success: boolean,
-  durationMs: number
-): AutoSaveTelemetry {
-  const updated: AutoSaveTelemetry = {
-    ...telemetry,
-    totalAttempts: telemetry.totalAttempts + 1,
-    lastSaveDurationMs: durationMs,
-    lastUpdatedAt: Date.now(),
-  };
-
-  if (success) {
-    updated.totalSaves = telemetry.totalSaves + 1;
-    updated.totalDurationMs = telemetry.totalDurationMs + durationMs;
-  } else {
-    updated.totalErrors = telemetry.totalErrors + 1;
-  }
-
-  return updated;
-}
-
-/**
- * Get computed telemetry stats
- */
-function getTelemetryStats(telemetry: AutoSaveTelemetry) {
-  const successRate = telemetry.totalAttempts > 0
-    ? (telemetry.totalSaves / telemetry.totalAttempts) * 100
-    : 0;
-
-  const avgSaveDurationMs = telemetry.totalSaves > 0
-    ? telemetry.totalDurationMs / telemetry.totalSaves
-    : 0;
-
-  return {
-    ...telemetry,
-    successRate,
-    avgSaveDurationMs,
-  };
-}
 
 /**
  * Watches isDirty flag and triggers debounced saves
@@ -160,12 +59,11 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
   // Track if we have a pending save
   const pendingSaveRef = useRef(false);
 
-  // Telemetry tracking (privacy-friendly, stored locally)
-  const telemetryRef = useRef<AutoSaveTelemetry>(loadTelemetry());
+  // Telemetry tracking (extracted hook)
+  const { recordSaveAttempt, getStats } = useAutoSaveTelemetry();
 
   // Tab synchronization
   const {
-    tabId,
     hasConflict,
     conflictingTabCount,
     notifySaved,
@@ -277,32 +175,30 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
         isDirty: false,
       });
 
-      // Calculate save duration and update telemetry
+      // Record successful save in telemetry
       const duration = performance.now() - startTime;
-      telemetryRef.current = updateTelemetry(telemetryRef.current, true, duration);
-      saveTelemetry(telemetryRef.current);
+      recordSaveAttempt(true, duration);
 
       logger.info('AutoSaveTrigger', 'Save completed successfully', {
         projectId: currentProject.id,
         projectName: currentProject.name,
         timestamp: now,
         durationMs: Math.round(duration),
-        telemetry: getTelemetryStats(telemetryRef.current),
+        telemetry: getStats(),
       });
 
       // Notify other tabs that we saved
       notifySaved();
     } catch (error) {
-      // Calculate save duration and update telemetry (failed save)
+      // Record failed save in telemetry
       const duration = performance.now() - startTime;
-      telemetryRef.current = updateTelemetry(telemetryRef.current, false, duration);
-      saveTelemetry(telemetryRef.current);
+      recordSaveAttempt(false, duration);
 
       logger.error('AutoSaveTrigger', 'Save failed', error, {
         projectId: currentProject?.id,
         errorType: error instanceof Error ? error.name : 'Unknown',
         durationMs: Math.round(duration),
-        telemetry: getTelemetryStats(telemetryRef.current),
+        telemetry: getStats(),
       });
 
       let errorMessage = 'Failed to save project';
@@ -436,6 +332,6 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
       onClose: handleConflictClose,
     },
     // Telemetry stats (for debugging/analytics)
-    telemetry: getTelemetryStats(telemetryRef.current),
+    telemetry: getStats(),
   };
 }

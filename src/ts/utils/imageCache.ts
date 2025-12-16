@@ -6,6 +6,7 @@
 import { loadImage, loadLocalImage } from './imageUtils.js';
 import { dataSyncService } from '../sync/index.js';
 import { cacheInvalidationService } from '../cache/CacheInvalidationService.js';
+import { logger } from './logger.js';
 
 // ============================================================================
 // TYPES
@@ -121,13 +122,13 @@ class ImageCache {
                     const cachedBlob = await dataSyncService.getCharacterImage(characterId);
                     if (cachedBlob) {
                         image = await blobToImage(cachedBlob);
-                        console.log(`[ImageCache] Loaded ${characterId} from sync storage`);
+                        logger.debug('ImageCache', `Loaded ${characterId} from sync storage`);
                     } else {
                         // Not in sync storage, load from network
                         image = await loadImage(url);
                     }
                 } catch (error) {
-                    console.warn(`[ImageCache] Failed to load ${characterId} from sync storage, falling back to network:`, error);
+                    logger.warn('ImageCache', `Failed to load ${characterId} from sync storage, falling back to network`, error);
                     image = await loadImage(url);
                 }
             } else {
@@ -241,7 +242,7 @@ class ImageCache {
         }
 
         this.currentSizeBytes -= bytesFreed;
-        console.debug(`[ImageCache] Invalidated ${urls.length} URLs, freed ${(bytesFreed / 1024 / 1024).toFixed(2)} MB`);
+        logger.debug('ImageCache', `Invalidated ${urls.length} URLs, freed ${(bytesFreed / 1024 / 1024).toFixed(2)} MB`);
     }
 
     /**
@@ -282,7 +283,7 @@ class ImageCache {
                 try {
                     await this.get(url, isLocal);
                 } catch (error) {
-                    console.warn(`[ImageCache] Failed to preload: ${url}`, error);
+                    logger.warn('ImageCache', `Failed to preload: ${url}`, error);
                 } finally {
                     loaded++;
                     if (onProgress) {
@@ -319,7 +320,7 @@ cacheInvalidationService.subscribe('asset', (event) => {
 cacheInvalidationService.subscribe('global', () => {
     // Global invalidation - clear entire cache
     globalImageCache.clear();
-    console.log('[ImageCache] Cleared all cached images (global invalidation)');
+    logger.info('ImageCache', 'Cleared all cached images (global invalidation)');
 });
 
 export default globalImageCache;

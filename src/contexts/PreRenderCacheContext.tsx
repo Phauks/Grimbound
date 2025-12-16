@@ -8,11 +8,12 @@ import {
   PreRenderCacheManager,
   LRUCacheAdapter,
   LRUEvictionPolicy,
-  GalleryPreRenderStrategy,
-  CustomizePreRenderStrategy,
+  TokensPreRenderStrategy,
+  CharactersPreRenderStrategy,
   ProjectPreRenderStrategy,
   CacheLogger
 } from '../ts/cache/index.js'
+import { logger } from '../ts/utils/logger.js'
 
 /**
  * Context value type.
@@ -39,8 +40,8 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
   const manager = useMemo(() => {
     const mgr = new PreRenderCacheManager()
 
-    // ===== Gallery Cache =====
-    const galleryCache = new LRUCacheAdapter<string, string>({
+    // ===== Tokens Cache =====
+    const tokensCache = new LRUCacheAdapter<string, string>({
       maxSize: 50,  // First 50 tokens
       maxMemory: 25_000_000,  // 25MB (~52 data URLs)
       evictionPolicy: new LRUEvictionPolicy({
@@ -49,11 +50,11 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
         evictionRatio: 0.2  // Evict 20% (10 tokens) at a time
       }),
       onEvict: (event) => {
-        CacheLogger.logEviction('gallery', event.key, event.reason, event.size, event.lastAccessed, event.accessCount)
+        CacheLogger.logEviction('tokens', event.key, event.reason, event.size, event.lastAccessed, event.accessCount)
       }
     })
-    mgr.registerCache('gallery', galleryCache)
-    mgr.registerStrategy(new GalleryPreRenderStrategy(galleryCache, {
+    mgr.registerCache('tokens', tokensCache)
+    mgr.registerStrategy(new TokensPreRenderStrategy(tokensCache, {
       maxTokens: 20,
       maxConcurrent: 5,
       useWorkers: true,  // Enable Web Workers (auto-detects OffscreenCanvas support)
@@ -61,8 +62,8 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
       encodingQuality: 0.92
     }))
 
-    // ===== Customize Cache =====
-    const customizeCache = new LRUCacheAdapter({
+    // ===== Characters Cache =====
+    const charactersCache = new LRUCacheAdapter({
       maxSize: 5,  // 5 character sets
       maxMemory: 10_000_000,  // 10MB
       evictionPolicy: new LRUEvictionPolicy({
@@ -71,11 +72,11 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
         evictionRatio: 0.4  // Evict 40% (2 entries) at a time
       }),
       onEvict: (event) => {
-        CacheLogger.logEviction('customize', event.key, event.reason, event.size, event.lastAccessed, event.accessCount)
+        CacheLogger.logEviction('characters', event.key, event.reason, event.size, event.lastAccessed, event.accessCount)
       }
     })
-    mgr.registerCache('customize', customizeCache)
-    mgr.registerStrategy(new CustomizePreRenderStrategy(customizeCache, {
+    mgr.registerCache('characters', charactersCache)
+    mgr.registerStrategy(new CharactersPreRenderStrategy(charactersCache, {
       includeReminders: true
     }))
 
@@ -104,15 +105,15 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
   useEffect(() => {
     if (import.meta.env.DEV) {
       const handlePreRenderStart = (event: any) => {
-        console.log(`[Cache] Pre-render started:`, event.strategy)
+        logger.debug('Cache', `Pre-render started:`, event.strategy)
       }
 
       const handlePreRenderComplete = (event: any) => {
-        console.log(`[Cache] Pre-render complete:`, event.strategy, event.result)
+        logger.debug('Cache', `Pre-render complete:`, event.strategy, event.result)
       }
 
       const handlePreRenderError = (event: any) => {
-        console.error(`[Cache] Pre-render error:`, event.strategy, event.error)
+        logger.error('Cache', `Pre-render error:`, event.strategy, event.error)
       }
 
       manager.on('prerender:start', handlePreRenderStart)

@@ -10,6 +10,9 @@ import CONFIG from '../config.js';
 import {
     CHARACTER_LAYOUT,
     META_TOKEN_LAYOUT,
+    REMINDER_LAYOUT,
+    QR_TOKEN_LAYOUT,
+    QR_COLORS,
     LINE_HEIGHTS,
     TOKEN_COUNT_BADGE,
     DEFAULT_COLORS
@@ -23,7 +26,29 @@ import {
     type TextLayoutResult
 } from '../canvas/index.js';
 import type { TokenGeneratorOptions } from '../types/tokenOptions.js';
+import type { ReminderCountStyle } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+
+/**
+ * Format reminder count based on the selected style
+ */
+function formatReminderCount(count: number, style: ReminderCountStyle = 'arabic'): string {
+    switch (style) {
+        case 'roman':
+            const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+            return romanNumerals[count - 1] || count.toString();
+        case 'circled':
+            if (count >= 1 && count <= 20) {
+                return String.fromCodePoint(0x245F + count);
+            }
+            return count.toString();
+        case 'dots':
+            return '\u2022'.repeat(count);
+        case 'arabic':
+        default:
+            return count.toString();
+    }
+}
 
 /**
  * Handles all text rendering operations for tokens
@@ -141,7 +166,7 @@ export class TokenTextRenderer {
         radius: number,
         diameter: number
     ): void {
-        const reminderLayout = CONFIG.REMINDER_LAYOUT || { CURVED_TEXT_RADIUS: 0.85 };
+        const reminderLayout = REMINDER_LAYOUT;
 
         drawCurvedText(ctx, {
             text: reminderText.toUpperCase(),
@@ -175,9 +200,18 @@ export class TokenTextRenderer {
 
         const y = diameter * CHARACTER_LAYOUT.TOKEN_COUNT_Y_POSITION;
 
+        // Format the count based on the selected style
+        const style = this.options.reminderCountStyle || 'arabic';
+        const displayText = formatReminderCount(count, style);
+
+        // Adjust badge size for dots style (wider)
+        const badgeRadius = style === 'dots'
+            ? fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS * (1 + count * 0.15)
+            : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
+
         // Draw background circle
         ctx.beginPath();
-        ctx.arc(diameter / 2, y, fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS, 0, Math.PI * 2);
+        ctx.arc(diameter / 2, y, badgeRadius, 0, Math.PI * 2);
         ctx.fillStyle = DEFAULT_COLORS.BADGE_BACKGROUND;
         ctx.fill();
         ctx.strokeStyle = DEFAULT_COLORS.TEXT_PRIMARY;
@@ -186,10 +220,10 @@ export class TokenTextRenderer {
 
         // Draw count text
         ctx.fillStyle = DEFAULT_COLORS.TEXT_PRIMARY;
-        ctx.fillText(count.toString(), diameter / 2, y);
+        ctx.fillText(displayText, diameter / 2, y);
         ctx.restore();
 
-        logger.debug('TokenTextRenderer', 'Drew token count badge', count);
+        logger.debug('TokenTextRenderer', 'Drew token count badge', displayText);
     }
 
     /**
@@ -248,39 +282,7 @@ export class TokenTextRenderer {
     }
 
     /**
-     * Draw QR code overlay text
-     */
-    drawQROverlayText(
-        ctx: CanvasRenderingContext2D,
-        text: string,
-        diameter: number
-    ): void {
-        // Import dynamically to avoid circular dependencies
-        import('../canvas/index.js').then(({ drawQROverlayText }) => {
-            const qrLayout = CONFIG.QR_TOKEN_LAYOUT || {
-                OVERLAY_TEXT_SIZE: 0.08,
-                OVERLAY_TEXT_MAX_WIDTH: 0.4,
-                QR_VERTICAL_OFFSET: 0.05
-            };
-            const qrColors = CONFIG.QR_COLORS || { DARK: '#000000' };
-
-            drawQROverlayText(
-                ctx,
-                text.toUpperCase(),
-                diameter,
-                'LHF Unlovable',
-                qrLayout.OVERLAY_TEXT_SIZE,
-                qrLayout.OVERLAY_TEXT_MAX_WIDTH,
-                qrLayout.QR_VERTICAL_OFFSET,
-                qrColors.DARK
-            );
-
-            logger.debug('TokenTextRenderer', 'Drew QR overlay text', text);
-        });
-    }
-
-    /**
-     * Draw "ALMANAC" text on QR token
+     * Draw "ALMANAC" curved at the bottom of QR token
      */
     drawAlmanacLabel(
         ctx: CanvasRenderingContext2D,
@@ -289,22 +291,22 @@ export class TokenTextRenderer {
         diameter: number
     ): void {
         const metaFont = this.options.metaNameFont || this.options.characterNameFont;
-        const qrColors = CONFIG.QR_COLORS || { DARK: '#000000' };
 
+        // Draw "ALMANAC" curved at bottom
         drawCurvedText(ctx, {
             text: 'ALMANAC',
             centerX: center.x,
             centerY: center.y,
-            radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
+            radius: radius * QR_TOKEN_LAYOUT.SCRIPT_NAME_RADIUS,
             fontFamily: metaFont,
-            fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
+            fontSize: diameter * QR_TOKEN_LAYOUT.SCRIPT_NAME_SIZE,
             position: 'bottom',
-            color: qrColors.DARK,
+            color: QR_COLORS.GRADIENT_END,  // Use dark color for contrast
             letterSpacing: this.options.fontSpacing.metaText ?? 0,
             shadowBlur: 0
         });
 
-        logger.debug('TokenTextRenderer', 'Drew almanac label');
+        logger.debug('TokenTextRenderer', 'Drew ALMANAC label');
     }
 }
 

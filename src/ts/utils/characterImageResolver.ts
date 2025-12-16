@@ -16,8 +16,9 @@
  */
 
 import { dataSyncService } from '../sync/index.js'
-import { isAssetReference, resolveAssetUrl } from '../../services/upload/assetResolver.js'
+import { isAssetReference, resolveAssetUrl } from '../services/upload/assetResolver.js'
 import type { Character } from '../types/index.js'
+import { logger } from './logger.js'
 
 // ============================================================================
 // Types
@@ -187,7 +188,7 @@ export async function resolveCharacterImageUrl(
       } catch (error) {
         // Silent fail - will fall through to fallback
         if (logContext) {
-          console.warn(`[${logContext}] Failed to resolve from sync storage: ${lookupId}`)
+          logger.warn(logContext, `Failed to resolve from sync storage: ${lookupId}`)
         }
       }
     }
@@ -196,7 +197,7 @@ export async function resolveCharacterImageUrl(
     return { url: imageUrl, source: 'fallback' }
   } catch (error) {
     if (logContext) {
-      console.error(`[${logContext}] Failed to resolve character image:`, characterId, error)
+      logger.error(logContext, `Failed to resolve character image: ${characterId}`, error)
     }
     return { url: imageUrl, source: 'fallback' }
   }

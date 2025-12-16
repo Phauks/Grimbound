@@ -83,11 +83,10 @@
 }
 
 .characterRow {
-  display: grid;
-  grid-template-columns: 64px 140px 1fr;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.15s ease;
 }
@@ -98,6 +97,27 @@
 
 .characterRow:hover {
   background: var(--surface-hover);
+}
+
+/* Left side: Icon + Name + Official badge */
+.characterLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  width: 160px;
+  min-width: 160px;
+}
+
+/* Right side: Additional info rows */
+.characterRight {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 1px solid var(--border-color);
+  padding-left: 1rem;
 }
 
 /* Character Icon - Shows the raw character icon (no background) */
@@ -128,21 +148,115 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Character Content - Contains all character info rows */
+.characterContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Character Name Row - Name with optional official badge */
+.characterNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* Character Name */
 .characterName {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Character Ability - Full text shown */
+/* Official Badge - Shows below character name for official characters */
+.officialBadge {
+  display: inline-block;
+  width: fit-content;
+  padding: 1px 4px;
+  background: #1976d2;
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  border-radius: 2px;
+}
+
+/* Info Row - Label + text for ability, reminders, etc. */
+.infoRow {
+  display: flex;
+  gap: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.infoLabel {
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.infoText {
+  color: var(--text-secondary);
+}
+
+/* Reminder Tags Container - For showing reminder tokens */
+.reminderTagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Individual Reminder Tag */
+.reminderTag {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Character Name Cell - Contains name and official badge stacked vertically */
+.characterNameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
 .characterAbility {
   font-size: 0.8rem;
   color: var(--text-secondary);
   line-height: 1.4;
+}
+
+.characterReminder {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.characterRemindersList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.noContent {
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .noAbility {

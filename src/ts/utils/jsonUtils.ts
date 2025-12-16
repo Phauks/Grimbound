@@ -61,19 +61,19 @@ export function deepClone<T>(obj: T): T {
 }
 
 /**
- * Strip internal fields (like uuid) from a character or script entry object.
+ * Strip internal fields (like uuid, source) from a character or script entry object.
  * Used when exporting JSON to keep the output clean.
  * @param entry - Object to strip internal fields from
  * @returns Object with internal fields removed
  */
-export function stripInternalFields<T extends Record<string, unknown>>(entry: T): Omit<T, 'uuid'> {
+export function stripInternalFields<T extends Record<string, unknown>>(entry: T): Omit<T, 'uuid' | 'source'> {
     if (typeof entry !== 'object' || entry === null) return entry;
-    const { uuid, ...rest } = entry;
-    return rest as Omit<T, 'uuid'>;
+    const { uuid, source, ...rest } = entry;
+    return rest as Omit<T, 'uuid' | 'source'>;
 }
 
 /**
- * Clean JSON string by stripping internal fields (uuid) from all entries.
+ * Clean JSON string by stripping internal fields (uuid, source) from all entries.
  * Used for exporting script JSON without internal generator state.
  * @param jsonString - JSON string to clean
  * @returns Cleaned JSON string with internal fields removed
@@ -84,7 +84,7 @@ export function getCleanJsonForExport(jsonString: string): string {
         if (!Array.isArray(parsed)) return jsonString;
 
         const cleaned = parsed.map(entry => {
-            // If it's an object (character or meta), strip uuid
+            // If it's an object (character or meta), strip uuid and source
             if (typeof entry === 'object' && entry !== null) {
                 return stripInternalFields(entry as Record<string, unknown>);
             }

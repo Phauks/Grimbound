@@ -5,7 +5,7 @@
  * Migrated to use unified Modal component.
  */
 
-import { Modal } from '../Shared/Modal/Modal'
+import { Modal } from '../Shared/ModalBase/Modal'
 import styles from './InfoModal.module.css'
 
 interface InfoModalProps {

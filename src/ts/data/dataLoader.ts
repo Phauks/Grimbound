@@ -7,6 +7,7 @@ import type {
     Character,
     ScriptEntry,
 } from '../types/index.js';
+import { logger } from '../utils/logger.js';
 
 // ============================================================================
 // Data Fetching
@@ -18,7 +19,7 @@ import type {
  * @returns Parsed script data
  */
 export async function loadExampleScript(filename: string): Promise<ScriptEntry[]> {
-    console.log(`[loadExampleScript] Loading example script: ${filename}`);
+    logger.debug('DataLoader', `Loading example script: ${filename}`);
 
     // Ensure filename has .json extension
     const jsonFilename = filename.endsWith('.json') ? filename : `${filename}.json`;
@@ -36,22 +37,22 @@ export async function loadExampleScript(filename: string): Promise<ScriptEntry[]
 
     for (const path of pathsToTry) {
         try {
-            console.log(`[loadExampleScript] Trying path: ${path}`);
+            logger.debug('DataLoader', `Trying path: ${path}`);
             const response = await fetch(path);
             if (response.ok) {
                 const data = await response.json() as ScriptEntry[];
-                console.log(`[loadExampleScript] Successfully loaded from: ${path}`, data);
+                logger.debug('DataLoader', `Successfully loaded from: ${path}`, data);
                 return data;
             }
-            console.log(`[loadExampleScript] Path returned status: ${response.status}`);
+            logger.debug('DataLoader', `Path returned status: ${response.status}`);
         } catch (error) {
-            console.log(`[loadExampleScript] Path failed: ${path}`, error);
+            logger.debug('DataLoader', `Path failed: ${path}`, error);
             lastError = error instanceof Error ? error : new Error(String(error));
         }
     }
 
     const errorMessage = `Failed to load example script: ${filename}. ${lastError?.message ?? 'Unknown error'}`;
-    console.error('[loadExampleScript]', errorMessage);
+    logger.error('DataLoader', errorMessage, lastError);
     throw new Error(errorMessage);
 }
 
@@ -61,36 +62,36 @@ export async function loadExampleScript(filename: string): Promise<ScriptEntry[]
  * @returns Parsed JSON data
  */
 export async function loadJsonFile(file: File): Promise<ScriptEntry[]> {
-    console.log(`[loadJsonFile] Loading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+    logger.debug('DataLoader', `Loading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
         reader.onload = (event): void => {
-            console.log('[loadJsonFile] File read successfully');
+            logger.debug('DataLoader', 'File read successfully');
             try {
                 const result = event.target?.result;
                 if (typeof result !== 'string') {
                     const error = new Error('Failed to read file as text');
-                    console.error('[loadJsonFile]', error.message);
+                    logger.error('DataLoader', error.message, error);
                     reject(error);
                     return;
                 }
-                console.log(`[loadJsonFile] File content length: ${result.length}`);
+                logger.debug('DataLoader', `File content length: ${result.length}`);
                 const data = JSON.parse(result) as ScriptEntry[];
-                console.log('[loadJsonFile] JSON parsed successfully:', data);
+                logger.debug('DataLoader', 'JSON parsed successfully', data);
                 resolve(data);
             } catch (error) {
                 const message = error instanceof Error ? error.message : 'Unknown error';
                 const parseError = new Error(`Invalid JSON file: ${message}`);
-                console.error('[loadJsonFile]', parseError.message);
+                logger.error('DataLoader', parseError.message, parseError);
                 reject(parseError);
             }
         };
 
         reader.onerror = (): void => {
             const error = new Error('Failed to read file');
-            console.error('[loadJsonFile]', error.message, reader.error);
+            logger.error('DataLoader', error.message, error);
             reject(error);
         };
 

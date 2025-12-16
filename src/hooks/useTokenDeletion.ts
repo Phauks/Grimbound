@@ -72,7 +72,7 @@ export function useTokenDeletion({
         logger.debug('useTokenDeletion', 'Delete requested', { type: token.type, name: token.name });
 
         // Meta tokens can be deleted immediately without confirmation
-        if (token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium') {
+        if (token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium' || token.type === 'bootlegger') {
             // Disable the corresponding option
             if (token.type === 'script-name') {
                 updateGenerationOptions({ scriptNameToken: false });
@@ -80,6 +80,8 @@ export function useTokenDeletion({
                 updateGenerationOptions({ almanacToken: false });
             } else if (token.type === 'pandemonium') {
                 updateGenerationOptions({ pandemoniumToken: false });
+            } else if (token.type === 'bootlegger') {
+                updateGenerationOptions({ generateBootleggerRules: false });
             }
 
             // Delete the token immediately

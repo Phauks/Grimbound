@@ -1,7 +1,8 @@
 import styles from '../../styles/components/layout/Header.module.css'
-import { SyncStatusIndicator } from '../Shared/SyncStatusIndicator'
-import { AutoSaveIndicator } from '../Shared/AutoSaveIndicator'
-import { SaveAsNewProjectButton } from '../Shared/SaveAsNewProjectButton'
+import { SyncStatusIndicator } from '../Shared/Feedback/SyncStatusIndicator'
+import { AutoSaveIndicator } from '../Shared/Feedback/AutoSaveIndicator'
+import { SaveAsNewProjectButton } from '../Shared/Assets/SaveAsNewProjectButton'
+import { usePWAInstall } from '../../hooks/usePWAInstall'
 
 interface AppHeaderProps {
   onSettingsClick: () => void
@@ -22,6 +23,8 @@ export function AppHeader({
   version = '0.3.0',
   currentProjectName,
 }: AppHeaderProps) {
+  const { canInstall, isInstalled, isPrompting, promptInstall } = usePWAInstall();
+
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
@@ -46,6 +49,24 @@ export function AppHeader({
         </div>
       </div>
       <div className={styles.headerRight}>
+        {/* PWA Install Button - only shown when app is installable */}
+        {canInstall && !isInstalled && (
+          <button
+            type="button"
+            className={`${styles.iconButton} ${styles.installButton}`}
+            onClick={() => promptInstall()}
+            disabled={isPrompting}
+            aria-label="Install app"
+            title="Install this app for offline use"
+          >
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+              />
+            </svg>
+          </button>
+        )}
         <button
           type="button"
           className={styles.iconButton}

@@ -24,6 +24,7 @@ import { githubReleaseClient } from './githubReleaseClient.js';
 import { packageExtractor } from './packageExtractor.js';
 import { VersionManager } from './versionManager.js';
 import { DataSyncError, GitHubAPIError } from '../errors.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Sync event types
@@ -101,7 +102,7 @@ export class DataSyncService {
      * Internal initialization logic
      */
     private async _initialize(): Promise<void> {
-        console.log('[DataSyncService] Initializing...');
+        logger.info('DataSyncService', 'Initializing...');
 
         try {
             // Initialize storage
@@ -122,16 +123,16 @@ export class DataSyncService {
                     error: null,
                 };
 
-                console.log(`[DataSyncService] Using cached data: ${cachedVersion}`);
+                logger.info('DataSyncService', `Using cached data: ${cachedVersion}`);
                 this.emitEvent('initialized', this.currentStatus);
 
                 // Check for updates in background (non-blocking)
                 this.checkForUpdates().catch(error => {
-                    console.warn('[DataSyncService] Background update check failed:', error);
+                    logger.warn('DataSyncService', 'Background update check failed:', error);
                 });
             } else {
                 // No cached data - need to download
-                console.log('[DataSyncService] No cached data, downloading from GitHub...');
+                logger.info('DataSyncService', 'No cached data, downloading from GitHub...');
 
                 this.currentStatus.state = 'checking';
                 this.currentStatus.dataSource = 'github';
@@ -145,7 +146,7 @@ export class DataSyncService {
                 this.startPeriodicUpdateChecks();
             }
         } catch (error) {
-            console.error('[DataSyncService] Initialization failed:', error);
+            logger.error('DataSyncService', 'Initialization failed:', error);
 
             this.currentStatus = {
                 state: 'error',
@@ -166,7 +167,7 @@ export class DataSyncService {
      * Non-blocking - can be called independently
      */
     async checkForUpdates(): Promise<boolean> {
-        console.log('[DataSyncService] Checking for updates...');
+        logger.info('DataSyncService', 'Checking for updates...');
 
         try {
             this.currentStatus.state = 'checking';
@@ -177,7 +178,7 @@ export class DataSyncService {
 
             if (!release) {
                 // 304 Not Modified - no update available
-                console.log('[DataSyncService] No updates available (304 Not Modified)');
+                logger.info('DataSyncService', 'No updates available (304 Not Modified)');
                 this.currentStatus.state = 'success';
                 this.emitEvent('success', this.currentStatus);
                 return false;
@@ -188,7 +189,7 @@ export class DataSyncService {
 
             // Check if update is available
             if (currentVersion && VersionManager.isEqual(availableVersion, currentVersion)) {
-                console.log(`[DataSyncService] Already on latest version: ${currentVersion}`);
+                logger.info('DataSyncService', `Already on latest version: ${currentVersion}`);
                 this.currentStatus.state = 'success';
                 this.currentStatus.availableVersion = null;
                 this.emitEvent('success', this.currentStatus);
@@ -196,7 +197,7 @@ export class DataSyncService {
             }
 
             if (currentVersion && VersionManager.isOlder(availableVersion, currentVersion)) {
-                console.log(`[DataSyncService] Cached version is newer: ${currentVersion} > ${availableVersion}`);
+                logger.info('DataSyncService', `Cached version is newer: ${currentVersion} > ${availableVersion}`);
                 this.currentStatus.state = 'success';
                 this.currentStatus.availableVersion = null;
                 this.emitEvent('success', this.currentStatus);
@@ -204,17 +205,17 @@ export class DataSyncService {
             }
 
             // Update available!
-            console.log(`[DataSyncService] Update available: ${availableVersion} (current: ${currentVersion || 'none'})`);
+            logger.info('DataSyncService', `Update available: ${availableVersion} (current: ${currentVersion || 'none'})`);
             this.currentStatus.availableVersion = availableVersion;
             return true;
         } catch (error) {
             if (error instanceof GitHubAPIError && error.rateLimited) {
-                console.warn('[DataSyncService] Rate limited, will try again later');
+                logger.warn('DataSyncService', 'Rate limited, will try again later');
                 this.currentStatus.state = 'success'; // Don't show as error
                 this.currentStatus.error = 'Rate limited';
                 this.emitEvent('success', this.currentStatus);
             } else {
-                console.error('[DataSyncService] Update check failed:', error);
+                logger.error('DataSyncService', 'Update check failed:', error);
                 this.currentStatus.state = 'error';
                 this.currentStatus.error = error instanceof Error ? error.message : 'Unknown error';
                 this.emitEvent('error', this.currentStatus, { error: error as Error });
@@ -228,7 +229,7 @@ export class DataSyncService {
      * Downloads ZIP, extracts, validates, and stores in IndexedDB
      */
     async downloadAndInstall(): Promise<void> {
-        console.log('[DataSyncService] Starting download and install...');
+        logger.info('DataSyncService', 'Starting download and install...');
 
         try {
             this.currentStatus.state = 'downloading';
@@ -242,7 +243,7 @@ export class DataSyncService {
             }
 
             const version = release.tag_name;
-            console.log(`[DataSyncService] Downloading version: ${version}`);
+            logger.info('DataSyncService', `Downloading version: ${version}`);
 
             // Find ZIP asset
             const zipAsset = githubReleaseClient.findZipAsset(release);
@@ -258,7 +259,7 @@ export class DataSyncService {
             });
 
             // Extract package
-            console.log('[DataSyncService] Extracting package...');
+            logger.info('DataSyncService', 'Extracting package...');
             this.currentStatus.state = 'extracting';
             this.emitEvent('extracting', this.currentStatus);
 
@@ -267,15 +268,15 @@ export class DataSyncService {
             // Verify content hash
             const isValid = await packageExtractor.verifyContentHash(extractedPackage);
             if (!isValid) {
-                console.warn('[DataSyncService] Content hash verification failed, but continuing...');
+                logger.warn('DataSyncService', 'Content hash verification failed, but continuing...');
             }
 
             // Store characters in IndexedDB
-            console.log(`[DataSyncService] Storing ${extractedPackage.characters.length} characters...`);
+            logger.info('DataSyncService', `Storing ${extractedPackage.characters.length} characters...`);
             await storageManager.storeCharacters(extractedPackage.characters, version);
 
             // Store icons in Cache API
-            console.log(`[DataSyncService] Caching ${extractedPackage.icons.size} icons...`);
+            logger.info('DataSyncService', `Caching ${extractedPackage.icons.size} icons...`);
             for (const [characterId, iconBlob] of extractedPackage.icons) {
                 await storageManager.cacheImage(characterId, iconBlob);
             }
@@ -296,10 +297,10 @@ export class DataSyncService {
                 error: null,
             };
 
-            console.log(`[DataSyncService] Successfully installed version: ${version}`);
+            logger.info('DataSyncService', `Successfully installed version: ${version}`);
             this.emitEvent('success', this.currentStatus, { version });
         } catch (error) {
-            console.error('[DataSyncService] Download and install failed:', error);
+            logger.error('DataSyncService', 'Download and install failed:', error);
 
             this.currentStatus.state = 'error';
             this.currentStatus.error = error instanceof Error ? error.message : 'Unknown error';
@@ -375,7 +376,7 @@ export class DataSyncService {
         try {
             return await storageManager.getImage(characterId);
         } catch (error) {
-            console.warn(`[DataSyncService] Failed to get cached image for ${characterId}:`, error);
+            logger.warn('DataSyncService', `Failed to get cached image for ${characterId}:`, error);
             return null;
         }
     }
@@ -401,7 +402,7 @@ export class DataSyncService {
      * Clear all cached data and force re-download
      */
     async clearCacheAndResync(): Promise<void> {
-        console.log('[DataSyncService] Clearing cache and resyncing...');
+        logger.info('DataSyncService', 'Clearing cache and resyncing...');
 
         try {
             await storageManager.clearAll();
@@ -413,7 +414,7 @@ export class DataSyncService {
 
             await this.downloadAndInstall();
         } catch (error) {
-            console.error('[DataSyncService] Clear and resync failed:', error);
+            logger.error('DataSyncService', 'Clear and resync failed:', error);
             throw error;
         }
     }
@@ -426,11 +427,11 @@ export class DataSyncService {
             return; // Already running
         }
 
-        console.log(`[DataSyncService] Starting periodic update checks every ${CONFIG.SYNC.CHECK_INTERVAL_MS}ms`);
+        logger.info('DataSyncService', `Starting periodic update checks every ${CONFIG.SYNC.CHECK_INTERVAL_MS}ms`);
 
         this.updateCheckInterval = window.setInterval(() => {
             this.checkForUpdates().catch(error => {
-                console.warn('[DataSyncService] Periodic update check failed:', error);
+                logger.warn('DataSyncService', 'Periodic update check failed:', error);
             });
         }, CONFIG.SYNC.CHECK_INTERVAL_MS);
     }
@@ -442,7 +443,7 @@ export class DataSyncService {
         if (this.updateCheckInterval !== null) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
-            console.log('[DataSyncService] Stopped periodic update checks');
+            logger.info('DataSyncService', 'Stopped periodic update checks');
         }
     }
 
@@ -478,7 +479,7 @@ export class DataSyncService {
             try {
                 listener(event);
             } catch (error) {
-                console.error('[DataSyncService] Event listener error:', error);
+                logger.error('DataSyncService', 'Event listener error:', error);
             }
         }
     }

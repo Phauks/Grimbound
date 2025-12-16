@@ -29,6 +29,7 @@ export class LayerManager {
       blendMode: 'normal' as BlendMode,
       zIndex: 0,
       canvas,
+      version: 0,
       position: { x: 0, y: 0 },
       rotation: 0,
       scale: { x: 1, y: 1 },

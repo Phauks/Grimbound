@@ -15,6 +15,7 @@
  */
 
 import type { Character, ScriptEntry, ScriptMeta, Team } from '../types/index.js';
+import { logger } from './logger.js';
 
 // ============================================================================
 // Constants
@@ -345,7 +346,7 @@ export function sortScriptJsonBySAO(
         const sorted = sortScriptBySAO(parsed, options);
         return JSON.stringify(sorted, null, 2);
     } catch (error) {
-        console.error('Failed to sort script JSON:', error);
+        logger.error('scriptSorting', 'Failed to sort script JSON', error);
         throw error;
     }
 }

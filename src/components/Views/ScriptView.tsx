@@ -9,8 +9,8 @@
 
 import { useState } from 'react'
 import { NightOrderProvider } from '../../contexts/NightOrderContext'
-import type { ScriptSubTab } from '../Script/ScriptTabNavigation'
-import { NightOrderView } from '../Script/NightOrderView'
+import type { ScriptSubTab } from '../ViewComponents/ScriptComponents/ScriptTabNavigation'
+import { NightOrderView } from '../ViewComponents/ScriptComponents/NightOrderView'
 import styles from '../../styles/components/views/Views.module.css'
 
 interface ScriptViewProps {

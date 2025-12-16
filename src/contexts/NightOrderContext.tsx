@@ -7,6 +7,7 @@
 
 import { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react'
 import type { Character, ScriptMeta, ScriptEntry } from '../ts/types/index.js'
+import { logger } from '../ts/utils/logger.js'
 import type {
     NightOrderEntry,
     NightOrderSource,
@@ -82,7 +83,7 @@ export function NightOrderProvider({ children }: NightOrderProviderProps) {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to build night order'
             setError(message)
-            console.error('Night order initialization error:', err)
+            logger.error('NightOrderContext', 'Initialization error:', err)
         } finally {
             setIsLoading(false)
         }

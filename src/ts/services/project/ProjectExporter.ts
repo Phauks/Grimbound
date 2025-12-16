@@ -26,11 +26,11 @@ import type {
   ProjectManifest,
   CustomIconMetadata,
 } from '../../types/project.js';
-import type { DBAsset } from '../../../services/upload/types.js';
+import type { DBAsset } from '../upload/types.js';
 import { sanitizeFilename } from '../../utils/stringUtils.js';
 import { downloadFile } from '../../utils/imageUtils.js';
 import { CONFIG } from '../../config.js';
-import { assetStorageService } from '../../../services/upload/AssetStorageService.js';
+import { assetStorageService } from '../upload/AssetStorageService.js';
 
 // ============================================================================
 // Constants
@@ -41,6 +41,7 @@ const DEFAULT_EXPORT_OPTIONS: Required<ExportOptions> = {
   includeUnusedAssets: true,
   includeThumbnail: true,
   compressImages: false, // Future feature
+  includeCustomIcons: true,
 };
 
 // ============================================================================

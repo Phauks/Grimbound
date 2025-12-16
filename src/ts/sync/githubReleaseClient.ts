@@ -13,6 +13,7 @@ import CONFIG from '../config.js';
 import type { GitHubRelease, GitHubAsset } from '../types/index.js';
 import { GitHubAPIError, DataSyncError } from '../errors.js';
 import { applyCorsProxy } from '../utils/imageUtils.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Rate limit information from GitHub API headers
@@ -130,8 +131,9 @@ export class GitHubReleaseClient {
 
                 if (attempt < CONFIG.SYNC.MAX_RETRIES) {
                     const delay = CONFIG.SYNC.RETRY_DELAY_MS * Math.pow(2, attempt);
-                    console.warn(
-                        `[GitHubReleaseClient] Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${CONFIG.SYNC.MAX_RETRIES})`
+                    logger.warn(
+                        'GitHubReleaseClient',
+                        `Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${CONFIG.SYNC.MAX_RETRIES})`
                     );
                     await this.sleep(delay);
                     return this.fetchWithRetry(url, options, attempt + 1);
@@ -153,8 +155,9 @@ export class GitHubReleaseClient {
             // Network or other errors
             if (attempt < CONFIG.SYNC.MAX_RETRIES) {
                 const delay = CONFIG.SYNC.RETRY_DELAY_MS * Math.pow(2, attempt);
-                console.warn(
-                    `[GitHubReleaseClient] Request failed. Retrying in ${delay}ms (attempt ${attempt + 1}/${CONFIG.SYNC.MAX_RETRIES})`
+                logger.warn(
+                    'GitHubReleaseClient',
+                    `Request failed. Retrying in ${delay}ms (attempt ${attempt + 1}/${CONFIG.SYNC.MAX_RETRIES})`
                 );
                 await this.sleep(delay);
                 return this.fetchWithRetry(url, options, attempt + 1);
@@ -201,7 +204,7 @@ export class GitHubReleaseClient {
 
             // 304 Not Modified - data hasn't changed, return cached data
             if (response.status === 304) {
-                console.log('[GitHubReleaseClient] Release not modified (304), using cached data');
+                logger.info('GitHubReleaseClient', 'Release not modified (304), using cached data');
                 return this.etagCache?.data || null;
             }
 
@@ -226,7 +229,7 @@ export class GitHubReleaseClient {
                 };
             }
 
-            console.log('[GitHubReleaseClient] Fetched latest release:', data.tag_name);
+            logger.info('GitHubReleaseClient', 'Fetched latest release:', data.tag_name);
             return data;
         } catch (error) {
             if (error instanceof GitHubAPIError) {
@@ -254,9 +257,9 @@ export class GitHubReleaseClient {
         // Use browser_download_url with CORS proxy
         const url = applyCorsProxy(asset.browser_download_url);
 
-        const proxyType = url.includes('corsproxy.io') ? 'corsproxy.io' : 
+        const proxyType = url.includes('corsproxy.io') ? 'corsproxy.io' :
                           url.includes('allorigins') ? 'allorigins' : 'direct';
-        console.log(`[GitHubReleaseClient] Downloading asset via: ${proxyType}`);
+        logger.info('GitHubReleaseClient', `Downloading asset via: ${proxyType}`);
 
         try {
             const response = await this.fetchWithRetry(url, {

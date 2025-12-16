@@ -1,0 +1,39 @@
+/**
+ * EditableSliderValue Component Styles
+ *
+ * Editable value input that looks like a span but can be clicked to edit.
+ * Uses the same styling as the EditableSlider value for consistency.
+ */
+
+.editableValue {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+  min-width: 32px;
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  margin: 0;
+  cursor: text;
+  outline: none;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.editableValue:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.editableValue:focus {
+  color: var(--text-primary, #f0f0f0);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.editableValue:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted, #666);
+  opacity: 0.5;
+}

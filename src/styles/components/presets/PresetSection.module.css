@@ -1,21 +1,88 @@
 /**
  * PresetSection Component Styles
- * Preset grid and section container
+ * Organized preset grid with visual hierarchy
  */
 
-.presetButtons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  overflow: visible;
+/* ============================================
+   SECTION CONTAINER - Visual grouping
+   ============================================ */
+.presetSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
-/* Preset Action Buttons (Save & Import) */
+/* ============================================
+   PRESET GROUP - Built-in vs Custom separation
+   ============================================ */
+.presetGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.presetGroupLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 var(--spacing-xs);
+}
+
+.presetGroupLabel::before,
+.presetGroupLabel::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 162, 39, 0.2) 50%,
+    transparent
+  );
+}
+
+.presetGroupLabel::before {
+  background: linear-gradient(
+    to left,
+    transparent,
+    rgba(201, 162, 39, 0.2) 50%,
+    transparent
+  );
+}
+
+/* ============================================
+   PRESET BUTTONS GRID
+   ============================================ */
+.presetButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: var(--spacing-sm);
+  overflow: visible;
+  padding: var(--spacing-xs);
+}
+
+/* Ensure at least 3 columns on wider screens */
+@media (min-width: 300px) {
+  .presetButtons {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ============================================
+   PRESET ACTION BUTTONS
+   ============================================ */
 .presetActions {
   display: flex;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .presetActions .btnSecondary {
@@ -23,4 +90,40 @@
   justify-content: center;
 }
 
+/* ============================================
+   DIVIDER LINE
+   ============================================ */
+.divider {
+  height: 1px;
+  margin: var(--spacing-xs) 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 162, 39, 0.15) 20%,
+    rgba(201, 162, 39, 0.15) 80%,
+    transparent
+  );
+}
 
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.emptyStateIcon {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}

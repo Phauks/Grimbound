@@ -3,10 +3,11 @@
  * ZIP Exporter - ZIP file creation with folder structure
  */
 
+import JSZip from 'jszip';
 import { TEAM_LABELS } from '../config.js';
 import { canvasToBlob } from '../utils/index.js';
 import { embedPngMetadata, buildTokenMetadata } from './pngMetadata.js';
-import type { Token, ProgressCallback, JSZipInstance, ZipExportOptions, PngExportOptions } from '../types/index.js';
+import type { Token, ProgressCallback, ZipExportOptions, PngExportOptions } from '../types/index.js';
 
 // ============================================================================
 // CONSTANTS
@@ -37,10 +38,10 @@ const DEFAULT_ZIP_OPTIONS: ZipExportOptions = {
 // ============================================================================
 
 /**
- * Check if a token is a meta token (script name, almanac, pandemonium)
+ * Check if a token is a meta token (script name, almanac, pandemonium, bootlegger)
  */
 export function isMetaToken(token: Token): boolean {
-    return token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium';
+    return token.type === 'script-name' || token.type === 'almanac' || token.type === 'pandemonium' || token.type === 'bootlegger';
 }
 
 /**
@@ -133,12 +134,7 @@ export async function createTokensZip(
         throw new Error('No tokens to export');
     }
 
-    const JSZipConstructor = window.JSZip;
-    if (!JSZipConstructor) {
-        throw new Error('JSZip library not loaded');
-    }
-
-    const zip: JSZipInstance = new JSZipConstructor();
+    const zip = new JSZip();
     const settings = { ...DEFAULT_ZIP_OPTIONS, ...zipSettings };
     const compressionValue = COMPRESSION_LEVELS[settings.compressionLevel] ?? 6;
 

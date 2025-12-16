@@ -54,7 +54,14 @@ interface TokenContextType {
   }
   updateFilters: (filters: Partial<TokenContextType['filters']>) => void
 
-  // Example token state
+  // Example token states - two independent slots
+  // Character/Reminder are synced (selecting reminder sets its parent character)
+  exampleCharacterToken: Token | null
+  setExampleCharacterToken: (token: Token | null) => void
+  // Meta tokens (almanac, script-name, pandemonium) are independent
+  exampleMetaToken: Token | null
+  setExampleMetaToken: (token: Token | null) => void
+  // Legacy single accessor (returns character token for backwards compatibility)
   exampleToken: Token | null
   setExampleToken: (token: Token | null) => void
 
@@ -206,6 +213,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
       reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
       meta: { scale: 1.0, offsetX: 0, offsetY: 0 },
     },
+    measurementUnit: 'inches',
   })
 
   const [filters, setFilters] = useState({
@@ -216,7 +224,31 @@ export function TokenProvider({ children }: TokenProviderProps) {
     origin: [] as string[],
   })
 
-  const [exampleToken, setExampleToken] = useState<Token | null>(null)
+  // Two independent example token states
+  const [exampleCharacterToken, setExampleCharacterToken] = useState<Token | null>(null)
+  const [exampleMetaToken, setExampleMetaToken] = useState<Token | null>(null)
+
+  // Smart setter that routes to correct state based on token type
+  const setExampleToken = useCallback((token: Token | null) => {
+    if (!token) {
+      // Clear both if null
+      setExampleCharacterToken(null)
+      setExampleMetaToken(null)
+      return
+    }
+
+    if (token.type === 'character' || token.type === 'reminder') {
+      // Character and reminder tokens go to character slot
+      // For reminders, we store the reminder itself (preview will find parent character)
+      setExampleCharacterToken(token)
+    } else if (token.type === 'almanac' || token.type === 'script-name' || token.type === 'pandemonium' || token.type === 'bootlegger') {
+      // All meta tokens go to meta slot
+      setExampleMetaToken(token)
+    }
+  }, [])
+
+  // Legacy accessor returns character token for backwards compatibility
+  const exampleToken = exampleCharacterToken
 
   const updateGenerationOptions = useCallback((options: Partial<GenerationOptions>) => {
     setGenerationOptions((prev) => ({ ...prev, ...options }))
@@ -248,6 +280,10 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setJsonInput,
     filters,
     updateFilters,
+    exampleCharacterToken,
+    setExampleCharacterToken,
+    exampleMetaToken,
+    setExampleMetaToken,
     exampleToken,
     setExampleToken,
     isLoading,

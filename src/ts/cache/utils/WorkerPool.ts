@@ -4,6 +4,7 @@
  */
 
 import type { WorkerTask, WorkerResponse } from '../../workers/prerender-worker.js'
+import { logger } from '../../utils/logger.js'
 
 /**
  * Task in the queue.
@@ -75,7 +76,7 @@ export class WorkerPool {
     )
 
     worker.onerror = (error) => {
-      console.error('Worker error:', error)
+      logger.error('WorkerPool', 'Worker error', error)
       // Remove failed worker from pool
       const index = this.workers.indexOf(worker)
       if (index !== -1) {
@@ -89,7 +90,7 @@ export class WorkerPool {
           const newWorker = this.createWorker()
           this.workers.push(newWorker)
         } catch (err) {
-          console.error('Failed to recover worker:', err)
+          logger.error('WorkerPool', 'Failed to recover worker', err)
         }
       }
     }

@@ -12,8 +12,8 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Modal } from '../Shared/Modal/Modal'
-import { Button } from '../Shared/Button'
+import { Modal } from '../Shared/ModalBase/Modal'
+import { Button } from '../Shared/UI/Button'
 import { projectDb } from '../../ts/db/projectDb'
 import { calculateProjectDiff, getDiffSummary } from '../../ts/utils/projectDiff'
 import { useProjects } from '../../hooks/useProjects'

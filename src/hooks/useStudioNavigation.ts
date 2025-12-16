@@ -114,7 +114,7 @@ export function useStudioNavigation({
             // User can edit just the icon before it's used for token generation
             navigateToStudioWithBlob(blob, onTabChange, {
                 characterName: token.name,
-                source: 'gallery',
+                source: 'tokens',
             }, 'full');
         } catch (error) {
             logger.error('useStudioNavigation', 'Failed to edit in Studio', error);

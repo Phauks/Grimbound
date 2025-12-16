@@ -14,8 +14,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ViewLayout } from '../Layout/ViewLayout'
-import { Button } from '../Shared/Button'
-import { VersionCard } from '../Projects/VersionCard'
+import { Button } from '../Shared/UI/Button'
+import { VersionCard } from '../ViewComponents/ProjectsComponents/VersionCard'
 import { CreateVersionModal } from '../Modals/CreateVersionModal'
 import { ProjectHistoryModal } from '../Modals/ProjectHistoryModal'
 import { projectDb } from '../../ts/db/projectDb'

@@ -9,6 +9,7 @@
  */
 
 import { storageManager } from './storageManager.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Migration status information
@@ -35,7 +36,7 @@ export class MigrationHelper {
 
             return !hasVersion && !hasMigrated;
         } catch (error) {
-            console.error('[MigrationHelper] Error checking first-time status:', error);
+            logger.error('MigrationHelper', 'Error checking first-time status:', error);
             return true; // Assume first-time on error
         }
     }
@@ -62,7 +63,7 @@ export class MigrationHelper {
 
             return false;
         } catch (error) {
-            console.error('[MigrationHelper] Error checking legacy data:', error);
+            logger.error('MigrationHelper', 'Error checking legacy data:', error);
             return false;
         }
     }
@@ -104,7 +105,7 @@ export class MigrationHelper {
      */
     async markMigrationCompleted(migrationId: string): Promise<void> {
         await storageManager.setMetadata(migrationId, true);
-        console.log(`[MigrationHelper] Marked migration completed: ${migrationId}`);
+        logger.info('MigrationHelper', `Marked migration completed: ${migrationId}`);
     }
 
     /**
@@ -121,7 +122,7 @@ export class MigrationHelper {
      * Sets initial flags and metadata
      */
     async performFirstTimeSetup(): Promise<void> {
-        console.log('[MigrationHelper] Performing first-time setup...');
+        logger.info('MigrationHelper', 'Performing first-time setup...');
 
         try {
             // Mark as migrated (first-time users are "pre-migrated")
@@ -133,9 +134,9 @@ export class MigrationHelper {
             await storageManager.setSetting('updateMode', 'auto');
             await storageManager.setSetting('dataSource', 'github');
 
-            console.log('[MigrationHelper] First-time setup complete');
+            logger.info('MigrationHelper', 'First-time setup complete');
         } catch (error) {
-            console.error('[MigrationHelper] First-time setup failed:', error);
+            logger.error('MigrationHelper', 'First-time setup failed:', error);
             throw error;
         }
     }
@@ -145,7 +146,7 @@ export class MigrationHelper {
      * Call this after successfully migrating to IndexedDB
      */
     async clearLegacyData(): Promise<void> {
-        console.log('[MigrationHelper] Clearing legacy data...');
+        logger.info('MigrationHelper', 'Clearing legacy data...');
 
         try {
             const keysToRemove = [
@@ -159,13 +160,13 @@ export class MigrationHelper {
                 try {
                     localStorage.removeItem(key);
                 } catch (error) {
-                    console.warn(`[MigrationHelper] Failed to remove ${key}:`, error);
+                    logger.warn('MigrationHelper', `Failed to remove ${key}:`, error);
                 }
             }
 
-            console.log('[MigrationHelper] Legacy data cleared');
+            logger.info('MigrationHelper', 'Legacy data cleared');
         } catch (error) {
-            console.error('[MigrationHelper] Error clearing legacy data:', error);
+            logger.error('MigrationHelper', 'Error clearing legacy data:', error);
             // Don't throw - this is not critical
         }
     }
@@ -175,7 +176,7 @@ export class MigrationHelper {
      * Checks which migrations need to run and executes them in order
      */
     async runPendingMigrations(): Promise<void> {
-        console.log('[MigrationHelper] Checking for pending migrations...');
+        logger.info('MigrationHelper', 'Checking for pending migrations...');
 
         const status = await this.getMigrationStatus();
 
@@ -198,7 +199,7 @@ export class MigrationHelper {
                 id: 'migration_indexeddb',
                 name: 'Migrate to IndexedDB',
                 run: async () => {
-                    console.log('[MigrationHelper] Running IndexedDB migration...');
+                    logger.info('MigrationHelper', 'Running IndexedDB migration...');
                     // In this case, we don't actually need to migrate data
                     // since the old app didn't cache character data
                     // Just mark as completed and clear legacy data
@@ -210,19 +211,19 @@ export class MigrationHelper {
         // Run each pending migration
         for (const migration of migrations) {
             try {
-                console.log(`[MigrationHelper] Running migration: ${migration.name}`);
+                logger.info('MigrationHelper', `Running migration: ${migration.name}`);
                 await migration.run();
                 await this.markMigrationCompleted(migration.id);
             } catch (error) {
-                console.error(`[MigrationHelper] Migration failed: ${migration.name}`, error);
+                logger.error('MigrationHelper', `Migration failed: ${migration.name}`, error);
                 // Continue with other migrations even if one fails
             }
         }
 
         if (migrations.length === 0) {
-            console.log('[MigrationHelper] No pending migrations');
+            logger.info('MigrationHelper', 'No pending migrations');
         } else {
-            console.log(`[MigrationHelper] Completed ${migrations.length} migration(s)`);
+            logger.info('MigrationHelper', `Completed ${migrations.length} migration(s)`);
         }
     }
 
@@ -231,7 +232,7 @@ export class MigrationHelper {
      * WARNING: This will cause migrations to run again
      */
     async resetMigrations(): Promise<void> {
-        console.warn('[MigrationHelper] Resetting all migrations - use only for testing!');
+        logger.warn('MigrationHelper', 'Resetting all migrations - use only for testing!');
 
         const migrationFlags = [
             'migrated',

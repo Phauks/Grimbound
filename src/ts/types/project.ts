@@ -7,7 +7,7 @@
  * @module types/project
  */
 
-import type { Character, ScriptMeta, GenerationOptions } from './index.js';
+import type { Character, ScriptMeta, GenerationOptions, Token } from './index.js';
 
 // ============================================================================
 // Project Entity
@@ -76,6 +76,9 @@ export interface ProjectState {
 
   // Filter state (optional - can reset to defaults)
   filters?: ProjectFilters;
+
+  // Generated tokens (for cache warming, not persisted to IndexedDB)
+  tokens?: Token[];
 
   // Schema version
   schemaVersion: number;                   // Current: 1
@@ -323,6 +326,7 @@ export interface ExportOptions {
   includeUnusedAssets?: boolean;           // Default: true - Include assets with usageCount === 0
   includeThumbnail?: boolean;              // Default: true
   compressImages?: boolean;                // Default: false (future)
+  includeCustomIcons?: boolean;            // Default: true - Include custom character icons
 }
 
 // ============================================================================

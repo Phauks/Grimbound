@@ -14,7 +14,7 @@ export type AppPage = 'projects' | 'editor' | 'townSquare'
 /**
  * Editor sub-tabs (only visible when on Editor page)
  */
-export type EditorTab = 'editor' | 'gallery' | 'customize' | 'script' | 'download'
+export type EditorTab = 'json' | 'tokens' | 'characters' | 'script' | 'studio' | 'export'
 
 /**
  * Page metadata for navigation display

@@ -31,7 +31,8 @@ import {
   AssetManagerOptions,
   AssetWithUrl,
   AssetType,
-} from '../services/upload/index.js';
+} from '../ts/services/upload/index.js';
+import { useSelection } from './useSelection.js';
 
 // ============================================================================
 // Types
@@ -61,8 +62,9 @@ export interface UseAssetManagerReturn {
   loadMore: () => Promise<void>;
   isLoadingMore: boolean;
 
-  // Selection
+  // Selection (from useSelection)
   selectedIds: Set<string>;
+  selectedCount: number;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -105,10 +107,24 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     ...DEFAULT_FILTER,
     ...options.initialFilter,
   });
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<AssetStats | null>(null);
   const [orphanedCount, setOrphanedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Use extracted selection hook
+  const {
+    selectedIds,
+    selectedCount,
+    toggleSelect,
+    clearSelection,
+    isSelected,
+    setSelection,
+  } = useSelection();
+
+  // Select all assets currently loaded
+  const selectAll = useCallback(() => {
+    setSelection(assets.map((a) => a.id));
+  }, [assets, setSelection]);
 
   // Fetch assets
   const fetchAssets = useCallback(async () => {
@@ -195,50 +211,19 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   // Filter methods
   const setFilter = useCallback((updates: Partial<AssetFilter>) => {
     setFilterState((prev) => ({ ...prev, ...updates }));
-    setSelectedIds(new Set()); // Clear selection on filter change
-  }, []);
+    clearSelection(); // Clear selection on filter change
+  }, [clearSelection]);
 
   const resetFilter = useCallback(() => {
     setFilterState({ ...DEFAULT_FILTER, ...options.initialFilter });
-    setSelectedIds(new Set());
-  }, [options.initialFilter]);
-
-  // Selection methods
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const selectAll = useCallback(() => {
-    setSelectedIds(new Set(assets.map((a) => a.id)));
-  }, [assets]);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
-
-  const isSelected = useCallback(
-    (id: string) => selectedIds.has(id),
-    [selectedIds]
-  );
+    clearSelection();
+  }, [options.initialFilter, clearSelection]);
 
   // Action methods
   const deleteAsset = useCallback(
     async (id: string) => {
       try {
         await assetStorageService.delete(id);
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
         await fetchAssets();
       } catch (err) {
         setError((err as Error).message);
@@ -253,13 +238,13 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
 
     try {
       await assetStorageService.bulkDelete(Array.from(selectedIds));
-      setSelectedIds(new Set());
+      clearSelection();
       await fetchAssets();
     } catch (err) {
       setError((err as Error).message);
       throw err;
     }
-  }, [selectedIds, fetchAssets]);
+  }, [selectedIds, fetchAssets, clearSelection]);
 
   const promoteToGlobal = useCallback(
     async (id: string) => {
@@ -292,13 +277,13 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
 
     try {
       await assetStorageService.bulkPromoteToGlobal(Array.from(selectedIds));
-      setSelectedIds(new Set());
+      clearSelection();
       await fetchAssets();
     } catch (err) {
       setError((err as Error).message);
       throw err;
     }
-  }, [selectedIds, fetchAssets]);
+  }, [selectedIds, fetchAssets, clearSelection]);
 
   const moveSelectedToProject = useCallback(
     async (projectId: string) => {
@@ -306,14 +291,14 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
 
       try {
         await assetStorageService.bulkMoveToProject(Array.from(selectedIds), projectId);
-        setSelectedIds(new Set());
+        clearSelection();
         await fetchAssets();
       } catch (err) {
         setError((err as Error).message);
         throw err;
       }
     },
-    [selectedIds, fetchAssets]
+    [selectedIds, fetchAssets, clearSelection]
   );
 
   const cleanupOrphans = useCallback(async () => {
@@ -356,6 +341,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
 
     // Selection
     selectedIds,
+    selectedCount,
     toggleSelect,
     selectAll,
     clearSelection,

@@ -7,6 +7,7 @@ import { DEFAULT_COLORS, CHARACTER_LAYOUT, LINE_HEIGHTS } from '../constants.js'
 import { wrapText } from './canvasUtils.js';
 import { precalculateCurvedTextPositions, calculateCircularTextLayout } from './canvasOptimizations.js';
 import { getCachedFont } from '../cache/instances/fontCache.js';
+import { parseAbilityText, getLineSegments } from '../utils/abilityTextParser.js';
 
 /**
  * Options for curved text rendering
@@ -295,10 +296,41 @@ export function drawAbilityText(
         CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING
     );
 
+    // Check if we have bold text (setup brackets)
+    const segments = parseAbilityText(ability);
+    const hasBoldText = segments.some(s => s.isBold);
+
     // Draw lines
     let currentY = startY;
     for (const line of layout.lines) {
-        ctx.fillText(line, diameter / 2, currentY);
+        if (!hasBoldText) {
+            // Fast path: no bold text, use simple centered drawing
+            ctx.fillText(line, diameter / 2, currentY);
+        } else {
+            // Slow path: render segment-by-segment for mixed bold/normal text
+            const lineSegments = getLineSegments(line, ability);
+
+            // Calculate total line width with mixed fonts
+            let totalWidth = 0;
+            for (const seg of lineSegments) {
+                ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
+                totalWidth += ctx.measureText(seg.text).width;
+            }
+
+            // Start from left edge of centered text
+            let xPos = (diameter / 2) - (totalWidth / 2);
+
+            // Draw each segment with appropriate font weight
+            for (const seg of lineSegments) {
+                ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
+                ctx.textAlign = 'left'; // Left-align for segment drawing
+                ctx.fillText(seg.text, xPos, currentY);
+                xPos += ctx.measureText(seg.text).width;
+            }
+
+            // Reset alignment for next iteration
+            ctx.textAlign = 'center';
+        }
         currentY += layout.lineHeight;
     }
 

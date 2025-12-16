@@ -3,7 +3,7 @@ import { useTokenContext } from '../contexts/TokenContext'
 import { PDFGenerator } from '../ts/export/pdfGenerator.js'
 import { createTokensZip } from '../ts/export/zipExporter.js'
 import { createCompletePackage } from '../ts/export/completePackageExporter.js'
-import { sanitizeFilename, downloadFile, getCleanJsonForExport } from '../ts/utils/index.js'
+import { sanitizeFilename, downloadFile, getCleanJsonForExport, logger } from '../ts/utils/index.js'
 import type { ProgressCallback } from '../ts/types/index.js'
 
 export type ExportStep = 'zip' | 'pdf' | 'json' | 'style' | 'tokens' | null
@@ -93,10 +93,10 @@ export function useExport() {
     } catch (error) {
       // Don't log abort errors as they're intentional
       if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log(`${step} export cancelled`)
+        logger.debug('useExport', `${step} export cancelled`)
         return
       }
-      console.error(`${step} export error:`, error)
+      logger.error('useExport', `${step} export error:`, error)
       throw error
     } finally {
       // Only reset state if this is a standalone call
@@ -219,10 +219,10 @@ export function useExport() {
     } catch (error) {
       // Don't log abort errors as they're intentional
       if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log('Download All cancelled')
+        logger.debug('useExport', 'Download All cancelled')
         return
       }
-      console.error('Download All error:', error)
+      logger.error('useExport', 'Download All error:', error)
       throw error
     } finally {
       isDownloadingAllRef.current = false

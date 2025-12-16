@@ -3,7 +3,7 @@ import { useTokenContext } from '../contexts/TokenContext'
 import { useDataSync } from '../contexts/DataSyncContext'
 import { loadExampleScript } from '../ts/data/dataLoader.js'
 import { validateAndParseScript, extractScriptMeta } from '../ts/data/scriptParser.js'
-import { validateJson } from '../ts/utils/index.js'
+import { validateJson, logger } from '../ts/utils/index.js'
 import { characterLookup } from '../ts/data/characterLookup.js'
 import { nameToId } from '../ts/utils/nameGenerator'
 import type { SyncEvent } from '../ts/sync/index.js'
@@ -33,7 +33,7 @@ export function useScriptData() {
   useEffect(() => {
     if (officialData.length > 0) {
       characterLookup.updateCharacters(officialData)
-      console.log('[useScriptData] Updated character lookup with', officialData.length, 'characters')
+      logger.debug('useScriptData', 'Updated character lookup with', officialData.length, 'characters')
     }
   }, [officialData])
 
@@ -71,7 +71,7 @@ export function useScriptData() {
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load script'
         setError(errorMessage)
-        console.error('Script loading error:', err)
+        logger.error('useScriptData', 'Script loading error:', err)
       } finally {
         setIsLoading(false)
       }
@@ -82,17 +82,17 @@ export function useScriptData() {
   const loadOfficialData = useCallback(async () => {
     try {
       if (!isInitialized) {
-        console.log('[useScriptData] Sync service not initialized yet, skipping load')
+        logger.debug('useScriptData', 'Sync service not initialized yet, skipping load')
         return []
       }
       
-      console.log('[useScriptData] Loading official data from sync service...')
+      logger.debug('useScriptData', 'Loading official data from sync service...')
       const official = await getCharacters()
       setOfficialData(official)
-      console.log('[useScriptData] Loaded', official.length, 'official characters')
+      logger.debug('useScriptData', 'Loaded', official.length, 'official characters')
       return official
     } catch (err) {
-      console.error('[useScriptData] Failed to fetch official data:', err)
+      logger.error('useScriptData', 'Failed to fetch official data:', err)
       return []
     }
   }, [isInitialized, getCharacters, setOfficialData])
@@ -101,7 +101,7 @@ export function useScriptData() {
   useEffect(() => {
     if (isInitialized && !hasLoadedRef.current) {
       hasLoadedRef.current = true
-      console.log('[useScriptData] Sync service initialized, loading official data...')
+      logger.debug('useScriptData', 'Sync service initialized, loading official data...')
       loadOfficialData()
     }
   }, [isInitialized, loadOfficialData])
@@ -111,7 +111,7 @@ export function useScriptData() {
     const handleSyncEvent = (event: SyncEvent) => {
       // Reload official data after a successful sync (new data downloaded)
       if (event.type === 'success' && event.status.state === 'success') {
-        console.log('[useScriptData] Sync completed, reloading official data...')
+        logger.debug('useScriptData', 'Sync completed, reloading official data...')
         loadOfficialData()
       }
     }
@@ -185,9 +185,9 @@ export function useScriptData() {
    */
   const updateScript = useCallback(async (
     newJson: string,
-    source: 'user-edit' | 'format' | 'sort' | 'condense' | 'add-meta' | 'remove-underscores' | 'upload' | 'load-example' | 'clear' | 'undo' | 'redo'
+    source: 'user-edit' | 'format' | 'sort' | 'condense' | 'add-meta' | 'remove-underscores' | 'upload' | 'load-example' | 'clear' | 'undo' | 'redo' | 'fix-formats'
   ) => {
-    console.log('[ScriptData] Updating script via gateway', {
+    logger.debug('ScriptData', 'Updating script via gateway', {
       source,
       jsonLength: newJson.length,
       isEmpty: newJson === '',
@@ -197,18 +197,18 @@ export function useScriptData() {
       if (source === 'clear') {
         // Special case: clear all state
         clearScript()
-        console.debug('[ScriptData] Script cleared successfully')
+        logger.debug('ScriptData', 'Script cleared successfully')
       } else {
         // Normal case: update JSON and reparse
         await loadScript(newJson)
-        console.debug('[ScriptData] Script updated and parsed')
+        logger.debug('ScriptData', 'Script updated and parsed')
       }
 
       // Auto-save will trigger automatically via detector
       // (detector watches jsonInput, characters, etc.)
 
     } catch (error) {
-      console.error('[ScriptData] Failed to update script', { source, error })
+      logger.error('ScriptData', 'Failed to update script', { source, error })
       throw error // Re-throw so handlers can show user-friendly messages
     }
   }, [clearScript, loadScript])
@@ -264,7 +264,7 @@ export function useScriptData() {
         // Use gateway to trigger auto-save
         await updateScript(updatedJson, 'add-meta')
       } catch (err) {
-        console.error('Failed to add _meta to script:', err)
+        logger.error('useScriptData', 'Failed to add _meta to script:', err)
         setError('Failed to add metadata: Invalid JSON')
       }
     },
@@ -345,7 +345,7 @@ export function useScriptData() {
       // Use gateway to trigger auto-save
       await updateScript(updatedJson, 'remove-underscores')
     } catch (err) {
-      console.error('Failed to remove underscores from IDs:', err)
+      logger.error('useScriptData', 'Failed to remove underscores from IDs:', err)
       setError('Failed to update IDs: Invalid JSON')
     }
   }, [jsonInput, updateScript, setError])

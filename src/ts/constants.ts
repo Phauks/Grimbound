@@ -85,18 +85,14 @@ export const META_TOKEN_LAYOUT = {
  * Layout ratios for QR code almanac token
  */
 export const QR_TOKEN_LAYOUT = {
-    /** Size of QR code relative to diameter */
-    QR_CODE_SIZE: 0.8,
-    /** Font size ratio for script name overlay on QR */
-    OVERLAY_TEXT_SIZE: 0.08,
-    /** Max width ratio for overlay text wrapping */
-    OVERLAY_TEXT_MAX_WIDTH: 0.4,
-    /** Vertical offset for QR code (pushes up slightly) */
-    QR_VERTICAL_OFFSET: 0.05,
-    /** Width ratio for white box behind text */
-    TEXT_BOX_WIDTH: 0.45,
-    /** Height ratio for white box behind text */
-    TEXT_BOX_HEIGHT: 0.15,
+    /** Size of QR code relative to diameter - reduced to fit within circle */
+    QR_CODE_SIZE: 0.68,
+    /** Font size ratio for script name (curved at bottom) */
+    SCRIPT_NAME_SIZE: 0.10,
+    /** Radius for curved script name text placement */
+    SCRIPT_NAME_RADIUS: 0.88,
+    /** Logo size relative to QR code (embedded in center) */
+    LOGO_SIZE_RATIO: 0.25,
 } as const;
 
 // ============================================================================
@@ -199,15 +195,17 @@ export const DEFAULT_COLORS = {
 } as const;
 
 /**
- * QR code colors
+ * QR code default colors and styling
  */
 export const QR_COLORS = {
-    /** Dark color for QR modules */
-    DARK: '#000000',
-    /** Light color for QR background */
-    LIGHT: '#FFFFFF',
-    /** Error correction level (3 = H = 30% recovery) */
-    ERROR_CORRECTION_LEVEL: 3,
+    /** Default gradient start color (blood red) */
+    GRADIENT_START: '#8B0000',
+    /** Default gradient end color (near black) */
+    GRADIENT_END: '#1a1a1a',
+    /** Background color */
+    BACKGROUND: '#FFFFFF',
+    /** Error correction level (H = 30% recovery for logo overlay) */
+    ERROR_CORRECTION_LEVEL: 'H',
 } as const;
 
 // ============================================================================

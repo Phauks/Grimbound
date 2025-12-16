@@ -186,6 +186,39 @@ export function calculateTokenCounts(characters: Character[]): TokenCounts {
     };
 }
 
+// ============================================================================
+// Preview Character Selection
+// ============================================================================
+
+/**
+ * Select the best character for preview/example purposes.
+ * Priority order:
+ * 1. Character with both setup flag AND reminders (shows most visual features)
+ * 2. Character with reminders (enables reminder token preview)
+ * 3. First character in list (fallback)
+ *
+ * @param characters - Array of characters to choose from
+ * @returns The best character for preview, or null if array is empty
+ */
+export function getBestPreviewCharacter(characters: Character[]): Character | null {
+    if (characters.length === 0) return null;
+
+    // Best: has both setup AND reminders (shows setup flower + reminder preview)
+    const withSetupAndReminders = characters.find(
+        c => c.setup && c.reminders && c.reminders.length > 0
+    );
+    if (withSetupAndReminders) return withSetupAndReminders;
+
+    // Next best: has reminders (useful for reminder preview)
+    const withReminders = characters.find(
+        c => c.reminders && c.reminders.length > 0
+    );
+    if (withReminders) return withReminders;
+
+    // Fallback: first character
+    return characters[0];
+}
+
 export default {
     validateCharacter,
     getCharacterImageUrl,
@@ -194,4 +227,5 @@ export default {
     getGlobalReminders,
     groupByTeam,
     calculateTokenCounts,
+    getBestPreviewCharacter,
 };

@@ -738,36 +738,57 @@
 }
 
 /* ============================================
-   Content with Preview Layout
+   Side-by-Side Layout with Preview
    ============================================ */
 
-.contentWithPreview {
+/* Main container that holds left panel and preview panel side by side */
+.modalBodyWithPreview {
   display: flex;
-  gap: 20px;
-  padding: 0 24px;
-}
-
-.contentWithPreview .content {
   flex: 1;
-  min-width: 0;
+  min-height: 0; /* Critical for flex children to respect parent height */
+  overflow: hidden;
 }
 
-/* ============================================
-   Live Preview Panel
-   ============================================ */
+/* Left panel: contains all controls and scrollable asset grid */
+.leftPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
 
-.previewPanel {
-  width: 200px;
+/* Scrollable area within left panel (just the asset content) */
+.scrollableContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  min-height: 0;
+}
+
+/* Right panel: fixed preview panel, doesn't scroll */
+.rightPanel {
+  width: 280px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 16px;
   background: var(--bg-secondary);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
+  border-left: 1px solid var(--border-color);
+  overflow: hidden; /* Prevent any scrolling */
+}
+
+/* ============================================
+   Live Preview Panel (within right panel)
+   ============================================ */
+
+.previewPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .previewHeader {
@@ -776,19 +797,21 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .previewContainer {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-tertiary, rgba(0, 0, 0, 0.05));
   border-radius: 50%;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .previewImage {
@@ -831,15 +854,16 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  margin-top: 12px;
+  margin-top: 16px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .previewCharacterName {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  max-width: 180px;
+  max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -851,27 +875,83 @@
   text-transform: capitalize;
 }
 
-/* Responsive: hide preview on small screens */
+/* Preview action buttons container - at bottom of preview panel */
+.previewActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.previewActions button {
+  width: 100%;
+}
+
+/* Responsive: stack layout on small screens */
 @media (max-width: 900px) {
-  .contentWithPreview {
+  .modalBodyWithPreview {
     flex-direction: column;
   }
 
-  .previewPanel {
+  .leftPanel {
+    flex: 1;
+    min-height: 200px;
+  }
+
+  .rightPanel {
     width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    flex-direction: row;
+    height: auto;
+    max-height: 140px;
+    overflow: visible;
+  }
+
+  .previewPanel {
     flex-direction: row;
     gap: 16px;
-    padding: 12px;
+    padding: 12px 16px;
+    height: auto;
+  }
+
+  .previewHeader {
+    display: none;
   }
 
   .previewContainer {
     width: 80px;
     height: 80px;
+    flex-shrink: 0;
   }
 
   .previewLabel {
     margin-top: 0;
     align-items: flex-start;
     text-align: left;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .previewActions {
+    flex-direction: row;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid var(--border-color);
+    padding-left: 16px;
+    width: auto;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .previewActions button {
+    width: auto;
+    padding: 8px 16px;
   }
 }

@@ -7,7 +7,7 @@
  * @module ts/constants/builtInAssets
  */
 
-import type { AssetType } from '../../services/upload/types.js'
+import type { AssetType } from '../services/upload/types.js'
 import { CONFIG } from '../config.js'
 
 // ============================================================================
@@ -36,7 +36,7 @@ export interface BuiltInAsset {
 export const BUILT_IN_BACKGROUNDS: BuiltInAsset[] = Array.from({ length: 7 }, (_, i) => ({
   id: `character_background_${i + 1}`,
   label: `Background ${i + 1}`,
-  src: `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}character_background_${i + 1}.png`,
+  src: `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}character_background_${i + 1}.webp`,
   type: 'token-background' as AssetType,
   source: 'builtin' as const,
 }))
@@ -48,7 +48,7 @@ export const BUILT_IN_BACKGROUNDS: BuiltInAsset[] = Array.from({ length: 7 }, (_
 export const BUILT_IN_FLOWERS: BuiltInAsset[] = Array.from({ length: 7 }, (_, i) => ({
   id: `setup_flower_${i + 1}`,
   label: `Flower ${i + 1}`,
-  src: `${CONFIG.ASSETS.SETUP_FLOWERS}setup_flower_${i + 1}.png`,
+  src: `${CONFIG.ASSETS.SETUP_FLOWERS}setup_flower_${i + 1}.webp`,
   type: 'setup-flower' as AssetType,
   source: 'builtin' as const,
 }))
@@ -61,7 +61,7 @@ export const BUILT_IN_LEAVES: BuiltInAsset[] = [
   {
     id: 'classic',
     label: 'Classic',
-    src: `${CONFIG.ASSETS.LEAVES}leaves/classic/leaf_1.png`,
+    src: `${CONFIG.ASSETS.LEAVES}leaves/classic/leaf_1.webp`,
     type: 'leaf' as AssetType,
     source: 'builtin' as const,
   },

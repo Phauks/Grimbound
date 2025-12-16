@@ -11,6 +11,7 @@ import type {
   CacheOptions
 } from '../core/index.js'
 import { estimateSize } from '../utils/memoryEstimator.js'
+import { logger } from '../../utils/logger.js'
 
 /**
  * Eviction event data
@@ -146,7 +147,7 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
     // Check expiration
     if (entry.ttl && Date.now() - entry.createdAt > entry.ttl) {
       // Don't await - let next get() handle it
-      this.delete(key).catch(console.error)
+      this.delete(key).catch((error) => logger.error('LRUCacheAdapter', 'Failed to delete expired entry', error))
       return false
     }
 

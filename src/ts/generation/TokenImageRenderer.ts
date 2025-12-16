@@ -23,9 +23,9 @@ import type { TokenGeneratorOptions } from '../types/tokenOptions.js';
 import {
     IconLayoutStrategyFactory,
     type IconLayoutStrategy,
-    type LayoutContext,
-    type TextLayoutResult
+    type LayoutContext
 } from './iconLayoutStrategies.js';
+import type { TextLayoutResult } from '../canvas/canvasOptimizations.js';
 import { TokenCreationError } from '../errors.js';
 import { logger } from '../utils/logger.js';
 
@@ -117,9 +117,10 @@ export class TokenImageRenderer {
             const defaultIconSettings = { scale: 1.0, offsetX: 0, offsetY: 0 };
             const iconSettings = this.options.iconSettings?.[tokenType as 'character' | 'reminder' | 'meta'] || defaultIconSettings;
 
-            // Create layout context
+            // Create layout context (offsets are in inches, converted to pixels in strategy)
             const layoutContext: LayoutContext = {
                 diameter,
+                dpi: this.options.dpi || 300,
                 iconScale: iconSettings.scale,
                 iconOffsetX: iconSettings.offsetX,
                 iconOffsetY: iconSettings.offsetY
@@ -190,7 +191,10 @@ export class TokenImageRenderer {
             leafPopulationProbability: this.options.leafPopulationProbability,
             leafGeneration: this.options.leafGeneration,
             leafArcSpan: this.options.leafArcSpan,
-            leafSlots: this.options.leafSlots
+            leafSlots: this.options.leafSlots,
+            enableLeftLeaf: this.options.enableLeftLeaf,
+            enableRightLeaf: this.options.enableRightLeaf,
+            sideLeafProbability: this.options.sideLeafProbability
         };
         await drawLeaves(ctx, diameter, leafOptions);
         logger.debug('TokenImageRenderer', 'Drew leaves', { maxLeaves: this.options.maximumLeaves });

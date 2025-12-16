@@ -16,9 +16,9 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { AssetType, AssetWithUrl } from '../services/upload/types.js'
-import { assetStorageService } from '../services/upload/index.js'
-import { isAssetReference, extractAssetId } from '../services/upload/assetResolver.js'
+import type { AssetType, AssetWithUrl } from '../ts/services/upload/types.js'
+import { assetStorageService } from '../ts/services/upload/index.js'
+import { isAssetReference, extractAssetId } from '../ts/services/upload/assetResolver.js'
 import {
   getBuiltInAssets,
   getBuiltInAssetPath,

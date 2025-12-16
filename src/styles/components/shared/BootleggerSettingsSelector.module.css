@@ -1,0 +1,141 @@
+/* BootleggerSettingsSelector.module.css */
+
+.previewContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  transition: opacity var(--transition-fast);
+}
+
+.previewDisabled {
+  opacity: 0.4;
+}
+
+.previewIcon {
+  font-size: 1.5rem;
+}
+
+/* Setting rows */
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.settingLabel {
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.settingHint {
+  margin: var(--spacing-xs) 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Icon type toggle buttons */
+.iconTypeButtons {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: 2px;
+}
+
+.iconTypeBtn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.iconTypeBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.iconTypeBtnActive {
+  color: var(--text-on-accent);
+  background: var(--color-accent);
+}
+
+.iconTypeBtnActive:hover:not(:disabled) {
+  color: var(--text-on-accent);
+  background: var(--color-accent);
+}
+
+.iconTypeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Option rows (checkbox style) */
+.optionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.optionRow:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: inherit;
+}
+
+.optionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.optionLabel {
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.optionDescription {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.optionDisabled {
+  opacity: 0.5;
+}
+
+/* Info note */
+.infoNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-hover);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-sm);
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+
+.infoText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}

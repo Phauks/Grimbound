@@ -12,6 +12,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { dataSyncService, type SyncEvent } from '../ts/sync/index.js';
 import type { SyncStatus, Character } from '../ts/types/index.js';
+import { logger } from '../ts/utils/logger.js';
 
 interface DataSyncContextType {
   // Sync status
@@ -55,13 +56,13 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
 
     async function initialize() {
       try {
-        console.log('[DataSyncContext] Initializing sync service...');
+        logger.info('DataSyncContext', 'Initializing sync service...');
 
         // Subscribe to sync events before initialization
         const unsubscribe = dataSyncService.addEventListener((event) => {
           if (!mounted) return;
 
-          console.log('[DataSyncContext] Sync event:', event.type, event.status);
+          logger.debug('DataSyncContext', 'Sync event:', event.type, event.status);
           setStatus(event.status);
 
           if (event.type === 'initialized') {
@@ -77,7 +78,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
           const initialStatus = dataSyncService.getStatus();
           setStatus(initialStatus);
           setIsInitialized(true);
-          console.log('[DataSyncContext] Initialization complete:', initialStatus);
+          logger.info('DataSyncContext', 'Initialization complete:', initialStatus);
         }
 
         // Cleanup
@@ -86,7 +87,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
           unsubscribe;
         };
       } catch (error) {
-        console.error('[DataSyncContext] Initialization failed:', error);
+        logger.error('DataSyncContext', 'Initialization failed:', error);
         if (mounted) {
           setStatus({
             state: 'error',

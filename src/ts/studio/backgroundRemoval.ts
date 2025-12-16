@@ -1,20 +1,32 @@
 /**
  * Background Removal Service
  *
- * AI-powered background removal using MediaPipe Selfie Segmentation
+ * AI-powered background removal using MediaPipe Tasks Vision ImageSegmenter
  * Runs entirely client-side with no API costs or usage limits
  */
 
+import {
+  FilesetResolver,
+  ImageSegmenter,
+  ImageSegmenterResult,
+} from '@mediapipe/tasks-vision';
 import type { BackgroundRemovalOptions } from '../types/index.js';
+import { logger } from '../utils/logger.js';
+
+// WASM files location - can be changed to self-host
+const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm';
+
+// Model file - DeepLabV3 for general image segmentation
+const MODEL_PATH = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/1/deeplab_v3.tflite';
 
 /**
  * Background Removal Service
  *
- * Uses MediaPipe Selfie Segmentation for automatic background removal.
+ * Uses MediaPipe Tasks Vision ImageSegmenter for automatic background removal.
  * Model is lazy-loaded on first use and cached for subsequent operations.
  */
 export class BackgroundRemovalService {
-  private model: any = null; // SelfieSegmentation type from @mediapipe/selfie_segmentation
+  private segmenter: ImageSegmenter | null = null;
   private isLoading: boolean = false;
   private loadingPromise: Promise<void> | null = null;
 
@@ -23,39 +35,33 @@ export class BackgroundRemovalService {
    */
   async initialize(): Promise<void> {
     // If already loaded or currently loading, return existing promise
-    if (this.model) return;
+    if (this.segmenter) return;
     if (this.loadingPromise) return this.loadingPromise;
 
     this.isLoading = true;
 
     this.loadingPromise = (async () => {
       try {
-        // Dynamic import MediaPipe Selfie Segmentation
-        // NOTE: Requires @mediapipe/selfie_segmentation package installed
-        const { SelfieSegmentation } = await import('@mediapipe/selfie_segmentation');
+        logger.info('BackgroundRemoval', 'Loading MediaPipe Tasks Vision...');
 
-        this.model = new SelfieSegmentation({
-          locateFile: (file: string) => {
-            // Use CDN for model files to avoid bundling large files
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-          }
+        // Load the vision WASM files
+        const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+
+        // Create the ImageSegmenter
+        this.segmenter = await ImageSegmenter.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: MODEL_PATH,
+            delegate: 'GPU', // Use GPU acceleration when available
+          },
+          outputCategoryMask: true,
+          outputConfidenceMasks: true,
+          runningMode: 'IMAGE',
         });
 
-        // Configure model options
-        this.model.setOptions({
-          modelSelection: 1, // 0 = general, 1 = landscape (better for varied subjects)
-          selfieMode: false,
-        });
-
-        await this.model.initialize();
-        console.log('Background removal model initialized successfully');
+        logger.info('BackgroundRemoval', 'Background removal model initialized successfully');
       } catch (error) {
-        console.error('Failed to load background removal model:', error);
-        console.warn(
-          'Background removal requires @mediapipe/selfie_segmentation package. ' +
-          'Run: npm install @mediapipe/selfie_segmentation'
-        );
-        this.model = null;
+        logger.error('BackgroundRemoval', 'Failed to load background removal model', error);
+        this.segmenter = null;
         throw error;
       } finally {
         this.isLoading = false;
@@ -74,11 +80,11 @@ export class BackgroundRemovalService {
     options: BackgroundRemovalOptions = {}
   ): Promise<ImageData> {
     // Initialize model if needed
-    if (!this.model && !this.isLoading) {
+    if (!this.segmenter && !this.isLoading) {
       await this.initialize();
     }
 
-    if (!this.model) {
+    if (!this.segmenter) {
       throw new Error('Background removal model not loaded');
     }
 
@@ -97,38 +103,53 @@ export class BackgroundRemovalService {
       const ctx = canvas.getContext('2d')!;
       ctx.putImageData(imageData, 0, 0);
 
-      // Run segmentation
-      const results = await new Promise<any>((resolve, reject) => {
-        this.model.onResults((results: any) => resolve(results));
-        this.model.send({ image: canvas }).catch(reject);
+      // Run segmentation with callback
+      let segmentationResult: ImageSegmenterResult | null = null;
+
+      // The segment method uses a callback pattern
+      this.segmenter.segment(canvas, (result: ImageSegmenterResult) => {
+        segmentationResult = result;
       });
 
-      // Get segmentation mask
-      const maskCanvas = results.segmentationMask;
-      const maskCtx = maskCanvas.getContext('2d')!;
-      const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+      if (!segmentationResult) {
+        throw new Error('Segmentation failed - no result returned');
+      }
+
+      // Get the confidence mask (better for smooth edges)
+      const confidenceMasks = (segmentationResult as ImageSegmenterResult).confidenceMasks;
+
+      if (!confidenceMasks || confidenceMasks.length === 0) {
+        throw new Error('No confidence mask returned from segmentation');
+      }
+
+      // Use the first confidence mask (person/foreground)
+      const mask = confidenceMasks[0];
+      const maskData = mask.getAsFloat32Array();
 
       // Apply mask to original image
-      const output = this.applySegmentationMask(imageData, maskData, {
+      const output = this.applyConfidenceMask(imageData, maskData, {
         threshold,
         featherEdges,
         edgeRadius,
         invertMask
       });
 
+      // Close the mask to free memory
+      mask.close();
+
       return output;
     } catch (error) {
-      console.error('Background removal failed:', error);
+      logger.error('BackgroundRemoval', 'Background removal failed', error);
       throw error;
     }
   }
 
   /**
-   * Apply segmentation mask to image
+   * Apply confidence mask to image
    */
-  private applySegmentationMask(
+  private applyConfidenceMask(
     imageData: ImageData,
-    maskData: ImageData,
+    maskData: Float32Array,
     options: Required<BackgroundRemovalOptions>
   ): ImageData {
     const { threshold, featherEdges, edgeRadius, invertMask } = options;
@@ -141,28 +162,32 @@ export class BackgroundRemovalService {
     );
 
     // Apply mask to alpha channel
-    for (let i = 0; i < maskData.data.length; i += 4) {
-      // Get mask value (0-255)
-      const maskValue = maskData.data[i]; // R channel (mask is grayscale)
+    for (let i = 0; i < maskData.length; i++) {
+      // Get mask value (0-1 float)
+      let confidence = maskData[i];
 
-      // Normalize to 0-1
-      const normalizedMask = maskValue / 255;
+      // Apply threshold for hard edges, or use raw confidence for soft edges
+      let alpha: number;
+      if (featherEdges) {
+        // Smooth transition using confidence value
+        alpha = Math.max(0, Math.min(1, (confidence - threshold + 0.5)));
+      } else {
+        // Hard threshold
+        alpha = confidence > threshold ? 1 : 0;
+      }
 
-      // Apply threshold
-      let alpha = normalizedMask > threshold ? 1 : 0;
-
-      // Invert if requested
+      // Invert if requested (remove foreground instead of background)
       if (invertMask) {
         alpha = 1 - alpha;
       }
 
       // Set alpha channel
-      const pixelIndex = i;
+      const pixelIndex = i * 4;
       output.data[pixelIndex + 3] = Math.round(alpha * 255);
     }
 
-    // Apply edge feathering if requested
-    if (featherEdges && edgeRadius > 0) {
+    // Apply additional edge feathering if requested
+    if (featherEdges && edgeRadius > 1) {
       return this.featherEdges(output, edgeRadius);
     }
 
@@ -237,7 +262,7 @@ export class BackgroundRemovalService {
    * Check if model is loaded
    */
   isModelLoaded(): boolean {
-    return this.model !== null;
+    return this.segmenter !== null;
   }
 
   /**
@@ -251,13 +276,13 @@ export class BackgroundRemovalService {
    * Unload the model to free memory
    */
   async dispose(): Promise<void> {
-    if (this.model) {
+    if (this.segmenter) {
       try {
-        await this.model.close();
+        this.segmenter.close();
       } catch (error) {
-        console.error('Error disposing background removal model:', error);
+        logger.error('BackgroundRemoval', 'Error disposing background removal model', error);
       }
-      this.model = null;
+      this.segmenter = null;
     }
   }
 }

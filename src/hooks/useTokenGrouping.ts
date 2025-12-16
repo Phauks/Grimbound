@@ -20,7 +20,7 @@ interface UseTokenGroupingReturn {
     characterTokens: Token[];
     /** Sorted reminder tokens */
     reminderTokens: Token[];
-    /** Meta tokens (script-name, almanac, pandemonium) */
+    /** Meta tokens (script-name, almanac, pandemonium, bootlegger) */
     metaTokens: Token[];
     /** Grouped character tokens with counts */
     groupedCharacterTokens: TokenGroup[];

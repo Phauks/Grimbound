@@ -35,17 +35,17 @@ export interface UsePreRenderCacheReturn {
  * - View cache statistics
  * - Clear caches
  *
- * @param strategyName - Name of the pre-render strategy ('gallery', 'customize', 'project')
+ * @param strategyName - Name of the pre-render strategy ('tokens', 'characters', 'project')
  * @returns Cache API for the specified strategy
  *
  * @example
  * ```tsx
- * const { cache, stats, preRender } = usePreRenderCache('gallery')
+ * const { cache, stats, preRender } = usePreRenderCache('tokens')
  *
  * // Trigger pre-rendering on hover
  * const handleHover = () => {
  *   preRender({
- *     type: 'gallery-hover',
+ *     type: 'tokens-hover',
  *     tokens: allTokens
  *   })
  * }
@@ -128,7 +128,7 @@ export function useAllCacheStats(): Record<string, CacheStats> {
  *
  * @example
  * ```tsx
- * const isRendering = useIsStrategyRendering('gallery')
+ * const isRendering = useIsStrategyRendering('tokens')
  *
  * return (
  *   <button disabled={isRendering}>

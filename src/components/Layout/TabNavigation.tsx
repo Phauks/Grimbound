@@ -1,11 +1,11 @@
 import { useCallback } from 'react'
 import { useTokenContext } from '../../contexts/TokenContext'
 import { useProjects } from '../../hooks/useProjects'
-import { preRenderFirstCharacter } from '../../utils/customizePreRenderCache'
-import { preRenderGalleryTokens } from '../TokenGrid/TokenCard'
+import { preRenderFirstCharacter } from '../../ts/cache/index.js'
+import { preRenderGalleryTokens } from '../ViewComponents/TokensComponents/TokenGrid/TokenCard'
 import styles from '../../styles/components/layout/TabNavigation.module.css'
 
-export type EditorTab = 'projects' | 'editor' | 'gallery' | 'customize' | 'script' | 'studio' | 'download' | 'town-square'
+export type EditorTab = 'projects' | 'json' | 'tokens' | 'characters' | 'script' | 'studio' | 'export' | 'town-square'
 export type TabType = EditorTab // Legacy alias for backwards compatibility
 
 interface TabNavigationProps {
@@ -21,7 +21,7 @@ export function TabNavigation({ activeTab, onTabChange, lastSelectedCharacterUui
 
   // Pre-render tokens when hovering over tabs
   const handleTabHover = useCallback((tabId: EditorTab) => {
-    if (tabId === 'customize' && characters.length > 0) {
+    if (tabId === 'characters' && characters.length > 0) {
       // Pre-render the last selected character (or first if none selected)
       let characterToPreRender = characters[0]  // Default fallback
 
@@ -33,7 +33,7 @@ export function TabNavigation({ activeTab, onTabChange, lastSelectedCharacterUui
       }
 
       preRenderFirstCharacter(characterToPreRender, generationOptions)
-    } else if (tabId === 'gallery' && tokens.length > 0) {
+    } else if (tabId === 'tokens' && tokens.length > 0) {
       // Pre-render data URLs for gallery tokens (first 20)
       preRenderGalleryTokens(tokens, 20)
     }
@@ -41,12 +41,12 @@ export function TabNavigation({ activeTab, onTabChange, lastSelectedCharacterUui
 
   const tabs: { id: EditorTab; label: string; disabled?: boolean }[] = [
     { id: 'projects', label: 'Projects' },
-    { id: 'editor', label: 'JSON' },
-    { id: 'gallery', label: 'Tokens' },
-    { id: 'customize', label: 'Characters' },
+    { id: 'json', label: 'JSON' },
+    { id: 'tokens', label: 'Tokens' },
+    { id: 'characters', label: 'Characters' },
     { id: 'script', label: 'Script' },
     { id: 'studio', label: 'Studio' },
-    { id: 'download', label: 'Export' },
+    { id: 'export', label: 'Export' },
     { id: 'town-square', label: 'Town Square' },
   ]
 

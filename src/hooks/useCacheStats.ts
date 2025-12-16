@@ -12,7 +12,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { globalImageCache } from '../ts/utils/imageCache.js';
-import { assetStorageService } from '../services/upload/AssetStorageService.js';
+import { assetStorageService } from '../ts/services/upload/AssetStorageService.js';
+import { logger } from '../ts/utils/logger.js';
 
 /**
  * Cache statistics for a single layer
@@ -59,12 +60,9 @@ function getImageCacheStats(): CacheLayerStats {
 
   return {
     name: 'Image Cache',
-    entryCount: stats.size,
-    maxSize: stats.maxSize,
-    hitCount: stats.hits,
-    missCount: stats.misses,
-    hitRate: stats.hitRate,
-    memoryUsageMB: stats.estimatedSizeMB,
+    entryCount: stats.entries,
+    maxSize: stats.maxSizeMB,
+    memoryUsageMB: stats.sizeMB,
   };
 }
 
@@ -235,7 +233,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
 
       setStats(newStats);
     } catch (error) {
-      console.error('[useCacheStats] Failed to refresh stats:', error);
+      logger.error('useCacheStats', 'Failed to refresh stats:', error);
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +253,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
       // Refresh stats after clearing
       await refresh();
     } catch (error) {
-      console.error('[useCacheStats] Failed to clear caches:', error);
+      logger.error('useCacheStats', 'Failed to clear caches:', error);
     }
   }, [refresh]);
 

@@ -7,7 +7,8 @@
  * @module ts/cache/__tests__/testUtils
  */
 
-import type { ICacheStrategy, CacheStats } from '../types.js';
+import type { CacheStats, CacheEntry, CacheOptions } from '../core/types.js';
+import type { ICacheStrategy } from '../core/interfaces.js';
 
 // ============================================================================
 // Mock Cache Implementation
@@ -28,53 +29,71 @@ import type { ICacheStrategy, CacheStats } from '../types.js';
  * ]);
  * ```
  */
-export function createMockCache<K, V>(
+export function createMockCache<K extends string = string, V = unknown>(
   entries?: [K, V][]
 ): ICacheStrategy<K, V> {
-  const storage = new Map<K, V>(entries || []);
-  const accessTimes = new Map<K, number>();
-  const tags = new Map<K, Set<string>>();
+  const storage = new Map<K, CacheEntry<V>>();
   let hitCount = 0;
   let missCount = 0;
   let evictionCount = 0;
 
+  // Initialize with entries
+  if (entries) {
+    for (const [key, value] of entries) {
+      storage.set(key, {
+        key: key as string,
+        value,
+        size: 0,
+        createdAt: Date.now(),
+        lastAccessed: Date.now(),
+        accessCount: 0
+      });
+    }
+  }
+
   return {
-    async get(key: K): Promise<V | null> {
-      const value = storage.get(key);
-      if (value !== undefined) {
+    async get(key: K): Promise<CacheEntry<V> | null> {
+      const entry = storage.get(key);
+      if (entry) {
         hitCount++;
-        accessTimes.set(key, Date.now());
-        return value;
+        entry.lastAccessed = Date.now();
+        entry.accessCount++;
+        return entry;
       }
       missCount++;
       return null;
     },
 
-    async set(key: K, value: V, cacheTags?: string[]): Promise<void> {
-      storage.set(key, value);
-      accessTimes.set(key, Date.now());
-
-      if (cacheTags) {
-        tags.set(key, new Set(cacheTags));
-      }
+    async set(key: K, value: V, options?: CacheOptions): Promise<void> {
+      storage.set(key, {
+        key: key as string,
+        value,
+        size: 0,
+        createdAt: Date.now(),
+        lastAccessed: Date.now(),
+        accessCount: 0,
+        ttl: options?.ttl,
+        tags: options?.tags,
+        metadata: options?.metadata
+      });
     },
 
-    async delete(key: K): Promise<boolean> {
-      const existed = storage.has(key);
-      storage.delete(key);
-      accessTimes.delete(key);
-      tags.delete(key);
-      if (existed) evictionCount++;
-      return existed;
+    has(key: K): boolean {
+      return storage.has(key);
+    },
+
+    async delete(key: K): Promise<void> {
+      if (storage.has(key)) {
+        storage.delete(key);
+        evictionCount++;
+      }
     },
 
     async clear(): Promise<void> {
       storage.clear();
-      accessTimes.clear();
-      tags.clear();
     },
 
-    async getStats(): Promise<CacheStats> {
+    getStats(): CacheStats {
       const totalCount = hitCount + missCount;
       return {
         size: storage.size,
@@ -82,34 +101,61 @@ export function createMockCache<K, V>(
         missCount,
         hitRate: totalCount > 0 ? hitCount / totalCount : 0,
         evictionCount,
-        memoryUsage: 0,
-        maxSize: Infinity,
-        maxMemory: Infinity
+        memoryUsage: 0
       };
     },
 
-    async evict(count: number): Promise<number> {
-      const entries = Array.from(storage.keys());
-      const toEvict = entries.slice(0, Math.min(count, entries.length));
+    async evict(): Promise<number> {
+      // Simple LRU eviction - remove oldest entry
+      if (storage.size === 0) return 0;
 
-      for (const key of toEvict) {
-        await this.delete(key);
+      let oldestKey: K | null = null;
+      let oldestTime = Infinity;
+
+      for (const [key, entry] of storage.entries()) {
+        if (entry.lastAccessed < oldestTime) {
+          oldestTime = entry.lastAccessed;
+          oldestKey = key;
+        }
       }
 
-      return toEvict.length;
+      if (oldestKey) {
+        storage.delete(oldestKey);
+        evictionCount++;
+        return 1;
+      }
+
+      return 0;
+    },
+
+    keys(): K[] {
+      return Array.from(storage.keys());
     },
 
     async invalidateByTag(tag: string): Promise<number> {
       let invalidated = 0;
 
-      for (const [key, keyTags] of tags.entries()) {
-        if (keyTags.has(tag)) {
-          await this.delete(key);
+      for (const [key, entry] of storage.entries()) {
+        if (entry.tags?.includes(tag)) {
+          storage.delete(key);
           invalidated++;
+          evictionCount++;
         }
       }
 
       return invalidated;
+    },
+
+    async getByTag(tag: string): Promise<Array<CacheEntry<V>>> {
+      const results: Array<CacheEntry<V>> = [];
+
+      for (const entry of storage.values()) {
+        if (entry.tags?.includes(tag)) {
+          results.push(entry);
+        }
+      }
+
+      return results;
     }
   };
 }
@@ -179,11 +225,11 @@ export function createMockTokenUrls(count: number): [string, string][] {
  * ```typescript
  * const cache = createMockCache();
  * await populateCache(cache, createMockCacheEntries(100));
- * const stats = await cache.getStats();
+ * const stats = cache.getStats();
  * expect(stats.size).toBe(100);
  * ```
  */
-export async function populateCache<K, V>(
+export async function populateCache<K extends string, V>(
   cache: ICacheStrategy<K, V>,
   entries: [K, V][]
 ): Promise<void> {
@@ -208,15 +254,15 @@ export async function populateCache<K, V>(
  * // stats: { hits: 2, misses: 1 }
  * ```
  */
-export async function simulateCacheAccess<K, V>(
+export async function simulateCacheAccess<K extends string, V>(
   cache: ICacheStrategy<K, V>,
   keys: K[]
 ): Promise<(V | null)[]> {
   const results: (V | null)[] = [];
 
   for (const key of keys) {
-    const value = await cache.get(key);
-    results.push(value);
+    const entry = await cache.get(key);
+    results.push(entry?.value ?? null);
   }
 
   return results;
@@ -234,7 +280,7 @@ export async function simulateCacheAccess<K, V>(
  * @example
  * ```typescript
  * await waitForCondition(async () => {
- *   const stats = await cache.getStats();
+ *   const stats = cache.getStats();
  *   return stats.size === 10;
  * });
  * ```
@@ -295,33 +341,38 @@ export async function measureDuration<T>(
  * expect(calls.get).toHaveLength(1);
  * ```
  */
-export function createCacheSpy<K, V>(
+export function createCacheSpy<K extends string, V>(
   baseCache: ICacheStrategy<K, V>
 ): {
   cache: ICacheStrategy<K, V>;
-  calls: Record<string, any[]>;
+  calls: Record<string, unknown[]>;
 } {
-  const calls: Record<string, any[]> = {
+  const calls: Record<string, unknown[]> = {
     get: [],
     set: [],
     delete: [],
     clear: [],
     evict: [],
-    invalidateByTag: []
+    invalidateByTag: [],
+    getByTag: []
   };
 
   const cache: ICacheStrategy<K, V> = {
-    async get(key: K): Promise<V | null> {
+    async get(key: K): Promise<CacheEntry<V> | null> {
       calls.get.push({ key, timestamp: Date.now() });
       return baseCache.get(key);
     },
 
-    async set(key: K, value: V, cacheTags?: string[]): Promise<void> {
-      calls.set.push({ key, value, cacheTags, timestamp: Date.now() });
-      return baseCache.set(key, value, cacheTags);
+    async set(key: K, value: V, options?: CacheOptions): Promise<void> {
+      calls.set.push({ key, value, options, timestamp: Date.now() });
+      return baseCache.set(key, value, options);
     },
 
-    async delete(key: K): Promise<boolean> {
+    has(key: K): boolean {
+      return baseCache.has(key);
+    },
+
+    async delete(key: K): Promise<void> {
       calls.delete.push({ key, timestamp: Date.now() });
       return baseCache.delete(key);
     },
@@ -331,18 +382,27 @@ export function createCacheSpy<K, V>(
       return baseCache.clear();
     },
 
-    async getStats(): Promise<CacheStats> {
+    getStats(): CacheStats {
       return baseCache.getStats();
     },
 
-    async evict(count: number): Promise<number> {
-      calls.evict.push({ count, timestamp: Date.now() });
-      return baseCache.evict(count);
+    async evict(): Promise<number> {
+      calls.evict.push({ timestamp: Date.now() });
+      return baseCache.evict();
+    },
+
+    keys(): K[] {
+      return baseCache.keys();
     },
 
     async invalidateByTag(tag: string): Promise<number> {
       calls.invalidateByTag.push({ tag, timestamp: Date.now() });
       return baseCache.invalidateByTag(tag);
+    },
+
+    async getByTag(tag: string): Promise<Array<CacheEntry<V>>> {
+      calls.getByTag.push({ tag, timestamp: Date.now() });
+      return baseCache.getByTag(tag);
     }
   };
 

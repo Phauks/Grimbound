@@ -41,12 +41,12 @@ cache/
 ```typescript
 import { usePreRenderCache } from '../hooks/usePreRenderCache'
 
-function Gallery() {
+function TokensView() {
   const cacheManager = usePreRenderCache()
 
   const handleScroll = async () => {
     const result = await cacheManager?.preRender({
-      type: 'gallery',
+      type: 'tokens-hover',
       tokens: visibleTokens,
       characters: charactersInViewport
     })

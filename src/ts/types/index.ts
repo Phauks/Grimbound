@@ -5,9 +5,18 @@
 
 // Token generator options
 export * from './tokenOptions.js';
+import type { QRCodeOptions } from './tokenOptions.js';
+
+// Background effects types
+export * from './backgroundEffects.js';
+import type { BackgroundStyle } from './backgroundEffects.js';
 
 // Project management types
 export * from './project.js';
+
+// Measurement system types
+export * from './measurement.js';
+import type { MeasurementUnit } from './measurement.js';
 
 // UI Theme types
 export type { UITheme, ThemeId } from '../themes.js';
@@ -165,7 +174,7 @@ export interface ScriptMeta {
     synopsis?: string;
     overview?: string;
     changelog?: string;
-    bootlegger?: string;
+    bootlegger?: string[];
     gameplay?: string;
     difficulty?: string;
     storytellerTips?: string;
@@ -225,6 +234,9 @@ export interface PngExportOptions {
 // ZIP compression level
 export type CompressionLevel = 'fast' | 'normal' | 'maximum';
 
+// Reminder count display style
+export type ReminderCountStyle = 'arabic' | 'roman' | 'circled' | 'dots';
+
 // ZIP export configuration
 export interface ZipExportOptions {
     saveInTeamFolders: boolean;
@@ -246,10 +258,17 @@ export interface CustomPreset {
     isCustom: true;
 }
 
-// Icon settings for image positioning
+/**
+ * Icon settings for image positioning
+ * Note: offsetX and offsetY are stored in INCHES (canonical unit)
+ * and converted to pixels during rendering using DPI
+ */
 export interface IconSettings {
+    /** Scale multiplier (1.0 = 100%) */
     scale: number;
+    /** Horizontal offset in inches */
     offsetX: number;
+    /** Vertical offset in inches (positive = up) */
     offsetY: number;
 }
 
@@ -259,11 +278,18 @@ export interface IconSettingsOptions {
     meta: IconSettings;
 }
 
+// Bootlegger icon type options
+export type BootleggerIconType = 'bootlegger' | 'script';
+
 // Generation options (subset of TokenConfig)
 export interface GenerationOptions {
     displayAbilityText: boolean;
     generateBootleggerRules: boolean;
+    bootleggerIconType?: BootleggerIconType;
+    bootleggerNormalizeIcons?: boolean;
+    bootleggerHideName?: boolean;
     tokenCount: boolean;
+    reminderCountStyle?: ReminderCountStyle;
     generateImageVariants?: boolean;
     generateReminderVariants?: boolean;
     setupFlowerStyle: string;
@@ -276,6 +302,10 @@ export interface GenerationOptions {
     metaBackground?: string;
     metaBackgroundColor?: string;
     metaBackgroundType?: 'color' | 'image';
+    // Advanced background styling (overrides simple color when set)
+    characterBackgroundStyle?: BackgroundStyle;
+    reminderBackgroundStyle?: BackgroundStyle;
+    metaBackgroundStyle?: BackgroundStyle;
     characterNameFont: string;
     characterNameColor?: string;
     metaNameFont?: string;
@@ -289,10 +319,14 @@ export interface GenerationOptions {
     almanacToken: boolean;
     pandemoniumToken: boolean;
     leafGeneration?: string;
+    leafEnabled?: boolean;  // Whether accent leaves are enabled
     maximumLeaves?: number;
     leafPopulationProbability?: number;
     leafArcSpan?: number;
     leafSlots?: number;
+    enableLeftLeaf?: boolean;
+    enableRightLeaf?: boolean;
+    sideLeafProbability?: number;
     dpi?: DPIOption;
     fontSpacing?: FontSpacingOptions;
     textShadow?: TextShadowOptions;
@@ -304,11 +338,14 @@ export interface GenerationOptions {
     pdfImageQuality?: number;  // JPEG quality for PDF images (0.0-1.0)
     pdfBleed?: number;         // Bleed in inches for cutting margin (default 1/8" = 0.125)
     iconSettings?: IconSettingsOptions;  // Icon positioning per token type
+    logoUrl?: string;  // Custom logo URL for meta tokens
+    measurementUnit?: MeasurementUnit;   // User's preferred display unit (inches/millimeters)
+    qrCodeOptions?: QRCodeOptions;  // QR code styling options for almanac tokens
 }
 
 // Generated token
 export interface Token {
-    type: 'character' | 'reminder' | 'script-name' | 'almanac' | 'pandemonium';
+    type: 'character' | 'reminder' | 'script-name' | 'almanac' | 'pandemonium' | 'bootlegger';
     name: string;
     filename: string;
     team: Team | string;
@@ -704,11 +741,6 @@ export interface UIElements {
     downloadAllPng: HTMLButtonElement | null;
     generatePdf: HTMLButtonElement | null;
 
-    // Sticky Export Bar
-    stickyExportBar: HTMLElement | null;
-    downloadAllPngSticky: HTMLButtonElement | null;
-    generatePdfSticky: HTMLButtonElement | null;
-
     // Token Counts
     countTownsfolk: HTMLElement | null;
     countOutsider: HTMLElement | null;
@@ -1013,7 +1045,7 @@ export interface LogoTemplate {
 // Guide line for canvas overlay
 export interface Guide {
     id: string;
-    type: 'horizontal' | 'vertical';
+    orientation: 'horizontal' | 'vertical';
     position: number;  // pixels from top/left
     color?: string;
 }
@@ -1022,8 +1054,10 @@ export interface Guide {
 export interface GridConfig {
     enabled: boolean;
     spacing: number;      // pixels
-    color?: string;
-    snapEnabled?: boolean;
+    color: string;
+    snapEnabled: boolean;
+    lineWidth: number;    // pixels
+    opacity: number;      // 0-1
 }
 
 // Studio editor state (for StudioContext)

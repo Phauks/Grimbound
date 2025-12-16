@@ -7,6 +7,7 @@
 
 import type { Layer } from '../types/index.js';
 import { studioCanvasPool } from '../canvas/canvasPool.js';
+import { logger } from '../utils/logger.js';
 
 // ============================================================================
 // Types
@@ -134,7 +135,7 @@ export class MemoryManager {
     };
 
     if (this.config.debug) {
-      console.log('[MemoryManager] Stats:', stats);
+      logger.debug('MemoryManager', 'Stats:', stats);
     }
 
     return stats;
@@ -163,7 +164,7 @@ export class MemoryManager {
    */
   triggerGarbageCollection(): void {
     if (this.config.debug) {
-      console.log('[MemoryManager] Triggering GC hints');
+      logger.debug('MemoryManager', 'Triggering GC hints');
     }
 
     // Revoke any object URLs that might be lingering
@@ -173,7 +174,7 @@ export class MemoryManager {
     // Force a microtask to allow GC to run
     Promise.resolve().then(() => {
       if (this.config.debug) {
-        console.log('[MemoryManager] GC hints completed');
+        logger.debug('MemoryManager', 'GC hints completed');
       }
     });
   }
@@ -183,7 +184,7 @@ export class MemoryManager {
    */
   clearCanvasPool(): void {
     if (this.config.debug) {
-      console.log('[MemoryManager] Clearing canvas pool');
+      logger.debug('MemoryManager', 'Clearing canvas pool');
     }
 
     studioCanvasPool.clear();
@@ -199,7 +200,7 @@ export class MemoryManager {
     const { clearPool = true, triggerGC = true } = options;
 
     if (this.config.debug) {
-      console.log('[MemoryManager] Starting cleanup', options);
+      logger.debug('MemoryManager', 'Starting cleanup', options);
     }
 
     if (clearPool) {
@@ -211,7 +212,7 @@ export class MemoryManager {
     }
 
     if (this.config.debug) {
-      console.log('[MemoryManager] Cleanup complete');
+      logger.debug('MemoryManager', 'Cleanup complete');
     }
   }
 

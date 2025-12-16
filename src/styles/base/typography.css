@@ -41,58 +41,6 @@ h6 {
   font-weight: var(--font-medium);
 }
 
-/* Display font (game title) */
-.font-display {
-  font-family: var(--font-display);
-}
-
-/* Monospace for code/JSON */
-.font-mono {
-  font-family: var(--font-mono);
-}
-
-/* Text color utilities */
-.text-primary {
-  color: var(--text-primary);
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.text-muted {
-  color: var(--text-muted);
-}
-
-.text-accent {
-  color: var(--color-accent);
-}
-
-.text-error {
-  color: var(--color-error);
-}
-
-.text-success {
-  color: var(--color-success);
-}
-
-/* Text alignment */
-.text-left { text-align: left; }
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-
-/* Text transform */
-.uppercase { text-transform: uppercase; }
-.lowercase { text-transform: lowercase; }
-.capitalize { text-transform: capitalize; }
-
-/* Truncation */
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Selection styling */
 ::selection {
   background-color: var(--color-accent);

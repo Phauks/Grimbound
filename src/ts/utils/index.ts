@@ -138,6 +138,13 @@ export {
     FORMAT_PATTERNS
 } from './textFormatAnalyzer.js';
 
+// Ability text parser utilities (for bold [] rendering on tokens)
+export {
+    parseAbilityText,
+    hasSetupBrackets,
+    getLineSegments
+} from './abilityTextParser.js';
+
 // Character image resolution utilities (SSOT for all character icon resolution)
 export {
     resolveCharacterImageUrl,
@@ -146,6 +153,26 @@ export {
     extractCharacterIdFromPath,
     getFirstImageUrl
 } from './characterImageResolver.js';
+
+// Measurement utilities (SSOT for all unit conversions)
+export {
+    MM_PER_INCH,
+    STEP_SIZES,
+    DECIMAL_PLACES,
+    inchesToMm,
+    mmToInches,
+    inchesToPixels,
+    pixelsToInches,
+    toCanonicalInches,
+    fromCanonicalInches,
+    getUnitSuffix,
+    formatMeasurement,
+    roundToStep,
+    convertConfigToDisplayUnit,
+    ICON_OFFSET_CONFIG,
+    PDF_OFFSET_CONFIG,
+    BLEED_CONFIG
+} from './measurementUtils.js';
 
 // Re-export types
 export type { DebouncedFunction } from './asyncUtils.js';
@@ -161,6 +188,7 @@ export type {
     FormatPattern,
     FormatIssue
 } from './textFormatAnalyzer.js';
+export type { TextSegment } from './abilityTextParser.js';
 export type {
     ResolveOptions,
     ResolvedImage,

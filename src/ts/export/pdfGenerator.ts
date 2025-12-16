@@ -3,6 +3,7 @@
  * PDF Generator - PDF export functionality
  */
 
+import { jsPDF } from 'jspdf';
 import CONFIG, { AVERY_TEMPLATES } from '../config.js';
 import type { Token, PDFOptions, TokenLayoutItem, ProgressCallback, jsPDFDocument, AveryTemplate, AveryTemplateId } from '../types/index.js';
 
@@ -258,18 +259,13 @@ export class PDFGenerator {
      * @returns Generated PDF document
      */
     async generatePDF(tokens: Token[], progressCallback: ProgressCallback | null = null, separatePages: boolean = true): Promise<jsPDFDocument> {
-        const jspdfLib = window.jspdf;
-        if (!jspdfLib) {
-            throw new Error('jsPDF library not loaded');
-        }
-
         // Create PDF document (dimensions in inches)
-        const pdf = new jspdfLib.jsPDF({
+        const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'in',
             format: [this.options.pageWidth, this.options.pageHeight],
-            compress: true  // Enable PDF stream compression (type not in @types but supported)
-        } as any);
+            compress: true  // Enable PDF stream compression
+        });
 
         // Calculate layout
         const { pages, pageTemplates } = this.calculateGridLayout(tokens, separatePages);

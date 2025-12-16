@@ -8,12 +8,14 @@ import {
     sanitizeFilename,
     generateUniqueFilename,
     createProgressState,
-    updateProgress
+    updateProgress,
+    logger
 } from '../utils/index.js';
 import type { ProgressState } from '../utils/index.js';
 import { TokenGenerator } from './tokenGenerator.js';
+import type { TextLayoutResult } from '../canvas/index.js';
 import { getAllCharacterImageUrls } from '../data/characterUtils.js';
-import { createPreloadTasks, preResolveAssetsWithPriority } from '../../services/upload/assetResolver.js';
+import { createPreloadTasks, preResolveAssetsWithPriority } from '../services/upload/assetResolver.js';
 import type { Character, Token, GenerationOptions, ProgressCallback, TokenCallback, Team, ScriptMeta } from '../types/index.js';
 
 // ============================================================================
@@ -32,6 +34,10 @@ function calculateTotalTokenCount(
     if (options.pandemoniumToken) metaTokenCount++;
     if (options.scriptNameToken && scriptMeta?.name) metaTokenCount++;
     if (options.almanacToken && scriptMeta?.almanac) metaTokenCount++;
+    // Add bootlegger token count
+    if (options.generateBootleggerRules && scriptMeta?.bootlegger?.length) {
+        metaTokenCount += scriptMeta.bootlegger.length;
+    }
 
     const characterTokenCount = characters.reduce((sum, char) => {
         // If generating variants, count all image variants for each character
@@ -81,7 +87,7 @@ async function generateMetaTokens(
             if (tokenCallback) tokenCallback(token);
             tokens.push(token);
         } catch (error) {
-            console.error('Failed to generate pandemonium token:', error);
+            logger.error('BatchGenerator', 'Failed to generate pandemonium token', error);
         }
         updateProgress(progress);
     }
@@ -106,7 +112,7 @@ async function generateMetaTokens(
             if (tokenCallback) tokenCallback(token);
             tokens.push(token);
         } catch (error) {
-            console.error('Failed to generate script name token:', error);
+            logger.error('BatchGenerator', 'Failed to generate script name token', error);
         }
         updateProgress(progress);
     }
@@ -118,7 +124,7 @@ async function generateMetaTokens(
         }
         
         try {
-            const canvas = await generator.generateAlmanacQRToken(scriptMeta.almanac, scriptMeta.name);
+            const canvas = await generator.generateAlmanacQRToken(scriptMeta.almanac, scriptMeta.name, scriptMeta.logo);
             const token: Token = {
                 type: 'almanac',
                 name: `${scriptMeta.name} Almanac`,
@@ -130,9 +136,61 @@ async function generateMetaTokens(
             if (tokenCallback) tokenCallback(token);
             tokens.push(token);
         } catch (error) {
-            console.error('Failed to generate almanac QR token:', error);
+            logger.error('BatchGenerator', 'Failed to generate almanac QR token', error);
         }
         updateProgress(progress);
+    }
+
+    // Generate Bootlegger tokens
+    if (options.generateBootleggerRules && scriptMeta?.bootlegger?.length) {
+        const bootleggerEntries = scriptMeta.bootlegger.filter(text => text?.trim());
+
+        // Calculate normalized layout if option is enabled and there are multiple entries
+        let normalizedLayout: TextLayoutResult | undefined;
+        if (options.bootleggerNormalizeIcons && bootleggerEntries.length > 1) {
+            // Pre-calculate all layouts to find the one with largest text height
+            let maxTextHeight = 0;
+            for (const text of bootleggerEntries) {
+                const layout = generator.calculateBootleggerLayout(text);
+                if (layout && layout.totalHeight > maxTextHeight) {
+                    maxTextHeight = layout.totalHeight;
+                    normalizedLayout = layout;
+                }
+            }
+        }
+
+        for (let i = 0; i < scriptMeta.bootlegger.length; i++) {
+            const abilityText = scriptMeta.bootlegger[i];
+
+            // Check for cancellation
+            if (signal?.aborted) {
+                throw new DOMException('Token generation aborted', 'AbortError');
+            }
+
+            // Skip empty entries
+            if (!abilityText?.trim()) {
+                updateProgress(progress);
+                continue;
+            }
+
+            try {
+                const canvas = await generator.generateBootleggerToken(abilityText, normalizedLayout);
+                const token: Token = {
+                    type: 'bootlegger',
+                    name: `Bootlegger ${i + 1}`,
+                    filename: `_bootlegger_${i + 1}`,
+                    team: 'meta',
+                    canvas,
+                    diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
+                    order: i, // Preserve order from script meta
+                };
+                if (tokenCallback) tokenCallback(token);
+                tokens.push(token);
+            } catch (error) {
+                logger.error('BatchGenerator', `Failed to generate bootlegger token ${i + 1}`, error);
+            }
+            updateProgress(progress);
+        }
     }
 
     return tokens;
@@ -174,7 +232,7 @@ async function generateSingleCharacterToken(
             isOfficial,
         };
     } catch (error) {
-        console.error(`Failed to generate token for ${character.name}:`, error);
+        logger.error('BatchGenerator', `Failed to generate token for ${character.name}`, error);
         return null;
     }
 }
@@ -241,7 +299,7 @@ async function generateReminderTokensForCharacter(
                 if (tokenCallback) tokenCallback(token);
                 tokens.push(token);
             } catch (error) {
-                console.error(`Failed to generate reminder token "${reminder}" for ${character.name}:`, error);
+                logger.error('BatchGenerator', `Failed to generate reminder token "${reminder}" for ${character.name}`, error);
             }
             updateProgress(progress);
         }
@@ -339,7 +397,7 @@ async function generateCharacterAndReminderTokens(
                         if (tokenCallback) tokenCallback(token);
                         return token;
                     } catch (error) {
-                        console.error(`Failed to generate token for ${character.name}:`, error);
+                        logger.error('BatchGenerator', `Failed to generate token for ${character.name}`, error);
                         updateProgress(progress);
                         return null;
                     }
@@ -395,6 +453,9 @@ export async function generateAllTokens(
         ...options,
         transparentBackground: options.pngSettings?.transparentBackground ?? false,
         bootleggerRules: options.generateBootleggerRules ? scriptMeta?.bootlegger : undefined,
+        bootleggerIconType: options.bootleggerIconType,
+        bootleggerNormalizeIcons: options.bootleggerNormalizeIcons,
+        bootleggerHideName: options.bootleggerHideName,
         logoUrl: scriptMeta?.logo,
     };
     const generator = new TokenGenerator(generatorOptions);
@@ -412,7 +473,7 @@ export async function generateAllTokens(
             concurrency: 5,
             onProgress: (loaded, total) => {
                 // Optional: could emit progress event here
-                // console.log(`Preloaded ${loaded}/${total} assets`);
+                // logger.debug('BatchGenerator', `Preloaded ${loaded}/${total} assets`);
             }
         });
     }
@@ -473,7 +534,7 @@ export async function generateScriptNameTokenOnly(
         };
         return token;
     } catch (error) {
-        console.error('Failed to generate script name token:', error);
+        logger.error('BatchGenerator', 'Failed to generate script name token', error);
         return null;
     }
 }

@@ -9,6 +9,8 @@
  * Pattern: Observer (Publish-Subscribe)
  */
 
+import { logger } from '../utils/logger.js';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -356,7 +358,7 @@ export class CacheInvalidationService {
 
     if (listenersToNotify.size === 0) {
       // No listeners registered - log for debugging
-      console.debug(`[CacheInvalidation] No listeners for scope: ${event.scope}`)
+      logger.debug('CacheInvalidation', `No listeners for scope: ${event.scope}`)
       return
     }
 
@@ -365,17 +367,15 @@ export class CacheInvalidationService {
       try {
         await listener(event)
       } catch (error) {
-        console.error('[CacheInvalidation] Listener error:', error)
+        logger.error('CacheInvalidation', 'Listener error', error)
       }
     })
 
     await Promise.all(notifications)
 
     // Log successful invalidation
-    console.debug(
-      `[CacheInvalidation] ${event.scope} invalidation:`,
-      event.entityIds,
-      `(${listenersToNotify.size} listeners notified)`
+    logger.debug('CacheInvalidation',
+      `${event.scope} invalidation: ${event.entityIds.join(', ')} (${listenersToNotify.size} listeners notified)`
     )
   }
 

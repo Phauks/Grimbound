@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 import { getPreset } from '../ts/generation/presets.js'
-import { sanitizeFilename, generateUuid, STORAGE_KEYS, getStorageItem, setStorageItem, removeStorageItem } from '../ts/utils/index.js'
+import { sanitizeFilename, generateUuid, STORAGE_KEYS, getStorageItem, setStorageItem, removeStorageItem, logger } from '../ts/utils/index.js'
 import type { GenerationOptions, PresetName } from '../ts/types/index.js'
 
 export interface CustomPreset {
@@ -32,7 +32,7 @@ export function usePresets() {
           return presetName
         }
       } catch (err) {
-        console.error(`Failed to apply preset ${presetName}:`, err)
+        logger.error('usePresets', `Failed to apply preset ${presetName}:`, err)
       }
       return null
     },
@@ -62,7 +62,7 @@ export function usePresets() {
     try {
       setStorageItem(STORAGE_KEYS.DEFAULT_PRESET, presetId)
     } catch (err) {
-      console.error('Failed to set default preset:', err)
+      logger.error('usePresets', 'Failed to set default preset:', err)
     }
   }, [])
 
@@ -85,7 +85,7 @@ export function usePresets() {
         savePresetsToStorage(presets)
         return customPreset
       } catch (err) {
-        console.error('Failed to save custom preset:', err)
+        logger.error('usePresets', 'Failed to save custom preset:', err)
         throw err
       }
     },
@@ -103,7 +103,7 @@ export function usePresets() {
         setDefaultPreset('classic')
       }
     } catch (err) {
-      console.error('Failed to delete custom preset:', err)
+      logger.error('usePresets', 'Failed to delete custom preset:', err)
       throw err
     }
   }, [getCustomPresets, getDefaultPresetId, setDefaultPreset])
@@ -114,7 +114,7 @@ export function usePresets() {
         updateGenerationOptions(preset.settings)
         return preset.id
       } catch (err) {
-        console.error(`Failed to apply custom preset ${preset.name}:`, err)
+        logger.error('usePresets', `Failed to apply custom preset ${preset.name}:`, err)
       }
       return null
     },
@@ -133,7 +133,7 @@ export function usePresets() {
         }
         return false
       } catch (err) {
-        console.error('Failed to update custom preset:', err)
+        logger.error('usePresets', 'Failed to update custom preset:', err)
         return false
       }
     },
@@ -155,7 +155,7 @@ export function usePresets() {
         savePresetsToStorage(presets)
         return newPreset
       } catch (err) {
-        console.error('Failed to duplicate preset:', err)
+        logger.error('usePresets', 'Failed to duplicate preset:', err)
         throw err
       }
     },
@@ -178,7 +178,7 @@ export function usePresets() {
         savePresetsToStorage(presets)
         return newPreset
       } catch (err) {
-        console.error('Failed to duplicate built-in preset:', err)
+        logger.error('usePresets', 'Failed to duplicate built-in preset:', err)
         throw err
       }
     },
@@ -201,7 +201,7 @@ export function usePresets() {
         }
         return false
       } catch (err) {
-        console.error('Failed to edit preset:', err)
+        logger.error('usePresets', 'Failed to edit preset:', err)
         return false
       }
     },
@@ -227,7 +227,7 @@ export function usePresets() {
       // Fallback to classic
       return applyPreset('classic')
     } catch (err) {
-      console.error('Failed to load default preset:', err)
+      logger.error('usePresets', 'Failed to load default preset:', err)
       return null
     }
   }, [applyPreset, applyCustomPreset, getCustomPresets, getDefaultPresetId])
@@ -243,7 +243,7 @@ export function usePresets() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('Failed to export preset:', err)
+      logger.error('usePresets', 'Failed to export preset:', err)
       throw err
     }
   }, [])
@@ -297,7 +297,7 @@ export function usePresets() {
         savePresetsToStorage(presets)
         return true
       } catch (err) {
-        console.error('Failed to reorder presets:', err)
+        logger.error('usePresets', 'Failed to reorder presets:', err)
         return false
       }
     },

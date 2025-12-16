@@ -1,7 +1,8 @@
 import { useCallback, useRef } from 'react'
 import { useTokenContext } from '../contexts/TokenContext'
 import { generateAllTokens } from '../ts/generation/batchGenerator.js'
-import { clearDataUrlCache } from '../components/TokenGrid/TokenCard'
+import { clearDataUrlCache } from '../components/ViewComponents/TokensComponents/TokenGrid/TokenCard'
+import { logger } from '../ts/utils/logger.js'
 import type { ProgressCallback, Token, TokenCallback } from '../ts/types/index.js'
 
 export function useTokenGenerator() {
@@ -74,12 +75,12 @@ export function useTokenGenerator() {
       } catch (err) {
         // Don't treat abort as an error
         if (err instanceof DOMException && err.name === 'AbortError') {
-          console.log('Token generation was cancelled')
+          logger.debug('useTokenGenerator', 'Token generation was cancelled')
           return
         }
         const errorMessage = err instanceof Error ? err.message : 'Failed to generate tokens'
         setError(errorMessage)
-        console.error('Token generation error:', err)
+        logger.error('useTokenGenerator', 'Token generation error:', err)
       } finally {
         setIsLoading(false)
         setGenerationProgress(null)

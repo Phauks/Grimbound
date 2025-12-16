@@ -51,7 +51,7 @@ export const CONFIG: Config = {
     // Style Defaults
     STYLE: {
         LEAF_GENERATION: 'classic',
-        MAXIMUM_LEAVES: 0,
+        MAXIMUM_LEAVES: 5,
         LEAF_POPULATION_PROBABILITY: 30,
         LEAF_ARC_SPAN: 120,
         LEAF_SLOTS: 7,
@@ -155,13 +155,13 @@ export const CONFIG: Config = {
         CORS_PROXY: 'https://cors-header-proxy.infiniteinstants.com/?'   // Cloudflare Workers CORS proxy
     },
 
-    // Asset Paths
+    // Asset Paths (served from publicDir 'assets' at root path)
     ASSETS: {
-        FONTS: './assets/fonts/',
-        IMAGES: './assets/images/',
-        CHARACTER_BACKGROUNDS: './assets/images/character_background/',
-        SETUP_FLOWERS: './assets/images/setup_flower/',
-        LEAVES: './assets/images/'
+        FONTS: '/fonts/',
+        IMAGES: '/images/',
+        CHARACTER_BACKGROUNDS: '/images/character_background/',
+        SETUP_FLOWERS: '/images/setup_flower/',
+        LEAVES: '/images/'
     },
 
     // Example Scripts (auto-populated from example_scripts folder)

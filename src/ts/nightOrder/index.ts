@@ -79,7 +79,25 @@ export {
     getScaleWarning,
 } from './nightOrderLayout.js';
 
-// WYSIWYG PDF Export (uses html2pdf.js for true WYSIWYG output)
-export type { WysiwygExportOptions } from './nightOrderWysiwygExport.js';
+// PDF Export using pdf-lib (fast, native OTF support)
+export type {
+    ExportPhase,
+    ProgressCallback,
+    NightOrderPdfOptions,
+} from './nightOrderPdfLib.js';
 
-export { exportNightOrderPDF } from './nightOrderWysiwygExport.js';
+export {
+    generateNightOrderPdf,
+    downloadNightOrderPdf,
+    getNightOrderPdfBlob,
+} from './nightOrderPdfLib.js';
+
+// Font loading utilities
+export type { FontSet } from './fontLoader.js';
+
+export {
+    loadFonts,
+    preloadFonts,
+    clearFontCache,
+    getCachedFontCount,
+} from './fontLoader.js';

@@ -1,6 +1,6 @@
 /**
  * PresetModal Shared Styles
- * Used by SavePresetModal and EditPresetModal
+ * Gothic elegance for Save and Edit preset modals
  */
 
 /* Modal uses layout/Modal.module.css base styles */
@@ -9,80 +9,298 @@
   max-width: 400px;
 }
 
-/* Form styles */
+/* ============================================
+   FORM LAYOUT
+   ============================================ */
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .formGroup label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
+.formGroup label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(201, 162, 39, 0.2),
+    transparent
+  );
+}
+
 .formGroup input {
-  padding: var(--spacing-sm);
-  background-color: var(--bg-input);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.02) 0%,
+    transparent 100%
+  ), var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.formGroup input::placeholder {
+  color: var(--text-disabled);
+  font-style: italic;
 }
 
 .formGroup input:focus {
   outline: none;
   border-color: var(--color-accent);
+  background: linear-gradient(
+    to bottom,
+    rgba(201, 162, 39, 0.03) 0%,
+    transparent 100%
+  ), var(--bg-input);
+  box-shadow:
+    0 0 0 3px rgba(201, 162, 39, 0.1),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Emoji picker */
+/* ============================================
+   EMOJI PICKER - Token Collection Style
+   ============================================ */
 .emojiPicker {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .emojiOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
   padding: var(--spacing-sm);
-  background-color: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  ), var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 1.125rem;
-  transition: var(--transition);
+  font-size: 1.25rem;
+  transition:
+    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+
+  /* Subtle emboss effect */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .emojiOption:hover {
-  border-color: var(--color-accent);
-  background-color: var(--bg-hover);
+  transform: translateY(-2px) scale(1.05);
+  border-color: rgba(201, 162, 39, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 0 12px rgba(201, 162, 39, 0.1);
 }
 
 .emojiOption.selected {
   border-color: var(--color-accent);
-  background-color: var(--color-accent-light);
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.1) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  ), var(--bg-card);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+    0 0 12px rgba(201, 162, 39, 0.25),
+    0 0 24px rgba(201, 162, 39, 0.1);
 }
 
-/* Error message */
+/* Animated ring on selected */
+.emojiOption.selected::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.6) 0%,
+    rgba(201, 162, 39, 0.2) 50%,
+    rgba(201, 162, 39, 0.6) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Stagger animation on hover */
+.emojiOption {
+  position: relative;
+}
+
+/* ============================================
+   ERROR MESSAGE
+   ============================================ */
 .errorMessage {
-  padding: var(--spacing-sm);
-  background-color: var(--danger-light);
-  color: var(--danger-color);
-  border: 1px solid var(--danger-color);
-  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(
+    to right,
+    rgba(231, 76, 60, 0.1),
+    rgba(231, 76, 60, 0.05)
+  );
+  color: var(--color-error-light);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-left: 3px solid var(--color-error);
+  border-radius: var(--radius-md);
   font-size: 0.875rem;
 }
 
-/* Drag over state */
-.dragOver {
-  border: 2px dashed var(--color-accent);
-  background-color: var(--color-accent-light);
+.errorMessage::before {
+  content: '⚠';
+  font-size: 1rem;
 }
 
+/* ============================================
+   DRAG OVER STATE - Drop Zone Highlight
+   ============================================ */
+.dragOver {
+  position: relative;
+}
 
+.dragOver::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-lg);
+  background: rgba(201, 162, 39, 0.05);
+  pointer-events: none;
+  animation: dragPulse 1s ease-in-out infinite;
+}
+
+@keyframes dragPulse {
+  0%, 100% {
+    border-color: var(--color-accent);
+    background: rgba(201, 162, 39, 0.05);
+  }
+  50% {
+    border-color: var(--color-accent-light);
+    background: rgba(201, 162, 39, 0.1);
+  }
+}
+
+/* ============================================
+   DROP ZONE HINT
+   ============================================ */
+.dropHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  margin-top: var(--spacing-md);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.dropHint:hover {
+  border-color: rgba(201, 162, 39, 0.3);
+  background: rgba(201, 162, 39, 0.03);
+}
+
+.dropHintIcon {
+  font-size: 1.5rem;
+  opacity: 0.6;
+}
+
+/* ============================================
+   MODAL FOOTER ENHANCEMENTS
+   ============================================ */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   SECTION DIVIDER
+   ============================================ */
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sectionDivider::before,
+.sectionDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 162, 39, 0.15) 50%,
+    transparent
+  );
+}

@@ -7,6 +7,7 @@
 
 import type { Layer, BlendMode, Point } from '../types/index.js';
 import { studioCanvasPool } from '../canvas/canvasPool.js';
+import { logger } from '../utils/logger.js';
 
 // ============================================================================
 // Canvas Pool Utilities
@@ -239,7 +240,7 @@ export async function pasteFromClipboard(): Promise<HTMLCanvasElement | null> {
 
     return null;
   } catch (error) {
-    console.error('Failed to read from clipboard:', error);
+    logger.error('CanvasOperations', 'Failed to read from clipboard', error);
     return null;
   }
 }

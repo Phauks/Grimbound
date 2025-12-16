@@ -19,7 +19,7 @@ export const DUSK_ENTRY: NightOrderEntry = {
     type: 'special',
     name: 'Dusk',
     ability: 'Start the Night Phase.',
-    image: '/assets/scripts/dusk.png',
+    image: '/scripts/dusk.webp',
     team: 'special',
     order: -1000, // Very low to always sort first
     isOfficial: true,
@@ -35,7 +35,7 @@ export const DAWN_ENTRY: NightOrderEntry = {
     type: 'special',
     name: 'Dawn',
     ability: 'Wait for a few seconds. End the Night Phase.',
-    image: '/assets/scripts/dawn.png',
+    image: '/scripts/dawn.webp',
     team: 'special',
     order: 1000, // Very high to always sort last
     isOfficial: true,
@@ -51,8 +51,8 @@ export const MINION_INFO_ENTRY: NightOrderEntry = {
     id: SPECIAL_ENTRY_IDS.MINION_INFO,
     type: 'special',
     name: 'Minion Info',
-    ability: 'If there are 7 or more players, wake all Minions: Show the **THIS IS THE DEMON** token. Point to the Demon. Show the **THESE ARE YOUR MINIONS** token. Point to the other Minions.',
-    image: '/assets/scripts/minioninfo.png',
+    ability: 'If there are 7 or more players, wake all Minions: Show the *THIS IS THE DEMON* token. Point to the Demon. Show the *THESE ARE YOUR MINIONS* token. Point to the other Minions.',
+    image: '/scripts/minioninfo.webp',
     team: 'special',
     order: 92.5, // Near end of first night, before Demon Info
     isOfficial: true,
@@ -68,8 +68,8 @@ export const DEMON_INFO_ENTRY: NightOrderEntry = {
     id: SPECIAL_ENTRY_IDS.DEMON_INFO,
     type: 'special',
     name: 'Demon Info',
-    ability: 'If there are 7 or more players, wake the Demon: Show the **THESE ARE YOUR MINIONS** token. Point to all Minions. Show the **THESE CHARACTERS ARE NOT IN PLAY** token. Show 3 not-in-play good character tokens.',
-    image: '/assets/scripts/demoninfo.png',
+    ability: 'If there are 7 or more players, wake the Demon: Show the *THESE ARE YOUR MINIONS* token. Point to all Minions. Show the *THESE CHARACTERS ARE NOT IN PLAY* token. Show 3 not-in-play good character tokens.',
+    image: '/scripts/demoninfo.webp',
     team: 'special',
     order: 95.5, // After Minion Info, near end of first night
     isOfficial: true,

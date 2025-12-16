@@ -4,10 +4,11 @@
  * Integration between Studio and the global asset storage system
  */
 
-import { assetStorageService } from '../../services/upload/AssetStorageService.js';
-import type { AssetType, StudioAssetMetadata } from '../../services/upload/types.js';
+import { assetStorageService } from '../services/upload/AssetStorageService.js';
+import type { AssetType, StudioAssetMetadata } from '../services/upload/types.js';
 import type { Layer, ToolSettings, CanvasSize } from '../types/index.js';
 import { saveStudioPreset, loadStudioPreset, type StudioPreset } from './studioPresets.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Options for saving a Studio asset
@@ -103,7 +104,7 @@ export async function saveStudioAsset(
     linkedTo: characterId ? [characterId] : [],
   });
 
-  console.log('[StudioAssetIntegration] Saved Studio asset:', assetId, type, name);
+  logger.info('StudioAssetIntegration', `Saved Studio asset: ${assetId}, ${type}, ${name}`);
 
   // Store project data reference if it's a full project
   if (projectData) {
@@ -149,7 +150,7 @@ export async function loadStudioAsset(assetId: string): Promise<{
   // Otherwise, load as a single-layer image
   const asset = await assetStorageService.getById(assetId);
   if (!asset) {
-    console.warn('[StudioAssetIntegration] Asset not found:', assetId);
+    logger.warn('StudioAssetIntegration', `Asset not found: ${assetId}`);
     return null;
   }
 
@@ -164,6 +165,7 @@ export async function loadStudioAsset(assetId: string): Promise<{
     blendMode: 'normal',
     zIndex: 0,
     canvas,
+    version: 0,
     position: { x: 0, y: 0 },
     rotation: 0,
     scale: { x: 1, y: 1 },
@@ -215,7 +217,7 @@ export async function deleteStudioAsset(assetId: string): Promise<void> {
 
   // Delete from asset storage
   await assetStorageService.delete(assetId);
-  console.log('[StudioAssetIntegration] Deleted Studio asset:', assetId);
+  logger.info('StudioAssetIntegration', `Deleted Studio asset: ${assetId}`);
 }
 
 // =============================================================================

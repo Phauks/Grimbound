@@ -6,6 +6,7 @@
  */
 
 import type { Layer, ToolSettings } from '../types/index';
+import { logger } from '../utils/logger.js';
 
 // ============================================================================
 // Types
@@ -128,7 +129,7 @@ export class HistoryManager {
     }
 
     if (this.config.debug) {
-      console.log(
+      logger.debug('HistoryManager',
         `[HistoryManager] Pushed state: ${action} (${this.currentIndex + 1}/${this.history.length})`
       );
     }
@@ -142,7 +143,7 @@ export class HistoryManager {
   undo(): HistoryEntry | null {
     if (!this.canUndo()) {
       if (this.config.debug) {
-        console.log('[HistoryManager] Cannot undo - at oldest state');
+        logger.debug('HistoryManager','[HistoryManager] Cannot undo - at oldest state');
       }
       return null;
     }
@@ -151,7 +152,7 @@ export class HistoryManager {
     const entry = this.history[this.currentIndex];
 
     if (this.config.debug) {
-      console.log(
+      logger.debug('HistoryManager',
         `[HistoryManager] Undo: ${entry.action} (${this.currentIndex + 1}/${this.history.length})`
       );
     }
@@ -167,7 +168,7 @@ export class HistoryManager {
   redo(): HistoryEntry | null {
     if (!this.canRedo()) {
       if (this.config.debug) {
-        console.log('[HistoryManager] Cannot redo - at newest state');
+        logger.debug('HistoryManager','[HistoryManager] Cannot redo - at newest state');
       }
       return null;
     }
@@ -176,7 +177,7 @@ export class HistoryManager {
     const entry = this.history[this.currentIndex];
 
     if (this.config.debug) {
-      console.log(
+      logger.debug('HistoryManager',
         `[HistoryManager] Redo: ${entry.action} (${this.currentIndex + 1}/${this.history.length})`
       );
     }
@@ -232,7 +233,7 @@ export class HistoryManager {
     this.currentIndex = -1;
 
     if (this.config.debug) {
-      console.log('[HistoryManager] History cleared');
+      logger.debug('HistoryManager','[HistoryManager] History cleared');
     }
   }
 
@@ -316,6 +317,7 @@ export class HistoryManager {
         blendMode: s.blendMode,
         zIndex: s.zIndex,
         canvas,
+        version: 0,
         position: { ...s.position },
         rotation: s.rotation,
         scale: { ...s.scale },

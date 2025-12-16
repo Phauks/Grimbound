@@ -29,6 +29,7 @@ import {
   HistoryManager,
   createDebouncedPush,
 } from '../ts/studio/index.js';
+import { logger } from '../ts/utils/logger.js';
 
 // ============================================================================
 // Context Type Definition
@@ -169,6 +170,8 @@ const DEFAULT_GRID: GridConfig = {
   spacing: 20,
   color: '#cccccc',
   snapEnabled: false,
+  lineWidth: 1,
+  opacity: 0.3,
 };
 
 const MAX_HISTORY_SIZE = 50;
@@ -464,7 +467,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
     ).then(() => {
       setHistoryVersion(v => v + 1);
     }).catch(err => {
-      console.error('[StudioContext] Failed to push history:', err);
+      logger.error('StudioContext', 'Failed to push history:', err);
     });
   }, [layers, canvasSize, backgroundColor, toolSettings]);
 
@@ -488,7 +491,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       }
       setHistoryVersion(v => v + 1); // Trigger re-render
     } catch (err) {
-      console.error('[StudioContext] Failed to undo:', err);
+      logger.error('StudioContext', 'Failed to undo:', err);
     }
   }, []);
 
@@ -512,7 +515,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       }
       setHistoryVersion(v => v + 1); // Trigger re-render
     } catch (err) {
-      console.error('[StudioContext] Failed to redo:', err);
+      logger.error('StudioContext', 'Failed to redo:', err);
     }
   }, []);
 
@@ -557,14 +560,14 @@ export function StudioProvider({ children }: StudioProviderProps) {
   const saveAsset = useCallback(async (options: Omit<StudioAssetSaveOptions, 'type'>): Promise<string> => {
     // TODO: Implement actual asset saving to IndexedDB
     // This is a placeholder that will be implemented in Phase 7
-    console.log('saveAsset called with options:', options);
+    logger.debug('StudioContext', 'saveAsset called with options:', options);
     return Promise.resolve('placeholder-asset-id');
   }, []);
 
   const loadFromAsset = useCallback(async (assetId: string): Promise<void> => {
     // TODO: Implement actual asset loading from IndexedDB
     // This is a placeholder that will be implemented in Phase 7
-    console.log('loadFromAsset called with assetId:', assetId);
+    logger.debug('StudioContext', 'loadFromAsset called with assetId:', assetId);
     setCurrentAssetId(assetId);
     return Promise.resolve();
   }, []);
@@ -608,7 +611,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       // Set edit mode
       setEditModeState(mode);
     } catch (error) {
-      console.error('Failed to load image:', error);
+      logger.error('StudioContext', 'Failed to load image:', error);
       throw error;
     } finally {
       setIsProcessing(false);

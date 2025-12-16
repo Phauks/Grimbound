@@ -57,6 +57,20 @@ export const BASELINE_ENTRY_SPACING = 0.02
 export const BASELINE_HEADER_FONT = 1.5
 
 // ============================================================================
+// Constants - CSS/PDF Sync (WYSIWYG)
+// These values match the CSS in NightOrderEntry.module.css
+// ============================================================================
+
+/** Gap between icon and text content (CSS: gap: 0.4rem = 6.4px = 0.067in) */
+export const BASELINE_ICON_TEXT_GAP = 0.067  // inches
+
+/** Vertical padding per entry (CSS: padding: 0.15rem = 2.4px = 0.025in) */
+export const BASELINE_ENTRY_PADDING = 0.025  // inches
+
+/** Line height ratio for ability text (CSS: line-height: 1.2) */
+export const ABILITY_LINE_HEIGHT_RATIO = 1.2
+
+// ============================================================================
 // Constants - Scale Factor Limits
 // ============================================================================
 

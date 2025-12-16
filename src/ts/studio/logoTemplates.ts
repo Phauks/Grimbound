@@ -372,6 +372,7 @@ export async function logoLayerConfigToLayer(
     blendMode: 'normal',
     zIndex,
     canvas,
+    version: 0,
     position: { ...config.position },
     rotation: 0,
     scale: { x: 1, y: 1 },

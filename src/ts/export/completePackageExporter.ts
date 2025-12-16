@@ -3,6 +3,7 @@
  * Complete Package Exporter - Creates ZIP containing tokens, PDF, JSON, and style
  */
 
+import JSZip from 'jszip';
 import { PDFGenerator } from './pdfGenerator.js';
 import { getTokenFilename, getTokenFolderPath, processTokenToBlob } from './zipExporter.js';
 import { downloadFile } from '../utils/index.js';
@@ -12,15 +13,7 @@ import type {
   ScriptMeta,
   ZipExportOptions,
   ProgressCallback,
-  JSZipInstance,
 } from '../types/index.js';
-
-// Extend Window interface for JSZip
-declare global {
-  interface Window {
-    JSZip: new () => JSZipInstance;
-  }
-}
 
 /**
  * Progress callback with step information
@@ -69,12 +62,7 @@ export async function createCompletePackage(
     signal,
   } = options;
 
-  const JSZipConstructor = window.JSZip;
-  if (!JSZipConstructor) {
-    throw new Error('JSZip library not loaded');
-  }
-
-  const zip = new JSZipConstructor();
+  const zip = new JSZip();
 
   // Step 1: Add Script JSON
   if (progressCallback) {

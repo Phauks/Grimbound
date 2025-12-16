@@ -48,9 +48,9 @@ export {
     drawLeaves,
     type LeafDrawingOptions,
     // QR generation
-    generateQRCode,
-    type QRCodeOptions,
-    type QRCodeConstructor,
+    generateStyledQRCode,
+    QR_DEFAULTS,
+    type StyledQRCodeOptions,
 } from './canvas/index.js';
 
 // ============================================================================

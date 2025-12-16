@@ -3,52 +3,49 @@
  * Reusable JSON editor with syntax highlighting
  */
 
-/* Container for the entire editor */
+/* Container for the entire editor - CSS Grid for overlay, parent scrolls */
 .editorContainer {
-  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
   width: 100%;
   border-radius: var(--border-radius);
-  overflow: hidden;
+  overflow: auto;
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
 }
 
-/* Syntax highlighting overlay */
+/* Syntax highlighting overlay - same grid cell as textarea */
 .highlightOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  grid-column: 1;
+  grid-row: 1;
   padding: var(--spacing-md);
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow: auto;
+  overflow: visible;
   pointer-events: none;
   color: var(--text-primary);
-  background-color: var(--bg-input);
 }
 
-/* Editable textarea */
+/* Editable textarea - same grid cell, auto-sizes to content */
 .textarea {
-  position: relative;
+  grid-column: 1;
+  grid-row: 1;
   width: 100%;
-  height: 100%;
   min-height: inherit;
   padding: var(--spacing-md);
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   border: none;
-  resize: vertical;
+  resize: none;
   background-color: transparent;
   color: transparent;
   caret-color: var(--text-primary);
-  overflow: auto;
-  z-index: 1;
+  overflow: visible;
 }
 
 .textarea::placeholder {

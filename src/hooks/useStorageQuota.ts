@@ -6,7 +6,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { assetStorageService } from '../services/upload/AssetStorageService.js'
+import { assetStorageService } from '../ts/services/upload/AssetStorageService.js'
+import { logger } from '../ts/utils/logger.js'
 
 // ============================================================================
 // Types
@@ -101,7 +102,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
     try {
       // Check if StorageManager API is available
       if (!navigator.storage || !navigator.storage.estimate) {
-        console.warn('[useStorageQuota] StorageManager API not available')
+        logger.warn('useStorageQuota', 'StorageManager API not available')
         setIsChecking(false)
         return null
       }
@@ -129,7 +130,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
       setIsChecking(false)
       return quotaInfo
     } catch (error) {
-      console.error('[useStorageQuota] Failed to check quota:', error)
+      logger.error('useStorageQuota', 'Failed to check quota:', error)
       setIsChecking(false)
       return null
     }
@@ -149,7 +150,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
       )
 
       if (orphanedAssets.length === 0) {
-        console.log('[useStorageQuota] No orphaned assets found')
+        logger.debug('useStorageQuota', 'No orphaned assets found')
         return 0
       }
 
@@ -160,18 +161,18 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
           await assetStorageService.delete(asset.id)
           deletedCount++
         } catch (error) {
-          console.error(`[useStorageQuota] Failed to delete asset ${asset.id}:`, error)
+          logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error)
         }
       }
 
-      console.log(`[useStorageQuota] Cleaned up ${deletedCount} orphaned assets`)
+      logger.info('useStorageQuota', `Cleaned up ${deletedCount} orphaned assets`)
 
       // Re-check quota after cleanup
       await checkQuota()
 
       return deletedCount
     } catch (error) {
-      console.error('[useStorageQuota] Cleanup failed:', error)
+      logger.error('useStorageQuota', 'Cleanup failed:', error)
       return 0
     }
   }, [checkQuota])
@@ -191,7 +192,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
       })
 
       if (oldAssets.length === 0) {
-        console.log('[useStorageQuota] No old assets found')
+        logger.debug('useStorageQuota', 'No old assets found')
         return 0
       }
 
@@ -206,18 +207,18 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
           await assetStorageService.delete(asset.id)
           deletedCount++
         } catch (error) {
-          console.error(`[useStorageQuota] Failed to delete asset ${asset.id}:`, error)
+          logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error)
         }
       }
 
-      console.log(`[useStorageQuota] Cleaned up ${deletedCount} old assets`)
+      logger.info('useStorageQuota', `Cleaned up ${deletedCount} old assets`)
 
       // Re-check quota after cleanup
       await checkQuota()
 
       return deletedCount
     } catch (error) {
-      console.error('[useStorageQuota] Cleanup failed:', error)
+      logger.error('useStorageQuota', 'Cleanup failed:', error)
       return 0
     }
   }, [checkQuota])

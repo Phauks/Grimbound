@@ -9,10 +9,11 @@
  */
 
 import { cacheManager } from '../CacheManager.js'
-import { assetStorageService } from '../../../services/upload/AssetStorageService.js'
+import { assetStorageService } from '../../services/upload/AssetStorageService.js'
 import type { PreRenderContext } from '../core/index.js'
 import type { Token } from '../../types/index.js'
 import type { Character } from '../../types/index.js'
+import { logger } from '../../utils/logger.js'
 
 // ============================================================================
 // Types
@@ -133,7 +134,7 @@ export class ProjectOpenWarmingPolicy implements WarmingPolicy {
     }
 
     // Step 1: Warm character images
-    console.debug('[WarmingPolicy:ProjectOpen] Warming character images...', {
+    logger.debug('WarmingPolicy', '[ProjectOpen] Warming character images...', {
       count: charactersToWarm.length
     })
 
@@ -156,12 +157,12 @@ export class ProjectOpenWarmingPolicy implements WarmingPolicy {
 
     // Step 2: Load project-specific custom assets (if project ID provided)
     if (projectId) {
-      console.debug('[WarmingPolicy:ProjectOpen] Loading project assets...', { projectId })
+      logger.debug('WarmingPolicy', '[ProjectOpen] Loading project assets...', { projectId })
 
       try {
         const assets = await assetStorageService.list({
           projectId,
-          types: ['character-icon', 'token-background', 'logo']
+          type: ['character-icon', 'token-background', 'logo']
         })
 
         if (assets.length > 0) {
@@ -180,14 +181,14 @@ export class ProjectOpenWarmingPolicy implements WarmingPolicy {
 
         updateProgress(`Loaded ${assets.length} project assets`)
       } catch (error) {
-        console.warn('[WarmingPolicy:ProjectOpen] Failed to load project assets:', error)
+        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to load project assets:', error)
         updateProgress('Failed to load project assets')
       }
     }
 
     // Step 3: Pre-render first N tokens (most likely to be viewed)
     if (tokensToPreRender.length > 0) {
-      console.debug('[WarmingPolicy:ProjectOpen] Pre-rendering tokens...', {
+      logger.debug('WarmingPolicy', '[ProjectOpen] Pre-rendering tokens...', {
         count: tokensToPreRender.length
       })
 
@@ -202,12 +203,12 @@ export class ProjectOpenWarmingPolicy implements WarmingPolicy {
         const result = await cacheManager.preRender(preRenderContext)
         updateProgress(`Pre-rendered ${result.rendered} tokens`)
       } catch (error) {
-        console.warn('[WarmingPolicy:ProjectOpen] Failed to pre-render tokens:', error)
+        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to pre-render tokens:', error)
         updateProgress('Failed to pre-render tokens')
       }
     }
 
-    console.debug('[WarmingPolicy:ProjectOpen] Warming complete')
+    logger.debug('WarmingPolicy', '[ProjectOpen] Warming complete')
   }
 }
 
@@ -280,7 +281,7 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
       'icons/imp.webp'
     ]
 
-    console.debug('[WarmingPolicy:AppStart] Warming common character images...', {
+    logger.debug('WarmingPolicy', '[AppStart] Warming common character images...', {
       count: commonCharacters.length
     })
 
@@ -291,14 +292,14 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
         }
       })
     } catch (error) {
-      console.warn('[WarmingPolicy:AppStart] Failed to warm character images:', error)
+      logger.warn('WarmingPolicy', '[AppStart] Failed to warm character images:', error)
       updateProgress('Failed to load character images')
     }
 
     // Step 2: Pre-resolve recently used assets from IndexedDB
     const maxAssets = this.options.maxAssetsToResolve ?? 20
 
-    console.debug('[WarmingPolicy:AppStart] Pre-resolving cached assets...', {
+    logger.debug('WarmingPolicy', '[AppStart] Pre-resolving cached assets...', {
       maxAssets
     })
 
@@ -306,7 +307,7 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
       const recentAssets = await assetStorageService.list({
         limit: maxAssets,
         sortBy: 'lastUsedAt',
-        sortOrder: 'desc'
+        sortDirection: 'desc'
       })
 
       if (recentAssets.length > 0) {
@@ -327,11 +328,11 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
         updateProgress('No cached assets to resolve')
       }
     } catch (error) {
-      console.warn('[WarmingPolicy:AppStart] Failed to pre-resolve assets:', error)
+      logger.warn('WarmingPolicy', '[AppStart] Failed to pre-resolve assets:', error)
       updateProgress('Failed to resolve cached assets')
     }
 
-    console.debug('[WarmingPolicy:AppStart] Warming complete')
+    logger.debug('WarmingPolicy', '[AppStart] Warming complete')
   }
 }
 
@@ -395,11 +396,11 @@ export class WarmingPolicyManager {
     const applicablePolicies = this.policies.filter(p => p.shouldWarm(context))
 
     if (applicablePolicies.length === 0) {
-      console.debug('[WarmingPolicyManager] No applicable policies for context', context)
+      logger.debug('WarmingPolicyManager', 'No applicable policies for context', context)
       return results
     }
 
-    console.debug('[WarmingPolicyManager] Executing warming policies', {
+    logger.debug('WarmingPolicyManager', 'Executing warming policies', {
       policies: applicablePolicies.map(p => p.name)
     })
 
@@ -421,7 +422,7 @@ export class WarmingPolicyManager {
           success: true
         })
       } catch (error) {
-        console.error(`[WarmingPolicyManager] Policy '${policy.name}' failed:`, error)
+        logger.error('WarmingPolicyManager', `Policy '${policy.name}' failed:`, error)
         results.push({
           policy: policy.name,
           duration: Date.now() - startTime,
@@ -432,7 +433,7 @@ export class WarmingPolicyManager {
       }
     }
 
-    console.debug('[WarmingPolicyManager] Warming complete', { results })
+    logger.debug('WarmingPolicyManager', 'Warming complete', { results })
     return results
   }
 

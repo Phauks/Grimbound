@@ -18,7 +18,7 @@ import {
     type Point,
     type CanvasContext
 } from '../canvas/index.js';
-import { generateQRCode } from '../canvas/index.js';
+import { generateStyledQRCode } from '../canvas/qrGeneration.js';
 import { getCharacterImageUrl, countReminders } from '../data/index.js';
 import type { Character } from '../types/index.js';
 import {
@@ -34,6 +34,54 @@ import { defaultImageCache } from './ImageCacheAdapter.js';
 
 // Re-export for backward compatibility
 export { generateAllTokens } from './batchGenerator.js';
+
+/**
+ * Lighten a hex color by a percentage
+ * @param hex - Hex color string (e.g., '#8B0000')
+ * @param percent - Lightness percentage (0-100, higher = lighter)
+ * @returns Lightened hex color
+ */
+function lightenColor(hex: string, percent: number): string {
+    // Parse hex color
+    const color = hex.replace('#', '');
+    const r = parseInt(color.slice(0, 2), 16);
+    const g = parseInt(color.slice(2, 4), 16);
+    const b = parseInt(color.slice(4, 6), 16);
+
+    // Calculate lightened values (blend toward white)
+    const factor = percent / 100;
+    const newR = Math.round(r + (255 - r) * factor);
+    const newG = Math.round(g + (255 - g) * factor);
+    const newB = Math.round(b + (255 - b) * factor);
+
+    // Convert back to hex
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Draw a rounded rectangle path
+ */
+function roundedRectPath(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+): void {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
 
 /**
  * Refactored TokenGenerator using composition and dependency injection
@@ -167,10 +215,7 @@ export class TokenGenerator {
         }
 
         // Determine ability text
-        const bootleggerText = this.options.bootleggerRules?.trim();
-        const abilityTextToDisplay = bootleggerText
-            ? bootleggerText
-            : (this.options.displayAbilityText ? character.ability : undefined);
+        const abilityTextToDisplay = this.options.displayAbilityText ? character.ability : undefined;
         const hasAbilityText = Boolean(abilityTextToDisplay?.trim());
 
         // Calculate text layout if needed
@@ -198,7 +243,7 @@ export class TokenGenerator {
         ctx.restore();
 
         // Draw leaves
-        if (this.options.maximumLeaves > 0) {
+        if (this.options.leafEnabled !== false && this.options.maximumLeaves > 0) {
             await this.imageRenderer.drawLeaves(ctx, diameter);
         }
 
@@ -329,15 +374,63 @@ export class TokenGenerator {
         });
     }
 
-    async generateAlmanacQRToken(almanacUrl: string, scriptName: string): Promise<HTMLCanvasElement> {
+    async generateAlmanacQRToken(
+        almanacUrl: string,
+        scriptName: string,
+        scriptLogoUrl?: string
+    ): Promise<HTMLCanvasElement> {
         logger.debug('TokenGenerator', 'Generating almanac QR token', scriptName);
 
         const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
         const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
-        this.applyCircularClip(ctx, center, radius);
+        // Get user's QR options with defaults
+        const qrOpts = this.options.qrCodeOptions;
 
-        // Draw background
+        // Token options
+        const showAlmanacLabel = qrOpts?.showAlmanacLabel ?? true;
+        const showLogo = qrOpts?.showLogo ?? true;
+
+        // Dots options
+        const dotType = qrOpts?.dotType ?? 'extra-rounded';
+        const dotsUseGradient = qrOpts?.dotsUseGradient ?? true;
+        const dotsGradientType = qrOpts?.dotsGradientType ?? 'linear';
+        const dotsGradientRotation = qrOpts?.dotsGradientRotation ?? 45;
+        const dotsColorStart = qrOpts?.dotsColorStart ?? QR_COLORS.GRADIENT_START;
+        const dotsColorEnd = qrOpts?.dotsColorEnd ?? QR_COLORS.GRADIENT_END;
+
+        // Corner square options
+        const cornerSquareType = qrOpts?.cornerSquareType ?? 'extra-rounded';
+        const cornerSquareUseGradient = qrOpts?.cornerSquareUseGradient ?? false;
+        const cornerSquareGradientType = qrOpts?.cornerSquareGradientType ?? 'linear';
+        const cornerSquareColorStart = qrOpts?.cornerSquareColorStart ?? QR_COLORS.GRADIENT_START;
+        const cornerSquareColorEnd = qrOpts?.cornerSquareColorEnd ?? QR_COLORS.GRADIENT_START;
+
+        // Corner dot options
+        const cornerDotType = qrOpts?.cornerDotType ?? 'dot';
+        const cornerDotUseGradient = qrOpts?.cornerDotUseGradient ?? false;
+        const cornerDotGradientType = qrOpts?.cornerDotGradientType ?? 'linear';
+        const cornerDotColorStart = qrOpts?.cornerDotColorStart ?? QR_COLORS.GRADIENT_END;
+        const cornerDotColorEnd = qrOpts?.cornerDotColorEnd ?? QR_COLORS.GRADIENT_END;
+
+        // Background options
+        const backgroundUseGradient = qrOpts?.backgroundUseGradient ?? false;
+        const backgroundGradientType = qrOpts?.backgroundGradientType ?? 'linear';
+        const backgroundColorStart = qrOpts?.backgroundColorStart ?? '#FFFFFF';
+        const backgroundColorEnd = qrOpts?.backgroundColorEnd ?? '#FFFFFF';
+        const backgroundOpacity = qrOpts?.backgroundOpacity ?? 100;
+        const backgroundRoundedCorners = qrOpts?.backgroundRoundedCorners ?? false;
+
+        // Image options
+        const imageHideBackgroundDots = qrOpts?.imageHideBackgroundDots ?? true;
+        const imageSize = qrOpts?.imageSize ?? 30;
+        const imageMargin = qrOpts?.imageMargin ?? 4;
+
+        // QR options
+        const errorCorrectionLevel = qrOpts?.errorCorrectionLevel ?? 'H';
+
+        // Draw meta background (same as other meta tokens)
+        this.applyCircularClip(ctx, center, radius);
         if (this.options.metaBackgroundType === 'color') {
             if (!this.options.transparentBackground) {
                 ctx.fillStyle = this.options.metaBackgroundColor || '#FFFFFF';
@@ -345,28 +438,61 @@ export class TokenGenerator {
             }
         } else {
             const bgName = this.options.metaBackground || this.options.characterBackground;
-            await this.imageRenderer.drawBackground(ctx, bgName, diameter, QR_COLORS.LIGHT);
+            await this.imageRenderer.drawBackground(ctx, bgName, diameter, DEFAULT_COLORS.FALLBACK_BACKGROUND);
         }
-
-        // Generate and draw QR code
-        const qrSize = Math.floor(diameter * QR_TOKEN_LAYOUT.QR_CODE_SIZE);
-        const qrCanvas = await generateQRCode({ text: almanacUrl, size: qrSize });
-        const qrOffset = (diameter - qrSize) / 2;
-        ctx.drawImage(qrCanvas, qrOffset, qrOffset - diameter * QR_TOKEN_LAYOUT.QR_VERTICAL_OFFSET, qrSize, qrSize);
-
         ctx.restore();
 
-        // Draw white box behind script name
-        const boxWidth = diameter * QR_TOKEN_LAYOUT.TEXT_BOX_WIDTH;
-        const boxHeight = diameter * QR_TOKEN_LAYOUT.TEXT_BOX_HEIGHT;
-        const boxX = (diameter - boxWidth) / 2;
-        const boxY = (diameter - boxHeight) / 2 - diameter * QR_TOKEN_LAYOUT.QR_VERTICAL_OFFSET;
-        ctx.fillStyle = QR_COLORS.LIGHT;
-        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+        // Calculate QR size and position
+        const qrSize = Math.floor(diameter * QR_TOKEN_LAYOUT.QR_CODE_SIZE);
+        const qrOffset = (diameter - qrSize) / 2;
 
-        // Draw script name and almanac label
-        this.textRenderer.drawQROverlayText(ctx, scriptName, diameter);
-        this.textRenderer.drawAlmanacLabel(ctx, center, radius, diameter);
+        // Generate styled QR code with all options
+        const qrCanvas = await generateStyledQRCode({
+            text: almanacUrl,
+            size: qrSize,
+            logoUrl: scriptLogoUrl,
+            showLogo: showLogo && !!scriptLogoUrl,
+            // Dots
+            dotType,
+            dotsUseGradient,
+            dotsGradientType,
+            dotsGradientRotation,
+            dotsColorStart,
+            dotsColorEnd,
+            // Corner squares
+            cornerSquareType,
+            cornerSquareUseGradient,
+            cornerSquareGradientType,
+            cornerSquareColorStart,
+            cornerSquareColorEnd,
+            // Corner dots
+            cornerDotType,
+            cornerDotUseGradient,
+            cornerDotGradientType,
+            cornerDotColorStart,
+            cornerDotColorEnd,
+            // Background
+            backgroundUseGradient,
+            backgroundGradientType,
+            backgroundColorStart,
+            backgroundColorEnd,
+            backgroundOpacity,
+            backgroundRoundedCorners,
+            // Image
+            imageHideBackgroundDots,
+            imageSize,
+            imageMargin,
+            // QR
+            errorCorrectionLevel
+        });
+
+        // Draw QR code centered on token
+        ctx.drawImage(qrCanvas, qrOffset, qrOffset, qrSize, qrSize);
+
+        // Optionally draw "ALMANAC" curved at bottom
+        if (showAlmanacLabel) {
+            this.textRenderer.drawAlmanacLabel(ctx, center, radius, diameter);
+        }
 
         logger.info('TokenGenerator', 'Generated almanac QR token', scriptName);
         return canvas;

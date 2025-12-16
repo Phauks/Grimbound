@@ -12,9 +12,10 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useDataSync } from '../../contexts/DataSyncContext'
 import { getThemeIds, UI_THEMES } from '../../ts/themes'
 import { storageManager } from '../../ts/sync/index.js'
-import { Modal } from '../Shared/Modal/Modal'
-import { Button } from '../Shared/Button'
-import type { DPIOption } from '../../ts/types/index'
+import { logger } from '../../ts/utils/logger.js'
+import { Modal } from '../Shared/ModalBase/Modal'
+import { Button } from '../Shared/UI/Button'
+import type { DPIOption, MeasurementUnit } from '../../ts/types/index'
 import styles from './SettingsModal.module.css'
 
 interface SettingsModalProps {
@@ -47,7 +48,7 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
       setAutoSync(enabled)
       addToast(`Auto-sync ${enabled ? 'enabled' : 'disabled'}`, 'success')
     } catch (error) {
-      console.error('Failed to update auto-sync setting:', error)
+      logger.error('SettingsModal', 'Failed to update auto-sync setting', error)
       addToast('Failed to update setting', 'error')
     }
   }
@@ -89,6 +90,26 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
               </select>
               <span className={styles.helpText}>
                 Higher DPI creates larger, more detailed token images
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.optionGroup}>
+            <label className={styles.label} htmlFor="measurementUnit">
+              Measurement Units
+            </label>
+            <div className={styles.selectWrapper}>
+              <select
+                id="measurementUnit"
+                className={styles.select}
+                value={generationOptions.measurementUnit || 'inches'}
+                onChange={(e) => updateGenerationOptions({ measurementUnit: e.target.value as MeasurementUnit })}
+              >
+                <option value="inches">Inches (in)</option>
+                <option value="millimeters">Millimeters (mm)</option>
+              </select>
+              <span className={styles.helpText}>
+                Choose your preferred unit for offset and dimension measurements
               </span>
             </div>
           </div>

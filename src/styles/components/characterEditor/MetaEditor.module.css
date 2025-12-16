@@ -1,0 +1,397 @@
+/* MetaEditor.module.css - Editor panel for script meta data */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Tabs container */
+.tabsContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Tabs navigation */
+.tabsNav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.tabButton {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-hover);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tabButton:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.tabButton.active {
+  color: var(--text-on-accent);
+  background: var(--color-accent);
+}
+
+.tabsSpacer {
+  flex: 1;
+}
+
+/* Download button group */
+.downloadGroup {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.tabsDownloadBtn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.tabsDownloadBtn:hover {
+  background: var(--color-primary-light);
+}
+
+.tabsDownloadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.downloadCaretBtn {
+  padding: var(--spacing-sm) var(--spacing-xs);
+  background: var(--color-primary);
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  font-size: 0.625rem;
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.downloadCaretBtn:hover {
+  background: var(--color-primary-light);
+}
+
+.downloadCaretBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.downloadMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.downloadMenu button {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.downloadMenu button:hover {
+  background: var(--bg-hover);
+}
+
+/* Tab content */
+.tabContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-md);
+  padding-top: 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.tabContent::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Form fields */
+.formGroup {
+  margin-bottom: var(--spacing-md);
+}
+
+.formGroup:last-child {
+  margin-bottom: 0;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.formGroup input:disabled {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.linkedField {
+  background: var(--bg-hover) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed !important;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: var(--spacing-xs);
+  margin-bottom: 0;
+}
+
+/* Button styles */
+.btnPrimary {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btnPrimary:hover {
+  background: var(--color-primary-light);
+}
+
+.btnSecondary {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btnSecondary:hover {
+  background: var(--bg-input);
+  border-color: var(--color-primary);
+}
+
+.btnSm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.8125rem;
+}
+
+/* Decoratives tab */
+.decorativesNote {
+  padding: var(--spacing-md);
+  background: var(--bg-hover);
+  border-radius: var(--border-radius);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.decorativesNote p {
+  margin: 0;
+}
+
+/* JSON Tab */
+.jsonTabContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.jsonHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.jsonDescription {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.jsonButtons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.jsonEditorWrapper {
+  flex: 1;
+  min-height: 300px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.jsonError {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+/* Bootlegger list */
+.bootleggerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.bootleggerRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-fast);
+}
+
+.bootleggerRow:hover {
+  border-color: var(--color-primary-subtle);
+}
+
+.bootleggerRow.dragging {
+  opacity: 0.5;
+}
+
+.bootleggerRow.dragOver {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.bootleggerTextarea {
+  flex: 1;
+  min-height: 40px;
+  resize: none;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  padding: var(--spacing-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.bootleggerTextarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.dragHandle {
+  cursor: grab;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: 0.875rem;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  align-self: center;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.btnIcon {
+  padding: var(--spacing-xs);
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.btnDanger {
+  color: var(--text-muted);
+}
+
+.btnDanger:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}

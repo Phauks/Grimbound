@@ -20,11 +20,16 @@ export interface IconLayoutResult {
 
 /**
  * Context for layout calculations
+ * Note: iconOffsetX and iconOffsetY are in INCHES (canonical unit)
+ * They are converted to pixels using the dpi parameter
  */
 export interface LayoutContext {
     diameter: number;
+    dpi: number;
     iconScale: number;
+    /** Horizontal offset in inches */
     iconOffsetX: number;
+    /** Vertical offset in inches */
     iconOffsetY: number;
 }
 
@@ -58,7 +63,11 @@ export class CharacterWithAbilityTextLayout implements IconLayoutStrategy {
     ) {}
 
     calculate(context: LayoutContext): IconLayoutResult {
-        const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
+        const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+
+        // Convert inch offsets to pixels
+        const offsetXPixels = iconOffsetX * dpi;
+        const offsetYPixels = iconOffsetY * dpi;
 
         // Character name is at the bottom (curved text)
         const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
@@ -86,10 +95,10 @@ export class CharacterWithAbilityTextLayout implements IconLayoutStrategy {
         const baseOffsetX = (diameter - size) / 2;
         const baseOffsetY = (diameter - size) / 2 - diameter * verticalOffset;
 
-        // Apply user-defined offsets
+        // Apply user-defined offsets (converted from inches to pixels)
         // Note: offsetY is negated so positive values move the icon up
-        const x = baseOffsetX + iconOffsetX;
-        const y = baseOffsetY - iconOffsetY;
+        const x = baseOffsetX + offsetXPixels;
+        const y = baseOffsetY - offsetYPixels;
 
         return {
             size,
@@ -103,7 +112,11 @@ export class CharacterWithAbilityTextLayout implements IconLayoutStrategy {
  */
 export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
     calculate(context: LayoutContext): IconLayoutResult {
-        const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
+        const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+
+        // Convert inch offsets to pixels
+        const offsetXPixels = iconOffsetX * dpi;
+        const offsetYPixels = iconOffsetY * dpi;
 
         // Character name is at the bottom (curved text)
         const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
@@ -131,9 +144,9 @@ export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
         const baseOffsetX = (diameter - size) / 2;
         const baseOffsetY = (diameter - size) / 2 - diameter * verticalOffset;
 
-        // Apply user-defined offsets
-        const x = baseOffsetX + iconOffsetX;
-        const y = baseOffsetY - iconOffsetY;
+        // Apply user-defined offsets (converted from inches to pixels)
+        const x = baseOffsetX + offsetXPixels;
+        const y = baseOffsetY - offsetYPixels;
 
         return {
             size,
@@ -147,7 +160,11 @@ export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
  */
 export class ReminderTokenLayout implements IconLayoutStrategy {
     calculate(context: LayoutContext): IconLayoutResult {
-        const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
+        const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+
+        // Convert inch offsets to pixels
+        const offsetXPixels = iconOffsetX * dpi;
+        const offsetYPixels = iconOffsetY * dpi;
 
         // Use reminder layout constants
         const imageSizeRatio = REMINDER_LAYOUT.IMAGE_SIZE_RATIO;
@@ -160,9 +177,9 @@ export class ReminderTokenLayout implements IconLayoutStrategy {
         const baseOffsetX = (diameter - size) / 2;
         const baseOffsetY = (diameter - size) / 2 - diameter * verticalOffset;
 
-        // Apply user-defined offsets
-        const x = baseOffsetX + iconOffsetX;
-        const y = baseOffsetY - iconOffsetY;
+        // Apply user-defined offsets (converted from inches to pixels)
+        const x = baseOffsetX + offsetXPixels;
+        const y = baseOffsetY - offsetYPixels;
 
         return {
             size,
@@ -176,7 +193,11 @@ export class ReminderTokenLayout implements IconLayoutStrategy {
  */
 export class MetaTokenLayout implements IconLayoutStrategy {
     calculate(context: LayoutContext): IconLayoutResult {
-        const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
+        const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+
+        // Convert inch offsets to pixels
+        const offsetXPixels = iconOffsetX * dpi;
+        const offsetYPixels = iconOffsetY * dpi;
 
         // Simple centered layout
         const imageSizeRatio = 1.0;
@@ -186,9 +207,9 @@ export class MetaTokenLayout implements IconLayoutStrategy {
         const baseOffsetX = (diameter - size) / 2;
         const baseOffsetY = (diameter - size) / 2;
 
-        // Apply user-defined offsets
-        const x = baseOffsetX + iconOffsetX;
-        const y = baseOffsetY - iconOffsetY;
+        // Apply user-defined offsets (converted from inches to pixels)
+        const x = baseOffsetX + offsetXPixels;
+        const y = baseOffsetY - offsetYPixels;
 
         return {
             size,

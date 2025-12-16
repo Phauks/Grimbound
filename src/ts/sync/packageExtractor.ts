@@ -16,6 +16,7 @@ import type {
     ExtractedPackage,
 } from '../types/index.js';
 import { PackageValidationError, DataSyncError } from '../errors.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Package Extractor for processing GitHub release ZIP files
@@ -251,7 +252,7 @@ export class PackageExtractor {
 
                 icons.set(characterId, blob);
             } catch (error) {
-                console.warn(`[PackageExtractor] Failed to extract icon: ${name}`, error);
+                logger.warn('PackageExtractor', `Failed to extract icon: ${name}`, error);
                 // Continue with other icons even if one fails
             }
         }
@@ -282,15 +283,16 @@ export class PackageExtractor {
             const expectedHash = extractedPackage.manifest.contentHash;
 
             if (hashHex !== expectedHash) {
-                console.warn(
-                    `[PackageExtractor] Content hash mismatch: expected ${expectedHash}, got ${hashHex}`
+                logger.warn(
+                    'PackageExtractor',
+                    `Content hash mismatch: expected ${expectedHash}, got ${hashHex}`
                 );
                 return false;
             }
 
             return true;
         } catch (error) {
-            console.error('[PackageExtractor] Failed to verify content hash:', error);
+            logger.error('PackageExtractor', 'Failed to verify content hash:', error);
             return false;
         }
     }
@@ -338,7 +340,7 @@ export class PackageExtractor {
 
             return hasManifest && hasCharacters && hasIconsFolder;
         } catch (error) {
-            console.error('[PackageExtractor] Structure validation failed:', error);
+            logger.error('PackageExtractor', 'Structure validation failed:', error);
             return false;
         }
     }

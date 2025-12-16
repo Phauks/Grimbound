@@ -82,6 +82,41 @@
   transform: none;
 }
 
+/* PWA Install button with subtle highlight */
+.installButton {
+  position: relative;
+  animation: installPulse 2s ease-in-out infinite;
+}
+
+.installButton::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--border-radius-md);
+  background: linear-gradient(45deg, var(--color-accent), var(--color-success));
+  opacity: 0.3;
+  z-index: -1;
+  animation: installGlow 2s ease-in-out infinite;
+}
+
+@keyframes installPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes installGlow {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .title {

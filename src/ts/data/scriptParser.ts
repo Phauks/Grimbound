@@ -5,6 +5,7 @@
 
 import CONFIG from '../config.js';
 import { generateUuid, generateStableUuid } from '../utils/nameGenerator.js';
+import { logger } from '../utils/logger.js';
 import type {
     Character,
     ScriptEntry,
@@ -142,7 +143,7 @@ async function processScriptEntry(options: ProcessEntryOptions): Promise<EntryPr
             ? `${position}: Character "${entry}" not found in official data`
             : null;
         if (!lenient) {
-            console.warn(`Character not found in official data: ${entry}`);
+            logger.warn('ScriptParser', `Character not found in official data: ${entry}`);
         }
         return { character: null, warning };
     }
@@ -174,7 +175,7 @@ async function processScriptEntry(options: ProcessEntryOptions): Promise<EntryPr
             ? `${position}: Character "${entry.id}" not found in official data`
             : null;
         if (!lenient) {
-            console.warn(`Character not found in official data: ${entry.id}`);
+            logger.warn('ScriptParser', `Character not found in official data: ${entry.id}`);
         }
         return { character: null, warning };
     }
@@ -284,6 +285,7 @@ export async function validateAndParseScript(
 
 /**
  * Extract meta information from script
+ * Includes backward compatibility migration for bootlegger field
  * @param scriptData - Raw script data
  * @returns Meta object or null
  */
@@ -294,7 +296,25 @@ export function extractScriptMeta(scriptData: ScriptEntry[]): ScriptMeta | null 
 
     for (const entry of scriptData) {
         if (isScriptMeta(entry)) {
-            return entry;
+            const meta = { ...entry };
+
+            // Backward compatibility: convert old bootlegger string to array format
+            // Old format: bootlegger: "Custom ability text"
+            // New format: bootlegger: ["Custom ability text"]
+            // Note: Type assertion needed because old JSON data may have string format
+            const bootleggerValue = meta.bootlegger as string | string[] | undefined;
+            if (bootleggerValue !== undefined) {
+                if (typeof bootleggerValue === 'string') {
+                    meta.bootlegger = bootleggerValue.trim() ? [bootleggerValue] : [];
+                    logger.debug('ScriptParser', 'Migrated bootlegger from string to array format');
+                } else if (!Array.isArray(bootleggerValue)) {
+                    // Invalid format, reset to empty array
+                    meta.bootlegger = [];
+                    logger.warn('ScriptParser', 'Invalid bootlegger format, reset to empty array');
+                }
+            }
+
+            return meta;
         }
     }
 

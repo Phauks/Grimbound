@@ -6,6 +6,7 @@
 
 import { projectDb } from '../db/projectDb.js';
 import type { Layer, ToolSettings, CanvasSize } from '../types/index.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Serialized layer for storage
@@ -94,7 +95,7 @@ export async function saveStudioPreset(
   // TODO: Add studioPresets table to projectDb schema
   await storePresetInIndexedDB(preset);
 
-  console.log('[StudioPresets] Saved preset:', id, options.name);
+  logger.info('StudioPresets', `Saved preset: ${id} - ${options.name}`);
   return id;
 }
 
@@ -130,7 +131,7 @@ export async function loadStudioPreset(id: string): Promise<{
     })
   );
 
-  console.log('[StudioPresets] Loaded preset:', id, preset.name);
+  logger.info('StudioPresets', `Loaded preset: ${id} - ${preset.name}`);
 
   return {
     layers,
@@ -176,7 +177,7 @@ export async function updateStudioPreset(
   };
 
   await storePresetInIndexedDB(updatedPreset);
-  console.log('[StudioPresets] Updated preset:', id);
+  logger.info('StudioPresets', `Updated preset: ${id}`);
 }
 
 /**
@@ -186,7 +187,7 @@ export async function updateStudioPreset(
  */
 export async function deleteStudioPreset(id: string): Promise<void> {
   await deletePresetFromIndexedDB(id);
-  console.log('[StudioPresets] Deleted preset:', id);
+  logger.info('StudioPresets', `Deleted preset: ${id}`);
 }
 
 /**
@@ -215,7 +216,7 @@ export async function duplicateStudioPreset(
   };
 
   await storePresetInIndexedDB(newPreset);
-  console.log('[StudioPresets] Duplicated preset:', id, '->', newPreset.id);
+  logger.info('StudioPresets', `Duplicated preset: ${id} -> ${newPreset.id}`);
 
   return newPreset.id;
 }
@@ -340,7 +341,7 @@ async function loadAllPresetsFromIndexedDB(): Promise<StudioPreset[]> {
 
     return JSON.parse(data) as StudioPreset[];
   } catch (error) {
-    console.error('[StudioPresets] Failed to load presets:', error);
+    logger.error('StudioPresets', 'Failed to load presets', error);
     return [];
   }
 }
@@ -360,5 +361,5 @@ async function deletePresetFromIndexedDB(id: string): Promise<void> {
  */
 export async function clearAllStudioPresets(): Promise<void> {
   localStorage.removeItem('studio-presets');
-  console.log('[StudioPresets] Cleared all presets');
+  logger.info('StudioPresets', 'Cleared all presets');
 }

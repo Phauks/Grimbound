@@ -27,14 +27,14 @@ export { LRUEvictionPolicy } from './policies/LRUEvictionPolicy.js'
 export type { LRUEvictionPolicyOptions } from './policies/LRUEvictionPolicy.js'
 
 // Strategies (Domain services)
-export { GalleryPreRenderStrategy } from './strategies/GalleryPreRenderStrategy.js'
-export type { GalleryStrategyOptions } from './strategies/GalleryPreRenderStrategy.js'
+export { TokensPreRenderStrategy } from './strategies/TokensPreRenderStrategy.js'
+export type { TokensStrategyOptions } from './strategies/TokensPreRenderStrategy.js'
 
-export { CustomizePreRenderStrategy } from './strategies/CustomizePreRenderStrategy.js'
+export { CharactersPreRenderStrategy } from './strategies/CharactersPreRenderStrategy.js'
 export type {
-  CustomizeStrategyOptions,
-  CustomizePreRenderEntry
-} from './strategies/CustomizePreRenderStrategy.js'
+  CharactersStrategyOptions,
+  CharactersPreRenderEntry
+} from './strategies/CharactersPreRenderStrategy.js'
 
 export { ProjectPreRenderStrategy } from './strategies/ProjectPreRenderStrategy.js'
 export type { ProjectStrategyOptions } from './strategies/ProjectPreRenderStrategy.js'
@@ -78,3 +78,10 @@ export {
 
 export { CacheLogger, CacheLogLevel } from './utils/CacheLogger.js'
 export type { CachePerformanceMetrics } from './utils/CacheLogger.js'
+
+// Characters Pre-Render Helpers (Convenience API)
+export {
+  hashOptions,
+  getPreRenderedTokens,
+  preRenderFirstCharacter
+} from './charactersPreRenderHelpers.js'

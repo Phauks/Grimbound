@@ -13,6 +13,8 @@
  * @module utils/compressionUtils
  */
 
+import { logger } from './logger.js';
+
 /**
  * Check if CompressionStream API is available
  * @returns True if compression is supported
@@ -39,7 +41,7 @@ export function isCompressionSupported(): boolean {
  */
 export async function compressString(str: string): Promise<Blob | null> {
   if (!isCompressionSupported()) {
-    console.warn('[compressionUtils] CompressionStream not supported, skipping compression');
+    logger.warn('compressionUtils', 'CompressionStream not supported, skipping compression');
     return null;
   }
 
@@ -57,7 +59,7 @@ export async function compressString(str: string): Promise<Blob | null> {
     const blob = await new Response(compressedStream).blob();
     return blob;
   } catch (error) {
-    console.error('[compressionUtils] Compression failed:', error);
+    logger.error('compressionUtils', 'Compression failed', error);
     return null;
   }
 }
@@ -93,7 +95,7 @@ export async function decompressBlob(blob: Blob): Promise<string> {
     const text = await new Response(decompressedStream).text();
     return text;
   } catch (error) {
-    console.error('[compressionUtils] Decompression failed:', error);
+    logger.error('compressionUtils', 'Decompression failed', error);
     throw error;
   }
 }

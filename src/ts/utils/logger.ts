@@ -53,7 +53,8 @@ export class Logger {
 
     constructor(config: LoggerConfig = {}) {
         // Default to DEBUG in development, WARN in production
-        const isDevelopment = import.meta.env?.DEV ?? process.env.NODE_ENV !== 'production';
+        // Use import.meta.env for Vite environments (browser-compatible)
+        const isDevelopment = import.meta.env?.DEV ?? true;
         this.level = config.level ?? (isDevelopment ? LogLevel.DEBUG : LogLevel.WARN);
         this.timestamps = config.timestamps ?? false;
         this.prefix = config.prefix ?? '';

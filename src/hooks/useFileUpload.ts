@@ -32,7 +32,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { fileUploadService, UploadOutcome, UseFileUploadConfig } from '../services/upload/index.js';
+import { fileUploadService, UploadOutcome, UseFileUploadConfig } from '../ts/services/upload/index.js';
 
 // ============================================================================
 // Types

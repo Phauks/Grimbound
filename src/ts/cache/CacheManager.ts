@@ -21,7 +21,8 @@ import type {
   PreRenderContext,
   PreRenderResult,
   CacheStats,
-  ICacheStrategy
+  ICacheStrategy,
+  IPreRenderStrategy
 } from './core/index.js'
 import type { InvalidationScope } from './CacheInvalidationService.js'
 import type { Token } from '../types/index.js'
@@ -89,7 +90,7 @@ export interface CacheWarmingOptions {
  * const image = await cacheManager.getCharacterImage('washerwoman')
  *
  * // Get pre-rendered token
- * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'gallery')
+ * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'tokens')
  *
  * // Invalidate all caches when asset changes
  * await cacheManager.invalidateAsset('asset-123')
@@ -174,12 +175,12 @@ export class CacheManager {
    * Get pre-rendered token from cache.
    *
    * @param filename - Token filename to retrieve
-   * @param strategyName - Strategy name ('gallery', 'customize', 'project')
+   * @param strategyName - Strategy name ('tokens', 'characters', 'project')
    * @returns Data URL of cached token, or null if not cached
    *
    * @example
    * ```typescript
-   * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'gallery')
+   * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'tokens')
    * if (dataUrl) {
    *   img.src = dataUrl
    * }
@@ -190,7 +191,8 @@ export class CacheManager {
     if (strategyName) {
       const cache = this.preRenderManager.getCache(strategyName)
       if (cache) {
-        return cache.get(filename)
+        const entry = await cache.get(filename)
+        return entry?.value ?? null
       }
       return null
     }
@@ -199,8 +201,8 @@ export class CacheManager {
     for (const cacheName of this.preRenderManager.getCacheNames()) {
       const cache = this.preRenderManager.getCache(cacheName)
       if (cache) {
-        const result = await cache.get(filename)
-        if (result) return result
+        const entry = await cache.get(filename)
+        if (entry?.value) return entry.value
       }
     }
 
@@ -216,7 +218,7 @@ export class CacheManager {
    * @example
    * ```typescript
    * const result = await cacheManager.preRender({
-   *   type: 'gallery-scroll',
+   *   type: 'tokens-hover',
    *   tokens: visibleTokens,
    *   characters: allCharacters,
    *   generationOptions: options
@@ -232,11 +234,11 @@ export class CacheManager {
    * Cache a batch of tokens (convenience method for pre-rendering).
    *
    * @param tokens - Array of tokens to cache
-   * @param type - Context type ('gallery-scroll', 'customize-tab', etc.)
+   * @param type - Context type ('tokens-hover', 'characters-hover', etc.)
    *
    * @example
    * ```typescript
-   * await cacheManager.cacheTokenBatch(allTokens, 'gallery-scroll')
+   * await cacheManager.cacheTokenBatch(allTokens, 'tokens-hover')
    * ```
    */
   async cacheTokenBatch(tokens: Token[], type: string = 'manual'): Promise<void> {
@@ -336,11 +338,11 @@ export class CacheManager {
   /**
    * Clear a specific cache by name.
    *
-   * @param name - Cache name ('gallery', 'customize', 'project', 'image', 'font')
+   * @param name - Cache name ('tokens', 'characters', 'project', 'image', 'font')
    *
    * @example
    * ```typescript
-   * await cacheManager.clearCache('gallery')
+   * await cacheManager.clearCache('tokens')
    * ```
    */
   async clearCache(name: string): Promise<void> {
@@ -463,7 +465,7 @@ export class CacheManager {
    * Register a new pre-render strategy.
    * Delegates to PreRenderCacheManager.
    */
-  registerStrategy(strategy: ICacheStrategy): void {
+  registerStrategy(strategy: IPreRenderStrategy): void {
     this.preRenderManager.registerStrategy(strategy)
   }
 
@@ -492,7 +494,7 @@ export class CacheManager {
  * const img = await cacheManager.getCharacterImage('icons/washerwoman.webp')
  *
  * // Get pre-rendered token
- * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'gallery')
+ * const dataUrl = await cacheManager.getPreRenderedToken('washerwoman.png', 'tokens')
  *
  * // Invalidate when asset changes
  * await cacheManager.invalidateAsset('asset-123', 'update')

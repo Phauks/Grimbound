@@ -17,6 +17,7 @@
  */
 
 import { WorkerPool, type WorkerPoolOptions } from './WorkerPool.js';
+import { logger } from '../../utils/logger.js';
 
 /**
  * Configuration for adaptive worker pool
@@ -155,7 +156,7 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // High memory pressure - scale down
       if (this.currentWorkerCount > this.minWorkers) {
         this.scaleDown();
-        console.log(
+        logger.debug('AdaptiveWorkerPool',
           `[AdaptiveWorkerPool] Scaling down due to memory pressure: ${(memory.pressure * 100).toFixed(1)}%`
         );
       }
@@ -163,7 +164,7 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // Low memory pressure + growing queue - scale up
       if (this.currentWorkerCount < this.maxWorkers) {
         this.scaleUp();
-        console.log(
+        logger.debug('AdaptiveWorkerPool',
           `[AdaptiveWorkerPool] Scaling up due to queue length: ${stats.queuedTasks} tasks`
         );
       }
@@ -171,7 +172,7 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // All idle - gradually scale down to min
       if (this.currentWorkerCount > this.minWorkers) {
         this.scaleDown();
-        console.log('[AdaptiveWorkerPool] Scaling down due to idle workers');
+        logger.debug('AdaptiveWorkerPool','[AdaptiveWorkerPool] Scaling down due to idle workers');
       }
     }
   }
@@ -191,9 +192,9 @@ export class AdaptiveWorkerPool extends WorkerPool {
       this.currentWorkerCount++;
       this.lastScaleTime = Date.now();
 
-      console.log(`[AdaptiveWorkerPool] Scaled up to ${this.currentWorkerCount} workers`);
+      logger.info('AdaptiveWorkerPool', `Scaled up to ${this.currentWorkerCount} workers`);
     } catch (error) {
-      console.error('[AdaptiveWorkerPool] Failed to scale up:', error);
+      logger.error('AdaptiveWorkerPool', 'Failed to scale up', error);
     }
   }
 
@@ -228,9 +229,9 @@ export class AdaptiveWorkerPool extends WorkerPool {
       this.currentWorkerCount--;
       this.lastScaleTime = Date.now();
 
-      console.log(`[AdaptiveWorkerPool] Scaled down to ${this.currentWorkerCount} workers`);
+      logger.info('AdaptiveWorkerPool', `Scaled down to ${this.currentWorkerCount} workers`);
     } catch (error) {
-      console.error('[AdaptiveWorkerPool] Failed to scale down:', error);
+      logger.error('AdaptiveWorkerPool', 'Failed to scale down', error);
     }
   }
 

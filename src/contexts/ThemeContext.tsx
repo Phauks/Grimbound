@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { UI_THEMES, DEFAULT_THEME_ID, getTheme, isValidThemeId, type UITheme, type ThemeId } from '../ts/themes'
-import { STORAGE_KEYS, getStorageItem, setStorageItem } from '../ts/utils/index.js'
+import { STORAGE_KEYS, getStorageItem, setStorageItem, logger } from '../ts/utils/index.js'
 
 export interface CustomTheme extends UITheme {
   isCustom: true
@@ -104,7 +104,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     if (isBuiltIn || isCustom) {
       setCurrentThemeId(themeId)
     } else {
-      console.warn(`Theme "${themeId}" not found, falling back to default`)
+      logger.warn('ThemeContext', `Theme "${themeId}" not found, falling back to default`)
       setCurrentThemeId(DEFAULT_THEME_ID)
     }
   }, [customThemes])

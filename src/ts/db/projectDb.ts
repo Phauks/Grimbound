@@ -13,12 +13,13 @@ import Dexie, { Table } from 'dexie';
 import type {
   DBProject,
   DBAutoSaveSnapshot,
-  DBAsset,
   DBProjectVersion,
+  DBCustomIcon,
   ProjectState,
   ProjectVersion,
   StorageQuota,
 } from '../types/project.js';
+import type { DBAsset } from '../services/upload/types.js';
 
 // ============================================================================
 // Database Class
@@ -54,6 +55,7 @@ export class ProjectDatabase extends Dexie {
   autoSaveSnapshots!: Table<DBAutoSaveSnapshot, string>;
   assets!: Table<DBAsset, string>;
   projectVersions!: Table<DBProjectVersion, string>;
+  customIcons!: Table<DBCustomIcon, string>;
 
   constructor() {
     super('botc-token-generator-projects');
@@ -120,6 +122,21 @@ export class ProjectDatabase extends Dexie {
       //          createdAt (for chronological ordering)
       projectVersions: 'id, projectId, [projectId+versionMajor+versionMinor], createdAt',
     });
+
+    // Define schema version 6 (add custom icons table)
+    this.version(6).stores({
+      // Keep existing tables
+      projects: 'id, name, lastModifiedAt, lastAccessedAt, *tags',
+      autoSaveSnapshots: 'id, projectId, timestamp',
+      assets: 'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+      projectVersions: 'id, projectId, [projectId+versionMajor+versionMinor], createdAt',
+
+      // NEW: Custom icons table
+      // Primary key: id
+      // Compound index: [characterId+projectId] for unique character-project lookup
+      // Indexes: characterId, projectId for filtering
+      customIcons: 'id, characterId, projectId, [characterId+projectId]',
+    });
   }
 
   // ==========================================================================
@@ -165,12 +182,12 @@ export class ProjectDatabase extends Dexie {
    * WARNING: This is destructive and cannot be undone
    */
   async clearAll(): Promise<void> {
-    await this.transaction('rw', this.projects, this.autoSaveSnapshots, this.assets, this.projectVersions, async () => {
-      await this.projects.clear();
-      await this.autoSaveSnapshots.clear();
-      await this.assets.clear();
-      await this.projectVersions.clear();
-    });
+    // Clear all tables individually - Dexie transaction supports max 6 tables
+    await this.projects.clear();
+    await this.autoSaveSnapshots.clear();
+    await this.assets.clear();
+    await this.projectVersions.clear();
+    await this.customIcons.clear();
   }
 
   /**

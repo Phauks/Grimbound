@@ -1,29 +1,114 @@
 /**
  * PresetCard Component Styles
- * Individual preset button with dropdown menu
+ * Gothic Token Collection aesthetic - embossed game pieces with depth
  */
 
+/* ============================================
+   CARD BASE - Embossed Token Feel
+   ============================================ */
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--bg-input);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
+  gap: 6px;
+  padding: var(--spacing-sm) var(--spacing-sm);
+  min-width: 78px;
+  max-width: 78px;
+  min-height: 84px;
+
+  /* Layered background for depth */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.15) 100%
+    ),
+    var(--bg-card);
+
+  /* Beveled border effect */
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+
+  /* Multi-layer shadow for depth */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+
   cursor: pointer;
-  transition: all var(--transition-fast);
-  min-width: 70px;
-  max-width: 70px;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+
+  /* Subtle corner accents via pseudo-element */
+  overflow: hidden;
 }
 
+/* Corner accent decorations */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  /* Corner flourish pattern */
+  background:
+    radial-gradient(
+      ellipse 20px 20px at 0% 0%,
+      rgba(201, 162, 39, 0.15) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 20px 20px at 100% 0%,
+      rgba(201, 162, 39, 0.15) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 20px 20px at 0% 100%,
+      rgba(201, 162, 39, 0.15) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 20px 20px at 100% 100%,
+      rgba(201, 162, 39, 0.15) 0%,
+      transparent 70%
+    );
+}
+
+/* ============================================
+   HOVER STATE - Lift and Glow
+   ============================================ */
 .card:hover:not(:disabled) {
-  background-color: var(--bg-hover);
-  border-color: var(--color-accent);
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.02);
+  border-color: rgba(201, 162, 39, 0.4);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(201, 162, 39, 0.15);
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 /* Disable transform when menu is open to prevent position issues */
@@ -31,57 +116,213 @@
   transform: none;
 }
 
+/* ============================================
+   ACTIVE STATE - Selected Preset
+   ============================================ */
 .card.active {
-  background-color: var(--color-primary);
   border-color: var(--color-accent);
-  box-shadow: 0 0 10px rgba(240, 230, 210, 0.3);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(201, 162, 39, 0.08) 0%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(201, 162, 39, 0.05) 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.15) 100%
+    ),
+    var(--bg-card);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 16px rgba(201, 162, 39, 0.25),
+    0 0 32px rgba(201, 162, 39, 0.1);
 }
 
+.card.active::before {
+  opacity: 1;
+}
+
+.card.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.6) 0%,
+    rgba(201, 162, 39, 0.2) 50%,
+    rgba(201, 162, 39, 0.6) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============================================
+   DISABLED STATE
+   ============================================ */
 .card:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
+/* ============================================
+   FOCUS STATE - Accessibility
+   ============================================ */
 .card:focus {
+  outline: none;
+}
+
+.card:focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-/* Add button variant */
+/* ============================================
+   ADD BUTTON VARIANT - Dashed Invitation
+   ============================================ */
 .cardAdd {
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 100%
+    ),
+    rgba(45, 45, 45, 0.5);
+
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cardAdd::before {
+  display: none;
+}
+
+.cardAdd:hover:not(:disabled) {
   border-style: dashed;
-  opacity: 0.7;
+  border-color: var(--color-accent);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(201, 162, 39, 0.05) 0%,
+      transparent 100%
+    ),
+    rgba(45, 45, 45, 0.8);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 0 16px rgba(201, 162, 39, 0.1);
 }
 
-.cardAdd:hover {
-  opacity: 1;
-  border-style: solid;
+.cardAdd .icon {
+  color: var(--text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
-/* Default star indicator */
+.cardAdd:hover .icon {
+  color: var(--color-accent);
+  transform: scale(1.1);
+}
+
+.cardAdd .name {
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.cardAdd:hover .name {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   DEFAULT STAR INDICATOR
+   ============================================ */
 .defaultStar {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 0.75rem;
+  top: 4px;
+  left: 4px;
+  font-size: 0.7rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  animation: starPulse 2s ease-in-out infinite;
 }
 
+@keyframes starPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+/* ============================================
+   ICON - Large Emoji Display
+   ============================================ */
 .icon {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
+.card:hover .icon {
+  transform: scale(1.08);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+.card.active .icon {
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 8px rgba(201, 162, 39, 0.3));
+}
+
+/* ============================================
+   NAME - Preset Label
+   ============================================ */
 .name {
-  font-size: 0.75rem;
+  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
   text-align: center;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: color 0.2s ease;
 }
 
-/* Menu container - wraps trigger and dropdown for click-outside detection */
+.card:hover .name {
+  color: var(--text-primary);
+}
+
+.card.active .name {
+  color: var(--color-accent);
+}
+
+/* ============================================
+   MENU CONTAINER & TRIGGER
+   ============================================ */
 .menuContainer {
   position: absolute;
   top: var(--spacing-xs);
@@ -89,12 +330,10 @@
   z-index: 100;
 }
 
-/* When menu is open, ensure container is above other cards */
 .menuContainer:has(.menuDropdown.active) {
   z-index: 1001;
 }
 
-/* Menu trigger button */
 .menuTrigger {
   display: flex;
   align-items: center;
@@ -102,39 +341,56 @@
   width: 20px;
   height: 20px;
   padding: 0;
-  background: var(--bg-tertiary, rgba(255, 255, 255, 0.1));
-  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
   opacity: 0;
-  transition: var(--transition);
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .card:hover .menuTrigger {
   opacity: 1;
 }
 
-/* Keep trigger visible when menu is open */
 .menuTrigger[aria-expanded="true"] {
   opacity: 1;
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.4);
+  color: var(--color-accent);
 }
 
 .menuTrigger:hover {
   color: var(--text-primary);
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
 }
 
-/* Dropdown menu - uses fixed positioning set via JS to escape all parent clipping */
+/* ============================================
+   DROPDOWN MENU
+   ============================================ */
 .menuDropdown {
   z-index: 9999;
-  min-width: 150px;
+  min-width: 160px;
   padding: var(--spacing-xs);
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
+  background: linear-gradient(
+    to bottom,
+    rgba(50, 50, 50, 0.98) 0%,
+    rgba(40, 40, 40, 0.98) 100%
+  );
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .menuDropdown.active {
@@ -146,40 +402,58 @@
   align-items: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   background: transparent;
   border: none;
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
   text-align: left;
   color: var(--text-primary);
-  font-size: 0.875rem;
-  transition: var(--transition);
+  font-size: 0.8rem;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .menuItem:hover {
-  background-color: var(--card-hover-bg);
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--color-accent-light);
+  transform: translateX(2px);
 }
 
 .menuIcon {
-  font-size: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
-/* Drag and drop states */
+/* ============================================
+   DRAG AND DROP STATES
+   ============================================ */
 .dragging {
-  opacity: 0.5;
-  cursor: grabbing;
-  background: var(--bg-tertiary);
-  transform: scale(0.95);
+  opacity: 0.6;
+  cursor: grabbing !important;
+  transform: scale(0.95) rotate(-1deg);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(201, 162, 39, 0.3);
 }
 
 .dropTarget {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent);
-  background: var(--color-primary-subtle, rgba(240, 230, 210, 0.1));
+  border-color: var(--color-accent) !important;
+  transform: scale(1.02);
+
+  box-shadow:
+    inset 0 0 20px rgba(201, 162, 39, 0.1),
+    0 0 0 2px var(--color-accent),
+    0 0 20px rgba(201, 162, 39, 0.3);
 }
 
-/* Show grab cursor for draggable cards */
+.dropTarget::before {
+  opacity: 1 !important;
+}
+
+/* Grab cursor for draggable cards */
 .card[draggable="true"] {
   cursor: grab;
 }
@@ -188,4 +462,32 @@
   cursor: grabbing;
 }
 
+/* ============================================
+   ENTRANCE ANIMATION
+   ============================================ */
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
+.card {
+  animation: cardEnter 0.3s ease-out backwards;
+}
+
+/* Stagger animation for cards */
+.card:nth-child(1) { animation-delay: 0ms; }
+.card:nth-child(2) { animation-delay: 50ms; }
+.card:nth-child(3) { animation-delay: 100ms; }
+.card:nth-child(4) { animation-delay: 150ms; }
+.card:nth-child(5) { animation-delay: 200ms; }
+.card:nth-child(6) { animation-delay: 250ms; }
+.card:nth-child(7) { animation-delay: 300ms; }
+.card:nth-child(8) { animation-delay: 350ms; }
+.card:nth-child(9) { animation-delay: 400ms; }
+.card:nth-child(10) { animation-delay: 450ms; }

@@ -6,7 +6,7 @@ import {
   downloadCharacterTokensAsZip,
   getCharacterChanges,
 } from '../ts/ui/detailViewUtils.js'
-import { debounce } from '../ts/utils/index.js'
+import { debounce, logger } from '../ts/utils/index.js'
 import type { Character, Token } from '../ts/types/index.js'
 
 interface UseTokenDetailEditorProps {
@@ -39,7 +39,7 @@ export function useTokenDetailEditor({
           canvas: newCanvas,
         })
       } catch (error) {
-        console.error('Failed to regenerate preview:', error)
+        logger.error('useTokenDetailEditor', 'Failed to regenerate preview:', error)
       } finally {
         setIsRegenerating(false)
       }
@@ -69,9 +69,9 @@ export function useTokenDetailEditor({
       const updated = updateCharacterInJson(jsonInput, character.id, editedCharacter)
       setJsonInput(updated)
       setIsDirty(false)
-      console.log('Character changes applied to script')
+      logger.debug('useTokenDetailEditor', 'Character changes applied to script')
     } catch (error) {
-      console.error('Failed to apply changes:', error)
+      logger.error('useTokenDetailEditor', 'Failed to apply changes:', error)
     }
   }, [editedCharacter, character.id, jsonInput, setJsonInput])
 
@@ -84,7 +84,7 @@ export function useTokenDetailEditor({
         generationOptions.pngSettings
       )
     } catch (error) {
-      console.error('Failed to download tokens:', error)
+      logger.error('useTokenDetailEditor', 'Failed to download tokens:', error)
     }
   }, [previewToken, reminderTokens, character.name, generationOptions.pngSettings])
 

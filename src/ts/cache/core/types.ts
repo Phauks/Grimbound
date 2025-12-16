@@ -96,9 +96,10 @@ export interface CacheEvent<V = any> {
  * Pre-render context types.
  */
 export type PreRenderContextType =
-  | 'gallery-hover'      // User hovered over gallery tab
-  | 'customize-hover'    // User hovered over customize tab
+  | 'tokens-hover'       // User hovered over tokens tab
+  | 'characters-hover'   // User hovered over characters tab
   | 'project-hover'      // User hovered over project card
+  | 'project-open'       // User opened a project
   | 'manual'             // Manually triggered
   | 'auto'               // Automatically triggered
 

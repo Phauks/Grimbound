@@ -1,0 +1,385 @@
+/* ============================================
+   FontPreviewSelector Component Styles
+
+   A unified font selector matching the design
+   pattern of ColorPreviewSelector and AssetPreviewSelector.
+   Features live font preview with elegant dropdown.
+   ============================================ */
+
+/* ============================================
+   Container
+   ============================================ */
+
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.container:hover:not(.disabled) {
+  border-color: var(--border-color-hover, var(--text-secondary));
+}
+
+.container.open {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.15);
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Font Preview Box
+   ============================================ */
+
+.preview {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-input) 100%
+  );
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.container:hover:not(.disabled) .preview {
+  border-color: var(--color-accent);
+}
+
+.container.open .preview {
+  transform: scale(1.02);
+  border-color: var(--color-accent);
+}
+
+/* Size variants */
+.previewSmall {
+  width: 48px;
+  height: 40px;
+}
+
+.previewMedium {
+  width: 64px;
+  height: 56px;
+}
+
+.previewLarge {
+  width: 88px;
+  height: 80px;
+}
+
+/* Preview text styling */
+.previewText {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.previewSmall .previewText {
+  font-size: 1.125rem;
+}
+
+.previewLarge .previewText {
+  font-size: 2rem;
+}
+
+/* ============================================
+   Info Section
+   ============================================ */
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fontName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+/* ============================================
+   Change Button
+   ============================================ */
+
+.changeButton {
+  flex-shrink: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 60px;
+}
+
+.changeButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.changeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.container.open .changeButton {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--bg-primary);
+}
+
+/* ============================================
+   Dropdown
+   ============================================ */
+
+.dropdown {
+  /* Position is set inline via portal */
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+
+  /* Smooth scroll */
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+
+  /* Entry animation */
+  animation: dropdownSlideDown 0.15s ease-out;
+}
+
+@keyframes dropdownSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Upward opening variant */
+.dropdownUpward {
+  animation: dropdownSlideUp 0.15s ease-out;
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ============================================
+   Option Items
+   ============================================ */
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.option:last-child {
+  border-bottom: none;
+}
+
+.option:hover,
+.optionFocused {
+  background: var(--bg-hover);
+}
+
+.optionSelected {
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.optionSelected:hover,
+.optionSelected.optionFocused {
+  background: rgba(201, 162, 39, 0.18);
+}
+
+/* Option Preview */
+.optionPreview {
+  flex-shrink: 0;
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Option Info */
+.optionInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.optionLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionCategory {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.optionSelected .optionLabel {
+  color: var(--color-accent);
+}
+
+/* Selected Indicator */
+.selectedIndicator {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: var(--bg-primary);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* ============================================
+   Compact Mode (size="small")
+   ============================================ */
+
+.compact {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-sm);
+}
+
+.compact .fontName {
+  font-size: 0.8125rem;
+}
+
+.compact .category {
+  display: none;
+}
+
+.compact .changeButton {
+  padding: 2px var(--spacing-xs);
+  font-size: 0.75rem;
+  min-width: 50px;
+}
+
+.compact .dropdown {
+  max-height: 200px;
+}
+
+.compact .option {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-sm);
+}
+
+.compact .optionPreview {
+  width: 32px;
+  height: 26px;
+  font-size: 0.875rem;
+}
+
+.compact .optionLabel {
+  font-size: 0.8125rem;
+}
+
+.compact .optionCategory {
+  display: none;
+}
+
+/* ============================================
+   Focus States (Accessibility)
+   ============================================ */
+
+.container:focus-within:not(.disabled) {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+}
+
+.changeButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

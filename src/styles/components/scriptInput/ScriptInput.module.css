@@ -205,40 +205,37 @@
 }
 
 .jsonHighlight {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* CSS Grid overlay - both elements in same cell */
+  grid-column: 1;
+  grid-row: 1;
   padding: var(--spacing-md);
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow: auto;
+  overflow: visible;  /* Let parent scroll */
   pointer-events: none;
   color: var(--text-primary);
-  background-color: var(--bg-input);
+  /* No background - parent has it */
 }
 
 .jsonEditor {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  /* CSS Grid overlay - both elements in same cell */
+  grid-column: 1;
+  grid-row: 1;
   padding: var(--spacing-md);
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   border: none;
   resize: none;
+  overflow: visible;  /* Let parent scroll - no internal scrolling */
   background-color: transparent;
   color: transparent;
   caret-color: var(--text-primary);
+  /* Height will be set by JS to match content */
+  min-height: 100%;
 }
 
 .jsonEditor::placeholder {

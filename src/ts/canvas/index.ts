@@ -42,9 +42,9 @@ export {
 
 // QR code generation
 export {
-    generateQRCode,
-    type QRCodeOptions,
-    type QRCodeConstructor,
+    generateStyledQRCode,
+    QR_DEFAULTS,
+    type StyledQRCodeOptions,
 } from './qrGeneration.js';
 
 // Canvas optimization utilities
@@ -70,3 +70,17 @@ export {
     CanvasPool,
     globalCanvasPool,
 } from './canvasPool.js';
+
+// Gradient utilities for backgrounds
+export {
+    createBackgroundGradient,
+    createGradientPreview,
+    getCSSGradient,
+    interpolateColors,
+} from './gradientUtils.js';
+
+// Background effects (textures, vignette, glow, etc.)
+export {
+    renderBackground,
+    renderTexturePreview,
+} from './backgroundEffects.js';

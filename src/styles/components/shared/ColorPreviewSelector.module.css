@@ -1,33 +1,10 @@
 /* ============================================
    ColorPreviewSelector Component Styles
-   Matches AssetPreviewSelector for consistency
+
+   Component-specific styles for the color preview selector.
+   Uses SettingsSelectorBase.module.css for container, panel,
+   and footer styles.
    ============================================ */
-
-.container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.container:hover:not(.disabled) {
-  border-color: var(--border-color-hover, var(--text-secondary));
-}
-
-.container.editing {
-  border-color: var(--primary-color, #1976d2);
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
-}
-
-.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
 /* ============================================
    Color Preview Swatch
@@ -42,12 +19,16 @@
   border: 2px solid var(--border-color);
   overflow: hidden;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
 
-.preview:hover {
-  border-color: var(--primary-color, #1976d2);
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  /* Checkerboard pattern for transparency visualization */
+  background:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
 }
 
 /* Size variants */
@@ -57,13 +38,13 @@
 }
 
 .previewMedium {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
 }
 
 .previewLarge {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
 }
 
 /* Shape variants */
@@ -75,57 +56,56 @@
   border-radius: var(--border-radius);
 }
 
-/* Native color input - styled to be clickable but visually minimal */
-.colorInput {
+/* Color swatch overlay */
+.colorSwatch {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  transition: background-color var(--transition-fast);
+}
+
+/* Border for light colors */
+.swatchBorder {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.previewCircle .swatchBorder {
+  border-radius: 50%;
+}
+
+.previewSquare .swatchBorder {
+  border-radius: calc(var(--border-radius) - 2px);
+}
+
+/* Native color input - hidden but accessible */
+.colorInput {
+  position: absolute;
+  width: 0;
+  height: 0;
   opacity: 0;
-  cursor: pointer;
-  border: none;
-  padding: 0;
+  pointer-events: none;
 }
 
 /* ============================================
-   Info Section
+   Custom Color Picker Row
    ============================================ */
 
-.info {
-  flex: 1;
-  min-width: 0;
+.customPickerRow {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  position: relative;
 }
 
-.label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hexValue {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-family: monospace;
-}
-
-/* ============================================
-   Action Buttons
-   ============================================ */
-
-.actions {
+.pickerButton {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  flex-shrink: 0;
-}
-
-.changeButton {
   padding: var(--spacing-xs) var(--spacing-sm);
   background: var(--bg-input);
   border: 1px solid var(--border-color);
@@ -136,112 +116,121 @@
   transition: all var(--transition-fast);
 }
 
-.changeButton:hover:not(:disabled) {
+.pickerButton:hover {
   background: var(--bg-hover);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
-.changeButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pickerIcon {
+  font-size: 1rem;
 }
 
-/* Action buttons (Apply/Cancel) */
-.actionButton {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border: 1px solid transparent;
+.currentColorDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: auto;
 }
 
-.actionButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.currentColorSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
-.applyButton {
-  background: var(--success-color, #28a745);
-  color: white;
-  border-color: var(--success-color, #28a745);
-}
-
-.applyButton:hover:not(:disabled) {
-  background: var(--success-color-dark, #218838);
-  border-color: var(--success-color-dark, #218838);
-}
-
-.cancelButton {
-  background: transparent;
-  color: var(--text-muted);
-  border-color: var(--border-color);
-  padding: var(--spacing-xs);
-  min-width: 28px;
-}
-
-.cancelButton:hover:not(:disabled) {
-  background: var(--danger-color-soft, rgba(220, 53, 69, 0.1));
-  color: var(--danger-color, #dc3545);
-  border-color: var(--danger-color, #dc3545);
+.currentColorHex {
+  font-size: 0.75rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--text-secondary);
 }
 
 /* ============================================
-   Change Indicator
+   Preset Groups
    ============================================ */
 
-.changeIndicator {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 12px;
-  height: 12px;
+.presetGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.presetGroupLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-left: 2px;
+}
+
+.presetSwatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ============================================
+   Preset Swatches
+   ============================================ */
+
+.presetSwatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--warning-color, #ffc107);
-  color: var(--text-primary);
-  border-radius: 50%;
-  font-size: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  animation: pulse 1.5s ease-in-out infinite;
+  position: relative;
+  padding: 0;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+.presetSwatch:hover {
+  transform: scale(1.1);
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.presetSwatchLight {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.presetSwatchSelected {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 2px var(--bg-panel),
+    0 0 0 4px var(--color-accent);
+}
+
+.presetCheck {
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.presetSwatchLight .presetCheck {
+  color: var(--bg-primary);
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.8),
+    0 0 6px rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================
-   Compact Mode (size="small")
+   Focus States (Accessibility)
    ============================================ */
 
-.compact {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  gap: var(--spacing-sm);
+.presetSwatch:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.compact .label {
-  font-size: 0.8125rem;
-}
-
-.compact .hexValue {
-  display: none;
-}
-
-.compact .changeButton,
-.compact .actionButton {
-  padding: 2px var(--spacing-xs);
-  font-size: 0.75rem;
-}
-
-.compact .cancelButton {
-  min-width: 22px;
-  padding: 2px;
+.pickerButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
