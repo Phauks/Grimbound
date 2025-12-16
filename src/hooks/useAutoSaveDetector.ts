@@ -8,8 +8,8 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useTokenContext } from '../contexts/TokenContext.js';
 import { useProjectContext } from '../contexts/ProjectContext.js';
+import { useTokenContext } from '../contexts/TokenContext.js';
 import { logger } from '../ts/utils/index.js';
 
 /**
@@ -25,7 +25,8 @@ import { logger } from '../ts/utils/index.js';
  * - Resets when project changes
  */
 export function useAutoSaveDetector() {
-  const { currentProject, setIsDirty, setAutoSaveStatus, incrementChangeVersion } = useProjectContext();
+  const { currentProject, setIsDirty, setAutoSaveStatus, incrementChangeVersion } =
+    useProjectContext();
   const {
     characters,
     scriptMeta,
@@ -33,7 +34,7 @@ export function useAutoSaveDetector() {
     jsonInput,
     filters,
     characterMetadata,
-    tokens
+    tokens,
   } = useTokenContext();
 
   const previousStateRef = useRef<string | null>(null);
@@ -74,7 +75,7 @@ export function useAutoSaveDetector() {
       jsonInput,
       filters,
       characterMetadata: Object.fromEntries(characterMetadata),
-      tokens: tokens.map(t => ({ name: t.name, type: t.type, filename: t.filename })), // Lightweight token representation
+      tokens: tokens.map((t) => ({ name: t.name, type: t.type, filename: t.filename })), // Lightweight token representation
     });
 
     // First run - just store state
@@ -116,7 +117,7 @@ export function useAutoSaveDetector() {
       logger.debug('AutoSaveDetector', 'State unchanged - no dirty flag set');
     }
   }, [
-    currentProject?.id,  // Only re-run when project changes
+    currentProject?.id,
     characters,
     scriptMeta,
     generationOptions,
@@ -127,5 +128,6 @@ export function useAutoSaveDetector() {
     setIsDirty,
     setAutoSaveStatus,
     incrementChangeVersion,
+    currentProject,
   ]);
 }

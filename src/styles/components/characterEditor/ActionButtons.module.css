@@ -114,7 +114,9 @@
   width: 0;
   background: var(--color-success, #27ae60);
   opacity: 0;
-  transition: width 0.2s ease-out, opacity 0.2s ease;
+  transition:
+    width 0.2s ease-out,
+    opacity 0.2s ease;
   z-index: -1;
 }
 

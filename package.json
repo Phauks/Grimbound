@@ -15,8 +15,12 @@
     "dev:tsc": "tsc --watch",
     "dev:serve": "vite",
     "dev:test": "npm-run-all --parallel dev:tsc dev:serve test:watch",
-    "lint": "tsc --noEmit",
+    "lint": "npm-run-all --parallel typecheck biome:check",
+    "lint:fix": "npm-run-all typecheck biome:fix",
     "typecheck": "tsc --noEmit",
+    "biome:check": "biome check ./src",
+    "biome:fix": "biome check --write ./src",
+    "format": "biome format --write ./src",
     "precommit": "npm-run-all lint test build",
     "precommit:quick": "npm-run-all lint test",
     "prerelease": "npm-run-all clean build lint test:coverage test:e2e-checklist",
@@ -49,6 +53,7 @@
     "react-window": "^2.2.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.9",
     "@types/file-saver": "^2.0.7",
     "@types/jszip": "^3.4.1",
     "@types/react": "^19.0.0",

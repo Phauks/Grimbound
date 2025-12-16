@@ -32,7 +32,9 @@
   color: var(--text-primary);
   font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input::placeholder {
@@ -132,7 +134,9 @@
   font-family: inherit;
   cursor: pointer;
   appearance: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .select:focus {
@@ -282,7 +286,9 @@
   font-size: 1rem;
   font-family: inherit;
   resize: vertical;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .textarea::placeholder {

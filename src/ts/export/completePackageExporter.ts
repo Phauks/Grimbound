@@ -4,16 +4,16 @@
  */
 
 import JSZip from 'jszip';
+import type {
+  GenerationOptions,
+  ProgressCallback,
+  ScriptMeta,
+  Token,
+  ZipExportOptions,
+} from '../types/index.js';
+import { downloadFile } from '../utils/index.js';
 import { PDFGenerator } from './pdfGenerator.js';
 import { getTokenFilename, getTokenFolderPath, processTokenToBlob } from './zipExporter.js';
-import { downloadFile } from '../utils/index.js';
-import type {
-  Token,
-  GenerationOptions,
-  ScriptMeta,
-  ZipExportOptions,
-  ProgressCallback,
-} from '../types/index.js';
 
 /**
  * Progress callback with step information
@@ -48,9 +48,7 @@ export interface CompletePackageOptions {
  * @param options - Package configuration options
  * @returns Blob containing the complete ZIP package
  */
-export async function createCompletePackage(
-  options: CompletePackageOptions
-): Promise<Blob> {
+export async function createCompletePackage(options: CompletePackageOptions): Promise<Blob> {
   const {
     tokens,
     scriptJson,
@@ -147,11 +145,11 @@ export async function createCompletePackage(
 
   // Step 4: Add PDF
   const pdfGenerator = new PDFGenerator({
-    tokenPadding: generationOptions.pdfPadding ?? 0.25,  // Default 1/4" padding
-    xOffset: generationOptions.pdfXOffset ?? 0,         // Inches
-    yOffset: generationOptions.pdfYOffset ?? 0,         // Inches
-    imageQuality: generationOptions.pdfImageQuality ?? 0.90,
-    bleed: generationOptions.pdfBleed ?? 0.125,         // Default 1/8" bleed
+    tokenPadding: generationOptions.pdfPadding ?? 0.25, // Default 1/4" padding
+    xOffset: generationOptions.pdfXOffset ?? 0, // Inches
+    yOffset: generationOptions.pdfYOffset ?? 0, // Inches
+    imageQuality: generationOptions.pdfImageQuality ?? 0.9,
+    bleed: generationOptions.pdfBleed ?? 0.125, // Default 1/8" bleed
   });
 
   const pdfProgressCallback: ProgressCallback = (currentPage, totalPages) => {

@@ -6,14 +6,14 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
-import { Alert } from '../Shared/UI/Alert';
-import { ProjectImporter } from '../../ts/services/project/ProjectImporter';
-import { logger } from '../../ts/utils/index.js';
-import type { ProjectPreview } from '../../ts/types/project.js';
+import { useCallback, useRef, useState } from 'react';
 import styles from '../../styles/components/modals/ImportProjectModal.module.css';
+import { ProjectImporter } from '../../ts/services/project/ProjectImporter';
+import type { ProjectPreview } from '../../ts/types/project.js';
+import { logger } from '../../ts/utils/index.js';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Alert } from '../Shared/UI/Alert';
+import { Button } from '../Shared/UI/Button';
 
 interface ImportProjectModalProps {
   /** Whether modal is open */
@@ -34,28 +34,8 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle file drop
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      await processFile(files[0]);
-    }
-  }, []);
-
-  // Handle file selection
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      await processFile(files[0]);
-    }
-  }, []);
-
   // Process and validate file
-  const processFile = async (file: File) => {
+  const processFile = useCallback(async (file: File) => {
     setSelectedFile(file);
     setError(null);
     setIsValidating(true);
@@ -87,42 +67,33 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       setError(errorMessage);
       setIsValidating(false);
     }
-  };
+  }, []);
 
-  // Handle import
-  const handleImport = useCallback(async () => {
-    if (!selectedFile) return;
+  // Handle file drop
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    setIsImporting(true);
-    setError(null);
-    setProgress(10);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        await processFile(files[0]);
+      }
+    },
+    [processFile]
+  );
 
-    try {
-      const importer = new ProjectImporter();
-
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      // Import project (generates new ID automatically)
-      const project = await importer.importFromZip(selectedFile);
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      // Success - call onImport callback
-      setTimeout(() => {
-        onImport(project.id);
-        handleClose();
-      }, 500);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to import project';
-      setError(errorMessage);
-      setIsImporting(false);
-      setProgress(0);
-    }
-  }, [selectedFile, onImport]);
+  // Handle file selection
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        await processFile(files[0]);
+      }
+    },
+    [processFile]
+  );
 
   // Handle drag events
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -162,36 +133,72 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
     }
   }, [isImporting, onClose]);
 
-  const footerContent = selectedFile && preview ? (
-    <>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          setSelectedFile(null);
-          setPreview(null);
-          setError(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }}
-        disabled={isImporting}
-      >
-        Choose Different File
+  // Handle import
+  const handleImport = useCallback(async () => {
+    if (!selectedFile) return;
+
+    setIsImporting(true);
+    setError(null);
+    setProgress(10);
+
+    try {
+      const importer = new ProjectImporter();
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => Math.min(prev + 10, 90));
+      }, 200);
+
+      // Import project (generates new ID automatically)
+      const project = await importer.importFromZip(selectedFile);
+
+      clearInterval(progressInterval);
+      setProgress(100);
+
+      // Success - call onImport callback
+      setTimeout(() => {
+        onImport(project.id);
+        handleClose();
+      }, 500);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to import project';
+      setError(errorMessage);
+      setIsImporting(false);
+      setProgress(0);
+    }
+  }, [selectedFile, onImport, handleClose]);
+
+  const footerContent =
+    selectedFile && preview ? (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setSelectedFile(null);
+            setPreview(null);
+            setError(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          disabled={isImporting}
+        >
+          Choose Different File
+        </Button>
+        <Button
+          variant="accent"
+          onClick={handleImport}
+          loading={isImporting}
+          loadingText="Importing..."
+        >
+          Import Project
+        </Button>
+      </>
+    ) : (
+      <Button variant="secondary" onClick={handleClose} disabled={isImporting}>
+        Cancel
       </Button>
-      <Button
-        variant="accent"
-        onClick={handleImport}
-        loading={isImporting}
-        loadingText="Importing..."
-      >
-        Import Project
-      </Button>
-    </>
-  ) : (
-    <Button variant="secondary" onClick={handleClose} disabled={isImporting}>
-      Cancel
-    </Button>
-  );
+    );
 
   return (
     <Modal

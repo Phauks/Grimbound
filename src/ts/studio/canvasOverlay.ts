@@ -4,7 +4,7 @@
  * Draw grid, guides, and other overlay helpers on the canvas
  */
 
-import type { Guide, GridConfig, Point } from '../types/index.js';
+import type { GridConfig, Guide, Point } from '../types/index.js';
 
 /**
  * Draw grid overlay on canvas
@@ -123,11 +123,7 @@ export function drawOverlays(
  * @param enabled - Whether snapping is enabled
  * @returns Snapped point
  */
-export function snapToGrid(
-  point: Point,
-  gridSize: number,
-  enabled: boolean
-): Point {
+export function snapToGrid(point: Point, gridSize: number, enabled: boolean): Point {
   if (!enabled || gridSize <= 0) {
     return point;
   }

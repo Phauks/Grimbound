@@ -5,18 +5,18 @@
  * Shows whether the version matches the current project state.
  */
 
-import { useMemo } from 'react'
-import { Button } from '../../Shared/UI/Button'
-import type { Project, ProjectVersion } from '../../../ts/types/project'
-import styles from '../../../styles/components/projects/VersionCard.module.css'
+import { useMemo } from 'react';
+import styles from '../../../styles/components/projects/VersionCard.module.css';
+import type { Project, ProjectVersion } from '../../../ts/types/project';
+import { Button } from '../../Shared/UI/Button';
 
 interface VersionCardProps {
-  version: ProjectVersion
-  project: Project
-  onSelect: () => void
-  onDelete: () => void
-  onDuplicate: () => void
-  onRestore: () => void
+  version: ProjectVersion;
+  project: Project;
+  onSelect: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onRestore: () => void;
 }
 
 export function VersionCard({
@@ -32,41 +32,41 @@ export function VersionCard({
     // Simple comparison: compare the JSON stringified states
     // This is a basic check - could be enhanced with deep comparison
     try {
-      const versionState = JSON.stringify(version.stateSnapshot)
-      const projectState = JSON.stringify(project.state)
-      return versionState === projectState
+      const versionState = JSON.stringify(version.stateSnapshot);
+      const projectState = JSON.stringify(project.state);
+      return versionState === projectState;
     } catch {
-      return false
+      return false;
     }
-  }, [version.stateSnapshot, project.state])
+  }, [version.stateSnapshot, project.state]);
 
   // Format timestamp
   const formattedDate = useMemo(() => {
-    const date = new Date(version.createdAt)
-    const now = Date.now()
-    const diff = now - version.createdAt
+    const date = new Date(version.createdAt);
+    const now = Date.now();
+    const diff = now - version.createdAt;
 
     // Less than 1 minute
     if (diff < 60000) {
-      return 'Just now'
+      return 'Just now';
     }
 
     // Less than 1 hour
     if (diff < 3600000) {
-      const minutes = Math.floor(diff / 60000)
-      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
+      const minutes = Math.floor(diff / 60000);
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
     }
 
     // Less than 1 day
     if (diff < 86400000) {
-      const hours = Math.floor(diff / 3600000)
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+      const hours = Math.floor(diff / 3600000);
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
     }
 
     // Less than 7 days
     if (diff < 604800000) {
-      const days = Math.floor(diff / 86400000)
-      return `${days} day${days !== 1 ? 's' : ''} ago`
+      const days = Math.floor(diff / 86400000);
+      return `${days} day${days !== 1 ? 's' : ''} ago`;
     }
 
     // Otherwise show formatted date
@@ -76,18 +76,18 @@ export function VersionCard({
       year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
       hour: 'numeric',
       minute: '2-digit',
-    })
-  }, [version.createdAt])
+    });
+  }, [version.createdAt]);
 
   // Extract summary stats from snapshot
   const stats = useMemo(() => {
-    const snapshot = version.stateSnapshot
+    const snapshot = version.stateSnapshot;
     return {
       characterCount: snapshot.characters?.length || 0,
       customIconCount: snapshot.customIcons?.length || 0,
       scriptName: snapshot.scriptMeta?.name || null,
-    }
-  }, [version.stateSnapshot])
+    };
+  }, [version.stateSnapshot]);
 
   return (
     <div className={`${styles.card} ${isCurrent ? styles.current : ''}`}>
@@ -171,11 +171,14 @@ export function VersionCard({
           <span className={styles.publishedText}>
             Published
             {version.downloadCount !== undefined && version.downloadCount > 0 && (
-              <> · {version.downloadCount} download{version.downloadCount !== 1 ? 's' : ''}</>
+              <>
+                {' '}
+                · {version.downloadCount} download{version.downloadCount !== 1 ? 's' : ''}
+              </>
             )}
           </span>
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,30 +1,35 @@
-import { useCallback } from 'react'
-import { useTokenContext } from '../../../../contexts/TokenContext'
-import { useToast } from '../../../../contexts/ToastContext'
-import { TokenCard } from './TokenCard'
-import { ConfirmDialog } from '../../../Shared/ModalBase/ConfirmDialog'
-import { useTokenDeletion } from '../../../../hooks/useTokenDeletion'
-import { useTokenGrouping } from '../../../../hooks/useTokenGrouping'
-import { useStudioNavigation } from '../../../../hooks/useStudioNavigation'
-import { canvasToBlob, downloadFile } from '../../../../ts/utils/imageUtils'
-import { embedPngMetadata, buildTokenMetadata } from '../../../../ts/export/pngMetadata'
-import { logger } from '../../../../ts/utils/logger'
-import type { Token } from '../../../../ts/types/index.js'
-import type { TabType } from '../../../Layout/TabNavigation'
-import styles from '../../../../styles/components/tokens/TokenGrid.module.css'
+import { useCallback } from 'react';
+import { useToast } from '../../../../contexts/ToastContext';
+import { useTokenContext } from '../../../../contexts/TokenContext';
+import { useStudioNavigation } from '../../../../hooks/useStudioNavigation';
+import { useTokenDeletion } from '../../../../hooks/useTokenDeletion';
+import { useTokenGrouping } from '../../../../hooks/useTokenGrouping';
+import styles from '../../../../styles/components/tokens/TokenGrid.module.css';
+import { buildTokenMetadata, embedPngMetadata } from '../../../../ts/export/pngMetadata';
+import type { Token } from '../../../../ts/types/index.js';
+import { canvasToBlob, downloadFile } from '../../../../ts/utils/imageUtils';
+import { logger } from '../../../../ts/utils/logger';
+import type { TabType } from '../../../Layout/TabNavigation';
+import { ConfirmDialog } from '../../../Shared/ModalBase/ConfirmDialog';
+import { TokenCard } from './TokenCard';
 
 interface TokenGridProps {
   /** Optional tokens array - when provided, uses these instead of context */
-  tokens?: Token[]
+  tokens?: Token[];
   /** When true, hides editing controls (context menu, delete, set as example) */
-  readOnly?: boolean
+  readOnly?: boolean;
   /** Click handler for tokens - required when not readOnly */
-  onTokenClick?: (token: Token) => void
+  onTokenClick?: (token: Token) => void;
   /** Tab change handler - for navigating to Studio */
-  onTabChange?: (tab: TabType) => void
+  onTabChange?: (tab: TabType) => void;
 }
 
-export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, onTabChange }: TokenGridProps) {
+export function TokenGrid({
+  tokens: propTokens,
+  readOnly = false,
+  onTokenClick,
+  onTabChange,
+}: TokenGridProps) {
   const {
     isLoading,
     error,
@@ -34,37 +39,43 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
     setCharacters,
     setExampleToken,
     updateGenerationOptions,
-    generationOptions
-  } = useTokenContext()
-  const { addToast } = useToast()
+    generationOptions,
+  } = useTokenContext();
+  const { addToast } = useToast();
 
   // Use prop tokens if provided, otherwise use context tokens directly (no filtering)
-  const displayTokens = propTokens ?? contextTokens
-  const allTokens = propTokens ?? contextTokens
+  const displayTokens = propTokens ?? contextTokens;
+  const allTokens = propTokens ?? contextTokens;
 
-  const handleSetAsExample = useCallback((token: Token) => {
-    setExampleToken(token)
-  }, [setExampleToken])
+  const handleSetAsExample = useCallback(
+    (token: Token) => {
+      setExampleToken(token);
+    },
+    [setExampleToken]
+  );
 
   // Download single token as PNG
-  const handleDownloadToken = useCallback(async (token: Token) => {
-    try {
-      let blob = await canvasToBlob(token.canvas)
+  const handleDownloadToken = useCallback(
+    async (token: Token) => {
+      try {
+        let blob = await canvasToBlob(token.canvas);
 
-      // Embed metadata if enabled in settings
-      if (generationOptions.pngSettings?.embedMetadata) {
-        const metadata = buildTokenMetadata(token)
-        blob = await embedPngMetadata(blob, metadata)
+        // Embed metadata if enabled in settings
+        if (generationOptions.pngSettings?.embedMetadata) {
+          const metadata = buildTokenMetadata(token);
+          blob = await embedPngMetadata(blob, metadata);
+        }
+
+        const filename = `${token.filename}.png`;
+        downloadFile(blob, filename);
+        addToast(`Downloaded ${token.name}`, 'success');
+      } catch (error) {
+        logger.error('TokenGrid', 'Failed to download token', error);
+        addToast('Failed to download token', 'error');
       }
-
-      const filename = `${token.filename}.png`
-      downloadFile(blob, filename)
-      addToast(`Downloaded ${token.name}`, 'success')
-    } catch (error) {
-      logger.error('TokenGrid', 'Failed to download token', error)
-      addToast('Failed to download token', 'error')
-    }
-  }, [generationOptions.pngSettings, addToast])
+    },
+    [generationOptions.pngSettings, addToast]
+  );
 
   // Use custom hooks for token management
   const deletion = useTokenDeletion({
@@ -72,12 +83,12 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
     characters,
     setTokens,
     setCharacters,
-    updateGenerationOptions
-  })
+    updateGenerationOptions,
+  });
 
-  const grouping = useTokenGrouping(displayTokens)
+  const grouping = useTokenGrouping(displayTokens);
 
-  const studioNav = useStudioNavigation({ onTabChange })
+  const studioNav = useStudioNavigation({ onTabChange });
 
   // For readOnly mode with prop tokens, skip loading/error states
   if (!propTokens && allTokens.length === 0) {
@@ -85,7 +96,7 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
       <div className={styles.emptyState}>
         <p>No tokens generated yet. Upload or paste a JSON script to get started.</p>
       </div>
-    )
+    );
   }
 
   if (!propTokens && isLoading) {
@@ -94,7 +105,7 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
         <div className={styles.spinner}></div>
         <p>Generating tokens...</p>
       </div>
-    )
+    );
   }
 
   if (!propTokens && error) {
@@ -102,7 +113,7 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
       <div className={styles.errorState}>
         <p className={styles.errorMessage}>Error: {error}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -194,5 +205,5 @@ export function TokenGrid({ tokens: propTokens, readOnly = false, onTokenClick, 
         />
       )}
     </div>
-  )
+  );
 }

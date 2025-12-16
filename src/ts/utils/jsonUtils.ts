@@ -3,7 +3,7 @@
  * JSON Utility Functions
  */
 
-import type { ValidationResult, ScriptEntry, Character } from '../types/index.js';
+import type { Character, ScriptEntry, ValidationResult } from '../types/index.js';
 
 /**
  * Format JSON with pretty printing
@@ -11,12 +11,12 @@ import type { ValidationResult, ScriptEntry, Character } from '../types/index.js
  * @returns Formatted JSON string
  */
 export function formatJson(jsonString: string): string {
-    try {
-        const parsed = JSON.parse(jsonString) as unknown;
-        return JSON.stringify(parsed, null, 2);
-    } catch {
-        return jsonString;
-    }
+  try {
+    const parsed = JSON.parse(jsonString) as unknown;
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return jsonString;
+  }
 }
 
 /**
@@ -25,39 +25,39 @@ export function formatJson(jsonString: string): string {
  * @returns Validation result with valid boolean and error message
  */
 export function validateJson(jsonString: string): ValidationResult {
-    if (!jsonString.trim()) {
-        return { valid: false, error: 'JSON is empty' };
+  if (!jsonString.trim()) {
+    return { valid: false, error: 'JSON is empty' };
+  }
+  try {
+    const parsed = JSON.parse(jsonString) as unknown;
+    if (!Array.isArray(parsed)) {
+      return { valid: false, error: 'JSON must be an array' };
     }
-    try {
-        const parsed = JSON.parse(jsonString) as unknown;
-        if (!Array.isArray(parsed)) {
-            return { valid: false, error: 'JSON must be an array' };
-        }
-        return { valid: true, data: parsed as ScriptEntry[] };
-    } catch (e) {
-        const error = e instanceof Error ? e.message : 'Unknown error';
-        return { valid: false, error: `Invalid JSON: ${error}` };
-    }
+    return { valid: true, data: parsed as ScriptEntry[] };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : 'Unknown error';
+    return { valid: false, error: `Invalid JSON: ${error}` };
+  }
 }
 
 /**
  * Deep clone an object using structuredClone (with JSON fallback for older browsers).
  * structuredClone handles more types (Date, RegExp, Map, Set, ArrayBuffer, etc.) and circular references.
  * Falls back to JSON serialization for environments without structuredClone support.
- * 
+ *
  * @param obj - Object to clone
  * @returns Cloned object
  */
 export function deepClone<T>(obj: T): T {
-    if (obj === null || obj === undefined) {
-        return obj;
-    }
-    // Use structuredClone if available (Chrome 98+, Firefox 94+, Safari 15.4+)
-    if (typeof structuredClone === 'function') {
-        return structuredClone(obj);
-    }
-    // Fallback to JSON serialization for older browsers
-    return JSON.parse(JSON.stringify(obj)) as T;
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  // Use structuredClone if available (Chrome 98+, Firefox 94+, Safari 15.4+)
+  if (typeof structuredClone === 'function') {
+    return structuredClone(obj);
+  }
+  // Fallback to JSON serialization for older browsers
+  return JSON.parse(JSON.stringify(obj)) as T;
 }
 
 /**
@@ -66,10 +66,12 @@ export function deepClone<T>(obj: T): T {
  * @param entry - Object to strip internal fields from
  * @returns Object with internal fields removed
  */
-export function stripInternalFields<T extends Record<string, unknown>>(entry: T): Omit<T, 'uuid' | 'source'> {
-    if (typeof entry !== 'object' || entry === null) return entry;
-    const { uuid, source, ...rest } = entry;
-    return rest as Omit<T, 'uuid' | 'source'>;
+export function stripInternalFields<T extends Record<string, unknown>>(
+  entry: T
+): Omit<T, 'uuid' | 'source'> {
+  if (typeof entry !== 'object' || entry === null) return entry;
+  const { uuid, source, ...rest } = entry;
+  return rest as Omit<T, 'uuid' | 'source'>;
 }
 
 /**
@@ -79,23 +81,23 @@ export function stripInternalFields<T extends Record<string, unknown>>(entry: T)
  * @returns Cleaned JSON string with internal fields removed
  */
 export function getCleanJsonForExport(jsonString: string): string {
-    try {
-        const parsed = JSON.parse(jsonString);
-        if (!Array.isArray(parsed)) return jsonString;
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) return jsonString;
 
-        const cleaned = parsed.map(entry => {
-            // If it's an object (character or meta), strip uuid and source
-            if (typeof entry === 'object' && entry !== null) {
-                return stripInternalFields(entry as Record<string, unknown>);
-            }
-            // String IDs stay as-is
-            return entry;
-        });
+    const cleaned = parsed.map((entry) => {
+      // If it's an object (character or meta), strip uuid and source
+      if (typeof entry === 'object' && entry !== null) {
+        return stripInternalFields(entry as Record<string, unknown>);
+      }
+      // String IDs stay as-is
+      return entry;
+    });
 
-        return JSON.stringify(cleaned, null, 2);
-    } catch {
-        return jsonString;
-    }
+    return JSON.stringify(cleaned, null, 2);
+  } catch {
+    return jsonString;
+  }
 }
 
 /**
@@ -104,9 +106,9 @@ export function getCleanJsonForExport(jsonString: string): string {
  * @returns True if entry is condensable { "id": "..." } format
  */
 function isCondensableIdReference(entry: unknown): entry is { id: string } {
-    if (typeof entry !== 'object' || entry === null) return false;
-    const keys = Object.keys(entry);
-    return keys.length === 1 && 'id' in entry && typeof (entry as { id: unknown }).id === 'string';
+  if (typeof entry !== 'object' || entry === null) return false;
+  const keys = Object.keys(entry);
+  return keys.length === 1 && 'id' in entry && typeof (entry as { id: unknown }).id === 'string';
 }
 
 /**
@@ -116,8 +118,8 @@ function isCondensableIdReference(entry: unknown): entry is { id: string } {
  * @returns True if ID matches an official character
  */
 function isOfficialCharacter(id: string, officialData: Character[]): boolean {
-    const normalizedId = id.toLowerCase().trim();
-    return officialData.some(char => char.id.toLowerCase() === normalizedId);
+  const normalizedId = id.toLowerCase().trim();
+  return officialData.some((char) => char.id.toLowerCase() === normalizedId);
 }
 
 /**
@@ -128,20 +130,20 @@ function isOfficialCharacter(id: string, officialData: Character[]): boolean {
  * @returns True if script contains condensable references
  */
 export function hasCondensableReferences(jsonString: string, officialData: Character[]): boolean {
-    try {
-        const parsed = JSON.parse(jsonString);
-        if (!Array.isArray(parsed)) return false;
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) return false;
 
-        return parsed.some(entry => {
-            // Check if entry is condensable format and matches official character
-            if (isCondensableIdReference(entry)) {
-                return isOfficialCharacter(entry.id, officialData);
-            }
-            return false;
-        });
-    } catch {
-        return false;
-    }
+    return parsed.some((entry) => {
+      // Check if entry is condensable format and matches official character
+      if (isCondensableIdReference(entry)) {
+        return isOfficialCharacter(entry.id, officialData);
+      }
+      return false;
+    });
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -152,21 +154,21 @@ export function hasCondensableReferences(jsonString: string, officialData: Chara
  * @returns Condensed JSON string with simplified character references
  */
 export function condenseScript(jsonString: string, officialData: Character[]): string {
-    try {
-        const parsed = JSON.parse(jsonString);
-        if (!Array.isArray(parsed)) return jsonString;
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) return jsonString;
 
-        const condensed = parsed.map(entry => {
-            // If entry is condensable and matches official character, convert to string
-            if (isCondensableIdReference(entry) && isOfficialCharacter(entry.id, officialData)) {
-                return entry.id;
-            }
-            // Keep all other entries as-is (strings, _meta, custom characters, etc.)
-            return entry;
-        });
+    const condensed = parsed.map((entry) => {
+      // If entry is condensable and matches official character, convert to string
+      if (isCondensableIdReference(entry) && isOfficialCharacter(entry.id, officialData)) {
+        return entry.id;
+      }
+      // Keep all other entries as-is (strings, _meta, custom characters, etc.)
+      return entry;
+    });
 
-        return JSON.stringify(condensed, null, 2);
-    } catch {
-        return jsonString;
-    }
+    return JSON.stringify(condensed, null, 2);
+  } catch {
+    return jsonString;
+  }
 }

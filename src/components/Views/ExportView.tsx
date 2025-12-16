@@ -1,116 +1,130 @@
-import { useState, useMemo, useCallback } from 'react'
-import { useTokenContext } from '../../contexts/TokenContext'
-import { useExport } from '../../hooks/useExport'
-import { useToast } from '../../contexts/ToastContext'
-import { ViewLayout } from '../Layout/ViewLayout'
-import { Button } from '../Shared/UI/Button'
-import { MeasurementSlider } from '../Shared/Controls/MeasurementSlider'
-import { OptionGroup } from '../Shared/UI/OptionGroup'
-import { SliderWithValue } from '../Shared/Controls/SliderWithValue'
-import { PDF_OFFSET_CONFIG, BLEED_CONFIG } from '../../ts/utils/measurementUtils'
-import styles from '../../styles/components/views/Views.module.css'
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css'
-import type { CompressionLevel, ZipExportOptions, MeasurementUnit } from '../../ts/types/index'
+import { useCallback, useMemo, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { useTokenContext } from '../../contexts/TokenContext';
+import { useExport } from '../../hooks/useExport';
+import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
+import styles from '../../styles/components/views/Views.module.css';
+import type { CompressionLevel, ZipExportOptions } from '../../ts/types/index';
+import { BLEED_CONFIG, PDF_OFFSET_CONFIG } from '../../ts/utils/measurementUtils';
+import { ViewLayout } from '../Layout/ViewLayout';
+import { MeasurementSlider } from '../Shared/Controls/MeasurementSlider';
+import { SliderWithValue } from '../Shared/Controls/SliderWithValue';
+import { Button } from '../Shared/UI/Button';
+import { OptionGroup } from '../Shared/UI/OptionGroup';
 
 const DEFAULT_ZIP_SETTINGS: ZipExportOptions = {
   saveInTeamFolders: true,
   saveRemindersSeparately: true,
   metaTokenFolder: true,
   includeScriptJson: false,
-  compressionLevel: 'normal'
-}
+  compressionLevel: 'normal',
+};
 
 export function ExportView() {
-  const { tokens, generationOptions, updateGenerationOptions, characters, scriptMeta } = useTokenContext()
-  const { downloadZip, downloadPdf, downloadJson, downloadStyleFormat, downloadAll, cancelExport, isExporting, exportProgress, exportStep } = useExport()
-  const { addToast } = useToast()
-  const [activeZipSubTab, setActiveZipSubTab] = useState<'structure' | 'quality'>('structure')
-  const [activePdfSubTab, setActivePdfSubTab] = useState<'layout' | 'quality'>('layout')
-  const [isExportingNightOrder, setIsExportingNightOrder] = useState(false)
+  const { tokens, generationOptions, updateGenerationOptions, characters, scriptMeta } =
+    useTokenContext();
+  const {
+    downloadZip,
+    downloadPdf,
+    downloadJson,
+    downloadStyleFormat,
+    downloadAll,
+    cancelExport,
+    isExporting,
+    exportProgress,
+    exportStep,
+  } = useExport();
+  const { addToast } = useToast();
+  const [activeZipSubTab, setActiveZipSubTab] = useState<'structure' | 'quality'>('structure');
+  const [activePdfSubTab, setActivePdfSubTab] = useState<'layout' | 'quality'>('layout');
+  const [isExportingNightOrder, setIsExportingNightOrder] = useState(false);
 
   // Ensure zipSettings has all required fields
-  const zipSettings = useMemo(() => ({
-    ...DEFAULT_ZIP_SETTINGS,
-    ...generationOptions.zipSettings
-  }), [generationOptions.zipSettings])
+  const zipSettings = useMemo(
+    () => ({
+      ...DEFAULT_ZIP_SETTINGS,
+      ...generationOptions.zipSettings,
+    }),
+    [generationOptions.zipSettings]
+  );
 
   const handleDownloadZip = async () => {
     try {
-      addToast('Preparing ZIP download...', 'info')
-      await downloadZip()
-      addToast('ZIP file downloaded successfully', 'success')
+      addToast('Preparing ZIP download...', 'info');
+      await downloadZip();
+      addToast('ZIP file downloaded successfully', 'success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to create ZIP: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to create ZIP: ${message}`, 'error');
     }
-  }
+  };
 
   const handleDownloadPdf = async () => {
     try {
-      addToast('Preparing PDF download...', 'info')
-      await downloadPdf()
-      addToast('PDF downloaded successfully', 'success')
+      addToast('Preparing PDF download...', 'info');
+      await downloadPdf();
+      addToast('PDF downloaded successfully', 'success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to generate PDF: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to generate PDF: ${message}`, 'error');
     }
-  }
+  };
 
   const handleDownloadJson = () => {
     try {
-      addToast('Preparing JSON download...', 'info')
-      downloadJson()
-      addToast('JSON downloaded successfully', 'success')
+      addToast('Preparing JSON download...', 'info');
+      downloadJson();
+      addToast('JSON downloaded successfully', 'success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to download JSON: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to download JSON: ${message}`, 'error');
     }
-  }
+  };
 
   const handleDownloadStyleFormat = () => {
     try {
-      addToast('Preparing style format download...', 'info')
-      downloadStyleFormat()
-      addToast('Style format downloaded successfully', 'success')
+      addToast('Preparing style format download...', 'info');
+      downloadStyleFormat();
+      addToast('Style format downloaded successfully', 'success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to download style: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to download style: ${message}`, 'error');
     }
-  }
+  };
 
   const handleDownloadAll = async () => {
     try {
-      addToast('Preparing complete package...', 'info')
-      await downloadAll()
-      addToast('All files downloaded successfully', 'success')
+      addToast('Preparing complete package...', 'info');
+      await downloadAll();
+      addToast('All files downloaded successfully', 'success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to download all: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to download all: ${message}`, 'error');
     }
-  }
+  };
 
   const handleDownloadNightOrder = useCallback(async () => {
-    if (isExportingNightOrder) return
+    if (isExportingNightOrder) return;
     if (characters.length === 0) {
-      addToast('No characters found. Load a script first.', 'warning')
-      return
+      addToast('No characters found. Load a script first.', 'warning');
+      return;
     }
 
-    setIsExportingNightOrder(true)
+    setIsExportingNightOrder(true);
     try {
-      addToast('Preparing Night Order PDF...', 'info')
+      addToast('Preparing Night Order PDF...', 'info');
       // For now, inform the user to use the Script tab
       // A full implementation would require rendering the night order sheets programmatically
-      addToast('Please use the Script tab to generate Night Order PDFs', 'info')
+      addToast('Please use the Script tab to generate Night Order PDFs', 'info');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      addToast(`Failed to generate Night Order: ${message}`, 'error')
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      addToast(`Failed to generate Night Order: ${message}`, 'error');
     } finally {
-      setIsExportingNightOrder(false)
+      setIsExportingNightOrder(false);
     }
-  }, [isExportingNightOrder, characters, addToast])
+  }, [isExportingNightOrder, characters, addToast]);
 
-  const hasTokens = tokens.length > 0
+  const hasTokens = tokens.length > 0;
 
   return (
     <ViewLayout variant="2-panel">
@@ -129,13 +143,16 @@ export function ExportView() {
                   type="checkbox"
                   className={styles.toggleSwitch}
                   checked={generationOptions.pngSettings?.embedMetadata ?? false}
-                  onChange={(e) => updateGenerationOptions({
-                    pngSettings: {
-                      ...generationOptions.pngSettings,
-                      embedMetadata: e.target.checked,
-                      transparentBackground: generationOptions.pngSettings?.transparentBackground ?? false
-                    }
-                  })}
+                  onChange={(e) =>
+                    updateGenerationOptions({
+                      pngSettings: {
+                        ...generationOptions.pngSettings,
+                        embedMetadata: e.target.checked,
+                        transparentBackground:
+                          generationOptions.pngSettings?.transparentBackground ?? false,
+                      },
+                    })
+                  }
                 />
               </OptionGroup>
 
@@ -147,13 +164,15 @@ export function ExportView() {
                   type="checkbox"
                   className={styles.toggleSwitch}
                   checked={generationOptions.pngSettings?.transparentBackground ?? false}
-                  onChange={(e) => updateGenerationOptions({
-                    pngSettings: {
-                      ...generationOptions.pngSettings,
-                      embedMetadata: generationOptions.pngSettings?.embedMetadata ?? false,
-                      transparentBackground: e.target.checked
-                    }
-                  })}
+                  onChange={(e) =>
+                    updateGenerationOptions({
+                      pngSettings: {
+                        ...generationOptions.pngSettings,
+                        embedMetadata: generationOptions.pngSettings?.embedMetadata ?? false,
+                        transparentBackground: e.target.checked,
+                      },
+                    })
+                  }
                 />
               </OptionGroup>
             </div>
@@ -189,12 +208,14 @@ export function ExportView() {
                       type="checkbox"
                       className={styles.toggleSwitch}
                       checked={zipSettings.saveInTeamFolders}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          saveInTeamFolders: e.target.checked,
-                        }
-                      })}
+                      onChange={(e) =>
+                        updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            saveInTeamFolders: e.target.checked,
+                          },
+                        })
+                      }
                     />
                   </OptionGroup>
 
@@ -206,12 +227,14 @@ export function ExportView() {
                       type="checkbox"
                       className={styles.toggleSwitch}
                       checked={zipSettings.saveRemindersSeparately}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          saveRemindersSeparately: e.target.checked,
-                        }
-                      })}
+                      onChange={(e) =>
+                        updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            saveRemindersSeparately: e.target.checked,
+                          },
+                        })
+                      }
                     />
                   </OptionGroup>
 
@@ -223,12 +246,14 @@ export function ExportView() {
                       type="checkbox"
                       className={styles.toggleSwitch}
                       checked={zipSettings.metaTokenFolder}
-                      onChange={(e) => updateGenerationOptions({
-                        zipSettings: {
-                          ...zipSettings,
-                          metaTokenFolder: e.target.checked,
-                        }
-                      })}
+                      onChange={(e) =>
+                        updateGenerationOptions({
+                          zipSettings: {
+                            ...zipSettings,
+                            metaTokenFolder: e.target.checked,
+                          },
+                        })
+                      }
                     />
                   </OptionGroup>
                 </>
@@ -242,12 +267,14 @@ export function ExportView() {
                   <select
                     className={styles.selectInput}
                     value={zipSettings.compressionLevel}
-                    onChange={(e) => updateGenerationOptions({
-                      zipSettings: {
-                        ...zipSettings,
-                        compressionLevel: e.target.value as CompressionLevel
-                      }
-                    })}
+                    onChange={(e) =>
+                      updateGenerationOptions({
+                        zipSettings: {
+                          ...zipSettings,
+                          compressionLevel: e.target.value as CompressionLevel,
+                        },
+                      })
+                    }
                   >
                     <option value="fast">Fast (larger file)</option>
                     <option value="normal">Normal (balanced)</option>
@@ -331,7 +358,7 @@ export function ExportView() {
                   isSlider
                 >
                   <SliderWithValue
-                    value={(generationOptions.pdfImageQuality ?? 0.90) * 100}
+                    value={(generationOptions.pdfImageQuality ?? 0.9) * 100}
                     onChange={(value) => updateGenerationOptions({ pdfImageQuality: value / 100 })}
                     min={70}
                     max={100}
@@ -359,7 +386,10 @@ export function ExportView() {
           ) : (
             <div className={styles.noTokensMessage}>
               <p>No tokens generated yet.</p>
-              <p className={styles.noTokensHint}>Generate tokens in the Editor or Gallery tab first, then come back here to download them.</p>
+              <p className={styles.noTokensHint}>
+                Generate tokens in the Editor or Gallery tab first, then come back here to download
+                them.
+              </p>
             </div>
           )}
 
@@ -441,11 +471,12 @@ export function ExportView() {
             </div>
 
             <p className={styles.btnDescription}>
-              Token Print Sheets are compatible with Avery 94500 (1.75" character tokens) and Avery 94509 (1" reminder tokens) label sheets.
+              Token Print Sheets are compatible with Avery 94500 (1.75" character tokens) and Avery
+              94509 (1" reminder tokens) label sheets.
             </p>
           </div>
         </div>
       </ViewLayout.Panel>
     </ViewLayout>
-  )
+  );
 }

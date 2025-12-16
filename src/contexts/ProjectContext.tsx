@@ -7,12 +7,17 @@
  * @module contexts/ProjectContext
  */
 
-import { createContext, useContext, ReactNode, useState, useCallback, useRef, useEffect } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useProjectCacheWarming } from '../hooks/useProjectCacheWarming.js';
-import type {
-  Project,
-  AutoSaveStatus,
-} from '../ts/types/project.js';
+import type { AutoSaveStatus, Project } from '../ts/types/project.js';
 
 // ============================================================================
 // Context Type Definition
@@ -92,7 +97,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
   // Change version - increments on every state change
   const [changeVersion, setChangeVersion] = useState(0);
   const incrementChangeVersion = useCallback(() => {
-    setChangeVersion(v => v + 1);
+    setChangeVersion((v) => v + 1);
   }, []);
 
   // Last saved timestamp
@@ -121,7 +126,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     } else {
       setLastSavedAt(null);
     }
-  }, [currentProject?.id, currentProject?.lastModifiedAt]);
+  }, [currentProject?.lastModifiedAt]);
 
   // Warm caches when project changes
   useProjectCacheWarming(currentProject);
@@ -144,11 +149,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     setSaveNow: setSaveNowFn,
   };
 
-  return (
-    <ProjectContext.Provider value={value}>
-      {children}
-    </ProjectContext.Provider>
-  );
+  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }
 
 // ============================================================================

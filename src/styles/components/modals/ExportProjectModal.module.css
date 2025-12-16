@@ -68,14 +68,14 @@
   border-color: var(--primary-color, #1976d2);
 }
 
-.option input[type='checkbox'] {
+.option input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.option input[type='checkbox']:disabled {
+.option input[type="checkbox"]:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

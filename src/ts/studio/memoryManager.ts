@@ -5,8 +5,8 @@
  * Provides utilities for estimating memory consumption and triggering cleanup.
  */
 
-import type { Layer } from '../types/index.js';
 import { studioCanvasPool } from '../canvas/canvasPool.js';
+import type { Layer } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 // ============================================================================
@@ -96,7 +96,10 @@ export class MemoryManager {
    * @param avgCanvasSize - Average canvas dimensions
    * @returns Estimated memory in MB
    */
-  estimateHistoryMemory(historyCount: number, avgCanvasSize: { width: number; height: number }): number {
+  estimateHistoryMemory(
+    historyCount: number,
+    avgCanvasSize: { width: number; height: number }
+  ): number {
     if (historyCount === 0) return 0;
 
     // Compressed PNG/JPEG is roughly 10-20% of raw size
@@ -117,7 +120,11 @@ export class MemoryManager {
    * @param canvasSize - Current canvas size
    * @returns Memory statistics
    */
-  getStats(layers: Layer[], historyCount: number, canvasSize: { width: number; height: number }): MemoryStats {
+  getStats(
+    layers: Layer[],
+    historyCount: number,
+    canvasSize: { width: number; height: number }
+  ): MemoryStats {
     const layersMB = this.estimateLayerMemory(layers);
     const historyMB = this.estimateHistoryMemory(historyCount, canvasSize);
     const totalMB = layersMB + historyMB;
@@ -149,7 +156,11 @@ export class MemoryManager {
    * @param canvasSize - Current canvas size
    * @returns True if memory usage is safe
    */
-  checkMemoryLimit(layers: Layer[], historyCount: number, canvasSize: { width: number; height: number }): boolean {
+  checkMemoryLimit(
+    layers: Layer[],
+    historyCount: number,
+    canvasSize: { width: number; height: number }
+  ): boolean {
     const stats = this.getStats(layers, historyCount, canvasSize);
     return !stats.isCritical;
   }
@@ -230,7 +241,9 @@ export class MemoryManager {
     const recommendations: string[] = [];
 
     if (stats.isCritical) {
-      recommendations.push('Memory usage is critical. Consider clearing history or merging layers.');
+      recommendations.push(
+        'Memory usage is critical. Consider clearing history or merging layers.'
+      );
     } else if (stats.isWarning) {
       recommendations.push('Memory usage is high. Consider optimizing your workflow.');
     }
@@ -244,7 +257,9 @@ export class MemoryManager {
     }
 
     if (stats.poolStats.available > 10) {
-      recommendations.push('Canvas pool has many unused canvases. They will be released automatically.');
+      recommendations.push(
+        'Canvas pool has many unused canvases. They will be released automatically.'
+      );
     }
 
     return recommendations;
@@ -265,7 +280,9 @@ export class MemoryManager {
     ];
 
     if (stats.isWarning) {
-      lines.push(`⚠️  Memory usage: ${((stats.totalMB / this.config.maxMemoryMB) * 100).toFixed(1)}%`);
+      lines.push(
+        `⚠️  Memory usage: ${((stats.totalMB / this.config.maxMemoryMB) * 100).toFixed(1)}%`
+      );
     }
 
     return lines.join('\n');

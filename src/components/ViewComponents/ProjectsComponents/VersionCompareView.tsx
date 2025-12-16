@@ -6,41 +6,41 @@
  * visual diff indicators for added (+), removed (-), and modified (≈) items.
  */
 
-import { useMemo } from 'react'
-import { calculateProjectDiff, getDiffSummary } from '../../../ts/utils/projectDiff'
-import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js'
-import type { ProjectState, ProjectVersion } from '../../../ts/types/project'
-import type { Character, Team } from '../../../ts/types/index'
-import styles from '../../../styles/components/projects/VersionCompareView.module.css'
+import { useMemo } from 'react';
+import styles from '../../../styles/components/projects/VersionCompareView.module.css';
+import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js';
+import type { Character, Team } from '../../../ts/types/index';
+import type { ProjectState, ProjectVersion } from '../../../ts/types/project';
+import { calculateProjectDiff, getDiffSummary } from '../../../ts/utils/projectDiff';
 
 interface VersionCompareViewProps {
   /** Current project state */
-  currentState: ProjectState
+  currentState: ProjectState;
   /** Selected version to compare against */
-  compareVersion: ProjectVersion
+  compareVersion: ProjectVersion;
   /** Handler to exit compare mode */
-  onExitCompare: () => void
+  onExitCompare: () => void;
   /** Handler to restore the selected version */
-  onRestore: (version: ProjectVersion) => void
+  onRestore: (version: ProjectVersion) => void;
   /** Whether restore is in progress */
-  isRestoring?: boolean
+  isRestoring?: boolean;
 }
 
 /**
  * Format relative time from a timestamp
  */
 function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-  if (days > 0) return `${days}d ago`
-  if (hours > 0) return `${hours}h ago`
-  if (minutes > 0) return `${minutes}m ago`
-  return 'Just now'
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return 'Just now';
 }
 
 export function VersionCompareView({
@@ -48,14 +48,14 @@ export function VersionCompareView({
   compareVersion,
   onExitCompare,
   onRestore,
-  isRestoring = false
+  isRestoring = false,
 }: VersionCompareViewProps) {
   // Calculate the diff between current and version states
   const diff = useMemo(() => {
-    return calculateProjectDiff(compareVersion.stateSnapshot, currentState)
-  }, [currentState, compareVersion.stateSnapshot])
+    return calculateProjectDiff(compareVersion.stateSnapshot, currentState);
+  }, [currentState, compareVersion.stateSnapshot]);
 
-  const summary = useMemo(() => getDiffSummary(diff), [diff])
+  const summary = useMemo(() => getDiffSummary(diff), [diff]);
 
   return (
     <div className={styles.container}>
@@ -66,16 +66,15 @@ export function VersionCompareView({
             Comparing: <span className={styles.current}>Current</span>
             <span className={styles.arrow}>↔</span>
             <span className={styles.version}>v{compareVersion.versionNumber}</span>
-            <span className={styles.versionTime}>{formatRelativeTime(compareVersion.createdAt)}</span>
+            <span className={styles.versionTime}>
+              {formatRelativeTime(compareVersion.createdAt)}
+            </span>
           </h3>
           <p className={styles.summary}>{summary}</p>
         </div>
 
         <div className={styles.headerActions}>
-          <button
-            className={styles.exitButton}
-            onClick={onExitCompare}
-          >
+          <button type="button" className={styles.exitButton} onClick={onExitCompare}>
             ✕ Exit Compare
           </button>
           <button
@@ -137,7 +136,10 @@ export function VersionCompareView({
               <h4 className={styles.sectionTitle}>
                 Characters
                 <span className={styles.countBadge}>
-                  {diff.characters.added.length + diff.characters.removed.length + diff.characters.modified.length} changes
+                  {diff.characters.added.length +
+                    diff.characters.removed.length +
+                    diff.characters.modified.length}{' '}
+                  changes
                 </span>
               </h4>
 
@@ -149,12 +151,8 @@ export function VersionCompareView({
                   </div>
                   <div className={styles.columnContent}>
                     {/* Added characters (in current, not in version) */}
-                    {diff.characters.added.map(char => (
-                      <CharacterRow
-                        key={`added-${char.id}`}
-                        character={char}
-                        status="added"
-                      />
+                    {diff.characters.added.map((char) => (
+                      <CharacterRow key={`added-${char.id}`} character={char} status="added" />
                     ))}
 
                     {/* Modified characters (show current version) */}
@@ -171,30 +169,29 @@ export function VersionCompareView({
 
                 <div className={styles.column}>
                   <div className={styles.columnHeader}>
-                    <span>v{compareVersion.versionNumber} ({compareVersion.stateSnapshot.characters.length})</span>
+                    <span>
+                      v{compareVersion.versionNumber} (
+                      {compareVersion.stateSnapshot.characters.length})
+                    </span>
                   </div>
                   <div className={styles.columnContent}>
                     {/* Removed characters (in version, not in current) */}
-                    {diff.characters.removed.map(char => (
-                      <CharacterRow
-                        key={`removed-${char.id}`}
-                        character={char}
-                        status="removed"
-                      />
+                    {diff.characters.removed.map((char) => (
+                      <CharacterRow key={`removed-${char.id}`} character={char} status="removed" />
                     ))}
 
                     {/* Modified characters (show version's version) */}
                     {diff.characters.modified.map(({ character }) => {
                       const versionChar = compareVersion.stateSnapshot.characters.find(
-                        c => c.id === character.id
-                      )
+                        (c) => c.id === character.id
+                      );
                       return versionChar ? (
                         <CharacterRow
                           key={`modified-old-${versionChar.id}`}
                           character={versionChar}
                           status="modified"
                         />
-                      ) : null
+                      ) : null;
                     })}
                   </div>
                 </div>
@@ -207,7 +204,7 @@ export function VersionCompareView({
             <div className={styles.section}>
               <h4 className={styles.sectionTitle}>Generation Options</h4>
               <div className={styles.optionsList}>
-                {diff.generationOptions.fields.map(field => (
+                {diff.generationOptions.fields.map((field) => (
                   <div key={field} className={styles.optionChange}>
                     <span className={styles.modifiedIndicator}>≈</span>
                     <span className={styles.optionName}>{formatOptionName(field)}</span>
@@ -223,14 +220,10 @@ export function VersionCompareView({
               <h4 className={styles.sectionTitle}>Custom Icons</h4>
               <div className={styles.iconsSummary}>
                 {diff.customIcons.added > 0 && (
-                  <span className={styles.addedText}>
-                    +{diff.customIcons.added} added
-                  </span>
+                  <span className={styles.addedText}>+{diff.customIcons.added} added</span>
                 )}
                 {diff.customIcons.removed > 0 && (
-                  <span className={styles.removedText}>
-                    -{diff.customIcons.removed} removed
-                  </span>
+                  <span className={styles.removedText}>-{diff.customIcons.removed} removed</span>
                 )}
               </div>
             </div>
@@ -238,7 +231,7 @@ export function VersionCompareView({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // ==========================================================================
@@ -246,9 +239,9 @@ export function VersionCompareView({
 // ==========================================================================
 
 interface MetaChangeProps {
-  label: string
-  oldValue: string | undefined
-  newValue: string | undefined
+  label: string;
+  oldValue: string | undefined;
+  newValue: string | undefined;
 }
 
 function MetaChange({ label, oldValue, newValue }: MetaChangeProps) {
@@ -261,29 +254,29 @@ function MetaChange({ label, oldValue, newValue }: MetaChangeProps) {
         <span className={styles.newValue}>{newValue || '(empty)'}</span>
       </div>
     </div>
-  )
+  );
 }
 
 interface CharacterRowProps {
-  character: Character
-  status: 'added' | 'removed' | 'modified'
-  changedFields?: string[]
+  character: Character;
+  status: 'added' | 'removed' | 'modified';
+  changedFields?: string[];
 }
 
 function CharacterRow({ character, status, changedFields }: CharacterRowProps) {
   const statusClass = {
     added: styles.statusAdded,
     removed: styles.statusRemoved,
-    modified: styles.statusModified
-  }[status]
+    modified: styles.statusModified,
+  }[status];
 
   const statusIcon = {
     added: '+',
     removed: '-',
-    modified: '≈'
-  }[status]
+    modified: '≈',
+  }[status];
 
-  const team = character.team as Team
+  const team = character.team as Team;
 
   return (
     <div className={`${styles.characterRow} ${statusClass}`}>
@@ -295,12 +288,10 @@ function CharacterRow({ character, status, changedFields }: CharacterRowProps) {
       />
       <span className={styles.characterName}>{character.name}</span>
       {changedFields && changedFields.length > 0 && (
-        <span className={styles.changedFields}>
-          ({changedFields.join(', ')})
-        </span>
+        <span className={styles.changedFields}>({changedFields.join(', ')})</span>
       )}
     </div>
-  )
+  );
 }
 
 // ==========================================================================
@@ -313,6 +304,6 @@ function CharacterRow({ character, status, changedFields }: CharacterRowProps) {
 function formatOptionName(key: string): string {
   return key
     .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim()
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
 }

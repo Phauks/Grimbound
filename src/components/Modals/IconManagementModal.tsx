@@ -6,13 +6,13 @@
  * Migrated to use unified Modal and Button components.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
-import { IconUploader } from '../Shared/Controls/IconUploader';
+import { useCallback, useMemo, useState } from 'react';
+import styles from '../../styles/components/modals/IconManagementModal.module.css';
 import type { Character } from '../../ts/types/index.js';
 import type { CustomIconMetadata } from '../../ts/types/project.js';
-import styles from '../../styles/components/modals/IconManagementModal.module.css';
+import { IconUploader } from '../Shared/Controls/IconUploader';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
 
 interface IconManagementModalProps {
   /** Whether modal is open */

@@ -21,11 +21,11 @@
  */
 
 import JSZip from 'jszip';
-import type { DBAsset, AssetFilter } from './types.js';
-import { assetStorageService } from './AssetStorageService.js';
 import { downloadFile } from '../../utils/imageUtils.js';
-import { sanitizeFilename } from '../../utils/stringUtils.js';
 import { logger } from '../../utils/logger.js';
+import { sanitizeFilename } from '../../utils/stringUtils.js';
+import { assetStorageService } from './AssetStorageService.js';
+import type { DBAsset } from './types.js';
 
 /**
  * Archive manifest metadata
@@ -114,10 +114,7 @@ export class AssetArchiveService {
    * );
    * ```
    */
-  async archiveAssets(
-    assetIds: string[],
-    options: ArchiveOptions = {}
-  ): Promise<ArchiveResult> {
+  async archiveAssets(assetIds: string[], options: ArchiveOptions = {}): Promise<ArchiveResult> {
     try {
       if (assetIds.length === 0) {
         return {
@@ -130,9 +127,7 @@ export class AssetArchiveService {
       }
 
       // Fetch assets to archive
-      const assets = await Promise.all(
-        assetIds.map((id) => assetStorageService.getById(id))
-      );
+      const assets = await Promise.all(assetIds.map((id) => assetStorageService.getById(id)));
       const validAssets = assets.filter((a): a is DBAsset => a !== null);
 
       if (validAssets.length === 0) {
@@ -150,7 +145,7 @@ export class AssetArchiveService {
       const assetsFolder = zip.folder('assets');
       const thumbnailsFolder = zip.folder('thumbnails');
 
-      if (!assetsFolder || !thumbnailsFolder) {
+      if (!(assetsFolder && thumbnailsFolder)) {
         throw new Error('Failed to create ZIP folders');
       }
 
@@ -207,8 +202,7 @@ export class AssetArchiveService {
 
       // Generate filename
       const filename =
-        options.filename ||
-        this.generateArchiveFilename(validAssets.length, options.reason);
+        options.filename || this.generateArchiveFilename(validAssets.length, options.reason);
 
       // Download archive
       downloadFile(blob, filename);
@@ -315,7 +309,7 @@ export class AssetArchiveService {
             `thumbnails/${assetMeta.id}.${this.getExtensionFromMetadata(assetMeta)}`
           );
 
-          if (!assetFile || !thumbnailFile) {
+          if (!(assetFile && thumbnailFile)) {
             errors.push(`Missing files for asset ${assetMeta.id}`);
             continue;
           }
@@ -340,8 +334,7 @@ export class AssetArchiveService {
 
           restoredCount++;
         } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : 'Unknown error';
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           errors.push(`Failed to restore asset ${assetMeta.id}: ${errorMsg}`);
         }
       }
@@ -396,9 +389,7 @@ export class AssetArchiveService {
    */
   private generateArchiveFilename(count: number, reason?: string): string {
     const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const sanitizedReason = reason
-      ? sanitizeFilename(reason).substring(0, 20)
-      : 'archive';
+    const sanitizedReason = reason ? sanitizeFilename(reason).substring(0, 20) : 'archive';
     return `botc-assets-${sanitizedReason}-${count}-${timestamp}.zip`;
   }
 

@@ -5,25 +5,25 @@
  * Renders as content inside ViewLayout.Panel (no wrapper element).
  */
 
-import { useState, useEffect, useRef } from 'react'
-import type { Project, ProjectVersion } from '../../../ts/types/project.js'
-import { projectDb } from '../../../ts/db/projectDb'
-import { useContextMenu } from '../../../hooks/useContextMenu'
-import { Button } from '../../Shared/UI/Button'
-import styles from '../../../styles/components/projects/ProjectNavigation.module.css'
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css'
-import contextMenuStyles from '../../../styles/components/shared/ContextMenu.module.css'
+import { useEffect, useRef, useState } from 'react';
+import { useContextMenu } from '../../../hooks/useContextMenu';
+import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
+import styles from '../../../styles/components/projects/ProjectNavigation.module.css';
+import contextMenuStyles from '../../../styles/components/shared/ContextMenu.module.css';
+import { projectDb } from '../../../ts/db/projectDb';
+import type { Project, ProjectVersion } from '../../../ts/types/project.js';
+import { Button } from '../../Shared/UI/Button';
 
 interface ProjectNavigationProps {
-  projects: Project[]
-  selectedProjectId: string | null
-  currentProjectId: string | null
-  onSelectProject: (projectId: string) => void
-  onHoverProject?: (projectId: string) => void
-  onCreateProject: () => void
-  onImportProject: () => void
-  onIconManagement: () => void
-  onDeleteProject?: (project: Project) => void
+  projects: Project[];
+  selectedProjectId: string | null;
+  currentProjectId: string | null;
+  onSelectProject: (projectId: string) => void;
+  onHoverProject?: (projectId: string) => void;
+  onCreateProject: () => void;
+  onImportProject: () => void;
+  onIconManagement: () => void;
+  onDeleteProject?: (project: Project) => void;
 }
 
 export function ProjectNavigation({
@@ -35,92 +35,92 @@ export function ProjectNavigation({
   onCreateProject,
   onImportProject,
   onIconManagement,
-  onDeleteProject
+  onDeleteProject,
 }: ProjectNavigationProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState<'recent' | 'alphabetical'>('recent')
-  const selectedRef = useRef<HTMLDivElement>(null)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'alphabetical'>('recent');
+  const selectedRef = useRef<HTMLDivElement>(null);
 
   // Latest version for each project
-  const [latestVersions, setLatestVersions] = useState<Map<string, ProjectVersion>>(new Map())
+  const [latestVersions, setLatestVersions] = useState<Map<string, ProjectVersion>>(new Map());
 
   // Context menu for project actions
-  const contextMenu = useContextMenu<Project>()
+  const contextMenu = useContextMenu<Project>();
 
   // Load latest versions for all projects
   useEffect(() => {
     const loadLatestVersions = async () => {
-      const versionMap = new Map<string, ProjectVersion>()
+      const versionMap = new Map<string, ProjectVersion>();
 
       for (const project of projects) {
         try {
-          const latestVersion = await projectDb.getLatestProjectVersion(project.id)
+          const latestVersion = await projectDb.getLatestProjectVersion(project.id);
           if (latestVersion) {
-            versionMap.set(project.id, latestVersion)
+            versionMap.set(project.id, latestVersion);
           }
         } catch (error) {
           // Silently skip errors - version badges are optional
-          console.debug(`Failed to load version for project ${project.id}:`, error)
+          console.debug(`Failed to load version for project ${project.id}:`, error);
         }
       }
 
-      setLatestVersions(versionMap)
-    }
+      setLatestVersions(versionMap);
+    };
 
     if (projects.length > 0) {
-      loadLatestVersions()
+      loadLatestVersions();
     }
-  }, [projects])
+  }, [projects]);
 
   // Scroll to selected project
   useEffect(() => {
     if (selectedRef.current) {
-      selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  }, [selectedProjectId])
+  }, []);
 
   // Filter and sort projects
   const filteredProjects = projects
     .filter((project) => {
-      if (!searchQuery) return true
-      const query = searchQuery.toLowerCase()
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
       return (
         project.name.toLowerCase().includes(query) ||
         project.description?.toLowerCase().includes(query)
-      )
+      );
     })
     .sort((a, b) => {
       if (sortBy === 'alphabetical') {
-        return a.name.localeCompare(b.name)
+        return a.name.localeCompare(b.name);
       } else {
         // Sort by most recent (lastModifiedAt descending)
-        return b.lastModifiedAt - a.lastModifiedAt
+        return b.lastModifiedAt - a.lastModifiedAt;
       }
-    })
+    });
 
   // Format relative time
   const formatRelativeTime = (timestamp: number) => {
-    const now = Date.now()
-    const diff = now - timestamp
-    const seconds = Math.floor(diff / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const hours = Math.floor(minutes / 60)
-    const days = Math.floor(hours / 24)
-    const weeks = Math.floor(days / 7)
-    const months = Math.floor(days / 30)
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
 
-    if (months > 0) return `${months}mo ago`
-    if (weeks > 0) return `${weeks}w ago`
-    if (days > 0) return `${days}d ago`
-    if (hours > 0) return `${hours}h ago`
-    if (minutes > 0) return `${minutes}m ago`
-    return 'just now'
-  }
+    if (months > 0) return `${months}mo ago`;
+    if (weeks > 0) return `${weeks}w ago`;
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'just now';
+  };
 
   const renderProjectItem = (project: Project) => {
-    const isSelected = project.id === selectedProjectId
-    const isActive = project.id === currentProjectId
-    const latestVersion = latestVersions.get(project.id)
+    const isSelected = project.id === selectedProjectId;
+    const isActive = project.id === currentProjectId;
+    const latestVersion = latestVersions.get(project.id);
 
     return (
       <div
@@ -134,7 +134,7 @@ export function ProjectNavigation({
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
-            onSelectProject(project.id)
+            onSelectProject(project.id);
           }
         }}
       >
@@ -142,7 +142,10 @@ export function ProjectNavigation({
           <div className={styles.nameRow}>
             <div className={styles.name}>{project.name}</div>
             {latestVersion && (
-              <span className={styles.versionBadge} title={`Latest version: ${latestVersion.versionNumber}`}>
+              <span
+                className={styles.versionBadge}
+                title={`Latest version: ${latestVersion.versionNumber}`}
+              >
                 v{latestVersion.versionNumber}
               </span>
             )}
@@ -152,15 +155,15 @@ export function ProjectNavigation({
           </div>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const handleDeleteFromContextMenu = () => {
     if (contextMenu.data && onDeleteProject) {
-      onDeleteProject(contextMenu.data)
+      onDeleteProject(contextMenu.data);
     }
-    contextMenu.close()
-  }
+    contextMenu.close();
+  };
 
   return (
     <div className={layoutStyles.panelContent}>
@@ -248,12 +251,14 @@ export function ProjectNavigation({
             className={`${contextMenuStyles.contextMenuItem} ${contextMenuStyles.danger}`}
             onClick={handleDeleteFromContextMenu}
             disabled={contextMenu.data?.id === currentProjectId}
-            title={contextMenu.data?.id === currentProjectId ? 'Cannot delete active project' : undefined}
+            title={
+              contextMenu.data?.id === currentProjectId ? 'Cannot delete active project' : undefined
+            }
           >
             Delete Project
           </button>
         </div>
       )}
     </div>
-  )
+  );
 }

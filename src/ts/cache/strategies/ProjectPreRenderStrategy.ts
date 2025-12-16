@@ -3,20 +3,20 @@
  * Pre-renders script name tokens when hovering over projects.
  */
 
+import type { Token } from '../../types/index.js';
 import type {
+  ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-  ICacheStrategy
-} from '../core/index.js'
-import type { Token } from '../../types/index.js'
+} from '../core/index.js';
 
 /**
  * Configuration options for project pre-rendering.
  */
 export interface ProjectStrategyOptions {
   /** Allow aborting if user hovers away (default: true) */
-  abortOnUnhover: boolean
+  abortOnUnhover: boolean;
 }
 
 /**
@@ -24,36 +24,34 @@ export interface ProjectStrategyOptions {
  * Pre-renders script name tokens for project cards on hover.
  */
 export class ProjectPreRenderStrategy implements IPreRenderStrategy {
-  readonly name = 'project'
-  readonly priority = 3
+  readonly name = 'project';
+  readonly priority = 3;
 
-  private abortControllers = new Map<string, AbortController>()
+  private abortControllers = new Map<string, AbortController>();
 
   constructor(
-    private cache: ICacheStrategy<string, Token>,  // Key: projectId, Value: script-name token
+    private cache: ICacheStrategy<string, Token>, // Key: projectId, Value: script-name token
     private options: ProjectStrategyOptions = {
-      abortOnUnhover: true
+      abortOnUnhover: true,
     }
   ) {}
 
   shouldTrigger(context: PreRenderContext): boolean {
     return (
-      context.type === 'project-hover' &&
-      context.projectId != null &&
-      context.tokens.length > 0
-    )
+      context.type === 'project-hover' && context.projectId != null && context.tokens.length > 0
+    );
   }
 
   async preRender(context: PreRenderContext): Promise<PreRenderResult> {
-    const { projectId, tokens } = context
+    const { projectId, tokens } = context;
 
     if (!projectId) {
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: 'Missing project ID'
-      }
+        error: 'Missing project ID',
+      };
     }
 
     // Check if already cached
@@ -65,39 +63,39 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
         metadata: {
           strategy: this.name,
           cached: true,
-          projectId
-        }
-      }
+          projectId,
+        },
+      };
     }
 
     // Find script-name token
-    const scriptNameToken = tokens.find(t => t.type === 'script-name')
+    const scriptNameToken = tokens.find((t) => t.type === 'script-name');
     if (!scriptNameToken) {
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: 'No script-name token found'
-      }
+        error: 'No script-name token found',
+      };
     }
 
     try {
       // Set up abort controller if configured
-      let abortController: AbortController | undefined
+      let abortController: AbortController | undefined;
       if (this.options.abortOnUnhover) {
         // Cancel any existing render for this project
-        this.cancelRender(projectId)
+        this.cancelRender(projectId);
 
-        abortController = new AbortController()
-        this.abortControllers.set(projectId, abortController)
+        abortController = new AbortController();
+        this.abortControllers.set(projectId, abortController);
       }
 
       // Store token in cache
-      await this.cache.set(projectId, scriptNameToken)
+      await this.cache.set(projectId, scriptNameToken);
 
       // Clean up abort controller
       if (abortController) {
-        this.abortControllers.delete(projectId)
+        this.abortControllers.delete(projectId);
       }
 
       return {
@@ -108,19 +106,19 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
           strategy: this.name,
           projectId,
           tokenType: scriptNameToken.type,
-          cacheStats: this.cache.getStats()
-        }
-      }
+          cacheStats: this.cache.getStats(),
+        },
+      };
     } catch (error) {
       // Clean up abort controller on error
-      this.abortControllers.delete(projectId)
+      this.abortControllers.delete(projectId);
 
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: error instanceof Error ? error.message : String(error)
-      }
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 
@@ -130,8 +128,8 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
    * @returns Cached token or null
    */
   async getPreRendered(projectId: string): Promise<Token | null> {
-    const entry = await this.cache.get(projectId)
-    return entry?.value ?? null
+    const entry = await this.cache.get(projectId);
+    return entry?.value ?? null;
   }
 
   /**
@@ -139,10 +137,10 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
    * @param projectId - Project ID
    */
   cancelRender(projectId: string): void {
-    const controller = this.abortControllers.get(projectId)
+    const controller = this.abortControllers.get(projectId);
     if (controller) {
-      controller.abort()
-      this.abortControllers.delete(projectId)
+      controller.abort();
+      this.abortControllers.delete(projectId);
     }
   }
 
@@ -150,9 +148,9 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
    * Clear all abort controllers (cleanup).
    */
   clearAllAbortControllers(): void {
-    for (const [projectId, controller] of this.abortControllers) {
-      controller.abort()
+    for (const [_projectId, controller] of this.abortControllers) {
+      controller.abort();
     }
-    this.abortControllers.clear()
+    this.abortControllers.clear();
   }
 }

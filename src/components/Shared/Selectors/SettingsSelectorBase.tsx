@@ -12,8 +12,8 @@
  * @module components/Shared/SettingsSelectorBase
  */
 
-import { memo, forwardRef } from 'react'
-import styles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
+import { forwardRef, memo } from 'react';
+import styles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
 
 // ============================================================================
 // Types
@@ -21,31 +21,31 @@ import styles from '../../../styles/components/shared/SettingsSelectorBase.modul
 
 export interface SettingsSelectorBaseProps {
   /** Preview content (left side - visual representation) */
-  preview: React.ReactNode
+  preview: React.ReactNode;
   /** Info content (middle - label and summary) */
-  info: React.ReactNode
+  info: React.ReactNode;
   /** Optional header slot above the action button (e.g., toggles) */
-  headerSlot?: React.ReactNode
+  headerSlot?: React.ReactNode;
   /** Action button text */
-  actionLabel?: string
+  actionLabel?: string;
   /** Called when action button is clicked */
-  onAction?: () => void
+  onAction?: () => void;
   /** Whether the panel is expanded */
-  isExpanded?: boolean
+  isExpanded?: boolean;
   /** Whether the component is disabled */
-  disabled?: boolean
+  disabled?: boolean;
   /** Whether the component is visually disabled (grayed out but interactive) */
-  visuallyDisabled?: boolean
+  visuallyDisabled?: boolean;
   /** Component size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Keyboard event handler */
-  onKeyDown?: (event: React.KeyboardEvent) => void
+  onKeyDown?: (event: React.KeyboardEvent) => void;
   /** Additional className for container */
-  className?: string
+  className?: string;
   /** Children rendered after the container (e.g., portal panels) */
-  children?: React.ReactNode
+  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -82,7 +82,7 @@ export const SettingsSelectorBase = memo(
       className,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
     return (
       <>
@@ -119,9 +119,9 @@ export const SettingsSelectorBase = memo(
         {/* Children (portal panels, etc.) */}
         {children}
       </>
-    )
+    );
   })
-)
+);
 
 // ============================================================================
 // Sub-components for composition
@@ -129,10 +129,10 @@ export const SettingsSelectorBase = memo(
 
 /** Preview wrapper with standard sizing and shape options */
 export interface PreviewBoxProps {
-  children: React.ReactNode
-  shape?: 'circle' | 'square'
-  size?: 'small' | 'medium' | 'large'
-  className?: string
+  children: React.ReactNode;
+  shape?: 'circle' | 'square';
+  size?: 'small' | 'medium' | 'large';
+  className?: string;
 }
 
 export const PreviewBox = memo(function PreviewBox({
@@ -148,16 +148,16 @@ export const PreviewBox = memo(function PreviewBox({
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
-  return <div className={classes}>{children}</div>
-})
+  return <div className={classes}>{children}</div>;
+});
 
 /** Info section with primary label and optional summary */
 export interface InfoSectionProps {
-  label: string
-  summary?: string
-  className?: string
+  label: string;
+  summary?: string;
+  className?: string;
 }
 
 export const InfoSection = memo(function InfoSection({
@@ -170,22 +170,22 @@ export const InfoSection = memo(function InfoSection({
       <span className={styles.primaryLabel}>{label}</span>
       {summary && <span className={styles.summary}>{summary}</span>}
     </div>
-  )
-})
+  );
+});
 
 /** Toggle button group for headerSlot */
 export interface ToggleOption {
-  value: string
-  label: string
-  icon?: React.ReactNode
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
 }
 
 export interface ToggleGroupProps {
-  options: ToggleOption[]
-  value: string
-  onChange: (value: string) => void
-  disabled?: boolean
-  className?: string
+  options: ToggleOption[];
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
 }
 
 export const ToggleGroup = memo(function ToggleGroup({
@@ -210,17 +210,17 @@ export const ToggleGroup = memo(function ToggleGroup({
         </button>
       ))}
     </div>
-  )
-})
+  );
+});
 
 /** Enabled/Disabled toggle for sections that can be turned off */
 export interface EnableToggleProps {
-  enabled: boolean
-  onChange: (enabled: boolean) => void
-  enabledLabel?: string
-  disabledLabel?: string
-  disabled?: boolean
-  className?: string
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  enabledLabel?: string;
+  disabledLabel?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 export const EnableToggle = memo(function EnableToggle({
@@ -252,7 +252,7 @@ export const EnableToggle = memo(function EnableToggle({
         <span className={styles.toggleLabel}>{enabledLabel}</span>
       </button>
     </div>
-  )
-})
+  );
+});
 
-export default SettingsSelectorBase
+export default SettingsSelectorBase;

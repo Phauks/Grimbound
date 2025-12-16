@@ -9,9 +9,9 @@
  * - Listens to sync events and updates state
  */
 
-import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { dataSyncService, type SyncEvent } from '../ts/sync/index.js';
-import type { SyncStatus, Character } from '../ts/types/index.js';
+import type { Character, SyncStatus } from '../ts/types/index.js';
 import { logger } from '../ts/utils/logger.js';
 
 interface DataSyncContextType {
@@ -59,7 +59,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
         logger.info('DataSyncContext', 'Initializing sync service...');
 
         // Subscribe to sync events before initialization
-        const unsubscribe = dataSyncService.addEventListener((event) => {
+        const _unsubscribe = dataSyncService.addEventListener((event) => {
           if (!mounted) return;
 
           logger.debug('DataSyncContext', 'Sync event:', event.type, event.status);
@@ -84,7 +84,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
         // Cleanup
         return () => {
           mounted = false;
-          unsubscribe;
+          _unsubscribe;
         };
       } catch (error) {
         logger.error('DataSyncContext', 'Initialization failed:', error);
@@ -154,11 +154,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
     subscribeToEvents,
   };
 
-  return (
-    <DataSyncContext.Provider value={value}>
-      {children}
-    </DataSyncContext.Provider>
-  );
+  return <DataSyncContext.Provider value={value}>{children}</DataSyncContext.Provider>;
 }
 
 export function useDataSync() {

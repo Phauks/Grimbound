@@ -8,10 +8,10 @@
   --color-primary-dark: #5c0000;
   --color-primary-light: #b30000;
   --color-primary-subtle: rgba(139, 0, 0, 0.1);
-  
+
   --color-secondary: #2c3e50;
   --color-secondary-dark: #1a252f;
-  
+
   --color-accent: #c9a227;
   --color-accent-light: #e6c34a;
   --color-accent-dark: #a88620;
@@ -28,7 +28,7 @@
   --color-danger: #e74c3c;
   --color-danger-hover: #c0392b;
   --color-danger-subtle: rgba(231, 76, 60, 0.1);
-  
+
   /* ---- Semantic Color Aliases (for legacy compatibility) ---- */
   --danger-color: var(--color-danger);
   --danger-light: var(--color-danger-subtle);
@@ -75,7 +75,7 @@
   --team-fabled: #4f1a5f;
   --team-loric: #2a5f5f;
   --team-meta: #808080;
-  
+
   /* ---- Team Color Aliases ---- */
   --color-team-townsfolk: var(--team-townsfolk);
   --color-team-outsider: var(--team-outsider);

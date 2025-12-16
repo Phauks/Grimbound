@@ -6,10 +6,10 @@
 
 // Interfaces
 export type {
-  IProjectService,
   IProjectDatabase,
   IProjectExporter,
   IProjectImporter,
+  IProjectService,
 } from './IProjectService.js';
 
 // Services

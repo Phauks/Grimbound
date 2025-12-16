@@ -5,19 +5,19 @@
  * Uses ViewLayout 3-panel system: left sidebar (tools), center (canvas), right (layers).
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStudio } from '../../contexts/StudioContext';
-import { StudioSidebar } from '../ViewComponents/StudioComponents/StudioSidebar';
-import { StudioCanvas } from '../ViewComponents/StudioComponents/StudioCanvas';
-import { StudioLayersPanel } from '../ViewComponents/StudioComponents/StudioLayersPanel';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { composeLayers, consumePendingStudioOperation } from '../../ts/studio/index';
-import { isAssetReference, extractAssetId } from '../../ts/types/index';
+import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
+import styles from '../../styles/components/studio/Studio.module.css';
 import { assetStorageService } from '../../ts/services/upload/AssetStorageService';
+import { composeLayers, consumePendingStudioOperation } from '../../ts/studio/index';
+import { extractAssetId, isAssetReference } from '../../ts/types/index';
 import { applyCorsProxy } from '../../ts/utils/imageUtils';
 import { logger } from '../../ts/utils/logger.js';
-import styles from '../../styles/components/studio/Studio.module.css';
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
+import { ViewLayout } from '../Layout/ViewLayout';
+import { StudioCanvas } from '../ViewComponents/StudioComponents/StudioCanvas';
+import { StudioLayersPanel } from '../ViewComponents/StudioComponents/StudioLayersPanel';
+import { StudioSidebar } from '../ViewComponents/StudioComponents/StudioSidebar';
 
 export function StudioView() {
   const {
@@ -41,7 +41,14 @@ export function StudioView() {
 
     const loadPendingOperation = async () => {
       try {
-        logger.info('StudioView', 'Loading pending operation:', pendingOp.type, pendingOp.metadata, 'editMode:', pendingOp.editMode);
+        logger.info(
+          'StudioView',
+          'Loading pending operation:',
+          pendingOp.type,
+          pendingOp.metadata,
+          'editMode:',
+          pendingOp.editMode
+        );
 
         // Use editMode from pending operation (defaults to 'full' if not specified)
         const mode = pendingOp.editMode || 'full';
@@ -66,7 +73,7 @@ export function StudioView() {
           } else {
             // External URL or data URL - apply CORS proxy if needed
             const proxiedUrl = applyCorsProxy(url);
-            logger.info('StudioView', 'Fetching from URL:', proxiedUrl.substring(0, 50) + '...');
+            logger.info('StudioView', 'Fetching from URL:', `${proxiedUrl.substring(0, 50)}...`);
             const response = await fetch(proxiedUrl);
             if (!response.ok) {
               throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
@@ -90,7 +97,9 @@ export function StudioView() {
       } catch (error) {
         logger.error('StudioView', 'Failed to load pending operation', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        alert(`Failed to load image in Studio:\n${errorMessage}\n\nPlease check the browser console for details.`);
+        alert(
+          `Failed to load image in Studio:\n${errorMessage}\n\nPlease check the browser console for details.`
+        );
       }
     };
 
@@ -112,7 +121,7 @@ export function StudioView() {
   // Mark as needing compose when layers or canvas size changes
   useEffect(() => {
     needsComposeRef.current = true;
-  }, [layers, canvasSize]);
+  }, []);
 
   // Update composite canvas with RAF batching
   useEffect(() => {
@@ -143,7 +152,7 @@ export function StudioView() {
       }
 
       // Filter to only visible layers for better performance
-      const visibleLayers = layers.filter(layer => layer.visible);
+      const visibleLayers = layers.filter((layer) => layer.visible);
 
       // Composite visible layers
       composeLayers(visibleLayers, canvas);
@@ -166,31 +175,37 @@ export function StudioView() {
   }, [layers, canvasSize]);
 
   // Handle file import
-  const handleFileImport = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
+  const handleFileImport = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
 
-    try {
-      await loadFromImage(file);
-    } catch (error) {
-      logger.error('StudioView', 'Failed to load image', error);
-      alert('Failed to load image');
-    }
-  }, [loadFromImage]);
+      try {
+        await loadFromImage(file);
+      } catch (error) {
+        logger.error('StudioView', 'Failed to load image', error);
+        alert('Failed to load image');
+      }
+    },
+    [loadFromImage]
+  );
 
   // Handle file input change
-  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileImport(file);
-    }
-    // Reset input so same file can be selected again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [handleFileImport]);
+  const handleFileInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        handleFileImport(file);
+      }
+      // Reset input so same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [handleFileImport]
+  );
 
   // Handle drag and drop
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -202,15 +217,18 @@ export function StudioView() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    async (event: React.DragEvent) => {
+      event.preventDefault();
+      setIsDragging(false);
 
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      handleFileImport(file);
-    }
-  }, [handleFileImport]);
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        handleFileImport(file);
+      }
+    },
+    [handleFileImport]
+  );
 
   // Handle paste from clipboard
   useEffect(() => {
@@ -249,9 +267,7 @@ export function StudioView() {
       // Ctrl/Cmd + N - New project
       if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
         event.preventDefault();
-        const confirmed = isDirty
-          ? confirm('You have unsaved changes. Create new project?')
-          : true;
+        const confirmed = isDirty ? confirm('You have unsaved changes. Create new project?') : true;
 
         if (confirmed) {
           newProject(512, 512);
@@ -317,14 +333,14 @@ export function StudioView() {
                   >
                     📁 Import Image
                   </button>
-                  <button
-                    className={styles.toolbarButton}
-                    onClick={() => newProject(512, 512)}
-                  >
+                  <button type="button" className={styles.toolbarButton} onClick={() => newProject(512, 512)}>
                     ✨ New Project
                   </button>
                 </div>
-                <p className={styles.emptyStateText} style={{ marginTop: 'var(--spacing-lg)', fontSize: '0.75rem' }}>
+                <p
+                  className={styles.emptyStateText}
+                  style={{ marginTop: 'var(--spacing-lg)', fontSize: '0.75rem' }}
+                >
                   Tip: You can also drag and drop an image or paste from clipboard (Ctrl+V)
                 </p>
               </div>

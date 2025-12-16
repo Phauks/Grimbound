@@ -8,26 +8,22 @@
  * @module components/Shared/SetupSettingsSelector
  */
 
-import { memo, useState, useCallback } from 'react'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import { AssetManagerModal } from '../../Modals/AssetManagerModal'
-import { BUILT_IN_FLOWERS } from '../../../ts/constants/builtInAssets'
-import { CONFIG } from '../../../ts/config'
-import type { GenerationOptions } from '../../../ts/types/index'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
+import { memo, useCallback, useState } from 'react';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import { CONFIG } from '../../../ts/config';
+import { BUILT_IN_FLOWERS } from '../../../ts/constants/builtInAssets';
+import type { GenerationOptions } from '../../../ts/types/index';
+import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface SetupSettingsSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  projectId?: string
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  projectId?: string;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 // ============================================================================
@@ -38,15 +34,15 @@ const FlowerPreview = memo(function FlowerPreview({
   flowerStyle,
   isEnabled,
 }: {
-  flowerStyle: string
-  isEnabled: boolean
+  flowerStyle: string;
+  isEnabled: boolean;
 }) {
   const getFlowerPreviewSrc = () => {
-    if (!flowerStyle || flowerStyle === 'none') return null
-    return `${CONFIG.ASSETS.SETUP_FLOWERS}${flowerStyle}.webp`
-  }
+    if (!flowerStyle || flowerStyle === 'none') return null;
+    return `${CONFIG.ASSETS.SETUP_FLOWERS}${flowerStyle}.webp`;
+  };
 
-  const previewSrc = getFlowerPreviewSrc()
+  const previewSrc = getFlowerPreviewSrc();
 
   return (
     <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
@@ -56,15 +52,15 @@ const FlowerPreview = memo(function FlowerPreview({
           alt={`${flowerStyle} setup flower`}
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           onError={(e) => {
-            e.currentTarget.style.display = 'none'
+            e.currentTarget.style.display = 'none';
           }}
         />
       ) : (
         <span className={styles.previewIcon}>🌸</span>
       )}
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -78,38 +74,42 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
   disabled = false,
   ariaLabel,
 }: SetupSettingsSelectorProps) {
-  const [showAssetModal, setShowAssetModal] = useState(false)
+  const [showAssetModal, setShowAssetModal] = useState(false);
 
-  const currentFlower = generationOptions.setupFlowerStyle || 'setup_flower_1'
-  const isEnabled = currentFlower !== 'none'
+  const currentFlower = generationOptions.setupFlowerStyle || 'setup_flower_1';
+  const isEnabled = currentFlower !== 'none';
 
   // Store last selected flower for when toggling back on
-  const [lastFlower, setLastFlower] = useState(
-    isEnabled ? currentFlower : 'setup_flower_1'
-  )
+  const [lastFlower, setLastFlower] = useState(isEnabled ? currentFlower : 'setup_flower_1');
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    if (enabled) {
-      onOptionChange({ setupFlowerStyle: lastFlower })
-    } else {
-      if (currentFlower !== 'none') {
-        setLastFlower(currentFlower)
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        onOptionChange({ setupFlowerStyle: lastFlower });
+      } else {
+        if (currentFlower !== 'none') {
+          setLastFlower(currentFlower);
+        }
+        onOptionChange({ setupFlowerStyle: 'none' });
       }
-      onOptionChange({ setupFlowerStyle: 'none' })
-    }
-  }, [onOptionChange, currentFlower, lastFlower])
+    },
+    [onOptionChange, currentFlower, lastFlower]
+  );
 
-  const handleAssetChange = useCallback((assetId: string) => {
-    onOptionChange({ setupFlowerStyle: assetId })
-    setLastFlower(assetId)
-    setShowAssetModal(false)
-  }, [onOptionChange])
+  const handleAssetChange = useCallback(
+    (assetId: string) => {
+      onOptionChange({ setupFlowerStyle: assetId });
+      setLastFlower(assetId);
+      setShowAssetModal(false);
+    },
+    [onOptionChange]
+  );
 
   const getFlowerLabel = () => {
-    if (!isEnabled) return 'Disabled'
-    const flower = BUILT_IN_FLOWERS.find(f => f.id === currentFlower)
-    return flower?.label || currentFlower.replace('setup_flower_', 'Flower ')
-  }
+    if (!isEnabled) return 'Disabled';
+    const flower = BUILT_IN_FLOWERS.find((f) => f.id === currentFlower);
+    return flower?.label || currentFlower.replace('setup_flower_', 'Flower ');
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -128,25 +128,17 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
         On
       </button>
     </div>
-  )
+  );
 
   return (
     <>
       <SettingsSelectorBase
         preview={
           <PreviewBox shape="square" size={size}>
-            <FlowerPreview
-              flowerStyle={isEnabled ? currentFlower : 'none'}
-              isEnabled={isEnabled}
-            />
+            <FlowerPreview flowerStyle={isEnabled ? currentFlower : 'none'} isEnabled={isEnabled} />
           </PreviewBox>
         }
-        info={
-          <InfoSection
-            label="Setup"
-            summary={getFlowerLabel()}
-          />
-        }
+        info={<InfoSection label="Setup" summary={getFlowerLabel()} />}
         headerSlot={EnableToggle}
         actionLabel="Change"
         onAction={() => setShowAssetModal(true)}
@@ -170,7 +162,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
         />
       )}
     </>
-  )
-})
+  );
+});
 
-export default SetupSettingsSelector
+export default SetupSettingsSelector;

@@ -8,7 +8,7 @@
  */
 
 import { assetStorageService } from './AssetStorageService.js';
-import type { AssetWithUrl, AssetType } from './types.js';
+import type { AssetType, AssetWithUrl } from './types.js';
 
 // ============================================================================
 // Types
@@ -54,12 +54,12 @@ export interface SuggestionOptions {
 // ============================================================================
 
 const SCORE_WEIGHTS = {
-  EXACT_MATCH: 100,        // Perfect filename match
-  FUZZY_MATCH_HIGH: 80,    // Very close match (>80% similarity)
-  FUZZY_MATCH_MEDIUM: 50,  // Moderate match (50-80% similarity)
-  FUZZY_MATCH_LOW: 30,     // Weak match (30-50% similarity)
-  RECENT_USE_MAX: 30,      // Most recently used
-  FREQUENT_USE_MAX: 20,    // Most frequently used
+  EXACT_MATCH: 100, // Perfect filename match
+  FUZZY_MATCH_HIGH: 80, // Very close match (>80% similarity)
+  FUZZY_MATCH_MEDIUM: 50, // Moderate match (50-80% similarity)
+  FUZZY_MATCH_LOW: 30, // Weak match (30-50% similarity)
+  RECENT_USE_MAX: 30, // Most recently used
+  FREQUENT_USE_MAX: 20, // Most frequently used
 };
 
 const RECENCY_DECAY_DAYS = 30; // After 30 days, recency bonus decays to 0
@@ -234,9 +234,7 @@ export class AssetSuggestionService {
     const len2 = str2.length;
 
     // Create a 2D array for dynamic programming
-    const matrix: number[][] = Array.from({ length: len1 + 1 }, () =>
-      Array(len2 + 1).fill(0)
-    );
+    const matrix: number[][] = Array.from({ length: len1 + 1 }, () => Array(len2 + 1).fill(0));
 
     // Initialize first column and row
     for (let i = 0; i <= len1; i++) {
@@ -251,8 +249,8 @@ export class AssetSuggestionService {
       for (let j = 1; j <= len2; j++) {
         const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
         matrix[i][j] = Math.min(
-          matrix[i - 1][j] + 1,      // deletion
-          matrix[i][j - 1] + 1,      // insertion
+          matrix[i - 1][j] + 1, // deletion
+          matrix[i][j - 1] + 1, // insertion
           matrix[i - 1][j - 1] + cost // substitution
         );
       }

@@ -5,9 +5,9 @@
  * and flexible content areas with optional scrolling.
  */
 
-import { cn } from '../../../ts/utils/classNames'
-import type { ViewLayoutPanelProps, PanelWidth } from './types'
-import styles from '../../../styles/components/layout/ViewLayout.module.css'
+import styles from '../../../styles/components/layout/ViewLayout.module.css';
+import { cn } from '../../../ts/utils/classNames';
+import type { PanelWidth, ViewLayoutPanelProps } from './types';
 
 /**
  * Get the CSS class for a given width configuration
@@ -15,17 +15,17 @@ import styles from '../../../styles/components/layout/ViewLayout.module.css'
 function getWidthClass(width: PanelWidth | undefined): string {
   switch (width) {
     case 'left':
-      return styles.widthLeft
+      return styles.widthLeft;
     case 'right':
-      return styles.widthRight
+      return styles.widthRight;
     case 'right-studio':
-      return styles.widthRightStudio
+      return styles.widthRightStudio;
     case 'flex':
     case undefined:
-      return styles.widthFlex
+      return styles.widthFlex;
     default:
       // For number values, we'll use inline styles
-      return ''
+      return '';
   }
 }
 
@@ -49,8 +49,8 @@ export function ViewLayoutPanel({
   'data-testid': testId,
 }: ViewLayoutPanelProps) {
   // Determine if this is a sidebar (fixed width) or main content (flex)
-  const isSidebar = position === 'left' || (position === 'right' && width !== 'flex')
-  const isCenter = position === 'center' || (position === 'right' && width === 'flex')
+  const isSidebar = position === 'left' || (position === 'right' && width !== 'flex');
+  const isCenter = position === 'center' || (position === 'right' && width === 'flex');
 
   // Build class list
   const panelClasses = cn(
@@ -68,15 +68,16 @@ export function ViewLayoutPanel({
     scrollable && styles.hiddenScrollbar,
     // User-provided classes
     className
-  )
+  );
 
   // Handle custom numeric width
-  const inlineStyle = typeof width === 'number'
-    ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }
-    : undefined
+  const inlineStyle =
+    typeof width === 'number'
+      ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }
+      : undefined;
 
   // Use semantic element for sidebars
-  const Element = isSidebar ? 'aside' : 'div'
+  const Element = isSidebar ? 'aside' : 'div';
 
   return (
     <Element
@@ -87,5 +88,5 @@ export function ViewLayoutPanel({
     >
       {children}
     </Element>
-  )
+  );
 }

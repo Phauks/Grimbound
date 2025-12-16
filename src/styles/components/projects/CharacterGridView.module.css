@@ -104,7 +104,9 @@
   border-radius: 8px;
   padding: var(--spacing-md);
   text-align: center;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color);
@@ -163,7 +165,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {
@@ -209,29 +212,71 @@
   color: white;
 }
 
-.teamTownsfolk { background-color: #1a5f2a; }
-.teamTownsfolk .team { background-color: #1a5f2a; }
-.teamOutsider { background-color: #1a3f5f; }
-.teamOutsider .team { background-color: #1a3f5f; }
-.teamMinion { background-color: #5f1a3f; }
-.teamMinion .team { background-color: #5f1a3f; }
-.teamDemon { background-color: #8b0000; }
-.teamDemon .team { background-color: #8b0000; }
-.teamTraveller { background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%); }
-.teamTraveller .team { background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%); }
-.teamFabled { background-color: #4f1a5f; }
-.teamFabled .team { background-color: #4f1a5f; }
-.teamLoric { background-color: #2a5f5f; }
-.teamLoric .team { background-color: #2a5f5f; }
+.teamTownsfolk {
+  background-color: #1a5f2a;
+}
+.teamTownsfolk .team {
+  background-color: #1a5f2a;
+}
+.teamOutsider {
+  background-color: #1a3f5f;
+}
+.teamOutsider .team {
+  background-color: #1a3f5f;
+}
+.teamMinion {
+  background-color: #5f1a3f;
+}
+.teamMinion .team {
+  background-color: #5f1a3f;
+}
+.teamDemon {
+  background-color: #8b0000;
+}
+.teamDemon .team {
+  background-color: #8b0000;
+}
+.teamTraveller {
+  background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%);
+}
+.teamTraveller .team {
+  background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%);
+}
+.teamFabled {
+  background-color: #4f1a5f;
+}
+.teamFabled .team {
+  background-color: #4f1a5f;
+}
+.teamLoric {
+  background-color: #2a5f5f;
+}
+.teamLoric .team {
+  background-color: #2a5f5f;
+}
 
 /* Category team colors (left border) */
-.category.teamTownsfolk { border-left: 4px solid #1a5f2a; }
-.category.teamOutsider { border-left: 4px solid #1a3f5f; }
-.category.teamMinion { border-left: 4px solid #5f1a3f; }
-.category.teamDemon { border-left: 4px solid #8b0000; }
-.category.teamTraveller { border-left: 4px solid #5f3f6f; }
-.category.teamFabled { border-left: 4px solid #4f1a5f; }
-.category.teamLoric { border-left: 4px solid #2a5f5f; }
+.category.teamTownsfolk {
+  border-left: 4px solid #1a5f2a;
+}
+.category.teamOutsider {
+  border-left: 4px solid #1a3f5f;
+}
+.category.teamMinion {
+  border-left: 4px solid #5f1a3f;
+}
+.category.teamDemon {
+  border-left: 4px solid #8b0000;
+}
+.category.teamTraveller {
+  border-left: 4px solid #5f3f6f;
+}
+.category.teamFabled {
+  border-left: 4px solid #4f1a5f;
+}
+.category.teamLoric {
+  border-left: 4px solid #2a5f5f;
+}
 
 /* Official Badge - matches TokenCard */
 .official {

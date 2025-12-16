@@ -12,16 +12,16 @@
  */
 
 import JSZip from 'jszip';
-import type { IProjectImporter } from './IProjectService.js';
+import { CONFIG } from '../../config.js';
 import type {
-  Project,
-  ValidationResult,
-  ProjectPreview,
-  ProjectManifest,
   CustomIconMetadata,
+  Project,
+  ProjectManifest,
+  ProjectPreview,
+  ValidationResult,
 } from '../../types/project.js';
 import { generateUuid } from '../../utils/nameGenerator.js';
-import { CONFIG } from '../../config.js';
+import type { IProjectImporter } from './IProjectService.js';
 
 // ============================================================================
 // Constants
@@ -95,7 +95,9 @@ export class ProjectImporter implements IProjectImporter {
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      errors.push(`File size (${this.formatBytes(file.size)}) exceeds maximum allowed (${this.formatBytes(MAX_FILE_SIZE)})`);
+      errors.push(
+        `File size (${this.formatBytes(file.size)}) exceeds maximum allowed (${this.formatBytes(MAX_FILE_SIZE)})`
+      );
     } else if (file.size > WARN_FILE_SIZE) {
       warnings.push(`File size (${this.formatBytes(file.size)}) is quite large`);
     }
@@ -109,7 +111,7 @@ export class ProjectImporter implements IProjectImporter {
     let zip: JSZip;
     try {
       zip = await JSZip.loadAsync(file);
-    } catch (error) {
+    } catch (_error) {
       errors.push('File is not a valid ZIP archive');
       return { valid: false, errors, warnings };
     }
@@ -136,10 +138,12 @@ export class ProjectImporter implements IProjectImporter {
         if (manifest.compatibility.minGeneratorVersion) {
           const minVersion = manifest.compatibility.minGeneratorVersion;
           if (this.compareVersions(CONFIG.VERSION, minVersion) < 0) {
-            warnings.push(`This package requires generator version ${minVersion} or higher (current: ${CONFIG.VERSION})`);
+            warnings.push(
+              `This package requires generator version ${minVersion} or higher (current: ${CONFIG.VERSION})`
+            );
           }
         }
-      } catch (error) {
+      } catch (_error) {
         errors.push('manifest.json is not valid JSON');
       }
     }
@@ -149,7 +153,7 @@ export class ProjectImporter implements IProjectImporter {
       try {
         const projectText = await zip.files['project.json'].async('text');
         JSON.parse(projectText);
-      } catch (error) {
+      } catch (_error) {
         errors.push('project.json is not valid JSON');
       }
     }

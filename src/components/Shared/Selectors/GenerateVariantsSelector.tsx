@@ -7,47 +7,39 @@
  * @module components/Shared/GenerateVariantsSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import type { GenerationOptions } from '../../../ts/types/index'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import type { GenerationOptions } from '../../../ts/types/index';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface GenerateVariantsSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 interface PendingVariantSettings {
-  characterVariants: boolean
-  reminderVariants: boolean
+  characterVariants: boolean;
+  reminderVariants: boolean;
 }
 
 // ============================================================================
 // Preview Component
 // ============================================================================
 
-const VariantPreview = memo(function VariantPreview({
-  isEnabled,
-}: {
-  isEnabled: boolean
-}) {
+const VariantPreview = memo(function VariantPreview({ isEnabled }: { isEnabled: boolean }) {
   return (
     <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
       <span className={styles.previewIcon}>🎭</span>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -60,28 +52,34 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
   disabled = false,
   ariaLabel,
 }: GenerateVariantsSelectorProps) {
-  const characterVariantsEnabled = generationOptions.generateImageVariants || false
-  const reminderVariantsEnabled = generationOptions.generateReminderVariants || false
-  const isEnabled = characterVariantsEnabled || reminderVariantsEnabled
+  const characterVariantsEnabled = generationOptions.generateImageVariants;
+  const reminderVariantsEnabled = generationOptions.generateReminderVariants;
+  const isEnabled = characterVariantsEnabled || reminderVariantsEnabled;
 
   const currentSettings: PendingVariantSettings = {
     characterVariants: characterVariantsEnabled,
     reminderVariants: reminderVariantsEnabled,
-  }
+  };
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({
-      generateImageVariants: enabled,
-      generateReminderVariants: enabled,
-    })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({
+        generateImageVariants: enabled,
+        generateReminderVariants: enabled,
+      });
+    },
+    [onOptionChange]
+  );
 
-  const handlePanelChange = useCallback((settings: PendingVariantSettings) => {
-    onOptionChange({
-      generateImageVariants: settings.characterVariants,
-      generateReminderVariants: settings.reminderVariants,
-    })
-  }, [onOptionChange])
+  const handlePanelChange = useCallback(
+    (settings: PendingVariantSettings) => {
+      onOptionChange({
+        generateImageVariants: settings.characterVariants,
+        generateReminderVariants: settings.reminderVariants,
+      });
+    },
+    [onOptionChange]
+  );
 
   const panel = useExpandablePanel<PendingVariantSettings>({
     value: currentSettings,
@@ -90,24 +88,24 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     disabled,
     panelHeight: 150,
     minPanelWidth: 220,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
 
   const getSummary = () => {
-    if (!displaySettings.characterVariants && !displaySettings.reminderVariants) {
-      return 'Disabled'
+    if (!(displaySettings.characterVariants || displaySettings.reminderVariants)) {
+      return 'Disabled';
     }
-    const parts: string[] = []
-    if (displaySettings.characterVariants) parts.push('Character')
-    if (displaySettings.reminderVariants) parts.push('Reminder')
-    return parts.join(' + ')
-  }
+    const parts: string[] = [];
+    if (displaySettings.characterVariants) parts.push('Character');
+    if (displaySettings.reminderVariants) parts.push('Reminder');
+    return parts.join(' + ');
+  };
 
   const defaultSettings: PendingVariantSettings = {
     characterVariants: false,
     reminderVariants: false,
-  }
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -126,10 +124,10 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
         On
       </button>
     </div>
-  )
+  );
 
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -140,7 +138,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -181,26 +179,18 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -210,12 +200,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
           <VariantPreview isEnabled={isEnabled} />
         </PreviewBox>
       }
-      info={
-        <InfoSection
-          label="Variants"
-          summary={getSummary()}
-        />
-      }
+      info={<InfoSection label="Variants" summary={getSummary()} />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -228,7 +213,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default GenerateVariantsSelector
+export default GenerateVariantsSelector;

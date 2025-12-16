@@ -9,210 +9,210 @@
  */
 
 .entry {
-    display: flex;
-    align-items: center; /* Center icon vertically with name+ability */
-    gap: calc(0.4rem * var(--scale-factor, 1)); /* Reduced gap */
-    padding: calc(0.15rem * var(--scale-factor, 1)) 0; /* Minimal vertical padding, no horizontal */
-    /* Removed border-bottom - no lines between characters */
-    transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center; /* Center icon vertically with name+ability */
+  gap: calc(0.4rem * var(--scale-factor, 1)); /* Reduced gap */
+  padding: calc(0.15rem * var(--scale-factor, 1)) 0; /* Minimal vertical padding, no horizontal */
+  /* Removed border-bottom - no lines between characters */
+  transition: background-color 0.15s ease;
 }
 
 .entry:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .entry.dragging {
-    opacity: 0.8;
-    background-color: rgba(79, 70, 229, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0.8;
+  background-color: rgba(79, 70, 229, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Sorting wrapper state (applied to parent div during drag) */
 .sorting {
-    position: relative;
-    z-index: 100;
+  position: relative;
+  z-index: 100;
 }
 
 /* Drag area with handle or lock */
 .dragArea {
-    width: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .lockIcon {
-    font-size: 0.75rem;
-    opacity: 0.4;
-    cursor: default;
+  font-size: 0.75rem;
+  opacity: 0.4;
+  cursor: default;
 }
 
 .dragHandle {
-    cursor: grab;
-    padding: 0.25rem;
-    border-radius: 4px;
-    color: #666;
-    transition: background-color 0.15s ease;
+  cursor: grab;
+  padding: 0.25rem;
+  border-radius: 4px;
+  color: #666;
+  transition: background-color 0.15s ease;
 }
 
 .dragHandle:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .dragHandle:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
 .dragIcon {
-    font-size: 0.9rem;
-    letter-spacing: -2px;
-    user-select: none;
+  font-size: 0.9rem;
+  letter-spacing: -2px;
+  user-select: none;
 }
 
 .spacer {
-    width: 24px;
+  width: 24px;
 }
 
 /* Character/Special icon with dynamic scaling */
 .iconContainer {
-    width: var(--icon-size, 40px);
-    height: var(--icon-size, 40px);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: var(--icon-size, 40px);
+  height: var(--icon-size, 40px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 4px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 /* Content area */
 .content {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0; /* No gap between name and ability */
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* No gap between name and ability */
 }
 
 /* Character name - Goudy Old Style with dynamic scaling */
 .name {
-    font-family: 'Goudy Old Style', 'Georgia', serif;
-    font-size: var(--name-font-size, 1rem);
-    font-weight: 600;
-    line-height: 1.1; /* Tighter line height */
+  font-family: "Goudy Old Style", "Georgia", serif;
+  font-size: var(--name-font-size, 1rem);
+  font-weight: 600;
+  line-height: 1.1; /* Tighter line height */
 }
 
 /* Ability text - Trade Gothic with dynamic scaling */
 .ability {
-    font-family: 'TradeGothic', 'Helvetica Neue', 'Arial', sans-serif;
-    font-size: var(--ability-font-size, 0.85rem);
-    line-height: 1.2; /* Tighter line height */
-    color: #333;
+  font-family: "TradeGothic", "Helvetica Neue", "Arial", sans-serif;
+  font-size: var(--ability-font-size, 0.85rem);
+  line-height: 1.2; /* Tighter line height */
+  color: #333;
 }
 
 .abilityText {
-    display: inline;
+  display: inline;
 }
 
 /* Reminder tokens in bold - Trade Gothic Bold */
 .reminderToken {
-    font-family: 'TradeGothicBold', 'Helvetica Neue', 'Arial', sans-serif;
-    font-weight: 700;
+  font-family: "TradeGothicBold", "Helvetica Neue", "Arial", sans-serif;
+  font-weight: 700;
 }
 
 /* Reminder circle indicator (@ symbol in text) */
 .reminderCircle {
-    color: #888888;  /* Grey color */
-    font-size: 0.8em;
-    margin: 0 0.1em;
-    display: inline-block;
+  color: #888888; /* Grey color */
+  font-size: 0.8em;
+  margin: 0 0.1em;
+  display: inline-block;
 }
 
 /* Reminder indicator dot */
 .reminderIndicator {
-    width: 16px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.5rem;
-    color: #333;
-    opacity: 0.6;
+  width: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  color: #333;
+  opacity: 0.6;
 }
 
 /* Special entry styling */
 .entry[data-type="special"] .name {
-    color: #4a4a4a !important;
+  color: #4a4a4a;
 }
 
 .entry[data-type="special"] .icon {
-    opacity: 0.9;
+  opacity: 0.9;
 }
 
 /* Team-based styling adjustments */
 .entry[data-team="townsfolk"] .name {
-    color: #1a5f2a;
+  color: #1a5f2a;
 }
 
 .entry[data-team="outsider"] .name {
-    color: #1a3f5f;
+  color: #1a3f5f;
 }
 
 .entry[data-team="minion"] .name {
-    color: #5f1a3f;
+  color: #5f1a3f;
 }
 
 .entry[data-team="demon"] .name {
-    color: #8b0000;
+  color: #8b0000;
 }
 
 .entry[data-team="traveller"] .name {
-    color: #5f4f1a;
+  color: #5f4f1a;
 }
 
 .entry[data-team="fabled"] .name {
-    color: #4f1a5f;
+  color: #4f1a5f;
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-    .entry {
-        gap: 0.3rem;
-        padding: 0.1rem 0;
-    }
+  .entry {
+    gap: 0.3rem;
+    padding: 0.1rem 0;
+  }
 
-    .iconContainer {
-        width: 28px;
-        height: 28px;
-    }
+  .iconContainer {
+    width: 28px;
+    height: 28px;
+  }
 
-    .name {
-        font-size: 0.85rem;
-    }
+  .name {
+    font-size: 0.85rem;
+  }
 
-    .ability {
-        font-size: 0.75rem;
-    }
+  .ability {
+    font-size: 0.75rem;
+  }
 }
 
 /* Print styles */
 @media print {
-    .entry {
-        break-inside: avoid;
-        page-break-inside: avoid;
-    }
+  .entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 
-    .dragArea {
-        display: none;
-    }
+  .dragArea {
+    display: none;
+  }
 
-    .entry:hover {
-        background-color: transparent;
-    }
+  .entry:hover {
+    background-color: transparent;
+  }
 }

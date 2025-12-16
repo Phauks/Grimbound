@@ -14,25 +14,25 @@
  * @module components/Shared/Drawer/BackgroundDrawer
  */
 
-import { memo, useEffect, useRef, useCallback, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import styles from '../../../styles/components/shared/BackgroundDrawer.module.css'
+import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import styles from '../../../styles/components/shared/BackgroundDrawer.module.css';
 
 export interface BackgroundDrawerProps {
   /** Whether the drawer is open */
-  isOpen: boolean
+  isOpen: boolean;
   /** Called when the drawer should close (cancel) */
-  onClose: () => void
+  onClose: () => void;
   /** Called when apply is clicked */
-  onApply: () => void
+  onApply: () => void;
   /** Called when reset is clicked */
-  onReset: () => void
+  onReset: () => void;
   /** Token type label to display in header */
-  tokenType: 'character' | 'reminder' | 'meta'
+  tokenType: 'character' | 'reminder' | 'meta';
   /** Drawer content */
-  children: ReactNode
+  children: ReactNode;
   /** Optional title override */
-  title?: string
+  title?: string;
 }
 
 /**
@@ -41,21 +41,21 @@ export interface BackgroundDrawerProps {
  */
 function getDrawerPosition(): { top: number; left: number; right: number } {
   // Find the preview row element - drawer matches its width
-  const previewRow = document.querySelector('[data-preview-row]')
+  const previewRow = document.querySelector('[data-preview-row]');
 
   // Default fallbacks
-  let top = 200
-  let left = 320
-  let right = 16
+  let top = 200;
+  let left = 320;
+  let right = 16;
 
   if (previewRow) {
-    const rect = previewRow.getBoundingClientRect()
-    top = rect.bottom + 8 // 8px gap below preview row
-    left = rect.left // Match preview row's left edge
-    right = window.innerWidth - rect.right // Match preview row's right edge
+    const rect = previewRow.getBoundingClientRect();
+    top = rect.bottom + 8; // 8px gap below preview row
+    left = rect.left; // Match preview row's left edge
+    right = window.innerWidth - rect.right; // Match preview row's right edge
   }
 
-  return { top, left, right }
+  return { top, left, right };
 }
 
 export const BackgroundDrawer = memo(function BackgroundDrawer({
@@ -67,111 +67,110 @@ export const BackgroundDrawer = memo(function BackgroundDrawer({
   children,
   title = 'Background Settings',
 }: BackgroundDrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState({ top: 200, left: 320, right: 16 })
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 200, left: 320, right: 16 });
 
   // Update position when drawer opens or on resize
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const updatePosition = () => {
-      setPosition(getDrawerPosition())
-    }
+      setPosition(getDrawerPosition());
+    };
 
     // Initial position
-    updatePosition()
+    updatePosition();
 
     // Update on resize/scroll
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
 
     return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
-    }
-  }, [isOpen])
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen]);
 
   // Handle escape key to close
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onClose();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Handle click outside to close
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
       // Only close if clicking the overlay itself, not the drawer content
       if (e.target === e.currentTarget) {
-        onClose()
+        onClose();
       }
     },
     [onClose]
-  )
+  );
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
-      const originalOverflow = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = originalOverflow
-      }
+        document.body.style.overflow = originalOverflow;
+      };
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   // Focus management - focus first focusable element when opened
   useEffect(() => {
     if (isOpen && drawerRef.current) {
       const focusableElements = drawerRef.current.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
+      );
       if (focusableElements.length > 0) {
         // Focus the close button or first interactive element
-        const closeButton = drawerRef.current.querySelector<HTMLButtonElement>(
-          '[data-close-button]'
-        )
+        const closeButton =
+          drawerRef.current.querySelector<HTMLButtonElement>('[data-close-button]');
         if (closeButton) {
-          closeButton.focus()
+          closeButton.focus();
         } else {
-          focusableElements[0].focus()
+          focusableElements[0].focus();
         }
       }
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   // Token type label for header
-  const tokenTypeLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1)
+  const tokenTypeLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
   // Drawer styles with CSS custom properties for position
   const drawerStyle: React.CSSProperties = {
     '--drawer-top': `${position.top}px`,
     '--drawer-left': `${position.left}px`,
     '--drawer-right': `${position.right}px`,
-  } as React.CSSProperties
+  } as React.CSSProperties;
 
   // Don't render anything if not open (for performance)
   // But we use CSS transitions, so we need to keep it in DOM briefly
-  const [shouldRender, setShouldRender] = useState(isOpen)
+  const [shouldRender, setShouldRender] = useState(isOpen);
 
   useEffect(() => {
     if (isOpen) {
-      setShouldRender(true)
+      setShouldRender(true);
     } else {
       // Keep in DOM during close animation
-      const timer = setTimeout(() => setShouldRender(false), 300)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  if (!shouldRender) return null
+  if (!shouldRender) return null;
 
   const drawerContent = (
     <>
@@ -201,39 +200,25 @@ export const BackgroundDrawer = memo(function BackgroundDrawer({
 
           {/* Action buttons in header */}
           <div className={styles.headerActions}>
-            <button
-              type="button"
-              className={styles.resetButton}
-              onClick={onReset}
-            >
+            <button type="button" className={styles.resetButton} onClick={onReset}>
               Reset
             </button>
-            <button
-              type="button"
-              className={styles.cancelButton}
-              onClick={onClose}
-            >
+            <button type="button" className={styles.cancelButton} onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={styles.applyButton}
-              onClick={onApply}
-            >
+            <button type="button" className={styles.applyButton} onClick={onApply}>
               Apply
             </button>
           </div>
         </div>
 
         {/* Content - rendered from parent */}
-        <div className={styles.drawerContent}>
-          {children}
-        </div>
+        <div className={styles.drawerContent}>{children}</div>
       </div>
     </>
-  )
+  );
 
-  return createPortal(drawerContent, document.body)
-})
+  return createPortal(drawerContent, document.body);
+});
 
-export default BackgroundDrawer
+export default BackgroundDrawer;

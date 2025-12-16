@@ -4,8 +4,7 @@
  * Save and load complete Studio projects with all layers and settings
  */
 
-import { projectDb } from '../db/projectDb.js';
-import type { Layer, ToolSettings, CanvasSize } from '../types/index.js';
+import type { CanvasSize, Layer, ToolSettings } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -197,10 +196,7 @@ export async function deleteStudioPreset(id: string): Promise<void> {
  * @param newName - Name for the duplicate
  * @returns New preset ID
  */
-export async function duplicateStudioPreset(
-  id: string,
-  newName: string
-): Promise<string> {
+export async function duplicateStudioPreset(id: string, newName: string): Promise<string> {
   const preset = await loadPresetFromIndexedDB(id);
 
   if (!preset) {
@@ -228,10 +224,7 @@ export async function duplicateStudioPreset(
 /**
  * Generate thumbnail from layers
  */
-async function generateThumbnail(
-  layers: Layer[],
-  canvasSize: CanvasSize
-): Promise<string> {
+async function generateThumbnail(layers: Layer[], canvasSize: CanvasSize): Promise<string> {
   // Create temporary canvas for compositing
   const canvas = document.createElement('canvas');
   const maxSize = 256; // Thumbnail max dimension
@@ -244,7 +237,8 @@ async function generateThumbnail(
   const ctx = canvas.getContext('2d')!;
 
   // Composite all visible layers
-  for (const layer of [...layers].reverse()) { // Bottom to top
+  for (const layer of [...layers].reverse()) {
+    // Bottom to top
     if (!layer.visible) continue;
 
     ctx.save();

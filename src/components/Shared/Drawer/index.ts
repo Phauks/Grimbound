@@ -1,1 +1,1 @@
-export { BackgroundDrawer, type BackgroundDrawerProps } from './BackgroundDrawer'
+export { BackgroundDrawer, type BackgroundDrawerProps } from './BackgroundDrawer';

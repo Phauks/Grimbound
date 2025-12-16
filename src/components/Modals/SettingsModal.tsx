@@ -5,69 +5,69 @@
  * Migrated to use unified Modal and Button components.
  */
 
-import { useEffect, useState } from 'react'
-import { useToast } from '../../contexts/ToastContext'
-import { useTokenContext } from '../../contexts/TokenContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { useDataSync } from '../../contexts/DataSyncContext'
-import { getThemeIds, UI_THEMES } from '../../ts/themes'
-import { storageManager } from '../../ts/sync/index.js'
-import { logger } from '../../ts/utils/logger.js'
-import { Modal } from '../Shared/ModalBase/Modal'
-import { Button } from '../Shared/UI/Button'
-import type { DPIOption, MeasurementUnit } from '../../ts/types/index'
-import styles from './SettingsModal.module.css'
+import { useEffect, useState } from 'react';
+import { useDataSync } from '../../contexts/DataSyncContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
+import { useTokenContext } from '../../contexts/TokenContext';
+import { storageManager } from '../../ts/sync/index.js';
+import { getThemeIds, UI_THEMES } from '../../ts/themes';
+import type { DPIOption, MeasurementUnit } from '../../ts/types/index';
+import { logger } from '../../ts/utils/logger.js';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
+import styles from './SettingsModal.module.css';
 
 interface SettingsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onOpenSyncDetails?: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenSyncDetails?: () => void;
 }
 
 export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsModalProps) {
-  const { addToast } = useToast()
-  const { generationOptions, updateGenerationOptions } = useTokenContext()
-  const { currentThemeId, setTheme } = useTheme()
-  const { status: syncStatus, isInitialized: isSyncInitialized } = useDataSync()
-  const [autoSync, setAutoSync] = useState(true)
+  const { addToast } = useToast();
+  const { generationOptions, updateGenerationOptions } = useTokenContext();
+  const { currentThemeId, setTheme } = useTheme();
+  const { status: syncStatus, isInitialized: isSyncInitialized } = useDataSync();
+  const [autoSync, setAutoSync] = useState(true);
 
   // Load auto-sync setting from storage
   useEffect(() => {
     if (isOpen && isSyncInitialized) {
       storageManager.getSetting('autoSync').then((value) => {
         if (value !== null) {
-          setAutoSync(value as boolean)
+          setAutoSync(value as boolean);
         }
-      })
+      });
     }
-  }, [isOpen, isSyncInitialized])
+  }, [isOpen, isSyncInitialized]);
 
   const handleAutoSyncChange = async (enabled: boolean) => {
     try {
-      await storageManager.setSetting('autoSync', enabled)
-      setAutoSync(enabled)
-      addToast(`Auto-sync ${enabled ? 'enabled' : 'disabled'}`, 'success')
+      await storageManager.setSetting('autoSync', enabled);
+      setAutoSync(enabled);
+      addToast(`Auto-sync ${enabled ? 'enabled' : 'disabled'}`, 'success');
     } catch (error) {
-      logger.error('SettingsModal', 'Failed to update auto-sync setting', error)
-      addToast('Failed to update setting', 'error')
+      logger.error('SettingsModal', 'Failed to update auto-sync setting', error);
+      addToast('Failed to update setting', 'error');
     }
-  }
+  };
 
   const handleOpenSyncDetails = () => {
     if (onOpenSyncDetails) {
-      onClose()
-      setTimeout(() => onOpenSyncDetails(), 100)
+      onClose();
+      setTimeout(() => onOpenSyncDetails(), 100);
     }
-  }
+  };
 
   const handleWipeData = () => {
     if (confirm('Are you sure you want to clear all local data? This cannot be undone.')) {
-      localStorage.clear()
-      addToast('All local data has been cleared', 'success')
-      onClose()
-      setTimeout(() => window.location.reload(), 500)
+      localStorage.clear();
+      addToast('All local data has been cleared', 'success');
+      onClose();
+      setTimeout(() => window.location.reload(), 500);
     }
-  }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Global Settings" size="large">
@@ -83,7 +83,9 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
                 id="dpiSetting"
                 className={styles.select}
                 value={generationOptions.dpi}
-                onChange={(e) => updateGenerationOptions({ dpi: parseInt(e.target.value) as DPIOption })}
+                onChange={(e) =>
+                  updateGenerationOptions({ dpi: parseInt(e.target.value, 10) as DPIOption })
+                }
               >
                 <option value="300">300 DPI (Standard)</option>
                 <option value="600">600 DPI (High Quality)</option>
@@ -103,7 +105,9 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
                 id="measurementUnit"
                 className={styles.select}
                 value={generationOptions.measurementUnit || 'inches'}
-                onChange={(e) => updateGenerationOptions({ measurementUnit: e.target.value as MeasurementUnit })}
+                onChange={(e) =>
+                  updateGenerationOptions({ measurementUnit: e.target.value as MeasurementUnit })
+                }
               >
                 <option value="inches">Inches (in)</option>
                 <option value="millimeters">Millimeters (mm)</option>
@@ -125,13 +129,13 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
                 value={currentThemeId}
                 onChange={(e) => setTheme(e.target.value)}
               >
-                {getThemeIds().map(themeId => {
-                  const theme = UI_THEMES[themeId]
+                {getThemeIds().map((themeId) => {
+                  const theme = UI_THEMES[themeId];
                   return (
                     <option key={themeId} value={themeId}>
                       {theme.icon} {theme.name}
                     </option>
-                  )
+                  );
                 })}
               </select>
               <span className={styles.helpText}>
@@ -148,13 +152,19 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
             <h3 className={styles.sectionTitle}>Data Synchronization</h3>
             <div className={styles.syncInfo}>
               <p className={styles.syncStatus}>
-                Status: <strong>{syncStatus.state === 'success' ? '✓ Synced' : syncStatus.state}</strong>
+                Status:{' '}
+                <strong>{syncStatus.state === 'success' ? '✓ Synced' : syncStatus.state}</strong>
                 {syncStatus.currentVersion && <span> • Version {syncStatus.currentVersion}</span>}
               </p>
               <p className={styles.syncSource}>
-                Source: {syncStatus.dataSource === 'github' ? 'GitHub Releases' :
-                         syncStatus.dataSource === 'cache' ? 'Local Cache' :
-                         syncStatus.dataSource === 'offline' ? 'Offline' : 'Unknown'}
+                Source:{' '}
+                {syncStatus.dataSource === 'github'
+                  ? 'GitHub Releases'
+                  : syncStatus.dataSource === 'cache'
+                    ? 'Local Cache'
+                    : syncStatus.dataSource === 'offline'
+                      ? 'Offline'
+                      : 'Unknown'}
               </p>
             </div>
 
@@ -190,5 +200,5 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
         </div>
       </div>
     </Modal>
-  )
+  );
 }

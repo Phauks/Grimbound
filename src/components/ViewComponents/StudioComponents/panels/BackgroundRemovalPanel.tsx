@@ -6,10 +6,10 @@
 
 import { useState } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
+import styles from '../../../../styles/components/studio/Studio.module.css';
 import { backgroundRemovalService } from '../../../../ts/studio/backgroundRemoval';
 import { getImageData, putImageData } from '../../../../ts/studio/canvasOperations';
 import { logger } from '../../../../ts/utils/logger.js';
-import styles from '../../../../styles/components/studio/Studio.module.css';
 
 export function BackgroundRemovalPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -36,11 +36,9 @@ export function BackgroundRemovalPanel() {
 
       // Store original for before/after comparison
       if (!originalImageData) {
-        setOriginalImageData(new ImageData(
-          new Uint8ClampedArray(imageData.data),
-          imageData.width,
-          imageData.height
-        ));
+        setOriginalImageData(
+          new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height)
+        );
       }
 
       // Run background removal
@@ -48,7 +46,7 @@ export function BackgroundRemovalPanel() {
         threshold,
         featherEdges,
         edgeRadius: edgeSmoothing,
-        invertMask: false
+        invertMask: false,
       });
 
       // Apply result to canvas
@@ -61,7 +59,7 @@ export function BackgroundRemovalPanel() {
       logger.error('BackgroundRemovalPanel', 'Background removal failed', err);
       setError(
         'Failed to remove background. Make sure the MediaPipe package is installed: ' +
-        'npm install @mediapipe/selfie_segmentation'
+          'npm install @mediapipe/selfie_segmentation'
       );
     } finally {
       setIsProcessing(false);
@@ -70,7 +68,7 @@ export function BackgroundRemovalPanel() {
 
   // Reset to original image
   const handleReset = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     putImageData(activeLayer.canvas, originalImageData);
     updateLayer(activeLayer.id, { canvas: activeLayer.canvas });
@@ -81,7 +79,7 @@ export function BackgroundRemovalPanel() {
 
   // Toggle before/after preview
   const handleTogglePreview = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     if (showBefore) {
       // Show current (after)
@@ -139,7 +137,11 @@ export function BackgroundRemovalPanel() {
         disabled={isProcessing || isModelLoading}
         style={{ width: '100%', marginBottom: 'var(--spacing-md)' }}
       >
-        {isProcessing ? '🔄 Processing...' : isModelLoading ? '📥 Loading Model...' : '🤖 Auto Remove Background'}
+        {isProcessing
+          ? '🔄 Processing...'
+          : isModelLoading
+            ? '📥 Loading Model...'
+            : '🤖 Auto Remove Background'}
       </button>
 
       {/* Threshold Slider */}
@@ -163,7 +165,14 @@ export function BackgroundRemovalPanel() {
 
       {/* Edge Feathering Toggle */}
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
-        <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', gap: 'var(--spacing-xs)' }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            gap: 'var(--spacing-xs)',
+          }}
+        >
           <input
             type="checkbox"
             checked={featherEdges}
@@ -177,7 +186,9 @@ export function BackgroundRemovalPanel() {
       {/* Edge Smoothness Slider */}
       {featherEdges && (
         <div style={{ marginBottom: 'var(--spacing-md)' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
+          <label
+            style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}
+          >
             Edge Smoothness: {edgeSmoothing}px
           </label>
           <input
@@ -194,7 +205,13 @@ export function BackgroundRemovalPanel() {
 
       {/* Before/After Toggle */}
       {originalImageData && (
-        <div style={{ marginTop: 'var(--spacing-lg)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
+        <div
+          style={{
+            marginTop: 'var(--spacing-lg)',
+            paddingTop: 'var(--spacing-md)',
+            borderTop: '1px solid var(--color-primary)',
+          }}
+        >
           <h4 style={{ fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)' }}>Preview</h4>
 
           <button
@@ -205,18 +222,20 @@ export function BackgroundRemovalPanel() {
             {showBefore ? '👁️ Show After' : '👁️ Show Before'}
           </button>
 
-          <button
-            className={styles.toolbarButton}
-            onClick={handleReset}
-            style={{ width: '100%' }}
-          >
+          <button type="button" className={styles.toolbarButton} onClick={handleReset} style={{ width: '100%' }}>
             🔄 Reset to Original
           </button>
         </div>
       )}
 
       {/* Model Status */}
-      <div style={{ marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
+      <div
+        style={{
+          marginTop: 'var(--spacing-md)',
+          paddingTop: 'var(--spacing-md)',
+          borderTop: '1px solid var(--color-primary)',
+        }}
+      >
         <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
           <strong>Model Status:</strong>{' '}
           {isModelLoaded ? '✅ Loaded' : isModelLoading ? '⏳ Loading...' : '⏸️ Not Loaded'}
@@ -227,8 +246,16 @@ export function BackgroundRemovalPanel() {
       </div>
 
       {/* Manual Tools Section (Future Enhancement) */}
-      <div style={{ marginTop: 'var(--spacing-lg)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
-        <h4 style={{ fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)' }}>Manual Refinement</h4>
+      <div
+        style={{
+          marginTop: 'var(--spacing-lg)',
+          paddingTop: 'var(--spacing-md)',
+          borderTop: '1px solid var(--color-primary)',
+        }}
+      >
+        <h4 style={{ fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)' }}>
+          Manual Refinement
+        </h4>
         <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
           Manual mask painting tools coming soon...
         </p>

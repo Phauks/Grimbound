@@ -2,4 +2,4 @@
  * Downloads Drawer exports
  */
 
-export { DownloadsDrawer } from './DownloadsDrawer'
+export { DownloadsDrawer } from './DownloadsDrawer';

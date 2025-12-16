@@ -112,7 +112,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary, #ffffff);
-  font-family: var(--font-display, 'Cinzel', serif);
+  font-family: var(--font-display, "Cinzel", serif);
 }
 
 .titleIcon {

@@ -17,18 +17,14 @@
  * @module components/Shared/FontSettingsSelector
  */
 
-import { memo, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import { EditableSlider } from '../Controls/EditableSlider'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import panelStyles from '../../../styles/components/shared/SimplePanelSelector.module.css'
-import styles from '../../../styles/components/shared/FontSettingsSelector.module.css'
+import { memo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import styles from '../../../styles/components/shared/FontSettingsSelector.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import panelStyles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import { EditableSlider } from '../Controls/EditableSlider';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
 // Types
@@ -36,49 +32,49 @@ import styles from '../../../styles/components/shared/FontSettingsSelector.modul
 
 export interface FontOption {
   /** Font family value (as used in CSS/canvas) */
-  value: string
+  value: string;
   /** Display label for the font */
-  label: string
+  label: string;
   /** Category for grouping (e.g., 'Display', 'Sans Serif') */
-  category?: string
+  category?: string;
 }
 
 export interface FontSettings {
   /** Font family name */
-  fontFamily: string
+  fontFamily: string;
   /** Font color in hex format */
-  color: string
+  color: string;
   /** Letter spacing in pixels */
-  letterSpacing: number
+  letterSpacing: number;
   /** Text shadow blur radius in pixels */
-  shadowBlur: number
+  shadowBlur: number;
 }
 
 export interface FontSettingsSelectorProps {
   /** Current font settings */
-  value: FontSettings
+  value: FontSettings;
   /** Called when settings are confirmed (on Apply or panel close) */
-  onChange: (settings: FontSettings) => void
+  onChange: (settings: FontSettings) => void;
   /** Called on every change for live preview (optional) */
-  onPreviewChange?: (settings: FontSettings) => void
+  onPreviewChange?: (settings: FontSettings) => void;
   /** Available font options */
-  fontOptions: FontOption[]
+  fontOptions: FontOption[];
   /** Preview text to display */
-  previewText?: string
+  previewText?: string;
   /** Component label */
-  label?: string
+  label?: string;
   /** Component size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Visual disabled state (grayed out but not truly disabled) */
-  visuallyDisabled?: boolean
+  visuallyDisabled?: boolean;
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Default values for reset */
-  defaults?: Partial<FontSettings>
+  defaults?: Partial<FontSettings>;
   /** Slot for header content (e.g., toggle buttons) - rendered between info and button */
-  headerSlot?: React.ReactNode
+  headerSlot?: React.ReactNode;
 }
 
 // ============================================================================
@@ -96,19 +92,19 @@ const TEXT_COLOR_PRESETS = [
   { value: '#E74C3C', name: 'Red' },
   { value: '#3498DB', name: 'Blue' },
   { value: '#27AE60', name: 'Green' },
-]
+];
 
 // ============================================================================
 // Utility Functions
 // ============================================================================
 
 function isLightColor(hex: string): boolean {
-  const color = hex.replace('#', '')
-  const r = parseInt(color.slice(0, 2), 16)
-  const g = parseInt(color.slice(2, 4), 16)
-  const b = parseInt(color.slice(4, 6), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5
+  const color = hex.replace('#', '');
+  const r = parseInt(color.slice(0, 2), 16);
+  const g = parseInt(color.slice(2, 4), 16);
+  const b = parseInt(color.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
 }
 
 // ============================================================================
@@ -119,17 +115,18 @@ const FontPreview = memo(function FontPreview({
   settings,
   isLightText,
 }: {
-  settings: FontSettings
-  isLightText: boolean
+  settings: FontSettings;
+  isLightText: boolean;
 }) {
   const previewStyle: React.CSSProperties = {
     fontFamily: settings.fontFamily,
     color: settings.color,
     letterSpacing: `${settings.letterSpacing}px`,
-    textShadow: settings.shadowBlur > 0
-      ? `0 0 ${settings.shadowBlur}px rgba(0,0,0,0.8), 0 1px ${Math.ceil(settings.shadowBlur / 2)}px rgba(0,0,0,0.6)`
-      : 'none',
-  }
+    textShadow:
+      settings.shadowBlur > 0
+        ? `0 0 ${settings.shadowBlur}px rgba(0,0,0,0.8), 0 1px ${Math.ceil(settings.shadowBlur / 2)}px rgba(0,0,0,0.6)`
+        : 'none',
+  };
 
   return (
     <div className={styles.previewContainer}>
@@ -142,8 +139,8 @@ const FontPreview = memo(function FontPreview({
         style={{ backgroundColor: settings.color }}
       />
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -163,7 +160,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   defaults = { letterSpacing: 0, shadowBlur: 4 },
   headerSlot,
 }: FontSettingsSelectorProps) {
-  const colorInputRef = useRef<HTMLInputElement>(null)
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   // Default settings for reset
   const defaultSettings: FontSettings = {
@@ -171,7 +168,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
     color: '#FFFFFF',
     letterSpacing: defaults.letterSpacing ?? 0,
     shadowBlur: defaults.shadowBlur ?? 4,
-  }
+  };
 
   // Use the shared expandable panel hook
   const panel = useExpandablePanel<FontSettings>({
@@ -181,22 +178,23 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
     disabled: disabled || visuallyDisabled,
     panelHeight: 240,
     minPanelWidth: 380,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : value
-  const isLightText = isLightColor(displaySettings.color)
+  const displaySettings = panel.isExpanded ? panel.pendingValue : value;
+  const isLightText = isLightColor(displaySettings.color);
 
   // Get current font option for display
-  const currentFontOption = fontOptions.find((f) => f.value === displaySettings.fontFamily) || fontOptions[0]
+  const currentFontOption =
+    fontOptions.find((f) => f.value === displaySettings.fontFamily) || fontOptions[0];
 
   // Format summary text
   const getSummary = useCallback(() => {
-    return `${displaySettings.color.toUpperCase()} · ${displaySettings.letterSpacing}px · ${displaySettings.shadowBlur}px shadow`
-  }, [displaySettings])
+    return `${displaySettings.color.toUpperCase()} · ${displaySettings.letterSpacing}px · ${displaySettings.shadowBlur}px shadow`;
+  }, [displaySettings]);
 
   // Render the expandable panel via portal
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -207,7 +205,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -221,7 +219,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
             <div className={panelStyles.panelTitle}>Font</div>
             <div className={styles.fontList}>
               {fontOptions.map((font) => {
-                const isSelected = font.value === panel.pendingValue.fontFamily
+                const isSelected = font.value === panel.pendingValue.fontFamily;
                 return (
                   <button
                     key={font.value}
@@ -233,7 +231,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
                     <span className={styles.fontOptionPreview}>Aa</span>
                     <span className={styles.fontOptionName}>{font.label}</span>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -247,8 +245,9 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
               <div className={styles.colorRow}>
                 <div className={styles.colorSwatches}>
                   {TEXT_COLOR_PRESETS.slice(0, 5).map((preset) => {
-                    const isSelected = preset.value.toUpperCase() === panel.pendingValue.color.toUpperCase()
-                    const presetIsLight = isLightColor(preset.value)
+                    const isSelected =
+                      preset.value.toUpperCase() === panel.pendingValue.color.toUpperCase();
+                    const presetIsLight = isLightColor(preset.value);
                     return (
                       <button
                         key={preset.value}
@@ -260,7 +259,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
                       >
                         {isSelected && <span className={styles.colorCheck}>✓</span>}
                       </button>
-                    )
+                    );
                   })}
                 </div>
                 <button
@@ -281,8 +280,9 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
               </div>
               <div className={styles.colorSwatches}>
                 {TEXT_COLOR_PRESETS.slice(5).map((preset) => {
-                  const isSelected = preset.value.toUpperCase() === panel.pendingValue.color.toUpperCase()
-                  const presetIsLight = isLightColor(preset.value)
+                  const isSelected =
+                    preset.value.toUpperCase() === panel.pendingValue.color.toUpperCase();
+                  const presetIsLight = isLightColor(preset.value);
                   return (
                     <button
                       key={preset.value}
@@ -294,7 +294,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
                     >
                       {isSelected && <span className={styles.colorCheck}>✓</span>}
                     </button>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -337,26 +337,18 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -367,10 +359,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
         </PreviewBox>
       }
       info={
-        <InfoSection
-          label={currentFontOption?.label || 'Select font'}
-          summary={getSummary()}
-        />
+        <InfoSection label={currentFontOption?.label || 'Select font'} summary={getSummary()} />
       }
       headerSlot={headerSlot}
       actionLabel="Customize"
@@ -384,7 +373,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default FontSettingsSelector
+export default FontSettingsSelector;

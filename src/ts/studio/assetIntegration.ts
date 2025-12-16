@@ -5,10 +5,10 @@
  */
 
 import { assetStorageService } from '../services/upload/AssetStorageService.js';
-import type { AssetType, StudioAssetMetadata } from '../services/upload/types.js';
-import type { Layer, ToolSettings, CanvasSize } from '../types/index.js';
-import { saveStudioPreset, loadStudioPreset, type StudioPreset } from './studioPresets.js';
+import type { StudioAssetMetadata } from '../services/upload/types.js';
+import type { CanvasSize, Layer, ToolSettings } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { loadStudioPreset, saveStudioPreset } from './studioPresets.js';
 
 /**
  * Options for saving a Studio asset
@@ -55,7 +55,17 @@ export async function saveStudioAsset(
   backgroundColor: string,
   options: SaveStudioAssetOptions
 ): Promise<string> {
-  const { type, name, description, projectId = null, characterId, tags = [], createdFrom, sourceAssetId, presetApplied } = options;
+  const {
+    type,
+    name,
+    description,
+    projectId = null,
+    characterId,
+    tags = [],
+    createdFrom,
+    sourceAssetId,
+    presetApplied,
+  } = options;
 
   // Composite all layers to create the final image
   const compositeBlob = await compositeLayers(layers, canvasSize, backgroundColor);
@@ -132,7 +142,8 @@ export async function loadStudioAsset(assetId: string): Promise<{
 
   if (projectDataId) {
     // Load complete project state
-    const { layers, canvasSize, toolSettings, backgroundColor, preset } = await loadStudioPreset(projectDataId);
+    const { layers, canvasSize, toolSettings, backgroundColor, preset } =
+      await loadStudioPreset(projectDataId);
 
     // Get metadata from asset storage
     const asset = await assetStorageService.getById(assetId);
@@ -282,13 +293,17 @@ async function generateThumbnail(blob: Blob, size: number): Promise<Blob> {
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) {
-        resolve(blob);
-      } else {
-        reject(new Error('Failed to generate thumbnail'));
-      }
-    }, 'image/jpeg', 0.8);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to generate thumbnail'));
+        }
+      },
+      'image/jpeg',
+      0.8
+    );
   });
 }
 

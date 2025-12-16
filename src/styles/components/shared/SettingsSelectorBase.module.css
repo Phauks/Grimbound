@@ -19,7 +19,10 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
 .container:hover:not(.disabled):not(.visuallyDisabled) {
@@ -68,14 +71,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--bg-tertiary) 0%,
-    var(--bg-secondary) 100%
-  );
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
   border: 2px solid var(--border-color);
   overflow: hidden;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .container:hover:not(.disabled):not(.visuallyDisabled) .previewBox {
@@ -143,7 +144,7 @@
 .summary {
   font-size: 0.7rem;
   color: var(--text-muted);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
@@ -511,5 +512,5 @@
 .sliderValue {
   font-size: 0.75rem;
   color: var(--text-muted);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
 }

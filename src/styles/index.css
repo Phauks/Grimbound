@@ -7,9 +7,9 @@
    ============================================ */
 
 /* Design System Foundation */
-@import './tokens/index.css';
-@import './base/index.css';
-@import './utilities/index.css';
+@import "./tokens/index.css";
+@import "./base/index.css";
+@import "./utilities/index.css";
 
 /* Legacy styles - TEMPORARILY DISABLED to identify missing CSS Module styles */
 /* @import '../../css/styles.css'; */

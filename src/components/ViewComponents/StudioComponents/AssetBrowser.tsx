@@ -5,15 +5,14 @@
  * Integrates with AssetStorageService and asset cache system.
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProjectContext } from '../../../contexts/ProjectContext';
 import { useStudio } from '../../../contexts/StudioContext';
+import styles from '../../../styles/components/studio/Studio.module.css';
 import { assetStorageService } from '../../../ts/services/upload/index';
+import type { AssetType, AssetWithUrl } from '../../../ts/services/upload/types';
 import { loadStudioAsset } from '../../../ts/studio/assetIntegration';
 import { logger } from '../../../ts/utils/logger.js';
-import type { AssetWithUrl } from '../../../ts/services/upload/types';
-import type { AssetType } from '../../../ts/services/upload/types';
-import styles from '../../../styles/components/studio/Studio.module.css';
 
 interface AssetBrowserProps {
   isOpen: boolean;
@@ -45,13 +44,11 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
     try {
       // Determine project filter
       const projectId =
-        scope === 'global' ? null : scope === 'project' ? currentProject?.id ?? null : null;
+        scope === 'global' ? null : scope === 'project' ? (currentProject?.id ?? null) : null;
 
       // Determine type filter
       const types: AssetType[] =
-        assetType === 'all'
-          ? ['studio-icon', 'studio-logo', 'studio-project']
-          : [assetType];
+        assetType === 'all' ? ['studio-icon', 'studio-logo', 'studio-project'] : [assetType];
 
       // Query assets from storage (uses cache internally)
       const results = await assetStorageService.listWithUrls({
@@ -145,25 +142,37 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
         {/* Header */}
         <div className={styles.modalHeader}>
           <h2>Studio Asset Library</h2>
-          <button
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className={styles.modalBody} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+        <div
+          className={styles.modalBody}
+          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}
+        >
           {/* Filters */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
             {/* Scope selector */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  marginBottom: 'var(--spacing-xs)',
+                }}
+              >
                 Library
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 'var(--spacing-xs)',
+                }}
+              >
                 <button
                   className={`${styles.toolbarButton} ${scope === 'project' ? styles.active : ''}`}
                   onClick={() => setScope('project')}
@@ -189,10 +198,23 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
 
             {/* Type filter */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  marginBottom: 'var(--spacing-xs)',
+                }}
+              >
                 Asset Type
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-xs)' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 'var(--spacing-xs)',
+                }}
+              >
                 <button
                   className={`${styles.toolbarButton} ${assetType === 'all' ? styles.active : ''}`}
                   onClick={() => setAssetType('all')}
@@ -226,7 +248,15 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
 
             {/* Search */}
             <div>
-              <label htmlFor="asset-search" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+              <label
+                htmlFor="asset-search"
+                style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  marginBottom: 'var(--spacing-xs)',
+                }}
+              >
                 Search
               </label>
               <input
@@ -274,7 +304,14 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
             }}
           >
             {isLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
+              >
                 <div>Loading assets...</div>
               </div>
             ) : filteredAssets.length === 0 ? (
@@ -361,7 +398,13 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                       >
                         {asset.metadata.filename}
                       </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      <div
+                        style={{
+                          fontSize: '0.65rem',
+                          color: 'var(--text-secondary)',
+                          marginTop: '2px',
+                        }}
+                      >
                         {asset.metadata.width}×{asset.metadata.height}
                       </div>
                     </div>
@@ -403,7 +446,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''} found
           </div>
-          <button className={styles.secondaryButton} onClick={onClose}>
+          <button type="button" className={styles.secondaryButton} onClick={onClose}>
             Close
           </button>
         </div>

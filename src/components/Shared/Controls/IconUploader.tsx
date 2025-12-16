@@ -5,7 +5,7 @@
  * Supports image preview, format validation, and size constraints.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import styles from '../../../styles/components/shared/IconUploader.module.css';
 
 interface IconUploaderProps {
@@ -51,9 +51,7 @@ export function IconUploader({
     (file: File): string | null => {
       // Check file type
       if (!acceptedFormats.includes(file.type)) {
-        const formatList = acceptedFormats
-          .map((f) => f.split('/')[1].toUpperCase())
-          .join(', ');
+        const formatList = acceptedFormats.map((f) => f.split('/')[1].toUpperCase()).join(', ');
         return `Invalid format. Please use: ${formatList}`;
       }
 
@@ -95,7 +93,7 @@ export function IconUploader({
           setIsProcessing(false);
         };
         reader.readAsDataURL(file);
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to process image');
         setIsProcessing(false);
       }
@@ -200,7 +198,6 @@ export function IconUploader({
           onChange={handleFileSelect}
           className={styles.fileInput}
           disabled={disabled}
-          aria-hidden="true"
         />
 
         {isProcessing ? (
@@ -210,7 +207,11 @@ export function IconUploader({
           </div>
         ) : value ? (
           <div className={styles.preview}>
-            <img src={value} alt={characterName || 'Icon preview'} className={styles.previewImage} />
+            <img
+              src={value}
+              alt={characterName || 'Icon preview'}
+              className={styles.previewImage}
+            />
             {showRemove && !disabled && (
               <button
                 onClick={handleRemove}
@@ -239,7 +240,8 @@ export function IconUploader({
               <strong>Click to browse</strong> or drag image here
             </p>
             <p className={styles.hint}>
-              {acceptedFormats.map((f) => f.split('/')[1].toUpperCase()).join(', ')} • Max {maxSizeMB}MB
+              {acceptedFormats.map((f) => f.split('/')[1].toUpperCase()).join(', ')} • Max{' '}
+              {maxSizeMB}MB
             </p>
           </div>
         )}

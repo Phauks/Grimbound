@@ -10,14 +10,12 @@
  * - DataSyncService: Main orchestrator (Phase 3)
  */
 
-// Phase 1: Core Infrastructure
-export * from './versionManager.js';
-export * from './storageManager.js';
-
-// Phase 2: GitHub Integration
-export * from './githubReleaseClient.js';
-export * from './packageExtractor.js';
-
 // Phase 3: Service Orchestration
 export * from './dataSyncService.js';
+// Phase 2: GitHub Integration
+export * from './githubReleaseClient.js';
 export * from './migrationHelper.js';
+export * from './packageExtractor.js';
+export * from './storageManager.js';
+// Phase 1: Core Infrastructure
+export * from './versionManager.js';

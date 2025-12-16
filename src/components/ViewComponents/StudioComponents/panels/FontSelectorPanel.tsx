@@ -6,14 +6,14 @@
 
 import { useCallback } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
-import type { Layer, TextLayerData } from '../../../../ts/types/index';
 import styles from '../../../../styles/components/studio/Studio.module.css';
+import type { TextLayerData } from '../../../../ts/types/index';
 
 export function FontSelectorPanel() {
   const { layers, activeLayerId, updateLayer, toolSettings, setToolSettings } = useStudio();
 
   // Get active text layer
-  const activeLayer = layers.find(l => l.id === activeLayerId);
+  const activeLayer = layers.find((l) => l.id === activeLayerId);
   const isTextLayer = activeLayer?.type === 'text';
   const textData = isTextLayer ? (activeLayer.data as TextLayerData) : null;
 
@@ -30,7 +30,7 @@ export function FontSelectorPanel() {
 
   const handleFontChange = useCallback(
     (font: string) => {
-      if (!activeLayerId || !isTextLayer || !activeLayer) return;
+      if (!(activeLayerId && isTextLayer && activeLayer)) return;
 
       updateLayer(activeLayerId, {
         data: {
@@ -44,7 +44,7 @@ export function FontSelectorPanel() {
 
   const handleFontSizeChange = useCallback(
     (fontSize: number) => {
-      if (!activeLayerId || !isTextLayer || !activeLayer) return;
+      if (!(activeLayerId && isTextLayer && activeLayer)) return;
 
       updateLayer(activeLayerId, {
         data: {
@@ -58,7 +58,7 @@ export function FontSelectorPanel() {
 
   const handleLetterSpacingChange = useCallback(
     (letterSpacing: number) => {
-      if (!activeLayerId || !isTextLayer || !activeLayer) return;
+      if (!(activeLayerId && isTextLayer && activeLayer)) return;
 
       updateLayer(activeLayerId, {
         data: {
@@ -72,7 +72,7 @@ export function FontSelectorPanel() {
 
   const handleAlignmentChange = useCallback(
     (alignment: 'left' | 'center' | 'right') => {
-      if (!activeLayerId || !isTextLayer || !activeLayer) return;
+      if (!(activeLayerId && isTextLayer && activeLayer)) return;
 
       updateLayer(activeLayerId, {
         data: {
@@ -86,7 +86,7 @@ export function FontSelectorPanel() {
 
   const handleColorChange = useCallback(
     (color: string) => {
-      if (!activeLayerId || !isTextLayer || !activeLayer) return;
+      if (!(activeLayerId && isTextLayer && activeLayer)) return;
 
       updateLayer(activeLayerId, {
         data: {
@@ -98,14 +98,16 @@ export function FontSelectorPanel() {
     [activeLayerId, isTextLayer, activeLayer, updateLayer]
   );
 
-  if (!isTextLayer || !textData) {
+  if (!(isTextLayer && textData)) {
     return (
       <div className={styles.panel}>
         <div className={styles.panelHeader}>
           <h3>Font Settings</h3>
         </div>
         <div className={styles.panelBody}>
-          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          <div
+            style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)' }}
+          >
             Select a text layer to edit font settings
           </div>
         </div>
@@ -124,32 +126,32 @@ export function FontSelectorPanel() {
           <label className={styles.controlLabel}>Font Family</label>
           <select
             value={textData.font}
-            onChange={e => handleFontChange(e.target.value)}
+            onChange={(e) => handleFontChange(e.target.value)}
             className={styles.select}
           >
             <optgroup label="Display Fonts">
-              {AVAILABLE_FONTS.filter(f => f.category === 'Display').map(font => (
+              {AVAILABLE_FONTS.filter((f) => f.category === 'Display').map((font) => (
                 <option key={font.value} value={font.value}>
                   {font.label}
                 </option>
               ))}
             </optgroup>
             <optgroup label="Sans-Serif">
-              {AVAILABLE_FONTS.filter(f => f.category === 'Sans-Serif').map(font => (
+              {AVAILABLE_FONTS.filter((f) => f.category === 'Sans-Serif').map((font) => (
                 <option key={font.value} value={font.value}>
                   {font.label}
                 </option>
               ))}
             </optgroup>
             <optgroup label="Serif">
-              {AVAILABLE_FONTS.filter(f => f.category === 'Serif').map(font => (
+              {AVAILABLE_FONTS.filter((f) => f.category === 'Serif').map((font) => (
                 <option key={font.value} value={font.value}>
                   {font.label}
                 </option>
               ))}
             </optgroup>
             <optgroup label="Monospace">
-              {AVAILABLE_FONTS.filter(f => f.category === 'Monospace').map(font => (
+              {AVAILABLE_FONTS.filter((f) => f.category === 'Monospace').map((font) => (
                 <option key={font.value} value={font.value}>
                   {font.label}
                 </option>
@@ -160,16 +162,14 @@ export function FontSelectorPanel() {
 
         {/* Font Size */}
         <div className={styles.controlGroup}>
-          <label className={styles.controlLabel}>
-            Font Size: {textData.fontSize}pt
-          </label>
+          <label className={styles.controlLabel}>Font Size: {textData.fontSize}pt</label>
           <input
             type="range"
             min="8"
             max="200"
             step="1"
             value={textData.fontSize}
-            onChange={e => handleFontSizeChange(Number(e.target.value))}
+            onChange={(e) => handleFontSizeChange(Number(e.target.value))}
             className={styles.slider}
           />
           <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
@@ -185,7 +185,7 @@ export function FontSelectorPanel() {
               min="8"
               max="200"
               value={textData.fontSize}
-              onChange={e => handleFontSizeChange(Number(e.target.value))}
+              onChange={(e) => handleFontSizeChange(Number(e.target.value))}
               className={styles.input}
               style={{ flex: 1, textAlign: 'center' }}
             />
@@ -210,7 +210,7 @@ export function FontSelectorPanel() {
             max="50"
             step="0.5"
             value={textData.letterSpacing || 0}
-            onChange={e => handleLetterSpacingChange(Number(e.target.value))}
+            onChange={(e) => handleLetterSpacingChange(Number(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -250,7 +250,7 @@ export function FontSelectorPanel() {
             <input
               type="color"
               value={textData.color}
-              onChange={e => handleColorChange(e.target.value)}
+              onChange={(e) => handleColorChange(e.target.value)}
               style={{
                 width: '60px',
                 height: '40px',
@@ -262,7 +262,7 @@ export function FontSelectorPanel() {
             <input
               type="text"
               value={textData.color}
-              onChange={e => handleColorChange(e.target.value)}
+              onChange={(e) => handleColorChange(e.target.value)}
               className={styles.input}
               style={{ flex: 1 }}
               placeholder="#FFFFFF"

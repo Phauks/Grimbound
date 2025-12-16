@@ -14,15 +14,16 @@ import { logger } from '../ts/utils/logger.js';
  * Schedule a task to run during idle time
  */
 function scheduleIdleTask(task: () => Promise<void>): void {
-    if ('requestIdleCallback' in window) {
-        (window as Window & { requestIdleCallback: (callback: () => void, options?: { timeout: number }) => void }).requestIdleCallback(
-            () => void task(),
-            { timeout: 2000 }
-        );
-    } else {
-        // Fallback for browsers without requestIdleCallback
-        setTimeout(() => void task(), 100);
-    }
+  if ('requestIdleCallback' in window) {
+    (
+      window as Window & {
+        requestIdleCallback: (callback: () => void, options?: { timeout: number }) => void;
+      }
+    ).requestIdleCallback(() => void task(), { timeout: 2000 });
+  } else {
+    // Fallback for browsers without requestIdleCallback
+    setTimeout(() => void task(), 100);
+  }
 }
 
 /**
@@ -50,62 +51,65 @@ function scheduleIdleTask(task: () => Promise<void>): void {
  * ```
  */
 export function useProjectCacheWarming(project: Project | null): void {
-    useEffect(() => {
-        if (!project) {
-            logger.debug('useProjectCacheWarming', 'No project to warm');
-            return;
-        }
+  useEffect(() => {
+    if (!project) {
+      logger.debug('useProjectCacheWarming', 'No project to warm');
+      return;
+    }
 
-        logger.info('useProjectCacheWarming', 'Starting cache warming', {
-            projectId: project.id,
-            projectName: project.name
+    logger.info('useProjectCacheWarming', 'Starting cache warming', {
+      projectId: project.id,
+      projectName: project.name,
+    });
+
+    // Extract characters and tokens from project state
+    const characters = project.state?.characters || [];
+    const tokens = project.state?.tokens || [];
+
+    // Warm caches in the background (non-blocking)
+    const warmCaches = async () => {
+      try {
+        logger.debug('useProjectCacheWarming', 'Warming caches for project', {
+          projectId: project.id,
+          characterCount: characters.length,
+          tokenCount: tokens.length,
         });
 
-        // Extract characters and tokens from project state
-        const characters = project.state?.characters || [];
-        const tokens = project.state?.tokens || [];
+        await warmingPolicyManager.warm(
+          {
+            projectId: project.id,
+            characters,
+            tokens,
+          },
+          (policy, loaded, total, message) => {
+            logger.debug('useProjectCacheWarming', `Warming progress - ${policy}`, {
+              loaded,
+              total,
+              progress: total > 0 ? Math.round((loaded / total) * 100) : 0,
+              message,
+            });
+          }
+        );
 
-        // Warm caches in the background (non-blocking)
-        const warmCaches = async () => {
-            try {
-                logger.debug('useProjectCacheWarming', 'Warming caches for project', {
-                    projectId: project.id,
-                    characterCount: characters.length,
-                    tokenCount: tokens.length
-                });
+        logger.info('useProjectCacheWarming', 'Cache warming complete', {
+          projectId: project.id,
+        });
+      } catch (error) {
+        logger.warn('useProjectCacheWarming', 'Cache warming failed', error);
+      }
+    };
 
-                await warmingPolicyManager.warm(
-                    {
-                        projectId: project.id,
-                        characters,
-                        tokens
-                    },
-                    (policy, loaded, total, message) => {
-                        logger.debug('useProjectCacheWarming', `Warming progress - ${policy}`, {
-                            loaded,
-                            total,
-                            progress: total > 0 ? Math.round((loaded / total) * 100) : 0,
-                            message
-                        });
-                    }
-                );
+    // Run warming during idle time to avoid blocking UI
+    scheduleIdleTask(warmCaches);
 
-                logger.info('useProjectCacheWarming', 'Cache warming complete', {
-                    projectId: project.id
-                });
-            } catch (error) {
-                logger.warn('useProjectCacheWarming', 'Cache warming failed', error);
-            }
-        };
-
-        // Run warming during idle time to avoid blocking UI
-        scheduleIdleTask(warmCaches);
-
-        // Cleanup function (optional - caches will be cleared when project changes)
-        return () => {
-            logger.debug('useProjectCacheWarming', 'Project changed, previous warming cancelled if still running');
-        };
-    }, [project]);
+    // Cleanup function (optional - caches will be cleared when project changes)
+    return () => {
+      logger.debug(
+        'useProjectCacheWarming',
+        'Project changed, previous warming cancelled if still running'
+      );
+    };
+  }, [project]);
 }
 
 export default useProjectCacheWarming;

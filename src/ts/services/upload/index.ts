@@ -32,93 +32,82 @@
  * ```
  */
 
-// Types
+export {
+  AssetArchiveService,
+  assetArchiveService,
+} from './AssetArchiveService.js';
+export type { CreateAssetData } from './AssetStorageService.js';
+export {
+  AssetStorageService,
+  assetStorageService,
+} from './AssetStorageService.js';
 export type {
-  AssetType,
-  AssetSourceType,
-  AssetMetadata,
-  DBAsset,
-  AssetWithUrl,
-  UploadConfig,
-  AssetTypeConfig,
-  ValidationResult,
-  ProcessedImage,
-  UploadResult,
-  UploadError,
-  UploadOutcome,
-  AssetFilter,
-  AssetManagerOptions,
-  UseFileUploadConfig,
-  ExportableAsset,
-  AssetReference,
-} from './types.js';
-
+  AssetSuggestion,
+  SuggestionOptions,
+} from './AssetSuggestionService.js';
+export {
+  AssetSuggestionService,
+  assetSuggestionService,
+} from './AssetSuggestionService.js';
+// Asset Reference Resolver
+export {
+  ASSET_REF_PREFIX,
+  clearResolvedUrlCache,
+  createAssetReference,
+  extractAssetId,
+  getResolvedUrlSync,
+  isAssetReference,
+  preResolveAssets,
+  resolveAssetUrl,
+  resolveAssetUrls,
+  resolveCharacterImage,
+} from './assetResolver.js';
 // Constants
 export {
-  KB,
-  MB,
-  MAGIC_BYTES,
   ASSET_TYPE_CONFIGS,
-  DEFAULT_THUMBNAIL_SIZE,
-  THUMBNAIL_QUALITY,
-  PROCESSED_IMAGE_FORMAT,
-  PROCESSED_IMAGE_QUALITY,
-  ASSET_ZIP_PATHS,
+  ASSET_TYPE_ICONS,
   ASSET_TYPE_LABELS,
   ASSET_TYPE_LABELS_PLURAL,
-  ASSET_TYPE_ICONS,
+  ASSET_ZIP_PATHS,
+  DEFAULT_THUMBNAIL_SIZE,
+  KB,
+  MAGIC_BYTES,
+  MB,
+  PROCESSED_IMAGE_FORMAT,
+  PROCESSED_IMAGE_QUALITY,
+  THUMBNAIL_QUALITY,
 } from './constants.js';
-
+export {
+  FileUploadService,
+  fileUploadService,
+} from './FileUploadService.js';
 // Services
 export {
   FileValidationService,
   fileValidationService,
 } from './FileValidationService.js';
-
+export type { ProcessingOptions } from './ImageProcessingService.js';
 export {
   ImageProcessingService,
   imageProcessingService,
 } from './ImageProcessingService.js';
-
-export type { ProcessingOptions } from './ImageProcessingService.js';
-
-export {
-  AssetStorageService,
-  assetStorageService,
-} from './AssetStorageService.js';
-
-export type { CreateAssetData } from './AssetStorageService.js';
-
-export {
-  AssetSuggestionService,
-  assetSuggestionService,
-} from './AssetSuggestionService.js';
-
+// Types
 export type {
-  AssetSuggestion,
-  SuggestionOptions,
-} from './AssetSuggestionService.js';
-
-export {
-  FileUploadService,
-  fileUploadService,
-} from './FileUploadService.js';
-
-export {
-  AssetArchiveService,
-  assetArchiveService,
-} from './AssetArchiveService.js';
-
-// Asset Reference Resolver
-export {
-  ASSET_REF_PREFIX,
-  isAssetReference,
-  extractAssetId,
-  createAssetReference,
-  clearResolvedUrlCache,
-  resolveAssetUrl,
-  resolveAssetUrls,
-  resolveCharacterImage,
-  getResolvedUrlSync,
-  preResolveAssets,
-} from './assetResolver.js';
+  AssetFilter,
+  AssetManagerOptions,
+  AssetMetadata,
+  AssetReference,
+  AssetSourceType,
+  AssetType,
+  AssetTypeConfig,
+  AssetWithUrl,
+  DBAsset,
+  ExportableAsset,
+  ProcessedImage,
+  UploadConfig,
+  UploadError,
+  UploadOutcome,
+  UploadResult,
+  UseFileUploadConfig,
+  ValidationResult,
+} from './types.js';

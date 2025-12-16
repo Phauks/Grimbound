@@ -11,8 +11,8 @@
 
 import { useEffect, useState } from 'react';
 import { useDataSync } from '../../../contexts/DataSyncContext';
-import type { SyncEvent } from '../../../ts/sync/index.js';
 import styles from '../../../styles/components/shared/SyncProgressBar.module.css';
+import type { SyncEvent } from '../../../ts/sync/index.js';
 
 export function SyncProgressBar() {
   const { status, subscribeToEvents } = useDataSync();
@@ -76,7 +76,7 @@ export function SyncProgressBar() {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
   };
 
   const handleDismiss = () => {

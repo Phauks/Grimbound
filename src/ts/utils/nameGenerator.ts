@@ -1,6 +1,6 @@
 /**
  * Random Name Generator for Blood on the Clocktower Characters
- * 
+ *
  * Generates thematic names from a curated list of mythological and mystical words.
  */
 
@@ -706,7 +706,7 @@ const ALL_NAMES: string[] = [
   'Zhenniao',
   'Zipacna',
   'Zmey',
-]
+];
 
 // ============================================
 // GENERATOR FUNCTIONS
@@ -717,8 +717,8 @@ const ALL_NAMES: string[] = [
  * @returns A random name string
  */
 export function generateRandomName(): string {
-  const randomIndex = Math.floor(Math.random() * ALL_NAMES.length)
-  return ALL_NAMES[randomIndex]
+  const randomIndex = Math.floor(Math.random() * ALL_NAMES.length);
+  return ALL_NAMES[randomIndex];
 }
 
 /**
@@ -727,8 +727,8 @@ export function generateRandomName(): string {
  * @returns Array of unique random names
  */
 export function generateMultipleNames(count: number): string[] {
-  const shuffled = [...ALL_NAMES].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, Math.min(count, shuffled.length))
+  const shuffled = [...ALL_NAMES].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
 /**
@@ -741,7 +741,7 @@ export function nameToId(name: string): string {
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-    .replace(/\s+/g, '_')         // Replace spaces with underscores
+    .replace(/\s+/g, '_'); // Replace spaces with underscores
 }
 
 /**
@@ -749,7 +749,7 @@ export function nameToId(name: string): string {
  * @returns A UUID string
  */
 export function generateUuid(): string {
-  return crypto.randomUUID()
+  return crypto.randomUUID();
 }
 
 /**
@@ -765,7 +765,7 @@ const CHARACTER_UUID_NAMESPACE = 'a8f3e1c9-4b2d-5e6f-8a9b-3c4d5e6f7a8b';
  */
 function bytesToUuid(bytes: Uint8Array): string {
   const hex = Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;

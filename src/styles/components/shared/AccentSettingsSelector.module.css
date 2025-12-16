@@ -378,7 +378,7 @@
 
 .sectionDivider::before,
 .sectionDivider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--border-color);
@@ -426,7 +426,7 @@
 }
 
 .checkbox:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 3px;
   top: 0px;

@@ -17,11 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--bg-tertiary) 0%,
-    var(--bg-secondary) 100%
-  );
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
   border-radius: inherit;
   overflow: hidden;
 }
@@ -109,7 +105,7 @@
 
 /* Remove gap from the control container */
 .compactSlider > div {
-  gap: 0 !important;
+  gap: 0;
 }
 
 /* Make range slider slightly thinner */

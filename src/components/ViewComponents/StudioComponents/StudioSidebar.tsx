@@ -7,32 +7,23 @@
 
 import { useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
-import { ToolSettingsPanel } from './panels/ToolSettingsPanel';
-import { ImageProcessingPanel } from './panels/ImageProcessingPanel';
-import { BorderPanel } from './panels/BorderPanel';
-import { PresetPanel } from './panels/PresetPanel';
-import { SaveAssetModal } from './modals/SaveAssetModal';
-import { LogoWizardModal } from './modals/LogoWizardModal';
-import { logger } from '../../../ts/utils/logger.js';
-import styles from '../../../styles/components/studio/Studio.module.css';
 import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
+import styles from '../../../styles/components/studio/Studio.module.css';
+import { logger } from '../../../ts/utils/logger.js';
+import { LogoWizardModal } from './modals/LogoWizardModal';
+import { SaveAssetModal } from './modals/SaveAssetModal';
+import { BorderPanel } from './panels/BorderPanel';
+import { ImageProcessingPanel } from './panels/ImageProcessingPanel';
+import { PresetPanel } from './panels/PresetPanel';
+import { ToolSettingsPanel } from './panels/ToolSettingsPanel';
 
 interface StudioSidebarProps {
   onImportClick: () => void;
 }
 
 export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
-  const {
-    activeTool,
-    setActiveTool,
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    isDirty,
-    newProject,
-    layers,
-  } = useStudio();
+  const { activeTool, setActiveTool, canUndo, canRedo, undo, redo, isDirty, newProject, layers } =
+    useStudio();
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLogoWizard, setShowLogoWizard] = useState(false);
@@ -63,6 +54,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
           {/* Row 1: New and Import */}
           <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
             <button
+              type="button"
               className={styles.toolbarButton}
               onClick={handleNew}
               title="New Project (Ctrl+N)"
@@ -71,6 +63,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
               ✨ New
             </button>
             <button
+              type="button"
               className={styles.toolbarButton}
               onClick={onImportClick}
               title="Import Image (Ctrl+O)"
@@ -83,6 +76,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
           {/* Row 2: Logo Wizard and Save */}
           <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
             <button
+              type="button"
               className={styles.toolbarButton}
               onClick={() => setShowLogoWizard(true)}
               title="Create Script Logo"
@@ -91,6 +85,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
               📝 Logo Wizard
             </button>
             <button
+              type="button"
               className={styles.toolbarButton}
               onClick={() => setShowSaveModal(true)}
               disabled={layers.length === 0}
@@ -105,6 +100,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
           {/* Row 3: Undo/Redo and Layer Count */}
           <div style={{ display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
             <button
+              type="button"
               className={`${styles.toolbarButton} ${styles.iconButton}`}
               onClick={undo}
               disabled={!canUndo}
@@ -113,6 +109,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
               ↶
             </button>
             <button
+              type="button"
               className={`${styles.toolbarButton} ${styles.iconButton}`}
               onClick={redo}
               disabled={!canRedo}
@@ -128,8 +125,9 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
       <div className={styles.sidebarSection}>
         <h3 className={styles.sectionTitle}>Tools</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}>
-          {tools.map(tool => (
+          {tools.map((tool) => (
             <button
+              type="button"
               key={tool.id}
               className={`${styles.toolbarButton} ${activeTool === tool.id ? styles.active : ''}`}
               onClick={() => setActiveTool(tool.id)}
@@ -164,10 +162,7 @@ export function StudioSidebar({ onImportClick }: StudioSidebarProps) {
       />
 
       {/* Logo Wizard */}
-      <LogoWizardModal
-        isOpen={showLogoWizard}
-        onClose={() => setShowLogoWizard(false)}
-      />
+      <LogoWizardModal isOpen={showLogoWizard} onClose={() => setShowLogoWizard(false)} />
     </div>
   );
 }

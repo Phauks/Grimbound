@@ -5,30 +5,30 @@
  * Supports standard HTML select attributes plus custom styling options.
  */
 
-import { forwardRef, type SelectHTMLAttributes, type ReactNode } from 'react'
-import styles from '../../../styles/components/shared/Form.module.css'
+import { forwardRef, type ReactNode, type SelectHTMLAttributes } from 'react';
+import styles from '../../../styles/components/shared/Form.module.css';
 
 export interface SelectOption {
-  value: string
-  label: string
-  disabled?: boolean
+  value: string;
+  label: string;
+  disabled?: boolean;
 }
 
 export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   /** Select size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Error state */
-  error?: boolean
+  error?: boolean;
   /** Error message to display */
-  errorMessage?: string
+  errorMessage?: string;
   /** Options to render (alternative to children) */
-  options?: SelectOption[]
+  options?: SelectOption[];
   /** Placeholder option text */
-  placeholder?: string
+  placeholder?: string;
   /** Full width */
-  fullWidth?: boolean
+  fullWidth?: boolean;
   /** Children (option elements) */
-  children?: ReactNode
+  children?: ReactNode;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -56,14 +56,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       className,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
-    const wrapperClasses = [
-      styles.selectWrapper,
-      fullWidth && styles.fullWidth,
-    ]
+    const wrapperClasses = [styles.selectWrapper, fullWidth && styles.fullWidth]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
     return (
       <div className={wrapperClasses}>
@@ -82,11 +79,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             )}
             {options
               ? options.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    disabled={option.disabled}
-                  >
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
                     {option.label}
                   </option>
                 ))
@@ -94,12 +87,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </select>
           <span className={styles.selectChevron}>▼</span>
         </div>
-        {errorMessage && (
-          <span className={styles.errorText}>{errorMessage}</span>
-        )}
+        {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
       </div>
-    )
+    );
   }
-)
+);
 
-Select.displayName = 'Select'
+Select.displayName = 'Select';

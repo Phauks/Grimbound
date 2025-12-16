@@ -20,19 +20,13 @@
 
   /* Layered background for depth */
   background:
-    linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      transparent 50%,
-      rgba(0, 0, 0, 0.1) 100%
-    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%),
     linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0.02) 0%,
       transparent 40%,
       rgba(0, 0, 0, 0.15) 100%
-    ),
-    var(--bg-card);
+    ), var(--bg-card);
 
   /* Beveled border effect */
   border: 1px solid transparent;
@@ -57,7 +51,7 @@
 
 /* Corner accent decorations */
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -70,26 +64,10 @@
 
   /* Corner flourish pattern */
   background:
-    radial-gradient(
-      ellipse 20px 20px at 0% 0%,
-      rgba(201, 162, 39, 0.15) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 20px 20px at 100% 0%,
-      rgba(201, 162, 39, 0.15) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 20px 20px at 0% 100%,
-      rgba(201, 162, 39, 0.15) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 20px 20px at 100% 100%,
-      rgba(201, 162, 39, 0.15) 0%,
-      transparent 70%
-    );
+    radial-gradient(ellipse 20px 20px at 0% 0%, rgba(201, 162, 39, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 20px 20px at 100% 0%, rgba(201, 162, 39, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 20px 20px at 0% 100%, rgba(201, 162, 39, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 20px 20px at 100% 100%, rgba(201, 162, 39, 0.15) 0%, transparent 70%);
 }
 
 /* ============================================
@@ -123,19 +101,13 @@
   border-color: var(--color-accent);
 
   background:
-    linear-gradient(
-      135deg,
-      rgba(201, 162, 39, 0.08) 0%,
-      transparent 50%,
-      rgba(0, 0, 0, 0.1) 100%
-    ),
+    linear-gradient(135deg, rgba(201, 162, 39, 0.08) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%),
     linear-gradient(
       to bottom,
       rgba(201, 162, 39, 0.05) 0%,
       transparent 40%,
       rgba(0, 0, 0, 0.15) 100%
-    ),
-    var(--bg-card);
+    ), var(--bg-card);
 
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -151,7 +123,7 @@
 }
 
 .card.active::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -196,11 +168,7 @@
    ============================================ */
 .cardAdd {
   background:
-    linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.02) 0%,
-      transparent 100%
-    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
     rgba(45, 45, 45, 0.5);
 
   border: 2px dashed rgba(255, 255, 255, 0.15);
@@ -218,12 +186,7 @@
   border-style: dashed;
   border-color: var(--color-accent);
   background:
-    linear-gradient(
-      to bottom,
-      rgba(201, 162, 39, 0.05) 0%,
-      transparent 100%
-    ),
-    rgba(45, 45, 45, 0.8);
+    linear-gradient(to bottom, rgba(201, 162, 39, 0.05) 0%, transparent 100%), rgba(45, 45, 45, 0.8);
 
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -233,7 +196,9 @@
 
 .cardAdd .icon {
   color: var(--text-muted);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .cardAdd:hover .icon {
@@ -263,7 +228,8 @@
 }
 
 @keyframes starPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -280,7 +246,9 @@
   font-size: 1.5rem;
   line-height: 1;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
 }
 
 .card:hover .icon {
@@ -289,16 +257,14 @@
 }
 
 .card.active .icon {
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4))
-    drop-shadow(0 0 8px rgba(201, 162, 39, 0.3));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 8px rgba(201, 162, 39, 0.3));
 }
 
 /* ============================================
    NAME - Preset Label
    ============================================ */
 .name {
-  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-family: var(--font-family-display, "Cinzel", serif);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -380,11 +346,7 @@
   z-index: 9999;
   min-width: 160px;
   padding: var(--spacing-xs);
-  background: linear-gradient(
-    to bottom,
-    rgba(50, 50, 50, 0.98) 0%,
-    rgba(40, 40, 40, 0.98) 100%
-  );
+  background: linear-gradient(to bottom, rgba(50, 50, 50, 0.98) 0%, rgba(40, 40, 40, 0.98) 100%);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(201, 162, 39, 0.2);
   border-radius: var(--radius-lg);
@@ -432,7 +394,7 @@
    ============================================ */
 .dragging {
   opacity: 0.6;
-  cursor: grabbing !important;
+  cursor: grabbing;
   transform: scale(0.95) rotate(-1deg);
   box-shadow:
     0 12px 24px rgba(0, 0, 0, 0.4),
@@ -440,7 +402,7 @@
 }
 
 .dropTarget {
-  border-color: var(--color-accent) !important;
+  border-color: var(--color-accent);
   transform: scale(1.02);
 
   box-shadow:
@@ -450,7 +412,7 @@
 }
 
 .dropTarget::before {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 /* Grab cursor for draggable cards */
@@ -481,13 +443,33 @@
 }
 
 /* Stagger animation for cards */
-.card:nth-child(1) { animation-delay: 0ms; }
-.card:nth-child(2) { animation-delay: 50ms; }
-.card:nth-child(3) { animation-delay: 100ms; }
-.card:nth-child(4) { animation-delay: 150ms; }
-.card:nth-child(5) { animation-delay: 200ms; }
-.card:nth-child(6) { animation-delay: 250ms; }
-.card:nth-child(7) { animation-delay: 300ms; }
-.card:nth-child(8) { animation-delay: 350ms; }
-.card:nth-child(9) { animation-delay: 400ms; }
-.card:nth-child(10) { animation-delay: 450ms; }
+.card:nth-child(1) {
+  animation-delay: 0ms;
+}
+.card:nth-child(2) {
+  animation-delay: 50ms;
+}
+.card:nth-child(3) {
+  animation-delay: 100ms;
+}
+.card:nth-child(4) {
+  animation-delay: 150ms;
+}
+.card:nth-child(5) {
+  animation-delay: 200ms;
+}
+.card:nth-child(6) {
+  animation-delay: 250ms;
+}
+.card:nth-child(7) {
+  animation-delay: 300ms;
+}
+.card:nth-child(8) {
+  animation-delay: 350ms;
+}
+.card:nth-child(9) {
+  animation-delay: 400ms;
+}
+.card:nth-child(10) {
+  animation-delay: 450ms;
+}

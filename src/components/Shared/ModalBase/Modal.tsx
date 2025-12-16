@@ -45,32 +45,32 @@
  * ```
  */
 
-import { type ReactNode, useId } from 'react'
-import { useModalBehavior } from '../../../hooks/useModalBehavior'
-import { cn } from '../../../ts/utils'
-import styles from './Modal.module.css'
+import { type ReactNode, useId } from 'react';
+import { useModalBehavior } from '../../../hooks/useModalBehavior';
+import { cn } from '../../../ts/utils';
+import styles from './Modal.module.css';
 
-export type ModalSize = 'small' | 'medium' | 'large' | 'xlarge' | 'full'
+export type ModalSize = 'small' | 'medium' | 'large' | 'xlarge' | 'full';
 
 export interface ModalProps {
   /** Whether the modal is currently open */
-  isOpen: boolean
+  isOpen: boolean;
   /** Callback when modal should close */
-  onClose: () => void
+  onClose: () => void;
   /** Modal title displayed in header */
-  title: string
+  title: string;
   /** Size variant */
-  size?: ModalSize
+  size?: ModalSize;
   /** Modal body content */
-  children: ReactNode
+  children: ReactNode;
   /** Footer content (typically action buttons) */
-  footer?: ReactNode
+  footer?: ReactNode;
   /** Whether to prevent closing (e.g., during loading) */
-  preventClose?: boolean
+  preventClose?: boolean;
   /** Additional CSS class for the container */
-  className?: string
+  className?: string;
   /** ID for aria-describedby */
-  'aria-describedby'?: string
+  'aria-describedby'?: string;
 }
 
 const sizeClasses: Record<ModalSize, string> = {
@@ -79,7 +79,7 @@ const sizeClasses: Record<ModalSize, string> = {
   large: styles.sizeLarge,
   xlarge: styles.sizeXLarge,
   full: styles.sizeFull,
-}
+};
 
 export function Modal({
   isOpen,
@@ -96,13 +96,13 @@ export function Modal({
     isOpen,
     onClose,
     preventClose,
-  })
+  });
 
   // Generate unique ID for title
-  const generatedId = useId()
-  const titleId = `modal-title-${generatedId}`
+  const generatedId = useId();
+  const titleId = `modal-title-${generatedId}`;
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div
@@ -132,7 +132,7 @@ export function Modal({
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </div>
-  )
+  );
 }
 
 // ============================================
@@ -140,9 +140,9 @@ export function Modal({
 // ============================================
 
 interface ModalBodyProps {
-  children: ReactNode
-  compact?: boolean
-  className?: string
+  children: ReactNode;
+  compact?: boolean;
+  className?: string;
 }
 
 /**
@@ -150,34 +150,28 @@ interface ModalBodyProps {
  */
 Modal.Body = function ModalBody({ children, compact, className }: ModalBodyProps) {
   return (
-    <div className={cn(styles.body, compact && styles.bodyCompact, className)}>
-      {children}
-    </div>
-  )
-}
+    <div className={cn(styles.body, compact && styles.bodyCompact, className)}>{children}</div>
+  );
+};
 
 interface ModalFooterProps {
-  children: ReactNode
-  align?: 'start' | 'center' | 'end' | 'between'
-  className?: string
+  children: ReactNode;
+  align?: 'start' | 'center' | 'end' | 'between';
+  className?: string;
 }
 
 /**
  * Modal footer with alignment options
  */
-Modal.Footer = function ModalFooter({
-  children,
-  align = 'end',
-  className,
-}: ModalFooterProps) {
+Modal.Footer = function ModalFooter({ children, align = 'end', className }: ModalFooterProps) {
   const alignClass = {
     start: styles.footerStart,
     center: styles.footerCenter,
     end: styles.footerEnd,
     between: styles.footerBetween,
-  }[align]
+  }[align];
 
-  return <div className={cn(styles.footer, alignClass, className)}>{children}</div>
-}
+  return <div className={cn(styles.footer, alignClass, className)}>{children}</div>;
+};
 
-export default Modal
+export default Modal;

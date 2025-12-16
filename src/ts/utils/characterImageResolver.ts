@@ -15,10 +15,10 @@
  * @module utils/characterImageResolver
  */
 
-import { dataSyncService } from '../sync/index.js'
-import { isAssetReference, resolveAssetUrl } from '../services/upload/assetResolver.js'
-import type { Character } from '../types/index.js'
-import { logger } from './logger.js'
+import { isAssetReference, resolveAssetUrl } from '../services/upload/assetResolver.js';
+import { dataSyncService } from '../sync/index.js';
+import type { Character } from '../types/index.js';
+import { logger } from './logger.js';
 
 // ============================================================================
 // Types
@@ -29,9 +29,9 @@ import { logger } from './logger.js'
  */
 export interface ResolveOptions {
   /** Skip dataSyncService lookup (for custom characters) */
-  skipSyncStorage?: boolean
+  skipSyncStorage?: boolean;
   /** Context for logging (e.g., 'NightOrderEntry', 'CharacterList') */
-  logContext?: string
+  logContext?: string;
 }
 
 /**
@@ -39,11 +39,11 @@ export interface ResolveOptions {
  */
 export interface ResolvedImage {
   /** The resolved URL (may be blob:, http:, asset:, data:, or original) */
-  url: string
+  url: string;
   /** Where the URL came from */
-  source: 'asset' | 'external' | 'sync' | 'fallback'
+  source: 'asset' | 'external' | 'sync' | 'fallback';
   /** If source is 'sync', this is the blob URL that needs cleanup */
-  blobUrl?: string
+  blobUrl?: string;
 }
 
 /**
@@ -51,9 +51,9 @@ export interface ResolvedImage {
  */
 export interface BatchResolveResult {
   /** Map of character UUID -> resolved URL */
-  urls: Map<string, string>
+  urls: Map<string, string>;
   /** All blob URLs created (caller must revoke these on cleanup) */
-  blobUrls: string[]
+  blobUrls: string[];
 }
 
 // ============================================================================
@@ -67,7 +67,7 @@ export interface BatchResolveResult {
  * @returns True if the URL is external (doesn't need resolution)
  */
 export function isExternalUrl(url: string): boolean {
-  return /^(https?:\/\/|data:|blob:)/.test(url)
+  return /^(https?:\/\/|data:|blob:)/.test(url);
 }
 
 /**
@@ -84,12 +84,12 @@ export function isExternalUrl(url: string): boolean {
  */
 export function extractCharacterIdFromPath(path: string): string | null {
   // Get the filename from the path
-  const segments = path.split('/')
-  const filename = segments[segments.length - 1]
+  const segments = path.split('/');
+  const filename = segments[segments.length - 1];
 
   // Match patterns: "Icon_washerwoman.png", "washerwoman", "washerwoman.webp"
-  const match = filename.match(/^(?:Icon_)?([a-z0-9_]+)(?:\.(?:webp|png|jpg|jpeg|gif))?$/i)
-  return match ? match[1].toLowerCase() : null
+  const match = filename.match(/^(?:Icon_)?([a-z0-9_]+)(?:\.(?:webp|png|jpg|jpeg|gif))?$/i);
+  return match ? match[1].toLowerCase() : null;
 }
 
 /**
@@ -99,20 +99,20 @@ export function extractCharacterIdFromPath(path: string): string | null {
  * @returns First image URL or undefined
  */
 export function getFirstImageUrl(imageField: string | string[] | undefined): string | undefined {
-  if (!imageField) return undefined
+  if (!imageField) return undefined;
 
   if (typeof imageField === 'string') {
-    return imageField
+    return imageField;
   }
 
   if (Array.isArray(imageField) && imageField.length > 0) {
-    const first = imageField[0]
+    const first = imageField[0];
     if (typeof first === 'string') {
-      return first
+      return first;
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 // ============================================================================
@@ -151,55 +151,55 @@ export async function resolveCharacterImageUrl(
   characterId: string,
   options: ResolveOptions = {}
 ): Promise<ResolvedImage> {
-  const { skipSyncStorage = false, logContext } = options
+  const { skipSyncStorage = false, logContext } = options;
 
   // 1. Empty URL -> fallback
-  if (!imageUrl || !imageUrl.trim()) {
-    return { url: '', source: 'fallback' }
+  if (!imageUrl?.trim()) {
+    return { url: '', source: 'fallback' };
   }
 
   try {
     // 2. Asset reference -> resolve via AssetStorageService
     if (isAssetReference(imageUrl)) {
-      const resolvedUrl = await resolveAssetUrl(imageUrl)
+      const resolvedUrl = await resolveAssetUrl(imageUrl);
       return {
         url: resolvedUrl || imageUrl,
-        source: resolvedUrl ? 'asset' : 'fallback'
-      }
+        source: resolvedUrl ? 'asset' : 'fallback',
+      };
     }
 
     // 3. External URL -> return as-is
     if (isExternalUrl(imageUrl)) {
-      return { url: imageUrl, source: 'external' }
+      return { url: imageUrl, source: 'external' };
     }
 
     // 4. Try sync storage for official character images
     if (!skipSyncStorage) {
       // Extract character ID from the path if different from provided ID
-      const extractedId = extractCharacterIdFromPath(imageUrl)
-      const lookupId = extractedId || characterId
+      const extractedId = extractCharacterIdFromPath(imageUrl);
+      const lookupId = extractedId || characterId;
 
       try {
-        const blob = await dataSyncService.getCharacterImage(lookupId)
+        const blob = await dataSyncService.getCharacterImage(lookupId);
         if (blob) {
-          const blobUrl = URL.createObjectURL(blob)
-          return { url: blobUrl, source: 'sync', blobUrl }
+          const blobUrl = URL.createObjectURL(blob);
+          return { url: blobUrl, source: 'sync', blobUrl };
         }
-      } catch (error) {
+      } catch (_error) {
         // Silent fail - will fall through to fallback
         if (logContext) {
-          logger.warn(logContext, `Failed to resolve from sync storage: ${lookupId}`)
+          logger.warn(logContext, `Failed to resolve from sync storage: ${lookupId}`);
         }
       }
     }
 
     // 5. Fallback -> return original URL
-    return { url: imageUrl, source: 'fallback' }
+    return { url: imageUrl, source: 'fallback' };
   } catch (error) {
     if (logContext) {
-      logger.error(logContext, `Failed to resolve character image: ${characterId}`, error)
+      logger.error(logContext, `Failed to resolve character image: ${characterId}`, error);
     }
-    return { url: imageUrl, source: 'fallback' }
+    return { url: imageUrl, source: 'fallback' };
   }
 }
 
@@ -228,34 +228,34 @@ export async function resolveCharacterImages(
   characters: Character[],
   officialCharMap?: Map<string, Character>
 ): Promise<BatchResolveResult> {
-  const urls = new Map<string, string>()
-  const blobUrls: string[] = []
+  const urls = new Map<string, string>();
+  const blobUrls: string[] = [];
 
   for (const char of characters) {
-    if (!char.uuid) continue
+    if (!char.uuid) continue;
 
     // Get image URL from character or fallback to official data
-    let imageUrl = getFirstImageUrl(char.image as string | string[] | undefined)
+    let imageUrl = getFirstImageUrl(char.image as string | string[] | undefined);
 
     if (!imageUrl && officialCharMap) {
-      const officialChar = officialCharMap.get(char.id.toLowerCase())
+      const officialChar = officialCharMap.get(char.id.toLowerCase());
       if (officialChar) {
-        imageUrl = getFirstImageUrl(officialChar.image as string | string[] | undefined)
+        imageUrl = getFirstImageUrl(officialChar.image as string | string[] | undefined);
       }
     }
 
-    if (!imageUrl) continue
+    if (!imageUrl) continue;
 
-    const result = await resolveCharacterImageUrl(imageUrl, char.id)
+    const result = await resolveCharacterImageUrl(imageUrl, char.id);
 
     if (result.url) {
-      urls.set(char.uuid, result.url)
+      urls.set(char.uuid, result.url);
     }
 
     if (result.blobUrl) {
-      blobUrls.push(result.blobUrl)
+      blobUrls.push(result.blobUrl);
     }
   }
 
-  return { urls, blobUrls }
+  return { urls, blobUrls };
 }

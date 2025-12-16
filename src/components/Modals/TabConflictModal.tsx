@@ -44,8 +44,8 @@ export function TabConflictModal({
           <div className={styles.warning}>
             <h3>⚠️ Risk of Data Loss</h3>
             <p>
-              Changes made in one tab may overwrite changes made in another tab. The
-              last tab to save will win.
+              Changes made in one tab may overwrite changes made in another tab. The last tab to
+              save will win.
             </p>
           </div>
 
@@ -59,25 +59,17 @@ export function TabConflictModal({
           </div>
 
           <p className={styles.note}>
-            <strong>Note:</strong> Auto-save will continue to work, but conflicts may
-            result in lost changes.
+            <strong>Note:</strong> Auto-save will continue to work, but conflicts may result in lost
+            changes.
           </p>
         </div>
 
         {/* Actions */}
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={onClose}
-          >
+          <button type="button" className={styles.closeButton} onClick={onClose}>
             Close Other Tabs
           </button>
-          <button
-            type="button"
-            className={styles.continueButton}
-            onClick={onContinue}
-          >
+          <button type="button" className={styles.continueButton} onClick={onContinue}>
             Continue Anyway
           </button>
         </div>

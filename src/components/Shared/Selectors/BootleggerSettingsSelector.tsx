@@ -7,32 +7,28 @@
  * @module components/Shared/BootleggerSettingsSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import type { GenerationOptions, BootleggerIconType } from '../../../ts/types/index'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import type { BootleggerIconType, GenerationOptions } from '../../../ts/types/index';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface BootleggerSettingsSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 interface PendingBootleggerSettings {
-  enabled: boolean
-  iconType: BootleggerIconType
-  normalizeIcons: boolean
-  hideName: boolean
+  enabled: boolean;
+  iconType: BootleggerIconType;
+  normalizeIcons: boolean;
+  hideName: boolean;
 }
 
 // ============================================================================
@@ -43,17 +39,15 @@ const BootleggerPreview = memo(function BootleggerPreview({
   enabled,
   iconType,
 }: {
-  enabled: boolean
-  iconType: BootleggerIconType
+  enabled: boolean;
+  iconType: BootleggerIconType;
 }) {
   return (
     <div className={`${styles.previewContainer} ${!enabled ? styles.previewDisabled : ''}`}>
-      <span className={styles.previewIcon}>
-        {iconType === 'script' ? '📜' : '🥃'}
-      </span>
+      <span className={styles.previewIcon}>{iconType === 'script' ? '📜' : '🥃'}</span>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -71,22 +65,28 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
     iconType: generationOptions.bootleggerIconType ?? 'bootlegger',
     normalizeIcons: generationOptions.bootleggerNormalizeIcons ?? false,
     hideName: generationOptions.bootleggerHideName ?? false,
-  }
+  };
 
-  const isEnabled = currentSettings.enabled
+  const isEnabled = currentSettings.enabled;
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({ generateBootleggerRules: enabled })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({ generateBootleggerRules: enabled });
+    },
+    [onOptionChange]
+  );
 
-  const handlePanelChange = useCallback((settings: PendingBootleggerSettings) => {
-    onOptionChange({
-      generateBootleggerRules: settings.enabled,
-      bootleggerIconType: settings.iconType,
-      bootleggerNormalizeIcons: settings.normalizeIcons,
-      bootleggerHideName: settings.hideName,
-    })
-  }, [onOptionChange])
+  const handlePanelChange = useCallback(
+    (settings: PendingBootleggerSettings) => {
+      onOptionChange({
+        generateBootleggerRules: settings.enabled,
+        bootleggerIconType: settings.iconType,
+        bootleggerNormalizeIcons: settings.normalizeIcons,
+        bootleggerHideName: settings.hideName,
+      });
+    },
+    [onOptionChange]
+  );
 
   const panel = useExpandablePanel<PendingBootleggerSettings>({
     value: currentSettings,
@@ -95,21 +95,21 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
     disabled,
     panelHeight: 200,
     minPanelWidth: 240,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
 
   const getSummary = () => {
-    if (!displaySettings.enabled) return 'Disabled'
-    return displaySettings.iconType === 'script' ? 'Script icon' : 'Bootlegger icon'
-  }
+    if (!displaySettings.enabled) return 'Disabled';
+    return displaySettings.iconType === 'script' ? 'Script icon' : 'Bootlegger icon';
+  };
 
   const defaultSettings: PendingBootleggerSettings = {
     enabled: true,
     iconType: 'bootlegger',
     normalizeIcons: false,
     hideName: false,
-  }
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -128,10 +128,10 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
         On
       </button>
     </div>
-  )
+  );
 
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -142,7 +142,7 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -177,7 +177,9 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
           </div>
 
           {/* Normalize Icons */}
-          <label className={`${styles.checkboxRow} ${!panel.pendingValue.enabled ? styles.optionDisabled : ''}`}>
+          <label
+            className={`${styles.checkboxRow} ${!panel.pendingValue.enabled ? styles.optionDisabled : ''}`}
+          >
             <input
               type="checkbox"
               checked={panel.pendingValue.normalizeIcons}
@@ -188,7 +190,9 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
           </label>
 
           {/* Hide Name */}
-          <label className={`${styles.checkboxRow} ${!panel.pendingValue.enabled ? styles.optionDisabled : ''}`}>
+          <label
+            className={`${styles.checkboxRow} ${!panel.pendingValue.enabled ? styles.optionDisabled : ''}`}
+          >
             <input
               type="checkbox"
               checked={panel.pendingValue.hideName}
@@ -208,26 +212,18 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -240,12 +236,7 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
           />
         </PreviewBox>
       }
-      info={
-        <InfoSection
-          label="Bootlegger"
-          summary={getSummary()}
-        />
-      }
+      info={<InfoSection label="Bootlegger" summary={getSummary()} />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -258,7 +249,7 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default BootleggerSettingsSelector
+export default BootleggerSettingsSelector;

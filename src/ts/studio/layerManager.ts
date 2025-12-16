@@ -4,7 +4,14 @@
  * Utility class for managing layer operations (create, duplicate, merge, reorder)
  */
 
-import type { Layer, LayerType, BlendMode, ImageLayerData, TextLayerData, ShapeLayerData } from '../types/index.js';
+import type {
+  BlendMode,
+  ImageLayerData,
+  Layer,
+  LayerType,
+  ShapeLayerData,
+  TextLayerData,
+} from '../types/index.js';
 import { cloneCanvas } from './canvasOperations.js';
 
 /**
@@ -33,7 +40,7 @@ export class LayerManager {
       position: { x: 0, y: 0 },
       rotation: 0,
       scale: { x: 1, y: 1 },
-      ...options
+      ...options,
     };
   }
 
@@ -52,7 +59,7 @@ export class LayerManager {
       clonedData = {
         originalUrl: imageData.originalUrl,
         originalBlob: imageData.originalBlob,
-        filters: [...imageData.filters]
+        filters: [...imageData.filters],
       } as ImageLayerData;
     } else if (layer.type === 'text' && layer.data) {
       clonedData = { ...layer.data } as TextLayerData;
@@ -65,7 +72,7 @@ export class LayerManager {
       id: this.generateLayerId(),
       name: `${layer.name} copy`,
       canvas: clonedCanvas,
-      data: clonedData
+      data: clonedData,
     };
   }
 
@@ -73,8 +80,11 @@ export class LayerManager {
    * Merge a layer down into the layer below it
    * Returns the new merged layer and updated layers array
    */
-  mergeLayersDown(targetLayerId: string, layers: Layer[]): { mergedLayer: Layer; updatedLayers: Layer[] } {
-    const targetIndex = layers.findIndex(l => l.id === targetLayerId);
+  mergeLayersDown(
+    targetLayerId: string,
+    layers: Layer[]
+  ): { mergedLayer: Layer; updatedLayers: Layer[] } {
+    const targetIndex = layers.findIndex((l) => l.id === targetLayerId);
 
     if (targetIndex === -1) {
       throw new Error('Target layer not found');
@@ -95,14 +105,14 @@ export class LayerManager {
       ...lowerLayer,
       id: this.generateLayerId(),
       name: `${lowerLayer.name} + ${upperLayer.name}`,
-      canvas: mergedCanvas
+      canvas: mergedCanvas,
     };
 
     // Remove both layers and insert merged layer
     const updatedLayers = [
       ...layers.slice(0, targetIndex - 1),
       mergedLayer,
-      ...layers.slice(targetIndex + 1)
+      ...layers.slice(targetIndex + 1),
     ];
 
     return { mergedLayer, updatedLayers };
@@ -157,7 +167,7 @@ export class LayerManager {
    * Move layer up one position in z-index
    */
   moveLayerUp(layerId: string, layers: Layer[]): Layer[] {
-    const index = layers.findIndex(l => l.id === layerId);
+    const index = layers.findIndex((l) => l.id === layerId);
 
     if (index === -1 || index === layers.length - 1) {
       return layers; // Already at top or not found
@@ -170,7 +180,7 @@ export class LayerManager {
    * Move layer down one position in z-index
    */
   moveLayerDown(layerId: string, layers: Layer[]): Layer[] {
-    const index = layers.findIndex(l => l.id === layerId);
+    const index = layers.findIndex((l) => l.id === layerId);
 
     if (index === -1 || index === 0) {
       return layers; // Already at bottom or not found
@@ -183,36 +193,28 @@ export class LayerManager {
    * Move layer to top of stack
    */
   moveLayerToTop(layerId: string, layers: Layer[]): Layer[] {
-    const index = layers.findIndex(l => l.id === layerId);
+    const index = layers.findIndex((l) => l.id === layerId);
 
     if (index === -1 || index === layers.length - 1) {
       return layers;
     }
 
     const layer = layers[index];
-    return [
-      ...layers.slice(0, index),
-      ...layers.slice(index + 1),
-      layer
-    ];
+    return [...layers.slice(0, index), ...layers.slice(index + 1), layer];
   }
 
   /**
    * Move layer to bottom of stack
    */
   moveLayerToBottom(layerId: string, layers: Layer[]): Layer[] {
-    const index = layers.findIndex(l => l.id === layerId);
+    const index = layers.findIndex((l) => l.id === layerId);
 
     if (index === -1 || index === 0) {
       return layers;
     }
 
     const layer = layers[index];
-    return [
-      layer,
-      ...layers.slice(0, index),
-      ...layers.slice(index + 1)
-    ];
+    return [layer, ...layers.slice(0, index), ...layers.slice(index + 1)];
   }
 
   /**
@@ -230,7 +232,7 @@ export class LayerManager {
     // Update z-indices to match new order
     return result.map((layer, index) => ({
       ...layer,
-      zIndex: index
+      zIndex: index,
     }));
   }
 
@@ -255,7 +257,7 @@ export class LayerManager {
     // Update z-indices
     return result.map((layer, index) => ({
       ...layer,
-      zIndex: index
+      zIndex: index,
     }));
   }
 
@@ -295,7 +297,7 @@ export class LayerManager {
       screen: 'screen',
       overlay: 'overlay',
       darken: 'darken',
-      lighten: 'lighten'
+      lighten: 'lighten',
     };
 
     return mapping[blendMode] || 'source-over';

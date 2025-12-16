@@ -69,7 +69,8 @@
       "Bash(npm uninstall:*)",
       "Bash(del \"C:\\Users\\Trevo\\OneDrive\\Desktop\\Board Games\\Blood on the Clocktower\\Github - Token Generator\\Clocktower_Token_Generator\\src\\ts\\nightOrder\\nightOrderWysiwygExport.ts\")",
       "Bash(del \"C:\\Users\\Trevo\\OneDrive\\Desktop\\Board Games\\Blood on the Clocktower\\Github - Token Generator\\Clocktower_Token_Generator\\src\\ts\\nightOrder\\nightOrderExport.ts\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx biome:*)"
     ],
     "deny": [],
     "ask": []

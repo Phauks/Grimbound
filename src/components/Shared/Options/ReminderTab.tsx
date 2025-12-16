@@ -1,19 +1,19 @@
-import { memo, useState } from 'react'
-import type { GenerationOptions } from '../../../ts/types/index'
-import { OptionGroup } from '../UI/OptionGroup'
-import { SegmentedControl } from '../UI/SegmentedControl'
-import { SliderWithValue } from '../Controls/SliderWithValue'
-import styles from '../../../styles/components/options/OptionsTab.module.css'
+import { memo, useState } from 'react';
+import styles from '../../../styles/components/options/OptionsTab.module.css';
+import type { GenerationOptions } from '../../../ts/types/index';
+import { SliderWithValue } from '../Controls/SliderWithValue';
+import { OptionGroup } from '../UI/OptionGroup';
+import { SegmentedControl } from '../UI/SegmentedControl';
 
 interface ReminderTabProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
 }
 
-type SubTabType = 'background' | 'text'
+type SubTabType = 'background' | 'text';
 
 export const ReminderTab = memo(({ generationOptions, onOptionChange }: ReminderTabProps) => {
-  const [activeSubTab, setActiveSubTab] = useState<SubTabType>('background')
+  const [activeSubTab, setActiveSubTab] = useState<SubTabType>('background');
 
   const handleFontSpacingChange = (type: string, value: number) => {
     const currentSpacing = generationOptions.fontSpacing || {
@@ -21,14 +21,14 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
       abilityText: 0,
       reminderText: 0,
       metaText: 0,
-    }
+    };
     onOptionChange({
       fontSpacing: {
         ...currentSpacing,
         [type]: value,
       },
-    })
-  }
+    });
+  };
 
   const handleTextShadowChange = (type: string, value: number) => {
     const currentShadow = generationOptions.textShadow || {
@@ -36,26 +36,28 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
       abilityText: 3,
       reminderText: 4,
       metaText: 4,
-    }
+    };
     onOptionChange({
       textShadow: {
         ...currentShadow,
         [type]: value,
       },
-    })
-  }
+    });
+  };
 
   return (
     <div className={styles.tabContent} data-tab-content="reminder">
       <div className={styles.subtabsContainer}>
         <div className={styles.subtabsNav}>
           <button
+            type="button"
             className={`${styles.subtabButton} ${activeSubTab === 'background' ? styles.active : ''}`}
             onClick={() => setActiveSubTab('background')}
           >
             Background
           </button>
           <button
+            type="button"
             className={`${styles.subtabButton} ${activeSubTab === 'text' ? styles.active : ''}`}
             onClick={() => setActiveSubTab('text')}
           >
@@ -67,19 +69,27 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
         {activeSubTab === 'background' && (
           <div className={styles.subtabContent}>
             <div className={styles.subsection}>
-              <OptionGroup label="Background Type" description="Choose between a solid color or image background.">
+              <OptionGroup
+                label="Background Type"
+                description="Choose between a solid color or image background."
+              >
                 <SegmentedControl
                   options={[
                     { value: 'color', label: 'Color' },
                     { value: 'image', label: 'Image' },
                   ]}
                   value={generationOptions.reminderBackgroundType || 'color'}
-                  onChange={(value) => onOptionChange({ reminderBackgroundType: value as 'color' | 'image' })}
+                  onChange={(value) =>
+                    onOptionChange({ reminderBackgroundType: value as 'color' | 'image' })
+                  }
                 />
               </OptionGroup>
 
               {generationOptions.reminderBackgroundType === 'color' ? (
-                <OptionGroup label="Background Color" description="Choose a solid background color for reminder tokens.">
+                <OptionGroup
+                  label="Background Color"
+                  description="Choose a solid background color for reminder tokens."
+                >
                   <input
                     type="color"
                     className={styles.colorInput}
@@ -165,7 +175,7 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
         )}
       </div>
     </div>
-  )
-})
+  );
+});
 
-ReminderTab.displayName = 'ReminderTab'
+ReminderTab.displayName = 'ReminderTab';

@@ -3,25 +3,25 @@
  * Coordinates multiple caches and strategies, provides unified API.
  */
 
-import { EventEmitter } from '../utils/EventEmitter.js'
-import { CacheLogger } from '../utils/CacheLogger.js'
-import { cacheInvalidationService } from '../CacheInvalidationService.js'
+import { cacheInvalidationService } from '../CacheInvalidationService.js';
 import type {
+  CacheStats,
+  ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-  ICacheStrategy,
-  CacheStats
-} from '../core/index.js'
+} from '../core/index.js';
+import { CacheLogger } from '../utils/CacheLogger.js';
+import { EventEmitter } from '../utils/EventEmitter.js';
 
 /**
  * Events emitted by PreRenderCacheManager.
  */
 export interface PreRenderCacheManagerEvents {
-  'prerender:start': { strategy: string; context: PreRenderContext }
-  'prerender:complete': { strategy: string; result: PreRenderResult }
-  'prerender:error': { strategy: string; error: any }
-  'cache:cleared': { name: string }
+  'prerender:start': { strategy: string; context: PreRenderContext };
+  'prerender:complete': { strategy: string; result: PreRenderResult };
+  'prerender:error': { strategy: string; error: any };
+  'cache:cleared': { name: string };
 }
 
 /**
@@ -29,16 +29,16 @@ export interface PreRenderCacheManagerEvents {
  * Central manager that coordinates multiple caches and strategies.
  */
 export class PreRenderCacheManager extends EventEmitter {
-  private strategies = new Map<string, IPreRenderStrategy>()
-  private caches = new Map<string, ICacheStrategy>()
-  private isRendering = new Set<string>()  // Prevent concurrent renders
-  private inProgressOperations = new Map<string, Promise<PreRenderResult>>()  // Request deduplication
+  private strategies = new Map<string, IPreRenderStrategy>();
+  private caches = new Map<string, ICacheStrategy>();
+  private isRendering = new Set<string>(); // Prevent concurrent renders
+  private inProgressOperations = new Map<string, Promise<PreRenderResult>>(); // Request deduplication
 
   constructor() {
-    super()
+    super();
 
     // Subscribe to cache invalidation events
-    this.setupInvalidationListeners()
+    this.setupInvalidationListeners();
   }
 
   /**
@@ -50,42 +50,42 @@ export class PreRenderCacheManager extends EventEmitter {
     cacheInvalidationService.subscribe('asset', async (event) => {
       CacheLogger.debug('Asset invalidation received', {
         assetIds: event.entityIds,
-        reason: event.reason
-      })
+        reason: event.reason,
+      });
 
       // Clear all pre-render caches since we don't know which tokens use which assets
-      await this.clearAllCaches()
-    })
+      await this.clearAllCaches();
+    });
 
     // Character invalidation - clear customize and project caches
     cacheInvalidationService.subscribe('character', async (event) => {
       CacheLogger.debug('Character invalidation received', {
         characterIds: event.entityIds,
-        reason: event.reason
-      })
+        reason: event.reason,
+      });
 
       // Clear characters cache (affected by character changes)
-      await this.clearCache('characters')
+      await this.clearCache('characters');
       // Clear tokens cache (might contain affected characters)
-      await this.clearCache('tokens')
-    })
+      await this.clearCache('tokens');
+    });
 
     // Project invalidation - clear project cache
     cacheInvalidationService.subscribe('project', async (event) => {
       CacheLogger.debug('Project invalidation received', {
         projectIds: event.entityIds,
-        reason: event.reason
-      })
+        reason: event.reason,
+      });
 
       // Clear project-specific cache
-      await this.clearCache('project')
-    })
+      await this.clearCache('project');
+    });
 
     // Global invalidation - clear everything
     cacheInvalidationService.subscribe('global', async () => {
-      CacheLogger.info('Global invalidation received, clearing all caches')
-      await this.clearAllCaches()
-    })
+      CacheLogger.info('Global invalidation received, clearing all caches');
+      await this.clearAllCaches();
+    });
   }
 
   /**
@@ -93,7 +93,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @param strategy - Strategy to register
    */
   registerStrategy(strategy: IPreRenderStrategy): void {
-    this.strategies.set(strategy.name, strategy)
+    this.strategies.set(strategy.name, strategy);
   }
 
   /**
@@ -101,8 +101,8 @@ export class PreRenderCacheManager extends EventEmitter {
    * @param name - Strategy name
    */
   unregisterStrategy(name: string): void {
-    this.strategies.delete(name)
-    this.isRendering.delete(name)
+    this.strategies.delete(name);
+    this.isRendering.delete(name);
   }
 
   /**
@@ -111,7 +111,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @param cache - Cache implementation
    */
   registerCache(name: string, cache: ICacheStrategy): void {
-    this.caches.set(name, cache)
+    this.caches.set(name, cache);
   }
 
   /**
@@ -119,7 +119,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @param name - Cache name
    */
   unregisterCache(name: string): void {
-    this.caches.delete(name)
+    this.caches.delete(name);
   }
 
   /**
@@ -132,42 +132,42 @@ export class PreRenderCacheManager extends EventEmitter {
    */
   async preRender(context: PreRenderContext): Promise<PreRenderResult> {
     // Find matching strategy
-    const strategy = this.findStrategy(context)
+    const strategy = this.findStrategy(context);
     if (!strategy) {
-      CacheLogger.warn('No matching strategy found', { contextType: context.type })
+      CacheLogger.warn('No matching strategy found', { contextType: context.type });
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: 'No matching strategy found'
-      }
+        error: 'No matching strategy found',
+      };
     }
 
     // Generate unique key for this render operation
-    const operationKey = this.getOperationKey(strategy.name, context)
+    const operationKey = this.getOperationKey(strategy.name, context);
 
     // Return existing promise if already rendering this exact operation (request deduplication)
     if (this.inProgressOperations.has(operationKey)) {
       CacheLogger.debug('Request deduplicated', {
         operation: operationKey,
-        strategy: strategy.name
-      })
-      return this.inProgressOperations.get(operationKey)!
+        strategy: strategy.name,
+      });
+      return this.inProgressOperations.get(operationKey)!;
     }
 
     // Create new render operation
-    const renderPromise = this.executePreRender(strategy, context)
+    const renderPromise = this.executePreRender(strategy, context);
 
     // Store promise for deduplication
-    this.inProgressOperations.set(operationKey, renderPromise)
+    this.inProgressOperations.set(operationKey, renderPromise);
 
     // Clean up after completion
     renderPromise.finally(() => {
-      this.inProgressOperations.delete(operationKey)
-      this.isRendering.delete(strategy.name)
-    })
+      this.inProgressOperations.delete(operationKey);
+      this.isRendering.delete(strategy.name);
+    });
 
-    return renderPromise
+    return renderPromise;
   }
 
   /**
@@ -184,60 +184,60 @@ export class PreRenderCacheManager extends EventEmitter {
   ): Promise<PreRenderResult> {
     // Prevent concurrent renders for same strategy (optional additional check)
     if (this.isRendering.has(strategy.name)) {
-      CacheLogger.warn('Strategy already rendering', { strategy: strategy.name })
+      CacheLogger.warn('Strategy already rendering', { strategy: strategy.name });
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: `Strategy '${strategy.name}' already rendering`
-      }
+        error: `Strategy '${strategy.name}' already rendering`,
+      };
     }
 
     // Start performance timing
-    const timingLabel = `prerender:${strategy.name}`
-    CacheLogger.startTiming(timingLabel)
+    const timingLabel = `prerender:${strategy.name}`;
+    CacheLogger.startTiming(timingLabel);
     CacheLogger.info('Pre-render started', {
       strategy: strategy.name,
       contextType: context.type,
       tokenCount: context.tokens.length,
-      characterCount: context.characters?.length || 0
-    })
+      characterCount: context.characters?.length || 0,
+    });
 
     try {
-      this.isRendering.add(strategy.name)
-      this.emit('prerender:start', { strategy: strategy.name, context })
+      this.isRendering.add(strategy.name);
+      this.emit('prerender:start', { strategy: strategy.name, context });
 
-      const result = await strategy.preRender(context)
+      const result = await strategy.preRender(context);
 
       // End timing with result metadata
       CacheLogger.endTiming(timingLabel, {
         rendered: result.rendered,
         skipped: result.skipped,
-        success: result.success
-      })
+        success: result.success,
+      });
 
       CacheLogger.info('Pre-render completed', {
         strategy: strategy.name,
         rendered: result.rendered,
         skipped: result.skipped,
-        success: result.success
-      })
+        success: result.success,
+      });
 
-      this.emit('prerender:complete', { strategy: strategy.name, result })
-      return result
+      this.emit('prerender:complete', { strategy: strategy.name, result });
+      return result;
     } catch (error) {
       CacheLogger.error('Pre-render failed', {
         strategy: strategy.name,
-        error: error instanceof Error ? error.message : String(error)
-      })
+        error: error instanceof Error ? error.message : String(error),
+      });
 
-      this.emit('prerender:error', { strategy: strategy.name, error })
+      this.emit('prerender:error', { strategy: strategy.name, error });
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: error instanceof Error ? error.message : String(error)
-      }
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 
@@ -251,25 +251,25 @@ export class PreRenderCacheManager extends EventEmitter {
    */
   private getOperationKey(strategyName: string, context: PreRenderContext): string {
     // Build key from strategy name + context-specific data
-    const parts = [strategyName, context.type]
+    const parts = [strategyName, context.type];
 
     // Add first token filename if present (for gallery/customize)
     if (context.tokens.length > 0) {
-      parts.push(context.tokens[0].filename)
+      parts.push(context.tokens[0].filename);
     }
 
     // Add project ID if present
     if (context.projectId) {
-      parts.push(context.projectId)
+      parts.push(context.projectId);
     }
 
     // Add character ID if present (for customize)
     if (context.characters && context.characters.length > 0) {
-      const firstChar = context.characters[0]
-      parts.push(firstChar.id || firstChar.name || 'unknown')
+      const firstChar = context.characters[0];
+      parts.push(firstChar.id || firstChar.name || 'unknown');
     }
 
-    return parts.join(':')
+    return parts.join(':');
   }
 
   /**
@@ -278,7 +278,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Cache instance or undefined if not found
    */
   getCache(name: string): ICacheStrategy | undefined {
-    return this.caches.get(name)
+    return this.caches.get(name);
   }
 
   /**
@@ -287,7 +287,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Strategy instance or undefined if not found
    */
   getStrategy(name: string): IPreRenderStrategy | undefined {
-    return this.strategies.get(name)
+    return this.strategies.get(name);
   }
 
   /**
@@ -296,8 +296,8 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Cache statistics or null if cache not found
    */
   getCacheStats(name: string): CacheStats | null {
-    const cache = this.caches.get(name)
-    return cache ? cache.getStats() : null
+    const cache = this.caches.get(name);
+    return cache ? cache.getStats() : null;
   }
 
   /**
@@ -305,11 +305,11 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Map of cache name to statistics
    */
   getAllCacheStats(): Record<string, CacheStats> {
-    const stats: Record<string, CacheStats> = {}
+    const stats: Record<string, CacheStats> = {};
     for (const [name, cache] of this.caches) {
-      stats[name] = cache.getStats()
+      stats[name] = cache.getStats();
     }
-    return stats
+    return stats;
   }
 
   /**
@@ -317,14 +317,14 @@ export class PreRenderCacheManager extends EventEmitter {
    * @param name - Cache name
    */
   async clearCache(name: string): Promise<void> {
-    const cache = this.caches.get(name)
+    const cache = this.caches.get(name);
     if (cache) {
-      CacheLogger.info('Clearing cache', { name })
-      await cache.clear()
-      this.emit('cache:cleared', { name })
-      CacheLogger.debug('Cache cleared', { name })
+      CacheLogger.info('Clearing cache', { name });
+      await cache.clear();
+      this.emit('cache:cleared', { name });
+      CacheLogger.debug('Cache cleared', { name });
     } else {
-      CacheLogger.warn('Cache not found', { name })
+      CacheLogger.warn('Cache not found', { name });
     }
   }
 
@@ -332,12 +332,12 @@ export class PreRenderCacheManager extends EventEmitter {
    * Clear all caches.
    */
   async clearAllCaches(): Promise<void> {
-    CacheLogger.info('Clearing all caches', { count: this.caches.size })
+    CacheLogger.info('Clearing all caches', { count: this.caches.size });
     for (const [name, cache] of this.caches) {
-      await cache.clear()
-      this.emit('cache:cleared', { name })
+      await cache.clear();
+      this.emit('cache:cleared', { name });
     }
-    CacheLogger.debug('All caches cleared')
+    CacheLogger.debug('All caches cleared');
   }
 
   /**
@@ -346,7 +346,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns True if strategy is rendering
    */
   isStrategyRendering(strategyName: string): boolean {
-    return this.isRendering.has(strategyName)
+    return this.isRendering.has(strategyName);
   }
 
   /**
@@ -354,7 +354,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Array of strategy names
    */
   getStrategyNames(): string[] {
-    return Array.from(this.strategies.keys())
+    return Array.from(this.strategies.keys());
   }
 
   /**
@@ -362,7 +362,7 @@ export class PreRenderCacheManager extends EventEmitter {
    * @returns Array of cache names
    */
   getCacheNames(): string[] {
-    return Array.from(this.caches.keys())
+    return Array.from(this.caches.keys());
   }
 
   /**
@@ -374,9 +374,9 @@ export class PreRenderCacheManager extends EventEmitter {
    */
   private findStrategy(context: PreRenderContext): IPreRenderStrategy | null {
     const candidates = Array.from(this.strategies.values())
-      .filter(s => s.shouldTrigger(context))
-      .sort((a, b) => b.priority - a.priority)
+      .filter((s) => s.shouldTrigger(context))
+      .sort((a, b) => b.priority - a.priority);
 
-    return candidates[0] ?? null
+    return candidates[0] ?? null;
   }
 }

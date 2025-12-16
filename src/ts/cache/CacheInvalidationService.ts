@@ -18,37 +18,37 @@ import { logger } from '../utils/logger.js';
 /**
  * Invalidation scopes - what entity changed
  */
-export type InvalidationScope = 'asset' | 'character' | 'project' | 'global'
+export type InvalidationScope = 'asset' | 'character' | 'project' | 'global';
 
 /**
  * Invalidation event with context
  */
 export interface InvalidationEvent {
   /** What type of entity changed */
-  scope: InvalidationScope
+  scope: InvalidationScope;
   /** Entity ID(s) that changed */
-  entityIds: string[]
+  entityIds: string[];
   /** Reason for invalidation */
-  reason: 'update' | 'delete' | 'manual'
+  reason: 'update' | 'delete' | 'manual';
   /** Additional metadata */
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>;
   /** Timestamp */
-  timestamp: number
+  timestamp: number;
 }
 
 /**
  * Invalidation listener function
  */
-export type InvalidationListener = (event: InvalidationEvent) => void | Promise<void>
+export type InvalidationListener = (event: InvalidationEvent) => void | Promise<void>;
 
 /**
  * Subscription handle for unsubscribing
  */
 export interface InvalidationSubscription {
   /** Scope this subscription listens to */
-  scope: InvalidationScope | 'all'
+  scope: InvalidationScope | 'all';
   /** Unsubscribe function */
-  unsubscribe: () => void
+  unsubscribe: () => void;
 }
 
 // ============================================================================
@@ -77,17 +77,17 @@ export interface InvalidationSubscription {
  * ```
  */
 export class CacheInvalidationService {
-  private listeners: Map<InvalidationScope | 'all', Set<InvalidationListener>> = new Map()
-  private eventHistory: InvalidationEvent[] = []
-  private readonly maxHistorySize = 100
+  private listeners: Map<InvalidationScope | 'all', Set<InvalidationListener>> = new Map();
+  private eventHistory: InvalidationEvent[] = [];
+  private readonly maxHistorySize = 100;
 
   constructor() {
     // Initialize listener sets for each scope
-    this.listeners.set('asset', new Set())
-    this.listeners.set('character', new Set())
-    this.listeners.set('project', new Set())
-    this.listeners.set('global', new Set())
-    this.listeners.set('all', new Set())
+    this.listeners.set('asset', new Set());
+    this.listeners.set('character', new Set());
+    this.listeners.set('project', new Set());
+    this.listeners.set('global', new Set());
+    this.listeners.set('all', new Set());
   }
 
   // ==========================================================================
@@ -114,19 +114,19 @@ export class CacheInvalidationService {
     scope: InvalidationScope | 'all',
     listener: InvalidationListener
   ): InvalidationSubscription {
-    const scopeListeners = this.listeners.get(scope)
+    const scopeListeners = this.listeners.get(scope);
     if (!scopeListeners) {
-      throw new Error(`Invalid scope: ${scope}`)
+      throw new Error(`Invalid scope: ${scope}`);
     }
 
-    scopeListeners.add(listener)
+    scopeListeners.add(listener);
 
     return {
       scope,
       unsubscribe: () => {
-        scopeListeners.delete(listener)
-      }
-    }
+        scopeListeners.delete(listener);
+      },
+    };
   }
 
   /**
@@ -136,9 +136,9 @@ export class CacheInvalidationService {
    * @param listener - Listener function to remove
    */
   unsubscribe(scope: InvalidationScope | 'all', listener: InvalidationListener): void {
-    const scopeListeners = this.listeners.get(scope)
+    const scopeListeners = this.listeners.get(scope);
     if (scopeListeners) {
-      scopeListeners.delete(listener)
+      scopeListeners.delete(listener);
     }
   }
 
@@ -149,18 +149,18 @@ export class CacheInvalidationService {
    * @returns Number of active listeners
    */
   getListenerCount(scope: InvalidationScope | 'all'): number {
-    return this.listeners.get(scope)?.size ?? 0
+    return this.listeners.get(scope)?.size ?? 0;
   }
 
   /**
    * Get total count of all active listeners.
    */
   getTotalListenerCount(): number {
-    let total = 0
+    let total = 0;
     for (const listeners of this.listeners.values()) {
-      total += listeners.size
+      total += listeners.size;
     }
-    return total
+    return total;
   }
 
   // ==========================================================================
@@ -191,10 +191,10 @@ export class CacheInvalidationService {
       entityIds: [assetId],
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   /**
@@ -209,17 +209,17 @@ export class CacheInvalidationService {
     reason: 'update' | 'delete' | 'manual' = 'manual',
     metadata?: Record<string, unknown>
   ): Promise<void> {
-    if (assetIds.length === 0) return
+    if (assetIds.length === 0) return;
 
     const event: InvalidationEvent = {
       scope: 'asset',
       entityIds: assetIds,
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   /**
@@ -247,10 +247,10 @@ export class CacheInvalidationService {
       entityIds: [characterId],
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   /**
@@ -265,17 +265,17 @@ export class CacheInvalidationService {
     reason: 'update' | 'delete' | 'manual' = 'manual',
     metadata?: Record<string, unknown>
   ): Promise<void> {
-    if (characterIds.length === 0) return
+    if (characterIds.length === 0) return;
 
     const event: InvalidationEvent = {
       scope: 'character',
       entityIds: characterIds,
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   /**
@@ -302,10 +302,10 @@ export class CacheInvalidationService {
       entityIds: [projectId],
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   /**
@@ -329,10 +329,10 @@ export class CacheInvalidationService {
       entityIds: [],
       reason,
       metadata,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    };
 
-    await this.emit(event)
+    await this.emit(event);
   }
 
   // ==========================================================================
@@ -346,37 +346,38 @@ export class CacheInvalidationService {
    */
   private async emit(event: InvalidationEvent): Promise<void> {
     // Add to history
-    this.addToHistory(event)
+    this.addToHistory(event);
 
     // Get scope-specific listeners
-    const scopeListeners = this.listeners.get(event.scope) ?? new Set()
+    const scopeListeners = this.listeners.get(event.scope) ?? new Set();
     // Get global listeners (listen to all scopes)
-    const allListeners = this.listeners.get('all') ?? new Set()
+    const allListeners = this.listeners.get('all') ?? new Set();
 
     // Combine both sets
-    const listenersToNotify = new Set([...scopeListeners, ...allListeners])
+    const listenersToNotify = new Set([...scopeListeners, ...allListeners]);
 
     if (listenersToNotify.size === 0) {
       // No listeners registered - log for debugging
-      logger.debug('CacheInvalidation', `No listeners for scope: ${event.scope}`)
-      return
+      logger.debug('CacheInvalidation', `No listeners for scope: ${event.scope}`);
+      return;
     }
 
     // Notify all listeners in parallel
     const notifications = Array.from(listenersToNotify).map(async (listener) => {
       try {
-        await listener(event)
+        await listener(event);
       } catch (error) {
-        logger.error('CacheInvalidation', 'Listener error', error)
+        logger.error('CacheInvalidation', 'Listener error', error);
       }
-    })
+    });
 
-    await Promise.all(notifications)
+    await Promise.all(notifications);
 
     // Log successful invalidation
-    logger.debug('CacheInvalidation',
+    logger.debug(
+      'CacheInvalidation',
       `${event.scope} invalidation: ${event.entityIds.join(', ')} (${listenersToNotify.size} listeners notified)`
-    )
+    );
   }
 
   // ==========================================================================
@@ -387,11 +388,11 @@ export class CacheInvalidationService {
    * Add event to history, maintaining max size.
    */
   private addToHistory(event: InvalidationEvent): void {
-    this.eventHistory.push(event)
+    this.eventHistory.push(event);
 
     // Trim history if it exceeds max size
     if (this.eventHistory.length > this.maxHistorySize) {
-      this.eventHistory = this.eventHistory.slice(-this.maxHistorySize)
+      this.eventHistory = this.eventHistory.slice(-this.maxHistorySize);
     }
   }
 
@@ -402,7 +403,7 @@ export class CacheInvalidationService {
    * @returns Array of recent invalidation events
    */
   getRecentEvents(limit: number = 50): InvalidationEvent[] {
-    return this.eventHistory.slice(-limit)
+    return this.eventHistory.slice(-limit);
   }
 
   /**
@@ -413,16 +414,14 @@ export class CacheInvalidationService {
    * @returns Array of events matching scope
    */
   getEventsByScope(scope: InvalidationScope, limit: number = 50): InvalidationEvent[] {
-    return this.eventHistory
-      .filter(event => event.scope === scope)
-      .slice(-limit)
+    return this.eventHistory.filter((event) => event.scope === scope).slice(-limit);
   }
 
   /**
    * Clear event history.
    */
   clearHistory(): void {
-    this.eventHistory = []
+    this.eventHistory = [];
   }
 
   // ==========================================================================
@@ -440,19 +439,19 @@ export class CacheInvalidationService {
         project: this.getListenerCount('project'),
         global: this.getListenerCount('global'),
         all: this.getListenerCount('all'),
-        total: this.getTotalListenerCount()
+        total: this.getTotalListenerCount(),
       },
       events: {
         total: this.eventHistory.length,
         byScope: {
-          asset: this.eventHistory.filter(e => e.scope === 'asset').length,
-          character: this.eventHistory.filter(e => e.scope === 'character').length,
-          project: this.eventHistory.filter(e => e.scope === 'project').length,
-          global: this.eventHistory.filter(e => e.scope === 'global').length
-        }
+          asset: this.eventHistory.filter((e) => e.scope === 'asset').length,
+          character: this.eventHistory.filter((e) => e.scope === 'character').length,
+          project: this.eventHistory.filter((e) => e.scope === 'project').length,
+          global: this.eventHistory.filter((e) => e.scope === 'global').length,
+        },
       },
-      recentEvents: this.getRecentEvents(10)
-    }
+      recentEvents: this.getRecentEvents(10),
+    };
   }
 
   /**
@@ -460,7 +459,7 @@ export class CacheInvalidationService {
    */
   clearAllListeners(): void {
     for (const listeners of this.listeners.values()) {
-      listeners.clear()
+      listeners.clear();
     }
   }
 }
@@ -473,6 +472,6 @@ export class CacheInvalidationService {
  * Global cache invalidation service singleton.
  * Shared across the entire application.
  */
-export const cacheInvalidationService = new CacheInvalidationService()
+export const cacheInvalidationService = new CacheInvalidationService();
 
-export default cacheInvalidationService
+export default cacheInvalidationService;

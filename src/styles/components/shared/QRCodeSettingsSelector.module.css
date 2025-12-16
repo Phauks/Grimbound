@@ -36,7 +36,8 @@
 
 .threePanelLayout {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr;
+  /* Fixed column widths to prevent layout shifts */
+  grid-template-columns: 120px 1fr 1fr;
   gap: 0.75rem;
   padding: 0.75rem;
 }
@@ -47,6 +48,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  /* Prevent width recalculation when content changes */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .leftPanel {
@@ -224,8 +228,11 @@
   padding: 0.5rem;
   background: var(--bg-tertiary);
   border-radius: var(--radius-sm);
-  flex: 1;
-  min-height: 76px;
+  /* Fixed dimensions to prevent layout shifts when toggling options */
+  height: 76px;
+  min-width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* Compact variant for sections without style dropdown (e.g., Background) */
@@ -246,6 +253,8 @@
   gap: 0.375rem;
   flex-wrap: nowrap;
   min-height: 22px;
+  /* Prevent width changes when elements show/hide */
+  width: 100%;
 }
 
 .gradientToggle {
@@ -314,7 +323,7 @@
 
 .colorHex {
   font-size: 0.6875rem;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   color: var(--text-muted);
   text-transform: uppercase;
 }
@@ -335,6 +344,30 @@
   color: var(--text-muted);
   min-width: 22px;
   text-align: right;
+}
+
+.rotationValue {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  min-width: 28px;
+  width: 28px;
+  text-align: right;
+  background: transparent;
+  border: none;
+  padding: 1px 2px;
+  cursor: text;
+  font-family: var(--font-mono, monospace);
+}
+
+.rotationValue:hover {
+  color: var(--text-primary);
+}
+
+.rotationValue:focus {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
 }
 
 .rotationSlider {
@@ -367,7 +400,15 @@
 }
 
 /* ============================================
-   Opacity Control
+   Slider Controls (using EditableSlider component)
+   ============================================ */
+
+.sliderRow {
+  margin-top: 0.25rem;
+}
+
+/* ============================================
+   Opacity Control (legacy)
    ============================================ */
 
 .opacityRow {

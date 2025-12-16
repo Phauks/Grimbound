@@ -4,7 +4,7 @@
  * Main canvas area with zoom/pan controls and layer rendering
  */
 
-import { useRef, useEffect, useState, MutableRefObject } from 'react';
+import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
 import styles from '../../../styles/components/studio/Studio.module.css';
 
@@ -13,14 +13,7 @@ interface StudioCanvasProps {
 }
 
 export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
-  const {
-    canvasSize,
-    zoom,
-    pan,
-    setZoom,
-    setPan,
-    resetView,
-  } = useStudio();
+  const { canvasSize, zoom, pan, setZoom, setPan, resetView } = useStudio();
 
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,14 +30,14 @@ export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
   // Mark as needing render when canvas size changes
   useEffect(() => {
     needsRenderRef.current = true;
-  }, [canvasSize]);
+  }, []);
 
   // Optimized canvas rendering with RAF
   useEffect(() => {
     const displayCanvas = displayCanvasRef.current;
     const compositeCanvas = compositeCanvasRef.current;
 
-    if (!displayCanvas || !compositeCanvas) return;
+    if (!(displayCanvas && compositeCanvas)) return;
 
     const render = () => {
       if (!needsRenderRef.current) {
@@ -83,11 +76,11 @@ export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
   }, [compositeCanvasRef, canvasSize]);
 
   // External API to trigger re-renders (exposed via ref if needed)
-  const requestRender = () => {
+  const _requestRender = () => {
     needsRenderRef.current = true;
     if (!rafIdRef.current) {
       rafIdRef.current = requestAnimationFrame(() => {
-        if (!displayCanvasRef.current || !compositeCanvasRef.current) return;
+        if (!(displayCanvasRef.current && compositeCanvasRef.current)) return;
 
         const ctx = displayCanvasRef.current.getContext('2d');
         if (!ctx) return;
@@ -237,26 +230,14 @@ export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
         <div className={styles.zoomLevel} onClick={handleResetZoom} title="Click to reset to 100%">
           {Math.round(zoom * 100)}%
         </div>
-        <button
-          className={styles.zoomButton}
-          onClick={handleZoomIn}
-          title="Zoom In (Scroll Up)"
-        >
+        <button type="button" className={styles.zoomButton} onClick={handleZoomIn} title="Zoom In (Scroll Up)">
           +
         </button>
         <div className={styles.toolbarDivider} style={{ margin: '0 4px' }} />
-        <button
-          className={styles.zoomButton}
-          onClick={handleFitToScreen}
-          title="Fit to Screen (F)"
-        >
+        <button type="button" className={styles.zoomButton} onClick={handleFitToScreen} title="Fit to Screen (F)">
           ⊡
         </button>
-        <button
-          className={styles.zoomButton}
-          onClick={handleResetZoom}
-          title="100% Zoom (Ctrl+0)"
-        >
+        <button type="button" className={styles.zoomButton} onClick={handleResetZoom} title="100% Zoom (Ctrl+0)">
           1:1
         </button>
       </div>

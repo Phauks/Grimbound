@@ -15,32 +15,32 @@
  * @module components/Shared/Controls/EditableSlider
  */
 
-import { memo, useState, useCallback, useRef } from 'react'
-import styles from '../../../styles/components/shared/EditableSlider.module.css'
+import { memo, useCallback, useRef, useState } from 'react';
+import styles from '../../../styles/components/shared/EditableSlider.module.css';
 
 export interface EditableSliderProps {
   /** Current value */
-  value: number
+  value: number;
   /** Called when value changes */
-  onChange: (value: number) => void
+  onChange: (value: number) => void;
   /** Minimum allowed value */
-  min: number
+  min: number;
   /** Maximum allowed value */
-  max: number
+  max: number;
   /** Step increment */
-  step?: number
+  step?: number;
   /** Value suffix (%, °, x, px, etc.) */
-  suffix?: string
+  suffix?: string;
   /** Label text (optional) */
-  label?: string
+  label?: string;
   /** Default value for reset (enables reset-on-hover for label) */
-  defaultValue?: number
+  defaultValue?: number;
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Additional CSS class for the container */
-  className?: string
+  className?: string;
 }
 
 export const EditableSlider = memo(function EditableSlider({
@@ -56,50 +56,56 @@ export const EditableSlider = memo(function EditableSlider({
   ariaLabel,
   className,
 }: EditableSliderProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Handle text input focus
   const handleFocus = useCallback(() => {
-    setIsEditing(true)
-    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)))
-  }, [value, step])
+    setIsEditing(true);
+    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
+  }, [value, step]);
 
   // Handle text input blur - apply value
   const handleBlur = useCallback(() => {
-    setIsEditing(false)
-    const parsed = parseFloat(editValue)
-    if (!isNaN(parsed)) {
-      const clamped = Math.min(max, Math.max(min, parsed))
-      onChange(clamped)
+    setIsEditing(false);
+    const parsed = parseFloat(editValue);
+    if (!Number.isNaN(parsed)) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped);
     }
-  }, [editValue, min, max, onChange])
+  }, [editValue, min, max, onChange]);
 
   // Handle keyboard shortcuts
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      inputRef.current?.blur()
-    } else if (e.key === 'Escape') {
-      setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)))
-      inputRef.current?.blur()
-    }
-  }, [value, step])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        inputRef.current?.blur();
+      } else if (e.key === 'Escape') {
+        setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
+        inputRef.current?.blur();
+      }
+    },
+    [value, step]
+  );
 
   // Handle slider change
-  const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(parseFloat(e.target.value))
-  }, [onChange])
+  const handleSliderChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(parseFloat(e.target.value));
+    },
+    [onChange]
+  );
 
   // Handle reset click
   const handleReset = useCallback(() => {
     if (defaultValue !== undefined) {
-      onChange(defaultValue)
+      onChange(defaultValue);
     }
-  }, [defaultValue, onChange])
+  }, [defaultValue, onChange]);
 
-  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value)
-  const hasReset = defaultValue !== undefined && value !== defaultValue
+  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value);
+  const hasReset = defaultValue !== undefined && value !== defaultValue;
 
   return (
     <div className={`${styles.container} ${className || ''} ${disabled ? styles.disabled : ''}`}>
@@ -144,7 +150,7 @@ export const EditableSlider = memo(function EditableSlider({
         title={`Click to edit (${min}-${max})`}
       />
     </div>
-  )
-})
+  );
+});
 
-export default EditableSlider
+export default EditableSlider;

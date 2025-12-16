@@ -20,9 +20,9 @@ export type AssetType =
   | 'setup-flower'
   | 'leaf'
   | 'logo'
-  | 'studio-icon'      // Custom icon created in Studio
-  | 'studio-logo'      // Script logo created in Studio
-  | 'studio-project';  // Complete Studio project (multi-layer)
+  | 'studio-icon' // Custom icon created in Studio
+  | 'studio-logo' // Script logo created in Studio
+  | 'studio-project'; // Complete Studio project (multi-layer)
 
 /**
  * Source of how an asset was added to the system

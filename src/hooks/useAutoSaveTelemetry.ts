@@ -7,7 +7,7 @@
  * @module hooks/useAutoSaveTelemetry
  */
 
-import { useRef, useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { logger } from '../ts/utils/index.js';
 
 // ============================================================================
@@ -24,21 +24,21 @@ const TELEMETRY_STORAGE_KEY = 'botc-autosave-telemetry';
  * Auto-save telemetry metrics (privacy-friendly, stored locally)
  */
 export interface AutoSaveTelemetry {
-  totalSaves: number;           // Successful saves
-  totalErrors: number;          // Failed saves
-  totalAttempts: number;        // Total attempts (saves + errors)
-  totalDurationMs: number;      // Sum of all save durations
-  lastSaveDurationMs: number;   // Duration of most recent save
-  firstSaveAt: number;          // Timestamp of first save (session start)
-  lastUpdatedAt: number;        // Last metrics update
+  totalSaves: number; // Successful saves
+  totalErrors: number; // Failed saves
+  totalAttempts: number; // Total attempts (saves + errors)
+  totalDurationMs: number; // Sum of all save durations
+  lastSaveDurationMs: number; // Duration of most recent save
+  firstSaveAt: number; // Timestamp of first save (session start)
+  lastUpdatedAt: number; // Last metrics update
 }
 
 /**
  * Computed telemetry stats (includes derived values)
  */
 export interface AutoSaveTelemetryStats extends AutoSaveTelemetry {
-  successRate: number;          // Percentage of successful saves
-  avgSaveDurationMs: number;    // Average save duration
+  successRate: number; // Percentage of successful saves
+  avgSaveDurationMs: number; // Average save duration
 }
 
 // ============================================================================
@@ -85,13 +85,11 @@ function saveTelemetry(telemetry: AutoSaveTelemetry): void {
  * Get computed telemetry stats (includes derived values)
  */
 export function computeTelemetryStats(telemetry: AutoSaveTelemetry): AutoSaveTelemetryStats {
-  const successRate = telemetry.totalAttempts > 0
-    ? (telemetry.totalSaves / telemetry.totalAttempts) * 100
-    : 0;
+  const successRate =
+    telemetry.totalAttempts > 0 ? (telemetry.totalSaves / telemetry.totalAttempts) * 100 : 0;
 
-  const avgSaveDurationMs = telemetry.totalSaves > 0
-    ? telemetry.totalDurationMs / telemetry.totalSaves
-    : 0;
+  const avgSaveDurationMs =
+    telemetry.totalSaves > 0 ? telemetry.totalDurationMs / telemetry.totalSaves : 0;
 
   return {
     ...telemetry,

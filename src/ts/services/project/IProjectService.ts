@@ -8,16 +8,16 @@
  */
 
 import type {
-  Project,
-  CreateProjectOptions,
-  ListProjectsOptions,
-  ExportOptions,
-  AutoSaveStatus,
-  ValidationResult,
-  ProjectPreview,
-  CustomIcon,
   AutoSaveSnapshot,
+  AutoSaveStatus,
+  CreateProjectOptions,
+  CustomIcon,
+  ExportOptions,
+  ListProjectsOptions,
+  Project,
+  ProjectPreview,
   StorageQuota,
+  ValidationResult,
 } from '../../types/project.js';
 
 // ============================================================================

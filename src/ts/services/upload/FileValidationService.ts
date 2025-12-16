@@ -7,13 +7,8 @@
  * @module services/upload/FileValidationService
  */
 
-import type { AssetType, ValidationResult, AssetTypeConfig } from './types.js';
-import {
-  ASSET_TYPE_CONFIGS,
-  MAGIC_BYTES,
-  WEBP_SIGNATURE,
-  MB,
-} from './constants.js';
+import { ASSET_TYPE_CONFIGS, MAGIC_BYTES, MB, WEBP_SIGNATURE } from './constants.js';
+import type { AssetType, AssetTypeConfig, ValidationResult } from './types.js';
 
 // ============================================================================
 // FileValidationService
@@ -42,7 +37,7 @@ export class FileValidationService {
     if (!config.allowedMimeTypes.includes(detectedMimeType)) {
       errors.push(
         `Invalid file type: ${detectedMimeType || 'unknown'}. ` +
-        `Allowed: ${config.allowedExtensions.join(', ')}`
+          `Allowed: ${config.allowedExtensions.join(', ')}`
       );
     }
 
@@ -61,26 +56,18 @@ export class FileValidationService {
 
         // Check minimum dimensions
         if (config.minWidth && dimensions.width < config.minWidth) {
-          errors.push(
-            `Image too narrow: ${dimensions.width}px. Minimum: ${config.minWidth}px`
-          );
+          errors.push(`Image too narrow: ${dimensions.width}px. Minimum: ${config.minWidth}px`);
         }
         if (config.minHeight && dimensions.height < config.minHeight) {
-          errors.push(
-            `Image too short: ${dimensions.height}px. Minimum: ${config.minHeight}px`
-          );
+          errors.push(`Image too short: ${dimensions.height}px. Minimum: ${config.minHeight}px`);
         }
 
         // Check maximum dimensions
         if (config.maxWidth && dimensions.width > config.maxWidth) {
-          warnings.push(
-            `Image will be resized: ${dimensions.width}px → ${config.maxWidth}px`
-          );
+          warnings.push(`Image will be resized: ${dimensions.width}px → ${config.maxWidth}px`);
         }
         if (config.maxHeight && dimensions.height > config.maxHeight) {
-          warnings.push(
-            `Image will be resized: ${dimensions.height}px → ${config.maxHeight}px`
-          );
+          warnings.push(`Image will be resized: ${dimensions.height}px → ${config.maxHeight}px`);
         }
 
         // Check square requirement
@@ -92,7 +79,7 @@ export class FileValidationService {
           if (diff > tolerance) {
             warnings.push(
               `Image is not square (${dimensions.width}×${dimensions.height}). ` +
-              `It will be cropped to fit.`
+                `It will be cropped to fit.`
             );
           }
         }

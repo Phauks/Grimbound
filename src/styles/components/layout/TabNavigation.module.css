@@ -20,7 +20,7 @@
   border: none;
   padding: var(--spacing-md) var(--spacing-sm);
   color: var(--text-secondary);
-  font-family: 'TradeGothicBold', sans-serif;
+  font-family: "TradeGothicBold", sans-serif;
   font-size: 0.9rem;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -40,7 +40,7 @@
 }
 
 .tabButton::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -92,10 +92,8 @@
   .tabNavigation {
     flex-wrap: wrap;
   }
-  
+
   .tabButton {
     min-width: 80px;
   }
 }
-
-

@@ -7,12 +7,19 @@
  * @module services/upload/AssetStorageService
  */
 
-import { projectDb } from '../../db/projectDb.js';
-import type { DBAsset, AssetType, AssetMetadata, AssetFilter, AssetWithUrl, ExportableAsset } from './types.js';
-import { ASSET_ZIP_PATHS } from './constants.js';
 import { cacheInvalidationService } from '../../cache/CacheInvalidationService.js';
-import { imageProcessingService } from './ImageProcessingService.js';
+import { projectDb } from '../../db/projectDb.js';
 import { logger } from '../../utils/logger.js';
+import { ASSET_ZIP_PATHS } from './constants.js';
+import { imageProcessingService } from './ImageProcessingService.js';
+import type {
+  AssetFilter,
+  AssetMetadata,
+  AssetType,
+  AssetWithUrl,
+  DBAsset,
+  ExportableAsset,
+} from './types.js';
 
 // ============================================================================
 // Types
@@ -89,7 +96,7 @@ export class AssetStorageService {
     const { enableDeduplication = true } = options;
 
     // Generate content hash for deduplication (or use provided hash for restore)
-    const contentHash = data.contentHash ?? await imageProcessingService.hashBlob(data.blob);
+    const contentHash = data.contentHash ?? (await imageProcessingService.hashBlob(data.blob));
 
     // Check for existing asset with same content hash (deduplication)
     // Skip deduplication if a specific ID is provided (restore operation)
@@ -98,7 +105,7 @@ export class AssetStorageService {
       if (existing) {
         logger.debug('AssetStorageService', 'Deduplication: Reusing existing asset', {
           existingId: existing.id,
-          filename: data.metadata.filename
+          filename: data.metadata.filename,
         });
 
         // Update linkedTo if needed (merge with existing links)
@@ -130,12 +137,12 @@ export class AssetStorageService {
       ...(data.usedInProjects !== undefined && { usedInProjects: data.usedInProjects }),
     };
 
-    await projectDb.assets.put(asset);  // Use put instead of add to allow restore with existing ID
+    await projectDb.assets.put(asset); // Use put instead of add to allow restore with existing ID
 
     logger.debug('AssetStorageService', 'Created new asset', {
       id,
       filename: data.metadata.filename,
-      contentHash: contentHash.substring(0, 12) + '...'
+      contentHash: `${contentHash.substring(0, 12)}...`,
     });
 
     return id;
@@ -179,7 +186,7 @@ export class AssetStorageService {
 
     // Emit invalidation event for cache coordination
     await cacheInvalidationService.invalidateAsset(id, 'update', {
-      fields: Object.keys(updates)
+      fields: Object.keys(updates),
     });
   }
 
@@ -214,7 +221,9 @@ export class AssetStorageService {
    *
    * @param updates - Array of {id, data} pairs to update
    */
-  async bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<DBAsset, 'id'>> }>): Promise<void> {
+  async bulkUpdate(
+    updates: Array<{ id: string; data: Partial<Omit<DBAsset, 'id'>> }>
+  ): Promise<void> {
     await projectDb.transaction('rw', projectDb.assets, async () => {
       for (const { id, data } of updates) {
         // Revoke cached URLs if blob is being updated
@@ -226,9 +235,9 @@ export class AssetStorageService {
     });
 
     // Emit invalidation events for all updated assets
-    const updatedIds = updates.map(u => u.id);
+    const updatedIds = updates.map((u) => u.id);
     await cacheInvalidationService.invalidateAssets(updatedIds, 'update', {
-      count: updates.length
+      count: updates.length,
     });
   }
 
@@ -238,7 +247,7 @@ export class AssetStorageService {
    * @param ids - Array of asset IDs to promote
    */
   async bulkPromoteToGlobal(ids: string[]): Promise<void> {
-    await this.bulkUpdate(ids.map(id => ({ id, data: { projectId: null } })));
+    await this.bulkUpdate(ids.map((id) => ({ id, data: { projectId: null } })));
   }
 
   /**
@@ -248,7 +257,7 @@ export class AssetStorageService {
    * @param projectId - Target project ID
    */
   async bulkMoveToProject(ids: string[], projectId: string): Promise<void> {
-    await this.bulkUpdate(ids.map(id => ({ id, data: { projectId } })));
+    await this.bulkUpdate(ids.map((id) => ({ id, data: { projectId } })));
   }
 
   // ==========================================================================
@@ -273,24 +282,24 @@ export class AssetStorageService {
     let results: DBAsset[];
 
     // OPTIMIZATION: Use compound index when both type and projectId are provided (non-null)
-    if (filter.type && filter.projectId !== undefined && filter.projectId !== 'all' && filter.projectId !== null) {
+    if (
+      filter.type &&
+      filter.projectId !== undefined &&
+      filter.projectId !== 'all' &&
+      filter.projectId !== null
+    ) {
       const types = Array.isArray(filter.type) ? filter.type : [filter.type];
-      const projectIdVal = filter.projectId;  // Now guaranteed to be string
+      const projectIdVal = filter.projectId; // Now guaranteed to be string
 
       // Use compound index [type+projectId] for optimal performance
       if (types.length === 1) {
         // Single type - use compound index directly
-        collection = projectDb.assets
-          .where('[type+projectId]')
-          .equals([types[0], projectIdVal]);
+        collection = projectDb.assets.where('[type+projectId]').equals([types[0], projectIdVal]);
         results = await collection.toArray();
       } else {
         // Multiple types - query each type+projectId combination and merge
-        const promises = types.map(type =>
-          projectDb.assets
-            .where('[type+projectId]')
-            .equals([type, projectIdVal])
-            .toArray()
+        const promises = types.map((type) =>
+          projectDb.assets.where('[type+projectId]').equals([type, projectIdVal]).toArray()
         );
         const resultArrays = await Promise.all(promises);
         results = resultArrays.flat();
@@ -308,7 +317,11 @@ export class AssetStorageService {
       }
     }
     // OPTIMIZATION: Use projectId index when only projectId is provided (non-null string)
-    else if (filter.projectId !== undefined && filter.projectId !== 'all' && filter.projectId !== null) {
+    else if (
+      filter.projectId !== undefined &&
+      filter.projectId !== 'all' &&
+      filter.projectId !== null
+    ) {
       collection = projectDb.assets.where('projectId').equals(filter.projectId);
       results = await collection.toArray();
     }
@@ -326,9 +339,7 @@ export class AssetStorageService {
     // Apply search filter
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
-      results = results.filter((a) =>
-        a.metadata.filename.toLowerCase().includes(searchLower)
-      );
+      results = results.filter((a) => a.metadata.filename.toLowerCase().includes(searchLower));
     }
 
     // Apply orphaned filter
@@ -364,7 +375,6 @@ export class AssetStorageService {
           aVal = a.usageCount ?? 0; // Never used assets go to the end
           bVal = b.usageCount ?? 0;
           break;
-        case 'uploadedAt':
         default:
           aVal = a.metadata.uploadedAt;
           bVal = b.metadata.uploadedAt;
@@ -631,7 +641,7 @@ export class AssetStorageService {
       url,
       thumbnailUrl,
       refCount: 1,
-      weakRefs: new Set()
+      weakRefs: new Set(),
     });
     return url;
   }
@@ -702,7 +712,7 @@ export class AssetStorageService {
       url,
       thumbnailUrl,
       refCount: 1,
-      weakRefs: new Set()
+      weakRefs: new Set(),
     });
     return thumbnailUrl;
   }
@@ -816,7 +826,7 @@ export class AssetStorageService {
     return {
       cachedUrls: this.urlCache.size,
       // Rough estimate: ~1KB per URL entry (URL string + metadata)
-      estimatedSizeMB: (this.urlCache.size * 1024) / (1024 * 1024)
+      estimatedSizeMB: (this.urlCache.size * 1024) / (1024 * 1024),
     };
   }
 
@@ -981,8 +991,8 @@ export class AssetStorageService {
       'token-background': { count: 0, size: 0 },
       'script-background': { count: 0, size: 0 },
       'setup-flower': { count: 0, size: 0 },
-      'leaf': { count: 0, size: 0 },
-      'logo': { count: 0, size: 0 },
+      leaf: { count: 0, size: 0 },
+      logo: { count: 0, size: 0 },
       'studio-icon': { count: 0, size: 0 },
       'studio-logo': { count: 0, size: 0 },
       'studio-project': { count: 0, size: 0 },

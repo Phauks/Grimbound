@@ -24,7 +24,7 @@
 
 .title {
   margin: 0;
-  font-family: 'Dumbledor', Georgia, serif;
+  font-family: "Dumbledor", Georgia, serif;
   font-size: 36px;
   color: var(--color-accent);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -37,7 +37,7 @@
   border: 2px solid var(--color-accent);
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-family: 'TradeGothicBold', sans-serif;
+  font-family: "TradeGothicBold", sans-serif;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -70,7 +70,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-family: 'TradeGothicBold', sans-serif;
+  font-family: "TradeGothicBold", sans-serif;
   font-size: 14px;
   font-weight: 500;
   transition: all var(--transition-fast);
@@ -174,7 +174,7 @@
   margin-bottom: 8px;
   font-size: 24px;
   color: var(--text-primary);
-  font-family: 'TradeGothicBold', sans-serif;
+  font-family: "TradeGothicBold", sans-serif;
 }
 
 .emptyState p {

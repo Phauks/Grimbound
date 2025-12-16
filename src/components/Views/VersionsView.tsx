@@ -12,122 +12,134 @@
  * - Future-ready for publishing system
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { ViewLayout } from '../Layout/ViewLayout'
-import { Button } from '../Shared/UI/Button'
-import { VersionCard } from '../ViewComponents/ProjectsComponents/VersionCard'
-import { CreateVersionModal } from '../Modals/CreateVersionModal'
-import { ProjectHistoryModal } from '../Modals/ProjectHistoryModal'
-import { projectDb } from '../../ts/db/projectDb'
-import { projectService } from '../../ts/services/project'
-import { useProjects } from '../../hooks/useProjects'
-import { useToast } from '../../contexts/ToastContext'
-import { logger } from '../../ts/utils/logger'
-import type { Project, ProjectVersion, CreateProjectOptions } from '../../ts/types/project'
-import styles from '../../styles/components/views/VersionsView.module.css'
+import { useCallback, useEffect, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { useProjects } from '../../hooks/useProjects';
+import styles from '../../styles/components/views/VersionsView.module.css';
+import { projectDb } from '../../ts/db/projectDb';
+import { projectService } from '../../ts/services/project';
+import type { CreateProjectOptions, Project, ProjectVersion } from '../../ts/types/project';
+import { logger } from '../../ts/utils/logger';
+import { CreateVersionModal } from '../Modals/CreateVersionModal';
+import { ProjectHistoryModal } from '../Modals/ProjectHistoryModal';
+import { Button } from '../Shared/UI/Button';
+import { VersionCard } from '../ViewComponents/ProjectsComponents/VersionCard';
 
 interface VersionsViewProps {
-  project: Project
+  project: Project;
 }
 
 export function VersionsView({ project }: VersionsViewProps) {
-  const { addToast } = useToast()
-  const { updateProject, createProject } = useProjects()
-  const [versions, setVersions] = useState<ProjectVersion[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const { addToast } = useToast();
+  const { updateProject, createProject } = useProjects();
+  const [versions, setVersions] = useState<ProjectVersion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   // Load versions on mount and when project changes
   useEffect(() => {
-    loadVersions()
-  }, [project.id])
+    loadVersions();
+  }, [loadVersions]);
 
   const loadVersions = useCallback(async () => {
     try {
-      setIsLoading(true)
-      logger.info('VersionsView', 'Loading versions', { projectId: project.id })
+      setIsLoading(true);
+      logger.info('VersionsView', 'Loading versions', { projectId: project.id });
 
-      const loaded = await projectDb.loadProjectVersions(project.id)
-      setVersions(loaded)
+      const loaded = await projectDb.loadProjectVersions(project.id);
+      setVersions(loaded);
 
-      logger.info('VersionsView', `Loaded ${loaded.length} versions`)
+      logger.info('VersionsView', `Loaded ${loaded.length} versions`);
     } catch (error) {
-      logger.error('VersionsView', 'Failed to load versions', error)
-      addToast('Failed to load versions', 'error')
+      logger.error('VersionsView', 'Failed to load versions', error);
+      addToast('Failed to load versions', 'error');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [project.id, addToast])
+  }, [project.id, addToast]);
 
   const handleCreateVersion = useCallback(() => {
-    setCreateModalOpen(true)
-  }, [])
+    setCreateModalOpen(true);
+  }, []);
 
   const handleVersionCreated = useCallback(() => {
-    loadVersions()
-    addToast('Version created successfully!', 'success')
-  }, [loadVersions, addToast])
+    loadVersions();
+    addToast('Version created successfully!', 'success');
+  }, [loadVersions, addToast]);
 
-  const handleDeleteVersion = useCallback(async (versionId: string) => {
-    if (!confirm('Are you sure you want to delete this version? This cannot be undone.')) {
-      return
-    }
-
-    try {
-      logger.info('VersionsView', 'Deleting version', { versionId })
-      await projectDb.deleteProjectVersion(versionId)
-      await loadVersions()
-      addToast('Version deleted', 'success')
-    } catch (error) {
-      logger.error('VersionsView', 'Failed to delete version', error)
-      addToast('Failed to delete version', 'error')
-    }
-  }, [loadVersions, addToast])
-
-  const handleDuplicateVersion = useCallback(async (version: ProjectVersion) => {
-    try {
-      logger.info('VersionsView', 'Duplicating version', { versionId: version.id })
-
-      // Create a new project from this version's state
-      const newProjectName = `${project.name} (v${version.versionNumber} copy)`
-      const options: CreateProjectOptions = {
-        name: newProjectName,
-        description: `Copy of ${project.name} at version ${version.versionNumber}`,
-        state: version.stateSnapshot,
+  const handleDeleteVersion = useCallback(
+    async (versionId: string) => {
+      if (!confirm('Are you sure you want to delete this version? This cannot be undone.')) {
+        return;
       }
 
-      const newProject = await projectService.createProject(options)
-
-      if (newProject) {
-        addToast(`Created project "${newProjectName}"`, 'success')
+      try {
+        logger.info('VersionsView', 'Deleting version', { versionId });
+        await projectDb.deleteProjectVersion(versionId);
+        await loadVersions();
+        addToast('Version deleted', 'success');
+      } catch (error) {
+        logger.error('VersionsView', 'Failed to delete version', error);
+        addToast('Failed to delete version', 'error');
       }
-    } catch (error) {
-      logger.error('VersionsView', 'Failed to duplicate version', error)
-      addToast('Failed to duplicate version', 'error')
-    }
-  }, [project, addToast])
+    },
+    [loadVersions, addToast]
+  );
 
-  const handleRestoreVersion = useCallback(async (version: ProjectVersion) => {
-    if (!confirm(`Restore project to version ${version.versionNumber}? Your current state will be replaced.`)) {
-      return
-    }
+  const handleDuplicateVersion = useCallback(
+    async (version: ProjectVersion) => {
+      try {
+        logger.info('VersionsView', 'Duplicating version', { versionId: version.id });
 
-    try {
-      logger.info('VersionsView', 'Restoring version', { versionId: version.id })
+        // Create a new project from this version's state
+        const newProjectName = `${project.name} (v${version.versionNumber} copy)`;
+        const options: CreateProjectOptions = {
+          name: newProjectName,
+          description: `Copy of ${project.name} at version ${version.versionNumber}`,
+          state: version.stateSnapshot,
+        };
 
-      // Update the project's state to match the version's snapshot
-      await updateProject(project.id, {
-        state: version.stateSnapshot,
-      })
+        const newProject = await projectService.createProject(options);
 
-      await loadVersions()
-      addToast(`Restored to version ${version.versionNumber}`, 'success')
-    } catch (error) {
-      logger.error('VersionsView', 'Failed to restore version', error)
-      addToast('Failed to restore version', 'error')
-    }
-  }, [project.id, updateProject, loadVersions, addToast])
+        if (newProject) {
+          addToast(`Created project "${newProjectName}"`, 'success');
+        }
+      } catch (error) {
+        logger.error('VersionsView', 'Failed to duplicate version', error);
+        addToast('Failed to duplicate version', 'error');
+      }
+    },
+    [project, addToast]
+  );
+
+  const handleRestoreVersion = useCallback(
+    async (version: ProjectVersion) => {
+      if (
+        !confirm(
+          `Restore project to version ${version.versionNumber}? Your current state will be replaced.`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        logger.info('VersionsView', 'Restoring version', { versionId: version.id });
+
+        // Update the project's state to match the version's snapshot
+        await updateProject(project.id, {
+          state: version.stateSnapshot,
+        });
+
+        await loadVersions();
+        addToast(`Restored to version ${version.versionNumber}`, 'success');
+      } catch (error) {
+        logger.error('VersionsView', 'Failed to restore version', error);
+        addToast('Failed to restore version', 'error');
+      }
+    },
+    [project.id, updateProject, loadVersions, addToast]
+  );
 
   // Loading state
   if (isLoading) {
@@ -138,7 +150,7 @@ export function VersionsView({ project }: VersionsViewProps) {
           <p>Loading versions...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Empty state
@@ -152,10 +164,7 @@ export function VersionsView({ project }: VersionsViewProps) {
           <p className={styles.emptyHint}>
             Versions help you track major changes and prepare scripts for publishing.
           </p>
-          <Button
-            variant="primary"
-            onClick={handleCreateVersion}
-          >
+          <Button variant="primary" onClick={handleCreateVersion}>
             🏷️ Create Version
           </Button>
         </div>
@@ -167,7 +176,7 @@ export function VersionsView({ project }: VersionsViewProps) {
           onVersionCreated={handleVersionCreated}
         />
       </div>
-    )
+    );
   }
 
   // Timeline view with versions
@@ -182,10 +191,7 @@ export function VersionsView({ project }: VersionsViewProps) {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={handleCreateVersion}
-        >
+        <Button variant="primary" onClick={handleCreateVersion}>
           🏷️ Create Version
         </Button>
       </div>
@@ -220,5 +226,5 @@ export function VersionsView({ project }: VersionsViewProps) {
         project={project}
       />
     </div>
-  )
+  );
 }

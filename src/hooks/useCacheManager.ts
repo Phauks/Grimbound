@@ -7,49 +7,48 @@
  * strategy-specific functionality.
  */
 
-import { useMemo, useCallback } from 'react'
-import { cacheManager } from '../ts/cache/CacheManager.js'
-import type {
-  PreRenderContext,
-  PreRenderResult,
-  CacheStats
-} from '../ts/cache/index.js'
-import type { CombinedCacheStats } from '../ts/cache/CacheManager.js'
-import type { InvalidationScope } from '../ts/cache/CacheInvalidationService.js'
-import type { Token } from '../ts/types/index.js'
+import { useCallback, useMemo } from 'react';
+import type { InvalidationScope } from '../ts/cache/CacheInvalidationService.js';
+import type { CombinedCacheStats } from '../ts/cache/CacheManager.js';
+import { cacheManager } from '../ts/cache/CacheManager.js';
+import type { CacheStats, PreRenderContext, PreRenderResult } from '../ts/cache/index.js';
+import type { Token } from '../ts/types/index.js';
 
 /**
  * Return type for useCacheManager hook.
  */
 export interface UseCacheManagerReturn {
   // Character images
-  getCharacterImage: (url: string, isLocal?: boolean) => Promise<HTMLImageElement>
+  getCharacterImage: (url: string, isLocal?: boolean) => Promise<HTMLImageElement>;
   preloadImages: (
     urls: string[],
     isLocal?: boolean,
     onProgress?: (loaded: number, total: number) => void
-  ) => Promise<void>
-  hasImage: (url: string) => boolean
+  ) => Promise<void>;
+  hasImage: (url: string) => boolean;
 
   // Pre-rendered tokens
-  getPreRenderedToken: (filename: string, strategyName?: string) => Promise<string | null>
-  preRender: (context: PreRenderContext) => Promise<PreRenderResult>
-  cacheTokenBatch: (tokens: Token[], type?: string) => Promise<void>
+  getPreRenderedToken: (filename: string, strategyName?: string) => Promise<string | null>;
+  preRender: (context: PreRenderContext) => Promise<PreRenderResult>;
+  cacheTokenBatch: (tokens: Token[], type?: string) => Promise<void>;
 
   // Invalidation
-  invalidateAsset: (assetId: string, reason?: 'update' | 'delete' | 'manual') => Promise<void>
-  invalidateCharacter: (characterId: string, reason?: 'update' | 'delete' | 'manual') => Promise<void>
-  invalidateProject: (projectId: string, reason?: 'update' | 'delete' | 'manual') => Promise<void>
-  invalidate: (scope: InvalidationScope) => Promise<void>
+  invalidateAsset: (assetId: string, reason?: 'update' | 'delete' | 'manual') => Promise<void>;
+  invalidateCharacter: (
+    characterId: string,
+    reason?: 'update' | 'delete' | 'manual'
+  ) => Promise<void>;
+  invalidateProject: (projectId: string, reason?: 'update' | 'delete' | 'manual') => Promise<void>;
+  invalidate: (scope: InvalidationScope) => Promise<void>;
 
   // Cache management
-  clearCache: (name: string) => Promise<void>
-  clearAll: () => Promise<void>
+  clearCache: (name: string) => Promise<void>;
+  clearAll: () => Promise<void>;
 
   // Statistics
-  getStats: () => CombinedCacheStats
-  getCacheStats: (name: string) => CacheStats | null
-  isStrategyRendering: (strategyName: string) => boolean
+  getStats: () => CombinedCacheStats;
+  getCacheStats: (name: string) => CacheStats | null;
+  isStrategyRendering: (strategyName: string) => boolean;
 }
 
 /**
@@ -103,7 +102,7 @@ export function useCacheManager(): UseCacheManagerReturn {
   const getCharacterImage = useCallback(
     (url: string, isLocal: boolean = false) => cacheManager.getCharacterImage(url, isLocal),
     []
-  )
+  );
 
   const preloadImages = useCallback(
     (
@@ -112,76 +111,55 @@ export function useCacheManager(): UseCacheManagerReturn {
       onProgress?: (loaded: number, total: number) => void
     ) => cacheManager.preloadImages(urls, isLocal, onProgress),
     []
-  )
+  );
 
-  const hasImage = useCallback(
-    (url: string) => cacheManager.hasImage(url),
-    []
-  )
+  const hasImage = useCallback((url: string) => cacheManager.hasImage(url), []);
 
   const getPreRenderedToken = useCallback(
     (filename: string, strategyName?: string) =>
       cacheManager.getPreRenderedToken(filename, strategyName),
     []
-  )
+  );
 
-  const preRender = useCallback(
-    (context: PreRenderContext) => cacheManager.preRender(context),
-    []
-  )
+  const preRender = useCallback((context: PreRenderContext) => cacheManager.preRender(context), []);
 
   const cacheTokenBatch = useCallback(
     (tokens: Token[], type: string = 'manual') => cacheManager.cacheTokenBatch(tokens, type),
     []
-  )
+  );
 
   const invalidateAsset = useCallback(
     (assetId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
       cacheManager.invalidateAsset(assetId, reason),
     []
-  )
+  );
 
   const invalidateCharacter = useCallback(
     (characterId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
       cacheManager.invalidateCharacter(characterId, reason),
     []
-  )
+  );
 
   const invalidateProject = useCallback(
     (projectId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
       cacheManager.invalidateProject(projectId, reason),
     []
-  )
+  );
 
-  const invalidate = useCallback(
-    (scope: InvalidationScope) => cacheManager.invalidate(scope),
-    []
-  )
+  const invalidate = useCallback((scope: InvalidationScope) => cacheManager.invalidate(scope), []);
 
-  const clearCache = useCallback(
-    (name: string) => cacheManager.clearCache(name),
-    []
-  )
+  const clearCache = useCallback((name: string) => cacheManager.clearCache(name), []);
 
-  const clearAll = useCallback(
-    () => cacheManager.clearAll(),
-    []
-  )
+  const clearAll = useCallback(() => cacheManager.clearAll(), []);
 
-  const getStats = useCallback(
-    () => cacheManager.getStats(),
-    []
-  )
+  const getStats = useCallback(() => cacheManager.getStats(), []);
 
-  const getCacheStats = useCallback(
-    (name: string) => cacheManager.getCacheStats(name),
-    []
-  )
+  const getCacheStats = useCallback((name: string) => cacheManager.getCacheStats(name), []);
 
   const isStrategyRendering = useCallback(
     (strategyName: string) => cacheManager.isStrategyRendering(strategyName),
     []
-  )
+  );
 
   return useMemo(
     () => ({
@@ -208,7 +186,7 @@ export function useCacheManager(): UseCacheManagerReturn {
       // Statistics
       getStats,
       getCacheStats,
-      isStrategyRendering
+      isStrategyRendering,
     }),
     [
       getCharacterImage,
@@ -225,9 +203,9 @@ export function useCacheManager(): UseCacheManagerReturn {
       clearAll,
       getStats,
       getCacheStats,
-      isStrategyRendering
+      isStrategyRendering,
     ]
-  )
+  );
 }
 
 /**
@@ -259,7 +237,7 @@ export function useCacheManager(): UseCacheManagerReturn {
  * ```
  */
 export function useCombinedCacheStats(): CombinedCacheStats {
-  return useMemo(() => cacheManager.getStats(), [])
+  return useMemo(() => cacheManager.getStats(), []);
 }
 
 /**
@@ -282,7 +260,7 @@ export function useCombinedCacheStats(): CombinedCacheStats {
  */
 export function useAnyStrategyRendering(strategyNames: string[]): boolean {
   return useMemo(
-    () => strategyNames.some(name => cacheManager.isStrategyRendering(name)),
+    () => strategyNames.some((name) => cacheManager.isStrategyRendering(name)),
     [strategyNames]
-  )
+  );
 }

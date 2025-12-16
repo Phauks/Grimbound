@@ -5,9 +5,9 @@
  * Provides one-click cleanup options.
  */
 
-import React, { useState } from 'react'
-import type { StorageWarningInfo } from '../../../hooks/useStorageQuota.js'
-import styles from './StorageWarning.module.css'
+import { useState } from 'react';
+import type { StorageWarningInfo } from '../../../hooks/useStorageQuota.js';
+import styles from './StorageWarning.module.css';
 
 // ============================================================================
 // Types
@@ -15,13 +15,13 @@ import styles from './StorageWarning.module.css'
 
 export interface StorageWarningProps {
   /** Warning information from useStorageQuota */
-  warning: StorageWarningInfo
+  warning: StorageWarningInfo;
   /** Cleanup function */
-  onCleanup: () => Promise<{ orphaned: number; old: number }>
+  onCleanup: () => Promise<{ orphaned: number; old: number }>;
   /** Optional callback when warning is dismissed */
-  onDismiss?: () => void
+  onDismiss?: () => void;
   /** Show dismiss button (default: true) */
-  dismissible?: boolean
+  dismissible?: boolean;
 }
 
 // ============================================================================
@@ -51,58 +51,56 @@ export function StorageWarning({
   warning,
   onCleanup,
   onDismiss,
-  dismissible = true
+  dismissible = true,
 }: StorageWarningProps) {
-  const [isCleaningUp, setIsCleaningUp] = useState(false)
-  const [cleanupResult, setCleanupResult] = useState<{ orphaned: number; old: number } | null>(null)
-  const [isDismissed, setIsDismissed] = useState(false)
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<{ orphaned: number; old: number } | null>(
+    null
+  );
+  const [isDismissed, setIsDismissed] = useState(false);
 
   // Don't render if no warning or dismissed
   if (warning.level === 'none' || isDismissed) {
-    return null
+    return null;
   }
 
   const handleCleanup = async () => {
-    setIsCleaningUp(true)
-    setCleanupResult(null)
+    setIsCleaningUp(true);
+    setCleanupResult(null);
 
     try {
-      const result = await onCleanup()
-      setCleanupResult(result)
+      const result = await onCleanup();
+      setCleanupResult(result);
 
       // Auto-dismiss after successful cleanup if no assets were deleted
       if (result.orphaned === 0 && result.old === 0) {
         setTimeout(() => {
-          handleDismiss()
-        }, 3000)
+          handleDismiss();
+        }, 3000);
       }
     } catch (error) {
-      console.error('[StorageWarning] Cleanup failed:', error)
+      console.error('[StorageWarning] Cleanup failed:', error);
     } finally {
-      setIsCleaningUp(false)
+      setIsCleaningUp(false);
     }
-  }
+  };
 
   const handleDismiss = () => {
-    setIsDismissed(true)
-    onDismiss?.()
-  }
+    setIsDismissed(true);
+    onDismiss?.();
+  };
 
-  const bannerClass = `${styles.banner} ${styles[warning.level]}`
+  const bannerClass = `${styles.banner} ${styles[warning.level]}`;
 
   return (
     <div className={bannerClass} role="alert" aria-live="polite">
       <div className={styles.content}>
         {/* Icon */}
-        <div className={styles.icon}>
-          {warning.level === 'critical' ? '⚠️' : 'ℹ️'}
-        </div>
+        <div className={styles.icon}>{warning.level === 'critical' ? '⚠️' : 'ℹ️'}</div>
 
         {/* Message */}
         <div className={styles.message}>
-          <div className={styles.title}>
-            {warning.message}
-          </div>
+          <div className={styles.title}>{warning.message}</div>
 
           {/* Suggestions */}
           {warning.suggestions.length > 0 && (
@@ -125,6 +123,7 @@ export function StorageWarning({
         {/* Actions */}
         <div className={styles.actions}>
           <button
+            type="button"
             onClick={handleCleanup}
             disabled={isCleaningUp}
             className={styles.cleanupButton}
@@ -135,6 +134,7 @@ export function StorageWarning({
 
           {dismissible && (
             <button
+              type="button"
               onClick={handleDismiss}
               className={styles.dismissButton}
               aria-label="Dismiss warning"
@@ -156,7 +156,7 @@ export function StorageWarning({
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default StorageWarning
+export default StorageWarning;

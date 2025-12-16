@@ -3,28 +3,28 @@
  * Provides convenient API for components to trigger pre-rendering and access caches.
  */
 
-import { usePreRenderCacheManager } from '../contexts/PreRenderCacheContext.js'
+import { usePreRenderCacheManager } from '../contexts/PreRenderCacheContext.js';
 import type {
+  CacheStats,
+  ICacheStrategy,
   PreRenderContext,
   PreRenderResult,
-  ICacheStrategy,
-  CacheStats
-} from '../ts/cache/index.js'
+} from '../ts/cache/index.js';
 
 /**
  * Return type for usePreRenderCache hook.
  */
 export interface UsePreRenderCacheReturn {
   /** Cache instance for this strategy */
-  cache: ICacheStrategy | undefined
+  cache: ICacheStrategy | undefined;
   /** Current cache statistics */
-  stats: CacheStats | null
+  stats: CacheStats | null;
   /** Trigger pre-rendering with context */
-  preRender: (context: Partial<PreRenderContext>) => Promise<PreRenderResult>
+  preRender: (context: Partial<PreRenderContext>) => Promise<PreRenderResult>;
   /** Clear this cache */
-  clearCache: () => Promise<void>
+  clearCache: () => Promise<void>;
   /** Access to full manager (for advanced use) */
-  manager: ReturnType<typeof usePreRenderCacheManager>
+  manager: ReturnType<typeof usePreRenderCacheManager>;
 }
 
 /**
@@ -55,10 +55,10 @@ export interface UsePreRenderCacheReturn {
  * ```
  */
 export function usePreRenderCache(strategyName: string): UsePreRenderCacheReturn {
-  const manager = usePreRenderCacheManager()
+  const manager = usePreRenderCacheManager();
 
-  const cache = manager.getCache(strategyName)
-  const stats = manager.getCacheStats(strategyName)
+  const cache = manager.getCache(strategyName);
+  const stats = manager.getCacheStats(strategyName);
 
   /**
    * Trigger pre-rendering with given context.
@@ -71,26 +71,26 @@ export function usePreRenderCache(strategyName: string): UsePreRenderCacheReturn
       characters: context.characters,
       generationOptions: context.generationOptions,
       projectId: context.projectId,
-      metadata: context.metadata
-    }
+      metadata: context.metadata,
+    };
 
-    return manager.preRender(fullContext)
-  }
+    return manager.preRender(fullContext);
+  };
 
   /**
    * Clear cache for this strategy.
    */
   const clearCache = async (): Promise<void> => {
-    await manager.clearCache(strategyName)
-  }
+    await manager.clearCache(strategyName);
+  };
 
   return {
     cache,
     stats,
     preRender,
     clearCache,
-    manager
-  }
+    manager,
+  };
 }
 
 /**
@@ -115,8 +115,8 @@ export function usePreRenderCache(strategyName: string): UsePreRenderCacheReturn
  * ```
  */
 export function useAllCacheStats(): Record<string, CacheStats> {
-  const manager = usePreRenderCacheManager()
-  return manager.getAllCacheStats()
+  const manager = usePreRenderCacheManager();
+  return manager.getAllCacheStats();
 }
 
 /**
@@ -138,6 +138,6 @@ export function useAllCacheStats(): Record<string, CacheStats> {
  * ```
  */
 export function useIsStrategyRendering(strategyName: string): boolean {
-  const manager = usePreRenderCacheManager()
-  return manager.isStrategyRendering(strategyName)
+  const manager = usePreRenderCacheManager();
+  return manager.isStrategyRendering(strategyName);
 }

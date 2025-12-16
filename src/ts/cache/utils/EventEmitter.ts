@@ -9,7 +9,7 @@ import { logger } from '../../utils/logger.js';
  * Type-safe event listener function
  * Uses rest parameters with unknown type for safety
  */
-type EventListener<T extends unknown[] = unknown[]> = (...args: T) => void
+type EventListener<T extends unknown[] = unknown[]> = (...args: T) => void;
 
 /**
  * Event map type for defining event names and their parameter types
@@ -23,12 +23,12 @@ type EventListener<T extends unknown[] = unknown[]> = (...args: T) => void
  * const emitter = new EventEmitter<MyEvents>();
  * ```
  */
-export type EventMap = Record<string, unknown[]>
+export type EventMap = Record<string, unknown[]>;
 
 /**
  * Default event map when no type is specified
  */
-export type DefaultEventMap = Record<string, unknown[]>
+export type DefaultEventMap = Record<string, unknown[]>;
 
 /**
  * Simple event emitter for browser environments with optional type safety.
@@ -37,7 +37,7 @@ export type DefaultEventMap = Record<string, unknown[]>
  * @template TEventMap - Optional event map defining event names and parameter types
  */
 export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
-  private events = new Map<keyof TEventMap | string, Set<EventListener>>()
+  private events = new Map<keyof TEventMap | string, Set<EventListener>>();
 
   /**
    * Register an event listener.
@@ -46,15 +46,13 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
    */
   on<K extends keyof TEventMap | string>(
     event: K,
-    listener: K extends keyof TEventMap
-      ? EventListener<TEventMap[K]>
-      : EventListener<unknown[]>
+    listener: K extends keyof TEventMap ? EventListener<TEventMap[K]> : EventListener<unknown[]>
   ): this {
     if (!this.events.has(event)) {
-      this.events.set(event, new Set())
+      this.events.set(event, new Set());
     }
-    this.events.get(event)!.add(listener as EventListener)
-    return this
+    this.events.get(event)!.add(listener as EventListener);
+    return this;
   }
 
   /**
@@ -64,17 +62,23 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
    */
   once<K extends keyof TEventMap | string>(
     event: K,
-    listener: K extends keyof TEventMap
-      ? EventListener<TEventMap[K]>
-      : EventListener<unknown[]>
+    listener: K extends keyof TEventMap ? EventListener<TEventMap[K]> : EventListener<unknown[]>
   ): this {
     const onceListener: EventListener<unknown[]> = (...args: unknown[]) => {
-      (listener as EventListener<unknown[]>)(...args)
-      this.off(event, onceListener as K extends keyof TEventMap ? EventListener<TEventMap[K]> : EventListener<unknown[]>)
-    }
-    return this.on(event, onceListener as K extends keyof TEventMap
-      ? EventListener<TEventMap[K]>
-      : EventListener<unknown[]>)
+      (listener as EventListener<unknown[]>)(...args);
+      this.off(
+        event,
+        onceListener as K extends keyof TEventMap
+          ? EventListener<TEventMap[K]>
+          : EventListener<unknown[]>
+      );
+    };
+    return this.on(
+      event,
+      onceListener as K extends keyof TEventMap
+        ? EventListener<TEventMap[K]>
+        : EventListener<unknown[]>
+    );
   }
 
   /**
@@ -84,18 +88,16 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
    */
   off<K extends keyof TEventMap | string>(
     event: K,
-    listener: K extends keyof TEventMap
-      ? EventListener<TEventMap[K]>
-      : EventListener<unknown[]>
+    listener: K extends keyof TEventMap ? EventListener<TEventMap[K]> : EventListener<unknown[]>
   ): this {
-    const listeners = this.events.get(event)
+    const listeners = this.events.get(event);
     if (listeners) {
-      listeners.delete(listener as EventListener)
+      listeners.delete(listener as EventListener);
       if (listeners.size === 0) {
-        this.events.delete(event)
+        this.events.delete(event);
       }
     }
-    return this
+    return this;
   }
 
   /**
@@ -107,20 +109,20 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
     event: K,
     ...args: K extends keyof TEventMap ? TEventMap[K] : unknown[]
   ): boolean {
-    const listeners = this.events.get(event)
+    const listeners = this.events.get(event);
     if (!listeners || listeners.size === 0) {
-      return false
+      return false;
     }
 
     for (const listener of listeners) {
       try {
-        listener(...args)
+        listener(...args);
       } catch (error) {
-        logger.error('EventEmitter', `Error in event listener for '${String(event)}'`, error)
+        logger.error('EventEmitter', `Error in event listener for '${String(event)}'`, error);
       }
     }
 
-    return true
+    return true;
   }
 
   /**
@@ -129,11 +131,11 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
    */
   removeAllListeners<K extends keyof TEventMap | string>(event?: K): this {
     if (event) {
-      this.events.delete(event)
+      this.events.delete(event);
     } else {
-      this.events.clear()
+      this.events.clear();
     }
-    return this
+    return this;
   }
 
   /**
@@ -142,6 +144,6 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
    * @returns Number of listeners
    */
   listenerCount<K extends keyof TEventMap | string>(event: K): number {
-    return this.events.get(event)?.size ?? 0
+    return this.events.get(event)?.size ?? 0;
   }
 }

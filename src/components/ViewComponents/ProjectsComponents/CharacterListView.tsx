@@ -9,42 +9,50 @@
  * Designed for quick scanning of script contents.
  */
 
-import { useMemo, useState, useCallback } from 'react'
-import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js'
-import { useCharacterImageResolver } from '../../../hooks/useCharacterImageResolver.js'
-import type { Token, Team, Character } from '../../../ts/types/index.js'
-import styles from '../../../styles/components/projects/CharacterListView.module.css'
+import { useCallback, useMemo, useState } from 'react';
+import { useCharacterImageResolver } from '../../../hooks/useCharacterImageResolver.js';
+import styles from '../../../styles/components/projects/CharacterListView.module.css';
+import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js';
+import type { Character, Team, Token } from '../../../ts/types/index.js';
 
 interface CharacterListViewProps {
   /** Characters to display directly (preferred - instant loading) */
-  characters?: Character[]
+  characters?: Character[];
   /** Tokens to display - extracts character data (fallback for backward compatibility) */
-  tokens?: Token[]
+  tokens?: Token[];
   /** Whether to show the ability text column */
-  showAbility?: boolean
+  showAbility?: boolean;
   /** Whether to show the first night reminder column */
-  showFirstNightReminder?: boolean
+  showFirstNightReminder?: boolean;
   /** Whether to show the other night reminder column */
-  showOtherNightReminder?: boolean
+  showOtherNightReminder?: boolean;
   /** Whether to show the reminders column */
-  showReminders?: boolean
+  showReminders?: boolean;
 }
 
 interface CharacterRow {
-  uuid: string
-  id: string
-  name: string
-  team: Team
-  ability: string
-  order: number
-  firstNightReminder?: string
-  otherNightReminder?: string
-  reminders?: string[]
-  isOfficial: boolean
+  uuid: string;
+  id: string;
+  name: string;
+  team: Team;
+  ability: string;
+  order: number;
+  firstNightReminder?: string;
+  otherNightReminder?: string;
+  reminders?: string[];
+  isOfficial: boolean;
 }
 
 // Team order for grouping
-const TEAM_ORDER: Team[] = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled', 'loric']
+const TEAM_ORDER: Team[] = [
+  'townsfolk',
+  'outsider',
+  'minion',
+  'demon',
+  'traveller',
+  'fabled',
+  'loric',
+];
 
 export function CharacterListView({
   characters: charactersProp,
@@ -55,50 +63,50 @@ export function CharacterListView({
   showReminders = false,
 }: CharacterListViewProps) {
   // Track which team sections are collapsed
-  const [collapsedTeams, setCollapsedTeams] = useState<Set<Team>>(new Set())
+  const [collapsedTeams, setCollapsedTeams] = useState<Set<Team>>(new Set());
 
   // Get characters - either directly from prop or extracted from tokens
   const characters = useMemo(() => {
     // Prefer direct characters prop (instant loading)
     if (charactersProp && charactersProp.length > 0) {
-      return charactersProp
+      return charactersProp;
     }
 
     // Fallback: extract from tokens (backward compatibility)
-    if (!tokens) return []
+    if (!tokens) return [];
 
-    const characterTokens = tokens.filter(t => t.type === 'character')
-    const seenIds = new Set<string>()
-    const chars: Character[] = []
+    const characterTokens = tokens.filter((t) => t.type === 'character');
+    const seenIds = new Set<string>();
+    const chars: Character[] = [];
 
     for (const token of characterTokens) {
-      const character = token.characterData
-      if (!character) continue
+      const character = token.characterData;
+      if (!character) continue;
 
       // Skip duplicates (from variants)
-      if (seenIds.has(character.id)) continue
-      seenIds.add(character.id)
+      if (seenIds.has(character.id)) continue;
+      seenIds.add(character.id);
 
-      chars.push(character)
+      chars.push(character);
     }
 
-    return chars
-  }, [charactersProp, tokens])
+    return chars;
+  }, [charactersProp, tokens]);
 
   // Use the shared hook for async image resolution
-  const { resolvedUrls, isLoading } = useCharacterImageResolver({ characters })
+  const { resolvedUrls, isLoading } = useCharacterImageResolver({ characters });
 
   // Group characters by team
   const groupedCharacters = useMemo(() => {
     // Create unique character rows
-    const seenIds = new Set<string>()
-    const characterRows: CharacterRow[] = []
+    const seenIds = new Set<string>();
+    const characterRows: CharacterRow[] = [];
 
     characters.forEach((character, index) => {
       // Skip duplicates (from variants)
-      const uniqueKey = character.id
-      if (seenIds.has(uniqueKey)) return
-      seenIds.add(uniqueKey)
+      const uniqueKey = character.id;
+      if (seenIds.has(uniqueKey)) return;
+      seenIds.add(uniqueKey);
 
       characterRows.push({
         uuid: character.uuid || character.id,
@@ -111,55 +119,56 @@ export function CharacterListView({
         otherNightReminder: character.otherNightReminder,
         reminders: character.reminders,
         isOfficial: character.source === 'official',
-      })
-    })
+      });
+    });
 
     // Group by team
-    const grouped = new Map<Team, CharacterRow[]>()
+    const grouped = new Map<Team, CharacterRow[]>();
 
     for (const team of TEAM_ORDER) {
       const teamCharacters = characterRows
-        .filter(c => c.team === team)
-        .sort((a, b) => a.order - b.order)
+        .filter((c) => c.team === team)
+        .sort((a, b) => a.order - b.order);
 
       if (teamCharacters.length > 0) {
-        grouped.set(team, teamCharacters)
+        grouped.set(team, teamCharacters);
       }
     }
 
-    return grouped
-  }, [characters])
+    return grouped;
+  }, [characters]);
 
   const toggleTeamCollapse = useCallback((team: Team) => {
-    setCollapsedTeams(prev => {
-      const next = new Set(prev)
+    setCollapsedTeams((prev) => {
+      const next = new Set(prev);
       if (next.has(team)) {
-        next.delete(team)
+        next.delete(team);
       } else {
-        next.add(team)
+        next.add(team);
       }
-      return next
-    })
-  }, [])
+      return next;
+    });
+  }, []);
 
-  const isTeamCollapsed = (team: Team) => collapsedTeams.has(team)
+  const isTeamCollapsed = (team: Team) => collapsedTeams.has(team);
 
   // Check if there are any characters to display
   const totalCharacters = Array.from(groupedCharacters.values()).reduce(
     (sum, chars) => sum + chars.length,
     0
-  )
+  );
 
   if (totalCharacters === 0) {
     return (
       <div className={styles.emptyState}>
         <p>No characters to display</p>
       </div>
-    )
+    );
   }
 
   // Check if any additional info is being shown
-  const hasAdditionalInfo = showAbility || showFirstNightReminder || showOtherNightReminder || showReminders
+  const hasAdditionalInfo =
+    showAbility || showFirstNightReminder || showOtherNightReminder || showReminders;
 
   return (
     <div className={styles.container}>
@@ -172,36 +181,28 @@ export function CharacterListView({
             onClick={() => toggleTeamCollapse(team)}
             aria-expanded={!isTeamCollapsed(team)}
           >
-            <span className={styles.collapseIcon}>
-              {isTeamCollapsed(team) ? '▶' : '▼'}
-            </span>
+            <span className={styles.collapseIcon}>{isTeamCollapsed(team) ? '▶' : '▼'}</span>
             <span className={styles.teamName}>{TEAM_LABELS[team]}</span>
             <span className={styles.teamCount}>{characters.length}</span>
           </button>
 
           {!isTeamCollapsed(team) && (
             <div className={styles.characterList}>
-              {characters.map(character => {
-                const iconUrl = resolvedUrls.get(character.uuid)
-                const hasContent = (showAbility && character.ability) ||
-                                   (showFirstNightReminder && character.firstNightReminder) ||
-                                   (showOtherNightReminder && character.otherNightReminder) ||
-                                   (showReminders && character.reminders && character.reminders.length > 0)
+              {characters.map((character) => {
+                const iconUrl = resolvedUrls.get(character.uuid);
+                const hasContent =
+                  (showAbility && character.ability) ||
+                  (showFirstNightReminder && character.firstNightReminder) ||
+                  (showOtherNightReminder && character.otherNightReminder) ||
+                  (showReminders && character.reminders && character.reminders.length > 0);
 
                 return (
-                  <div
-                    key={character.id}
-                    className={styles.characterRow}
-                  >
+                  <div key={character.id} className={styles.characterRow}>
                     {/* Left side: Icon + Name + Official badge */}
                     <div className={styles.characterLeft}>
                       <div className={styles.characterIcon}>
                         {iconUrl ? (
-                          <img
-                            src={iconUrl}
-                            alt={character.name}
-                            className={styles.iconImage}
-                          />
+                          <img src={iconUrl} alt={character.name} className={styles.iconImage} />
                         ) : (
                           <div
                             className={styles.iconPlaceholder}
@@ -213,9 +214,7 @@ export function CharacterListView({
                       </div>
 
                       <div className={styles.characterNameCell}>
-                        <span className={styles.characterName}>
-                          {character.name}
-                        </span>
+                        <span className={styles.characterName}>{character.name}</span>
                         {character.isOfficial && (
                           <span className={styles.officialBadge}>Official</span>
                         )}
@@ -255,7 +254,9 @@ export function CharacterListView({
                             <span className={styles.infoLabel}>Reminders:</span>
                             <div className={styles.reminderTagsContainer}>
                               {character.reminders.map((reminder, idx) => (
-                                <span key={idx} className={styles.reminderTag}>{reminder}</span>
+                                <span key={idx} className={styles.reminderTag}>
+                                  {reminder}
+                                </span>
                               ))}
                             </div>
                           </div>
@@ -266,12 +267,12 @@ export function CharacterListView({
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </div>
       ))}
     </div>
-  )
+  );
 }

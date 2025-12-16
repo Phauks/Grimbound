@@ -9,10 +9,10 @@
  * - Clickable to open SyncDetailsModal
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDataSync } from '../../../contexts/DataSyncContext';
-import type { SyncState } from '../../../ts/types/index.js';
 import styles from '../../../styles/components/shared/SyncStatusIndicator.module.css';
+import type { SyncState } from '../../../ts/types/index.js';
 
 interface SyncStatusIndicatorProps {
   onDetailsClick?: () => void;
@@ -22,23 +22,25 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
   const { status, isInitialized } = useDataSync();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const getStatusInfo = useCallback((state: SyncState): { label: string; icon: string; color: string } => {
-    switch (state) {
-      case 'success':
-        return { label: 'Synced', icon: '✓', color: 'success' };
-      case 'checking':
-        return { label: 'Checking', icon: '⟳', color: 'info' };
-      case 'downloading':
-        return { label: 'Downloading', icon: '↓', color: 'info' };
-      case 'extracting':
-        return { label: 'Installing', icon: '⚙', color: 'info' };
-      case 'error':
-        return { label: 'Error', icon: '!', color: 'error' };
-      case 'idle':
-      default:
-        return { label: 'Offline', icon: '○', color: 'idle' };
-    }
-  }, []);
+  const getStatusInfo = useCallback(
+    (state: SyncState): { label: string; icon: string; color: string } => {
+      switch (state) {
+        case 'success':
+          return { label: 'Synced', icon: '✓', color: 'success' };
+        case 'checking':
+          return { label: 'Checking', icon: '⟳', color: 'info' };
+        case 'downloading':
+          return { label: 'Downloading', icon: '↓', color: 'info' };
+        case 'extracting':
+          return { label: 'Installing', icon: '⚙', color: 'info' };
+        case 'error':
+          return { label: 'Error', icon: '!', color: 'error' };
+        default:
+          return { label: 'Offline', icon: '○', color: 'idle' };
+      }
+    },
+    []
+  );
 
   const statusInfo = getStatusInfo(status.state);
 
@@ -55,9 +57,14 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
 
     // Data source
     if (status.dataSource && status.dataSource !== 'offline') {
-      const sourceLabel = status.dataSource === 'github' ? 'GitHub' :
-                          status.dataSource === 'cache' ? 'Cached' :
-                          status.dataSource === 'api' ? 'API' : 'Unknown';
+      const sourceLabel =
+        status.dataSource === 'github'
+          ? 'GitHub'
+          : status.dataSource === 'cache'
+            ? 'Cached'
+            : status.dataSource === 'api'
+              ? 'API'
+              : 'Unknown';
       lines.push(`Source: ${sourceLabel}`);
     }
 
@@ -115,9 +122,11 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
       {/* Tooltip */}
       {showTooltip && (
         <div className={styles.tooltip} role="tooltip">
-          {getTooltipText().split('\n').map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
+          {getTooltipText()
+            .split('\n')
+            .map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
         </div>
       )}
     </button>

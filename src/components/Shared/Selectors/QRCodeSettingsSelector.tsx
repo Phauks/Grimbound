@@ -12,80 +12,78 @@
  * @module components/Shared/QRCodeSettingsSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import styles from '../../../styles/components/shared/QRCodeSettingsSelector.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import { QR_COLORS } from '../../../ts/constants.js';
 import type {
   GenerationOptions,
-  QRDotType,
-  QRCornerSquareType,
+  QRCodeOptions,
   QRCornerDotType,
+  QRCornerSquareType,
+  QRDotType,
   QRGradientType,
-  QRCodeOptions
-} from '../../../ts/types/index'
-import { QR_COLORS } from '../../../ts/constants.js'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/QRCodeSettingsSelector.module.css'
+} from '../../../ts/types/index';
+import { EditableSlider } from '../Controls/EditableSlider';
+import { EditableSliderValue } from '../Controls/EditableSliderValue';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface QRCodeSettingsSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 // Full pending settings structure
 interface PendingQRSettings {
   // Token options
-  almanac: boolean
-  showAlmanacLabel: boolean
-  showLogo: boolean
-  showAuthor: boolean
+  almanac: boolean;
+  showAlmanacLabel: boolean;
+  showLogo: boolean;
+  showAuthor: boolean;
   // Dots
-  dotType: QRDotType
-  dotsUseGradient: boolean
-  dotsGradientType: QRGradientType
-  dotsGradientRotation: number
-  dotsColorStart: string
-  dotsColorEnd: string
+  dotType: QRDotType;
+  dotsUseGradient: boolean;
+  dotsGradientType: QRGradientType;
+  dotsGradientRotation: number;
+  dotsColorStart: string;
+  dotsColorEnd: string;
   // Corner squares
-  cornerSquareType: QRCornerSquareType
-  cornerSquareUseGradient: boolean
-  cornerSquareGradientType: QRGradientType
-  cornerSquareGradientRotation: number
-  cornerSquareColorStart: string
-  cornerSquareColorEnd: string
+  cornerSquareType: QRCornerSquareType;
+  cornerSquareUseGradient: boolean;
+  cornerSquareGradientType: QRGradientType;
+  cornerSquareGradientRotation: number;
+  cornerSquareColorStart: string;
+  cornerSquareColorEnd: string;
   // Corner dots
-  cornerDotType: QRCornerDotType
-  cornerDotUseGradient: boolean
-  cornerDotGradientType: QRGradientType
-  cornerDotGradientRotation: number
-  cornerDotColorStart: string
-  cornerDotColorEnd: string
+  cornerDotType: QRCornerDotType;
+  cornerDotUseGradient: boolean;
+  cornerDotGradientType: QRGradientType;
+  cornerDotGradientRotation: number;
+  cornerDotColorStart: string;
+  cornerDotColorEnd: string;
   // Background
-  backgroundUseGradient: boolean
-  backgroundGradientType: QRGradientType
-  backgroundGradientRotation: number
-  backgroundColorStart: string
-  backgroundColorEnd: string
-  backgroundOpacity: number
-  backgroundRoundedCorners: boolean
+  backgroundUseGradient: boolean;
+  backgroundGradientType: QRGradientType;
+  backgroundGradientRotation: number;
+  backgroundColorStart: string;
+  backgroundColorEnd: string;
+  backgroundOpacity: number;
+  backgroundRoundedCorners: boolean;
   // Image
-  imageSource: 'none' | 'script-name' | 'script-logo'
-  imageHideBackgroundDots: boolean
-  imageSize: number
-  imageMargin: number
+  imageSource: 'none' | 'script-name' | 'script-logo';
+  imageHideBackgroundDots: boolean;
+  imageSize: number;
+  imageMargin: number;
 }
 
 // ============================================================================
@@ -99,18 +97,18 @@ const DOT_TYPES: { value: QRDotType; label: string }[] = [
   { value: 'classy-rounded', label: 'Classy Round' },
   { value: 'square', label: 'Square' },
   { value: 'dots', label: 'Dots' },
-]
+];
 
 const CORNER_SQUARE_TYPES: { value: QRCornerSquareType; label: string }[] = [
   { value: 'extra-rounded', label: 'Extra Round' },
   { value: 'square', label: 'Square' },
   { value: 'dot', label: 'Dot' },
-]
+];
 
 const CORNER_DOT_TYPES: { value: QRCornerDotType; label: string }[] = [
   { value: 'dot', label: 'Dot' },
   { value: 'square', label: 'Square' },
-]
+];
 
 const DEFAULT_QR_SETTINGS: PendingQRSettings = {
   almanac: true,
@@ -146,7 +144,7 @@ const DEFAULT_QR_SETTINGS: PendingQRSettings = {
   imageHideBackgroundDots: true,
   imageSize: 30,
   imageMargin: 4,
-}
+};
 
 // ============================================================================
 // Preview Component
@@ -157,9 +155,9 @@ const QRPreview = memo(function QRPreview({
   colorEnd,
   isEnabled,
 }: {
-  colorStart: string
-  colorEnd: string
-  isEnabled: boolean
+  colorStart: string;
+  colorEnd: string;
+  isEnabled: boolean;
 }) {
   return (
     <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
@@ -182,8 +180,8 @@ const QRPreview = memo(function QRPreview({
         <circle cx="6.5" cy="17.5" r="1.5" fill="white" />
       </svg>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Unified Color Section Component
@@ -192,37 +190,37 @@ const QRPreview = memo(function QRPreview({
 
 interface ColorSectionProps {
   /** Section label */
-  label: string
+  label: string;
   /** Style dropdown options (optional - if not provided, no style dropdown) */
-  styleOptions?: { value: string; label: string }[]
+  styleOptions?: { value: string; label: string }[];
   /** Current style value */
-  styleValue?: string
+  styleValue?: string;
   /** Style change handler */
-  onStyleChange?: (value: string) => void
+  onStyleChange?: (value: string) => void;
   /** Whether gradient is enabled */
-  useGradient: boolean
+  useGradient: boolean;
   /** Gradient toggle handler */
-  onGradientToggle: (value: boolean) => void
+  onGradientToggle: (value: boolean) => void;
   /** Gradient type (linear/radial) */
-  gradientType: QRGradientType
+  gradientType: QRGradientType;
   /** Gradient type change handler */
-  onGradientTypeChange: (value: QRGradientType) => void
+  onGradientTypeChange: (value: QRGradientType) => void;
   /** Start color */
-  colorStart: string
+  colorStart: string;
   /** End color (used when gradient enabled) */
-  colorEnd: string
+  colorEnd: string;
   /** Start color change handler */
-  onColorStartChange: (value: string) => void
+  onColorStartChange: (value: string) => void;
   /** End color change handler */
-  onColorEndChange: (value: string) => void
+  onColorEndChange: (value: string) => void;
   /** Rotation angle (only for linear gradients with rotation support) */
-  rotation?: number
+  rotation?: number;
   /** Rotation change handler */
-  onRotationChange?: (value: number) => void
+  onRotationChange?: (value: number) => void;
   /** Whether to show rotation control */
-  showRotation?: boolean
+  showRotation?: boolean;
   /** Compact mode - no style dropdown, smaller padding */
-  compact?: boolean
+  compact?: boolean;
 }
 
 const ColorSection = memo(function ColorSection({
@@ -243,7 +241,7 @@ const ColorSection = memo(function ColorSection({
   showRotation = false,
   compact = false,
 }: ColorSectionProps) {
-  const hasStyleDropdown = styleOptions && styleOptions.length > 0 && onStyleChange
+  const hasStyleDropdown = styleOptions && styleOptions.length > 0 && onStyleChange;
 
   return (
     <div className={`${styles.colorSection} ${compact ? styles.colorSectionCompact : ''}`}>
@@ -257,8 +255,10 @@ const ColorSection = memo(function ColorSection({
             onChange={(e) => onStyleChange(e.target.value)}
             className={styles.styleSelect}
           >
-            {styleOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {styleOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
         )}
@@ -268,7 +268,7 @@ const ColorSection = memo(function ColorSection({
           value={colorStart}
           onChange={(e) => onColorStartChange(e.target.value)}
           className={styles.colorInput}
-          title={useGradient ? "Start color" : "Color"}
+          title={useGradient ? 'Start color' : 'Color'}
         />
         {useGradient && (
           <>
@@ -308,7 +308,6 @@ const ColorSection = memo(function ColorSection({
         {/* Rotation control for linear gradients */}
         {showRotation && useGradient && gradientType === 'linear' && onRotationChange && (
           <div className={styles.rotationControl}>
-            <span className={styles.rotationLabel}>{rotation}°</span>
             <input
               type="range"
               min="0"
@@ -318,12 +317,21 @@ const ColorSection = memo(function ColorSection({
               onChange={(e) => onRotationChange(Number(e.target.value))}
               className={styles.rotationSlider}
             />
+            <EditableSliderValue
+              value={rotation ?? 0}
+              onChange={onRotationChange}
+              min={0}
+              max={360}
+              step={15}
+              suffix="°"
+              className={styles.rotationValue}
+            />
           </div>
         )}
       </div>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Main Component
@@ -337,7 +345,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
   ariaLabel,
 }: QRCodeSettingsSelectorProps) {
   // Extract current settings from generationOptions
-  const qrOptions = generationOptions.qrCodeOptions
+  const qrOptions = generationOptions.qrCodeOptions;
   const currentSettings: PendingQRSettings = {
     almanac: generationOptions.almanacToken !== false,
     showAlmanacLabel: qrOptions?.showAlmanacLabel ?? DEFAULT_QR_SETTINGS.showAlmanacLabel,
@@ -346,85 +354,109 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
     dotType: qrOptions?.dotType ?? DEFAULT_QR_SETTINGS.dotType,
     dotsUseGradient: qrOptions?.dotsUseGradient ?? DEFAULT_QR_SETTINGS.dotsUseGradient,
     dotsGradientType: qrOptions?.dotsGradientType ?? DEFAULT_QR_SETTINGS.dotsGradientType,
-    dotsGradientRotation: qrOptions?.dotsGradientRotation ?? DEFAULT_QR_SETTINGS.dotsGradientRotation,
+    dotsGradientRotation:
+      qrOptions?.dotsGradientRotation ?? DEFAULT_QR_SETTINGS.dotsGradientRotation,
     dotsColorStart: qrOptions?.dotsColorStart ?? DEFAULT_QR_SETTINGS.dotsColorStart,
     dotsColorEnd: qrOptions?.dotsColorEnd ?? DEFAULT_QR_SETTINGS.dotsColorEnd,
     cornerSquareType: qrOptions?.cornerSquareType ?? DEFAULT_QR_SETTINGS.cornerSquareType,
-    cornerSquareUseGradient: qrOptions?.cornerSquareUseGradient ?? DEFAULT_QR_SETTINGS.cornerSquareUseGradient,
-    cornerSquareGradientType: qrOptions?.cornerSquareGradientType ?? DEFAULT_QR_SETTINGS.cornerSquareGradientType,
-    cornerSquareGradientRotation: qrOptions?.cornerSquareGradientRotation ?? DEFAULT_QR_SETTINGS.cornerSquareGradientRotation,
-    cornerSquareColorStart: qrOptions?.cornerSquareColorStart ?? DEFAULT_QR_SETTINGS.cornerSquareColorStart,
-    cornerSquareColorEnd: qrOptions?.cornerSquareColorEnd ?? DEFAULT_QR_SETTINGS.cornerSquareColorEnd,
+    cornerSquareUseGradient:
+      qrOptions?.cornerSquareUseGradient ?? DEFAULT_QR_SETTINGS.cornerSquareUseGradient,
+    cornerSquareGradientType:
+      qrOptions?.cornerSquareGradientType ?? DEFAULT_QR_SETTINGS.cornerSquareGradientType,
+    cornerSquareGradientRotation:
+      qrOptions?.cornerSquareGradientRotation ?? DEFAULT_QR_SETTINGS.cornerSquareGradientRotation,
+    cornerSquareColorStart:
+      qrOptions?.cornerSquareColorStart ?? DEFAULT_QR_SETTINGS.cornerSquareColorStart,
+    cornerSquareColorEnd:
+      qrOptions?.cornerSquareColorEnd ?? DEFAULT_QR_SETTINGS.cornerSquareColorEnd,
     cornerDotType: qrOptions?.cornerDotType ?? DEFAULT_QR_SETTINGS.cornerDotType,
-    cornerDotUseGradient: qrOptions?.cornerDotUseGradient ?? DEFAULT_QR_SETTINGS.cornerDotUseGradient,
-    cornerDotGradientType: qrOptions?.cornerDotGradientType ?? DEFAULT_QR_SETTINGS.cornerDotGradientType,
-    cornerDotGradientRotation: qrOptions?.cornerDotGradientRotation ?? DEFAULT_QR_SETTINGS.cornerDotGradientRotation,
+    cornerDotUseGradient:
+      qrOptions?.cornerDotUseGradient ?? DEFAULT_QR_SETTINGS.cornerDotUseGradient,
+    cornerDotGradientType:
+      qrOptions?.cornerDotGradientType ?? DEFAULT_QR_SETTINGS.cornerDotGradientType,
+    cornerDotGradientRotation:
+      qrOptions?.cornerDotGradientRotation ?? DEFAULT_QR_SETTINGS.cornerDotGradientRotation,
     cornerDotColorStart: qrOptions?.cornerDotColorStart ?? DEFAULT_QR_SETTINGS.cornerDotColorStart,
     cornerDotColorEnd: qrOptions?.cornerDotColorEnd ?? DEFAULT_QR_SETTINGS.cornerDotColorEnd,
-    backgroundUseGradient: qrOptions?.backgroundUseGradient ?? DEFAULT_QR_SETTINGS.backgroundUseGradient,
-    backgroundGradientType: qrOptions?.backgroundGradientType ?? DEFAULT_QR_SETTINGS.backgroundGradientType,
-    backgroundGradientRotation: qrOptions?.backgroundGradientRotation ?? DEFAULT_QR_SETTINGS.backgroundGradientRotation,
-    backgroundColorStart: qrOptions?.backgroundColorStart ?? DEFAULT_QR_SETTINGS.backgroundColorStart,
+    backgroundUseGradient:
+      qrOptions?.backgroundUseGradient ?? DEFAULT_QR_SETTINGS.backgroundUseGradient,
+    backgroundGradientType:
+      qrOptions?.backgroundGradientType ?? DEFAULT_QR_SETTINGS.backgroundGradientType,
+    backgroundGradientRotation:
+      qrOptions?.backgroundGradientRotation ?? DEFAULT_QR_SETTINGS.backgroundGradientRotation,
+    backgroundColorStart:
+      qrOptions?.backgroundColorStart ?? DEFAULT_QR_SETTINGS.backgroundColorStart,
     backgroundColorEnd: qrOptions?.backgroundColorEnd ?? DEFAULT_QR_SETTINGS.backgroundColorEnd,
     backgroundOpacity: qrOptions?.backgroundOpacity ?? DEFAULT_QR_SETTINGS.backgroundOpacity,
-    backgroundRoundedCorners: qrOptions?.backgroundRoundedCorners ?? DEFAULT_QR_SETTINGS.backgroundRoundedCorners,
+    backgroundRoundedCorners:
+      qrOptions?.backgroundRoundedCorners ?? DEFAULT_QR_SETTINGS.backgroundRoundedCorners,
     imageSource: qrOptions?.imageSource ?? DEFAULT_QR_SETTINGS.imageSource,
-    imageHideBackgroundDots: qrOptions?.imageHideBackgroundDots ?? DEFAULT_QR_SETTINGS.imageHideBackgroundDots,
+    imageHideBackgroundDots:
+      qrOptions?.imageHideBackgroundDots ?? DEFAULT_QR_SETTINGS.imageHideBackgroundDots,
     imageSize: qrOptions?.imageSize ?? DEFAULT_QR_SETTINGS.imageSize,
     imageMargin: qrOptions?.imageMargin ?? DEFAULT_QR_SETTINGS.imageMargin,
-  }
+  };
 
-  const isEnabled = generationOptions.almanacToken !== false
+  const isEnabled = generationOptions.almanacToken !== false;
 
   // Convert settings to QRCodeOptions for saving
-  const settingsToQROptions = useCallback((settings: PendingQRSettings): QRCodeOptions => ({
-    showAlmanacLabel: settings.showAlmanacLabel,
-    showLogo: settings.showLogo,
-    showAuthor: settings.showAuthor,
-    dotType: settings.dotType,
-    dotsUseGradient: settings.dotsUseGradient,
-    dotsGradientType: settings.dotsGradientType,
-    dotsGradientRotation: settings.dotsGradientRotation,
-    dotsColorStart: settings.dotsColorStart,
-    dotsColorEnd: settings.dotsColorEnd,
-    cornerSquareType: settings.cornerSquareType,
-    cornerSquareUseGradient: settings.cornerSquareUseGradient,
-    cornerSquareGradientType: settings.cornerSquareGradientType,
-    cornerSquareGradientRotation: settings.cornerSquareGradientRotation,
-    cornerSquareColorStart: settings.cornerSquareColorStart,
-    cornerSquareColorEnd: settings.cornerSquareColorEnd,
-    cornerDotType: settings.cornerDotType,
-    cornerDotUseGradient: settings.cornerDotUseGradient,
-    cornerDotGradientType: settings.cornerDotGradientType,
-    cornerDotGradientRotation: settings.cornerDotGradientRotation,
-    cornerDotColorStart: settings.cornerDotColorStart,
-    cornerDotColorEnd: settings.cornerDotColorEnd,
-    backgroundUseGradient: settings.backgroundUseGradient,
-    backgroundGradientType: settings.backgroundGradientType,
-    backgroundGradientRotation: settings.backgroundGradientRotation,
-    backgroundColorStart: settings.backgroundColorStart,
-    backgroundColorEnd: settings.backgroundColorEnd,
-    backgroundOpacity: settings.backgroundOpacity,
-    backgroundRoundedCorners: settings.backgroundRoundedCorners,
-    imageSource: settings.imageSource,
-    imageHideBackgroundDots: settings.imageHideBackgroundDots,
-    imageSize: settings.imageSize,
-    imageMargin: settings.imageMargin,
-    errorCorrectionLevel: 'H', // Fixed at 30% - highest error correction for logo support
-  }), [])
+  const settingsToQROptions = useCallback(
+    (settings: PendingQRSettings): QRCodeOptions => ({
+      showAlmanacLabel: settings.showAlmanacLabel,
+      showLogo: settings.showLogo,
+      showAuthor: settings.showAuthor,
+      dotType: settings.dotType,
+      dotsUseGradient: settings.dotsUseGradient,
+      dotsGradientType: settings.dotsGradientType,
+      dotsGradientRotation: settings.dotsGradientRotation,
+      dotsColorStart: settings.dotsColorStart,
+      dotsColorEnd: settings.dotsColorEnd,
+      cornerSquareType: settings.cornerSquareType,
+      cornerSquareUseGradient: settings.cornerSquareUseGradient,
+      cornerSquareGradientType: settings.cornerSquareGradientType,
+      cornerSquareGradientRotation: settings.cornerSquareGradientRotation,
+      cornerSquareColorStart: settings.cornerSquareColorStart,
+      cornerSquareColorEnd: settings.cornerSquareColorEnd,
+      cornerDotType: settings.cornerDotType,
+      cornerDotUseGradient: settings.cornerDotUseGradient,
+      cornerDotGradientType: settings.cornerDotGradientType,
+      cornerDotGradientRotation: settings.cornerDotGradientRotation,
+      cornerDotColorStart: settings.cornerDotColorStart,
+      cornerDotColorEnd: settings.cornerDotColorEnd,
+      backgroundUseGradient: settings.backgroundUseGradient,
+      backgroundGradientType: settings.backgroundGradientType,
+      backgroundGradientRotation: settings.backgroundGradientRotation,
+      backgroundColorStart: settings.backgroundColorStart,
+      backgroundColorEnd: settings.backgroundColorEnd,
+      backgroundOpacity: settings.backgroundOpacity,
+      backgroundRoundedCorners: settings.backgroundRoundedCorners,
+      imageSource: settings.imageSource,
+      imageHideBackgroundDots: settings.imageHideBackgroundDots,
+      imageSize: settings.imageSize,
+      imageMargin: settings.imageMargin,
+      errorCorrectionLevel: 'H', // Fixed at 30% - highest error correction for logo support
+    }),
+    []
+  );
 
   // Handle master enable/disable toggle
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({ almanacToken: enabled })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({ almanacToken: enabled });
+    },
+    [onOptionChange]
+  );
 
   // Handle panel changes
-  const handlePanelChange = useCallback((settings: PendingQRSettings) => {
-    onOptionChange({
-      almanacToken: settings.almanac,
-      qrCodeOptions: settingsToQROptions(settings),
-    })
-  }, [onOptionChange, settingsToQROptions])
+  const handlePanelChange = useCallback(
+    (settings: PendingQRSettings) => {
+      onOptionChange({
+        almanacToken: settings.almanac,
+        qrCodeOptions: settingsToQROptions(settings),
+      });
+    },
+    [onOptionChange, settingsToQROptions]
+  );
 
   // Use the expandable panel hook
   const panel = useExpandablePanel<PendingQRSettings>({
@@ -434,17 +466,18 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
     disabled,
     panelHeight: 420,
     minPanelWidth: 720,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
 
   // Format summary text
   const getSummary = () => {
-    if (!isEnabled) return 'Disabled'
-    const dotLabel = DOT_TYPES.find(d => d.value === displaySettings.dotType)?.label ?? 'Extra Round'
-    const gradientText = displaySettings.dotsUseGradient ? 'gradient' : 'solid'
-    return `${dotLabel} · ${gradientText}`
-  }
+    if (!isEnabled) return 'Disabled';
+    const dotLabel =
+      DOT_TYPES.find((d) => d.value === displaySettings.dotType)?.label ?? 'Extra Round';
+    const gradientText = displaySettings.dotsUseGradient ? 'gradient' : 'solid';
+    return `${dotLabel} · ${gradientText}`;
+  };
 
   // Enable toggle component
   const EnableToggle = (
@@ -464,11 +497,11 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
         On
       </button>
     </div>
-  )
+  );
 
   // Render three-panel expandable content
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -479,7 +512,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -503,7 +536,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
             </label>
 
             {/* Show Label (sub-option) */}
-            <label className={`${styles.checkboxRow} ${styles.subOption} ${!panel.pendingValue.almanac ? styles.optionDisabled : ''}`}>
+            <label
+              className={`${styles.checkboxRow} ${styles.subOption} ${!panel.pendingValue.almanac ? styles.optionDisabled : ''}`}
+            >
               <input
                 type="checkbox"
                 checked={panel.pendingValue.showAlmanacLabel}
@@ -514,13 +549,11 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
             </label>
 
             {/* Shareable Script - not yet implemented */}
-            <label className={`${styles.checkboxRow} ${styles.optionDisabled}`} title="Coming soon - shareable script links">
-              <input
-                type="checkbox"
-                checked={false}
-                onChange={() => {}}
-                disabled={true}
-              />
+            <label
+              className={`${styles.checkboxRow} ${styles.optionDisabled}`}
+              title="Coming soon - shareable script links"
+            >
+              <input type="checkbox" checked={false} onChange={() => {}} disabled={true} />
               <span>Shareable Script</span>
             </label>
           </div>
@@ -553,7 +586,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
               label="Corner Squares"
               styleOptions={CORNER_SQUARE_TYPES}
               styleValue={panel.pendingValue.cornerSquareType}
-              onStyleChange={(v) => panel.updatePendingField('cornerSquareType', v as QRCornerSquareType)}
+              onStyleChange={(v) =>
+                panel.updatePendingField('cornerSquareType', v as QRCornerSquareType)
+              }
               useGradient={panel.pendingValue.cornerSquareUseGradient}
               onGradientToggle={(v) => panel.updatePendingField('cornerSquareUseGradient', v)}
               gradientType={panel.pendingValue.cornerSquareGradientType}
@@ -599,7 +634,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                 {/* Shape dropdown */}
                 <select
                   value={panel.pendingValue.backgroundRoundedCorners ? 'round' : 'square'}
-                  onChange={(e) => panel.updatePendingField('backgroundRoundedCorners', e.target.value === 'round')}
+                  onChange={(e) =>
+                    panel.updatePendingField('backgroundRoundedCorners', e.target.value === 'round')
+                  }
                   className={styles.styleSelect}
                 >
                   <option value="square">Square</option>
@@ -611,7 +648,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                   value={panel.pendingValue.backgroundColorStart}
                   onChange={(e) => panel.updatePendingField('backgroundColorStart', e.target.value)}
                   className={styles.colorInput}
-                  title={panel.pendingValue.backgroundUseGradient ? "Start color" : "Color"}
+                  title={panel.pendingValue.backgroundUseGradient ? 'Start color' : 'Color'}
                 />
                 {panel.pendingValue.backgroundUseGradient && (
                   <>
@@ -619,7 +656,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                     <input
                       type="color"
                       value={panel.pendingValue.backgroundColorEnd}
-                      onChange={(e) => panel.updatePendingField('backgroundColorEnd', e.target.value)}
+                      onChange={(e) =>
+                        panel.updatePendingField('backgroundColorEnd', e.target.value)
+                      }
                       className={styles.colorInput}
                       title="End color"
                     />
@@ -633,7 +672,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                   <input
                     type="checkbox"
                     checked={panel.pendingValue.backgroundUseGradient}
-                    onChange={(e) => panel.updatePendingField('backgroundUseGradient', e.target.checked)}
+                    onChange={(e) =>
+                      panel.updatePendingField('backgroundUseGradient', e.target.checked)
+                    }
                   />
                   <span>Gradient</span>
                 </label>
@@ -641,7 +682,12 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                 {panel.pendingValue.backgroundUseGradient && (
                   <select
                     value={panel.pendingValue.backgroundGradientType}
-                    onChange={(e) => panel.updatePendingField('backgroundGradientType', e.target.value as QRGradientType)}
+                    onChange={(e) =>
+                      panel.updatePendingField(
+                        'backgroundGradientType',
+                        e.target.value as QRGradientType
+                      )
+                    }
                     className={styles.typeSelect}
                   >
                     <option value="linear">Linear</option>
@@ -649,34 +695,47 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                   </select>
                 )}
                 {/* Rotation control for linear gradients */}
-                {panel.pendingValue.backgroundUseGradient && panel.pendingValue.backgroundGradientType === 'linear' && (
-                  <div className={styles.rotationControl}>
-                    <span className={styles.rotationLabel}>{panel.pendingValue.backgroundGradientRotation}°</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="360"
-                      step="15"
-                      value={panel.pendingValue.backgroundGradientRotation}
-                      onChange={(e) => panel.updatePendingField('backgroundGradientRotation', Number(e.target.value))}
-                      className={styles.rotationSlider}
-                    />
-                  </div>
-                )}
+                {panel.pendingValue.backgroundUseGradient &&
+                  panel.pendingValue.backgroundGradientType === 'linear' && (
+                    <div className={styles.rotationControl}>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        step="15"
+                        value={panel.pendingValue.backgroundGradientRotation}
+                        onChange={(e) =>
+                          panel.updatePendingField(
+                            'backgroundGradientRotation',
+                            Number(e.target.value)
+                          )
+                        }
+                        className={styles.rotationSlider}
+                      />
+                      <EditableSliderValue
+                        value={panel.pendingValue.backgroundGradientRotation}
+                        onChange={(v) => panel.updatePendingField('backgroundGradientRotation', v)}
+                        min={0}
+                        max={360}
+                        step={15}
+                        suffix="°"
+                        className={styles.rotationValue}
+                      />
+                    </div>
+                  )}
               </div>
               {/* Row 3: Opacity slider */}
-              <div className={styles.opacityRow}>
-                <span className={styles.opacityText}>Opacity</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
+              <div className={styles.sliderRow}>
+                <EditableSlider
+                  label="Opacity"
                   value={panel.pendingValue.backgroundOpacity}
-                  onChange={(e) => panel.updatePendingField('backgroundOpacity', Number(e.target.value))}
-                  className={styles.opacitySlider}
+                  onChange={(v) => panel.updatePendingField('backgroundOpacity', v)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  suffix="%"
+                  defaultValue={100}
                 />
-                <span className={styles.opacityValue}>{panel.pendingValue.backgroundOpacity}%</span>
               </div>
             </div>
 
@@ -687,7 +746,12 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                 {/* Image source dropdown */}
                 <select
                   value={panel.pendingValue.imageSource}
-                  onChange={(e) => panel.updatePendingField('imageSource', e.target.value as 'none' | 'script-name' | 'script-logo')}
+                  onChange={(e) =>
+                    panel.updatePendingField(
+                      'imageSource',
+                      e.target.value as 'none' | 'script-name' | 'script-logo'
+                    )
+                  }
                   className={styles.styleSelect}
                 >
                   <option value="none">None</option>
@@ -700,7 +764,9 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                     <input
                       type="checkbox"
                       checked={panel.pendingValue.imageHideBackgroundDots}
-                      onChange={(e) => panel.updatePendingField('imageHideBackgroundDots', e.target.checked)}
+                      onChange={(e) =>
+                        panel.updatePendingField('imageHideBackgroundDots', e.target.checked)
+                      }
                     />
                     <span>Hide Dots</span>
                   </label>
@@ -709,31 +775,29 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
               {/* Image size and margin sliders (only show when image is enabled) */}
               {panel.pendingValue.imageSource !== 'none' && (
                 <>
-                  <div className={styles.opacityRow}>
-                    <span className={styles.opacityText}>Size</span>
-                    <input
-                      type="range"
-                      min="5"
-                      max="70"
-                      step="5"
+                  <div className={styles.sliderRow}>
+                    <EditableSlider
+                      label="Size"
                       value={panel.pendingValue.imageSize}
-                      onChange={(e) => panel.updatePendingField('imageSize', Number(e.target.value))}
-                      className={styles.opacitySlider}
+                      onChange={(v) => panel.updatePendingField('imageSize', v)}
+                      min={5}
+                      max={70}
+                      step={5}
+                      suffix="%"
+                      defaultValue={30}
                     />
-                    <span className={styles.opacityValue}>{panel.pendingValue.imageSize}%</span>
                   </div>
-                  <div className={styles.opacityRow}>
-                    <span className={styles.opacityText}>Margin</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="1"
+                  <div className={styles.sliderRow}>
+                    <EditableSlider
+                      label="Margin"
                       value={panel.pendingValue.imageMargin}
-                      onChange={(e) => panel.updatePendingField('imageMargin', Number(e.target.value))}
-                      className={styles.opacitySlider}
+                      onChange={(v) => panel.updatePendingField('imageMargin', v)}
+                      min={0}
+                      max={20}
+                      step={1}
+                      suffix="px"
+                      defaultValue={4}
                     />
-                    <span className={styles.opacityValue}>{panel.pendingValue.imageMargin}px</span>
                   </div>
                 </>
               )}
@@ -751,26 +815,18 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -784,12 +840,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
           />
         </PreviewBox>
       }
-      info={
-        <InfoSection
-          label="QR Tokens"
-          summary={getSummary()}
-        />
-      }
+      info={<InfoSection label="QR Tokens" summary={getSummary()} />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -802,7 +853,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default QRCodeSettingsSelector
+export default QRCodeSettingsSelector;

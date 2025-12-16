@@ -10,9 +10,9 @@
  * @module hooks/useCacheStats
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { globalImageCache } from '../ts/utils/imageCache.js';
+import { useCallback, useEffect, useState } from 'react';
 import { assetStorageService } from '../ts/services/upload/AssetStorageService.js';
+import { globalImageCache } from '../ts/utils/imageCache.js';
 import { logger } from '../ts/utils/logger.js';
 
 /**

@@ -156,7 +156,7 @@
 }
 
 .closeButton {
-  background-color: var(--accent-color, #4CAF50);
+  background-color: var(--accent-color, #4caf50);
   color: white;
 }
 

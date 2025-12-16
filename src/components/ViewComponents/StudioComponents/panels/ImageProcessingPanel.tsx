@@ -4,26 +4,25 @@
  * Panel with sliders and controls for applying filters and adjustments to the active layer
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
-import { logger } from '../../../../ts/utils/logger.js';
+import styles from '../../../../styles/components/studio/Studio.module.css';
 import {
+  addPadding,
   adjustBrightness,
   adjustContrast,
-  adjustSaturation,
   adjustHue,
-  invertColors,
+  adjustSaturation,
+  applyAntiAliasing,
   applyBlur,
   applySharpen,
-  detectEdges,
   cropToContent,
-  addPadding,
-  applyAntiAliasing,
+  detectEdges,
   getImageData,
+  invertColors,
   putImageData,
 } from '../../../../ts/studio/index';
-import type { ImageFilter } from '../../../../ts/types/index';
-import styles from '../../../../styles/components/studio/Studio.module.css';
+import { logger } from '../../../../ts/utils/logger.js';
 
 export function ImageProcessingPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -67,11 +66,11 @@ export function ImageProcessingPanel() {
     } else {
       setOriginalImageData(null);
     }
-  }, [activeLayer?.id]); // Only reset when layer ID changes
+  }, [activeLayer?.id, activeLayer.canvas, activeLayer]); // Only reset when layer ID changes
 
   // Apply all filters
   const applyAllFilters = useCallback(() => {
-    if (!activeLayer || !originalImageData || isApplying) return;
+    if (!(activeLayer && originalImageData) || isApplying) return;
 
     setIsApplying(true);
 
@@ -146,7 +145,7 @@ export function ImageProcessingPanel() {
 
   // Apply crop to content
   const handleCropToContent = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     try {
       const cropped = cropToContent(originalImageData, cropThreshold);
@@ -168,7 +167,7 @@ export function ImageProcessingPanel() {
 
   // Apply padding
   const handleAddPadding = () => {
-    if (!activeLayer || !originalImageData || paddingSize === 0) return;
+    if (!(activeLayer && originalImageData) || paddingSize === 0) return;
 
     try {
       const padded = addPadding(originalImageData, paddingSize, paddingColor);
@@ -193,7 +192,7 @@ export function ImageProcessingPanel() {
 
   // Apply edge detection
   const handleDetectEdges = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     try {
       const edges = detectEdges(originalImageData);
@@ -208,7 +207,7 @@ export function ImageProcessingPanel() {
 
   // Apply anti-aliasing
   const handleAntiAlias = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     try {
       const smoothed = applyAntiAliasing(originalImageData);
@@ -250,7 +249,8 @@ export function ImageProcessingPanel() {
       {/* Color Adjustments */}
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
         <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
-          Brightness: {brightness > 0 ? '+' : ''}{brightness}
+          Brightness: {brightness > 0 ? '+' : ''}
+          {brightness}
         </label>
         <input
           type="range"
@@ -264,7 +264,8 @@ export function ImageProcessingPanel() {
 
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
         <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
-          Contrast: {contrast > 0 ? '+' : ''}{contrast}
+          Contrast: {contrast > 0 ? '+' : ''}
+          {contrast}
         </label>
         <input
           type="range"
@@ -278,7 +279,8 @@ export function ImageProcessingPanel() {
 
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
         <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
-          Saturation: {saturation > 0 ? '+' : ''}{saturation}
+          Saturation: {saturation > 0 ? '+' : ''}
+          {saturation}
         </label>
         <input
           type="range"
@@ -306,7 +308,14 @@ export function ImageProcessingPanel() {
 
       {/* Effects */}
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
-        <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', gap: 'var(--spacing-xs)' }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.875rem',
+            gap: 'var(--spacing-xs)',
+          }}
+        >
           <input
             type="checkbox"
             checked={isInverted}
@@ -346,24 +355,39 @@ export function ImageProcessingPanel() {
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-md)' }}>
-        <button className={styles.toolbarButton} onClick={handleDetectEdges}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-xs)',
+          marginTop: 'var(--spacing-md)',
+        }}
+      >
+        <button type="button" className={styles.toolbarButton} onClick={handleDetectEdges}>
           🔍 Detect Edges
         </button>
-        <button className={styles.toolbarButton} onClick={handleAntiAlias}>
+        <button type="button" className={styles.toolbarButton} onClick={handleAntiAlias}>
           ✨ Anti-Alias
         </button>
-        <button className={styles.toolbarButton} onClick={handleReset}>
+        <button type="button" className={styles.toolbarButton} onClick={handleReset}>
           🔄 Reset Filters
         </button>
       </div>
 
       {/* Crop & Padding */}
-      <div style={{ marginTop: 'var(--spacing-lg)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
+      <div
+        style={{
+          marginTop: 'var(--spacing-lg)',
+          paddingTop: 'var(--spacing-md)',
+          borderTop: '1px solid var(--color-primary)',
+        }}
+      >
         <h4 style={{ fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)' }}>Transform</h4>
 
         <div style={{ marginBottom: 'var(--spacing-md)' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
+          <label
+            style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}
+          >
             Crop Threshold: {cropThreshold}
           </label>
           <input
@@ -384,7 +408,9 @@ export function ImageProcessingPanel() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
+          <label
+            style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}
+          >
             Padding: {paddingSize}px
           </label>
           <input
@@ -395,7 +421,9 @@ export function ImageProcessingPanel() {
             onChange={(e) => setPaddingSize(Number(e.target.value))}
             style={{ width: '100%', marginBottom: 'var(--spacing-xs)' }}
           />
-          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
+          <div
+            style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}
+          >
             <input
               type="color"
               value={paddingColor}

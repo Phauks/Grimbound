@@ -8,12 +8,11 @@
  * Architecture: Strategy Pattern (Domain Services)
  */
 
-import { cacheManager } from '../CacheManager.js'
-import { assetStorageService } from '../../services/upload/AssetStorageService.js'
-import type { PreRenderContext } from '../core/index.js'
-import type { Token } from '../../types/index.js'
-import type { Character } from '../../types/index.js'
-import { logger } from '../../utils/logger.js'
+import { assetStorageService } from '../../services/upload/AssetStorageService.js';
+import type { Character, Token } from '../../types/index.js';
+import { logger } from '../../utils/logger.js';
+import { cacheManager } from '../CacheManager.js';
+import type { PreRenderContext } from '../core/index.js';
 
 // ============================================================================
 // Types
@@ -24,17 +23,17 @@ import { logger } from '../../utils/logger.js'
  */
 export interface AppContext {
   /** Current route/page */
-  route?: string
+  route?: string;
   /** Active project ID */
-  projectId?: string
+  projectId?: string;
   /** Script characters */
-  characters?: Character[]
+  characters?: Character[];
   /** Tokens to display */
-  tokens?: Token[]
+  tokens?: Token[];
   /** Whether user is idle */
-  isIdle?: boolean
+  isIdle?: boolean;
   /** Custom metadata */
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -42,17 +41,17 @@ export interface AppContext {
  */
 export interface WarmingPolicy {
   /** Policy name for logging */
-  name: string
+  name: string;
 
   /** Priority (higher = executed first) */
-  priority: number
+  priority: number;
 
   /**
    * Determine if this policy should execute for given context
    * @param context - Application context
    * @returns True if policy should warm caches
    */
-  shouldWarm(context: AppContext): boolean
+  shouldWarm(context: AppContext): boolean;
 
   /**
    * Execute cache warming
@@ -63,18 +62,18 @@ export interface WarmingPolicy {
   warm(
     context: AppContext,
     onProgress?: (loaded: number, total: number, message?: string) => void
-  ): Promise<void>
+  ): Promise<void>;
 }
 
 /**
  * Result of warming operation
  */
 export interface WarmingResult {
-  policy: string
-  duration: number
-  itemsWarmed: number
-  success: boolean
-  error?: string
+  policy: string;
+  duration: number;
+  itemsWarmed: number;
+  success: boolean;
+  error?: string;
 }
 
 // ============================================================================
@@ -92,123 +91,124 @@ export interface WarmingResult {
  * Runs during idle time to avoid blocking UI interactions.
  */
 export class ProjectOpenWarmingPolicy implements WarmingPolicy {
-  name = 'project-open'
-  priority = 100
+  name = 'project-open';
+  priority = 100;
 
   constructor(
     private options: {
       /** Max characters to warm images for (default: 50) */
-      maxCharacters?: number
+      maxCharacters?: number;
       /** Max tokens to pre-render (default: 10) */
-      maxTokensToPreRender?: number
+      maxTokensToPreRender?: number;
       /** Whether to use idle callback (default: true) */
-      useIdleCallback?: boolean
+      useIdleCallback?: boolean;
     } = {}
   ) {}
 
   shouldWarm(context: AppContext): boolean {
     // Warm when project is opened and has characters
-    return !!(context.projectId && context.characters && context.characters.length > 0)
+    return !!(context.projectId && context.characters && context.characters.length > 0);
   }
 
   async warm(
     context: AppContext,
     onProgress?: (loaded: number, total: number, message?: string) => void
   ): Promise<void> {
-    const { characters = [], tokens = [], projectId } = context
-    const maxCharacters = this.options.maxCharacters ?? 50
-    const maxTokensToPreRender = this.options.maxTokensToPreRender ?? 10
+    const { characters = [], tokens = [], projectId } = context;
+    const maxCharacters = this.options.maxCharacters ?? 50;
+    const maxTokensToPreRender = this.options.maxTokensToPreRender ?? 10;
 
-    let totalSteps = 0
-    let completedSteps = 0
+    let totalSteps = 0;
+    let completedSteps = 0;
 
     // Calculate total steps
-    const charactersToWarm = characters.slice(0, maxCharacters)
-    const tokensToPreRender = tokens.slice(0, maxTokensToPreRender)
+    const charactersToWarm = characters.slice(0, maxCharacters);
+    const tokensToPreRender = tokens.slice(0, maxTokensToPreRender);
 
-    totalSteps = charactersToWarm.length + (projectId ? 1 : 0) + (tokensToPreRender.length > 0 ? 1 : 0)
+    totalSteps =
+      charactersToWarm.length + (projectId ? 1 : 0) + (tokensToPreRender.length > 0 ? 1 : 0);
 
     const updateProgress = (message?: string) => {
-      completedSteps++
-      onProgress?.(completedSteps, totalSteps, message)
-    }
+      completedSteps++;
+      onProgress?.(completedSteps, totalSteps, message);
+    };
 
     // Step 1: Warm character images
     logger.debug('WarmingPolicy', '[ProjectOpen] Warming character images...', {
-      count: charactersToWarm.length
-    })
+      count: charactersToWarm.length,
+    });
 
     const imageUrls = charactersToWarm
-      .map(char => {
+      .map((char) => {
         if (Array.isArray(char.image)) {
-          return char.image[0] // Use first image if multiple
+          return char.image[0]; // Use first image if multiple
         }
-        return char.image
+        return char.image;
       })
-      .filter(Boolean) as string[]
+      .filter(Boolean) as string[];
 
     if (imageUrls.length > 0) {
       await cacheManager.preloadImages(imageUrls, false, (loaded, total) => {
         if (loaded === total) {
-          updateProgress(`Loaded ${total} character images`)
+          updateProgress(`Loaded ${total} character images`);
         }
-      })
+      });
     }
 
     // Step 2: Load project-specific custom assets (if project ID provided)
     if (projectId) {
-      logger.debug('WarmingPolicy', '[ProjectOpen] Loading project assets...', { projectId })
+      logger.debug('WarmingPolicy', '[ProjectOpen] Loading project assets...', { projectId });
 
       try {
         const assets = await assetStorageService.list({
           projectId,
-          type: ['character-icon', 'token-background', 'logo']
-        })
+          type: ['character-icon', 'token-background', 'logo'],
+        });
 
         if (assets.length > 0) {
           const assetUrls = await Promise.all(
-            assets.map(async asset => {
-              const url = await assetStorageService.getAssetUrl(asset.id)
-              return url
+            assets.map(async (asset) => {
+              const url = await assetStorageService.getAssetUrl(asset.id);
+              return url;
             })
-          )
+          );
 
-          const validUrls = assetUrls.filter(Boolean) as string[]
+          const validUrls = assetUrls.filter(Boolean) as string[];
           if (validUrls.length > 0) {
-            await cacheManager.preloadImages(validUrls)
+            await cacheManager.preloadImages(validUrls);
           }
         }
 
-        updateProgress(`Loaded ${assets.length} project assets`)
+        updateProgress(`Loaded ${assets.length} project assets`);
       } catch (error) {
-        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to load project assets:', error)
-        updateProgress('Failed to load project assets')
+        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to load project assets:', error);
+        updateProgress('Failed to load project assets');
       }
     }
 
     // Step 3: Pre-render first N tokens (most likely to be viewed)
     if (tokensToPreRender.length > 0) {
       logger.debug('WarmingPolicy', '[ProjectOpen] Pre-rendering tokens...', {
-        count: tokensToPreRender.length
-      })
+        count: tokensToPreRender.length,
+      });
 
       const preRenderContext: PreRenderContext = {
         type: 'project-open',
         tokens: tokensToPreRender,
         characters,
-        projectId
-      }
+        projectId,
+      };
 
       try {
-        const result = await cacheManager.preRender(preRenderContext)
-        updateProgress(`Pre-rendered ${result.rendered} tokens`)
+        const result = await cacheManager.preRender(preRenderContext);
+        updateProgress(`Pre-rendered ${result.rendered} tokens`);
       } catch (error) {
-        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to pre-render tokens:', error)
-        updateProgress('Failed to pre-render tokens')
+        logger.warn('WarmingPolicy', '[ProjectOpen] Failed to pre-render tokens:', error);
+        updateProgress('Failed to pre-render tokens');
       }
     }
 
-    logger.debug('WarmingPolicy', '[ProjectOpen] Warming complete')
+    logger.debug('WarmingPolicy', '[ProjectOpen] Warming complete');
   }
 }
 
@@ -226,34 +226,34 @@ export class ProjectOpenWarmingPolicy implements WarmingPolicy {
  * Runs during idle time after initial app load to avoid blocking rendering.
  */
 export class AppStartWarmingPolicy implements WarmingPolicy {
-  name = 'app-start'
-  priority = 50
+  name = 'app-start';
+  priority = 50;
 
   constructor(
     private options: {
       /** Common character images to warm (default: trouble brewing) */
-      commonCharacters?: string[]
+      commonCharacters?: string[];
       /** Max assets to pre-resolve (default: 20) */
-      maxAssetsToResolve?: number
+      maxAssetsToResolve?: number;
     } = {}
   ) {}
 
   shouldWarm(context: AppContext): boolean {
     // Only warm on app start (no route or route is root)
-    return !context.route || context.route === '/' || context.route === ''
+    return !context.route || context.route === '/' || context.route === '';
   }
 
   async warm(
-    context: AppContext,
+    _context: AppContext,
     onProgress?: (loaded: number, total: number, message?: string) => void
   ): Promise<void> {
-    let totalSteps = 2 // character images + asset resolution
-    let completedSteps = 0
+    const totalSteps = 2; // character images + asset resolution
+    let completedSteps = 0;
 
     const updateProgress = (message?: string) => {
-      completedSteps++
-      onProgress?.(completedSteps, totalSteps, message)
-    }
+      completedSteps++;
+      onProgress?.(completedSteps, totalSteps, message);
+    };
 
     // Step 1: Warm common character images (Trouble Brewing by default)
     const commonCharacters = this.options.commonCharacters ?? [
@@ -278,61 +278,61 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
       'icons/spy.webp',
       'icons/scarletwoman.webp',
       'icons/baron.webp',
-      'icons/imp.webp'
-    ]
+      'icons/imp.webp',
+    ];
 
     logger.debug('WarmingPolicy', '[AppStart] Warming common character images...', {
-      count: commonCharacters.length
-    })
+      count: commonCharacters.length,
+    });
 
     try {
       await cacheManager.preloadImages(commonCharacters, false, (loaded, total) => {
         if (loaded === total) {
-          updateProgress(`Loaded ${total} common characters`)
+          updateProgress(`Loaded ${total} common characters`);
         }
-      })
+      });
     } catch (error) {
-      logger.warn('WarmingPolicy', '[AppStart] Failed to warm character images:', error)
-      updateProgress('Failed to load character images')
+      logger.warn('WarmingPolicy', '[AppStart] Failed to warm character images:', error);
+      updateProgress('Failed to load character images');
     }
 
     // Step 2: Pre-resolve recently used assets from IndexedDB
-    const maxAssets = this.options.maxAssetsToResolve ?? 20
+    const maxAssets = this.options.maxAssetsToResolve ?? 20;
 
     logger.debug('WarmingPolicy', '[AppStart] Pre-resolving cached assets...', {
-      maxAssets
-    })
+      maxAssets,
+    });
 
     try {
       const recentAssets = await assetStorageService.list({
         limit: maxAssets,
         sortBy: 'lastUsedAt',
-        sortDirection: 'desc'
-      })
+        sortDirection: 'desc',
+      });
 
       if (recentAssets.length > 0) {
         // Pre-generate object URLs for most recently used assets
         const urls = await Promise.all(
-          recentAssets.map(async asset => {
+          recentAssets.map(async (asset) => {
             try {
-              return await assetStorageService.getAssetUrl(asset.id)
+              return await assetStorageService.getAssetUrl(asset.id);
             } catch {
-              return null
+              return null;
             }
           })
-        )
+        );
 
-        const validUrls = urls.filter(Boolean)
-        updateProgress(`Pre-resolved ${validUrls.length} cached assets`)
+        const validUrls = urls.filter(Boolean);
+        updateProgress(`Pre-resolved ${validUrls.length} cached assets`);
       } else {
-        updateProgress('No cached assets to resolve')
+        updateProgress('No cached assets to resolve');
       }
     } catch (error) {
-      logger.warn('WarmingPolicy', '[AppStart] Failed to pre-resolve assets:', error)
-      updateProgress('Failed to resolve cached assets')
+      logger.warn('WarmingPolicy', '[AppStart] Failed to pre-resolve assets:', error);
+      updateProgress('Failed to resolve cached assets');
     }
 
-    logger.debug('WarmingPolicy', '[AppStart] Warming complete')
+    logger.debug('WarmingPolicy', '[AppStart] Warming complete');
   }
 }
 
@@ -344,7 +344,7 @@ export class AppStartWarmingPolicy implements WarmingPolicy {
  * Manages and executes warming policies based on application context.
  */
 export class WarmingPolicyManager {
-  private policies: WarmingPolicy[] = []
+  private policies: WarmingPolicy[] = [];
 
   /**
    * Register a warming policy.
@@ -352,9 +352,9 @@ export class WarmingPolicyManager {
    * @param policy - Warming policy to register
    */
   register(policy: WarmingPolicy): void {
-    this.policies.push(policy)
+    this.policies.push(policy);
     // Sort by priority (highest first)
-    this.policies.sort((a, b) => b.priority - a.priority)
+    this.policies.sort((a, b) => b.priority - a.priority);
   }
 
   /**
@@ -363,7 +363,7 @@ export class WarmingPolicyManager {
    * @param name - Policy name to remove
    */
   unregister(name: string): void {
-    this.policies = this.policies.filter(p => p.name !== name)
+    this.policies = this.policies.filter((p) => p.name !== name);
   }
 
   /**
@@ -390,58 +390,58 @@ export class WarmingPolicyManager {
     context: AppContext,
     onProgress?: (policy: string, loaded: number, total: number, message?: string) => void
   ): Promise<WarmingResult[]> {
-    const results: WarmingResult[] = []
+    const results: WarmingResult[] = [];
 
     // Find policies that should warm for this context
-    const applicablePolicies = this.policies.filter(p => p.shouldWarm(context))
+    const applicablePolicies = this.policies.filter((p) => p.shouldWarm(context));
 
     if (applicablePolicies.length === 0) {
-      logger.debug('WarmingPolicyManager', 'No applicable policies for context', context)
-      return results
+      logger.debug('WarmingPolicyManager', 'No applicable policies for context', context);
+      return results;
     }
 
     logger.debug('WarmingPolicyManager', 'Executing warming policies', {
-      policies: applicablePolicies.map(p => p.name)
-    })
+      policies: applicablePolicies.map((p) => p.name),
+    });
 
     // Execute policies in priority order
     for (const policy of applicablePolicies) {
-      const startTime = Date.now()
-      let itemsWarmed = 0
+      const startTime = Date.now();
+      let itemsWarmed = 0;
 
       try {
         await policy.warm(context, (loaded, total, message) => {
-          itemsWarmed = loaded
-          onProgress?.(policy.name, loaded, total, message)
-        })
+          itemsWarmed = loaded;
+          onProgress?.(policy.name, loaded, total, message);
+        });
 
         results.push({
           policy: policy.name,
           duration: Date.now() - startTime,
           itemsWarmed,
-          success: true
-        })
+          success: true,
+        });
       } catch (error) {
-        logger.error('WarmingPolicyManager', `Policy '${policy.name}' failed:`, error)
+        logger.error('WarmingPolicyManager', `Policy '${policy.name}' failed:`, error);
         results.push({
           policy: policy.name,
           duration: Date.now() - startTime,
           itemsWarmed,
           success: false,
-          error: error instanceof Error ? error.message : String(error)
-        })
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
-    logger.debug('WarmingPolicyManager', 'Warming complete', { results })
-    return results
+    logger.debug('WarmingPolicyManager', 'Warming complete', { results });
+    return results;
   }
 
   /**
    * Get registered policy names.
    */
   getPolicyNames(): string[] {
-    return this.policies.map(p => p.name)
+    return this.policies.map((p) => p.name);
   }
 
   /**
@@ -451,7 +451,7 @@ export class WarmingPolicyManager {
    * @returns True if policy is registered
    */
   hasPolicy(name: string): boolean {
-    return this.policies.some(p => p.name === name)
+    return this.policies.some((p) => p.name === name);
   }
 }
 
@@ -463,10 +463,10 @@ export class WarmingPolicyManager {
  * Global warming policy manager singleton.
  * Pre-registered with default policies (app-start, project-open).
  */
-export const warmingPolicyManager = new WarmingPolicyManager()
+export const warmingPolicyManager = new WarmingPolicyManager();
 
 // Register default policies
-warmingPolicyManager.register(new AppStartWarmingPolicy())
-warmingPolicyManager.register(new ProjectOpenWarmingPolicy())
+warmingPolicyManager.register(new AppStartWarmingPolicy());
+warmingPolicyManager.register(new ProjectOpenWarmingPolicy());
 
-export default warmingPolicyManager
+export default warmingPolicyManager;

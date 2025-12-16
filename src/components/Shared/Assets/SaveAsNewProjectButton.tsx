@@ -10,11 +10,11 @@
  * - Badge-style button matching auto-save indicator design
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useProjects } from '../../../hooks/useProjects.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTokenContext } from '../../../contexts/TokenContext';
-import { logger } from '../../../ts/utils/index.js';
+import { useProjects } from '../../../hooks/useProjects.js';
 import styles from '../../../styles/components/shared/AutoSaveIndicator.module.css';
+import { logger } from '../../../ts/utils/index.js';
 
 interface SaveAsNewProjectButtonProps {
   /** Optional callback for tab navigation */
@@ -83,15 +83,18 @@ export function SaveAsNewProjectButton({ onTabChange }: SaveAsNewProjectButtonPr
     }
   }, [projectName, createProject, onTabChange, handleCancelEditing]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSaveProject();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleCancelEditing();
-    }
-  }, [handleSaveProject, handleCancelEditing]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSaveProject();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancelEditing();
+      }
+    },
+    [handleSaveProject, handleCancelEditing]
+  );
 
   const handleBlur = useCallback(() => {
     // Small delay to allow click events to register first
@@ -142,12 +145,8 @@ export function SaveAsNewProjectButton({ onTabChange }: SaveAsNewProjectButtonPr
       aria-label="Save as new project"
       title="Click to enter project name and save"
     >
-      <span className={styles.icon}>
-        {isSaving ? '⟳' : '💾'}
-      </span>
-      <span className={styles.label}>
-        {isSaving ? 'Saving...' : 'Save as New Project'}
-      </span>
+      <span className={styles.icon}>{isSaving ? '⟳' : '💾'}</span>
+      <span className={styles.label}>{isSaving ? 'Saving...' : 'Save as New Project'}</span>
     </button>
   );
 }

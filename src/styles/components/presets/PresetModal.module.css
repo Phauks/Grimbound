@@ -28,7 +28,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-family: var(--font-family-display, "Cinzel", serif);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -37,23 +37,16 @@
 }
 
 .formGroup label::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(
-    to right,
-    rgba(201, 162, 39, 0.2),
-    transparent
-  );
+  background: linear-gradient(to right, rgba(201, 162, 39, 0.2), transparent);
 }
 
 .formGroup input {
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.02) 0%,
-    transparent 100%
-  ), var(--bg-input);
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0%, transparent 100%), var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
@@ -72,11 +65,8 @@
 .formGroup input:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: linear-gradient(
-    to bottom,
-    rgba(201, 162, 39, 0.03) 0%,
-    transparent 100%
-  ), var(--bg-input);
+  background:
+    linear-gradient(to bottom, rgba(201, 162, 39, 0.03) 0%, transparent 100%), var(--bg-input);
   box-shadow:
     0 0 0 3px rgba(201, 162, 39, 0.1),
     inset 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -101,12 +91,9 @@
   justify-content: center;
   aspect-ratio: 1;
   padding: var(--spacing-sm);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.1) 100%
-  ), var(--bg-card);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%),
+    var(--bg-card);
   border: 2px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -136,12 +123,9 @@
 
 .emojiOption.selected {
   border-color: var(--color-accent);
-  background: linear-gradient(
-    135deg,
-    rgba(201, 162, 39, 0.1) 0%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.1) 100%
-  ), var(--bg-card);
+  background:
+    linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%),
+    var(--bg-card);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 -1px 2px rgba(0, 0, 0, 0.1),
@@ -151,7 +135,7 @@
 
 /* Animated ring on selected */
 .emojiOption.selected::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -1px;
   border-radius: inherit;
@@ -172,8 +156,13 @@
 }
 
 @keyframes ringPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Stagger animation on hover */
@@ -189,11 +178,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(
-    to right,
-    rgba(231, 76, 60, 0.1),
-    rgba(231, 76, 60, 0.05)
-  );
+  background: linear-gradient(to right, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
   color: var(--color-error-light);
   border: 1px solid rgba(231, 76, 60, 0.3);
   border-left: 3px solid var(--color-error);
@@ -202,7 +187,7 @@
 }
 
 .errorMessage::before {
-  content: '⚠';
+  content: "⚠";
   font-size: 1rem;
 }
 
@@ -214,7 +199,7 @@
 }
 
 .dragOver::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border: 2px dashed var(--color-accent);
@@ -225,7 +210,8 @@
 }
 
 @keyframes dragPulse {
-  0%, 100% {
+  0%,
+  100% {
     border-color: var(--color-accent);
     background: rgba(201, 162, 39, 0.05);
   }
@@ -294,13 +280,8 @@
 
 .sectionDivider::before,
 .sectionDivider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(201, 162, 39, 0.15) 50%,
-    transparent
-  );
+  background: linear-gradient(to right, transparent, rgba(201, 162, 39, 0.15) 50%, transparent);
 }

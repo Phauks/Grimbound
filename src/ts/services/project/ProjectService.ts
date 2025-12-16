@@ -7,21 +7,21 @@
  * @module services/project/ProjectService
  */
 
-import type { IProjectService } from './IProjectService.js';
 import type {
-  Project,
-  CreateProjectOptions,
-  ListProjectsOptions,
-  ExportOptions,
   AutoSaveStatus,
+  CreateProjectOptions,
+  ExportOptions,
+  ListProjectsOptions,
+  Project,
   ProjectState,
   ProjectStats,
   ProjectThumbnail,
 } from '../../types/project.js';
+import { generateUuid } from '../../utils/nameGenerator.js';
+import type { IProjectService } from './IProjectService.js';
 import { projectDatabaseService } from './ProjectDatabaseService.js';
 import { projectExporter } from './ProjectExporter.js';
 import { projectImporter } from './ProjectImporter.js';
-import { generateUuid } from '../../utils/nameGenerator.js';
 
 // ============================================================================
 // ProjectService Implementation
@@ -78,7 +78,9 @@ export class ProjectService implements IProjectService {
       schemaVersion: 1,
     };
 
-    const state: ProjectState = options.state ? { ...defaultState, ...options.state } : defaultState;
+    const state: ProjectState = options.state
+      ? { ...defaultState, ...options.state }
+      : defaultState;
 
     // Create project
     const project: Project = {
@@ -163,18 +165,14 @@ export class ProjectService implements IProjectService {
 
     // Filter by tags
     if (options.filter?.tags && options.filter.tags.length > 0) {
-      projects = projects.filter((p) =>
-        p.tags?.some((tag) => options.filter!.tags!.includes(tag))
-      );
+      projects = projects.filter((p) => p.tags?.some((tag) => options.filter.tags!.includes(tag)));
     }
 
     // Filter by search query
     if (options.filter?.searchQuery) {
       const query = options.filter.searchQuery.toLowerCase();
       projects = projects.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query)
+        (p) => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query)
       );
     }
 

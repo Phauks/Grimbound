@@ -15,7 +15,7 @@
   font-size: 0.875rem;
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: 
+  transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
     color var(--transition-fast),
@@ -172,7 +172,7 @@
   cursor: pointer;
   background-color: var(--bg-input);
   color: var(--text-primary);
-  transition: 
+  transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
     color var(--transition-fast);

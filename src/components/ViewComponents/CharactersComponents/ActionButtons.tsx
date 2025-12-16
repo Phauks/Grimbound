@@ -1,42 +1,51 @@
-import { useState, useRef, useEffect } from 'react'
-import styles from '../../../styles/components/characterEditor/ActionButtons.module.css'
+import { useEffect, useRef, useState } from 'react';
+import styles from '../../../styles/components/characterEditor/ActionButtons.module.css';
 
 interface ActionButtonsProps {
-  isLoading: boolean
-  hasReminderTokens?: boolean
-  downloadProgress?: { current: number; total: number } | null
-  onDownloadAll: () => void
-  onDownloadCharacter: () => void
-  onDownloadReminders: () => void
-  onDownloadJson: () => void
+  isLoading: boolean;
+  hasReminderTokens?: boolean;
+  downloadProgress?: { current: number; total: number } | null;
+  onDownloadAll: () => void;
+  onDownloadCharacter: () => void;
+  onDownloadReminders: () => void;
+  onDownloadJson: () => void;
 }
 
-export function ActionButtons({ isLoading, hasReminderTokens = true, downloadProgress, onDownloadAll, onDownloadCharacter, onDownloadReminders, onDownloadJson }: ActionButtonsProps) {
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  
+export function ActionButtons({
+  isLoading,
+  hasReminderTokens = true,
+  downloadProgress,
+  onDownloadAll,
+  onDownloadCharacter,
+  onDownloadReminders,
+  onDownloadJson,
+}: ActionButtonsProps) {
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   // Calculate progress percentage from downloadProgress prop
-  const progressPercent = downloadProgress && downloadProgress.total > 0 
-    ? Math.round((downloadProgress.current / downloadProgress.total) * 100) 
-    : 0
-  const isDownloading = downloadProgress !== null && downloadProgress !== undefined
+  const progressPercent =
+    downloadProgress && downloadProgress.total > 0
+      ? Math.round((downloadProgress.current / downloadProgress.total) * 100)
+      : 0;
+  const isDownloading = downloadProgress !== null && downloadProgress !== undefined;
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDownloadMenu(false)
+        setShowDownloadMenu(false);
       }
-    }
+    };
 
     if (showDownloadMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showDownloadMenu])
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDownloadMenu]);
 
   return (
     <div className={styles.actions}>
@@ -48,7 +57,11 @@ export function ActionButtons({ isLoading, hasReminderTokens = true, downloadPro
             onClick={onDownloadAll}
             disabled={isLoading}
             title="Download character token, reminder tokens, and JSON as ZIP"
-            style={isDownloading ? { '--progress': `${progressPercent}%` } as React.CSSProperties : undefined}
+            style={
+              isDownloading
+                ? ({ '--progress': `${progressPercent}%` } as React.CSSProperties)
+                : undefined
+            }
           >
             <span className={styles.downloadProgress} />
             <span className={styles.icon}>📥</span>
@@ -72,8 +85,8 @@ export function ActionButtons({ isLoading, hasReminderTokens = true, downloadPro
               type="button"
               className={styles.downloadMenuItem}
               onClick={() => {
-                onDownloadCharacter()
-                setShowDownloadMenu(false)
+                onDownloadCharacter();
+                setShowDownloadMenu(false);
               }}
             >
               Character Token Only
@@ -82,8 +95,8 @@ export function ActionButtons({ isLoading, hasReminderTokens = true, downloadPro
               type="button"
               className={styles.downloadMenuItem}
               onClick={() => {
-                onDownloadReminders()
-                setShowDownloadMenu(false)
+                onDownloadReminders();
+                setShowDownloadMenu(false);
               }}
               disabled={!hasReminderTokens}
               title={!hasReminderTokens ? 'No reminder tokens to download' : undefined}
@@ -94,8 +107,8 @@ export function ActionButtons({ isLoading, hasReminderTokens = true, downloadPro
               type="button"
               className={styles.downloadMenuItem}
               onClick={() => {
-                onDownloadJson()
-                setShowDownloadMenu(false)
+                onDownloadJson();
+                setShowDownloadMenu(false);
               }}
             >
               Character JSON Only
@@ -104,5 +117,5 @@ export function ActionButtons({ isLoading, hasReminderTokens = true, downloadPro
         )}
       </div>
     </div>
-  )
+  );
 }

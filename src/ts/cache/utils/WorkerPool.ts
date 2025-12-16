@@ -3,16 +3,16 @@
  * Provides load balancing, queuing, and automatic worker management.
  */
 
-import type { WorkerTask, WorkerResponse } from '../../workers/prerender-worker.js'
-import { logger } from '../../utils/logger.js'
+import { logger } from '../../utils/logger.js';
+import type { WorkerResponse, WorkerTask } from '../../workers/prerender-worker.js';
 
 /**
  * Task in the queue.
  */
 interface QueuedTask<T = any> {
-  task: WorkerTask
-  resolve: (value: T) => void
-  reject: (error: Error) => void
+  task: WorkerTask;
+  resolve: (value: T) => void;
+  reject: (error: Error) => void;
 }
 
 /**
@@ -20,9 +20,9 @@ interface QueuedTask<T = any> {
  */
 export interface WorkerPoolOptions {
   /** Number of workers to create (default: navigator.hardwareConcurrency or 4) */
-  workerCount?: number
+  workerCount?: number;
   /** Maximum tasks in queue before rejecting new tasks (default: 100) */
-  maxQueueSize?: number
+  maxQueueSize?: number;
 }
 
 /**
@@ -43,24 +43,24 @@ export interface WorkerPoolOptions {
  * })
  */
 export class WorkerPool {
-  private workers: Worker[] = []
-  private activeWorkers = new Set<Worker>()
-  private queue: QueuedTask[] = []
-  private taskCounter = 0
-  private readonly maxQueueSize: number
+  private workers: Worker[] = [];
+  private activeWorkers = new Set<Worker>();
+  private queue: QueuedTask[] = [];
+  private taskCounter = 0;
+  private readonly maxQueueSize: number;
 
   /**
    * Create a new WorkerPool.
    * @param options - Pool configuration options
    */
   constructor(private options: WorkerPoolOptions = {}) {
-    const workerCount = options.workerCount || navigator.hardwareConcurrency || 4
-    this.maxQueueSize = options.maxQueueSize || 100
+    const workerCount = options.workerCount || navigator.hardwareConcurrency || 4;
+    this.maxQueueSize = options.maxQueueSize || 100;
 
     // Create workers
     for (let i = 0; i < workerCount; i++) {
-      const worker = this.createWorker()
-      this.workers.push(worker)
+      const worker = this.createWorker();
+      this.workers.push(worker);
     }
   }
 
@@ -70,32 +70,31 @@ export class WorkerPool {
    */
   private createWorker(): Worker {
     // Vite handles this worker import specially
-    const worker = new Worker(
-      new URL('../../workers/prerender-worker.ts', import.meta.url),
-      { type: 'module' }
-    )
+    const worker = new Worker(new URL('../../workers/prerender-worker.ts', import.meta.url), {
+      type: 'module',
+    });
 
     worker.onerror = (error) => {
-      logger.error('WorkerPool', 'Worker error', error)
+      logger.error('WorkerPool', 'Worker error', error);
       // Remove failed worker from pool
-      const index = this.workers.indexOf(worker)
+      const index = this.workers.indexOf(worker);
       if (index !== -1) {
-        this.workers.splice(index, 1)
-        this.activeWorkers.delete(worker)
+        this.workers.splice(index, 1);
+        this.activeWorkers.delete(worker);
       }
 
       // Try to recover by creating a new worker
       if (this.workers.length < (this.options.workerCount || 4)) {
         try {
-          const newWorker = this.createWorker()
-          this.workers.push(newWorker)
+          const newWorker = this.createWorker();
+          this.workers.push(newWorker);
         } catch (err) {
-          logger.error('WorkerPool', 'Failed to recover worker', err)
+          logger.error('WorkerPool', 'Failed to recover worker', err);
         }
       }
-    }
+    };
 
-    return worker
+    return worker;
   }
 
   /**
@@ -109,26 +108,26 @@ export class WorkerPool {
     // Add unique ID to task
     const fullTask: WorkerTask = {
       ...task,
-      id: `task-${++this.taskCounter}-${Date.now()}`
-    }
+      id: `task-${++this.taskCounter}-${Date.now()}`,
+    };
 
     return new Promise<T>((resolve, reject) => {
       // Check queue size limit
       if (this.queue.length >= this.maxQueueSize) {
-        reject(new Error('Worker pool queue is full'))
-        return
+        reject(new Error('Worker pool queue is full'));
+        return;
       }
 
       // Try to find available worker
-      const availableWorker = this.workers.find(w => !this.activeWorkers.has(w))
+      const availableWorker = this.workers.find((w) => !this.activeWorkers.has(w));
 
       if (availableWorker) {
-        this.runTask(availableWorker, fullTask, resolve, reject)
+        this.runTask(availableWorker, fullTask, resolve, reject);
       } else {
         // Queue task for later
-        this.queue.push({ task: fullTask, resolve, reject })
+        this.queue.push({ task: fullTask, resolve, reject });
       }
-    })
+    });
   }
 
   /**
@@ -144,38 +143,38 @@ export class WorkerPool {
     resolve: (value: T) => void,
     reject: (error: Error) => void
   ): void {
-    this.activeWorkers.add(worker)
+    this.activeWorkers.add(worker);
 
     // Set up one-time message handler for this task
     const handler = (e: MessageEvent<WorkerResponse>) => {
       // Check if this response matches our task
-      if (e.data.id !== task.id) return
+      if (e.data.id !== task.id) return;
 
       // Clean up
-      worker.removeEventListener('message', handler)
-      this.activeWorkers.delete(worker)
+      worker.removeEventListener('message', handler);
+      this.activeWorkers.delete(worker);
 
       // Handle response
       if (e.data.type === 'SUCCESS') {
-        resolve(e.data.data as T)
+        resolve(e.data.data as T);
       } else if (e.data.type === 'ERROR') {
-        reject(new Error(e.data.error || 'Worker task failed'))
+        reject(new Error(e.data.error || 'Worker task failed'));
       }
 
       // Process next queued task if available
-      this.processQueue()
-    }
+      this.processQueue();
+    };
 
-    worker.addEventListener('message', handler)
+    worker.addEventListener('message', handler);
 
     // Send task to worker
     try {
-      worker.postMessage(task)
+      worker.postMessage(task);
     } catch (error) {
-      worker.removeEventListener('message', handler)
-      this.activeWorkers.delete(worker)
-      reject(error instanceof Error ? error : new Error(String(error)))
-      this.processQueue()
+      worker.removeEventListener('message', handler);
+      this.activeWorkers.delete(worker);
+      reject(error instanceof Error ? error : new Error(String(error)));
+      this.processQueue();
     }
   }
 
@@ -183,14 +182,14 @@ export class WorkerPool {
    * Process next task in queue if workers are available.
    */
   private processQueue(): void {
-    if (this.queue.length === 0) return
+    if (this.queue.length === 0) return;
 
-    const availableWorker = this.workers.find(w => !this.activeWorkers.has(w))
-    if (!availableWorker) return
+    const availableWorker = this.workers.find((w) => !this.activeWorkers.has(w));
+    if (!availableWorker) return;
 
-    const queued = this.queue.shift()
+    const queued = this.queue.shift();
     if (queued) {
-      this.runTask(availableWorker, queued.task, queued.resolve, queued.reject)
+      this.runTask(availableWorker, queued.task, queued.resolve, queued.reject);
     }
   }
 
@@ -203,8 +202,8 @@ export class WorkerPool {
       workerCount: this.workers.length,
       activeWorkers: this.activeWorkers.size,
       queuedTasks: this.queue.length,
-      availableWorkers: this.workers.length - this.activeWorkers.size
-    }
+      availableWorkers: this.workers.length - this.activeWorkers.size,
+    };
   }
 
   /**
@@ -214,16 +213,16 @@ export class WorkerPool {
   terminate(): void {
     // Reject all queued tasks
     for (const queued of this.queue) {
-      queued.reject(new Error('Worker pool terminated'))
+      queued.reject(new Error('Worker pool terminated'));
     }
-    this.queue = []
+    this.queue = [];
 
     // Terminate all workers
     for (const worker of this.workers) {
-      worker.terminate()
+      worker.terminate();
     }
-    this.workers = []
-    this.activeWorkers.clear()
+    this.workers = [];
+    this.activeWorkers.clear();
   }
 
   /**
@@ -231,7 +230,7 @@ export class WorkerPool {
    * @returns True if idle
    */
   isIdle(): boolean {
-    return this.activeWorkers.size === 0 && this.queue.length === 0
+    return this.activeWorkers.size === 0 && this.queue.length === 0;
   }
 
   /**
@@ -242,24 +241,24 @@ export class WorkerPool {
    * @returns Promise resolving when idle or timeout
    */
   async waitForIdle(timeout: number = 30000): Promise<void> {
-    const startTime = Date.now()
+    const startTime = Date.now();
 
     return new Promise((resolve, reject) => {
       const checkIdle = () => {
         if (this.isIdle()) {
-          resolve()
-          return
+          resolve();
+          return;
         }
 
         if (Date.now() - startTime > timeout) {
-          reject(new Error('Worker pool idle timeout'))
-          return
+          reject(new Error('Worker pool idle timeout'));
+          return;
         }
 
-        setTimeout(checkIdle, 100)
-      }
+        setTimeout(checkIdle, 100);
+      };
 
-      checkIdle()
-    })
+      checkIdle();
+    });
   }
 }

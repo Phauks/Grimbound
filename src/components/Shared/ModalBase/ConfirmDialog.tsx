@@ -30,35 +30,35 @@
  * ```
  */
 
-import { Modal } from './Modal'
-import { Button } from '../UI/Button'
-import { Alert } from '../UI/Alert'
+import { Alert } from '../UI/Alert';
+import { Button } from '../UI/Button';
+import { Modal } from './Modal';
 
 export interface ConfirmDialogProps {
   /** Whether the dialog is open */
-  isOpen: boolean
+  isOpen: boolean;
   /** Callback when dialog should close */
-  onClose: () => void
+  onClose: () => void;
   /** Callback when user confirms */
-  onConfirm: () => void
+  onConfirm: () => void;
   /** Dialog title */
-  title: string
+  title: string;
   /** Confirmation message */
-  message: string
+  message: string;
   /** Text for confirm button */
-  confirmText?: string
+  confirmText?: string;
   /** Text for cancel button */
-  cancelText?: string
+  cancelText?: string;
   /** Visual variant affecting confirm button */
-  variant?: 'default' | 'danger'
+  variant?: 'default' | 'danger';
   /** Whether action is in progress */
-  loading?: boolean
+  loading?: boolean;
   /** Loading text for confirm button */
-  loadingText?: string
+  loadingText?: string;
   /** Optional warning message displayed below the main message */
-  warning?: string
+  warning?: string;
   /** Optional error message to display */
-  error?: string | null
+  error?: string | null;
 }
 
 export function ConfirmDialog({
@@ -98,9 +98,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
-        {message}
-      </p>
+      <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>{message}</p>
 
       {warning && (
         <Alert variant="warning" title="Warning" style={{ marginTop: 'var(--spacing-md)' }}>
@@ -114,7 +112,7 @@ export function ConfirmDialog({
         </Alert>
       )}
     </Modal>
-  )
+  );
 }
 
-export default ConfirmDialog
+export default ConfirmDialog;

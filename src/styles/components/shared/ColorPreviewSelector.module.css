@@ -19,7 +19,9 @@
   border: 2px solid var(--border-color);
   overflow: hidden;
   cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 
   /* Checkerboard pattern for transparency visualization */
   background:
@@ -28,7 +30,11 @@
     linear-gradient(45deg, transparent 75%, #ccc 75%),
     linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
 }
 
 /* Size variants */
@@ -141,7 +147,7 @@
 
 .currentColorHex {
   font-size: 0.75rem;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   color: var(--text-secondary);
 }
 

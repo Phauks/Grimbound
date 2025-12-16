@@ -10,13 +10,13 @@
  * - Delete individual snapshots
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useProjectContext } from '../../contexts/ProjectContext';
 import { useTokenContext } from '../../contexts/TokenContext';
-import { projectDatabaseService } from '../../ts/services/project/index.js';
-import { logger } from '../../ts/utils/index.js';
-import type { AutoSaveSnapshot } from '../../ts/types/project.js';
 import styles from '../../styles/components/modals/SnapshotRecoveryModal.module.css';
+import { projectDatabaseService } from '../../ts/services/project/index.js';
+import type { AutoSaveSnapshot } from '../../ts/types/project.js';
+import { logger } from '../../ts/utils/index.js';
 
 interface SnapshotRecoveryModalProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
     if (isOpen && currentProject) {
       loadSnapshots();
     }
-  }, [isOpen, currentProject?.id]);
+  }, [isOpen, currentProject?.id, currentProject, loadSnapshots]);
 
   const loadSnapshots = useCallback(async () => {
     if (!currentProject) return;
@@ -75,7 +75,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
   }, []);
 
   const confirmRestore = useCallback(async () => {
-    if (!selectedSnapshot || !currentProject) return;
+    if (!(selectedSnapshot && currentProject)) return;
 
     try {
       setIsLoading(true);
@@ -117,7 +117,16 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
     } finally {
       setIsLoading(false);
     }
-  }, [selectedSnapshot, currentProject, setCharacters, setScriptMeta, setJsonInput, clearAllMetadata, setCurrentProject, onClose]);
+  }, [
+    selectedSnapshot,
+    currentProject,
+    setCharacters,
+    setScriptMeta,
+    setJsonInput,
+    clearAllMetadata,
+    setCurrentProject,
+    onClose,
+  ]);
 
   const cancelRestore = useCallback(() => {
     setSelectedSnapshot(null);
@@ -169,12 +178,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
         {/* Header */}
         <div className={styles.header}>
           <h2>Version History</h2>
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -191,17 +195,13 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
           {error && (
             <div className={styles.error}>
               <p>{error}</p>
-              <button
-                type="button"
-                className={styles.retryButton}
-                onClick={loadSnapshots}
-              >
+              <button type="button" className={styles.retryButton} onClick={loadSnapshots}>
                 Retry
               </button>
             </div>
           )}
 
-          {!isLoading && !error && snapshots.length === 0 && (
+          {!(isLoading || error) && snapshots.length === 0 && (
             <div className={styles.empty}>
               <p>No snapshots found.</p>
               <p className={styles.hint}>
@@ -210,22 +210,18 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
             </div>
           )}
 
-          {!isLoading && !error && snapshots.length > 0 && !showConfirm && (
+          {!(isLoading || error) && snapshots.length > 0 && !showConfirm && (
             <div className={styles.list}>
               <p className={styles.info}>
-                {snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''} available
-                (showing last 10)
+                {snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''} available (showing
+                last 10)
               </p>
 
               {snapshots.map((snapshot) => (
                 <div key={snapshot.id} className={styles.snapshotItem}>
                   <div className={styles.snapshotInfo}>
-                    <div className={styles.snapshotTime}>
-                      {formatTimestamp(snapshot.timestamp)}
-                    </div>
-                    <div className={styles.snapshotSummary}>
-                      {getSnapshotSummary(snapshot)}
-                    </div>
+                    <div className={styles.snapshotTime}>{formatTimestamp(snapshot.timestamp)}</div>
+                    <div className={styles.snapshotSummary}>{getSnapshotSummary(snapshot)}</div>
                   </div>
                   <button
                     type="button"
@@ -248,8 +244,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
                 <strong>{formatTimestamp(selectedSnapshot.timestamp)}</strong>.
               </p>
               <p className={styles.warning}>
-                ⚠️ Your current unsaved changes will be lost. This action cannot be
-                undone.
+                ⚠️ Your current unsaved changes will be lost. This action cannot be undone.
               </p>
               <div className={styles.confirmButtons}>
                 <button

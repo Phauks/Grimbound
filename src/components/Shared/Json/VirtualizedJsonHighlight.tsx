@@ -1,31 +1,31 @@
-import { List, ListImperativeAPI, RowComponentProps } from 'react-window'
-import { memo, useMemo, forwardRef, useImperativeHandle, useRef, CSSProperties, ReactElement } from 'react'
-import { tokenizeJSONByLine, HighlightLine } from '../../../ts/ui/jsonHighlighter'
+import { forwardRef, memo, type ReactElement, useImperativeHandle, useMemo, useRef } from 'react';
+import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
+import { type HighlightLine, tokenizeJSONByLine } from '../../../ts/ui/jsonHighlighter';
 
 interface VirtualizedJsonHighlightProps {
-  json: string
-  height: number
-  width: number
+  json: string;
+  height: number;
+  width: number;
 }
 
 /**
  * Line height in pixels - must match CSS line-height
  * Used for accurate scroll position calculations
  */
-const LINE_HEIGHT = 21
+const LINE_HEIGHT = 21;
 
 /**
  * Props passed to each row component via rowProps
  */
 interface RowData {
-  lines: HighlightLine[]
+  lines: HighlightLine[];
 }
 
 /**
  * Row component for react-window v2
  * Renders a single line of highlighted JSON
  */
-type RowComponentType = (props: RowComponentProps<RowData>) => ReactElement
+type RowComponentType = (props: RowComponentProps<RowData>) => ReactElement;
 
 const Row: RowComponentType = memo(
   ({
@@ -39,15 +39,15 @@ const Row: RowComponentType = memo(
       dangerouslySetInnerHTML={{ __html: lines[index]?.html || '&nbsp;' }}
     />
   )
-) as RowComponentType
+) as RowComponentType;
 
-;(Row as unknown as { displayName: string }).displayName = 'VirtualizedJsonRow'
+(Row as unknown as { displayName: string }).displayName = 'VirtualizedJsonRow';
 
 /**
  * Imperative handle interface for controlling scroll from parent
  */
 export interface VirtualizedJsonHighlightHandle {
-  scrollTo: (scrollTop: number) => void
+  scrollTo: (scrollTop: number) => void;
 }
 
 /**
@@ -65,10 +65,10 @@ export interface VirtualizedJsonHighlightHandle {
 export const VirtualizedJsonHighlight = memo(
   forwardRef<VirtualizedJsonHighlightHandle, VirtualizedJsonHighlightProps>(
     ({ json, height, width }, ref) => {
-      const listRef = useRef<ListImperativeAPI>(null)
+      const listRef = useRef<ListImperativeAPI>(null);
 
       // Memoize line-based tokenization
-      const lines = useMemo(() => tokenizeJSONByLine(json), [json])
+      const lines = useMemo(() => tokenizeJSONByLine(json), [json]);
 
       // Expose scroll control to parent component
       useImperativeHandle(
@@ -76,14 +76,14 @@ export const VirtualizedJsonHighlight = memo(
         () => ({
           scrollTo: (scrollTop: number) => {
             // Convert pixel offset to row index
-            const index = Math.floor(scrollTop / LINE_HEIGHT)
-            listRef.current?.scrollToRow({ index, align: 'start' })
+            const index = Math.floor(scrollTop / LINE_HEIGHT);
+            listRef.current?.scrollToRow({ index, align: 'start' });
           },
         }),
         []
-      )
+      );
 
-      if (!json) return null
+      if (!json) return null;
 
       return (
         <List<RowData>
@@ -97,9 +97,9 @@ export const VirtualizedJsonHighlight = memo(
           style={{ width, height }}
           rowComponent={Row}
         />
-      )
+      );
     }
   )
-)
+);
 
-VirtualizedJsonHighlight.displayName = 'VirtualizedJsonHighlight'
+VirtualizedJsonHighlight.displayName = 'VirtualizedJsonHighlight';

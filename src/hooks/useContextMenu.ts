@@ -1,36 +1,36 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ContextMenuPosition {
-  x: number
-  y: number
+  x: number;
+  y: number;
 }
 
-export interface UseContextMenuOptions<TData = undefined> {
+export interface UseContextMenuOptions<_TData = undefined> {
   /** Controlled mode: external isOpen state */
-  isOpen?: boolean
+  isOpen?: boolean;
   /** Controlled mode: external toggle handler */
-  onToggle?: (open: boolean) => void
+  onToggle?: (open: boolean) => void;
   /** Position strategy: 'mouse' (default) positions at cursor, 'element' positions relative to element */
-  positionMode?: 'mouse' | 'element'
+  positionMode?: 'mouse' | 'element';
   /** Offset from element when using positionMode: 'element' */
-  elementOffset?: { x: number; y: number }
+  elementOffset?: { x: number; y: number };
 }
 
 export interface UseContextMenuReturn<TData = undefined> {
   /** Whether the context menu is open */
-  isOpen: boolean
+  isOpen: boolean;
   /** The position of the context menu */
-  position: ContextMenuPosition | null
+  position: ContextMenuPosition | null;
   /** Associated data (e.g., characterId, tokenId) */
-  data: TData | null
+  data: TData | null;
   /** Open the context menu at the mouse position or relative to element */
-  open: (e: React.MouseEvent, data?: TData, element?: HTMLElement | null) => void
+  open: (e: React.MouseEvent, data?: TData, element?: HTMLElement | null) => void;
   /** Close the context menu */
-  close: () => void
+  close: () => void;
   /** Ref to attach to the menu container for click-outside detection */
-  menuRef: React.RefObject<HTMLDivElement | null>
+  menuRef: React.RefObject<HTMLDivElement | null>;
   /** Handler to attach to an element's onContextMenu */
-  onContextMenu: (e: React.MouseEvent, data?: TData, element?: HTMLElement | null) => void
+  onContextMenu: (e: React.MouseEvent, data?: TData, element?: HTMLElement | null) => void;
 }
 
 /**
@@ -48,98 +48,98 @@ export function useContextMenu<TData = undefined>(
     onToggle,
     positionMode = 'mouse',
     elementOffset = { x: 8, y: 0 },
-  } = options
+  } = options;
 
   // Internal state for self-contained mode
-  const [internalIsOpen, setInternalIsOpen] = useState(false)
-  const [position, setPosition] = useState<ContextMenuPosition | null>(null)
-  const [data, setData] = useState<TData | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [position, setPosition] = useState<ContextMenuPosition | null>(null);
+  const [data, setData] = useState<TData | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Determine if we're in controlled mode
-  const isControlled = controlledIsOpen !== undefined
-  const isOpen = isControlled ? controlledIsOpen : internalIsOpen
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
 
   const close = useCallback(() => {
     if (isControlled) {
-      onToggle?.(false)
+      onToggle?.(false);
     } else {
-      setInternalIsOpen(false)
+      setInternalIsOpen(false);
     }
-    setPosition(null)
-    setData(null)
-  }, [isControlled, onToggle])
+    setPosition(null);
+    setData(null);
+  }, [isControlled, onToggle]);
 
   const open = useCallback(
     (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
 
-      let pos: ContextMenuPosition
+      let pos: ContextMenuPosition;
 
       if (positionMode === 'element' && element) {
-        const rect = element.getBoundingClientRect()
+        const rect = element.getBoundingClientRect();
         pos = {
           x: rect.right + elementOffset.x,
           y: rect.top + elementOffset.y,
-        }
+        };
       } else {
         pos = {
           x: e.clientX,
           y: e.clientY,
-        }
+        };
       }
 
-      setPosition(pos)
-      setData(itemData ?? (null as TData | null))
+      setPosition(pos);
+      setData(itemData ?? (null as TData | null));
 
       if (isControlled) {
-        onToggle?.(true)
+        onToggle?.(true);
       } else {
-        setInternalIsOpen(true)
+        setInternalIsOpen(true);
       }
     },
     [positionMode, elementOffset, isControlled, onToggle]
-  )
+  );
 
   // Click outside and Escape key handling
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node
+      const target = e.target as Node;
       if (menuRef.current && !menuRef.current.contains(target)) {
-        close()
+        close();
       }
-    }
+    };
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        close()
+        close();
       }
-    }
+    };
 
     // Use requestAnimationFrame to delay adding the listener
     // This avoids catching the opening click/right-click
     const frameId = requestAnimationFrame(() => {
-      document.addEventListener('mousedown', handleClickOutside)
-    })
-    document.addEventListener('keydown', handleEscape)
+      document.addEventListener('mousedown', handleClickOutside);
+    });
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
-      cancelAnimationFrame(frameId)
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, close])
+      cancelAnimationFrame(frameId);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, close]);
 
   // Convenience handler for onContextMenu prop
   const onContextMenu = useCallback(
     (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
-      open(e, itemData, element)
+      open(e, itemData, element);
     },
     [open]
-  )
+  );
 
   return {
     isOpen,
@@ -149,5 +149,5 @@ export function useContextMenu<TData = undefined>(
     close,
     menuRef,
     onContextMenu,
-  }
+  };
 }

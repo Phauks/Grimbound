@@ -32,10 +32,10 @@
  * ```
  */
 
-import { cn } from '../../../ts/utils/classNames'
-import { ViewLayoutPanel } from './ViewLayoutPanel'
-import type { ViewLayoutProps, ViewLayoutComponent } from './types'
-import styles from '../../../styles/components/layout/ViewLayout.module.css'
+import styles from '../../../styles/components/layout/ViewLayout.module.css';
+import { cn } from '../../../ts/utils/classNames';
+import type { ViewLayoutComponent, ViewLayoutProps } from './types';
+import { ViewLayoutPanel } from './ViewLayoutPanel';
 
 /**
  * Get the CSS class for a given layout variant
@@ -43,13 +43,13 @@ import styles from '../../../styles/components/layout/ViewLayout.module.css'
 function getVariantClass(variant: ViewLayoutProps['variant']): string {
   switch (variant) {
     case '2-panel':
-      return styles.layout2Panel
+      return styles.layout2Panel;
     case '3-panel':
-      return styles.layout3Panel
+      return styles.layout3Panel;
     case 'full-width':
-      return styles.layoutFullWidth
+      return styles.layoutFullWidth;
     default:
-      return ''
+      return '';
   }
 }
 
@@ -63,28 +63,20 @@ function ViewLayoutBase({
   height,
   'data-testid': testId,
 }: ViewLayoutProps) {
-  const containerClasses = cn(
-    styles.viewContainer,
-    getVariantClass(variant),
-    className
-  )
+  const containerClasses = cn(styles.viewContainer, getVariantClass(variant), className);
 
   // Allow custom height override via inline style
-  const inlineStyle = height ? { height, maxHeight: height } : undefined
+  const inlineStyle = height ? { height, maxHeight: height } : undefined;
 
   return (
-    <div
-      className={containerClasses}
-      style={inlineStyle}
-      data-testid={testId}
-    >
+    <div className={containerClasses} style={inlineStyle} data-testid={testId}>
       {children}
     </div>
-  )
+  );
 }
 
 /**
  * Compound component with Panel attached
  */
-export const ViewLayout = ViewLayoutBase as ViewLayoutComponent
-ViewLayout.Panel = ViewLayoutPanel
+export const ViewLayout = ViewLayoutBase as ViewLayoutComponent;
+ViewLayout.Panel = ViewLayoutPanel;

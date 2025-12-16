@@ -89,7 +89,7 @@
   padding: var(--spacing-sm) var(--spacing-xs);
   background: var(--color-primary);
   border: none;
-  border-left: 1px solid rgba(255,255,255,0.2);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   font-size: 0.625rem;
   color: var(--text-on-accent);
@@ -270,13 +270,13 @@
 
 /* Disabled overlay for official characters */
 .tabContent.disabled::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 200vh;
-  background: rgba(128, 128, 128, 0.30);
+  background: rgba(128, 128, 128, 0.3);
   pointer-events: none;
   z-index: 10;
 }
@@ -328,14 +328,14 @@
 }
 
 .readonlyField {
-  background: var(--bg-hover) !important;
-  color: var(--text-muted) !important;
+  background: var(--bg-hover);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
 .linkedField {
-  background: var(--bg-hover) !important;
-  color: var(--text-muted) !important;
+  background: var(--bg-hover);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -427,13 +427,27 @@
   position: relative;
 }
 
-.teamSelectGroup.teamTownsfolk select { border-left: 6px solid var(--color-team-townsfolk); }
-.teamSelectGroup.teamOutsider select { border-left: 6px solid var(--color-team-outsider); }
-.teamSelectGroup.teamMinion select { border-left: 6px solid var(--color-team-minion); }
-.teamSelectGroup.teamDemon select { border-left: 6px solid var(--color-team-demon); }
-.teamSelectGroup.teamTraveller select { border-left: 6px solid var(--color-team-traveller); }
-.teamSelectGroup.teamFabled select { border-left: 6px solid var(--color-team-fabled); }
-.teamSelectGroup.teamLoric select { border-left: 6px solid var(--color-team-loric); }
+.teamSelectGroup.teamTownsfolk select {
+  border-left: 6px solid var(--color-team-townsfolk);
+}
+.teamSelectGroup.teamOutsider select {
+  border-left: 6px solid var(--color-team-outsider);
+}
+.teamSelectGroup.teamMinion select {
+  border-left: 6px solid var(--color-team-minion);
+}
+.teamSelectGroup.teamDemon select {
+  border-left: 6px solid var(--color-team-demon);
+}
+.teamSelectGroup.teamTraveller select {
+  border-left: 6px solid var(--color-team-traveller);
+}
+.teamSelectGroup.teamFabled select {
+  border-left: 6px solid var(--color-team-fabled);
+}
+.teamSelectGroup.teamLoric select {
+  border-left: 6px solid var(--color-team-loric);
+}
 
 /* Setup checkbox */
 .setupCheckboxGroup {
@@ -472,7 +486,11 @@
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  transition: background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .imageUrlRow:hover {
@@ -522,7 +540,9 @@
   border: 2px solid var(--border-color);
   cursor: pointer;
   padding: 0;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .inlineThumbnail:hover {
@@ -563,7 +583,11 @@
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  transition: background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .reminderUrlRow:hover {
@@ -1051,7 +1075,9 @@
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
   white-space: nowrap;
 }
 

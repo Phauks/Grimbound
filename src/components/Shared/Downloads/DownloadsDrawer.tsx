@@ -7,10 +7,10 @@
  * @module components/Shared/Downloads/DownloadsDrawer
  */
 
-import { memo, useEffect, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useDownloadsContext, type DownloadItem } from '../../../contexts/DownloadsContext'
-import styles from '../../../styles/components/shared/DownloadsDrawer.module.css'
+import { memo, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { type DownloadItem, useDownloadsContext } from '../../../contexts/DownloadsContext';
+import styles from '../../../styles/components/shared/DownloadsDrawer.module.css';
 
 /**
  * Individual download item card
@@ -20,9 +20,9 @@ const DownloadItemCard = memo(function DownloadItemCard({
   isExecuting,
   onExecute,
 }: {
-  item: DownloadItem
-  isExecuting: boolean
-  onExecute: () => void
+  item: DownloadItem;
+  isExecuting: boolean;
+  onExecute: () => void;
 }) {
   return (
     <button
@@ -47,75 +47,69 @@ const DownloadItemCard = memo(function DownloadItemCard({
         )}
       </span>
     </button>
-  )
-})
+  );
+});
 
 /**
  * Main Downloads Drawer component
  */
 export const DownloadsDrawer = memo(function DownloadsDrawer() {
-  const {
-    downloads,
-    isOpen,
-    openDrawer,
-    closeDrawer,
-    executingId,
-    executeDownload,
-  } = useDownloadsContext()
+  const { downloads, isOpen, openDrawer, closeDrawer, executingId, executeDownload } =
+    useDownloadsContext();
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clear any pending close timeout
   const clearCloseTimeout = useCallback(() => {
     if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current)
-      closeTimeoutRef.current = null
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
     }
-  }, [])
+  }, []);
 
   // Handle mouse enter - open immediately
   const handleMouseEnter = useCallback(() => {
-    clearCloseTimeout()
-    openDrawer()
-  }, [openDrawer, clearCloseTimeout])
+    clearCloseTimeout();
+    openDrawer();
+  }, [openDrawer, clearCloseTimeout]);
 
   // Handle mouse leave - close after small delay
   const handleMouseLeave = useCallback(() => {
-    clearCloseTimeout()
+    clearCloseTimeout();
     closeTimeoutRef.current = setTimeout(() => {
-      closeDrawer()
-    }, 150) // Small delay to allow moving to drawer
-  }, [closeDrawer, clearCloseTimeout])
+      closeDrawer();
+    }, 150); // Small delay to allow moving to drawer
+  }, [closeDrawer, clearCloseTimeout]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
-    return () => clearCloseTimeout()
-  }, [clearCloseTimeout])
+    return () => clearCloseTimeout();
+  }, [clearCloseTimeout]);
 
   // Handle escape key to close
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        closeDrawer()
+        closeDrawer();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, closeDrawer])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeDrawer]);
 
   const handleExecute = useCallback(
     (item: DownloadItem) => {
-      executeDownload(item)
+      executeDownload(item);
     },
     [executeDownload]
-  )
+  );
 
   // Don't render if no downloads are registered
-  if (downloads.length === 0) return null
+  if (downloads.length === 0) return null;
 
   const drawerContent = (
     <div
@@ -163,9 +157,9 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
         </div>
       </div>
     </div>
-  )
+  );
 
-  return createPortal(drawerContent, document.body)
-})
+  return createPortal(drawerContent, document.body);
+});
 
-export default DownloadsDrawer
+export default DownloadsDrawer;

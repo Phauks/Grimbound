@@ -3,8 +3,8 @@
  * Canvas Optimization Utilities - Performance optimizations for canvas rendering
  */
 
+import { clearFontCache, getCachedFont } from '../cache/instances/fontCache.js';
 import { CHARACTER_LAYOUT } from '../constants.js';
-import { getCachedFont, fontCache, clearFontCache } from '../cache/instances/fontCache.js';
 
 // ============================================================================
 // TEXT LAYOUT CACHING
@@ -14,9 +14,9 @@ import { getCachedFont, fontCache, clearFontCache } from '../cache/instances/fon
  * Result of text layout calculation
  */
 export interface TextLayoutResult {
-    lines: string[];
-    totalHeight: number;
-    lineHeight: number;
+  lines: string[];
+  totalHeight: number;
+  lineHeight: number;
 }
 
 /**
@@ -33,52 +33,52 @@ export interface TextLayoutResult {
  * @returns Layout result with lines and height
  */
 export function calculateCircularTextLayout(
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    diameter: number,
-    fontSize: number,
-    lineHeightMultiplier: number,
-    startY: number,
-    circularPadding: number = CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  diameter: number,
+  fontSize: number,
+  lineHeightMultiplier: number,
+  startY: number,
+  circularPadding: number = CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING
 ): TextLayoutResult {
-    const radius = diameter / 2;
-    const centerY = diameter / 2;
-    const lineHeight = fontSize * lineHeightMultiplier;
+  const radius = diameter / 2;
+  const centerY = diameter / 2;
+  const lineHeight = fontSize * lineHeightMultiplier;
 
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-    let currentY = startY;
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  let currentY = startY;
 
-    // Create width calculator with caching
-    const widthCalculator = createCircularWidthCalculator(centerY, radius, circularPadding);
+  // Create width calculator with caching
+  const widthCalculator = createCircularWidthCalculator(centerY, radius, circularPadding);
 
-    for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const testWidth = ctx.measureText(testLine).width;
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = ctx.measureText(testLine).width;
 
-        // Calculate available width at current Y position
-        const availableWidth = widthCalculator(currentY + fontSize / 2);
+    // Calculate available width at current Y position
+    const availableWidth = widthCalculator(currentY + fontSize / 2);
 
-        if (testWidth <= availableWidth || !currentLine) {
-            // Word fits on current line (or it's the first word on the line)
-            currentLine = testLine;
-        } else {
-            // Word doesn't fit, save current line and start new one
-            lines.push(currentLine);
-            currentLine = word;
-            currentY += lineHeight;
-        }
+    if (testWidth <= availableWidth || !currentLine) {
+      // Word fits on current line (or it's the first word on the line)
+      currentLine = testLine;
+    } else {
+      // Word doesn't fit, save current line and start new one
+      lines.push(currentLine);
+      currentLine = word;
+      currentY += lineHeight;
     }
+  }
 
-    // Add the last line
-    if (currentLine) {
-        lines.push(currentLine);
-    }
+  // Add the last line
+  if (currentLine) {
+    lines.push(currentLine);
+  }
 
-    const totalHeight = lines.length * lineHeight;
+  const totalHeight = lines.length * lineHeight;
 
-    return { lines, totalHeight, lineHeight };
+  return { lines, totalHeight, lineHeight };
 }
 
 // ============================================================================
@@ -95,34 +95,34 @@ export function calculateCircularTextLayout(
  * @returns Function that returns cached width for given Y position
  */
 export function createCircularWidthCalculator(
-    centerY: number,
-    radius: number,
-    maxWidthRatio: number = 0.9
+  centerY: number,
+  radius: number,
+  maxWidthRatio: number = 0.9
 ): (y: number) => number {
-    const cache = new Map<number, number>();
+  const cache = new Map<number, number>();
 
-    return (y: number): number => {
-        // Round to nearest pixel for cache key
-        const key = Math.round(y);
+  return (y: number): number => {
+    // Round to nearest pixel for cache key
+    const key = Math.round(y);
 
-        if (!cache.has(key)) {
-            const distanceFromCenter = Math.abs(key - centerY);
+    if (!cache.has(key)) {
+      const distanceFromCenter = Math.abs(key - centerY);
 
-            // If outside the circle, return 0
-            if (distanceFromCenter > radius) {
-                cache.set(key, 0);
-            } else {
-                // Calculate chord width at this height using Pythagorean theorem
-                const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
-                const fullWidth = 2 * halfWidth;
+      // If outside the circle, return 0
+      if (distanceFromCenter > radius) {
+        cache.set(key, 0);
+      } else {
+        // Calculate chord width at this height using Pythagorean theorem
+        const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
+        const fullWidth = 2 * halfWidth;
 
-                // Apply max width ratio to add some padding from edges
-                cache.set(key, fullWidth * maxWidthRatio);
-            }
-        }
+        // Apply max width ratio to add some padding from edges
+        cache.set(key, fullWidth * maxWidthRatio);
+      }
+    }
 
-        return cache.get(key)!;
-    };
+    return cache.get(key)!;
+  };
 }
 
 /**
@@ -136,24 +136,24 @@ export function createCircularWidthCalculator(
  * @returns Available width at that Y position
  */
 export function calculateCircularWidth(
-    yPosition: number,
-    centerY: number,
-    radius: number,
-    maxWidthRatio: number = 0.9
+  yPosition: number,
+  centerY: number,
+  radius: number,
+  maxWidthRatio: number = 0.9
 ): number {
-    const distanceFromCenter = Math.abs(yPosition - centerY);
+  const distanceFromCenter = Math.abs(yPosition - centerY);
 
-    // If outside the circle, return 0
-    if (distanceFromCenter > radius) {
-        return 0;
-    }
+  // If outside the circle, return 0
+  if (distanceFromCenter > radius) {
+    return 0;
+  }
 
-    // Calculate chord width at this height using Pythagorean theorem
-    const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
-    const fullWidth = 2 * halfWidth;
+  // Calculate chord width at this height using Pythagorean theorem
+  const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
+  const fullWidth = 2 * halfWidth;
 
-    // Apply max width ratio to add some padding from edges
-    return fullWidth * maxWidthRatio;
+  // Apply max width ratio to add some padding from edges
+  return fullWidth * maxWidthRatio;
 }
 
 // ============================================================================
@@ -173,10 +173,10 @@ export { getCachedFont as globalFontCache, clearFontCache };
  * Pre-calculated position for a character in curved text
  */
 export interface CharacterPosition {
-    char: string;
-    x: number;
-    y: number;
-    rotation: number;
+  char: string;
+  x: number;
+  y: number;
+  rotation: number;
 }
 
 /**
@@ -196,52 +196,52 @@ export interface CharacterPosition {
  * @returns Array of pre-calculated character positions
  */
 export function precalculateCurvedTextPositions(
-    text: string,
-    charWidths: number[],
-    totalCharWidth: number,
-    centerX: number,
-    centerY: number,
-    radius: number,
-    arcSpan: number,
-    startAngle: number,
-    direction: number,
-    position: 'top' | 'bottom'
+  text: string,
+  charWidths: number[],
+  totalCharWidth: number,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  arcSpan: number,
+  startAngle: number,
+  direction: number,
+  position: 'top' | 'bottom'
 ): CharacterPosition[] {
-    const positions: CharacterPosition[] = [];
-    let currentAngle = startAngle;
+  const positions: CharacterPosition[] = [];
+  let currentAngle = startAngle;
 
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const charWidth = charWidths[i];
-        const charAngle = (charWidth / totalCharWidth) * arcSpan;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const charWidth = charWidths[i];
+    const charAngle = (charWidth / totalCharWidth) * arcSpan;
 
-        currentAngle += direction * charAngle / 2;
+    currentAngle += (direction * charAngle) / 2;
 
-        const x = centerX + radius * Math.cos(currentAngle);
-        const y = centerY + radius * Math.sin(currentAngle);
+    const x = centerX + radius * Math.cos(currentAngle);
+    const y = centerY + radius * Math.sin(currentAngle);
 
-        // Calculate rotation
-        let rotation = currentAngle + Math.PI / 2;
-        if (position === 'top') {
-            rotation -= Math.PI;
-        } else {
-            // For bottom text, flip 180 degrees to face outward
-            rotation += Math.PI;
-        }
-
-        positions.push({ char, x, y, rotation });
-
-        currentAngle += direction * charAngle / 2;
+    // Calculate rotation
+    let rotation = currentAngle + Math.PI / 2;
+    if (position === 'top') {
+      rotation -= Math.PI;
+    } else {
+      // For bottom text, flip 180 degrees to face outward
+      rotation += Math.PI;
     }
 
-    return positions;
+    positions.push({ char, x, y, rotation });
+
+    currentAngle += (direction * charAngle) / 2;
+  }
+
+  return positions;
 }
 
 export default {
-    calculateCircularTextLayout,
-    createCircularWidthCalculator,
-    calculateCircularWidth,
-    getCachedFont,
-    clearFontCache,
-    precalculateCurvedTextPositions
+  calculateCircularTextLayout,
+  createCircularWidthCalculator,
+  calculateCircularWidth,
+  getCachedFont,
+  clearFontCache,
+  precalculateCurvedTextPositions,
 };

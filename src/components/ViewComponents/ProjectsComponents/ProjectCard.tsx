@@ -91,7 +91,14 @@ export function ProjectCard({
               {project.description}
             </p>
           )}
-          <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '16px',
+              fontSize: '13px',
+              color: 'var(--text-secondary)',
+            }}
+          >
             <span>{project.stats.characterCount} characters</span>
             <span>•</span>
             <span>Modified {formatDate(project.lastModifiedAt)}</span>
@@ -101,6 +108,7 @@ export function ProjectCard({
         {/* Actions */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onExport?.(project);
@@ -117,6 +125,7 @@ export function ProjectCard({
             Export
           </button>
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onDelete?.(project);
@@ -209,6 +218,7 @@ export function ProjectCard({
       {/* Actions */}
       <div style={{ display: 'flex', gap: '8px' }}>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onExport?.(project);
@@ -226,6 +236,7 @@ export function ProjectCard({
           Export
         </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.(project);

@@ -2,8 +2,7 @@
  * Modal Components Barrel Export
  */
 
-export { Modal } from './Modal'
-export type { ModalProps, ModalSize } from './Modal'
-
-export { ConfirmDialog } from './ConfirmDialog'
-export type { ConfirmDialogProps } from './ConfirmDialog'
+export type { ConfirmDialogProps } from './ConfirmDialog';
+export { ConfirmDialog } from './ConfirmDialog';
+export type { ModalProps, ModalSize } from './Modal';
+export { Modal } from './Modal';

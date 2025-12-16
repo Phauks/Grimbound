@@ -87,7 +87,7 @@
   padding: var(--spacing-sm) var(--spacing-xs);
   background: var(--color-primary);
   border: none;
-  border-left: 1px solid rgba(255,255,255,0.2);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   font-size: 0.625rem;
   color: var(--text-on-accent);
@@ -178,7 +178,9 @@
   border-radius: var(--border-radius);
   font-size: 0.875rem;
   color: var(--text-primary);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   box-sizing: border-box;
 }
 
@@ -196,9 +198,9 @@
 }
 
 .linkedField {
-  background: var(--bg-hover) !important;
-  color: var(--text-muted) !important;
-  cursor: not-allowed !important;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 .fieldHint {

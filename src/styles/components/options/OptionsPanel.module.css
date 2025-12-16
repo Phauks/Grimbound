@@ -107,7 +107,7 @@
 }
 
 .sectionHeader::before {
-  content: '▸';
+  content: "▸";
   margin-right: 0.5rem;
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -380,4 +380,3 @@
   margin: 0;
   padding-left: 0.25rem;
 }
-

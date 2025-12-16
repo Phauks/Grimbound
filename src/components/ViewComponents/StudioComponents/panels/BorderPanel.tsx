@@ -4,10 +4,10 @@
  * Panel for configuring border properties on the active layer
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
-import { logger } from '../../../../ts/utils/logger.js';
 import styles from '../../../../styles/components/studio/Studio.module.css';
+import { logger } from '../../../../ts/utils/logger.js';
 
 export function BorderPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -36,7 +36,7 @@ export function BorderPanel() {
         setStyle('solid');
       }
     }
-  }, [activeLayer?.id]);
+  }, [activeLayer?.id, activeLayer]);
 
   // Apply border to canvas
   const applyBorder = () => {
@@ -65,12 +65,7 @@ export function BorderPanel() {
         }
 
         // Draw border around canvas edge
-        ctx.strokeRect(
-          width,
-          width,
-          canvas.width - width * 2,
-          canvas.height - width * 2
-        );
+        ctx.strokeRect(width, width, canvas.width - width * 2, canvas.height - width * 2);
 
         // Restore state
         ctx.restore();
@@ -80,7 +75,7 @@ export function BorderPanel() {
       updateLayer(activeLayer.id, {
         canvas,
         ...(activeLayer as any),
-        borderData: { enabled, width, color, style }
+        borderData: { enabled, width, color, style },
       });
     } catch (error) {
       logger.error('BorderPanel', 'Failed to apply border', error);
@@ -95,7 +90,7 @@ export function BorderPanel() {
       }, 100); // Debounce
       return () => clearTimeout(timeoutId);
     }
-  }, [enabled, width, color, style, activeLayer?.id]);
+  }, [enabled, applyBorder]);
 
   // Apply border
   const handleApplyBorder = () => {
@@ -130,12 +125,15 @@ export function BorderPanel() {
 
       {/* Enable/Disable Toggle */}
       <div style={{ marginBottom: 'var(--spacing-md)' }}>
-        <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', gap: 'var(--spacing-xs)' }}>
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.875rem',
+            gap: 'var(--spacing-xs)',
+          }}
+        >
+          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           Enable Border
         </label>
       </div>
@@ -185,7 +183,9 @@ export function BorderPanel() {
         <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)' }}>
           Style
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-xs)' }}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-xs)' }}
+        >
           <button
             className={`${styles.toolbarButton} ${style === 'solid' ? styles.active : ''}`}
             onClick={() => setStyle('solid')}
@@ -214,7 +214,14 @@ export function BorderPanel() {
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-md)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-xs)',
+          marginTop: 'var(--spacing-md)',
+        }}
+      >
         <button
           className={styles.toolbarButton}
           onClick={handleApplyBorder}

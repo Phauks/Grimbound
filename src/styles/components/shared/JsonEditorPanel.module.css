@@ -20,7 +20,7 @@
   grid-column: 1;
   grid-row: 1;
   padding: var(--spacing-md);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -37,7 +37,7 @@
   width: 100%;
   min-height: inherit;
   padding: var(--spacing-md);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   border: none;

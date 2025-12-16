@@ -1,0 +1,85 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.9/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/node_modules", "!**/dist", "!**/coverage", "!**/*.min.js", "!**/*.d.ts"]
+  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn",
+        "useSimplifiedLogicExpression": "warn",
+        "noStaticOnlyClass": "warn",
+        "noBannedTypes": "warn"
+      },
+      "correctness": {
+        "noUnusedImports": "warn",
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "warn",
+        "useExhaustiveDependencies": "warn",
+        "noInvalidUseBeforeDeclaration": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useBlockStatements": "off",
+        "useImportType": "warn",
+        "useFilenamingConvention": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "noConsole": "off",
+        "noArrayIndexKey": "warn",
+        "useIterableCallbackReturn": "warn",
+        "noImplicitAnyLet": "warn",
+        "noAssignInExpressions": "warn",
+        "noControlCharactersInRegex": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "warn",
+        "useButtonType": "warn",
+        "noLabelWithoutControl": "warn",
+        "noStaticElementInteractions": "warn",
+        "useSemanticElements": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useFocusableInteractive": "warn",
+        "useAnchorContent": "warn",
+        "noSvgWithoutTitle": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2
+    },
+    "linter": {
+      "enabled": true
+    }
+  }
+}

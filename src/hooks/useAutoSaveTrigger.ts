@@ -7,17 +7,17 @@
  * @module hooks/useAutoSaveTrigger
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectContext } from '../contexts/ProjectContext.js';
 import { useTokenContext } from '../contexts/TokenContext.js';
 import { projectDatabaseService } from '../ts/services/project/index.js';
-import { debounce, logger } from '../ts/utils/index.js';
-import { retryOperation } from '../ts/utils/errorUtils.js';
-import { generateUuid } from '../ts/utils/nameGenerator.js';
-import { useTabSynchronization } from './useTabSynchronization.js';
-import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
-import type { Project, AutoSaveSnapshot, ProjectState } from '../ts/types/project.js';
+import type { AutoSaveSnapshot, Project, ProjectState } from '../ts/types/project.js';
 import type { DebouncedFunction } from '../ts/utils/asyncUtils.js';
+import { retryOperation } from '../ts/utils/errorUtils.js';
+import { debounce, logger } from '../ts/utils/index.js';
+import { generateUuid } from '../ts/utils/nameGenerator.js';
+import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
+import { useTabSynchronization } from './useTabSynchronization.js';
 
 const AUTO_SAVE_DEBOUNCE_MS = 2000;
 const MAX_SNAPSHOTS = 10; // Keep last 10 snapshots
@@ -47,14 +47,8 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
     setCurrentProject,
   } = useProjectContext();
 
-  const {
-    characters,
-    scriptMeta,
-    generationOptions,
-    jsonInput,
-    filters,
-    characterMetadata,
-  } = useTokenContext();
+  const { characters, scriptMeta, generationOptions, jsonInput, filters, characterMetadata } =
+    useTokenContext();
 
   // Track if we have a pending save
   const pendingSaveRef = useRef(false);
@@ -63,11 +57,10 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
   const { recordSaveAttempt, getStats } = useAutoSaveTelemetry();
 
   // Tab synchronization
-  const {
-    hasConflict,
-    conflictingTabCount,
-    notifySaved,
-  } = useTabSynchronization(currentProject?.id || null, enabled);
+  const { hasConflict, conflictingTabCount, notifySaved } = useTabSynchronization(
+    currentProject?.id || null,
+    enabled
+  );
 
   // Conflict warning state
   const [showConflictWarning, setShowConflictWarning] = useState(false);
@@ -112,10 +105,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
       const stats = {
         characterCount: characters.length,
         tokenCount: 0, // Will be updated when tokens are generated
-        reminderCount: characters.reduce(
-          (sum, char) => sum + (char.reminders?.length || 0),
-          0
-        ),
+        reminderCount: characters.reduce((sum, char) => sum + (char.reminders?.length || 0), 0),
         customIconCount: currentState.customIcons.length,
         presetCount: 0,
         lastGeneratedAt: currentProject.stats.lastGeneratedAt,
@@ -146,7 +136,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
               return false;
             }
             return true; // Retry all other errors
-          }
+          },
         }
       );
 
@@ -238,7 +228,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
   useEffect(() => {
     setHasShownWarning(false);
     setShowConflictWarning(false);
-  }, [currentProject?.id]);
+  }, []);
 
   // Create debounced save - only created once!
   const debouncedSaveRef = useRef<DebouncedFunction<() => Promise<void>> | null>(null);
@@ -299,7 +289,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
     } else {
       logger.error('AutoSaveTrigger', 'ERROR: Debounced save function is null!');
     }
-  }, [enabled, currentProject?.id, isDirty, changeVersion]); // changeVersion ensures effect runs on every change!
+  }, [enabled, currentProject?.id, isDirty, changeVersion, currentProject]); // changeVersion ensures effect runs on every change!
 
   // Return saveNow for manual saves (e.g., from AutoSaveIndicator)
   const saveNow = useCallback(async () => {

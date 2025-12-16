@@ -5,18 +5,18 @@
 
 // Token Detail View utilities
 export {
-    regenerateSingleToken,
-    regenerateCharacterAndReminders,
-    updateCharacterInJson,
-    downloadCharacterTokensAsZip,
-    downloadCharacterTokenOnly,
-    downloadReminderTokensOnly,
-    getCharacterChanges,
+  downloadCharacterTokenOnly,
+  downloadCharacterTokensAsZip,
+  downloadReminderTokensOnly,
+  getCharacterChanges,
+  regenerateCharacterAndReminders,
+  regenerateSingleToken,
+  updateCharacterInJson,
 } from './detailViewUtils.js';
 
 // JSON Highlighting utilities
 export {
-    tokenizeJSON,
-    TOKEN_CLASS_MAP,
-    type HighlightToken,
+  type HighlightToken,
+  TOKEN_CLASS_MAP,
+  tokenizeJSON,
 } from './jsonHighlighter.js';

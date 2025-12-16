@@ -8,31 +8,29 @@
  * @module components/Modals/AssetManagerModal
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
-import { ConfirmDialog } from '../Shared/ModalBase/ConfirmDialog';
-import { useAssetManager } from '../../hooks/useAssetManager.js';
-import { useFileUpload } from '../../hooks/useFileUpload.js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '../../contexts/TokenContext.js';
-import { FileDropzone } from '../Shared/Controls/FileDropzone.js';
-import { AssetThumbnail } from '../Shared/Assets/AssetThumbnail.js';
-import { TokenGenerator } from '../../ts/generation/tokenGenerator.js';
+import { useAssetManager } from '../../hooks/useAssetManager.js';
+import styles from '../../styles/components/modals/AssetManagerModal.module.css';
+import { getBuiltInAssets } from '../../ts/constants/builtInAssets.js';
 import { getBestPreviewCharacter } from '../../ts/data/characterUtils.js';
-import { logger } from '../../ts/utils/logger.js';
-import type { GenerationOptions, Character, BackgroundStyle } from '../../ts/types/index.js';
-import { DEFAULT_BACKGROUND_STYLE } from '../../ts/types/backgroundEffects.js';
+import { TokenGenerator } from '../../ts/generation/tokenGenerator.js';
+import { createAssetReference } from '../../ts/services/upload/assetResolver.js';
 import {
-  AssetType,
+  ASSET_TYPE_ICONS,
   ASSET_TYPE_LABELS,
   ASSET_TYPE_LABELS_PLURAL,
-  ASSET_TYPE_ICONS,
+  type AssetType,
   assetStorageService,
-  fileUploadService,
 } from '../../ts/services/upload/index.js';
-import { getBuiltInAssets, type BuiltInAsset } from '../../ts/constants/builtInAssets.js';
-import { createAssetReference } from '../../ts/services/upload/assetResolver.js';
-import styles from '../../styles/components/modals/AssetManagerModal.module.css';
+import { DEFAULT_BACKGROUND_STYLE } from '../../ts/types/backgroundEffects.js';
+import type { BackgroundStyle, Character, GenerationOptions } from '../../ts/types/index.js';
+import { logger } from '../../ts/utils/logger.js';
+import { AssetThumbnail } from '../Shared/Assets/AssetThumbnail.js';
+import { FileDropzone } from '../Shared/Controls/FileDropzone.js';
+import { ConfirmDialog } from '../Shared/ModalBase/ConfirmDialog';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
 
 // ============================================================================
 // Types
@@ -175,7 +173,7 @@ export function AssetManagerModal({
     (id: string) => {
       if (selectionMode) {
         // Toggle selection in selection mode
-        setSelectedAssetId(prev => prev === id ? null : id);
+        setSelectedAssetId((prev) => (prev === id ? null : id));
       } else {
         toggleSelect(id);
       }
@@ -225,7 +223,7 @@ export function AssetManagerModal({
 
   // Handle upload complete
   const handleUploadComplete = useCallback(
-    (assetIds: string[]) => {
+    (_assetIds: string[]) => {
       setShowUpload(false);
       refresh();
     },
@@ -234,29 +232,32 @@ export function AssetManagerModal({
 
   // Handle cleanup orphans
   const handleCleanupOrphans = useCallback(async () => {
-    const count = await cleanupOrphans();
+    const _count = await cleanupOrphans();
     // Could show a toast here
   }, [cleanupOrphans]);
 
   // Handle rename
-  const handleRename = useCallback(async (id: string) => {
-    const asset = assets.find(a => a.id === id);
-    if (!asset) return;
-    
-    const newName = window.prompt('Enter new name:', asset.metadata.filename);
-    if (newName && newName.trim() && newName !== asset.metadata.filename) {
-      await assetStorageService.update(id, {
-        metadata: { ...asset.metadata, filename: newName.trim() }
-      });
-      refresh();
-    }
-  }, [assets, refresh]);
+  const handleRename = useCallback(
+    async (id: string) => {
+      const asset = assets.find((a) => a.id === id);
+      if (!asset) return;
+
+      const newName = window.prompt('Enter new name:', asset.metadata.filename);
+      if (newName?.trim() && newName !== asset.metadata.filename) {
+        await assetStorageService.update(id, {
+          metadata: { ...asset.metadata, filename: newName.trim() },
+        });
+        refresh();
+      }
+    },
+    [assets, refresh]
+  );
 
   // Handle download
   const handleDownload = useCallback(async (id: string) => {
     const asset = await assetStorageService.getById(id);
     if (!asset) return;
-    
+
     const url = URL.createObjectURL(asset.blob);
     const a = document.createElement('a');
     a.href = url;
@@ -268,39 +269,45 @@ export function AssetManagerModal({
   }, []);
 
   // Handle duplicate
-  const handleDuplicate = useCallback(async (id: string) => {
-    const asset = await assetStorageService.getById(id);
-    if (!asset) return;
-    
-    // Create a copy with a new name
-    const nameParts = asset.metadata.filename.split('.');
-    const ext = nameParts.length > 1 ? `.${nameParts.pop()}` : '';
-    const baseName = nameParts.join('.');
-    const newName = `${baseName} (copy)${ext}`;
-    
-    await assetStorageService.save({
-      type: asset.type,
-      projectId: asset.projectId,
-      blob: asset.blob,
-      thumbnail: asset.thumbnail,
-      metadata: { ...asset.metadata, filename: newName, uploadedAt: Date.now() },
-      linkedTo: [],
-    });
-    refresh();
-  }, [refresh]);
+  const handleDuplicate = useCallback(
+    async (id: string) => {
+      const asset = await assetStorageService.getById(id);
+      if (!asset) return;
+
+      // Create a copy with a new name
+      const nameParts = asset.metadata.filename.split('.');
+      const ext = nameParts.length > 1 ? `.${nameParts.pop()}` : '';
+      const baseName = nameParts.join('.');
+      const newName = `${baseName} (copy)${ext}`;
+
+      await assetStorageService.save({
+        type: asset.type,
+        projectId: asset.projectId,
+        blob: asset.blob,
+        thumbnail: asset.thumbnail,
+        metadata: { ...asset.metadata, filename: newName, uploadedAt: Date.now() },
+        linkedTo: [],
+      });
+      refresh();
+    },
+    [refresh]
+  );
 
   // Handle reclassify (change asset type) - directly from submenu
-  const handleReclassify = useCallback(async (id: string, newType: AssetType) => {
-    const asset = await assetStorageService.getById(id);
-    if (!asset || asset.type === newType) return;
-    
-    await assetStorageService.update(id, { type: newType });
-    refresh();
-  }, [refresh]);
+  const handleReclassify = useCallback(
+    async (id: string, newType: AssetType) => {
+      const asset = await assetStorageService.getById(id);
+      if (!asset || asset.type === newType) return;
+
+      await assetStorageService.update(id, { type: newType });
+      refresh();
+    },
+    [refresh]
+  );
 
   // Get built-in assets for the current filter type
   const builtInAssets = useMemo(() => {
-    if (!selectionMode || !includeBuiltIn) return [];
+    if (!(selectionMode && includeBuiltIn)) return [];
     const filterType = activeTab === 'all' ? initialAssetType : activeTab;
     if (!filterType) return [];
     return getBuiltInAssets(filterType);
@@ -347,46 +354,48 @@ export function AssetManagerModal({
   }, [sampleCharacter]);
 
   // Map asset type to generation option property based on preview token type
-  const getPreviewOptions = useCallback((assetValue: string | null): Partial<GenerationOptions> => {
-    if (!assetValue || assetValue === 'none') return {};
+  const getPreviewOptions = useCallback(
+    (assetValue: string | null): Partial<GenerationOptions> => {
+      if (!assetValue || assetValue === 'none') return {};
 
-    const assetType = initialAssetType || activeTab;
+      const assetType = initialAssetType || activeTab;
 
-    // Handle token backgrounds based on which token type we're previewing
-    // Uses the new BackgroundStyle structure with sourceType and imageUrl
-    if (assetType === 'token-background') {
-      const imageStyle: BackgroundStyle = {
-        ...DEFAULT_BACKGROUND_STYLE,
-        sourceType: 'image',
-        imageUrl: assetValue,
-      };
-
-      switch (previewTokenType) {
-        case 'reminder':
-          return { reminderBackgroundStyle: imageStyle };
-        case 'meta':
-          return { metaBackgroundStyle: imageStyle };
-        case 'character':
-        default:
-          return { characterBackgroundStyle: imageStyle };
-      }
-    }
-
-    // Handle other asset types
-    switch (assetType) {
-      case 'setup-flower':
-        return { setupFlowerStyle: assetValue };
-      case 'leaf':
-        return { leafGeneration: assetValue };
-      case 'script-background':
-        return {
-          metaBackgroundType: 'image' as const,
-          metaBackground: assetValue
+      // Handle token backgrounds based on which token type we're previewing
+      // Uses the new BackgroundStyle structure with sourceType and imageUrl
+      if (assetType === 'token-background') {
+        const imageStyle: BackgroundStyle = {
+          ...DEFAULT_BACKGROUND_STYLE,
+          sourceType: 'image',
+          imageUrl: assetValue,
         };
-      default:
-        return {};
-    }
-  }, [initialAssetType, activeTab, previewTokenType]);
+
+        switch (previewTokenType) {
+          case 'reminder':
+            return { reminderBackgroundStyle: imageStyle };
+          case 'meta':
+            return { metaBackgroundStyle: imageStyle };
+          default:
+            return { characterBackgroundStyle: imageStyle };
+        }
+      }
+
+      // Handle other asset types
+      switch (assetType) {
+        case 'setup-flower':
+          return { setupFlowerStyle: assetValue };
+        case 'leaf':
+          return { leafGeneration: assetValue };
+        case 'script-background':
+          return {
+            metaBackgroundType: 'image' as const,
+            metaBackground: assetValue,
+          };
+        default:
+          return {};
+      }
+    },
+    [initialAssetType, activeTab, previewTokenType]
+  );
 
   // Generate preview when modal opens or selection changes
   useEffect(() => {
@@ -419,7 +428,7 @@ export function AssetManagerModal({
         const previewOptions = {
           ...generationOptions,
           ...(assetValue ? getPreviewOptions(assetValue) : {}),
-          logoUrl: scriptMeta?.logo
+          logoUrl: scriptMeta?.logo,
         };
 
         const generator = new TokenGenerator(previewOptions);
@@ -436,7 +445,6 @@ export function AssetManagerModal({
               scriptMeta?.author
             );
             break;
-          case 'character':
           default:
             canvas = await generator.generateCharacterToken(sampleCharacter);
             break;
@@ -461,7 +469,15 @@ export function AssetManagerModal({
     // Debounce preview generation
     const timeout = setTimeout(generatePreview, 150);
     return () => clearTimeout(timeout);
-  }, [selectedAssetId, generationOptions, sampleCharacter, sampleReminderText, scriptMeta, getPreviewOptions, previewTokenType]);
+  }, [
+    selectedAssetId,
+    generationOptions,
+    sampleCharacter,
+    sampleReminderText,
+    scriptMeta,
+    getPreviewOptions,
+    previewTokenType,
+  ]);
 
   // Determine if we should show the preview panel
   // Always show preview when we have generationOptions (even without characters - we have fallback)
@@ -482,7 +498,7 @@ export function AssetManagerModal({
       return (
         <div className={styles.errorState}>
           <p>Error: {error}</p>
-          <button onClick={refresh} className={styles.retryButton}>
+          <button type="button" onClick={refresh} className={styles.retryButton}>
             Retry
           </button>
         </div>
@@ -499,10 +515,7 @@ export function AssetManagerModal({
               : 'No assets yet. Upload some files to get started!'}
           </p>
           {!showUpload && (
-            <button
-              onClick={() => setShowUpload(true)}
-              className={styles.uploadPrompt}
-            >
+            <button type="button" onClick={() => setShowUpload(true)} className={styles.uploadPrompt}>
               Upload Assets
             </button>
           )}
@@ -516,8 +529,9 @@ export function AssetManagerModal({
           {/* None Option (in selection mode) */}
           {selectionMode && showNoneOption && (
             <button
+              type="button"
               className={`${styles.builtInThumbnail} ${selectedAssetId === 'none' ? styles.selectedBuiltIn : ''}`}
-              onClick={() => setSelectedAssetId(prev => prev === 'none' ? null : 'none')}
+              onClick={() => setSelectedAssetId((prev) => (prev === 'none' ? null : 'none'))}
             >
               <span className={styles.noneIcon}>∅</span>
               <span className={styles.builtInLabel}>{noneLabel}</span>
@@ -525,24 +539,32 @@ export function AssetManagerModal({
           )}
 
           {/* Built-in Assets (in selection mode) */}
-          {selectionMode && builtInAssets.map((asset) => (
-            <button
-              key={`builtin:${asset.id}`}
-              className={`${styles.builtInThumbnail} ${selectedAssetId === `builtin:${asset.id}` ? styles.selectedBuiltIn : ''}`}
-              onClick={() => setSelectedAssetId(prev => prev === `builtin:${asset.id}` ? null : `builtin:${asset.id}`)}
-            >
-              <img src={asset.src} alt={asset.label} className={styles.builtInImage} />
-              <span className={styles.builtInLabel}>{asset.label}</span>
-              <span className={styles.builtInBadge}>●</span>
-            </button>
-          ))}
+          {selectionMode &&
+            builtInAssets.map((asset) => (
+              <button
+                type="button"
+                key={`builtin:${asset.id}`}
+                className={`${styles.builtInThumbnail} ${selectedAssetId === `builtin:${asset.id}` ? styles.selectedBuiltIn : ''}`}
+                onClick={() =>
+                  setSelectedAssetId((prev) =>
+                    prev === `builtin:${asset.id}` ? null : `builtin:${asset.id}`
+                  )
+                }
+              >
+                <img src={asset.src} alt={asset.label} className={styles.builtInImage} />
+                <span className={styles.builtInLabel}>{asset.label}</span>
+                <span className={styles.builtInBadge}>●</span>
+              </button>
+            ))}
 
           {/* Separator between built-in and user assets */}
-          {selectionMode && (builtInAssets.length > 0 || showNoneOption) && displayAssets.length > 0 && (
-            <div className={styles.assetSeparator}>
-              <span>My Uploads</span>
-            </div>
-          )}
+          {selectionMode &&
+            (builtInAssets.length > 0 || showNoneOption) &&
+            displayAssets.length > 0 && (
+              <div className={styles.assetSeparator}>
+                <span>My Uploads</span>
+              </div>
+            )}
 
           {/* User Assets */}
           {displayAssets.map((asset) => (
@@ -590,6 +612,7 @@ export function AssetManagerModal({
             </span>
             {!selectionMode && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeleteClick(asset.id);
@@ -611,6 +634,7 @@ export function AssetManagerModal({
       {/* Tabs */}
       <div className={styles.tabs}>
         <button
+          type="button"
           className={`${styles.tab} ${activeTab === 'all' ? styles.activeTab : ''}`}
           onClick={() => handleTabChange('all')}
         >
@@ -618,6 +642,7 @@ export function AssetManagerModal({
         </button>
         {ASSET_TYPES.map((type) => (
           <button
+            type="button"
             key={type}
             className={`${styles.tab} ${activeTab === type ? styles.activeTab : ''}`}
             onClick={() => handleTabChange(type)}
@@ -653,6 +678,7 @@ export function AssetManagerModal({
         <div className={styles.controlsRight}>
           <div className={styles.viewToggle}>
             <button
+              type="button"
               className={`${styles.viewButton} ${viewMode === 'grid' ? styles.activeView : ''}`}
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
@@ -660,6 +686,7 @@ export function AssetManagerModal({
               ▦
             </button>
             <button
+              type="button"
               className={`${styles.viewButton} ${viewMode === 'list' ? styles.activeView : ''}`}
               onClick={() => setViewMode('list')}
               aria-label="List view"
@@ -684,14 +711,10 @@ export function AssetManagerModal({
           📊 {stats?.count ?? 0} assets | {stats?.totalSizeMB.toFixed(1) ?? 0} MB
         </span>
         {selectedIds.size > 0 && (
-          <span className={styles.selectionInfo}>
-            {selectedIds.size} selected
-          </span>
+          <span className={styles.selectionInfo}>{selectedIds.size} selected</span>
         )}
         {orphanedCount > 0 && (
-          <span className={styles.orphanWarning}>
-            ⚠️ {orphanedCount} orphaned
-          </span>
+          <span className={styles.orphanWarning}>⚠️ {orphanedCount} orphaned</span>
         )}
       </div>
 
@@ -774,11 +797,7 @@ export function AssetManagerModal({
             {selectionMode ? 'Cancel' : 'Done'}
           </Button>
           {selectionMode && (
-            <Button
-              variant="accent"
-              onClick={handleApply}
-              disabled={!selectedAssetId}
-            >
+            <Button variant="accent" onClick={handleApply} disabled={!selectedAssetId}>
               Apply
             </Button>
           )}
@@ -801,9 +820,7 @@ export function AssetManagerModal({
           {/* Left Panel: Controls and scrollable content */}
           <div className={styles.leftPanel}>
             {renderControls()}
-            <div className={styles.scrollableContent}>
-              {renderAssetContent()}
-            </div>
+            <div className={styles.scrollableContent}>{renderAssetContent()}</div>
           </div>
 
           {/* Right Panel: Fixed preview with buttons */}
@@ -817,24 +834,20 @@ export function AssetManagerModal({
                   </div>
                 )}
                 {previewUrl ? (
-                  <img
-                    src={previewUrl}
-                    alt="Token preview"
-                    className={styles.previewImage}
-                  />
+                  <img src={previewUrl} alt="Token preview" className={styles.previewImage} />
                 ) : (
                   <div className={styles.previewPlaceholder}>
                     <span className={styles.previewPlaceholderIcon}>🎴</span>
-                    <span className={styles.previewPlaceholderText}>
-                      Generating preview...
-                    </span>
+                    <span className={styles.previewPlaceholderText}>Generating preview...</span>
                   </div>
                 )}
               </div>
               <div className={styles.previewLabel}>
                 {previewTokenType === 'meta' ? (
                   <>
-                    <span className={styles.previewCharacterName}>{scriptMeta?.name || 'Custom Script'}</span>
+                    <span className={styles.previewCharacterName}>
+                      {scriptMeta?.name || 'Custom Script'}
+                    </span>
                     <span className={styles.previewTeam}>Meta Token</span>
                   </>
                 ) : previewTokenType === 'reminder' ? (
@@ -855,11 +868,7 @@ export function AssetManagerModal({
                 <Button variant="secondary" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button
-                  variant="accent"
-                  onClick={handleApply}
-                  disabled={!selectedAssetId}
-                >
+                <Button variant="accent" onClick={handleApply} disabled={!selectedAssetId}>
                   Apply
                 </Button>
               </div>
@@ -870,9 +879,7 @@ export function AssetManagerModal({
         /* Standard layout without preview */
         <>
           {renderControls()}
-          <div className={styles.content}>
-            {renderAssetContent()}
-          </div>
+          <div className={styles.content}>{renderAssetContent()}</div>
         </>
       )}
 

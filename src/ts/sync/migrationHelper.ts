@@ -8,244 +8,226 @@
  * - Version-specific migration logic
  */
 
-import { storageManager } from './storageManager.js';
 import { logger } from '../utils/logger.js';
+import { storageManager } from './storageManager.js';
 
 /**
  * Migration status information
  */
 export interface MigrationStatus {
-    isFirstTime: boolean;
-    hasLegacyData: boolean;
-    migrationsCompleted: string[];
-    currentVersion: string | null;
+  isFirstTime: boolean;
+  hasLegacyData: boolean;
+  migrationsCompleted: string[];
+  currentVersion: string | null;
 }
 
 /**
  * Migration Helper for managing data transitions
  */
 export class MigrationHelper {
-    /**
-     * Check if this is a first-time user
-     * @returns true if no previous data exists
-     */
-    async isFirstTimeUser(): Promise<boolean> {
+  /**
+   * Check if this is a first-time user
+   * @returns true if no previous data exists
+   */
+  async isFirstTimeUser(): Promise<boolean> {
+    try {
+      const hasVersion = await storageManager.getMetadata('version');
+      const hasMigrated = await storageManager.getMetadata('migrated');
+
+      return !(hasVersion || hasMigrated);
+    } catch (error) {
+      logger.error('MigrationHelper', 'Error checking first-time status:', error);
+      return true; // Assume first-time on error
+    }
+  }
+
+  /**
+   * Check if user has legacy data (from before IndexedDB)
+   * In this case, we're checking localStorage for any previous tokens or settings
+   */
+  async hasLegacyData(): Promise<boolean> {
+    try {
+      // Check for common localStorage keys that might exist from previous versions
+      const keys = ['botc-tokens', 'botc-settings', 'botc-characters', 'clocktower-data'];
+
+      for (const key of keys) {
+        if (localStorage.getItem(key)) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('MigrationHelper', 'Error checking legacy data:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get migration status
+   */
+  async getMigrationStatus(): Promise<MigrationStatus> {
+    const isFirstTime = await this.isFirstTimeUser();
+    const hasLegacyData = await this.hasLegacyData();
+    const currentVersion = (await storageManager.getMetadata('version')) as string | null;
+
+    // Get list of completed migrations
+    const migrationsCompleted: string[] = [];
+    const migrationFlags = ['migrated', 'migration_v1_to_v2', 'migration_indexeddb'];
+
+    for (const flag of migrationFlags) {
+      const completed = await storageManager.getMetadata(flag);
+      if (completed) {
+        migrationsCompleted.push(flag);
+      }
+    }
+
+    return {
+      isFirstTime,
+      hasLegacyData,
+      migrationsCompleted,
+      currentVersion,
+    };
+  }
+
+  /**
+   * Mark a migration as completed
+   * @param migrationId - Unique identifier for the migration
+   */
+  async markMigrationCompleted(migrationId: string): Promise<void> {
+    await storageManager.setMetadata(migrationId, true);
+    logger.info('MigrationHelper', `Marked migration completed: ${migrationId}`);
+  }
+
+  /**
+   * Check if a specific migration has been completed
+   * @param migrationId - Migration identifier to check
+   */
+  async isMigrationCompleted(migrationId: string): Promise<boolean> {
+    const completed = await storageManager.getMetadata(migrationId);
+    return completed === true;
+  }
+
+  /**
+   * Perform first-time setup
+   * Sets initial flags and metadata
+   */
+  async performFirstTimeSetup(): Promise<void> {
+    logger.info('MigrationHelper', 'Performing first-time setup...');
+
+    try {
+      // Mark as migrated (first-time users are "pre-migrated")
+      await this.markMigrationCompleted('migrated');
+      await this.markMigrationCompleted('migration_indexeddb');
+
+      // Set initial settings
+      await storageManager.setSetting('autoSync', true);
+      await storageManager.setSetting('updateMode', 'auto');
+      await storageManager.setSetting('dataSource', 'github');
+
+      logger.info('MigrationHelper', 'First-time setup complete');
+    } catch (error) {
+      logger.error('MigrationHelper', 'First-time setup failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear legacy data from localStorage
+   * Call this after successfully migrating to IndexedDB
+   */
+  async clearLegacyData(): Promise<void> {
+    logger.info('MigrationHelper', 'Clearing legacy data...');
+
+    try {
+      const keysToRemove = ['botc-tokens', 'botc-settings', 'botc-characters', 'clocktower-data'];
+
+      for (const key of keysToRemove) {
         try {
-            const hasVersion = await storageManager.getMetadata('version');
-            const hasMigrated = await storageManager.getMetadata('migrated');
-
-            return !hasVersion && !hasMigrated;
+          localStorage.removeItem(key);
         } catch (error) {
-            logger.error('MigrationHelper', 'Error checking first-time status:', error);
-            return true; // Assume first-time on error
+          logger.warn('MigrationHelper', `Failed to remove ${key}:`, error);
         }
+      }
+
+      logger.info('MigrationHelper', 'Legacy data cleared');
+    } catch (error) {
+      logger.error('MigrationHelper', 'Error clearing legacy data:', error);
+      // Don't throw - this is not critical
+    }
+  }
+
+  /**
+   * Run all pending migrations
+   * Checks which migrations need to run and executes them in order
+   */
+  async runPendingMigrations(): Promise<void> {
+    logger.info('MigrationHelper', 'Checking for pending migrations...');
+
+    const status = await this.getMigrationStatus();
+
+    // If first-time user, just do first-time setup
+    if (status.isFirstTime) {
+      await this.performFirstTimeSetup();
+      return;
     }
 
-    /**
-     * Check if user has legacy data (from before IndexedDB)
-     * In this case, we're checking localStorage for any previous tokens or settings
-     */
-    async hasLegacyData(): Promise<boolean> {
-        try {
-            // Check for common localStorage keys that might exist from previous versions
-            const keys = [
-                'botc-tokens',
-                'botc-settings',
-                'botc-characters',
-                'clocktower-data',
-            ];
+    // Check for specific migrations that need to run
+    const migrations: Array<{
+      id: string;
+      name: string;
+      run: () => Promise<void>;
+    }> = [];
 
-            for (const key of keys) {
-                if (localStorage.getItem(key)) {
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (error) {
-            logger.error('MigrationHelper', 'Error checking legacy data:', error);
-            return false;
-        }
+    // Example: Migration to IndexedDB (if they have legacy data but haven't migrated)
+    if (status.hasLegacyData && !status.migrationsCompleted.includes('migration_indexeddb')) {
+      migrations.push({
+        id: 'migration_indexeddb',
+        name: 'Migrate to IndexedDB',
+        run: async () => {
+          logger.info('MigrationHelper', 'Running IndexedDB migration...');
+          // In this case, we don't actually need to migrate data
+          // since the old app didn't cache character data
+          // Just mark as completed and clear legacy data
+          await this.clearLegacyData();
+        },
+      });
     }
 
-    /**
-     * Get migration status
-     */
-    async getMigrationStatus(): Promise<MigrationStatus> {
-        const isFirstTime = await this.isFirstTimeUser();
-        const hasLegacyData = await this.hasLegacyData();
-        const currentVersion = await storageManager.getMetadata('version') as string | null;
-
-        // Get list of completed migrations
-        const migrationsCompleted: string[] = [];
-        const migrationFlags = [
-            'migrated',
-            'migration_v1_to_v2',
-            'migration_indexeddb',
-        ];
-
-        for (const flag of migrationFlags) {
-            const completed = await storageManager.getMetadata(flag);
-            if (completed) {
-                migrationsCompleted.push(flag);
-            }
-        }
-
-        return {
-            isFirstTime,
-            hasLegacyData,
-            migrationsCompleted,
-            currentVersion,
-        };
+    // Run each pending migration
+    for (const migration of migrations) {
+      try {
+        logger.info('MigrationHelper', `Running migration: ${migration.name}`);
+        await migration.run();
+        await this.markMigrationCompleted(migration.id);
+      } catch (error) {
+        logger.error('MigrationHelper', `Migration failed: ${migration.name}`, error);
+        // Continue with other migrations even if one fails
+      }
     }
 
-    /**
-     * Mark a migration as completed
-     * @param migrationId - Unique identifier for the migration
-     */
-    async markMigrationCompleted(migrationId: string): Promise<void> {
-        await storageManager.setMetadata(migrationId, true);
-        logger.info('MigrationHelper', `Marked migration completed: ${migrationId}`);
+    if (migrations.length === 0) {
+      logger.info('MigrationHelper', 'No pending migrations');
+    } else {
+      logger.info('MigrationHelper', `Completed ${migrations.length} migration(s)`);
     }
+  }
 
-    /**
-     * Check if a specific migration has been completed
-     * @param migrationId - Migration identifier to check
-     */
-    async isMigrationCompleted(migrationId: string): Promise<boolean> {
-        const completed = await storageManager.getMetadata(migrationId);
-        return completed === true;
+  /**
+   * Reset all migration flags (for testing/development)
+   * WARNING: This will cause migrations to run again
+   */
+  async resetMigrations(): Promise<void> {
+    logger.warn('MigrationHelper', 'Resetting all migrations - use only for testing!');
+
+    const migrationFlags = ['migrated', 'migration_v1_to_v2', 'migration_indexeddb'];
+
+    // Clear all migration flags from metadata
+    // Note: We don't have a delete method, so we set to false
+    for (const flag of migrationFlags) {
+      await storageManager.setMetadata(flag, false);
     }
-
-    /**
-     * Perform first-time setup
-     * Sets initial flags and metadata
-     */
-    async performFirstTimeSetup(): Promise<void> {
-        logger.info('MigrationHelper', 'Performing first-time setup...');
-
-        try {
-            // Mark as migrated (first-time users are "pre-migrated")
-            await this.markMigrationCompleted('migrated');
-            await this.markMigrationCompleted('migration_indexeddb');
-
-            // Set initial settings
-            await storageManager.setSetting('autoSync', true);
-            await storageManager.setSetting('updateMode', 'auto');
-            await storageManager.setSetting('dataSource', 'github');
-
-            logger.info('MigrationHelper', 'First-time setup complete');
-        } catch (error) {
-            logger.error('MigrationHelper', 'First-time setup failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Clear legacy data from localStorage
-     * Call this after successfully migrating to IndexedDB
-     */
-    async clearLegacyData(): Promise<void> {
-        logger.info('MigrationHelper', 'Clearing legacy data...');
-
-        try {
-            const keysToRemove = [
-                'botc-tokens',
-                'botc-settings',
-                'botc-characters',
-                'clocktower-data',
-            ];
-
-            for (const key of keysToRemove) {
-                try {
-                    localStorage.removeItem(key);
-                } catch (error) {
-                    logger.warn('MigrationHelper', `Failed to remove ${key}:`, error);
-                }
-            }
-
-            logger.info('MigrationHelper', 'Legacy data cleared');
-        } catch (error) {
-            logger.error('MigrationHelper', 'Error clearing legacy data:', error);
-            // Don't throw - this is not critical
-        }
-    }
-
-    /**
-     * Run all pending migrations
-     * Checks which migrations need to run and executes them in order
-     */
-    async runPendingMigrations(): Promise<void> {
-        logger.info('MigrationHelper', 'Checking for pending migrations...');
-
-        const status = await this.getMigrationStatus();
-
-        // If first-time user, just do first-time setup
-        if (status.isFirstTime) {
-            await this.performFirstTimeSetup();
-            return;
-        }
-
-        // Check for specific migrations that need to run
-        const migrations: Array<{
-            id: string;
-            name: string;
-            run: () => Promise<void>;
-        }> = [];
-
-        // Example: Migration to IndexedDB (if they have legacy data but haven't migrated)
-        if (status.hasLegacyData && !status.migrationsCompleted.includes('migration_indexeddb')) {
-            migrations.push({
-                id: 'migration_indexeddb',
-                name: 'Migrate to IndexedDB',
-                run: async () => {
-                    logger.info('MigrationHelper', 'Running IndexedDB migration...');
-                    // In this case, we don't actually need to migrate data
-                    // since the old app didn't cache character data
-                    // Just mark as completed and clear legacy data
-                    await this.clearLegacyData();
-                },
-            });
-        }
-
-        // Run each pending migration
-        for (const migration of migrations) {
-            try {
-                logger.info('MigrationHelper', `Running migration: ${migration.name}`);
-                await migration.run();
-                await this.markMigrationCompleted(migration.id);
-            } catch (error) {
-                logger.error('MigrationHelper', `Migration failed: ${migration.name}`, error);
-                // Continue with other migrations even if one fails
-            }
-        }
-
-        if (migrations.length === 0) {
-            logger.info('MigrationHelper', 'No pending migrations');
-        } else {
-            logger.info('MigrationHelper', `Completed ${migrations.length} migration(s)`);
-        }
-    }
-
-    /**
-     * Reset all migration flags (for testing/development)
-     * WARNING: This will cause migrations to run again
-     */
-    async resetMigrations(): Promise<void> {
-        logger.warn('MigrationHelper', 'Resetting all migrations - use only for testing!');
-
-        const migrationFlags = [
-            'migrated',
-            'migration_v1_to_v2',
-            'migration_indexeddb',
-        ];
-
-        // Clear all migration flags from metadata
-        // Note: We don't have a delete method, so we set to false
-        for (const flag of migrationFlags) {
-            await storageManager.setMetadata(flag, false);
-        }
-    }
+  }
 }
 
 // Export singleton instance

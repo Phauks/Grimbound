@@ -1,36 +1,36 @@
-import { createPortal } from 'react-dom'
-import { forwardRef } from 'react'
-import type { ContextMenuPosition } from '../../../hooks/useContextMenu'
-import styles from '../../../styles/components/shared/ContextMenu.module.css'
+import { forwardRef } from 'react';
+import { createPortal } from 'react-dom';
+import type { ContextMenuPosition } from '../../../hooks/useContextMenu';
+import styles from '../../../styles/components/shared/ContextMenu.module.css';
 
 export interface ContextMenuItem {
   /** Icon to display (emoji or text) */
-  icon?: string
+  icon?: string;
   /** Label text for the menu item */
-  label: string
+  label: string;
   /** Optional description for tooltip */
-  description?: string
+  description?: string;
   /** Click handler (optional if submenu is provided) */
-  onClick?: () => void
+  onClick?: () => void;
   /** Visual variant - 'danger' shows red styling */
-  variant?: 'default' | 'danger'
+  variant?: 'default' | 'danger';
   /** Whether the item is disabled */
-  disabled?: boolean
+  disabled?: boolean;
   /** Submenu items for nested menus */
-  submenu?: ContextMenuItem[]
+  submenu?: ContextMenuItem[];
 }
 
 export interface ContextMenuProps {
   /** Whether the menu is visible */
-  isOpen: boolean
+  isOpen: boolean;
   /** Position of the menu */
-  position: ContextMenuPosition | null
+  position: ContextMenuPosition | null;
   /** Menu items to render */
-  items: ContextMenuItem[]
+  items: ContextMenuItem[];
   /** Called when the menu should close */
-  onClose: () => void
+  onClose: () => void;
   /** Optional className for the menu container */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -39,15 +39,15 @@ export interface ContextMenuProps {
  */
 export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
   ({ isOpen, position, items, onClose, className }, ref) => {
-    if (!isOpen || !position || items.length === 0) {
-      return null
+    if (!(isOpen && position) || items.length === 0) {
+      return null;
     }
 
     const handleItemClick = (item: ContextMenuItem) => {
-      if (item.disabled || !item.onClick) return
-      item.onClick()
-      onClose()
-    }
+      if (item.disabled || !item.onClick) return;
+      item.onClick();
+      onClose();
+    };
 
     const menu = (
       <div
@@ -65,6 +65,7 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
       >
         {items.map((item, index) => (
           <button
+            type="button"
             key={`${item.label}-${index}`}
             className={`${styles.contextMenuItem} ${item.variant === 'danger' ? styles.danger : ''} ${item.disabled ? styles.disabled : ''}`}
             onClick={() => handleItemClick(item)}
@@ -77,11 +78,11 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
           </button>
         ))}
       </div>
-    )
+    );
 
     // Render via Portal to document.body for proper stacking
-    return createPortal(menu, document.body)
+    return createPortal(menu, document.body);
   }
-)
+);
 
-ContextMenu.displayName = 'ContextMenu'
+ContextMenu.displayName = 'ContextMenu';

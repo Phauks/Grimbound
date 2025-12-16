@@ -7,34 +7,28 @@
  * @module contexts/DownloadsContext
  */
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  type ReactNode,
-} from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 /**
  * Represents a single downloadable item
  */
 export interface DownloadItem {
   /** Unique identifier for this download option */
-  id: string
+  id: string;
   /** Icon to display (emoji or icon component) */
-  icon: string
+  icon: string;
   /** Primary label for the download */
-  label: string
+  label: string;
   /** Secondary description text */
-  description: string
+  description: string;
   /** Function to execute the download */
-  action: () => Promise<void> | void
+  action: () => Promise<void> | void;
   /** Whether this download is currently disabled */
-  disabled?: boolean
+  disabled?: boolean;
   /** Reason why the download is disabled */
-  disabledReason?: string
+  disabledReason?: string;
   /** Optional: Show loading state during action */
-  showProgress?: boolean
+  showProgress?: boolean;
 }
 
 /**
@@ -42,58 +36,58 @@ export interface DownloadItem {
  */
 interface DownloadsContextValue {
   /** Currently registered download items */
-  downloads: DownloadItem[]
+  downloads: DownloadItem[];
   /** Whether the drawer is open */
-  isOpen: boolean
+  isOpen: boolean;
   /** Open the downloads drawer */
-  openDrawer: () => void
+  openDrawer: () => void;
   /** Close the downloads drawer */
-  closeDrawer: () => void
+  closeDrawer: () => void;
   /** Toggle the drawer open/closed */
-  toggleDrawer: () => void
+  toggleDrawer: () => void;
   /** Register downloads for the current view (replaces previous) */
-  setDownloads: (downloads: DownloadItem[]) => void
+  setDownloads: (downloads: DownloadItem[]) => void;
   /** Clear all downloads (call when view unmounts) */
-  clearDownloads: () => void
+  clearDownloads: () => void;
   /** Currently executing download ID (for loading state) */
-  executingId: string | null
+  executingId: string | null;
   /** Execute a download action with loading state */
-  executeDownload: (item: DownloadItem) => Promise<void>
+  executeDownload: (item: DownloadItem) => Promise<void>;
 }
 
-const DownloadsContext = createContext<DownloadsContextValue | null>(null)
+const DownloadsContext = createContext<DownloadsContextValue | null>(null);
 
 /**
  * Downloads Provider
  * Wrap your app with this to enable downloads drawer functionality.
  */
 export function DownloadsProvider({ children }: { children: ReactNode }) {
-  const [downloads, setDownloadsState] = useState<DownloadItem[]>([])
-  const [isOpen, setIsOpen] = useState(false)
-  const [executingId, setExecutingId] = useState<string | null>(null)
+  const [downloads, setDownloadsState] = useState<DownloadItem[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [executingId, setExecutingId] = useState<string | null>(null);
 
-  const openDrawer = useCallback(() => setIsOpen(true), [])
-  const closeDrawer = useCallback(() => setIsOpen(false), [])
-  const toggleDrawer = useCallback(() => setIsOpen((prev) => !prev), [])
+  const openDrawer = useCallback(() => setIsOpen(true), []);
+  const closeDrawer = useCallback(() => setIsOpen(false), []);
+  const toggleDrawer = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const setDownloads = useCallback((newDownloads: DownloadItem[]) => {
-    setDownloadsState(newDownloads)
-  }, [])
+    setDownloadsState(newDownloads);
+  }, []);
 
   const clearDownloads = useCallback(() => {
-    setDownloadsState([])
-  }, [])
+    setDownloadsState([]);
+  }, []);
 
   const executeDownload = useCallback(async (item: DownloadItem) => {
-    if (item.disabled) return
+    if (item.disabled) return;
 
     try {
-      setExecutingId(item.id)
-      await item.action()
+      setExecutingId(item.id);
+      await item.action();
     } finally {
-      setExecutingId(null)
+      setExecutingId(null);
     }
-  }, [])
+  }, []);
 
   const value: DownloadsContextValue = {
     downloads,
@@ -105,37 +99,33 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     clearDownloads,
     executingId,
     executeDownload,
-  }
+  };
 
-  return (
-    <DownloadsContext.Provider value={value}>
-      {children}
-    </DownloadsContext.Provider>
-  )
+  return <DownloadsContext.Provider value={value}>{children}</DownloadsContext.Provider>;
 }
 
 /**
  * Hook to access downloads context
  */
 export function useDownloadsContext(): DownloadsContextValue {
-  const context = useContext(DownloadsContext)
+  const context = useContext(DownloadsContext);
   if (!context) {
-    throw new Error('useDownloadsContext must be used within a DownloadsProvider')
+    throw new Error('useDownloadsContext must be used within a DownloadsProvider');
   }
-  return context
+  return context;
 }
 
 /**
  * Convenience hook for registering downloads in a view
  * Call this in useEffect to register/unregister downloads when view mounts/unmounts
  */
-export function useRegisterDownloads(downloads: DownloadItem[], deps: unknown[] = []) {
-  const { setDownloads, clearDownloads } = useDownloadsContext()
+export function useRegisterDownloads(downloads: DownloadItem[], _deps: unknown[] = []) {
+  const { setDownloads, clearDownloads } = useDownloadsContext();
 
   // Use useEffect to register downloads when component mounts or deps change
   // Note: This should be called with useEffect in the consuming component
   return {
     register: () => setDownloads(downloads),
     unregister: clearDownloads,
-  }
+  };
 }

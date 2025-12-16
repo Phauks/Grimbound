@@ -21,57 +21,51 @@
  * ```
  */
 
-import { useState, useEffect, memo, useRef } from 'react'
-import type { AssetType } from '../../../ts/services/upload/types.js'
-import { isAssetReference, extractAssetId } from '../../../ts/services/upload/assetResolver.js'
-import { assetStorageService } from '../../../ts/services/upload/index.js'
-import {
-  getBuiltInAsset,
-  isBuiltInAsset,
-} from '../../../ts/constants/builtInAssets.js'
-import { AssetManagerModal } from '../../Modals/AssetManagerModal'
-import {
-  SettingsSelectorBase,
-  InfoSection,
-} from './SettingsSelectorBase'
-import styles from '../../../styles/components/shared/AssetPreviewSelector.module.css'
+import { memo, useEffect, useRef, useState } from 'react';
+import styles from '../../../styles/components/shared/AssetPreviewSelector.module.css';
+import { getBuiltInAsset, isBuiltInAsset } from '../../../ts/constants/builtInAssets.js';
+import { extractAssetId, isAssetReference } from '../../../ts/services/upload/assetResolver.js';
+import { assetStorageService } from '../../../ts/services/upload/index.js';
+import type { AssetType } from '../../../ts/services/upload/types.js';
+import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 /** Token type for preview generation */
-type PreviewTokenType = 'character' | 'reminder' | 'meta'
+type PreviewTokenType = 'character' | 'reminder' | 'meta';
 
 export interface AssetPreviewSelectorProps {
   /** Current value: built-in ID, "asset:uuid", or "none" */
-  value: string
+  value: string;
   /** Called when selection changes */
-  onChange: (value: string) => void
+  onChange: (value: string) => void;
   /** Asset type for filtering in modal */
-  assetType: AssetType
+  assetType: AssetType;
   /** Display label (shown next to preview) */
-  label?: string
+  label?: string;
   /** Preview shape */
-  shape?: 'circle' | 'square'
+  shape?: 'circle' | 'square';
   /** Component size */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Show "None" option */
-  showNone?: boolean
+  showNone?: boolean;
   /** Label for none option */
-  noneLabel?: string
+  noneLabel?: string;
   /** Project ID for scoping assets */
-  projectId?: string
+  projectId?: string;
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Generation options for live preview in modal */
-  generationOptions?: import('../../../ts/types/index.js').GenerationOptions
+  generationOptions?: import('../../../ts/types/index.js').GenerationOptions;
   /** Which token type to show in preview (defaults to 'character') */
-  previewTokenType?: PreviewTokenType
+  previewTokenType?: PreviewTokenType;
   /** Optional slot for content above the action button (e.g., toggle) */
-  headerSlot?: React.ReactNode
+  headerSlot?: React.ReactNode;
 }
 
 // ============================================================================
@@ -86,12 +80,12 @@ const AssetPreview = memo(function AssetPreview({
   isLoading,
   isNone,
 }: {
-  previewUrl: string | null
-  assetLabel: string
-  shape: 'circle' | 'square'
-  size: 'small' | 'medium' | 'large'
-  isLoading: boolean
-  isNone: boolean
+  previewUrl: string | null;
+  assetLabel: string;
+  shape: 'circle' | 'square';
+  size: 'small' | 'medium' | 'large';
+  isLoading: boolean;
+  isNone: boolean;
 }) {
   const previewClasses = [
     styles.preview,
@@ -99,23 +93,20 @@ const AssetPreview = memo(function AssetPreview({
     shape === 'circle' ? styles.previewCircle : styles.previewSquare,
     isLoading && styles.previewLoading,
     isNone && styles.previewNone,
-  ].filter(Boolean).join(' ')
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={previewClasses}>
       {previewUrl ? (
-        <img
-          src={previewUrl}
-          alt={assetLabel}
-          className={styles.previewImage}
-          loading="lazy"
-        />
+        <img src={previewUrl} alt={assetLabel} className={styles.previewImage} loading="lazy" />
       ) : (
         <span className={styles.noneIcon}>∅</span>
       )}
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -137,98 +128,103 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
   previewTokenType = 'character',
   headerSlot,
 }: AssetPreviewSelectorProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [assetLabel, setAssetLabel] = useState<string>('')
-  const [source, setSource] = useState<'builtin' | 'user' | 'global' | 'none'>('none')
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [assetLabel, setAssetLabel] = useState<string>('');
+  const [source, setSource] = useState<'builtin' | 'user' | 'global' | 'none'>('none');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Resolve the current value to a preview URL
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     async function resolvePreview() {
       if (!value || value === 'none') {
-        setPreviewUrl(null)
-        setAssetLabel(noneLabel)
-        setSource('none')
-        return
+        setPreviewUrl(null);
+        setAssetLabel(noneLabel);
+        setSource('none');
+        return;
       }
 
-      setIsLoading(true)
+      setIsLoading(true);
 
       // Check if it's a built-in asset
       if (isBuiltInAsset(value, assetType)) {
-        const builtIn = getBuiltInAsset(value, assetType)
+        const builtIn = getBuiltInAsset(value, assetType);
         if (builtIn) {
-          setPreviewUrl(builtIn.thumbnail ?? builtIn.src)
-          setAssetLabel(builtIn.label)
-          setSource('builtin')
-          setIsLoading(false)
-          return
+          setPreviewUrl(builtIn.thumbnail ?? builtIn.src);
+          setAssetLabel(builtIn.label);
+          setSource('builtin');
+          setIsLoading(false);
+          return;
         }
       }
 
       // Check if it's an asset reference
       if (isAssetReference(value)) {
-        const assetId = extractAssetId(value)
+        const assetId = extractAssetId(value);
         if (assetId) {
           try {
-            const asset = await assetStorageService.getByIdWithUrl(assetId)
+            const asset = await assetStorageService.getByIdWithUrl(assetId);
             if (!cancelled && asset) {
-              setPreviewUrl(asset.thumbnailUrl ?? asset.url ?? null)
-              setAssetLabel(asset.metadata?.filename ?? 'Custom Asset')
-              setSource(asset.projectId ? 'user' : 'global')
+              setPreviewUrl(asset.thumbnailUrl ?? asset.url ?? null);
+              setAssetLabel(asset.metadata?.filename ?? 'Custom Asset');
+              setSource(asset.projectId ? 'user' : 'global');
             }
           } catch {
             if (!cancelled) {
-              setPreviewUrl(null)
-              setAssetLabel('Asset not found')
-              setSource('none')
+              setPreviewUrl(null);
+              setAssetLabel('Asset not found');
+              setSource('none');
             }
           }
         }
       } else {
         // Try as a direct path (fallback)
-        setPreviewUrl(value)
-        setAssetLabel(label ?? 'Custom')
-        setSource('builtin')
+        setPreviewUrl(value);
+        setAssetLabel(label ?? 'Custom');
+        setSource('builtin');
       }
 
       if (!cancelled) {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    resolvePreview()
+    resolvePreview();
 
     return () => {
-      cancelled = true
-    }
-  }, [value, assetType, noneLabel, label])
+      cancelled = true;
+    };
+  }, [value, assetType, noneLabel, label]);
 
   // Handle asset selection from modal
   const handleSelectAsset = (selectedId: string) => {
-    onChange(selectedId)
-    setIsModalOpen(false)
-  }
+    onChange(selectedId);
+    setIsModalOpen(false);
+  };
 
   // Handle modal close
   const handleModalClose = () => {
-    setIsModalOpen(false)
-  }
+    setIsModalOpen(false);
+  };
 
   // Format source display
   const getSourceLabel = () => {
     switch (source) {
-      case 'none': return 'No selection'
-      case 'builtin': return 'Built-in'
-      case 'user': return 'My Upload'
-      case 'global': return 'Global'
-      default: return ''
+      case 'none':
+        return 'No selection';
+      case 'builtin':
+        return 'Built-in';
+      case 'user':
+        return 'My Upload';
+      case 'global':
+        return 'Global';
+      default:
+        return '';
     }
-  }
+  };
 
   return (
     <>
@@ -244,12 +240,7 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
             isNone={source === 'none'}
           />
         }
-        info={
-          <InfoSection
-            label={assetLabel}
-            summary={getSourceLabel()}
-          />
-        }
+        info={<InfoSection label={assetLabel} summary={getSourceLabel()} />}
         headerSlot={headerSlot}
         actionLabel="Customize"
         onAction={() => setIsModalOpen(true)}
@@ -273,7 +264,7 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
         previewTokenType={previewTokenType}
       />
     </>
-  )
-})
+  );
+});
 
-export default AssetPreviewSelector
+export default AssetPreviewSelector;

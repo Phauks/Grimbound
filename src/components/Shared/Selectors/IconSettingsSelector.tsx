@@ -17,21 +17,17 @@
  * @module components/Shared/IconSettingsSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import { SliderWithValue } from '../Controls/SliderWithValue'
-import { MeasurementSlider } from '../Controls/MeasurementSlider'
-import { ICON_OFFSET_CONFIG } from '../../../ts/utils/measurementUtils'
-import type { MeasurementUnit } from '../../../ts/types/measurement'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
-import iconStyles from '../../../styles/components/shared/IconSettingsSelector.module.css'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import iconStyles from '../../../styles/components/shared/IconSettingsSelector.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import type { MeasurementUnit } from '../../../ts/types/measurement';
+import { ICON_OFFSET_CONFIG } from '../../../ts/utils/measurementUtils';
+import { MeasurementSlider } from '../Controls/MeasurementSlider';
+import { SliderWithValue } from '../Controls/SliderWithValue';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
 // Types
@@ -39,32 +35,32 @@ import iconStyles from '../../../styles/components/shared/IconSettingsSelector.m
 
 export interface IconSettings {
   /** Icon scale multiplier (0.5x to 2.0x) */
-  scale: number
+  scale: number;
   /** Horizontal offset in inches */
-  offsetX: number
+  offsetX: number;
   /** Vertical offset in inches */
-  offsetY: number
+  offsetY: number;
 }
 
 export interface IconSettingsSelectorProps {
   /** Current icon settings */
-  value: IconSettings
+  value: IconSettings;
   /** Called when settings are confirmed (on Apply or panel close) */
-  onChange: (settings: IconSettings) => void
+  onChange: (settings: IconSettings) => void;
   /** Called on every change for live preview (optional) */
-  onPreviewChange?: (settings: IconSettings) => void
+  onPreviewChange?: (settings: IconSettings) => void;
   /** User's preferred measurement unit */
-  displayUnit?: MeasurementUnit
+  displayUnit?: MeasurementUnit;
   /** Token type for labeling */
-  tokenType?: 'character' | 'reminder' | 'meta'
+  tokenType?: 'character' | 'reminder' | 'meta';
   /** Optional URL for the preview icon image */
-  previewIconUrl?: string
+  previewIconUrl?: string;
   /** Component size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
 }
 
 // ============================================================================
@@ -75,7 +71,7 @@ const DEFAULT_SETTINGS: IconSettings = {
   scale: 1.0,
   offsetX: 0,
   offsetY: 0,
-}
+};
 
 // ============================================================================
 // Token Type Icons - Representative icons for each token type
@@ -90,30 +86,39 @@ const TokenTypeIcon = ({ tokenType }: { tokenType: 'character' | 'reminder' | 'm
           <circle cx="12" cy="7" r="4" />
           <path d="M12 14c-6 0-8 3-8 5v2h16v-2c0-2-2-5-8-5z" />
         </svg>
-      )
+      );
     case 'reminder':
       // Small reminder token - thought bubble/note
       return (
         <svg viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="8" opacity="0.9" />
-          <text x="12" y="16" textAnchor="middle" fontSize="10" fill="var(--bg-primary)" fontWeight="bold">R</text>
+          <text
+            x="12"
+            y="16"
+            textAnchor="middle"
+            fontSize="10"
+            fill="var(--bg-primary)"
+            fontWeight="bold"
+          >
+            R
+          </text>
         </svg>
-      )
+      );
     case 'meta':
       // Scroll/script icon for meta tokens
       return (
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
         </svg>
-      )
+      );
     default:
       return (
         <svg viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="10" />
         </svg>
-      )
+      );
   }
-}
+};
 
 // ============================================================================
 // Icon Preview Component
@@ -124,9 +129,9 @@ const IconPreview = memo(function IconPreview({
   previewIconUrl,
   tokenType,
 }: {
-  settings: IconSettings
-  previewIconUrl?: string
-  tokenType: 'character' | 'reminder' | 'meta'
+  settings: IconSettings;
+  previewIconUrl?: string;
+  tokenType: 'character' | 'reminder' | 'meta';
 }) {
   return (
     <div className={iconStyles.previewContainer}>
@@ -143,8 +148,8 @@ const IconPreview = memo(function IconPreview({
         )}
       </div>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -169,32 +174,35 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
     disabled,
     panelHeight: 200,
     minPanelWidth: 240,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : value
+  const displaySettings = panel.isExpanded ? panel.pendingValue : value;
 
   // Get token type display name
-  const tokenTypeLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1)
+  const tokenTypeLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
   // Format offset for display
-  const formatOffset = useCallback((offset: number): string => {
-    if (displayUnit === 'millimeters') {
-      const mm = offset * 25.4
-      return mm === 0 ? '0' : mm.toFixed(1)
-    }
-    return offset === 0 ? '0' : offset.toFixed(3)
-  }, [displayUnit])
+  const formatOffset = useCallback(
+    (offset: number): string => {
+      if (displayUnit === 'millimeters') {
+        const mm = offset * 25.4;
+        return mm === 0 ? '0' : mm.toFixed(1);
+      }
+      return offset === 0 ? '0' : offset.toFixed(3);
+    },
+    [displayUnit]
+  );
 
-  const unitSuffix = displayUnit === 'millimeters' ? 'mm' : '"'
+  const unitSuffix = displayUnit === 'millimeters' ? 'mm' : '"';
 
   // Format summary text
   const getSummary = useCallback(() => {
-    return `X: ${formatOffset(displaySettings.offsetX)}${unitSuffix} · Y: ${formatOffset(displaySettings.offsetY)}${unitSuffix}`
-  }, [displaySettings, formatOffset, unitSuffix])
+    return `X: ${formatOffset(displaySettings.offsetX)}${unitSuffix} · Y: ${formatOffset(displaySettings.offsetY)}${unitSuffix}`;
+  }, [displaySettings, formatOffset, unitSuffix]);
 
   // Render the expandable panel via portal
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -205,7 +213,7 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -220,7 +228,9 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
           <div className={iconStyles.sliderGroup}>
             <div className={iconStyles.sliderHeader}>
               <span className={iconStyles.sliderLabel}>Scale</span>
-              <span className={iconStyles.settingValue}>{panel.pendingValue.scale.toFixed(1)}x</span>
+              <span className={iconStyles.settingValue}>
+                {panel.pendingValue.scale.toFixed(1)}x
+              </span>
             </div>
             <div className={iconStyles.compactSlider}>
               <SliderWithValue
@@ -240,7 +250,10 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
           <div className={iconStyles.sliderGroup}>
             <div className={iconStyles.sliderHeader}>
               <span className={iconStyles.sliderLabel}>Offset X</span>
-              <span className={iconStyles.settingValue}>{formatOffset(panel.pendingValue.offsetX)}{unitSuffix}</span>
+              <span className={iconStyles.settingValue}>
+                {formatOffset(panel.pendingValue.offsetX)}
+                {unitSuffix}
+              </span>
             </div>
             <div className={iconStyles.compactSlider}>
               <MeasurementSlider
@@ -257,7 +270,10 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
           <div className={iconStyles.sliderGroup}>
             <div className={iconStyles.sliderHeader}>
               <span className={iconStyles.sliderLabel}>Offset Y</span>
-              <span className={iconStyles.settingValue}>{formatOffset(panel.pendingValue.offsetY)}{unitSuffix}</span>
+              <span className={iconStyles.settingValue}>
+                {formatOffset(panel.pendingValue.offsetY)}
+                {unitSuffix}
+              </span>
             </div>
             <div className={iconStyles.compactSlider}>
               <MeasurementSlider
@@ -281,26 +297,18 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -315,10 +323,7 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
         </PreviewBox>
       }
       info={
-        <InfoSection
-          label={`${displaySettings.scale.toFixed(1)}x Scale`}
-          summary={getSummary()}
-        />
+        <InfoSection label={`${displaySettings.scale.toFixed(1)}x Scale`} summary={getSummary()} />
       }
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -330,7 +335,7 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default IconSettingsSelector
+export default IconSettingsSelector;

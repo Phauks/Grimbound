@@ -9,11 +9,11 @@
  * - Manual "Save Now" button
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useProjectContext } from '../../../contexts/ProjectContext';
+import styles from '../../../styles/components/shared/AutoSaveIndicator.module.css';
 import type { AutoSaveStatus } from '../../../ts/types/project.js';
 import { ProjectHistoryModal } from '../../Modals/ProjectHistoryModal';
-import styles from '../../../styles/components/shared/AutoSaveIndicator.module.css';
 
 export function AutoSaveIndicator() {
   const { currentProject, autoSaveStatus, lastSavedAt } = useProjectContext();
@@ -36,7 +36,6 @@ export function AutoSaveIndicator() {
           return { label: 'Saved', icon: '✓', color: 'success' };
         case 'error':
           return { label: 'Error', icon: '!', color: 'error' };
-        case 'idle':
         default:
           if (status.isDirty) {
             return { label: 'Unsaved', icon: '●', color: 'warning' };

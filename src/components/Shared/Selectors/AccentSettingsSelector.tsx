@@ -12,44 +12,38 @@
  * @module components/Shared/AccentSettingsSelector
  */
 
-import { memo, useState, useCallback, useMemo, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import { EditableSlider } from '../Controls/EditableSlider'
-import { AssetManagerModal } from '../../Modals/AssetManagerModal'
-import type { GenerationOptions } from '../../../ts/types/index'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/AccentSettingsSelector.module.css'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import styles from '../../../styles/components/shared/AccentSettingsSelector.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import type { GenerationOptions } from '../../../ts/types/index';
+import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import { EditableSlider } from '../Controls/EditableSlider';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface AccentSettingsSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  projectId?: string
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  projectId?: string;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 interface PendingLeafSettings {
-  maximumLeaves: number
-  leafPopulationProbability: number
-  leafArcSpan: number
-  leafSlots: number
-  enableLeftLeaf: boolean
-  enableRightLeaf: boolean
-  sideLeafProbability: number
+  maximumLeaves: number;
+  leafPopulationProbability: number;
+  leafArcSpan: number;
+  leafSlots: number;
+  enableLeftLeaf: boolean;
+  enableRightLeaf: boolean;
+  sideLeafProbability: number;
 }
 
 // Built-in leaf styles (only classic available for now)
-const LEAF_STYLES = [
-  { id: 'classic', label: 'Classic' },
-]
+const LEAF_STYLES = [{ id: 'classic', label: 'Classic' }];
 
 // ============================================================================
 // Probability Calculation Utilities
@@ -59,17 +53,17 @@ const LEAF_STYLES = [
  * Calculate binomial probability P(X = k) = C(n,k) * p^k * (1-p)^(n-k)
  */
 function binomialProbability(n: number, k: number, p: number): number {
-  if (k > n || k < 0) return 0
-  if (p === 0) return k === 0 ? 1 : 0
-  if (p === 1) return k === n ? 1 : 0
+  if (k > n || k < 0) return 0;
+  if (p === 0) return k === 0 ? 1 : 0;
+  if (p === 1) return k === n ? 1 : 0;
 
   // Calculate C(n,k)
-  let c = 1
+  let c = 1;
   for (let i = 0; i < k; i++) {
-    c = c * (n - i) / (i + 1)
+    c = (c * (n - i)) / (i + 1);
   }
 
-  return c * Math.pow(p, k) * Math.pow(1 - p, n - k)
+  return c * p ** k * (1 - p) ** (n - k);
 }
 
 /**
@@ -84,66 +78,66 @@ function calculateDistribution(
   enableRightLeaf: boolean,
   sideLeafProbability: number
 ) {
-  const arcProb = probability / 100
-  const sideProb = sideLeafProbability / 100
+  const arcProb = probability / 100;
+  const sideProb = sideLeafProbability / 100;
 
   // Calculate arc leaf probabilities (0 to maxLeaves)
-  const arcDistribution: number[] = []
-  let cumulativeBeforeMax = 0
+  const arcDistribution: number[] = [];
+  let cumulativeBeforeMax = 0;
 
   for (let k = 0; k <= slots; k++) {
-    const prob = binomialProbability(slots, k, arcProb)
+    const prob = binomialProbability(slots, k, arcProb);
     if (k < maxLeaves) {
-      arcDistribution[k] = prob
-      cumulativeBeforeMax += prob
+      arcDistribution[k] = prob;
+      cumulativeBeforeMax += prob;
     } else if (k === maxLeaves) {
       // Probability of exactly maxLeaves or more (capped)
-      arcDistribution[k] = 1 - cumulativeBeforeMax
+      arcDistribution[k] = 1 - cumulativeBeforeMax;
     }
   }
 
   // Calculate side leaf probabilities (0, 1, or 2 side leaves)
-  const leftProb = enableLeftLeaf ? sideProb : 0
-  const rightProb = enableRightLeaf ? sideProb : 0
+  const leftProb = enableLeftLeaf ? sideProb : 0;
+  const rightProb = enableRightLeaf ? sideProb : 0;
 
   // P(side = 0), P(side = 1), P(side = 2)
   const sideDistribution = [
-    (1 - leftProb) * (1 - rightProb),                           // 0 side leaves
-    leftProb * (1 - rightProb) + (1 - leftProb) * rightProb,    // 1 side leaf
-    leftProb * rightProb                                         // 2 side leaves
-  ]
+    (1 - leftProb) * (1 - rightProb), // 0 side leaves
+    leftProb * (1 - rightProb) + (1 - leftProb) * rightProb, // 1 side leaf
+    leftProb * rightProb, // 2 side leaves
+  ];
 
   // Convolve arc and side distributions to get total distribution
-  const maxSideLeaves = (enableLeftLeaf ? 1 : 0) + (enableRightLeaf ? 1 : 0)
-  const maxTotal = maxLeaves + maxSideLeaves
-  const totalDistribution: number[] = new Array(maxTotal + 1).fill(0)
+  const maxSideLeaves = (enableLeftLeaf ? 1 : 0) + (enableRightLeaf ? 1 : 0);
+  const maxTotal = maxLeaves + maxSideLeaves;
+  const totalDistribution: number[] = new Array(maxTotal + 1).fill(0);
 
   for (let arc = 0; arc <= maxLeaves; arc++) {
-    const arcP = arcDistribution[arc] ?? 0
+    const arcP = arcDistribution[arc] ?? 0;
     for (let side = 0; side <= maxSideLeaves; side++) {
-      const sideP = sideDistribution[side] ?? 0
-      const total = arc + side
+      const sideP = sideDistribution[side] ?? 0;
+      const total = arc + side;
       if (total <= maxTotal) {
-        totalDistribution[total] += arcP * sideP
+        totalDistribution[total] += arcP * sideP;
       }
     }
   }
 
   // Expected arc leaves (capped)
-  const expectedArcRaw = slots * arcProb
-  const expectedArc = Math.min(expectedArcRaw, maxLeaves)
+  const expectedArcRaw = slots * arcProb;
+  const expectedArc = Math.min(expectedArcRaw, maxLeaves);
 
   // Expected side leaves
-  const expectedSide = leftProb + rightProb
+  const expectedSide = leftProb + rightProb;
 
   // Total expected
-  const expectedTotal = expectedArc + expectedSide
+  const expectedTotal = expectedArc + expectedSide;
 
   // Probability ranges from combined distribution (as percentages)
-  const probZero = (totalDistribution[0] ?? 0) * 100
-  const probLow = totalDistribution.slice(1, 3).reduce((sum, p) => sum + (p ?? 0), 0) * 100  // 1-2
-  const probMed = totalDistribution.slice(3, 5).reduce((sum, p) => sum + (p ?? 0), 0) * 100  // 3-4
-  const probHigh = totalDistribution.slice(5).reduce((sum, p) => sum + (p ?? 0), 0) * 100   // 5+
+  const probZero = (totalDistribution[0] ?? 0) * 100;
+  const probLow = totalDistribution.slice(1, 3).reduce((sum, p) => sum + (p ?? 0), 0) * 100; // 1-2
+  const probMed = totalDistribution.slice(3, 5).reduce((sum, p) => sum + (p ?? 0), 0) * 100; // 3-4
+  const probHigh = totalDistribution.slice(5).reduce((sum, p) => sum + (p ?? 0), 0) * 100; // 5+
 
   return {
     expectedArc: expectedArc.toFixed(1),
@@ -156,24 +150,24 @@ function calculateDistribution(
     probMed,
     probHigh,
     totalDistribution,
-  }
+  };
 }
 
 /**
  * Simulate a single leaf placement outcome
  */
 function simulateOutcome(slots: number, probability: number, maxLeaves: number): boolean[] {
-  const p = probability / 100
-  const result: boolean[] = []
-  let count = 0
+  const p = probability / 100;
+  const result: boolean[] = [];
+  let count = 0;
 
   for (let i = 0; i < slots; i++) {
-    const filled = Math.random() < p && count < maxLeaves
-    result.push(filled)
-    if (filled) count++
+    const filled = Math.random() < p && count < maxLeaves;
+    result.push(filled);
+    if (filled) count++;
   }
 
-  return result
+  return result;
 }
 
 // ============================================================================
@@ -184,15 +178,15 @@ const LeafPreview = memo(function LeafPreview({
   leafGeneration,
   isEnabled,
 }: {
-  leafGeneration: string
-  isEnabled: boolean
+  leafGeneration: string;
+  isEnabled: boolean;
 }) {
   const getLeafPreviewSrc = () => {
-    if (!leafGeneration || leafGeneration === 'none') return null
-    return `/assets/images/leaves/${leafGeneration}/leaf_1.webp`
-  }
+    if (!leafGeneration || leafGeneration === 'none') return null;
+    return `/assets/images/leaves/${leafGeneration}/leaf_1.webp`;
+  };
 
-  const previewSrc = getLeafPreviewSrc()
+  const previewSrc = getLeafPreviewSrc();
 
   return (
     <div className={`${styles.previewImage} ${!isEnabled ? styles.previewDisabledState : ''}`}>
@@ -202,18 +196,16 @@ const LeafPreview = memo(function LeafPreview({
           alt={`${leafGeneration} leaf style`}
           className={styles.leafImage}
           onError={(e) => {
-            e.currentTarget.style.display = 'none'
-            const fallback = e.currentTarget.nextElementSibling
-            if (fallback) fallback.classList.remove(styles.hidden)
+            e.currentTarget.style.display = 'none';
+            const fallback = e.currentTarget.nextElementSibling;
+            if (fallback) fallback.classList.remove(styles.hidden);
           }}
         />
       ) : null}
-      <span className={`${styles.leafFallback} ${previewSrc ? styles.hidden : ''}`}>
-        🍂
-      </span>
+      <span className={`${styles.leafFallback} ${previewSrc ? styles.hidden : ''}`}>🍂</span>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Visual Preview Component - Shows arc and probability
@@ -228,75 +220,83 @@ const VisualPreview = memo(function VisualPreview({
   enableRightLeaf,
   sideLeafProbability,
 }: {
-  slots: number
-  probability: number
-  maxLeaves: number
-  arcSpan: number
-  enableLeftLeaf: boolean
-  enableRightLeaf: boolean
-  sideLeafProbability: number
+  slots: number;
+  probability: number;
+  maxLeaves: number;
+  arcSpan: number;
+  enableLeftLeaf: boolean;
+  enableRightLeaf: boolean;
+  sideLeafProbability: number;
 }) {
-  const [arcSimulation, setArcSimulation] = useState<boolean[]>([])
-  const [leftSimulation, setLeftSimulation] = useState(false)
-  const [rightSimulation, setRightSimulation] = useState(false)
+  const [arcSimulation, setArcSimulation] = useState<boolean[]>([]);
+  const [leftSimulation, setLeftSimulation] = useState(false);
+  const [rightSimulation, setRightSimulation] = useState(false);
 
   // Recalculate distribution when settings change (now includes side leaves)
-  const stats = useMemo(() =>
-    calculateDistribution(slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability),
+  const stats = useMemo(
+    () =>
+      calculateDistribution(
+        slots,
+        probability,
+        maxLeaves,
+        enableLeftLeaf,
+        enableRightLeaf,
+        sideLeafProbability
+      ),
     [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]
-  )
+  );
 
   // Run simulation on settings change
   useEffect(() => {
-    setArcSimulation(simulateOutcome(slots, probability, maxLeaves))
-    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability)
-    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability)
-  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability])
+    setArcSimulation(simulateOutcome(slots, probability, maxLeaves));
+    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability);
+    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability);
+  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]);
 
   // Regenerate simulation
   const resimulate = useCallback(() => {
-    setArcSimulation(simulateOutcome(slots, probability, maxLeaves))
-    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability)
-    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability)
-  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability])
+    setArcSimulation(simulateOutcome(slots, probability, maxLeaves));
+    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability);
+    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability);
+  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]);
 
   // Calculate slot positions on arc at TOP of token
   // In screen coordinates: Y increases downward, so -90° points UP
   const slotPositions = useMemo(() => {
-    const positions: { x: number; y: number }[] = []
+    const positions: { x: number; y: number }[] = [];
 
     // Center the arc at the top (-90° in screen coordinates = up)
-    const centerAngle = -90 * (Math.PI / 180)
-    const halfSpan = (arcSpan / 2) * (Math.PI / 180)
-    const startAngle = centerAngle - halfSpan
-    const endAngle = centerAngle + halfSpan
+    const centerAngle = -90 * (Math.PI / 180);
+    const halfSpan = (arcSpan / 2) * (Math.PI / 180);
+    const startAngle = centerAngle - halfSpan;
+    const endAngle = centerAngle + halfSpan;
 
     // Container is 2in, token is 1.75in (radius 0.875in)
     // Token radius as % of container: 0.875 / 2 = 43.75%
     // Leaves at 78% of token radius (LEAF_LAYOUT.ARC_LEAVES.RADIAL_OFFSET)
     // Arc radius: 43.75% * 0.78 = 34.125%
-    const tokenRadiusPercent = (0.875 / 2) * 100  // 43.75%
-    const arcRadius = tokenRadiusPercent * 0.78   // ~34.1% - matches actual leaf placement
-    const centerX = 50   // center of 2in container
-    const centerY = 50   // center of 2in container
+    const tokenRadiusPercent = (0.875 / 2) * 100; // 43.75%
+    const arcRadius = tokenRadiusPercent * 0.78; // ~34.1% - matches actual leaf placement
+    const centerX = 50; // center of 2in container
+    const centerY = 50; // center of 2in container
 
     for (let i = 0; i < slots; i++) {
-      const t = slots > 1 ? i / (slots - 1) : 0.5
-      const angle = startAngle + (endAngle - startAngle) * t
+      const t = slots > 1 ? i / (slots - 1) : 0.5;
+      const angle = startAngle + (endAngle - startAngle) * t;
       positions.push({
         x: centerX + arcRadius * Math.cos(angle),
         y: centerY + arcRadius * Math.sin(angle), // + because Y is inverted in screen coords
-      })
+      });
     }
 
-    return positions
-  }, [slots, arcSpan])
+    return positions;
+  }, [slots, arcSpan]);
 
   // Side leaf positions (at 88% of token radius - SIDE_LEAVES.RADIAL_OFFSET)
-  const sideLeafRadius = (0.875 / 2) * 100 * 0.88 // ~38.5%
+  const sideLeafRadius = (0.875 / 2) * 100 * 0.88; // ~38.5%
 
-  const arcFilledCount = arcSimulation.filter(Boolean).length
-  const totalFilledCount = arcFilledCount + (leftSimulation ? 1 : 0) + (rightSimulation ? 1 : 0)
+  const arcFilledCount = arcSimulation.filter(Boolean).length;
+  const totalFilledCount = arcFilledCount + (leftSimulation ? 1 : 0) + (rightSimulation ? 1 : 0);
 
   return (
     <div className={styles.visualPreview}>
@@ -379,23 +379,32 @@ const VisualPreview = memo(function VisualPreview({
 
         {/* Stats - now includes side leaves */}
         <div className={styles.statsRow}>
-          <div className={styles.statItem} title={`Arc: ${stats.expectedArc} + Side: ${stats.expectedSide}`}>
+          <div
+            className={styles.statItem}
+            title={`Arc: ${stats.expectedArc} + Side: ${stats.expectedSide}`}
+          >
             <span className={styles.statValue}>{stats.expectedTotal}</span>
             <span className={styles.statLabel}>Expected</span>
           </div>
-          <div className={styles.statItem} title={`Arc: ${arcFilledCount} + Side: ${totalFilledCount - arcFilledCount}`}>
+          <div
+            className={styles.statItem}
+            title={`Arc: ${arcFilledCount} + Side: ${totalFilledCount - arcFilledCount}`}
+          >
             <span className={styles.statValue}>{totalFilledCount}</span>
             <span className={styles.statLabel}>Simulated</span>
           </div>
-          <div className={styles.statItem} title={`Arc max: ${stats.maxArc} + Side: ${stats.maxTotal - stats.maxArc}`}>
+          <div
+            className={styles.statItem}
+            title={`Arc max: ${stats.maxArc} + Side: ${stats.maxTotal - stats.maxArc}`}
+          >
             <span className={styles.statValue}>{stats.maxTotal}</span>
             <span className={styles.statLabel}>Max</span>
           </div>
         </div>
       </div>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Main Component
@@ -409,10 +418,10 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
   disabled = false,
   ariaLabel,
 }: AccentSettingsSelectorProps) {
-  const [showAssetModal, setShowAssetModal] = useState(false)
+  const [showAssetModal, setShowAssetModal] = useState(false);
 
-  const isEnabled = generationOptions.leafEnabled !== false
-  const currentLeafStyle = generationOptions.leafGeneration || 'classic'
+  const isEnabled = generationOptions.leafEnabled !== false;
+  const currentLeafStyle = generationOptions.leafGeneration || 'classic';
 
   const currentSettings: PendingLeafSettings = {
     maximumLeaves: generationOptions.maximumLeaves ?? 5,
@@ -422,32 +431,44 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     enableLeftLeaf: generationOptions.enableLeftLeaf ?? true,
     enableRightLeaf: generationOptions.enableRightLeaf ?? true,
     sideLeafProbability: generationOptions.sideLeafProbability ?? 50,
-  }
+  };
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({ leafEnabled: enabled })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({ leafEnabled: enabled });
+    },
+    [onOptionChange]
+  );
 
-  const handlePanelChange = useCallback((settings: PendingLeafSettings) => {
-    onOptionChange({
-      maximumLeaves: settings.maximumLeaves,
-      leafPopulationProbability: settings.leafPopulationProbability,
-      leafArcSpan: settings.leafArcSpan,
-      leafSlots: settings.leafSlots,
-      enableLeftLeaf: settings.enableLeftLeaf,
-      enableRightLeaf: settings.enableRightLeaf,
-      sideLeafProbability: settings.sideLeafProbability,
-    })
-  }, [onOptionChange])
+  const handlePanelChange = useCallback(
+    (settings: PendingLeafSettings) => {
+      onOptionChange({
+        maximumLeaves: settings.maximumLeaves,
+        leafPopulationProbability: settings.leafPopulationProbability,
+        leafArcSpan: settings.leafArcSpan,
+        leafSlots: settings.leafSlots,
+        enableLeftLeaf: settings.enableLeftLeaf,
+        enableRightLeaf: settings.enableRightLeaf,
+        sideLeafProbability: settings.sideLeafProbability,
+      });
+    },
+    [onOptionChange]
+  );
 
-  const handleLeafStyleChange = useCallback((styleId: string) => {
-    onOptionChange({ leafGeneration: styleId })
-  }, [onOptionChange])
+  const handleLeafStyleChange = useCallback(
+    (styleId: string) => {
+      onOptionChange({ leafGeneration: styleId });
+    },
+    [onOptionChange]
+  );
 
-  const handleAssetChange = useCallback((assetId: string) => {
-    onOptionChange({ leafGeneration: assetId })
-    setShowAssetModal(false)
-  }, [onOptionChange])
+  const handleAssetChange = useCallback(
+    (assetId: string) => {
+      onOptionChange({ leafGeneration: assetId });
+      setShowAssetModal(false);
+    },
+    [onOptionChange]
+  );
 
   const panel = useExpandablePanel<PendingLeafSettings>({
     value: currentSettings,
@@ -456,15 +477,15 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     disabled,
     panelHeight: 340,
     minPanelWidth: 580,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
-  const currentMaxLeavesLimit = displaySettings.leafSlots + 2
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
+  const currentMaxLeavesLimit = displaySettings.leafSlots + 2;
 
   const getSummary = () => {
-    if (!isEnabled) return 'Disabled'
-    return `${displaySettings.maximumLeaves} max · ${displaySettings.leafPopulationProbability}%`
-  }
+    if (!isEnabled) return 'Disabled';
+    return `${displaySettings.maximumLeaves} max · ${displaySettings.leafPopulationProbability}%`;
+  };
 
   const defaultSettings: PendingLeafSettings = {
     maximumLeaves: 5,
@@ -474,7 +495,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     enableLeftLeaf: true,
     enableRightLeaf: true,
     sideLeafProbability: 50,
-  }
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -493,10 +514,10 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
         On
       </button>
     </div>
-  )
+  );
 
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -507,7 +528,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -520,7 +541,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
           <div className={styles.leftPanel}>
             <div className={styles.panelTitle}>Leaf Style</div>
             <div className={styles.imageGrid}>
-              {LEAF_STYLES.map(style => (
+              {LEAF_STYLES.map((style) => (
                 <button
                   key={style.id}
                   type="button"
@@ -533,8 +554,8 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
                     alt={style.label}
                     className={styles.imageOptionImg}
                     onError={(e) => {
-                      e.currentTarget.src = ''
-                      e.currentTarget.alt = '🍂'
+                      e.currentTarget.src = '';
+                      e.currentTarget.alt = '🍂';
                     }}
                   />
                 </button>
@@ -600,10 +621,10 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
                 label="Arc Slots"
                 value={panel.pendingValue.leafSlots}
                 onChange={(v) => {
-                  panel.updatePendingField('leafSlots', v)
-                  const newLimit = v + 2
+                  panel.updatePendingField('leafSlots', v);
+                  const newLimit = v + 2;
                   if (panel.pendingValue.maximumLeaves > newLimit) {
-                    panel.updatePendingField('maximumLeaves', newLimit)
+                    panel.updatePendingField('maximumLeaves', newLimit);
                   }
                 }}
                 min={3}
@@ -653,7 +674,9 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
                 step={5}
                 suffix="%"
                 defaultValue={50}
-                disabled={!panel.pendingValue.enableLeftLeaf && !panel.pendingValue.enableRightLeaf}
+                disabled={
+                  !(panel.pendingValue.enableLeftLeaf || panel.pendingValue.enableRightLeaf)
+                }
               />
             </div>
           </div>
@@ -683,26 +706,18 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -710,18 +725,10 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
         ref={panel.containerRef}
         preview={
           <PreviewBox shape="square" size={size}>
-            <LeafPreview
-              leafGeneration={currentLeafStyle}
-              isEnabled={isEnabled}
-            />
+            <LeafPreview leafGeneration={currentLeafStyle} isEnabled={isEnabled} />
           </PreviewBox>
         }
-        info={
-          <InfoSection
-            label="Accents"
-            summary={getSummary()}
-          />
-        }
+        info={<InfoSection label="Accents" summary={getSummary()} />}
         headerSlot={EnableToggle}
         actionLabel="Customize"
         onAction={panel.toggle}
@@ -748,7 +755,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
         />
       )}
     </>
-  )
-})
+  );
+});
 
-export default AccentSettingsSelector
+export default AccentSettingsSelector;

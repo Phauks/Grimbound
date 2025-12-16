@@ -44,11 +44,11 @@
 
 .resetText {
   display: none;
-  color: var(--color-accent, #8B5CF6);
+  color: var(--color-accent, #8b5cf6);
 }
 
 .labelResettable:hover {
-  color: var(--color-accent, #8B5CF6);
+  color: var(--color-accent, #8b5cf6);
 }
 
 .labelResettable:hover .labelText {
@@ -88,7 +88,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--color-accent, #8B5CF6);
+  background: var(--color-accent, #8b5cf6);
   cursor: pointer;
   margin-top: -5px;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -97,7 +97,7 @@
 }
 
 .slider::-webkit-slider-thumb:hover {
-  background: var(--color-accent-hover, #7C3AED);
+  background: var(--color-accent-hover, #7c3aed);
 }
 
 /* Firefox track */
@@ -113,14 +113,14 @@
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  background: var(--color-accent, #8B5CF6);
+  background: var(--color-accent, #8b5cf6);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: background-color 0.15s ease;
 }
 
 .slider::-moz-range-thumb:hover {
-  background: var(--color-accent-hover, #7C3AED);
+  background: var(--color-accent-hover, #7c3aed);
 }
 
 /* Disabled state */

@@ -6,107 +6,119 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useState, useRef, useCallback } from 'react'
-import { Modal } from '../../../Shared/ModalBase/Modal'
-import { Button } from '../../../Shared/UI/Button'
-import { Alert } from '../../../Shared/UI/Alert'
-import { Input, FormGroup } from '../../../Shared/Form'
-import styles from '../../../../styles/components/presets/PresetModal.module.css'
+import { useCallback, useRef, useState } from 'react';
+import styles from '../../../../styles/components/presets/PresetModal.module.css';
+import { FormGroup, Input } from '../../../Shared/Form';
+import { Modal } from '../../../Shared/ModalBase/Modal';
+import { Alert } from '../../../Shared/UI/Alert';
+import { Button } from '../../../Shared/UI/Button';
 
 interface SavePresetModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (name: string, icon: string, description: string) => void
-  onImport?: (file: File) => Promise<void>
-  importError?: string | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (name: string, icon: string, description: string) => void;
+  onImport?: (file: File) => Promise<void>;
+  importError?: string | null;
 }
 
-const EMOJI_OPTIONS = ['⭐', '🌸', '⬜', '🎨', '✨', '🎭', '🎪', '🎯', '🌙', '🔥', '💎', '🍀']
+const EMOJI_OPTIONS = ['⭐', '🌸', '⬜', '🎨', '✨', '🎭', '🎪', '🎯', '🌙', '🔥', '💎', '🍀'];
 
-export function SavePresetModal({ isOpen, onClose, onSave, onImport, importError }: SavePresetModalProps) {
-  const [presetName, setPresetName] = useState('')
-  const [presetDescription, setPresetDescription] = useState('')
-  const [presetIcon, setPresetIcon] = useState('⭐')
-  const [isDragging, setIsDragging] = useState(false)
-  const [localError, setLocalError] = useState<string | null>(null)
-  const importInputRef = useRef<HTMLInputElement>(null)
+export function SavePresetModal({
+  isOpen,
+  onClose,
+  onSave,
+  onImport,
+  importError,
+}: SavePresetModalProps) {
+  const [presetName, setPresetName] = useState('');
+  const [presetDescription, setPresetDescription] = useState('');
+  const [presetIcon, setPresetIcon] = useState('⭐');
+  const [isDragging, setIsDragging] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
-    if (!presetName.trim()) return
+    if (!presetName.trim()) return;
     try {
-      onSave(presetName, presetIcon, presetDescription)
-      setPresetName('')
-      setPresetDescription('')
-      setPresetIcon('⭐')
+      onSave(presetName, presetIcon, presetDescription);
+      setPresetName('');
+      setPresetDescription('');
+      setPresetIcon('⭐');
     } catch (err) {
-      console.error('Failed to save preset:', err)
+      console.error('Failed to save preset:', err);
     }
-  }
+  };
 
   const handleImportClick = () => {
-    setLocalError(null)
-    importInputRef.current?.click()
-  }
+    setLocalError(null);
+    importInputRef.current?.click();
+  };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file && onImport) {
-      setLocalError(null)
+      setLocalError(null);
       try {
-        await onImport(file)
+        await onImport(file);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to import preset'
-        setLocalError(message)
+        const message = err instanceof Error ? err.message : 'Failed to import preset';
+        setLocalError(message);
       }
-      e.target.value = ''
+      e.target.value = '';
     }
-  }
+  };
 
   // Drag and drop handlers
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (onImport) setIsDragging(true)
-  }, [onImport])
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onImport) setIsDragging(true);
+    },
+    [onImport]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragging(false)
+      setIsDragging(false);
     }
-  }, [])
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-    setLocalError(null)
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      setLocalError(null);
 
-    if (!onImport) return
+      if (!onImport) return;
 
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      const file = files[0]
-      if (file.type === 'application/json' || file.name.endsWith('.json')) {
-        try {
-          await onImport(file)
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Failed to import preset'
-          setLocalError(message)
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.type === 'application/json' || file.name.endsWith('.json')) {
+          try {
+            await onImport(file);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to import preset';
+            setLocalError(message);
+          }
+        } else {
+          setLocalError('Please drop a JSON file');
         }
-      } else {
-        setLocalError('Please drop a JSON file')
       }
-    }
-  }, [onImport])
+    },
+    [onImport]
+  );
 
-  const displayError = localError || importError
+  const displayError = localError || importError;
 
   return (
     <Modal
@@ -163,8 +175,8 @@ export function SavePresetModal({ isOpen, onClose, onSave, onImport, importError
               fullWidth
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleSave()
+                  e.preventDefault();
+                  handleSave();
                 }
               }}
             />
@@ -198,5 +210,5 @@ export function SavePresetModal({ isOpen, onClose, onSave, onImport, importError
         </form>
       </div>
     </Modal>
-  )
+  );
 }

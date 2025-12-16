@@ -106,7 +106,7 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
     thumbnailSize: 128, // Standard size for setup tokens
   },
 
-  'leaf': {
+  leaf: {
     allowedMimeTypes: ['image/png', 'image/webp'],
     allowedExtensions: ['.png', '.webp'],
     maxSize: 1 * MB,
@@ -119,7 +119,7 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
     thumbnailSize: 64, // Small decorative element
   },
 
-  'logo': {
+  logo: {
     allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
     allowedExtensions: ['.png', '.jpg', '.jpeg', '.webp', '.svg'],
     maxSize: 2 * MB,
@@ -208,8 +208,8 @@ export const ASSET_ZIP_PATHS: Record<AssetType, string> = {
   'token-background': 'assets/token-backgrounds/',
   'script-background': 'assets/script-backgrounds/',
   'setup-flower': 'assets/setup-flowers/',
-  'leaf': 'assets/leaves/',
-  'logo': 'assets/logos/',
+  leaf: 'assets/leaves/',
+  logo: 'assets/logos/',
   'studio-icon': 'assets/studio-icons/',
   'studio-logo': 'assets/studio-logos/',
   'studio-project': 'assets/studio-projects/',
@@ -227,8 +227,8 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   'token-background': 'Token Background',
   'script-background': 'Script Background',
   'setup-flower': 'Setup Flower',
-  'leaf': 'Leaf',
-  'logo': 'Logo',
+  leaf: 'Leaf',
+  logo: 'Logo',
   'studio-icon': 'Studio Icon',
   'studio-logo': 'Studio Logo',
   'studio-project': 'Studio Project',
@@ -242,8 +242,8 @@ export const ASSET_TYPE_LABELS_PLURAL: Record<AssetType, string> = {
   'token-background': 'Token Backgrounds',
   'script-background': 'Script Backgrounds',
   'setup-flower': 'Setup Flowers',
-  'leaf': 'Leaves',
-  'logo': 'Logos',
+  leaf: 'Leaves',
+  logo: 'Logos',
   'studio-icon': 'Studio Icons',
   'studio-logo': 'Studio Logos',
   'studio-project': 'Studio Projects',
@@ -257,8 +257,8 @@ export const ASSET_TYPE_ICONS: Record<AssetType, string> = {
   'token-background': '🎨',
   'script-background': '📜',
   'setup-flower': '🌸',
-  'leaf': '🍃',
-  'logo': '🏷️',
+  leaf: '🍃',
+  logo: '🏷️',
   'studio-icon': '✨',
   'studio-logo': '🎭',
   'studio-project': '📦',

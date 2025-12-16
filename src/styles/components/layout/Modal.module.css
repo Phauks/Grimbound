@@ -91,7 +91,9 @@
   padding: var(--spacing-xs);
   line-height: 1;
   border-radius: var(--border-radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .close:hover {
@@ -132,7 +134,7 @@
 
 /* ---- Drag Over State ---- */
 .dragOver::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-color: rgba(201, 162, 39, 0.1);
@@ -244,7 +246,9 @@
   font-size: 0.875rem;
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
 .primaryBtn:hover:not(:disabled) {
@@ -265,7 +269,9 @@
   font-size: 0.875rem;
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .secondaryBtn:hover {
@@ -282,7 +288,9 @@
   padding: var(--spacing-xs);
   line-height: 1;
   border-radius: var(--border-radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .closeBtn:hover {
@@ -363,7 +371,9 @@
   font-size: 0.875rem;
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .btnSecondary:hover {
@@ -371,5 +381,3 @@
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
-
-

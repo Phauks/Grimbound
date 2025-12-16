@@ -3,18 +3,17 @@
  */
 
 export type {
-  CacheEntry,
-  CacheStats,
-  CacheOptions,
-  CacheEventType,
-  CacheEvent,
-  PreRenderContextType,
-  PreRenderContext,
-  PreRenderResult
-} from './types.js'
-
-export type {
   ICacheStrategy,
   IEvictionPolicy,
-  IPreRenderStrategy
-} from './interfaces.js'
+  IPreRenderStrategy,
+} from './interfaces.js';
+export type {
+  CacheEntry,
+  CacheEvent,
+  CacheEventType,
+  CacheOptions,
+  CacheStats,
+  PreRenderContext,
+  PreRenderContextType,
+  PreRenderResult,
+} from './types.js';

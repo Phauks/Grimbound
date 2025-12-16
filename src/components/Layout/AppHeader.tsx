@@ -1,17 +1,16 @@
-import styles from '../../styles/components/layout/Header.module.css'
-import { SyncStatusIndicator } from '../Shared/Feedback/SyncStatusIndicator'
-import { AutoSaveIndicator } from '../Shared/Feedback/AutoSaveIndicator'
-import { SaveAsNewProjectButton } from '../Shared/Assets/SaveAsNewProjectButton'
-import { usePWAInstall } from '../../hooks/usePWAInstall'
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import styles from '../../styles/components/layout/Header.module.css';
+import { SaveAsNewProjectButton } from '../Shared/Assets/SaveAsNewProjectButton';
+import { AutoSaveIndicator } from '../Shared/Feedback/AutoSaveIndicator';
 
 interface AppHeaderProps {
-  onSettingsClick: () => void
-  onInfoClick: () => void
-  onAnnouncementsClick: () => void
-  onSyncDetailsClick?: () => void
-  onAssetManagerClick: () => void
-  version?: string
-  currentProjectName?: string | null
+  onSettingsClick: () => void;
+  onInfoClick: () => void;
+  onAnnouncementsClick: () => void;
+  onSyncDetailsClick?: () => void;
+  onAssetManagerClick: () => void;
+  version?: string;
+  currentProjectName?: string | null;
 }
 
 export function AppHeader({
@@ -32,7 +31,14 @@ export function AppHeader({
 
         {/* Show project name when project exists */}
         {currentProjectName && (
-          <span style={{ marginLeft: '16px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+          <span
+            style={{
+              marginLeft: '16px',
+              fontSize: '14px',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+            }}
+          >
             {currentProjectName}
           </span>
         )}
@@ -60,10 +66,7 @@ export function AppHeader({
             title="Install this app for offline use"
           >
             <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
-              />
+              <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
             </svg>
           </button>
         )}
@@ -156,5 +159,5 @@ export function AppHeader({
         </a>
       </div>
     </header>
-  )
+  );
 }

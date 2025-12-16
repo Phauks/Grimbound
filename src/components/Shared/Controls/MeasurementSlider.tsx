@@ -16,28 +16,28 @@
  * ```
  */
 
-import { useMemo, useCallback } from 'react'
-import { SliderWithValue } from './SliderWithValue'
-import type { MeasurementUnit, MeasurementConfig } from '../../../ts/types/measurement'
+import { useCallback, useMemo } from 'react';
+import type { MeasurementConfig, MeasurementUnit } from '../../../ts/types/measurement';
 import {
-  fromCanonicalInches,
-  toCanonicalInches,
-  getUnitSuffix,
   convertConfigToDisplayUnit,
   DECIMAL_PLACES,
-} from '../../../ts/utils/measurementUtils'
+  fromCanonicalInches,
+  getUnitSuffix,
+  toCanonicalInches,
+} from '../../../ts/utils/measurementUtils';
+import { SliderWithValue } from './SliderWithValue';
 
 interface MeasurementSliderProps {
   /** Value in canonical inches */
-  value: number
+  value: number;
   /** Called with value in canonical inches when changed */
-  onChange: (inches: number) => void
+  onChange: (inches: number) => void;
   /** Measurement configuration defining bounds and defaults (all in inches) */
-  config: MeasurementConfig
+  config: MeasurementConfig;
   /** User's preferred display unit */
-  displayUnit: MeasurementUnit
+  displayUnit: MeasurementUnit;
   /** Custom aria label override (defaults to config.ariaLabel) */
-  ariaLabel?: string
+  ariaLabel?: string;
 }
 
 /**
@@ -57,26 +57,26 @@ export function MeasurementSlider({
   const displayConfig = useMemo(
     () => convertConfigToDisplayUnit(config, displayUnit),
     [config, displayUnit]
-  )
+  );
 
   // Convert canonical inches value to display unit value
   const displayValue = useMemo(() => {
-    const converted = fromCanonicalInches(value, displayUnit)
-    const decimals = DECIMAL_PLACES[displayUnit]
-    return Number(converted.toFixed(decimals))
-  }, [value, displayUnit])
+    const converted = fromCanonicalInches(value, displayUnit);
+    const decimals = DECIMAL_PLACES[displayUnit];
+    return Number(converted.toFixed(decimals));
+  }, [value, displayUnit]);
 
   // Handle slider change: convert from display unit back to inches
   const handleChange = useCallback(
     (newDisplayValue: number) => {
-      const canonicalInches = toCanonicalInches(newDisplayValue, displayUnit)
-      onChange(canonicalInches)
+      const canonicalInches = toCanonicalInches(newDisplayValue, displayUnit);
+      onChange(canonicalInches);
     },
     [displayUnit, onChange]
-  )
+  );
 
   // Get the unit suffix for display
-  const unitSuffix = getUnitSuffix(displayUnit)
+  const unitSuffix = getUnitSuffix(displayUnit);
 
   return (
     <SliderWithValue
@@ -89,5 +89,5 @@ export function MeasurementSlider({
       unit={unitSuffix}
       ariaLabel={ariaLabel || config.ariaLabel}
     />
-  )
+  );
 }

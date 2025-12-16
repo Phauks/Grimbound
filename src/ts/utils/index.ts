@@ -12,185 +12,167 @@
  * - compressionUtils: gzip compression/decompression for storage optimization
  */
 
-// String utilities
-export {
-    generateUniqueFilename,
-    sanitizeFilename,
-    capitalize
-} from './stringUtils.js';
-
-// Image utilities
-export {
-    loadImage,
-    loadLocalImage,
-    canvasToBlob,
-    downloadFile,
-    checkFontsLoaded,
-    applyCorsProxy
-} from './imageUtils.js';
-
-// JSON utilities
-export {
-    formatJson,
-    validateJson,
-    deepClone,
-    stripInternalFields,
-    getCleanJsonForExport,
-    condenseScript,
-    hasCondensableReferences
-} from './jsonUtils.js';
-
-// Storage utilities
-export {
-    STORAGE_KEYS,
-    getStorageItem,
-    setStorageItem,
-    removeStorageItem,
-    type StorageKey
-} from './storageKeys.js';
-
-// Color utilities
-export {
-    hexToRgb,
-    getContrastColor
-} from './colorUtils.js';
-
-// Async/timing utilities
-export {
-    shuffleArray,
-    debounce,
-    sleep
-} from './asyncUtils.js';
-
-// Progress tracking utilities
-export {
-    createProgressState,
-    updateProgress,
-    resetProgress,
-    getProgressPercentage
-} from './progressUtils.js';
-
-// Name generation utilities
-export {
-    generateRandomName,
-    generateMultipleNames,
-    nameToId,
-    generateUuid
-} from './nameGenerator.js';
-
-// Global image cache
-export { globalImageCache } from './imageCache.js';
-
-// Class name utilities
-export {
-    cn,
-    createVariantClasses
-} from './classNames.js';
-
-// Script sorting utilities
-export {
-    sortScriptBySAO,
-    sortScriptJsonBySAO,
-    isScriptSortedBySAO,
-    isScriptJsonSortedBySAO,
-    getScriptSortStats,
-    SAO_TEAM_ORDER,
-    SAO_ABILITY_PREFIXES
-} from './scriptSorting.js';
-
-// Compression utilities
-export {
-    isCompressionSupported,
-    compressString,
-    decompressBlob,
-    compressJSON,
-    decompressJSON,
-    getCompressionRatio,
-    getCompressionStats
-} from './compressionUtils.js';
-
-// Logger utilities
-export {
-    logger,
-    Logger,
-    ContextLogger,
-    LogLevel,
-    enableDebugLogging,
-    enableTimestamps
-} from './logger.js';
-
-// Error handling utilities
-export {
-    handleHookError,
-    clearHookError,
-    handleAsyncOperation,
-    retryOperation,
-    guardAgainstUndefined,
-    validateRequiredFields
-} from './errorUtils.js';
-
-// Text format analyzer utilities
-export {
-    analyzeReminderText,
-    normalizeReminderText,
-    hasFormatIssues,
-    getIssueSummary,
-    FORMAT_PATTERNS
-} from './textFormatAnalyzer.js';
-
+export type { TextSegment } from './abilityTextParser.js';
 // Ability text parser utilities (for bold [] rendering on tokens)
 export {
-    parseAbilityText,
-    hasSetupBrackets,
-    getLineSegments
+  getLineSegments,
+  hasSetupBrackets,
+  parseAbilityText,
 } from './abilityTextParser.js';
-
-// Character image resolution utilities (SSOT for all character icon resolution)
-export {
-    resolveCharacterImageUrl,
-    resolveCharacterImages,
-    isExternalUrl,
-    extractCharacterIdFromPath,
-    getFirstImageUrl
-} from './characterImageResolver.js';
-
-// Measurement utilities (SSOT for all unit conversions)
-export {
-    MM_PER_INCH,
-    STEP_SIZES,
-    DECIMAL_PLACES,
-    inchesToMm,
-    mmToInches,
-    inchesToPixels,
-    pixelsToInches,
-    toCanonicalInches,
-    fromCanonicalInches,
-    getUnitSuffix,
-    formatMeasurement,
-    roundToStep,
-    convertConfigToDisplayUnit,
-    ICON_OFFSET_CONFIG,
-    PDF_OFFSET_CONFIG,
-    BLEED_CONFIG
-} from './measurementUtils.js';
-
 // Re-export types
 export type { DebouncedFunction } from './asyncUtils.js';
-export type { ProgressCallback, ProgressState } from './progressUtils.js';
-export type { SortOrder, ScriptSortOptions } from './scriptSorting.js';
-export type { LoggerConfig } from './logger.js';
+// Async/timing utilities
+export {
+  debounce,
+  shuffleArray,
+  sleep,
+} from './asyncUtils.js';
 export type {
-    ErrorHandlingOptions,
-    AsyncOperationOptions,
-    RetryOptions
-} from './errorUtils.js';
-export type {
-    FormatPattern,
-    FormatIssue
-} from './textFormatAnalyzer.js';
-export type { TextSegment } from './abilityTextParser.js';
-export type {
-    ResolveOptions,
-    ResolvedImage,
-    BatchResolveResult
+  BatchResolveResult,
+  ResolvedImage,
+  ResolveOptions,
 } from './characterImageResolver.js';
+// Character image resolution utilities (SSOT for all character icon resolution)
+export {
+  extractCharacterIdFromPath,
+  getFirstImageUrl,
+  isExternalUrl,
+  resolveCharacterImages,
+  resolveCharacterImageUrl,
+} from './characterImageResolver.js';
+// Class name utilities
+export {
+  cn,
+  createVariantClasses,
+} from './classNames.js';
+// Color utilities
+export {
+  getContrastColor,
+  hexToRgb,
+} from './colorUtils.js';
+// Compression utilities
+export {
+  compressJSON,
+  compressString,
+  decompressBlob,
+  decompressJSON,
+  getCompressionRatio,
+  getCompressionStats,
+  isCompressionSupported,
+} from './compressionUtils.js';
+export type {
+  AsyncOperationOptions,
+  ErrorHandlingOptions,
+  RetryOptions,
+} from './errorUtils.js';
+// Error handling utilities
+export {
+  clearHookError,
+  guardAgainstUndefined,
+  handleAsyncOperation,
+  handleHookError,
+  retryOperation,
+  validateRequiredFields,
+} from './errorUtils.js';
+// Global image cache
+export { globalImageCache } from './imageCache.js';
+// Image utilities
+export {
+  applyCorsProxy,
+  canvasToBlob,
+  checkFontsLoaded,
+  downloadFile,
+  loadImage,
+  loadLocalImage,
+} from './imageUtils.js';
+// JSON utilities
+export {
+  condenseScript,
+  deepClone,
+  formatJson,
+  getCleanJsonForExport,
+  hasCondensableReferences,
+  stripInternalFields,
+  validateJson,
+} from './jsonUtils.js';
+export type { LoggerConfig } from './logger.js';
+// Logger utilities
+export {
+  ContextLogger,
+  enableDebugLogging,
+  enableTimestamps,
+  Logger,
+  LogLevel,
+  logger,
+} from './logger.js';
+// Measurement utilities (SSOT for all unit conversions)
+export {
+  BLEED_CONFIG,
+  convertConfigToDisplayUnit,
+  DECIMAL_PLACES,
+  formatMeasurement,
+  fromCanonicalInches,
+  getUnitSuffix,
+  ICON_OFFSET_CONFIG,
+  inchesToMm,
+  inchesToPixels,
+  MM_PER_INCH,
+  mmToInches,
+  PDF_OFFSET_CONFIG,
+  pixelsToInches,
+  roundToStep,
+  STEP_SIZES,
+  toCanonicalInches,
+} from './measurementUtils.js';
+// Name generation utilities
+export {
+  generateMultipleNames,
+  generateRandomName,
+  generateUuid,
+  nameToId,
+} from './nameGenerator.js';
+export type { ProgressCallback, ProgressState } from './progressUtils.js';
+// Progress tracking utilities
+export {
+  createProgressState,
+  getProgressPercentage,
+  resetProgress,
+  updateProgress,
+} from './progressUtils.js';
+export type { ScriptSortOptions, SortOrder } from './scriptSorting.js';
+// Script sorting utilities
+export {
+  getScriptSortStats,
+  isScriptJsonSortedBySAO,
+  isScriptSortedBySAO,
+  SAO_ABILITY_PREFIXES,
+  SAO_TEAM_ORDER,
+  sortScriptBySAO,
+  sortScriptJsonBySAO,
+} from './scriptSorting.js';
+// Storage utilities
+export {
+  getStorageItem,
+  removeStorageItem,
+  STORAGE_KEYS,
+  type StorageKey,
+  setStorageItem,
+} from './storageKeys.js';
+// String utilities
+export {
+  capitalize,
+  generateUniqueFilename,
+  sanitizeFilename,
+} from './stringUtils.js';
+export type {
+  FormatIssue,
+  FormatPattern,
+} from './textFormatAnalyzer.js';
+// Text format analyzer utilities
+export {
+  analyzeReminderText,
+  FORMAT_PATTERNS,
+  getIssueSummary,
+  hasFormatIssues,
+  normalizeReminderText,
+} from './textFormatAnalyzer.js';

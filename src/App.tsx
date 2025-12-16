@@ -1,48 +1,48 @@
-import { useState, useCallback, useEffect } from 'react'
-import { TokenProvider, useTokenContext } from './contexts/TokenContext'
-import { StudioProvider } from './contexts/StudioContext'
-import { ToastProvider } from './contexts/ToastContext'
-import { ProjectProvider, useProjectContext } from './contexts/ProjectContext'
-import { DownloadsProvider } from './contexts/DownloadsContext'
-import { AppHeader } from './components/Layout/AppHeader'
-import { useProjectAutoSave, useUnsavedChangesWarning } from './hooks/useProjectAutoSave'
-import { useStorageQuota } from './hooks/useStorageQuota'
-import { AppFooter } from './components/Layout/AppFooter'
-import { SettingsModal } from './components/Modals/SettingsModal'
-import { InfoModal } from './components/Modals/InfoModal'
-import { AnnouncementsModal } from './components/Modals/AnnouncementsModal'
-import { SyncDetailsModal } from './components/Modals/SyncDetailsModal'
-import { AssetManagerModal } from './components/Modals/AssetManagerModal'
-import { TabConflictModal } from './components/Modals/TabConflictModal'
-import { StorageWarning } from './components/Shared/Feedback/StorageWarning'
-import { ToastContainer } from './components/Shared/UI/Toast'
-import { DownloadsDrawer } from './components/Shared/Downloads'
-import { AppShell } from './components/Layout/AppShell'
-import { warmingPolicyManager } from './ts/cache/index.js'
-import { logger } from './ts/utils/logger.js'
-import layoutStyles from './styles/components/layout/AppLayout.module.css'
+import { useCallback, useEffect, useState } from 'react';
+import { AppFooter } from './components/Layout/AppFooter';
+import { AppHeader } from './components/Layout/AppHeader';
+import { AppShell } from './components/Layout/AppShell';
+import { AnnouncementsModal } from './components/Modals/AnnouncementsModal';
+import { AssetManagerModal } from './components/Modals/AssetManagerModal';
+import { InfoModal } from './components/Modals/InfoModal';
+import { SettingsModal } from './components/Modals/SettingsModal';
+import { SyncDetailsModal } from './components/Modals/SyncDetailsModal';
+import { TabConflictModal } from './components/Modals/TabConflictModal';
+import { DownloadsDrawer } from './components/Shared/Downloads';
+import { StorageWarning } from './components/Shared/Feedback/StorageWarning';
+import { ToastContainer } from './components/Shared/UI/Toast';
+import { DownloadsProvider } from './contexts/DownloadsContext';
+import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
+import { StudioProvider } from './contexts/StudioContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { TokenProvider, useTokenContext } from './contexts/TokenContext';
+import { useProjectAutoSave, useUnsavedChangesWarning } from './hooks/useProjectAutoSave';
+import { useStorageQuota } from './hooks/useStorageQuota';
+import layoutStyles from './styles/components/layout/AppLayout.module.css';
+import { warmingPolicyManager } from './ts/cache/index.js';
+import { logger } from './ts/utils/logger.js';
 
 function AppContent() {
-  const { currentProject, setSaveNow } = useProjectContext()
-  const { generationOptions } = useTokenContext()
+  const { currentProject, setSaveNow } = useProjectContext();
+  const { generationOptions } = useTokenContext();
 
   // Enable auto-save and unsaved changes warning
-  const { saveNow, conflictModalProps } = useProjectAutoSave() // Auto-save always enabled
-  useUnsavedChangesWarning()
+  const { saveNow, conflictModalProps } = useProjectAutoSave(); // Auto-save always enabled
+  useUnsavedChangesWarning();
 
   // Expose saveNow to context for AutoSaveIndicator
   useEffect(() => {
     if (setSaveNow && saveNow) {
-      setSaveNow(saveNow)
+      setSaveNow(saveNow);
     }
-  }, [saveNow, setSaveNow])
+  }, [saveNow, setSaveNow]);
 
   // Monitor storage quota
   const { warning, cleanup } = useStorageQuota({
     checkInterval: 5 * 60 * 1000, // Check every 5 minutes
-    warningThreshold: 80,          // Warn at 80%
-    criticalThreshold: 90          // Critical at 90%
-  })
+    warningThreshold: 80, // Warn at 80%
+    criticalThreshold: 90, // Critical at 90%
+  });
 
   // Warm caches on app start (runs once)
   useEffect(() => {
@@ -50,16 +50,13 @@ function AppContent() {
       try {
         logger.debug('App', 'Warming caches on app start');
 
-        await warmingPolicyManager.warm(
-          { route: '/' },
-          (policy, loaded, total, message) => {
-            logger.debug('App', `Warming progress - ${policy}:`, {
-              loaded,
-              total,
-              message
-            });
-          }
-        );
+        await warmingPolicyManager.warm({ route: '/' }, (policy, loaded, total, message) => {
+          logger.debug('App', `Warming progress - ${policy}:`, {
+            loaded,
+            total,
+            message,
+          });
+        });
 
         logger.debug('App', 'App start cache warming complete');
       } catch (error) {
@@ -77,22 +74,22 @@ function AppContent() {
   }, []); // Empty deps = run only once on mount
 
   // Modal states
-  const [showSettings, setShowSettings] = useState(false)
-  const [showInfo, setShowInfo] = useState(false)
-  const [showAnnouncements, setShowAnnouncements] = useState(false)
-  const [showSyncDetails, setShowSyncDetails] = useState(false)
-  const [showAssetManager, setShowAssetManager] = useState(false)
+  const [showSettings, setShowSettings] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [showSyncDetails, setShowSyncDetails] = useState(false);
+  const [showAssetManager, setShowAssetManager] = useState(false);
 
   // Disable default right-click menu app-wide, except for text inputs
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement
-    const tagName = target.tagName.toLowerCase()
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
     // Allow default context menu for text inputs (copy/paste functionality)
     if (tagName === 'textarea' || tagName === 'input') {
-      return
+      return;
     }
-    e.preventDefault()
-  }, [])
+    e.preventDefault();
+  }, []);
 
   return (
     <div className={layoutStyles.appContainer} onContextMenu={handleContextMenu}>
@@ -142,7 +139,7 @@ function AppContent() {
       {/* Downloads Drawer - slides in from right edge */}
       <DownloadsDrawer />
     </div>
-  )
+  );
 }
 
 export default function App() {
@@ -158,5 +155,5 @@ export default function App() {
         </TokenProvider>
       </ProjectProvider>
     </ToastProvider>
-  )
+  );
 }

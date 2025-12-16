@@ -42,7 +42,7 @@ function adjustBrightness(imageData: ImageData, value: number): ImageData {
   const adjustment = (value / 100) * 255; // -100 to +100 -> -255 to +255
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = Math.max(0, Math.min(255, data[i] + adjustment));     // R
+    data[i] = Math.max(0, Math.min(255, data[i] + adjustment)); // R
     data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + adjustment)); // G
     data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + adjustment)); // B
   }
@@ -162,7 +162,7 @@ function invertColors(imageData: ImageData): ImageData {
   const data = imageData.data;
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = 255 - data[i];         // R
+    data[i] = 255 - data[i]; // R
     data[i + 1] = 255 - data[i + 1]; // G
     data[i + 2] = 255 - data[i + 2]; // B
   }
@@ -185,7 +185,10 @@ function applyBlur(imageData: ImageData, radius: number): ImageData {
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0,
+        aSum = 0;
 
       // Sample kernel area
       for (let ky = -r; ky <= r; ky++) {
@@ -222,15 +225,13 @@ function applySharpen(imageData: ImageData, amount: number): ImageData {
   const outputData = new Uint8ClampedArray(data);
 
   // Sharpen kernel (unsharp mask approximation)
-  const kernel = [
-    0, -amount, 0,
-    -amount, 1 + 4 * amount, -amount,
-    0, -amount, 0,
-  ];
+  const kernel = [0, -amount, 0, -amount, 1 + 4 * amount, -amount, 0, -amount, 0];
 
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      let r = 0, g = 0, b = 0;
+      let r = 0,
+        g = 0,
+        b = 0;
 
       // Apply kernel
       for (let ky = -1; ky <= 1; ky++) {

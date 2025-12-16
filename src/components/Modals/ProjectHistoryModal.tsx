@@ -11,189 +11,199 @@
  * - Restore functionality for both versions and snapshots
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Modal } from '../Shared/ModalBase/Modal'
-import { Button } from '../Shared/UI/Button'
-import { projectDb } from '../../ts/db/projectDb'
-import { calculateProjectDiff, getDiffSummary } from '../../ts/utils/projectDiff'
-import { useProjects } from '../../hooks/useProjects'
-import { useToast } from '../../contexts/ToastContext'
-import { logger } from '../../ts/utils/logger'
-import type { Project, ProjectVersion, AutoSaveSnapshot, ProjectState } from '../../ts/types/project'
-import styles from '../../styles/components/modals/ProjectHistoryModal.module.css'
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { useProjects } from '../../hooks/useProjects';
+import styles from '../../styles/components/modals/ProjectHistoryModal.module.css';
+import { projectDb } from '../../ts/db/projectDb';
+import type { AutoSaveSnapshot, Project, ProjectVersion } from '../../ts/types/project';
+import { logger } from '../../ts/utils/logger';
+import { calculateProjectDiff, getDiffSummary } from '../../ts/utils/projectDiff';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Button } from '../Shared/UI/Button';
 
 interface ProjectHistoryModalProps {
-  isOpen: boolean
-  onClose: () => void
-  project: Project
+  isOpen: boolean;
+  onClose: () => void;
+  project: Project;
 }
 
 type TimelineItem =
   | { type: 'version'; data: ProjectVersion; timestamp: number }
-  | { type: 'snapshot'; data: AutoSaveSnapshot; timestamp: number }
+  | { type: 'snapshot'; data: AutoSaveSnapshot; timestamp: number };
 
-type TimelineTab = 'all' | 'versions' | 'snapshots'
+type TimelineTab = 'all' | 'versions' | 'snapshots';
 
 export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistoryModalProps) {
-  const { updateProject } = useProjects()
-  const { addToast } = useToast()
+  const { updateProject } = useProjects();
+  const { addToast } = useToast();
 
-  const [versions, setVersions] = useState<ProjectVersion[]>([])
-  const [snapshots, setSnapshots] = useState<AutoSaveSnapshot[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null)
-  const [activeTab, setActiveTab] = useState<TimelineTab>('all')
+  const [versions, setVersions] = useState<ProjectVersion[]>([]);
+  const [snapshots, setSnapshots] = useState<AutoSaveSnapshot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
+  const [activeTab, setActiveTab] = useState<TimelineTab>('all');
 
-  // Load history on mount
-  useEffect(() => {
-    if (isOpen) {
-      loadHistory()
-    }
-  }, [isOpen, project.id])
+  // Load auto-save snapshots from database
+  const loadAutoSaveSnapshots = useCallback(
+    async (projectId: string): Promise<AutoSaveSnapshot[]> => {
+      const dbSnapshots = await projectDb.autoSaveSnapshots
+        .where('projectId')
+        .equals(projectId)
+        .reverse()
+        .sortBy('timestamp');
 
-  const loadHistory = async () => {
+      return dbSnapshots.map((snap) => ({
+        id: snap.id,
+        projectId: snap.projectId,
+        timestamp: snap.timestamp,
+        stateSnapshot: JSON.parse(snap.stateJson),
+      }));
+    },
+    []
+  );
+
+  const loadHistory = useCallback(async () => {
     try {
-      setIsLoading(true)
-      logger.info('ProjectHistoryModal', 'Loading history', { projectId: project.id })
+      setIsLoading(true);
+      logger.info('ProjectHistoryModal', 'Loading history', { projectId: project.id });
 
       const [loadedVersions, loadedSnapshots] = await Promise.all([
         projectDb.loadProjectVersions(project.id),
         loadAutoSaveSnapshots(project.id),
-      ])
+      ]);
 
-      setVersions(loadedVersions)
-      setSnapshots(loadedSnapshots)
-      logger.info('ProjectHistoryModal', `Loaded ${loadedVersions.length} versions, ${loadedSnapshots.length} snapshots`)
+      setVersions(loadedVersions);
+      setSnapshots(loadedSnapshots);
+      logger.info(
+        'ProjectHistoryModal',
+        `Loaded ${loadedVersions.length} versions, ${loadedSnapshots.length} snapshots`
+      );
     } catch (error) {
-      logger.error('ProjectHistoryModal', 'Failed to load history', error)
-      addToast('Failed to load project history', 'error')
+      logger.error('ProjectHistoryModal', 'Failed to load history', error);
+      addToast('Failed to load project history', 'error');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }, [project.id, addToast, loadAutoSaveSnapshots]);
 
-  // Load auto-save snapshots from database
-  const loadAutoSaveSnapshots = async (projectId: string): Promise<AutoSaveSnapshot[]> => {
-    const dbSnapshots = await projectDb.autoSaveSnapshots
-      .where('projectId')
-      .equals(projectId)
-      .reverse()
-      .sortBy('timestamp')
-
-    return dbSnapshots.map(snap => ({
-      id: snap.id,
-      projectId: snap.projectId,
-      timestamp: snap.timestamp,
-      stateSnapshot: JSON.parse(snap.stateJson),
-    }))
-  }
+  // Load history on mount
+  useEffect(() => {
+    if (isOpen) {
+      loadHistory();
+    }
+  }, [isOpen, loadHistory]);
 
   // Combine and sort timeline items, filtered by active tab
   const timeline = useMemo(() => {
-    let items: TimelineItem[] = []
+    const items: TimelineItem[] = [];
 
     // Filter based on active tab
     if (activeTab === 'all' || activeTab === 'versions') {
-      items.push(...versions.map(v => ({ type: 'version' as const, data: v, timestamp: v.createdAt })))
+      items.push(
+        ...versions.map((v) => ({ type: 'version' as const, data: v, timestamp: v.createdAt }))
+      );
     }
     if (activeTab === 'all' || activeTab === 'snapshots') {
-      items.push(...snapshots.map(s => ({ type: 'snapshot' as const, data: s, timestamp: s.timestamp })))
+      items.push(
+        ...snapshots.map((s) => ({ type: 'snapshot' as const, data: s, timestamp: s.timestamp }))
+      );
     }
 
-    return items.sort((a, b) => b.timestamp - a.timestamp)
-  }, [versions, snapshots, activeTab])
+    return items.sort((a, b) => b.timestamp - a.timestamp);
+  }, [versions, snapshots, activeTab]);
 
   // Calculate diff for selected item
   const selectedDiff = useMemo(() => {
-    if (!selectedItem) return null
+    if (!selectedItem) return null;
 
-    const itemState = selectedItem.type === 'version'
-      ? selectedItem.data.stateSnapshot
-      : selectedItem.data.stateSnapshot
+    const itemState =
+      selectedItem.type === 'version'
+        ? selectedItem.data.stateSnapshot
+        : selectedItem.data.stateSnapshot;
 
-    return calculateProjectDiff(itemState, project.state)
-  }, [selectedItem, project.state])
+    return calculateProjectDiff(itemState, project.state);
+  }, [selectedItem, project.state]);
 
   const handleRestore = async (item: TimelineItem) => {
-    const itemType = item.type === 'version' ? 'version' : 'snapshot'
-    const itemLabel = item.type === 'version'
-      ? `version ${item.data.versionNumber}`
-      : `snapshot from ${formatTimestamp(item.timestamp)}`
+    const itemType = item.type === 'version' ? 'version' : 'snapshot';
+    const itemLabel =
+      item.type === 'version'
+        ? `version ${item.data.versionNumber}`
+        : `snapshot from ${formatTimestamp(item.timestamp)}`;
 
     if (!confirm(`Restore project to ${itemLabel}? Your current state will be replaced.`)) {
-      return
+      return;
     }
 
     try {
       logger.info('ProjectHistoryModal', `Restoring ${itemType}`, {
         projectId: project.id,
         itemId: item.data.id,
-      })
+      });
 
-      const stateToRestore = item.type === 'version'
-        ? item.data.stateSnapshot
-        : item.data.stateSnapshot
+      const stateToRestore =
+        item.type === 'version' ? item.data.stateSnapshot : item.data.stateSnapshot;
 
       await updateProject(project.id, {
         state: stateToRestore,
-      })
+      });
 
-      addToast(`Restored to ${itemLabel}`, 'success')
-      onClose()
+      addToast(`Restored to ${itemLabel}`, 'success');
+      onClose();
     } catch (error) {
-      logger.error('ProjectHistoryModal', `Failed to restore ${itemType}`, error)
-      addToast(`Failed to restore ${itemType}`, 'error')
+      logger.error('ProjectHistoryModal', `Failed to restore ${itemType}`, error);
+      addToast(`Failed to restore ${itemType}`, 'error');
     }
-  }
+  };
 
   const handleDeleteVersion = async (versionId: string) => {
     if (!confirm('Delete this version? This cannot be undone.')) {
-      return
+      return;
     }
 
     try {
-      await projectDb.deleteProjectVersion(versionId)
-      await loadHistory()
-      setSelectedItem(null)
-      addToast('Version deleted', 'success')
+      await projectDb.deleteProjectVersion(versionId);
+      await loadHistory();
+      setSelectedItem(null);
+      addToast('Version deleted', 'success');
     } catch (error) {
-      logger.error('ProjectHistoryModal', 'Failed to delete version', error)
-      addToast('Failed to delete version', 'error')
+      logger.error('ProjectHistoryModal', 'Failed to delete version', error);
+      addToast('Failed to delete version', 'error');
     }
-  }
+  };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Project History"
-      size="large"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Project History" size="large">
       <div className={styles.container}>
         {/* Left Panel: Timeline */}
         <div className={styles.timeline}>
           <div className={styles.timelineHeader}>
             <h3>Timeline</h3>
             <p className={styles.timelineCount}>
-              {versions.length} version{versions.length !== 1 ? 's' : ''}, {snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''}
+              {versions.length} version{versions.length !== 1 ? 's' : ''}, {snapshots.length}{' '}
+              snapshot{snapshots.length !== 1 ? 's' : ''}
             </p>
           </div>
 
           {/* Tab Navigation */}
           <div className={styles.tabNav}>
             <button
+              type="button"
               className={`${styles.tab} ${activeTab === 'all' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('all')}
             >
               All ({versions.length + snapshots.length})
             </button>
             <button
+              type="button"
               className={`${styles.tab} ${activeTab === 'versions' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('versions')}
             >
               🏷️ Versions ({versions.length})
             </button>
             <button
+              type="button"
               className={`${styles.tab} ${activeTab === 'snapshots' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('snapshots')}
             >
@@ -219,7 +229,9 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
                   isSelected={selectedItem?.data.id === item.data.id}
                   onSelect={() => setSelectedItem(item)}
                   onRestore={() => handleRestore(item)}
-                  onDelete={item.type === 'version' ? () => handleDeleteVersion(item.data.id) : undefined}
+                  onDelete={
+                    item.type === 'version' ? () => handleDeleteVersion(item.data.id) : undefined
+                  }
                 />
               ))}
             </div>
@@ -240,9 +252,7 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
                     ? `Version ${selectedItem.data.versionNumber}`
                     : 'Auto-Save Snapshot'}
                 </h3>
-                <p className={styles.detailsTimestamp}>
-                  {formatTimestamp(selectedItem.timestamp)}
-                </p>
+                <p className={styles.detailsTimestamp}>{formatTimestamp(selectedItem.timestamp)}</p>
               </div>
 
               {/* Release Notes (versions only) */}
@@ -272,19 +282,26 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
                           {selectedDiff.characters.added.length > 0 && (
                             <div className={styles.diffItem}>
                               <span className={styles.diffLabel}>Added:</span>
-                              <span>{selectedDiff.characters.added.map(c => c.name).join(', ')}</span>
+                              <span>
+                                {selectedDiff.characters.added.map((c) => c.name).join(', ')}
+                              </span>
                             </div>
                           )}
                           {selectedDiff.characters.removed.length > 0 && (
                             <div className={styles.diffItem}>
                               <span className={styles.diffLabel}>Removed:</span>
-                              <span>{selectedDiff.characters.removed.map(c => c.name).join(', ')}</span>
+                              <span>
+                                {selectedDiff.characters.removed.map((c) => c.name).join(', ')}
+                              </span>
                             </div>
                           )}
                           {selectedDiff.characters.modified.length > 0 && (
                             <div className={styles.diffItem}>
                               <span className={styles.diffLabel}>Modified:</span>
-                              <span>{selectedDiff.characters.modified.length} character{selectedDiff.characters.modified.length !== 1 ? 's' : ''}</span>
+                              <span>
+                                {selectedDiff.characters.modified.length} character
+                                {selectedDiff.characters.modified.length !== 1 ? 's' : ''}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -297,7 +314,10 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
                           {selectedDiff.scriptMeta.fields.name && (
                             <div className={styles.diffItem}>
                               <span className={styles.diffLabel}>Name:</span>
-                              <span>{selectedDiff.scriptMeta.fields.name.old || '(none)'} → {selectedDiff.scriptMeta.fields.name.new || '(none)'}</span>
+                              <span>
+                                {selectedDiff.scriptMeta.fields.name.old || '(none)'} →{' '}
+                                {selectedDiff.scriptMeta.fields.name.new || '(none)'}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -311,7 +331,7 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
         </div>
       </div>
     </Modal>
-  )
+  );
 }
 
 // ==========================================================================
@@ -319,15 +339,21 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
 // ==========================================================================
 
 interface TimelineItemCardProps {
-  item: TimelineItem
-  isSelected: boolean
-  onSelect: () => void
-  onRestore: () => void
-  onDelete?: () => void
+  item: TimelineItem;
+  isSelected: boolean;
+  onSelect: () => void;
+  onRestore: () => void;
+  onDelete?: () => void;
 }
 
-function TimelineItemCard({ item, isSelected, onSelect, onRestore, onDelete }: TimelineItemCardProps) {
-  const isVersion = item.type === 'version'
+function TimelineItemCard({
+  item,
+  isSelected,
+  onSelect,
+  onRestore,
+  onDelete,
+}: TimelineItemCardProps) {
+  const isVersion = item.type === 'version';
 
   return (
     <div
@@ -356,17 +382,31 @@ function TimelineItemCard({ item, isSelected, onSelect, onRestore, onDelete }: T
       )}
 
       <div className={styles.itemActions}>
-        <Button variant="secondary" size="small" onClick={(e) => { e.stopPropagation(); onRestore(); }}>
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRestore();
+          }}
+        >
           ↩️ Restore
         </Button>
         {onDelete && (
-          <Button variant="danger" size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+          <Button
+            variant="danger"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
             🗑️ Delete
           </Button>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ==========================================================================
@@ -374,19 +414,19 @@ function TimelineItemCard({ item, isSelected, onSelect, onRestore, onDelete }: T
 // ==========================================================================
 
 function formatTimestamp(timestamp: number): string {
-  const date = new Date(timestamp)
-  const now = Date.now()
-  const diff = now - timestamp
+  const date = new Date(timestamp);
+  const now = Date.now();
+  const diff = now - timestamp;
 
-  if (diff < 60000) return 'Just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
 
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  })
+  });
 }

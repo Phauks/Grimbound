@@ -16,8 +16,8 @@
  * @module cache/utils/AdaptiveWorkerPool
  */
 
-import { WorkerPool, type WorkerPoolOptions } from './WorkerPool.js';
 import { logger } from '../../utils/logger.js';
+import { WorkerPool, type WorkerPoolOptions } from './WorkerPool.js';
 
 /**
  * Configuration for adaptive worker pool
@@ -92,10 +92,7 @@ export class AdaptiveWorkerPool extends WorkerPool {
     const maxWorkers = options.maxWorkers ?? maxCores;
 
     // Start with half of max workers as initial count
-    const initialWorkerCount = Math.max(
-      minWorkers,
-      Math.min(Math.floor(maxWorkers / 2), maxCores)
-    );
+    const initialWorkerCount = Math.max(minWorkers, Math.min(Math.floor(maxWorkers / 2), maxCores));
 
     // Initialize parent with initial worker count
     super({ ...options, workerCount: initialWorkerCount });
@@ -156,7 +153,8 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // High memory pressure - scale down
       if (this.currentWorkerCount > this.minWorkers) {
         this.scaleDown();
-        logger.debug('AdaptiveWorkerPool',
+        logger.debug(
+          'AdaptiveWorkerPool',
           `[AdaptiveWorkerPool] Scaling down due to memory pressure: ${(memory.pressure * 100).toFixed(1)}%`
         );
       }
@@ -164,7 +162,8 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // Low memory pressure + growing queue - scale up
       if (this.currentWorkerCount < this.maxWorkers) {
         this.scaleUp();
-        logger.debug('AdaptiveWorkerPool',
+        logger.debug(
+          'AdaptiveWorkerPool',
           `[AdaptiveWorkerPool] Scaling up due to queue length: ${stats.queuedTasks} tasks`
         );
       }
@@ -172,7 +171,7 @@ export class AdaptiveWorkerPool extends WorkerPool {
       // All idle - gradually scale down to min
       if (this.currentWorkerCount > this.minWorkers) {
         this.scaleDown();
-        logger.debug('AdaptiveWorkerPool','[AdaptiveWorkerPool] Scaling down due to idle workers');
+        logger.debug('AdaptiveWorkerPool', '[AdaptiveWorkerPool] Scaling down due to idle workers');
       }
     }
   }
@@ -300,7 +299,8 @@ export class AdaptiveWorkerPool extends WorkerPool {
       memoryPressure: memory.pressure,
       memoryPressurePercent: `${(memory.pressure * 100).toFixed(1)}%`,
       autoScalingEnabled: this.enableAutoScaling,
-      canScaleUp: this.currentWorkerCount < this.maxWorkers && memory.pressure < this.memoryPressureThreshold,
+      canScaleUp:
+        this.currentWorkerCount < this.maxWorkers && memory.pressure < this.memoryPressureThreshold,
       canScaleDown: this.currentWorkerCount > this.minWorkers,
     };
   }

@@ -3,26 +3,26 @@
  * Implements ICacheStrategy with automatic eviction based on LRU policy.
  */
 
+import { logger } from '../../utils/logger.js';
 import type {
+  CacheEntry,
+  CacheOptions,
+  CacheStats,
   ICacheStrategy,
   IEvictionPolicy,
-  CacheEntry,
-  CacheStats,
-  CacheOptions
-} from '../core/index.js'
-import { estimateSize } from '../utils/memoryEstimator.js'
-import { logger } from '../../utils/logger.js'
+} from '../core/index.js';
+import { estimateSize } from '../utils/memoryEstimator.js';
 
 /**
  * Eviction event data
  */
 export interface EvictionEvent<V = any> {
-  key: string
-  reason: 'lru' | 'ttl' | 'manual'
-  size: number
-  lastAccessed: number
-  accessCount: number
-  value?: V
+  key: string;
+  reason: 'lru' | 'ttl' | 'manual';
+  size: number;
+  lastAccessed: number;
+  accessCount: number;
+  value?: V;
 }
 
 /**
@@ -30,13 +30,13 @@ export interface EvictionEvent<V = any> {
  */
 export interface LRUCacheAdapterOptions {
   /** Maximum number of entries (optional, unlimited if not set) */
-  maxSize?: number
+  maxSize?: number;
   /** Maximum memory in bytes (optional, unlimited if not set) */
-  maxMemory?: number
+  maxMemory?: number;
   /** Eviction policy to use */
-  evictionPolicy: IEvictionPolicy
+  evictionPolicy: IEvictionPolicy;
   /** Callback fired when entries are evicted */
-  onEvict?: (event: EvictionEvent) => void
+  onEvict?: (event: EvictionEvent) => void;
 }
 
 /**
@@ -44,8 +44,8 @@ export interface LRUCacheAdapterOptions {
  * Implements ICacheStrategy port with automatic eviction.
  */
 export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V> {
-  private cache = new Map<K, CacheEntry<V>>()
-  private tagIndex = new Map<string, Set<K>>()  // tag → keys mapping for selective invalidation
+  private cache = new Map<K, CacheEntry<V>>();
+  private tagIndex = new Map<string, Set<K>>(); // tag → keys mapping for selective invalidation
   private stats: CacheStats = {
     size: 0,
     memoryUsage: 0,
@@ -54,21 +54,21 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
     hitCount: 0,
     missCount: 0,
     evictionCount: 0,
-    hitRate: 0
-  }
+    hitRate: 0,
+  };
 
   constructor(private options: LRUCacheAdapterOptions) {
-    this.stats.maxSize = options.maxSize
-    this.stats.maxMemory = options.maxMemory
+    this.stats.maxSize = options.maxSize;
+    this.stats.maxMemory = options.maxMemory;
   }
 
   async get(key: K): Promise<CacheEntry<V> | null> {
-    const entry = this.cache.get(key)
+    const entry = this.cache.get(key);
 
     if (!entry) {
-      this.stats.missCount++
-      this.updateHitRate()
-      return null
+      this.stats.missCount++;
+      this.updateHitRate();
+      return null;
     }
 
     // Check if expired
@@ -81,28 +81,28 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
           size: entry.size,
           lastAccessed: entry.lastAccessed,
           accessCount: entry.accessCount,
-        })
+        });
       }
 
-      await this.delete(key)
-      this.stats.missCount++
-      this.updateHitRate()
-      return null
+      await this.delete(key);
+      this.stats.missCount++;
+      this.updateHitRate();
+      return null;
     }
 
     // Update access tracking
-    entry.lastAccessed = Date.now()
-    entry.accessCount++
-    this.options.evictionPolicy.recordAccess(String(key))
+    entry.lastAccessed = Date.now();
+    entry.accessCount++;
+    this.options.evictionPolicy.recordAccess(String(key));
 
-    this.stats.hitCount++
-    this.updateHitRate()
+    this.stats.hitCount++;
+    this.updateHitRate();
 
-    return entry
+    return entry;
   }
 
   async set(key: K, value: V, options?: CacheOptions): Promise<void> {
-    const size = estimateSize(value)
+    const size = estimateSize(value);
     const entry: CacheEntry<V> = {
       value,
       key: String(key),
@@ -112,89 +112,91 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
       accessCount: 0,
       ttl: options?.ttl,
       tags: options?.tags,
-      metadata: options?.metadata
-    }
+      metadata: options?.metadata,
+    };
 
     // If key exists, remove old tag associations
-    const existingEntry = this.cache.get(key)
+    const existingEntry = this.cache.get(key);
     if (existingEntry) {
-      this.removeTagAssociations(key, existingEntry.tags)
-      this.stats.memoryUsage -= existingEntry.size
-      this.stats.size--
+      this.removeTagAssociations(key, existingEntry.tags);
+      this.stats.memoryUsage -= existingEntry.size;
+      this.stats.size--;
     }
 
     // Add new tag associations
     if (options?.tags) {
-      this.addTagAssociations(key, options.tags)
+      this.addTagAssociations(key, options.tags);
     }
 
-    this.cache.set(key, entry)
-    this.stats.size++
-    this.stats.memoryUsage += size
+    this.cache.set(key, entry);
+    this.stats.size++;
+    this.stats.memoryUsage += size;
 
-    this.options.evictionPolicy.recordInsertion(String(key), size)
+    this.options.evictionPolicy.recordInsertion(String(key), size);
 
     // Auto-evict if needed
     if (this.options.evictionPolicy.shouldEvict(this.stats)) {
-      await this.evict()
+      await this.evict();
     }
   }
 
   has(key: K): boolean {
-    const entry = this.cache.get(key)
-    if (!entry) return false
+    const entry = this.cache.get(key);
+    if (!entry) return false;
 
     // Check expiration
     if (entry.ttl && Date.now() - entry.createdAt > entry.ttl) {
       // Don't await - let next get() handle it
-      this.delete(key).catch((error) => logger.error('LRUCacheAdapter', 'Failed to delete expired entry', error))
-      return false
+      this.delete(key).catch((error) =>
+        logger.error('LRUCacheAdapter', 'Failed to delete expired entry', error)
+      );
+      return false;
     }
 
-    return true
+    return true;
   }
 
   async delete(key: K): Promise<void> {
-    const entry = this.cache.get(key)
-    if (!entry) return
+    const entry = this.cache.get(key);
+    if (!entry) return;
 
     // Remove tag associations
-    this.removeTagAssociations(key, entry.tags)
+    this.removeTagAssociations(key, entry.tags);
 
-    this.cache.delete(key)
-    this.stats.size--
-    this.stats.memoryUsage -= entry.size
-    this.options.evictionPolicy.recordRemoval(String(key))
+    this.cache.delete(key);
+    this.stats.size--;
+    this.stats.memoryUsage -= entry.size;
+    this.options.evictionPolicy.recordRemoval(String(key));
   }
 
   async clear(): Promise<void> {
-    this.cache.clear()
-    this.tagIndex.clear()
-    this.stats.size = 0
-    this.stats.memoryUsage = 0
-    this.stats.evictionCount = 0
-    this.stats.hitCount = 0
-    this.stats.missCount = 0
-    this.stats.hitRate = 0
-    this.options.evictionPolicy.reset()
+    this.cache.clear();
+    this.tagIndex.clear();
+    this.stats.size = 0;
+    this.stats.memoryUsage = 0;
+    this.stats.evictionCount = 0;
+    this.stats.hitCount = 0;
+    this.stats.missCount = 0;
+    this.stats.hitRate = 0;
+    this.options.evictionPolicy.reset();
   }
 
   getStats(): CacheStats {
-    return { ...this.stats }
+    return { ...this.stats };
   }
 
   async evict(): Promise<number> {
     // Convert Map<K, CacheEntry<V>> to Map<string, CacheEntry<V>> for policy
-    const stringKeyedCache = new Map<string, CacheEntry<V>>()
+    const stringKeyedCache = new Map<string, CacheEntry<V>>();
     for (const [key, entry] of this.cache) {
-      stringKeyedCache.set(String(key), entry)
+      stringKeyedCache.set(String(key), entry);
     }
 
-    const victims = this.options.evictionPolicy.selectVictims(stringKeyedCache)
+    const victims = this.options.evictionPolicy.selectVictims(stringKeyedCache);
 
     for (const key of victims) {
       // Get entry before deletion to emit event
-      const entry = this.cache.get(key as K)
+      const entry = this.cache.get(key as K);
 
       // Emit eviction event before deletion
       if (entry && this.options.onEvict) {
@@ -204,55 +206,55 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
           size: entry.size,
           lastAccessed: entry.lastAccessed,
           accessCount: entry.accessCount,
-        })
+        });
       }
 
-      await this.delete(key as K)
+      await this.delete(key as K);
     }
 
-    this.stats.evictionCount += victims.length
-    return victims.length
+    this.stats.evictionCount += victims.length;
+    return victims.length;
   }
 
   keys(): K[] {
-    return Array.from(this.cache.keys())
+    return Array.from(this.cache.keys());
   }
 
   async invalidateByTag(tag: string): Promise<number> {
-    const keys = this.tagIndex.get(tag)
+    const keys = this.tagIndex.get(tag);
     if (!keys || keys.size === 0) {
-      return 0
+      return 0;
     }
 
-    let count = 0
+    let count = 0;
     // Create array copy since delete modifies the set
-    const keysToDelete = Array.from(keys)
+    const keysToDelete = Array.from(keys);
     for (const key of keysToDelete) {
-      await this.delete(key)
-      count++
+      await this.delete(key);
+      count++;
     }
 
     // Tag index entry is cleaned up by delete() method
-    this.tagIndex.delete(tag)
+    this.tagIndex.delete(tag);
 
-    return count
+    return count;
   }
 
   async getByTag(tag: string): Promise<Array<CacheEntry<V>>> {
-    const keys = this.tagIndex.get(tag)
+    const keys = this.tagIndex.get(tag);
     if (!keys || keys.size === 0) {
-      return []
+      return [];
     }
 
-    const entries: Array<CacheEntry<V>> = []
+    const entries: Array<CacheEntry<V>> = [];
     for (const key of keys) {
-      const entry = this.cache.get(key)
+      const entry = this.cache.get(key);
       if (entry) {
-        entries.push(entry)
+        entries.push(entry);
       }
     }
 
-    return entries
+    return entries;
   }
 
   /**
@@ -261,13 +263,13 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
    * @param tags - Tags to associate with key
    */
   private addTagAssociations(key: K, tags?: string[]): void {
-    if (!tags || tags.length === 0) return
+    if (!tags || tags.length === 0) return;
 
     for (const tag of tags) {
       if (!this.tagIndex.has(tag)) {
-        this.tagIndex.set(tag, new Set())
+        this.tagIndex.set(tag, new Set());
       }
-      this.tagIndex.get(tag)!.add(key)
+      this.tagIndex.get(tag)!.add(key);
     }
   }
 
@@ -277,22 +279,22 @@ export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V
    * @param tags - Tags to remove associations for
    */
   private removeTagAssociations(key: K, tags?: string[]): void {
-    if (!tags || tags.length === 0) return
+    if (!tags || tags.length === 0) return;
 
     for (const tag of tags) {
-      const keys = this.tagIndex.get(tag)
+      const keys = this.tagIndex.get(tag);
       if (keys) {
-        keys.delete(key)
+        keys.delete(key);
         // Clean up empty tag sets
         if (keys.size === 0) {
-          this.tagIndex.delete(tag)
+          this.tagIndex.delete(tag);
         }
       }
     }
   }
 
   private updateHitRate(): void {
-    const total = this.stats.hitCount + this.stats.missCount
-    this.stats.hitRate = total > 0 ? this.stats.hitCount / total : 0
+    const total = this.stats.hitCount + this.stats.missCount;
+    this.stats.hitRate = total > 0 ? this.stats.hitCount / total : 0;
   }
 }

@@ -3,32 +3,32 @@
  * Canvas Utilities - Reusable canvas helper functions
  */
 
-import { DEFAULT_COLORS, TEXT_SHADOW, ABILITY_TEXT_SHADOW } from '../constants.js';
+import { ABILITY_TEXT_SHADOW, DEFAULT_COLORS, TEXT_SHADOW } from '../constants.js';
 
 /**
  * Point interface for x, y coordinates
  */
 export interface Point {
-    x: number;
-    y: number;
+  x: number;
+  y: number;
 }
 
 /**
  * Canvas creation result
  */
 export interface CanvasContext {
-    canvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
-    center: Point;
-    radius: number;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  center: Point;
+  radius: number;
 }
 
 /**
  * Options for canvas creation
  */
 export interface CanvasOptions {
-    /** DPI setting (default: 300). Higher values create larger canvases with scaling. */
-    dpi?: number;
+  /** DPI setting (default: 300). Higher values create larger canvases with scaling. */
+  dpi?: number;
 }
 
 /**
@@ -39,32 +39,32 @@ export interface CanvasOptions {
  * @throws Error if canvas context cannot be obtained
  */
 export function createCanvas(diameter: number, options: CanvasOptions = {}): CanvasContext {
-    const { dpi = 300 } = options;
-    const dpiScale = dpi / 300;
-    const scaledDiameter = Math.floor(diameter * dpiScale);
+  const { dpi = 300 } = options;
+  const dpiScale = dpi / 300;
+  const scaledDiameter = Math.floor(diameter * dpiScale);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = scaledDiameter;
-    canvas.height = scaledDiameter;
+  const canvas = document.createElement('canvas');
+  canvas.width = scaledDiameter;
+  canvas.height = scaledDiameter;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        throw new Error('Failed to get canvas context');
-    }
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
 
-    // Enable high-quality rendering
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+  // Enable high-quality rendering
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-    // Apply DPI scaling so drawing coordinates remain consistent
-    if (dpiScale !== 1) {
-        ctx.scale(dpiScale, dpiScale);
-    }
+  // Apply DPI scaling so drawing coordinates remain consistent
+  if (dpiScale !== 1) {
+    ctx.scale(dpiScale, dpiScale);
+  }
 
-    const radius = diameter / 2;
-    const center: Point = { x: radius, y: radius };
+  const radius = diameter / 2;
+  const center: Point = { x: radius, y: radius };
 
-    return { canvas, ctx, center, radius };
+  return { canvas, ctx, center, radius };
 }
 
 /**
@@ -74,14 +74,14 @@ export function createCanvas(diameter: number, options: CanvasOptions = {}): Can
  * @param radius - Radius of the circle
  */
 export function createCircularClipPath(
-    ctx: CanvasRenderingContext2D,
-    center: Point,
-    radius: number
+  ctx: CanvasRenderingContext2D,
+  center: Point,
+  radius: number
 ): void {
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
 }
 
 /**
@@ -89,10 +89,10 @@ export function createCircularClipPath(
  * @param ctx - Canvas 2D context
  */
 export function applyTextShadow(ctx: CanvasRenderingContext2D): void {
-    ctx.shadowColor = DEFAULT_COLORS.TEXT_SHADOW;
-    ctx.shadowBlur = TEXT_SHADOW.BLUR;
-    ctx.shadowOffsetX = TEXT_SHADOW.OFFSET_X;
-    ctx.shadowOffsetY = TEXT_SHADOW.OFFSET_Y;
+  ctx.shadowColor = DEFAULT_COLORS.TEXT_SHADOW;
+  ctx.shadowBlur = TEXT_SHADOW.BLUR;
+  ctx.shadowOffsetX = TEXT_SHADOW.OFFSET_X;
+  ctx.shadowOffsetY = TEXT_SHADOW.OFFSET_Y;
 }
 
 /**
@@ -100,10 +100,10 @@ export function applyTextShadow(ctx: CanvasRenderingContext2D): void {
  * @param ctx - Canvas 2D context
  */
 export function applyAbilityTextShadow(ctx: CanvasRenderingContext2D): void {
-    ctx.shadowColor = DEFAULT_COLORS.TEXT_SHADOW;
-    ctx.shadowBlur = ABILITY_TEXT_SHADOW.BLUR;
-    ctx.shadowOffsetX = ABILITY_TEXT_SHADOW.OFFSET_X;
-    ctx.shadowOffsetY = ABILITY_TEXT_SHADOW.OFFSET_Y;
+  ctx.shadowColor = DEFAULT_COLORS.TEXT_SHADOW;
+  ctx.shadowBlur = ABILITY_TEXT_SHADOW.BLUR;
+  ctx.shadowOffsetX = ABILITY_TEXT_SHADOW.OFFSET_X;
+  ctx.shadowOffsetY = ABILITY_TEXT_SHADOW.OFFSET_Y;
 }
 
 /**
@@ -111,10 +111,10 @@ export function applyAbilityTextShadow(ctx: CanvasRenderingContext2D): void {
  * @param ctx - Canvas 2D context
  */
 export function clearShadow(ctx: CanvasRenderingContext2D): void {
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 /**
@@ -124,32 +124,28 @@ export function clearShadow(ctx: CanvasRenderingContext2D): void {
  * @param maxWidth - Maximum line width in pixels
  * @returns Array of wrapped lines
  */
-export function wrapText(
-    text: string,
-    ctx: CanvasRenderingContext2D,
-    maxWidth: number
-): string[] {
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
+export function wrapText(text: string, ctx: CanvasRenderingContext2D, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
 
-    for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const metrics = ctx.measureText(testLine);
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const metrics = ctx.measureText(testLine);
 
-        if (metrics.width > maxWidth && currentLine) {
-            lines.push(currentLine);
-            currentLine = word;
-        } else {
-            currentLine = testLine;
-        }
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
     }
+  }
 
-    if (currentLine) {
-        lines.push(currentLine);
-    }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
 
-    return lines;
+  return lines;
 }
 
 /**
@@ -160,29 +156,29 @@ export function wrapText(
  * @param targetHeight - Target height to fill
  */
 export function drawImageCover(
-    ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
-    targetWidth: number,
-    targetHeight: number
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  targetWidth: number,
+  targetHeight: number
 ): void {
-    const imgRatio = img.width / img.height;
-    const targetRatio = targetWidth / targetHeight;
+  const imgRatio = img.width / img.height;
+  const targetRatio = targetWidth / targetHeight;
 
-    let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
+  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
 
-    if (imgRatio > targetRatio) {
-        drawHeight = targetHeight;
-        drawWidth = img.width * (targetHeight / img.height);
-        drawX = (targetWidth - drawWidth) / 2;
-        drawY = 0;
-    } else {
-        drawWidth = targetWidth;
-        drawHeight = img.height * (targetWidth / img.width);
-        drawX = 0;
-        drawY = (targetHeight - drawHeight) / 2;
-    }
+  if (imgRatio > targetRatio) {
+    drawHeight = targetHeight;
+    drawWidth = img.width * (targetHeight / img.height);
+    drawX = (targetWidth - drawWidth) / 2;
+    drawY = 0;
+  } else {
+    drawWidth = targetWidth;
+    drawHeight = img.height * (targetWidth / img.width);
+    drawX = 0;
+    drawY = (targetHeight - drawHeight) / 2;
+  }
 
-    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 }
 
 /**
@@ -193,15 +189,15 @@ export function drawImageCover(
  * @param fillColor - Fill color
  */
 export function fillCircle(
-    ctx: CanvasRenderingContext2D,
-    center: Point,
-    radius: number,
-    fillColor: string
+  ctx: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  fillColor: string
 ): void {
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = fillColor;
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
 }
 
 /**
@@ -213,17 +209,17 @@ export function fillCircle(
  * @param lineWidth - Line width
  */
 export function strokeCircle(
-    ctx: CanvasRenderingContext2D,
-    center: Point,
-    radius: number,
-    strokeColor: string,
-    lineWidth: number = 2
+  ctx: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  strokeColor: string,
+  lineWidth: number = 2
 ): void {
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = lineWidth;
-    ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
 }
 
 /**
@@ -237,28 +233,28 @@ export function strokeCircle(
  * @param withShadow - Whether to apply text shadow
  */
 export function drawCenteredText(
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    x: number,
-    y: number,
-    font: string,
-    color: string,
-    withShadow: boolean = true
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  font: string,
+  color: string,
+  withShadow: boolean = true
 ): void {
-    ctx.save();
+  ctx.save();
 
-    ctx.font = font;
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-    if (withShadow) {
-        applyTextShadow(ctx);
-    }
+  if (withShadow) {
+    applyTextShadow(ctx);
+  }
 
-    ctx.fillText(text, x, y);
+  ctx.fillText(text, x, y);
 
-    ctx.restore();
+  ctx.restore();
 }
 
 /**
@@ -273,31 +269,31 @@ export function drawCenteredText(
  * @param withShadow - Whether to apply text shadow
  */
 export function drawMultiLineText(
-    ctx: CanvasRenderingContext2D,
-    lines: string[],
-    centerX: number,
-    startY: number,
-    lineHeight: number,
-    font: string,
-    color: string,
-    withShadow: boolean = true
+  ctx: CanvasRenderingContext2D,
+  lines: string[],
+  centerX: number,
+  startY: number,
+  lineHeight: number,
+  font: string,
+  color: string,
+  withShadow: boolean = true
 ): void {
-    ctx.save();
+  ctx.save();
 
-    ctx.font = font;
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
 
-    if (withShadow) {
-        applyAbilityTextShadow(ctx);
-    }
+  if (withShadow) {
+    applyAbilityTextShadow(ctx);
+  }
 
-    for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], centerX, startY + i * lineHeight);
-    }
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], centerX, startY + i * lineHeight);
+  }
 
-    ctx.restore();
+  ctx.restore();
 }
 
 /**
@@ -307,32 +303,32 @@ export function drawMultiLineText(
  * @returns Object with character widths array and total width
  */
 export function measureCharacterWidths(
-    text: string,
-    ctx: CanvasRenderingContext2D
+  text: string,
+  ctx: CanvasRenderingContext2D
 ): { charWidths: number[]; totalWidth: number } {
-    const charWidths: number[] = [];
-    let totalWidth = 0;
+  const charWidths: number[] = [];
+  let totalWidth = 0;
 
-    for (const char of text) {
-        const width = ctx.measureText(char).width;
-        charWidths.push(width);
-        totalWidth += width;
-    }
+  for (const char of text) {
+    const width = ctx.measureText(char).width;
+    charWidths.push(width);
+    totalWidth += width;
+  }
 
-    return { charWidths, totalWidth };
+  return { charWidths, totalWidth };
 }
 
 export default {
-    createCanvas,
-    createCircularClipPath,
-    applyTextShadow,
-    applyAbilityTextShadow,
-    clearShadow,
-    wrapText,
-    drawImageCover,
-    fillCircle,
-    strokeCircle,
-    drawCenteredText,
-    drawMultiLineText,
-    measureCharacterWidths,
+  createCanvas,
+  createCircularClipPath,
+  applyTextShadow,
+  applyAbilityTextShadow,
+  clearShadow,
+  wrapText,
+  drawImageCover,
+  fillCircle,
+  strokeCircle,
+  drawCenteredText,
+  drawMultiLineText,
+  measureCharacterWidths,
 };

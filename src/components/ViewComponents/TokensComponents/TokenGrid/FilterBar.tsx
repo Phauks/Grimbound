@@ -1,6 +1,6 @@
-import { useTokenContext } from '../../../../contexts/TokenContext'
-import { useFilters } from '../../../../hooks/useFilters'
-import styles from '../../../../styles/components/tokens/FilterBar.module.css'
+import { useTokenContext } from '../../../../contexts/TokenContext';
+import { useFilters } from '../../../../hooks/useFilters';
+import styles from '../../../../styles/components/tokens/FilterBar.module.css';
 
 const TEAMS = [
   { value: 'townsfolk', label: 'Townsfolk', color: '#1e90ff' },
@@ -10,32 +10,32 @@ const TEAMS = [
   { value: 'traveller', label: 'Travellers', color: '#9370db' },
   { value: 'fabled', label: 'Fabled', color: '#ffd700' },
   { value: 'loric', label: 'Loric', color: '#2e8b57' },
-]
+];
 
 const TOKEN_TYPES = [
   { value: 'character', label: 'Characters' },
   { value: 'reminder', label: 'Reminders' },
   { value: 'meta', label: 'Meta' },
-]
+];
 
 const REMINDERS_OPTIONS = [
   { value: 'has', label: 'Has Reminders' },
   { value: 'none', label: 'No Reminders' },
-]
+];
 
 const ORIGIN_OPTIONS = [
   { value: 'official', label: 'Official' },
   { value: 'custom', label: 'Custom' },
-]
+];
 
 export function FilterBar() {
-  const { filters, updateFilters } = useTokenContext()
-  const { toggleTeam, toggleTokenType, toggleReminders, toggleOrigin } = useFilters()
+  const { filters, updateFilters } = useTokenContext();
+  const { toggleTeam, toggleTokenType, toggleReminders, toggleOrigin } = useFilters();
 
-  const clearTeams = () => updateFilters({ teams: [] })
-  const clearTokenTypes = () => updateFilters({ tokenTypes: [] })
-  const clearReminders = () => updateFilters({ reminders: [] })
-  const clearOrigin = () => updateFilters({ origin: [] })
+  const clearTeams = () => updateFilters({ teams: [] });
+  const clearTokenTypes = () => updateFilters({ tokenTypes: [] });
+  const clearReminders = () => updateFilters({ reminders: [] });
+  const clearOrigin = () => updateFilters({ origin: [] });
 
   return (
     <div className={styles.container}>
@@ -47,14 +47,20 @@ export function FilterBar() {
               key={value}
               className={`${styles.chip} ${filters.teams.includes(value) ? styles.chipActive : ''}`}
               onClick={() => toggleTeam(value)}
-              style={filters.teams.includes(value) ? { backgroundColor: color, borderColor: color } : undefined}
+              style={
+                filters.teams.includes(value)
+                  ? { backgroundColor: color, borderColor: color }
+                  : undefined
+              }
             >
               {label}
             </button>
           ))}
         </div>
         {filters.teams.length > 0 && (
-          <button className={styles.clearBtn} onClick={clearTeams} title="Clear team filter">✕</button>
+          <button type="button" className={styles.clearBtn} onClick={clearTeams} title="Clear team filter">
+            ✕
+          </button>
         )}
       </div>
 
@@ -72,7 +78,9 @@ export function FilterBar() {
           ))}
         </div>
         {filters.tokenTypes.length > 0 && (
-          <button className={styles.clearBtn} onClick={clearTokenTypes} title="Clear type filter">✕</button>
+          <button type="button" className={styles.clearBtn} onClick={clearTokenTypes} title="Clear type filter">
+            ✕
+          </button>
         )}
       </div>
 
@@ -90,7 +98,13 @@ export function FilterBar() {
           ))}
         </div>
         {filters.reminders.length > 0 && (
-          <button className={styles.clearBtn} onClick={clearReminders} title="Clear reminders filter">✕</button>
+          <button
+            className={styles.clearBtn}
+            onClick={clearReminders}
+            title="Clear reminders filter"
+          >
+            ✕
+          </button>
         )}
       </div>
 
@@ -108,9 +122,11 @@ export function FilterBar() {
           ))}
         </div>
         {filters.origin.length > 0 && (
-          <button className={styles.clearBtn} onClick={clearOrigin} title="Clear origin filter">✕</button>
+          <button type="button" className={styles.clearBtn} onClick={clearOrigin} title="Clear origin filter">
+            ✕
+          </button>
         )}
       </div>
     </div>
-  )
+  );
 }

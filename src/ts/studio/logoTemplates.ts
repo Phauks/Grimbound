@@ -5,7 +5,7 @@
  * and styling patterns.
  */
 
-import type { Layer, CanvasSize } from '../types/index.js';
+import type { CanvasSize, Layer } from '../types/index.js';
 import { createStudioCanvas } from './canvasOperations.js';
 
 // ============================================================================
@@ -263,7 +263,7 @@ export const LOGO_TEMPLATES: LogoTemplate[] = [
  * @returns Template or undefined if not found
  */
 export function getTemplate(id: string): LogoTemplate | undefined {
-  return LOGO_TEMPLATES.find(t => t.id === id);
+  return LOGO_TEMPLATES.find((t) => t.id === id);
 }
 
 /**
@@ -272,7 +272,7 @@ export function getTemplate(id: string): LogoTemplate | undefined {
  * @returns Array of template IDs
  */
 export function getTemplateIds(): string[] {
-  return LOGO_TEMPLATES.map(t => t.id);
+  return LOGO_TEMPLATES.map((t) => t.id);
 }
 
 /**
@@ -281,7 +281,7 @@ export function getTemplateIds(): string[] {
  * @returns Array of template names
  */
 export function getTemplateNames(): string[] {
-  return LOGO_TEMPLATES.map(t => t.name);
+  return LOGO_TEMPLATES.map((t) => t.name);
 }
 
 /**
@@ -426,11 +426,17 @@ export async function applyTemplate(template: LogoTemplate): Promise<Layer[]> {
  * @param scriptName - Script name to apply
  * @returns Modified template with script name
  */
-export function customizeTemplateWithName(template: LogoTemplate, scriptName: string): LogoTemplate {
+export function customizeTemplateWithName(
+  template: LogoTemplate,
+  scriptName: string
+): LogoTemplate {
   return {
     ...template,
-    layerConfigs: template.layerConfigs.map(config => {
-      if (config.type === 'text' && (config.name === 'Script Name' || config.name === 'Main Title')) {
+    layerConfigs: template.layerConfigs.map((config) => {
+      if (
+        config.type === 'text' &&
+        (config.name === 'Script Name' || config.name === 'Main Title')
+      ) {
         return {
           ...config,
           text: scriptName,

@@ -7,9 +7,9 @@
  * @module ts/cache/charactersPreRenderHelpers
  */
 
-import { cacheManager } from './CacheManager.js'
-import type { CharactersPreRenderEntry } from './strategies/CharactersPreRenderStrategy.js'
-import type { Character, GenerationOptions, Token } from '../types/index.js'
+import type { Character, GenerationOptions } from '../types/index.js';
+import { cacheManager } from './CacheManager.js';
+import type { CharactersPreRenderEntry } from './strategies/CharactersPreRenderStrategy.js';
 
 /**
  * Hash generation options into a cache key component.
@@ -29,15 +29,15 @@ export function hashOptions(options: GenerationOptions): string {
     characterReminderFont: options.characterReminderFont,
     dpi: options.dpi,
     leafGeneration: options.leafGeneration,
-  })
+  });
   // Simple hash
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < key.length; i++) {
-    const char = key.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32bit integer
+    const char = key.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
   }
-  return hash.toString(36)
+  return hash.toString(36);
 }
 
 /**
@@ -59,7 +59,7 @@ export function getPreRenderedTokens(
   // synchronously in useState initializers. Return null and let the
   // component regenerate tokens as needed. The pre-render cache warming
   // on tab hover will populate the cache for subsequent navigation.
-  return null
+  return null;
 }
 
 /**
@@ -78,6 +78,6 @@ export async function preRenderFirstCharacter(
     type: 'characters-hover',
     tokens: [], // Required but not used for characters strategy
     characters: [character],
-    generationOptions: options
-  })
+    generationOptions: options,
+  });
 }

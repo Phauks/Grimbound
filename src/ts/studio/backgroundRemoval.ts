@@ -8,7 +8,7 @@
 import {
   FilesetResolver,
   ImageSegmenter,
-  ImageSegmenterResult,
+  type ImageSegmenterResult,
 } from '@mediapipe/tasks-vision';
 import type { BackgroundRemovalOptions } from '../types/index.js';
 import { logger } from '../utils/logger.js';
@@ -17,7 +17,8 @@ import { logger } from '../utils/logger.js';
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm';
 
 // Model file - DeepLabV3 for general image segmentation
-const MODEL_PATH = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/1/deeplab_v3.tflite';
+const MODEL_PATH =
+  'https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/1/deeplab_v3.tflite';
 
 /**
  * Background Removal Service
@@ -80,7 +81,7 @@ export class BackgroundRemovalService {
     options: BackgroundRemovalOptions = {}
   ): Promise<ImageData> {
     // Initialize model if needed
-    if (!this.segmenter && !this.isLoading) {
+    if (!(this.segmenter || this.isLoading)) {
       await this.initialize();
     }
 
@@ -88,12 +89,7 @@ export class BackgroundRemovalService {
       throw new Error('Background removal model not loaded');
     }
 
-    const {
-      threshold = 0.5,
-      featherEdges = true,
-      edgeRadius = 2,
-      invertMask = false
-    } = options;
+    const { threshold = 0.5, featherEdges = true, edgeRadius = 2, invertMask = false } = options;
 
     try {
       // Create temporary canvas for MediaPipe processing
@@ -131,7 +127,7 @@ export class BackgroundRemovalService {
         threshold,
         featherEdges,
         edgeRadius,
-        invertMask
+        invertMask,
       });
 
       // Close the mask to free memory
@@ -164,13 +160,13 @@ export class BackgroundRemovalService {
     // Apply mask to alpha channel
     for (let i = 0; i < maskData.length; i++) {
       // Get mask value (0-1 float)
-      let confidence = maskData[i];
+      const confidence = maskData[i];
 
       // Apply threshold for hard edges, or use raw confidence for soft edges
       let alpha: number;
       if (featherEdges) {
         // Smooth transition using confidence value
-        alpha = Math.max(0, Math.min(1, (confidence - threshold + 0.5)));
+        alpha = Math.max(0, Math.min(1, confidence - threshold + 0.5));
       } else {
         // Hard threshold
         alpha = confidence > threshold ? 1 : 0;

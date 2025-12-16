@@ -19,18 +19,18 @@
  */
 
 import JSZip from 'jszip';
-import type { IProjectExporter } from './IProjectService.js';
-import type {
-  Project,
-  ExportOptions,
-  ProjectManifest,
-  CustomIconMetadata,
-} from '../../types/project.js';
-import type { DBAsset } from '../upload/types.js';
-import { sanitizeFilename } from '../../utils/stringUtils.js';
-import { downloadFile } from '../../utils/imageUtils.js';
 import { CONFIG } from '../../config.js';
+import type {
+  CustomIconMetadata,
+  ExportOptions,
+  Project,
+  ProjectManifest,
+} from '../../types/project.js';
+import { downloadFile } from '../../utils/imageUtils.js';
+import { sanitizeFilename } from '../../utils/stringUtils.js';
 import { assetStorageService } from '../upload/AssetStorageService.js';
+import type { DBAsset } from '../upload/types.js';
+import type { IProjectExporter } from './IProjectService.js';
 
 // ============================================================================
 // Constants
@@ -158,10 +158,7 @@ export class ProjectExporter implements IProjectExporter {
    * @param includeUnused - Whether to include assets with usageCount === 0
    * @returns Array of assets to export
    */
-  private async fetchProjectAssets(
-    projectId: string,
-    includeUnused: boolean
-  ): Promise<DBAsset[]> {
+  private async fetchProjectAssets(projectId: string, includeUnused: boolean): Promise<DBAsset[]> {
     try {
       // Fetch all character-icon assets for this project
       const assets = await assetStorageService.list({
@@ -184,17 +181,12 @@ export class ProjectExporter implements IProjectExporter {
   /**
    * Prepare project data for export (strip out data URLs to keep file clean)
    */
-  private async prepareProjectData(
-    project: Project,
-    assets: DBAsset[]
-  ): Promise<Project> {
+  private async prepareProjectData(project: Project, assets: DBAsset[]): Promise<Project> {
     // Deep clone to avoid mutating original
     const exportData: Project = JSON.parse(JSON.stringify(project));
 
     // Convert assets to customIcons format for backward compatibility
-    exportData.state.customIcons = assets.map((asset) =>
-      this.assetToCustomIconMetadata(asset)
-    );
+    exportData.state.customIcons = assets.map((asset) => this.assetToCustomIconMetadata(asset));
 
     return exportData;
   }

@@ -63,7 +63,7 @@
 }
 
 .sectionHeader::before {
-  content: '▶';
+  content: "▶";
   font-size: 0.75rem;
   transition: transform var(--transition-fast);
 }
@@ -101,7 +101,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .emptyState {
@@ -140,5 +142,3 @@
     grid-template-columns: repeat(auto-fill, minmax(70px, 100px));
   }
 }
-
-

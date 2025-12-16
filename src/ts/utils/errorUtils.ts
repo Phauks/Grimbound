@@ -3,8 +3,8 @@
  * Error Handling Utilities - Standardized error handling for hooks and components
  */
 
-import { logger } from './logger.js';
 import { ErrorHandler } from '../errors.js';
+import { logger } from './logger.js';
 
 /**
  * Handle errors in React hooks with consistent logging and state updates
@@ -29,59 +29,53 @@ import { ErrorHandler } from '../errors.js';
  * ```
  */
 export function handleHookError(
-    error: unknown,
-    context: string,
-    setError: (message: string | null) => void,
-    options: ErrorHandlingOptions = {}
+  error: unknown,
+  context: string,
+  setError: (message: string | null) => void,
+  options: ErrorHandlingOptions = {}
 ): void {
-    const {
-        logLevel = 'error',
-        includeStack = false,
-        customMessage,
-        onError
-    } = options;
+  const { logLevel = 'error', includeStack = false, customMessage, onError } = options;
 
-    // Get user-friendly message
-    const userMessage = customMessage ?? ErrorHandler.getUserMessage(error);
+  // Get user-friendly message
+  const userMessage = customMessage ?? ErrorHandler.getUserMessage(error);
 
-    // Update error state
-    setError(userMessage);
+  // Update error state
+  setError(userMessage);
 
-    // Log error with appropriate level
-    const logData = includeStack && error instanceof Error && error.stack
-        ? [error.message, error.stack]
-        : [error];
+  // Log error with appropriate level
+  const logData =
+    includeStack && error instanceof Error && error.stack ? [error.message, error.stack] : [error];
 
-    switch (logLevel) {
-        case 'warn':
-            logger.warn(context, userMessage, ...logData);
-            break;
-        case 'error':
-            logger.error(context, userMessage, ...logData);
-            break;
-        case 'debug':
-            logger.debug(context, userMessage, ...logData);
-            break;
-    }
+  switch (logLevel) {
+    case 'warn':
+      logger.warn(context, userMessage, ...logData);
+      break;
+    case 'error':
+      logger.error(context, userMessage, ...logData);
+      break;
+    case 'debug':
+      logger.debug(context, userMessage, ...logData);
+      break;
+  }
 
-    // Call custom error handler if provided
-    if (onError) {
-        onError(error, userMessage);
-    }
+  // Call custom error handler if provided
+  if (onError) {
+    onError(error, userMessage);
+  }
 }
 
 /**
  * Options for error handling behavior
  */
 export interface ErrorHandlingOptions {
-    /** Log level to use (default: 'error') */
-    logLevel?: 'error' | 'warn' | 'debug';
-    /** Include stack trace in logs (default: false) */
-    includeStack?: boolean;
-    /** Custom error message override */
-    customMessage?: string;
-    /** Custom error handler callback */
-    onError?: (error: unknown, message: string) => void;
+  /** Log level to use (default: 'error') */
+  logLevel?: 'error' | 'warn' | 'debug';
+  /** Include stack trace in logs (default: false) */
+  includeStack?: boolean;
+  /** Custom error message override */
+  customMessage?: string;
+  /** Custom error handler callback */
+  onError?: (error: unknown, message: string) => void;
 }
 
 /**
@@ -97,15 +91,15 @@ export interface ErrorHandlingOptions {
  * ```
  */
 export function clearHookError(
-    context: string,
-    setError: (message: string | null) => void,
-    successMessage?: string
+  context: string,
+  setError: (message: string | null) => void,
+  successMessage?: string
 ): void {
-    setError(null);
+  setError(null);
 
-    if (successMessage) {
-        logger.info(context, successMessage);
-    }
+  if (successMessage) {
+    logger.info(context, successMessage);
+  }
 }
 
 /**
@@ -136,58 +130,53 @@ export function clearHookError(
  * ```
  */
 export async function handleAsyncOperation<T>(
-    operation: () => Promise<T>,
-    context: string,
-    setLoading: (loading: boolean) => void,
-    setError: (message: string | null) => void,
-    options: AsyncOperationOptions = {}
+  operation: () => Promise<T>,
+  context: string,
+  setLoading: (loading: boolean) => void,
+  setError: (message: string | null) => void,
+  options: AsyncOperationOptions = {}
 ): Promise<T | undefined> {
-    const {
-        successMessage,
-        errorOptions,
-        onSuccess,
-        onFinally
-    } = options;
+  const { successMessage, errorOptions, onSuccess, onFinally } = options;
 
-    try {
-        setLoading(true);
-        clearHookError(context, setError);
+  try {
+    setLoading(true);
+    clearHookError(context, setError);
 
-        const result = await operation();
+    const result = await operation();
 
-        if (successMessage) {
-            logger.info(context, successMessage);
-        }
-
-        if (onSuccess) {
-            onSuccess(result);
-        }
-
-        return result;
-    } catch (error) {
-        handleHookError(error, context, setError, errorOptions);
-        return undefined;
-    } finally {
-        setLoading(false);
-
-        if (onFinally) {
-            onFinally();
-        }
+    if (successMessage) {
+      logger.info(context, successMessage);
     }
+
+    if (onSuccess) {
+      onSuccess(result);
+    }
+
+    return result;
+  } catch (error) {
+    handleHookError(error, context, setError, errorOptions);
+    return undefined;
+  } finally {
+    setLoading(false);
+
+    if (onFinally) {
+      onFinally();
+    }
+  }
 }
 
 /**
  * Options for async operation handling
  */
 export interface AsyncOperationOptions {
-    /** Success message to log on completion */
-    successMessage?: string;
-    /** Error handling options */
-    errorOptions?: ErrorHandlingOptions;
-    /** Callback on successful completion */
-    onSuccess?: (result: unknown) => void;
-    /** Callback in finally block */
-    onFinally?: () => void;
+  /** Success message to log on completion */
+  successMessage?: string;
+  /** Error handling options */
+  errorOptions?: ErrorHandlingOptions;
+  /** Callback on successful completion */
+  onSuccess?: (result: unknown) => void;
+  /** Callback in finally block */
+  onFinally?: () => void;
 }
 
 /**
@@ -208,72 +197,68 @@ export interface AsyncOperationOptions {
  * ```
  */
 export async function retryOperation<T>(
-    operation: () => Promise<T>,
-    context: string,
-    options: RetryOptions = {}
+  operation: () => Promise<T>,
+  context: string,
+  options: RetryOptions = {}
 ): Promise<T> {
-    const {
-        maxAttempts = 3,
-        delayMs = 1000,
-        backoffMultiplier = 2,
-        shouldRetry = () => true, // By default, retry all errors
-        onRetry
-    } = options;
+  const {
+    maxAttempts = 3,
+    delayMs = 1000,
+    backoffMultiplier = 2,
+    shouldRetry = () => true, // By default, retry all errors
+    onRetry,
+  } = options;
 
-    let lastError: unknown;
-    let currentDelay = delayMs;
+  let lastError: unknown;
+  let currentDelay = delayMs;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-            logger.debug(context, `Attempt ${attempt}/${maxAttempts}`);
-            return await operation();
-        } catch (error) {
-            lastError = error;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      logger.debug(context, `Attempt ${attempt}/${maxAttempts}`);
+      return await operation();
+    } catch (error) {
+      lastError = error;
 
-            // Check if we should retry this error
-            const canRetry = shouldRetry(error);
+      // Check if we should retry this error
+      const canRetry = shouldRetry(error);
 
-            if (!canRetry) {
-                logger.warn(context, `Error is not retryable, failing immediately`, error);
-                throw error;
-            }
+      if (!canRetry) {
+        logger.warn(context, `Error is not retryable, failing immediately`, error);
+        throw error;
+      }
 
-            if (attempt < maxAttempts) {
-                logger.warn(
-                    context,
-                    `Attempt ${attempt} failed, retrying in ${currentDelay}ms`,
-                    error
-                );
+      if (attempt < maxAttempts) {
+        logger.warn(context, `Attempt ${attempt} failed, retrying in ${currentDelay}ms`, error);
 
-                if (onRetry) {
-                    onRetry(attempt, maxAttempts, error);
-                }
-
-                await new Promise(resolve => setTimeout(resolve, currentDelay));
-                currentDelay *= backoffMultiplier;
-            }
+        if (onRetry) {
+          onRetry(attempt, maxAttempts, error);
         }
-    }
 
-    // All attempts failed
-    logger.error(context, `All ${maxAttempts} attempts failed`, lastError);
-    throw lastError;
+        await new Promise((resolve) => setTimeout(resolve, currentDelay));
+        currentDelay *= backoffMultiplier;
+      }
+    }
+  }
+
+  // All attempts failed
+  logger.error(context, `All ${maxAttempts} attempts failed`, lastError);
+  throw lastError;
 }
 
 /**
  * Options for retry behavior
  */
 export interface RetryOptions {
-    /** Maximum number of attempts (default: 3) */
-    maxAttempts?: number;
-    /** Initial delay between retries in ms (default: 1000) */
-    delayMs?: number;
-    /** Multiplier for exponential backoff (default: 2) */
-    backoffMultiplier?: number;
-    /** Predicate to determine if error should be retried (default: always retry) */
-    shouldRetry?: (error: unknown) => boolean;
-    /** Callback on retry */
-    onRetry?: (attempt: number, maxAttempts: number, error: unknown) => void;
+  /** Maximum number of attempts (default: 3) */
+  maxAttempts?: number;
+  /** Initial delay between retries in ms (default: 1000) */
+  delayMs?: number;
+  /** Multiplier for exponential backoff (default: 2) */
+  backoffMultiplier?: number;
+  /** Predicate to determine if error should be retried (default: always retry) */
+  shouldRetry?: (error: unknown) => boolean;
+  /** Callback on retry */
+  onRetry?: (attempt: number, maxAttempts: number, error: unknown) => void;
 }
 
 /**
@@ -295,16 +280,16 @@ export interface RetryOptions {
  * ```
  */
 export function guardAgainstUndefined<T>(
-    value: T | null | undefined,
-    context: string,
-    fieldName: string
+  value: T | null | undefined,
+  context: string,
+  fieldName: string
 ): T {
-    if (value === null || value === undefined) {
-        const error = new Error(`${fieldName} is required`);
-        logger.error(context, `Validation failed: ${fieldName} is missing`);
-        throw error;
-    }
-    return value;
+  if (value === null || value === undefined) {
+    const error = new Error(`${fieldName} is required`);
+    logger.error(context, `Validation failed: ${fieldName} is missing`);
+    throw error;
+  }
+  return value;
 }
 
 /**
@@ -325,30 +310,30 @@ export function guardAgainstUndefined<T>(
  * ```
  */
 export function validateRequiredFields<T extends Record<string, unknown>>(
-    obj: T,
-    requiredFields: (keyof T)[],
-    context: string
+  obj: T,
+  requiredFields: (keyof T)[],
+  context: string
 ): void {
-    const missingFields: string[] = [];
+  const missingFields: string[] = [];
 
-    for (const field of requiredFields) {
-        if (obj[field] === null || obj[field] === undefined || obj[field] === '') {
-            missingFields.push(String(field));
-        }
+  for (const field of requiredFields) {
+    if (obj[field] === null || obj[field] === undefined || obj[field] === '') {
+      missingFields.push(String(field));
     }
+  }
 
-    if (missingFields.length > 0) {
-        const error = new Error(`Missing required fields: ${missingFields.join(', ')}`);
-        logger.error(context, `Validation failed`, { missingFields });
-        throw error;
-    }
+  if (missingFields.length > 0) {
+    const error = new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    logger.error(context, `Validation failed`, { missingFields });
+    throw error;
+  }
 }
 
 export default {
-    handleHookError,
-    clearHookError,
-    handleAsyncOperation,
-    retryOperation,
-    guardAgainstUndefined,
-    validateRequiredFields
+  handleHookError,
+  clearHookError,
+  handleAsyncOperation,
+  retryOperation,
+  guardAgainstUndefined,
+  validateRequiredFields,
 };

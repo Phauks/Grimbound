@@ -9,25 +9,25 @@
 /**
  * Top-level application pages
  */
-export type AppPage = 'projects' | 'editor' | 'townSquare'
+export type AppPage = 'projects' | 'editor' | 'townSquare';
 
 /**
  * Editor sub-tabs (only visible when on Editor page)
  */
-export type EditorTab = 'json' | 'tokens' | 'characters' | 'script' | 'studio' | 'export'
+export type EditorTab = 'json' | 'tokens' | 'characters' | 'script' | 'studio' | 'export';
 
 /**
  * Page metadata for navigation display
  */
 export interface PageInfo {
   /** Unique page identifier */
-  id: AppPage
+  id: AppPage;
   /** Display label for the page */
-  label: string
+  label: string;
   /** Emoji icon for visual identification */
-  icon: string
+  icon: string;
   /** Short description of the page purpose */
-  description: string
+  description: string;
 }
 
 /**
@@ -35,9 +35,9 @@ export interface PageInfo {
  */
 export interface EditorTabInfo {
   /** Unique tab identifier */
-  id: EditorTab
+  id: EditorTab;
   /** Display label for the tab */
-  label: string
+  label: string;
 }
 
 /**
@@ -45,7 +45,7 @@ export interface EditorTabInfo {
  */
 export interface NavigationState {
   /** Currently active page */
-  activePage: AppPage
+  activePage: AppPage;
   /** Currently active editor tab (when on Editor page) */
-  activeEditorTab: EditorTab
+  activeEditorTab: EditorTab;
 }

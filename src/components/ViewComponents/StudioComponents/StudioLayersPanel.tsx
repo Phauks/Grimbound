@@ -14,10 +14,10 @@
 
 import { useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
+import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
+import styles from '../../../styles/components/studio/Studio.module.css';
 import { layerManager } from '../../../ts/studio/layerManager';
 import type { BlendMode } from '../../../ts/types/index';
-import styles from '../../../styles/components/studio/Studio.module.css';
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
 
 interface ContextMenuState {
   visible: boolean;
@@ -61,7 +61,7 @@ export function StudioLayersPanel() {
 
   // Helper to determine if a layer is locked based on edit mode
   // In icon-only mode, only the first (top) layer is editable
-  const isLayerLocked = (layer: typeof layers[0], index: number): boolean => {
+  const isLayerLocked = (layer: (typeof layers)[0], index: number): boolean => {
     if (editMode === 'full') return layer.locked ?? false;
     // In icon-only mode, lock all layers except the first (top) one
     return editMode === 'icon-only' && index !== 0;
@@ -95,7 +95,7 @@ export function StudioLayersPanel() {
 
   const handleDelete = () => {
     if (contextMenu.layerId) {
-      const layer = layers.find(l => l.id === contextMenu.layerId);
+      const layer = layers.find((l) => l.id === contextMenu.layerId);
       if (layer && confirm(`Delete layer "${layer.name}"?`)) {
         removeLayer(contextMenu.layerId);
         pushHistory('Delete Layer');
@@ -164,15 +164,15 @@ export function StudioLayersPanel() {
     }
 
     // Find indices
-    const fromIndex = sortedLayers.findIndex(l => l.id === draggedLayerId);
-    const toIndex = sortedLayers.findIndex(l => l.id === targetLayerId);
+    const fromIndex = sortedLayers.findIndex((l) => l.id === draggedLayerId);
+    const toIndex = sortedLayers.findIndex((l) => l.id === targetLayerId);
 
     if (fromIndex !== -1 && toIndex !== -1) {
       // Reorder using layer manager
       const reorderedLayers = layerManager.reorderLayers(sortedLayers, fromIndex, toIndex);
 
       // Update all layers with new z-indices
-      reorderedLayers.forEach(layer => {
+      reorderedLayers.forEach((layer) => {
         updateLayer(layer.id, { zIndex: layer.zIndex });
       });
 
@@ -190,7 +190,7 @@ export function StudioLayersPanel() {
 
   // Get layer index (for determining if merge down is possible)
   const getLayerIndex = (layerId: string): number => {
-    return sortedLayers.findIndex(l => l.id === layerId);
+    return sortedLayers.findIndex((l) => l.id === layerId);
   };
 
   return (
@@ -227,7 +227,8 @@ export function StudioLayersPanel() {
               color: 'var(--text-secondary)',
             }}
           >
-            <strong>Icon-Only Mode:</strong> Only the top layer (icon) can be edited. Other layers are locked.
+            <strong>Icon-Only Mode:</strong> Only the top layer (icon) can be edited. Other layers
+            are locked.
           </div>
         )}
 
@@ -236,202 +237,251 @@ export function StudioLayersPanel() {
           {sortedLayers.map((layer, index) => {
             const locked = isLayerLocked(layer, index);
             return (
-            <div
-              key={layer.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, layer.id)}
-              onDragOver={(e) => handleDragOver(e, layer.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, layer.id)}
-              onDragEnd={handleDragEnd}
-              onContextMenu={(e) => handleContextMenu(e, layer.id)}
-              style={{
-                padding: 'var(--spacing-sm)',
-                background: layer.id === activeLayerId ? 'var(--bg-hover)' : 'transparent',
-                border: '2px solid',
-                borderColor:
-                  dragOverLayerId === layer.id ? 'var(--color-accent)' :
-                  layer.id === activeLayerId ? 'var(--color-accent)' : 'var(--color-primary)',
-                borderRadius: 'var(--border-radius-sm)',
-                cursor: 'move',
-                opacity: draggedLayerId === layer.id ? 0.5 : 1,
-                transition: 'all 0.15s ease',
-              }}
-              onClick={() => setActiveLayer(layer.id)}
-            >
-              {/* Top Row: Visibility, Lock, Name, Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
-                {/* Visibility Toggle */}
-                <button
-                  className={styles.iconButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateLayer(layer.id, { visible: !layer.visible });
+              <div
+                key={layer.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, layer.id)}
+                onDragOver={(e) => handleDragOver(e, layer.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, layer.id)}
+                onDragEnd={handleDragEnd}
+                onContextMenu={(e) => handleContextMenu(e, layer.id)}
+                style={{
+                  padding: 'var(--spacing-sm)',
+                  background: layer.id === activeLayerId ? 'var(--bg-hover)' : 'transparent',
+                  border: '2px solid',
+                  borderColor:
+                    dragOverLayerId === layer.id
+                      ? 'var(--color-accent)'
+                      : layer.id === activeLayerId
+                        ? 'var(--color-accent)'
+                        : 'var(--color-primary)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  cursor: 'move',
+                  opacity: draggedLayerId === layer.id ? 0.5 : 1,
+                  transition: 'all 0.15s ease',
+                }}
+                onClick={() => setActiveLayer(layer.id)}
+              >
+                {/* Top Row: Visibility, Lock, Name, Actions */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    marginBottom: 'var(--spacing-xs)',
                   }}
-                  title={layer.visible ? 'Hide Layer' : 'Show Layer'}
-                  disabled={locked}
-                  style={{ padding: '4px', fontSize: '1rem', width: '24px', height: '24px', opacity: locked ? 0.5 : 1 }}
                 >
-                  {layer.visible ? '👁️' : '🚫'}
-                </button>
-
-                {/* Lock Indicator */}
-                {locked && (
-                  <div
-                    title="Layer locked in icon-only mode"
-                    style={{ fontSize: '0.875rem', opacity: 0.7 }}
-                  >
-                    🔒
-                  </div>
-                )}
-
-                {/* Layer Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
+                  {/* Visibility Toggle */}
+                  <button
+                    className={styles.iconButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateLayer(layer.id, { visible: !layer.visible });
+                    }}
+                    title={layer.visible ? 'Hide Layer' : 'Show Layer'}
+                    disabled={locked}
                     style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--text-primary)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      padding: '4px',
+                      fontSize: '1rem',
+                      width: '24px',
+                      height: '24px',
+                      opacity: locked ? 0.5 : 1,
                     }}
                   >
-                    {layer.name}
+                    {layer.visible ? '👁️' : '🚫'}
+                  </button>
+
+                  {/* Lock Indicator */}
+                  {locked && (
+                    <div
+                      title="Layer locked in icon-only mode"
+                      style={{ fontSize: '0.875rem', opacity: 0.7 }}
+                    >
+                      🔒
+                    </div>
+                  )}
+
+                  {/* Layer Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {layer.name}
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                      {layer.type}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
-                    {layer.type}
+
+                  {/* Quick Actions */}
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    <button
+                      className={styles.iconButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        contextDuplicateLayer(layer.id);
+                        pushHistory('Duplicate Layer');
+                      }}
+                      title={locked ? 'Layer is locked' : 'Duplicate Layer'}
+                      disabled={locked}
+                      style={{
+                        padding: '4px',
+                        fontSize: '0.875rem',
+                        width: '24px',
+                        height: '24px',
+                        opacity: locked ? 0.5 : 1,
+                      }}
+                    >
+                      📋
+                    </button>
+                    <button
+                      className={styles.iconButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete layer "${layer.name}"?`)) {
+                          removeLayer(layer.id);
+                          pushHistory('Delete Layer');
+                        }
+                      }}
+                      title={locked ? 'Layer is locked' : 'Delete Layer'}
+                      disabled={locked}
+                      style={{
+                        padding: '4px',
+                        fontSize: '0.875rem',
+                        width: '24px',
+                        height: '24px',
+                        opacity: locked ? 0.5 : 1,
+                      }}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  <button
-                    className={styles.iconButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      contextDuplicateLayer(layer.id);
-                      pushHistory('Duplicate Layer');
+                {/* Opacity Slider */}
+                <div style={{ marginTop: 'var(--spacing-xs)' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      marginBottom: '2px',
+                      color: 'var(--text-secondary)',
                     }}
-                    title={locked ? 'Layer is locked' : 'Duplicate Layer'}
-                    disabled={locked}
-                    style={{ padding: '4px', fontSize: '0.875rem', width: '24px', height: '24px', opacity: locked ? 0.5 : 1 }}
                   >
-                    📋
-                  </button>
+                    Opacity: {Math.round(layer.opacity * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={layer.opacity * 100}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      updateLayer(layer.id, { opacity: Number(e.target.value) / 100 });
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={locked}
+                    style={{ width: '100%', height: '4px', opacity: locked ? 0.5 : 1 }}
+                  />
+                </div>
+
+                {/* Blend Mode Dropdown */}
+                <div style={{ marginTop: 'var(--spacing-xs)' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.7rem',
+                      marginBottom: '2px',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Blend Mode
+                  </label>
+                  <select
+                    value={layer.blendMode}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      updateLayer(layer.id, { blendMode: e.target.value as BlendMode });
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={locked}
+                    style={{
+                      width: '100%',
+                      padding: '4px 8px',
+                      fontSize: '0.75rem',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--color-primary)',
+                      borderRadius: 'var(--border-radius-sm)',
+                      opacity: locked ? 0.5 : 1,
+                    }}
+                  >
+                    {blendModes.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Layer Order Buttons */}
+                <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: '4px' }}>
                   <button
                     className={styles.iconButton}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete layer "${layer.name}"?`)) {
-                        removeLayer(layer.id);
-                        pushHistory('Delete Layer');
+                      const idx = getLayerIndex(layer.id);
+                      if (idx > 0) {
+                        reorderLayers(idx, idx - 1);
+                        pushHistory('Move Layer Up');
                       }
                     }}
-                    title={locked ? 'Layer is locked' : 'Delete Layer'}
-                    disabled={locked}
-                    style={{ padding: '4px', fontSize: '0.875rem', width: '24px', height: '24px', opacity: locked ? 0.5 : 1 }}
+                    disabled={getLayerIndex(layer.id) === 0}
+                    title="Move Up"
+                    style={{ flex: 1, fontSize: '0.7rem', padding: '2px' }}
                   >
-                    🗑️
+                    ▲
+                  </button>
+                  <button
+                    className={styles.iconButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const idx = getLayerIndex(layer.id);
+                      if (idx < layers.length - 1) {
+                        reorderLayers(idx, idx + 1);
+                        pushHistory('Move Layer Down');
+                      }
+                    }}
+                    disabled={getLayerIndex(layer.id) === sortedLayers.length - 1}
+                    title="Move Down"
+                    style={{ flex: 1, fontSize: '0.7rem', padding: '2px' }}
+                  >
+                    ▼
                   </button>
                 </div>
               </div>
-
-              {/* Opacity Slider */}
-              <div style={{ marginTop: 'var(--spacing-xs)' }}>
-                <label style={{ display: 'block', fontSize: '0.7rem', marginBottom: '2px', color: 'var(--text-secondary)' }}>
-                  Opacity: {Math.round(layer.opacity * 100)}%
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={layer.opacity * 100}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    updateLayer(layer.id, { opacity: Number(e.target.value) / 100 });
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={locked}
-                  style={{ width: '100%', height: '4px', opacity: locked ? 0.5 : 1 }}
-                />
-              </div>
-
-              {/* Blend Mode Dropdown */}
-              <div style={{ marginTop: 'var(--spacing-xs)' }}>
-                <label style={{ display: 'block', fontSize: '0.7rem', marginBottom: '2px', color: 'var(--text-secondary)' }}>
-                  Blend Mode
-                </label>
-                <select
-                  value={layer.blendMode}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    updateLayer(layer.id, { blendMode: e.target.value as BlendMode });
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={locked}
-                  style={{
-                    width: '100%',
-                    padding: '4px 8px',
-                    fontSize: '0.75rem',
-                    background: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--color-primary)',
-                    borderRadius: 'var(--border-radius-sm)',
-                    opacity: locked ? 0.5 : 1,
-                  }}
-                >
-                  {blendModes.map(mode => (
-                    <option key={mode} value={mode}>
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Layer Order Buttons */}
-              <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: '4px' }}>
-                <button
-                  className={styles.iconButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const idx = getLayerIndex(layer.id);
-                    if (idx > 0) {
-                      reorderLayers(idx, idx - 1);
-                      pushHistory('Move Layer Up');
-                    }
-                  }}
-                  disabled={getLayerIndex(layer.id) === 0}
-                  title="Move Up"
-                  style={{ flex: 1, fontSize: '0.7rem', padding: '2px' }}
-                >
-                  ▲
-                </button>
-                <button
-                  className={styles.iconButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const idx = getLayerIndex(layer.id);
-                    if (idx < layers.length - 1) {
-                      reorderLayers(idx, idx + 1);
-                      pushHistory('Move Layer Down');
-                    }
-                  }}
-                  disabled={getLayerIndex(layer.id) === sortedLayers.length - 1}
-                  title="Move Down"
-                  style={{ flex: 1, fontSize: '0.7rem', padding: '2px' }}
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-          );
+            );
           })}
         </div>
 
         {/* Empty State */}
         {layers.length === 0 && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)',
+              textAlign: 'center',
+              marginTop: 'var(--spacing-md)',
+            }}
+          >
             No layers yet. Import an image to get started.
           </p>
         )}
@@ -453,10 +503,7 @@ export function StudioLayersPanel() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            className={styles.contextMenuItem}
-            onClick={handleDuplicate}
-          >
+          <button type="button" className={styles.contextMenuItem} onClick={handleDuplicate}>
             📋 Duplicate
           </button>
           <button
@@ -466,19 +513,15 @@ export function StudioLayersPanel() {
           >
             ⬇️ Merge Down
           </button>
-          <button
-            className={styles.contextMenuItem}
-            onClick={handleMoveToTop}
-          >
+          <button type="button" className={styles.contextMenuItem} onClick={handleMoveToTop}>
             ⬆️ Move to Top
           </button>
-          <button
-            className={styles.contextMenuItem}
-            onClick={handleMoveToBottom}
-          >
+          <button type="button" className={styles.contextMenuItem} onClick={handleMoveToBottom}>
             ⬇️ Move to Bottom
           </button>
-          <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px solid var(--color-primary)' }} />
+          <hr
+            style={{ margin: '4px 0', border: 'none', borderTop: '1px solid var(--color-primary)' }}
+          />
           <button
             className={styles.contextMenuItem}
             onClick={handleDelete}

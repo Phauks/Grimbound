@@ -1,53 +1,64 @@
-import { useEffect, useState, useMemo } from 'react'
-import type { Token } from '../../../ts/types/index.js'
-import { groupTokensByIdentity } from '../../../ts/utils/tokenGrouping'
-import styles from '../../../styles/components/characterEditor/TokenPreview.module.css'
+import { useEffect, useMemo, useState } from 'react';
+import styles from '../../../styles/components/characterEditor/TokenPreview.module.css';
+import type { Token } from '../../../ts/types/index.js';
+import { groupTokensByIdentity } from '../../../ts/utils/tokenGrouping';
 
 interface TokenPreviewProps {
-  characterToken: Token
-  reminderTokens: Token[]
-  onReminderClick: (token: Token) => void
+  characterToken: Token;
+  reminderTokens: Token[];
+  onReminderClick: (token: Token) => void;
 }
 
-const REMINDERS_PER_PAGE = 3
+const REMINDERS_PER_PAGE = 3;
 
 // Helper to convert canvas to data URL with caching
 const canvasToDataUrl = (canvas: HTMLCanvasElement | undefined): string | null => {
-  if (!canvas) return null
-  return canvas.toDataURL('image/png')
-}
+  if (!canvas) return null;
+  return canvas.toDataURL('image/png');
+};
 
-export function TokenPreview({ characterToken, reminderTokens, onReminderClick }: TokenPreviewProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [startIndex, setStartIndex] = useState(0)
+export function TokenPreview({
+  characterToken,
+  reminderTokens,
+  onReminderClick,
+}: TokenPreviewProps) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [startIndex, setStartIndex] = useState(0);
 
   // Group reminder tokens to show count badges for duplicates
-  const groupedReminders = useMemo(() => groupTokensByIdentity(reminderTokens), [reminderTokens])
-  
+  const groupedReminders = useMemo(() => groupTokensByIdentity(reminderTokens), [reminderTokens]);
+
   // Derive selected reminder from index - automatically updates when tokens regenerate
-  const selectedReminder = selectedIndex !== null ? groupedReminders[selectedIndex]?.token ?? null : null
+  const selectedReminder =
+    selectedIndex !== null ? (groupedReminders[selectedIndex]?.token ?? null) : null;
 
   // Convert canvases to data URLs for high-quality img rendering
-  const characterImageUrl = useMemo(() => canvasToDataUrl(characterToken.canvas), [characterToken.canvas])
-  const selectedReminderImageUrl = useMemo(() => canvasToDataUrl(selectedReminder?.canvas), [selectedReminder?.canvas])
+  const characterImageUrl = useMemo(
+    () => canvasToDataUrl(characterToken.canvas),
+    [characterToken.canvas]
+  );
+  const selectedReminderImageUrl = useMemo(
+    () => canvasToDataUrl(selectedReminder?.canvas),
+    [selectedReminder?.canvas]
+  );
 
   // Calculate visible reminders based on pagination (using grouped reminders)
-  const visibleReminders = groupedReminders.slice(startIndex, startIndex + REMINDERS_PER_PAGE)
-  const canGoLeft = startIndex > 0
-  const canGoRight = startIndex + REMINDERS_PER_PAGE < groupedReminders.length
+  const visibleReminders = groupedReminders.slice(startIndex, startIndex + REMINDERS_PER_PAGE);
+  const canGoLeft = startIndex > 0;
+  const canGoRight = startIndex + REMINDERS_PER_PAGE < groupedReminders.length;
 
   // Reset when character changes
   useEffect(() => {
-    setStartIndex(0)
-    setSelectedIndex(null)
-  }, [characterToken.parentUuid])
+    setStartIndex(0);
+    setSelectedIndex(null);
+  }, []);
 
   // Clear if index out of bounds (reminder deleted)
   useEffect(() => {
     if (selectedIndex !== null && selectedIndex >= groupedReminders.length) {
-      setSelectedIndex(null)
+      setSelectedIndex(null);
     }
-  }, [groupedReminders.length, selectedIndex])
+  }, [groupedReminders.length, selectedIndex]);
 
   return (
     <div className={styles.previewArea}>
@@ -96,18 +107,20 @@ export function TokenPreview({ characterToken, reminderTokens, onReminderClick }
           <div className={styles.gallery}>
             {visibleReminders.length > 0 ? (
               visibleReminders.map(({ token: reminder, count }, i) => {
-                const globalIndex = startIndex + i
-                const reminderImageUrl = canvasToDataUrl(reminder.canvas)
+                const globalIndex = startIndex + i;
+                const reminderImageUrl = canvasToDataUrl(reminder.canvas);
                 return (
                   <div
                     key={globalIndex}
                     className={`${styles.reminderItem} ${selectedIndex === globalIndex ? styles.selected : ''}`}
-                    onClick={() => setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)}
+                    onClick={() =>
+                      setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)
+                    }
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
-                        setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)
+                        setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex);
                       }
                     }}
                     title={reminder.reminderText || reminder.filename}
@@ -124,9 +137,11 @@ export function TokenPreview({ characterToken, reminderTokens, onReminderClick }
                         />
                       )}
                     </div>
-                    <span className={styles.reminderText}>{reminder.reminderText || reminder.filename}</span>
+                    <span className={styles.reminderText}>
+                      {reminder.reminderText || reminder.filename}
+                    </span>
                   </div>
-                )
+                );
               })
             ) : (
               <div className={styles.empty}>
@@ -146,5 +161,5 @@ export function TokenPreview({ characterToken, reminderTokens, onReminderClick }
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -8,17 +8,17 @@
  */
 
 import { projectDb } from '../../db/projectDb.js';
+import type {
+  AutoSaveSnapshot,
+  CustomIcon,
+  DBAutoSaveSnapshot,
+  DBCustomIcon,
+  DBProject,
+  Project,
+  StorageQuota,
+} from '../../types/project.js';
 import { generateUuid } from '../../utils/nameGenerator.js';
 import type { IProjectDatabase } from './IProjectService.js';
-import type {
-  Project,
-  CustomIcon,
-  AutoSaveSnapshot,
-  StorageQuota,
-  DBProject,
-  DBCustomIcon,
-  DBAutoSaveSnapshot,
-} from '../../types/project.js';
 
 // ============================================================================
 // ProjectDatabaseService Implementation

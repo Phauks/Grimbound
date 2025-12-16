@@ -9,22 +9,22 @@
  * @see src/ts/utils/characterImageResolver.ts for the core resolution logic
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import { useTokenContext } from '../contexts/TokenContext.js'
-import { resolveCharacterImages, getFirstImageUrl } from '../ts/utils/characterImageResolver.js'
-import { logger } from '../ts/utils/logger.js'
-import type { Character } from '../ts/types/index.js'
+import { useEffect, useMemo, useState } from 'react';
+import { useTokenContext } from '../contexts/TokenContext.js';
+import type { Character } from '../ts/types/index.js';
+import { getFirstImageUrl, resolveCharacterImages } from '../ts/utils/characterImageResolver.js';
+import { logger } from '../ts/utils/logger.js';
 
 interface UseCharacterImageResolverOptions {
   /** Characters to resolve images for */
-  characters: Character[]
+  characters: Character[];
 }
 
 interface UseCharacterImageResolverResult {
   /** Map of character UUID -> resolved image URL */
-  resolvedUrls: Map<string, string>
+  resolvedUrls: Map<string, string>;
   /** Whether images are currently being resolved */
-  isLoading: boolean
+  isLoading: boolean;
 }
 
 /**
@@ -44,77 +44,77 @@ interface UseCharacterImageResolverResult {
  * const iconUrl = resolvedUrls.get(character.uuid)
  */
 export function useCharacterImageResolver({
-  characters
+  characters,
 }: UseCharacterImageResolverOptions): UseCharacterImageResolverResult {
-  const { officialData } = useTokenContext()
-  const [resolvedUrls, setResolvedUrls] = useState<Map<string, string>>(new Map())
-  const [isLoading, setIsLoading] = useState(false)
+  const { officialData } = useTokenContext();
+  const [resolvedUrls, setResolvedUrls] = useState<Map<string, string>>(new Map());
+  const [isLoading, setIsLoading] = useState(false);
 
   // Build a map of official character data for image fallback lookup
   const officialCharMap = useMemo(() => {
-    const map = new Map<string, Character>()
+    const map = new Map<string, Character>();
     for (const char of officialData) {
       if (char.id) {
-        map.set(char.id.toLowerCase(), char)
+        map.set(char.id.toLowerCase(), char);
       }
     }
-    return map
-  }, [officialData])
+    return map;
+  }, [officialData]);
 
   // Enrich characters with fallback images from official data before resolution
   const enrichedCharacters = useMemo(() => {
-    return characters.map(char => {
+    return characters.map((char) => {
       // If character already has an image, use it as-is
-      const existingImage = getFirstImageUrl(char.image as string | string[] | undefined)
-      if (existingImage) return char
+      const existingImage = getFirstImageUrl(char.image as string | string[] | undefined);
+      if (existingImage) return char;
 
       // Try to get image from official character data
-      const officialChar = officialCharMap.get(char.id.toLowerCase())
+      const officialChar = officialCharMap.get(char.id.toLowerCase());
       if (officialChar) {
-        const officialImage = getFirstImageUrl(officialChar.image as string | string[] | undefined)
+        const officialImage = getFirstImageUrl(officialChar.image as string | string[] | undefined);
         if (officialImage) {
-          return { ...char, image: officialImage }
+          return { ...char, image: officialImage };
         }
       }
 
-      return char
-    })
-  }, [characters, officialCharMap])
+      return char;
+    });
+  }, [characters, officialCharMap]);
 
   // Resolve character images using SSOT utility
   useEffect(() => {
-    if (enrichedCharacters.length === 0) return
+    if (enrichedCharacters.length === 0) return;
 
-    let isMounted = true
-    let blobUrlsToCleanup: string[] = []
+    let isMounted = true;
+    let blobUrlsToCleanup: string[] = [];
 
     const doResolve = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
 
       try {
-        const { urls, blobUrls } = await resolveCharacterImages(enrichedCharacters)
-        blobUrlsToCleanup = blobUrls
+        const { urls, blobUrls } = await resolveCharacterImages(enrichedCharacters);
+        blobUrlsToCleanup = blobUrls;
 
         if (isMounted) {
-          setResolvedUrls(urls)
+          setResolvedUrls(urls);
         }
       } catch (error) {
-        logger.error('useCharacterImageResolver', 'Failed to resolve images:', error)
+        logger.error('useCharacterImageResolver', 'Failed to resolve images:', error);
       } finally {
         if (isMounted) {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }
-    }
+    };
 
-    doResolve()
+    doResolve();
 
     // Cleanup: revoke blob URLs when component unmounts or characters change
     return () => {
-      isMounted = false
-      blobUrlsToCleanup.forEach(url => URL.revokeObjectURL(url))
-    }
-  }, [enrichedCharacters])
+      isMounted = false;
+      blobUrlsToCleanup.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [enrichedCharacters]);
 
-  return { resolvedUrls, isLoading }
+  return { resolvedUrls, isLoading };
 }

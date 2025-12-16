@@ -7,19 +7,19 @@
  * 3. URL from _meta.logo
  */
 
-import { useState, useEffect, useRef } from 'react'
-import styles from '../../../styles/components/projects/LogoSelector.module.css'
+import { useEffect, useRef, useState } from 'react';
+import styles from '../../../styles/components/projects/LogoSelector.module.css';
 
-export type LogoMode = 'text' | 'upload' | 'url'
+export type LogoMode = 'text' | 'upload' | 'url';
 
 interface LogoSelectorProps {
-  scriptName: string
-  logoUrl?: string
-  uploadedLogo?: string // Data URL
-  mode: LogoMode
-  onModeChange: (mode: LogoMode) => void
-  onLogoUpload: (dataUrl: string) => void
-  showSettingsBelowLogo?: boolean // Show settings beneath logo instead of overlay
+  scriptName: string;
+  logoUrl?: string;
+  uploadedLogo?: string; // Data URL
+  mode: LogoMode;
+  onModeChange: (mode: LogoMode) => void;
+  onLogoUpload: (dataUrl: string) => void;
+  showSettingsBelowLogo?: boolean; // Show settings beneath logo instead of overlay
 }
 
 export function LogoSelector({
@@ -29,151 +29,151 @@ export function LogoSelector({
   mode,
   onModeChange,
   onLogoUpload,
-  showSettingsBelowLogo = false
+  showSettingsBelowLogo = false,
 }: LogoSelectorProps) {
-  const [showOptions, setShowOptions] = useState(false)
-  const [textLogo, setTextLogo] = useState<string | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [showOptions, setShowOptions] = useState(false);
+  const [textLogo, setTextLogo] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Generate text-based logo from script name using full name and Unlovable font
   useEffect(() => {
     if (mode === 'text' && scriptName) {
-      const canvas = canvasRef.current
-      if (!canvas) return
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
       // Set canvas size
-      const size = 200
-      canvas.width = size
-      canvas.height = size
+      const size = 200;
+      canvas.width = size;
+      canvas.height = size;
 
       // Clear canvas
-      ctx.clearRect(0, 0, size, size)
+      ctx.clearRect(0, 0, size, size);
 
       // Background - dark parchment color
-      ctx.fillStyle = '#2a2520'
-      ctx.fillRect(0, 0, size, size)
+      ctx.fillStyle = '#2a2520';
+      ctx.fillRect(0, 0, size, size);
 
       // Border
-      ctx.strokeStyle = '#4a4035'
-      ctx.lineWidth = 3
-      ctx.strokeRect(2, 2, size - 4, size - 4)
+      ctx.strokeStyle = '#4a4035';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(2, 2, size - 4, size - 4);
 
       // Use full script name with word wrapping
-      const text = scriptName.trim()
-      ctx.fillStyle = '#d4c4a8'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
+      const text = scriptName.trim();
+      ctx.fillStyle = '#d4c4a8';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
       // Try to fit text - start with larger font and reduce if needed
-      let fontSize = 32
-      const minFontSize = 14
-      const maxWidth = size - 20
-      const lineHeight = 1.2
+      let fontSize = 32;
+      const minFontSize = 14;
+      const maxWidth = size - 20;
+      const lineHeight = 1.2;
 
       // Use Unlovable font
-      const fontFamily = "'LHF Unlovable', serif"
+      const fontFamily = "'LHF Unlovable', serif";
 
       // Word wrap function
       const wrapText = (text: string, maxWidth: number, fontSize: number): string[] => {
-        ctx.font = `${fontSize}px ${fontFamily}`
-        const words = text.split(' ')
-        const lines: string[] = []
-        let currentLine = ''
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
 
         for (const word of words) {
-          const testLine = currentLine ? `${currentLine} ${word}` : word
-          const metrics = ctx.measureText(testLine)
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const metrics = ctx.measureText(testLine);
           if (metrics.width > maxWidth && currentLine) {
-            lines.push(currentLine)
-            currentLine = word
+            lines.push(currentLine);
+            currentLine = word;
           } else {
-            currentLine = testLine
+            currentLine = testLine;
           }
         }
-        if (currentLine) lines.push(currentLine)
-        return lines
-      }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+      };
 
       // Find best font size that fits
-      let lines: string[] = []
+      let lines: string[] = [];
       while (fontSize >= minFontSize) {
-        lines = wrapText(text, maxWidth, fontSize)
-        const totalHeight = lines.length * fontSize * lineHeight
-        if (totalHeight <= size - 30) break
-        fontSize -= 2
+        lines = wrapText(text, maxWidth, fontSize);
+        const totalHeight = lines.length * fontSize * lineHeight;
+        if (totalHeight <= size - 30) break;
+        fontSize -= 2;
       }
 
       // Draw text lines
-      ctx.font = `${fontSize}px ${fontFamily}`
-      const totalHeight = lines.length * fontSize * lineHeight
-      const startY = (size - totalHeight) / 2 + fontSize / 2
+      ctx.font = `${fontSize}px ${fontFamily}`;
+      const totalHeight = lines.length * fontSize * lineHeight;
+      const startY = (size - totalHeight) / 2 + fontSize / 2;
 
       lines.forEach((line, i) => {
-        ctx.fillText(line, size / 2, startY + i * fontSize * lineHeight)
-      })
+        ctx.fillText(line, size / 2, startY + i * fontSize * lineHeight);
+      });
 
       // Convert to data URL
-      setTextLogo(canvas.toDataURL())
+      setTextLogo(canvas.toDataURL());
     }
-  }, [mode, scriptName])
+  }, [mode, scriptName]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
-      return
+      alert('Please select an image file');
+      return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image file size must be less than 5MB')
-      return
+      alert('Image file size must be less than 5MB');
+      return;
     }
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (event) => {
-      const dataUrl = event.target?.result as string
+      const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        onLogoUpload(dataUrl)
-        onModeChange('upload')
+        onLogoUpload(dataUrl);
+        onModeChange('upload');
       }
-    }
-    reader.readAsDataURL(file)
-  }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const getCurrentLogo = () => {
     switch (mode) {
       case 'text':
-        return textLogo
+        return textLogo;
       case 'upload':
-        return uploadedLogo
+        return uploadedLogo;
       case 'url':
-        return logoUrl
+        return logoUrl;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getModeLabel = () => {
     switch (mode) {
       case 'text':
-        return 'Text Logo'
+        return 'Text Logo';
       case 'upload':
-        return 'Uploaded'
+        return 'Uploaded';
       case 'url':
-        return 'URL Logo'
+        return 'URL Logo';
       default:
-        return 'No Logo'
+        return 'No Logo';
     }
-  }
+  };
 
-  const currentLogo = getCurrentLogo()
+  const currentLogo = getCurrentLogo();
 
   return (
     <div className={styles.container}>
@@ -230,8 +230,8 @@ export function LogoSelector({
             type="button"
             className={`${styles.optionItem} ${mode === 'text' ? styles.active : ''}`}
             onClick={() => {
-              onModeChange('text')
-              setShowOptions(false)
+              onModeChange('text');
+              setShowOptions(false);
             }}
           >
             <span>📝</span>
@@ -259,8 +259,8 @@ export function LogoSelector({
             type="button"
             className={`${styles.optionItem} ${mode === 'url' ? styles.active : ''}`}
             onClick={() => {
-              onModeChange('url')
-              setShowOptions(false)
+              onModeChange('url');
+              setShowOptions(false);
             }}
             disabled={!logoUrl}
             title={!logoUrl ? 'No logo URL in _meta' : 'Use logo URL from _meta'}
@@ -276,5 +276,5 @@ export function LogoSelector({
         </div>
       )}
     </div>
-  )
+  );
 }

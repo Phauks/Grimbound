@@ -19,7 +19,7 @@ export function adjustBrightness(imageData: ImageData, value: number): ImageData
   const data = new Uint8ClampedArray(imageData.data);
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = data[i] + value;       // Red
+    data[i] = data[i] + value; // Red
     data[i + 1] = data[i + 1] + value; // Green
     data[i + 2] = data[i + 2] + value; // Blue
     // Alpha (i + 3) unchanged
@@ -41,7 +41,7 @@ export function adjustContrast(imageData: ImageData, value: number): ImageData {
   const factor = (259 * (value + 255)) / (255 * (259 - value));
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = factor * (data[i] - 128) + 128;       // Red
+    data[i] = factor * (data[i] - 128) + 128; // Red
     data[i + 1] = factor * (data[i + 1] - 128) + 128; // Green
     data[i + 2] = factor * (data[i + 2] - 128) + 128; // Blue
   }
@@ -127,7 +127,7 @@ export function invertColors(imageData: ImageData): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = 255 - data[i];       // Red
+    data[i] = 255 - data[i]; // Red
     data[i + 1] = 255 - data[i + 1]; // Green
     data[i + 2] = 255 - data[i + 2]; // Blue
     // Alpha unchanged
@@ -157,7 +157,11 @@ export function applyBlur(imageData: ImageData, radius: number): ImageData {
   const temp = new Uint8ClampedArray(data.length);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0,
+        count = 0;
 
       for (let kx = -radius; kx <= radius; kx++) {
         const px = Math.min(width - 1, Math.max(0, x + kx));
@@ -181,7 +185,11 @@ export function applyBlur(imageData: ImageData, radius: number): ImageData {
   // Vertical pass
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0,
+        count = 0;
 
       for (let ky = -radius; ky <= radius; ky++) {
         const py = Math.min(height - 1, Math.max(0, y + ky));
@@ -217,11 +225,7 @@ export function applySharpen(imageData: ImageData, amount: number): ImageData {
   const result = new Uint8ClampedArray(data.length);
 
   // Sharpening kernel
-  const kernel = [
-    0, -amount, 0,
-    -amount, 1 + 4 * amount, -amount,
-    0, -amount, 0,
-  ];
+  const kernel = [0, -amount, 0, -amount, 1 + 4 * amount, -amount, 0, -amount, 0];
 
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
@@ -284,7 +288,8 @@ export function detectEdges(imageData: ImageData): ImageData {
 
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      let gx = 0, gy = 0;
+      let gx = 0,
+        gy = 0;
 
       for (let ky = -1; ky <= 1; ky++) {
         for (let kx = -1; kx <= 1; kx++) {
@@ -323,7 +328,10 @@ export function cropToContent(imageData: ImageData, threshold: number = 10): Ima
   const { width, height, data } = imageData;
 
   // Find bounds
-  let minX = width, minY = height, maxX = 0, maxY = 0;
+  let minX = width,
+    minY = height,
+    maxX = 0,
+    maxY = 0;
   const bgColor = { r: data[0], g: data[1], b: data[2], a: data[3] };
 
   for (let y = 0; y < height; y++) {
@@ -445,9 +453,9 @@ function parseColor(color: string): { r: number; g: number; b: number } {
     const match = color.match(/\d+/g);
     if (match && match.length >= 3) {
       return {
-        r: parseInt(match[0]),
-        g: parseInt(match[1]),
-        b: parseInt(match[2]),
+        r: parseInt(match[0], 10),
+        g: parseInt(match[1], 10),
+        b: parseInt(match[2], 10),
       };
     }
   }
@@ -498,10 +506,9 @@ class FilterWorkerPool {
 
     // Create new worker if under pool size
     if (this.workers.length < this.poolSize) {
-      const worker = new Worker(
-        new URL('./workers/filterWorker.ts', import.meta.url),
-        { type: 'module' }
-      );
+      const worker = new Worker(new URL('./workers/filterWorker.ts', import.meta.url), {
+        type: 'module',
+      });
       this.workers.push(worker);
       return worker;
     }

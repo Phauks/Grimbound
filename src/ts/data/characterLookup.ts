@@ -80,7 +80,7 @@ export class CharacterLookupService {
 
     // Sort by score (highest first) and return top N
     results.sort((a, b) => b.score - a.score);
-    return results.slice(0, limit).map(r => r.character);
+    return results.slice(0, limit).map((r) => r.character);
   }
 
   /**

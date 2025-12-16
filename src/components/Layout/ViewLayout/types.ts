@@ -4,7 +4,7 @@
  * TypeScript interfaces for the unified view layout system.
  */
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /**
  * Layout variant types
@@ -12,12 +12,12 @@ import type { ReactNode } from 'react'
  * - '3-panel': Left sidebar (280px) + Center (flex) + Right panel (flex or fixed)
  * - 'full-width': Single scrollable content area
  */
-export type ViewLayoutVariant = '2-panel' | '3-panel' | 'full-width'
+export type ViewLayoutVariant = '2-panel' | '3-panel' | 'full-width';
 
 /**
  * Panel position within the layout
  */
-export type PanelPosition = 'left' | 'center' | 'right'
+export type PanelPosition = 'left' | 'center' | 'right';
 
 /**
  * Panel width configuration
@@ -27,22 +27,22 @@ export type PanelPosition = 'left' | 'center' | 'right'
  * - 'flex': Fills remaining space
  * - number: Custom pixel width
  */
-export type PanelWidth = 'left' | 'right' | 'right-studio' | 'flex' | number
+export type PanelWidth = 'left' | 'right' | 'right-studio' | 'flex' | number;
 
 /**
  * Props for the ViewLayout container component
  */
 export interface ViewLayoutProps {
   /** Layout configuration - determines panel arrangement */
-  variant: ViewLayoutVariant
+  variant: ViewLayoutVariant;
   /** Child panels (ViewLayout.Panel components) */
-  children: ReactNode
+  children: ReactNode;
   /** Additional CSS classes for the container */
-  className?: string
+  className?: string;
   /** Custom height override (default: uses --view-height CSS variable) */
-  height?: string
+  height?: string;
   /** Test ID for testing purposes */
-  'data-testid'?: string
+  'data-testid'?: string;
 }
 
 /**
@@ -50,24 +50,24 @@ export interface ViewLayoutProps {
  */
 export interface ViewLayoutPanelProps {
   /** Panel position in layout - determines border placement */
-  position: PanelPosition
+  position: PanelPosition;
   /** Panel width configuration */
-  width?: PanelWidth
+  width?: PanelWidth;
   /** Enable scrolling with hidden scrollbar */
-  scrollable?: boolean
+  scrollable?: boolean;
   /** Panel content (optional for empty placeholder panels) */
-  children?: ReactNode
+  children?: ReactNode;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
   /** ARIA label for accessibility */
-  'aria-label'?: string
+  'aria-label'?: string;
   /** Test ID for testing purposes */
-  'data-testid'?: string
+  'data-testid'?: string;
 }
 
 /**
  * Compound component type for ViewLayout
  */
 export interface ViewLayoutComponent extends React.FC<ViewLayoutProps> {
-  Panel: React.FC<ViewLayoutPanelProps>
+  Panel: React.FC<ViewLayoutPanelProps>;
 }

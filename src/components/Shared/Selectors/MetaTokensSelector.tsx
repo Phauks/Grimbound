@@ -10,51 +10,43 @@
  * @module components/Shared/MetaTokensSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import type { GenerationOptions } from '../../../ts/types/index'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import type { GenerationOptions } from '../../../ts/types/index';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface MetaTokensSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 interface PendingMetaSettings {
-  pandemonium: boolean
-  scriptName: boolean
-  showAuthor: boolean
+  pandemonium: boolean;
+  scriptName: boolean;
+  showAuthor: boolean;
 }
 
 // ============================================================================
 // Preview Component
 // ============================================================================
 
-const MetaPreview = memo(function MetaPreview({
-  enabledCount,
-}: {
-  enabledCount: number
-}) {
+const MetaPreview = memo(function MetaPreview({ enabledCount }: { enabledCount: number }) {
   return (
-    <div className={`${styles.previewContainer} ${enabledCount === 0 ? styles.previewDisabled : ''}`}>
+    <div
+      className={`${styles.previewContainer} ${enabledCount === 0 ? styles.previewDisabled : ''}`}
+    >
       <span className={styles.previewIcon}>📋</span>
-      {enabledCount > 0 && (
-        <span className={styles.previewBadge}>{enabledCount}</span>
-      )}
+      {enabledCount > 0 && <span className={styles.previewBadge}>{enabledCount}</span>}
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -71,32 +63,38 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
     pandemonium: generationOptions.pandemoniumToken !== false,
     scriptName: generationOptions.scriptNameToken !== false,
     showAuthor: !(generationOptions.hideScriptNameAuthor ?? false),
-  }
+  };
 
   const countEnabled = (settings: PendingMetaSettings) => {
-    let count = 0
-    if (settings.pandemonium) count++
-    if (settings.scriptName) count++
-    return count
-  }
+    let count = 0;
+    if (settings.pandemonium) count++;
+    if (settings.scriptName) count++;
+    return count;
+  };
 
-  const enabledCount = countEnabled(currentSettings)
-  const isEnabled = enabledCount > 0
+  const enabledCount = countEnabled(currentSettings);
+  const isEnabled = enabledCount > 0;
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({
-      pandemoniumToken: enabled,
-      scriptNameToken: enabled,
-    })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({
+        pandemoniumToken: enabled,
+        scriptNameToken: enabled,
+      });
+    },
+    [onOptionChange]
+  );
 
-  const handlePanelChange = useCallback((settings: PendingMetaSettings) => {
-    onOptionChange({
-      pandemoniumToken: settings.pandemonium,
-      scriptNameToken: settings.scriptName,
-      hideScriptNameAuthor: !settings.showAuthor,
-    })
-  }, [onOptionChange])
+  const handlePanelChange = useCallback(
+    (settings: PendingMetaSettings) => {
+      onOptionChange({
+        pandemoniumToken: settings.pandemonium,
+        scriptNameToken: settings.scriptName,
+        hideScriptNameAuthor: !settings.showAuthor,
+      });
+    },
+    [onOptionChange]
+  );
 
   const panel = useExpandablePanel<PendingMetaSettings>({
     value: currentSettings,
@@ -105,24 +103,24 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
     disabled,
     panelHeight: 180,
     minPanelWidth: 220,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
-  const displayCount = countEnabled(displaySettings)
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
+  const displayCount = countEnabled(displaySettings);
 
   const getSummary = () => {
-    if (displayCount === 0) return 'None'
-    const parts: string[] = []
-    if (displaySettings.pandemonium) parts.push('Pandemonium')
-    if (displaySettings.scriptName) parts.push('Script')
-    return parts.join(', ')
-  }
+    if (displayCount === 0) return 'None';
+    const parts: string[] = [];
+    if (displaySettings.pandemonium) parts.push('Pandemonium');
+    if (displaySettings.scriptName) parts.push('Script');
+    return parts.join(', ');
+  };
 
   const defaultSettings: PendingMetaSettings = {
     pandemonium: true,
     scriptName: true,
     showAuthor: true,
-  }
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -141,10 +139,10 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
         On
       </button>
     </div>
-  )
+  );
 
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -155,7 +153,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -187,7 +185,9 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
           </label>
 
           {/* Show Author (sub-option) */}
-          <label className={`${styles.checkboxRow} ${styles.subOption} ${!panel.pendingValue.scriptName ? styles.optionDisabled : ''}`}>
+          <label
+            className={`${styles.checkboxRow} ${styles.subOption} ${!panel.pendingValue.scriptName ? styles.optionDisabled : ''}`}
+          >
             <input
               type="checkbox"
               checked={panel.pendingValue.showAuthor}
@@ -207,26 +207,18 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
@@ -236,12 +228,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
           <MetaPreview enabledCount={displayCount} />
         </PreviewBox>
       }
-      info={
-        <InfoSection
-          label="Meta Tokens"
-          summary={getSummary()}
-        />
-      }
+      info={<InfoSection label="Meta Tokens" summary={getSummary()} />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -254,7 +241,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default MetaTokensSelector
+export default MetaTokensSelector;

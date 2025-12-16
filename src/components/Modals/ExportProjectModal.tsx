@@ -6,13 +6,13 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
-import { Alert } from '../Shared/UI/Alert';
-import { ProjectExporter } from '../../ts/services/project/ProjectExporter';
-import type { Project, ExportOptions } from '../../ts/types/project.js';
+import { useCallback, useMemo, useState } from 'react';
 import styles from '../../styles/components/modals/ExportProjectModal.module.css';
+import { ProjectExporter } from '../../ts/services/project/ProjectExporter';
+import type { ExportOptions, Project } from '../../ts/types/project.js';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Alert } from '../Shared/UI/Alert';
+import { Button } from '../Shared/UI/Button';
 
 interface ExportProjectModalProps {
   /** Whether modal is open */
@@ -200,9 +200,7 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
           <input
             type="checkbox"
             checked={options.compressImages}
-            onChange={(e) =>
-              setOptions((prev) => ({ ...prev, compressImages: e.target.checked }))
-            }
+            onChange={(e) => setOptions((prev) => ({ ...prev, compressImages: e.target.checked }))}
             disabled={isExporting}
           />
           <div className={styles.optionContent}>

@@ -5,22 +5,22 @@
  * Supports standard HTML input attributes plus custom styling options.
  */
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
-import styles from '../../../styles/components/shared/Form.module.css'
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import styles from '../../../styles/components/shared/Form.module.css';
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** Input size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Error state */
-  error?: boolean
+  error?: boolean;
   /** Error message to display */
-  errorMessage?: string
+  errorMessage?: string;
   /** Left icon/element */
-  leftIcon?: ReactNode
+  leftIcon?: ReactNode;
   /** Right icon/element */
-  rightIcon?: ReactNode
+  rightIcon?: ReactNode;
   /** Full width */
-  fullWidth?: boolean
+  fullWidth?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -49,14 +49,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       className,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
-    const wrapperClasses = [
-      styles.inputWrapper,
-      fullWidth && styles.fullWidth,
-    ]
+    const wrapperClasses = [styles.inputWrapper, fullWidth && styles.fullWidth]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
     return (
       <div className={wrapperClasses}>
@@ -69,14 +66,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={error}
             {...props}
           />
-          {rightIcon && <span className={`${styles.inputIcon} ${styles.inputIconRight}`}>{rightIcon}</span>}
+          {rightIcon && (
+            <span className={`${styles.inputIcon} ${styles.inputIconRight}`}>{rightIcon}</span>
+          )}
         </div>
-        {errorMessage && (
-          <span className={styles.errorText}>{errorMessage}</span>
-        )}
+        {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
       </div>
-    )
+    );
   }
-)
+);
 
-Input.displayName = 'Input'
+Input.displayName = 'Input';

@@ -7,7 +7,7 @@
  * @module types/project
  */
 
-import type { Character, ScriptMeta, GenerationOptions, Token } from './index.js';
+import type { Character, GenerationOptions, ScriptMeta, Token } from './index.js';
 
 // ============================================================================
 // Project Entity
@@ -18,38 +18,38 @@ import type { Character, ScriptMeta, GenerationOptions, Token } from './index.js
  */
 export interface Project {
   // Identifiers
-  id: string;                              // UUID v4
-  name: string;                            // User-friendly name
-  description?: string;                    // Optional description
-  privateNotes?: string;                   // Private notes (not exported)
-  
+  id: string; // UUID v4
+  name: string; // User-friendly name
+  description?: string; // Optional description
+  privateNotes?: string; // Private notes (not exported)
+
   // Project content metadata
-  gameplay?: string;                       // Gameplay style description
-  difficulty?: string;                     // Difficulty level
-  storytellerTips?: string;                // Tips for running the script
-  changelog?: string;                      // Version history
+  gameplay?: string; // Gameplay style description
+  difficulty?: string; // Difficulty level
+  storytellerTips?: string; // Tips for running the script
+  changelog?: string; // Version history
 
   // Timestamps
-  createdAt: number;                       // Unix timestamp (ms)
-  lastModifiedAt: number;                  // Unix timestamp (ms)
-  lastAccessedAt: number;                  // Unix timestamp (ms)
+  createdAt: number; // Unix timestamp (ms)
+  lastModifiedAt: number; // Unix timestamp (ms)
+  lastAccessedAt: number; // Unix timestamp (ms)
 
   // Visual metadata
-  thumbnail: ProjectThumbnail;             // Thumbnail configuration
-  tags?: string[];                         // User-defined tags
-  color?: string;                          // Hex color for card badge
+  thumbnail: ProjectThumbnail; // Thumbnail configuration
+  tags?: string[]; // User-defined tags
+  color?: string; // Hex color for card badge
 
   // Application state snapshot
-  state: ProjectState;                     // Complete app state
+  state: ProjectState; // Complete app state
 
   // Statistics
-  stats: ProjectStats;                     // Computed statistics
+  stats: ProjectStats; // Computed statistics
 
   // Versioning
-  schemaVersion: number;                   // For migrations (current: 1)
+  schemaVersion: number; // For migrations (current: 1)
 
   // Cloud sync (future)
-  cloudSync?: CloudSyncMetadata;           // Reserved for v2.0
+  cloudSync?: CloudSyncMetadata; // Reserved for v2.0
 }
 
 // ============================================================================
@@ -61,18 +61,18 @@ export interface Project {
  */
 export interface ProjectState {
   // Script data
-  jsonInput: string;                       // Raw JSON input
-  characters: Character[];                 // Parsed characters
-  scriptMeta: ScriptMeta | null;          // Script metadata (_meta)
+  jsonInput: string; // Raw JSON input
+  characters: Character[]; // Parsed characters
+  scriptMeta: ScriptMeta | null; // Script metadata (_meta)
 
   // Character metadata (decorative overrides, etc.)
   characterMetadata: Record<string, CharacterMetadata>;
 
   // Generation options
-  generationOptions: GenerationOptions;    // Token generation settings
+  generationOptions: GenerationOptions; // Token generation settings
 
   // Custom character icons
-  customIcons: CustomIconMetadata[];       // User-uploaded icons
+  customIcons: CustomIconMetadata[]; // User-uploaded icons
 
   // Filter state (optional - can reset to defaults)
   filters?: ProjectFilters;
@@ -81,17 +81,17 @@ export interface ProjectState {
   tokens?: Token[];
 
   // Schema version
-  schemaVersion: number;                   // Current: 1
+  schemaVersion: number; // Current: 1
 }
 
 /**
  * Character-specific metadata overrides
  */
 export interface CharacterMetadata {
-  idLinkedToName?: boolean;                // Whether ID should update with name
+  idLinkedToName?: boolean; // Whether ID should update with name
   customIcon?: {
     enabled: boolean;
-    filename?: string;                     // Filename in ZIP or IndexedDB
+    filename?: string; // Filename in ZIP or IndexedDB
   };
 }
 
@@ -115,30 +115,30 @@ export interface ProjectFilters {
  * Custom character icon metadata
  */
 export interface CustomIconMetadata {
-  characterId: string;                     // Character UUID or ID
-  characterName: string;                   // For display
-  filename: string;                        // Filename in ZIP (e.g., "imp.webp")
+  characterId: string; // Character UUID or ID
+  characterName: string; // For display
+  filename: string; // Filename in ZIP (e.g., "imp.webp")
   source: 'uploaded' | 'url' | 'official-override';
 
   // Storage
-  dataUrl?: string;                        // Base64 for in-memory (not exported to ZIP)
-  storedInIndexedDB: boolean;             // Whether icon is in DB
+  dataUrl?: string; // Base64 for in-memory (not exported to ZIP)
+  storedInIndexedDB: boolean; // Whether icon is in DB
 
   // Metadata
-  fileSize?: number;                       // Bytes
-  mimeType?: string;                       // 'image/webp', 'image/png', etc.
-  lastModified?: number;                   // Timestamp
+  fileSize?: number; // Bytes
+  mimeType?: string; // 'image/webp', 'image/png', etc.
+  lastModified?: number; // Timestamp
 }
 
 /**
  * Custom icon blob storage (for IndexedDB)
  */
 export interface CustomIcon {
-  characterId: string;                     // Primary key
-  projectId: string;                       // Which project owns this
+  characterId: string; // Primary key
+  projectId: string; // Which project owns this
   characterName: string;
   filename: string;
-  blob: Blob;                              // Actual image data
+  blob: Blob; // Actual image data
   mimeType: string;
   fileSize: number;
   uploadedAt: number;
@@ -161,8 +161,8 @@ export interface ProjectThumbnail {
 
   // Auto-generated from first token
   auto?: {
-    dataUrl: string;                       // Base64 data URL
-    generatedAt: number;                   // Timestamp
+    dataUrl: string; // Base64 data URL
+    generatedAt: number; // Timestamp
   };
 
   // User-selected token thumbnail
@@ -176,15 +176,15 @@ export interface ProjectThumbnail {
   // Text-based script name thumbnail
   scriptName?: {
     scriptName: string;
-    dataUrl: string;                       // Generated text thumbnail
+    dataUrl: string; // Generated text thumbnail
     generatedAt: number;
   };
 
   // Script logo as thumbnail
   scriptLogo?: {
-    logoUrl: string;                       // Original URL
+    logoUrl: string; // Original URL
     scriptName: string;
-    dataUrl: string;                       // Cached/resized version
+    dataUrl: string; // Cached/resized version
   };
 
   // Custom uploaded image
@@ -204,11 +204,11 @@ export interface ProjectThumbnail {
  */
 export interface ProjectStats {
   characterCount: number;
-  tokenCount: number;                      // Generated tokens
+  tokenCount: number; // Generated tokens
   reminderCount: number;
   customIconCount: number;
   presetCount: number;
-  lastGeneratedAt?: number;                // Last token generation
+  lastGeneratedAt?: number; // Last token generation
 }
 
 // ============================================================================
@@ -221,9 +221,9 @@ export interface ProjectStats {
 export interface CloudSyncMetadata {
   syncEnabled: boolean;
   lastSyncedAt?: number;
-  syncId?: string;                         // Server-side ID
+  syncId?: string; // Server-side ID
   conflictState?: 'none' | 'local-newer' | 'remote-newer' | 'diverged';
-  lastSyncHash?: string;                   // For conflict detection
+  lastSyncHash?: string; // For conflict detection
 }
 
 // ============================================================================
@@ -234,10 +234,10 @@ export interface CloudSyncMetadata {
  * Auto-save snapshot for recovery
  */
 export interface AutoSaveSnapshot {
-  id: string;                              // UUID
-  projectId: string;                       // Which project
-  timestamp: number;                       // When saved
-  stateSnapshot: ProjectState;             // Full state
+  id: string; // UUID
+  projectId: string; // Which project
+  timestamp: number; // When saved
+  stateSnapshot: ProjectState; // Full state
 }
 
 // ============================================================================
@@ -249,28 +249,28 @@ export interface AutoSaveSnapshot {
  */
 export interface ProjectVersion {
   // Primary identifiers
-  id: string;                              // UUID for this version
-  projectId: string;                       // Parent project ID
+  id: string; // UUID for this version
+  projectId: string; // Parent project ID
 
   // Version information
-  versionNumber: string;                   // Semantic version (e.g., "1.2.0")
-  versionMajor: number;                    // Major version (for sorting/comparison)
-  versionMinor: number;                    // Minor version
-  versionPatch: number;                    // Patch version (default 0)
+  versionNumber: string; // Semantic version (e.g., "1.2.0")
+  versionMajor: number; // Major version (for sorting/comparison)
+  versionMinor: number; // Minor version
+  versionPatch: number; // Patch version (default 0)
 
   // Content snapshot
-  stateSnapshot: ProjectState;             // Full project state at version creation
+  stateSnapshot: ProjectState; // Full project state at version creation
 
   // Metadata
-  createdAt: number;                       // Unix timestamp (ms)
-  releaseNotes?: string;                   // User-provided changelog/description
-  tags?: string[];                         // Optional tags (e.g., ["alpha", "stable"])
+  createdAt: number; // Unix timestamp (ms)
+  releaseNotes?: string; // User-provided changelog/description
+  tags?: string[]; // Optional tags (e.g., ["alpha", "stable"])
 
   // Future publishing fields (placeholders, not implemented yet)
-  isPublished?: boolean;                   // True if shared to network
-  publishedAt?: number;                    // Timestamp of publication
-  downloadCount?: number;                  // How many times downloaded
-  networkId?: string;                      // Unique ID on shared network
+  isPublished?: boolean; // True if shared to network
+  publishedAt?: number; // Timestamp of publication
+  downloadCount?: number; // How many times downloaded
+  networkId?: string; // Unique ID on shared network
 }
 
 /**
@@ -283,9 +283,9 @@ export type VersionIncrementType = 'major' | 'minor' | 'patch';
  */
 export interface AutoSaveStatus {
   state: 'idle' | 'saving' | 'saved' | 'error';
-  lastSavedAt?: number;                    // Timestamp
-  error?: string;                          // Error message if failed
-  isDirty: boolean;                        // Has unsaved changes
+  lastSavedAt?: number; // Timestamp
+  error?: string; // Error message if failed
+  isDirty: boolean; // Has unsaved changes
 }
 
 // ============================================================================
@@ -301,7 +301,7 @@ export interface CreateProjectOptions {
   tags?: string[];
   color?: string;
   thumbnailType?: ProjectThumbnail['type'];
-  state?: Partial<ProjectState>;           // Can provide partial state
+  state?: Partial<ProjectState>; // Can provide partial state
 }
 
 /**
@@ -312,7 +312,7 @@ export interface ListProjectsOptions {
   sortOrder?: 'asc' | 'desc';
   filter?: {
     tags?: string[];
-    searchQuery?: string;                  // Search in name/description
+    searchQuery?: string; // Search in name/description
   };
   limit?: number;
   offset?: number;
@@ -322,11 +322,11 @@ export interface ListProjectsOptions {
  * Options for exporting a project
  */
 export interface ExportOptions {
-  includeAssets?: boolean;                 // Default: true - Include assets in export
-  includeUnusedAssets?: boolean;           // Default: true - Include assets with usageCount === 0
-  includeThumbnail?: boolean;              // Default: true
-  compressImages?: boolean;                // Default: false (future)
-  includeCustomIcons?: boolean;            // Default: true - Include custom character icons
+  includeAssets?: boolean; // Default: true - Include assets in export
+  includeUnusedAssets?: boolean; // Default: true - Include assets with usageCount === 0
+  includeThumbnail?: boolean; // Default: true
+  compressImages?: boolean; // Default: false (future)
+  includeCustomIcons?: boolean; // Default: true - Include custom character icons
 }
 
 // ============================================================================
@@ -337,17 +337,17 @@ export interface ExportOptions {
  * ZIP package manifest
  */
 export interface ProjectManifest {
-  format: string;                          // "blood-on-the-clocktower-project-package"
-  formatVersion: string;                   // "1.0.0"
-  generator: string;                       // "BotC Token Generator"
-  generatorVersion: string;                // App version
-  generatorUrl: string;                    // App URL
-  exportedAt: string;                      // ISO 8601 timestamp
+  format: string; // "blood-on-the-clocktower-project-package"
+  formatVersion: string; // "1.0.0"
+  generator: string; // "BotC Token Generator"
+  generatorVersion: string; // App version
+  generatorUrl: string; // App URL
+  exportedAt: string; // ISO 8601 timestamp
 
   files: {
-    projectData: string;                   // "project.json"
-    thumbnail?: string;                    // "thumbnail.png"
-    customIcons: string[];                 // ["icons/imp.webp", ...]
+    projectData: string; // "project.json"
+    thumbnail?: string; // "thumbnail.png"
+    customIcons: string[]; // ["icons/imp.webp", ...]
   };
 
   stats: {
@@ -359,8 +359,8 @@ export interface ProjectManifest {
   };
 
   compatibility: {
-    minGeneratorVersion: string;           // Minimum app version needed
-    schemaVersion: number;                 // Data schema version
+    minGeneratorVersion: string; // Minimum app version needed
+    schemaVersion: number; // Data schema version
   };
 }
 
@@ -395,11 +395,11 @@ export interface ProjectPreview {
  * Storage quota information
  */
 export interface StorageQuota {
-  usage: number;                           // Bytes used
-  quota: number;                           // Bytes available
-  usageMB: number;                         // MB used
-  quotaMB: number;                         // MB available
-  percentUsed: number;                     // Percentage (0-100)
+  usage: number; // Bytes used
+  quota: number; // Bytes available
+  usageMB: number; // MB used
+  quotaMB: number; // MB available
+  percentUsed: number; // Percentage (0-100)
 }
 
 // ============================================================================
@@ -410,17 +410,17 @@ export interface StorageQuota {
  * Project entity as stored in IndexedDB
  */
 export interface DBProject {
-  id: string;                              // Primary key
+  id: string; // Primary key
   name: string;
   description?: string;
   createdAt: number;
   lastModifiedAt: number;
   lastAccessedAt: number;
-  thumbnailDataUrl: string;                // Stored as data URL
-  thumbnailConfig: ProjectThumbnail;       // Full config
+  thumbnailDataUrl: string; // Stored as data URL
+  thumbnailConfig: ProjectThumbnail; // Full config
   tags: string[];
   color?: string;
-  stateJson: string;                       // JSON.stringify(ProjectState)
+  stateJson: string; // JSON.stringify(ProjectState)
   stats: ProjectStats;
   schemaVersion: number;
 }
@@ -429,12 +429,12 @@ export interface DBProject {
  * Custom icon entity as stored in IndexedDB
  */
 export interface DBCustomIcon {
-  id: string;                              // Primary key (UUID)
-  characterId: string;                     // Indexed
-  projectId: string;                       // Indexed
+  id: string; // Primary key (UUID)
+  characterId: string; // Indexed
+  projectId: string; // Indexed
   characterName: string;
   filename: string;
-  dataUrl: string;                         // Base64 data URL
+  dataUrl: string; // Base64 data URL
   mimeType: string;
   fileSize: number;
   uploadedAt: number;
@@ -444,28 +444,28 @@ export interface DBCustomIcon {
  * Auto-save snapshot entity as stored in IndexedDB
  */
 export interface DBAutoSaveSnapshot {
-  id: string;                              // Primary key (UUID)
-  projectId: string;                       // Indexed
-  timestamp: number;                       // Indexed
-  stateJson: string;                       // JSON.stringify(ProjectState)
+  id: string; // Primary key (UUID)
+  projectId: string; // Indexed
+  timestamp: number; // Indexed
+  stateJson: string; // JSON.stringify(ProjectState)
 }
 
 /**
  * Project version entity as stored in IndexedDB
  */
 export interface DBProjectVersion {
-  id: string;                              // Primary key (UUID)
-  projectId: string;                       // Indexed
-  versionNumber: string;                   // Semantic version
-  versionMajor: number;                    // Indexed (compound with versionMinor)
-  versionMinor: number;                    // Indexed (compound with versionMajor)
-  versionPatch: number;                    // Patch version
-  stateJson: string;                       // JSON.stringify(ProjectState)
-  createdAt: number;                       // Indexed
-  releaseNotes?: string;                   // Optional changelog
-  tags?: string[];                         // Optional tags
-  isPublished?: boolean;                   // Future: publication status
-  publishedAt?: number;                    // Future: publication timestamp
-  downloadCount?: number;                  // Future: download count
-  networkId?: string;                      // Future: network ID
+  id: string; // Primary key (UUID)
+  projectId: string; // Indexed
+  versionNumber: string; // Semantic version
+  versionMajor: number; // Indexed (compound with versionMinor)
+  versionMinor: number; // Indexed (compound with versionMajor)
+  versionPatch: number; // Patch version
+  stateJson: string; // JSON.stringify(ProjectState)
+  createdAt: number; // Indexed
+  releaseNotes?: string; // Optional changelog
+  tags?: string[]; // Optional tags
+  isPublished?: boolean; // Future: publication status
+  publishedAt?: number; // Future: publication timestamp
+  downloadCount?: number; // Future: download count
+  networkId?: string; // Future: network ID
 }

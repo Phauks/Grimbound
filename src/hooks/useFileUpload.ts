@@ -31,8 +31,12 @@
  * ```
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { fileUploadService, UploadOutcome, UseFileUploadConfig } from '../ts/services/upload/index.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  fileUploadService,
+  type UploadOutcome,
+  type UseFileUploadConfig,
+} from '../ts/services/upload/index.js';
 
 // ============================================================================
 // Types

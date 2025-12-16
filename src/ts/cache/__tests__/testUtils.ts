@@ -7,8 +7,8 @@
  * @module ts/cache/__tests__/testUtils
  */
 
-import type { CacheStats, CacheEntry, CacheOptions } from '../core/types.js';
 import type { ICacheStrategy } from '../core/interfaces.js';
+import type { CacheEntry, CacheOptions, CacheStats } from '../core/types.js';
 
 // ============================================================================
 // Mock Cache Implementation
@@ -46,7 +46,7 @@ export function createMockCache<K extends string = string, V = unknown>(
         size: 0,
         createdAt: Date.now(),
         lastAccessed: Date.now(),
-        accessCount: 0
+        accessCount: 0,
       });
     }
   }
@@ -74,7 +74,7 @@ export function createMockCache<K extends string = string, V = unknown>(
         accessCount: 0,
         ttl: options?.ttl,
         tags: options?.tags,
-        metadata: options?.metadata
+        metadata: options?.metadata,
       });
     },
 
@@ -101,7 +101,7 @@ export function createMockCache<K extends string = string, V = unknown>(
         missCount,
         hitRate: totalCount > 0 ? hitCount / totalCount : 0,
         evictionCount,
-        memoryUsage: 0
+        memoryUsage: 0,
       };
     },
 
@@ -156,7 +156,7 @@ export function createMockCache<K extends string = string, V = unknown>(
       }
 
       return results;
-    }
+    },
   };
 }
 
@@ -184,10 +184,7 @@ export function createMockCacheEntries<V = string>(
   const defaultFactory = (i: number) => `value-${i}` as unknown as V;
   const factory = valueFactory || defaultFactory;
 
-  return Array.from({ length: count }, (_, i) => [
-    `key-${i}`,
-    factory(i)
-  ]);
+  return Array.from({ length: count }, (_, i) => [`key-${i}`, factory(i)]);
 }
 
 /**
@@ -205,7 +202,7 @@ export function createMockCacheEntries<V = string>(
 export function createMockTokenUrls(count: number): [string, string][] {
   return Array.from({ length: count }, (_, i) => [
     `token-${i}.png`,
-    `data:image/png;base64,mock-base64-data-${i}`
+    `data:image/png;base64,mock-base64-data-${i}`,
   ]);
 }
 
@@ -296,7 +293,7 @@ export async function waitForCondition(
     if (await condition()) {
       return;
     }
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
   throw new Error(`Condition not met within ${timeout}ms`);
@@ -354,7 +351,7 @@ export function createCacheSpy<K extends string, V>(
     clear: [],
     evict: [],
     invalidateByTag: [],
-    getByTag: []
+    getByTag: [],
   };
 
   const cache: ICacheStrategy<K, V> = {
@@ -403,7 +400,7 @@ export function createCacheSpy<K extends string, V>(
     async getByTag(tag: string): Promise<Array<CacheEntry<V>>> {
       calls.getByTag.push({ tag, timestamp: Date.now() });
       return baseCache.getByTag(tag);
-    }
+    },
   };
 
   return { cache, calls };

@@ -23,25 +23,25 @@
  * ```
  */
 
-import { type ReactNode, type CSSProperties } from 'react'
-import { cn } from '../../../ts/utils'
-import styles from '../../../styles/components/shared/Alert.module.css'
+import type { CSSProperties, ReactNode } from 'react';
+import styles from '../../../styles/components/shared/Alert.module.css';
+import { cn } from '../../../ts/utils';
 
-export type AlertVariant = 'info' | 'success' | 'warning' | 'error'
+export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
 
 interface AlertProps {
   /** Visual style variant */
-  variant?: AlertVariant
+  variant?: AlertVariant;
   /** Optional title displayed in bold */
-  title?: string
+  title?: string;
   /** Alert content */
-  children: ReactNode
+  children: ReactNode;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
   /** Custom icon (overrides default) */
-  icon?: ReactNode
+  icon?: ReactNode;
   /** Inline styles (for layout spacing) */
-  style?: CSSProperties
+  style?: CSSProperties;
 }
 
 const defaultIcons: Record<AlertVariant, string> = {
@@ -49,16 +49,9 @@ const defaultIcons: Record<AlertVariant, string> = {
   success: '✓',
   warning: '⚠',
   error: '✕',
-}
+};
 
-export function Alert({
-  variant = 'info',
-  title,
-  children,
-  className,
-  icon,
-  style,
-}: AlertProps) {
+export function Alert({ variant = 'info', title, children, className, icon, style }: AlertProps) {
   return (
     <div
       className={cn(styles.alert, styles[variant], className)}
@@ -73,7 +66,7 @@ export function Alert({
         <div className={styles.message}>{children}</div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Alert
+export default Alert;

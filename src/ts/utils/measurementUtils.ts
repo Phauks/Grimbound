@@ -10,7 +10,11 @@
  * - Millimeters derived via: inches × 25.4
  */
 
-import type { MeasurementUnit, MeasurementConfig, DisplayMeasurement } from '../types/measurement.js';
+import type {
+  DisplayMeasurement,
+  MeasurementConfig,
+  MeasurementUnit,
+} from '../types/measurement.js';
 
 // ============================================================================
 // CONSTANTS
@@ -21,18 +25,18 @@ export const MM_PER_INCH = 25.4;
 
 /** Default step sizes for common UI inputs (all in inches) */
 export const STEP_SIZES = {
-    /** Fine adjustment: 1/100 inch = 0.254mm */
-    FINE: 0.01,
-    /** Medium adjustment: 1/32 inch = ~0.79mm */
-    MEDIUM: 0.03125,
-    /** Coarse adjustment: 1/16 inch = 1.59mm */
-    COARSE: 0.0625,
+  /** Fine adjustment: 1/100 inch = 0.254mm */
+  FINE: 0.01,
+  /** Medium adjustment: 1/32 inch = ~0.79mm */
+  MEDIUM: 0.03125,
+  /** Coarse adjustment: 1/16 inch = 1.59mm */
+  COARSE: 0.0625,
 } as const;
 
 /** Decimal places for display formatting by unit */
 export const DECIMAL_PLACES: Record<MeasurementUnit, number> = {
-    inches: 3,       // e.g., 0.125"
-    millimeters: 2,  // e.g., 3.18mm
+  inches: 3, // e.g., 0.125"
+  millimeters: 2, // e.g., 3.18mm
 };
 
 // ============================================================================
@@ -45,7 +49,7 @@ export const DECIMAL_PLACES: Record<MeasurementUnit, number> = {
  * @returns Value in millimeters
  */
 export function inchesToMm(inches: number): number {
-    return inches * MM_PER_INCH;
+  return inches * MM_PER_INCH;
 }
 
 /**
@@ -54,7 +58,7 @@ export function inchesToMm(inches: number): number {
  * @returns Value in inches
  */
 export function mmToInches(mm: number): number {
-    return mm / MM_PER_INCH;
+  return mm / MM_PER_INCH;
 }
 
 /**
@@ -64,7 +68,7 @@ export function mmToInches(mm: number): number {
  * @returns Value in pixels
  */
 export function inchesToPixels(inches: number, dpi: number): number {
-    return inches * dpi;
+  return inches * dpi;
 }
 
 /**
@@ -74,7 +78,7 @@ export function inchesToPixels(inches: number, dpi: number): number {
  * @returns Value in inches
  */
 export function pixelsToInches(pixels: number, dpi: number): number {
-    return pixels / dpi;
+  return pixels / dpi;
 }
 
 /**
@@ -84,14 +88,14 @@ export function pixelsToInches(pixels: number, dpi: number): number {
  * @returns Value in inches
  */
 export function toCanonicalInches(value: number, fromUnit: MeasurementUnit): number {
-    switch (fromUnit) {
-        case 'inches':
-            return value;
-        case 'millimeters':
-            return mmToInches(value);
-        default:
-            return value;
-    }
+  switch (fromUnit) {
+    case 'inches':
+      return value;
+    case 'millimeters':
+      return mmToInches(value);
+    default:
+      return value;
+  }
 }
 
 /**
@@ -101,14 +105,14 @@ export function toCanonicalInches(value: number, fromUnit: MeasurementUnit): num
  * @returns Value in target unit
  */
 export function fromCanonicalInches(inches: number, toUnit: MeasurementUnit): number {
-    switch (toUnit) {
-        case 'inches':
-            return inches;
-        case 'millimeters':
-            return inchesToMm(inches);
-        default:
-            return inches;
-    }
+  switch (toUnit) {
+    case 'inches':
+      return inches;
+    case 'millimeters':
+      return inchesToMm(inches);
+    default:
+      return inches;
+  }
 }
 
 // ============================================================================
@@ -121,14 +125,14 @@ export function fromCanonicalInches(inches: number, toUnit: MeasurementUnit): nu
  * @returns Unit suffix (e.g., '"' for inches, 'mm' for millimeters)
  */
 export function getUnitSuffix(unit: MeasurementUnit): string {
-    switch (unit) {
-        case 'inches':
-            return '"';
-        case 'millimeters':
-            return 'mm';
-        default:
-            return '';
-    }
+  switch (unit) {
+    case 'inches':
+      return '"';
+    case 'millimeters':
+      return 'mm';
+    default:
+      return '';
+  }
 }
 
 /**
@@ -138,19 +142,19 @@ export function getUnitSuffix(unit: MeasurementUnit): string {
  * @returns Formatted display measurement object
  */
 export function formatMeasurement(
-    canonicalInches: number,
-    displayUnit: MeasurementUnit
+  canonicalInches: number,
+  displayUnit: MeasurementUnit
 ): DisplayMeasurement {
-    const displayValue = fromCanonicalInches(canonicalInches, displayUnit);
-    const decimals = DECIMAL_PLACES[displayUnit];
-    const unitSuffix = getUnitSuffix(displayUnit);
-    const roundedValue = Number(displayValue.toFixed(decimals));
+  const displayValue = fromCanonicalInches(canonicalInches, displayUnit);
+  const decimals = DECIMAL_PLACES[displayUnit];
+  const unitSuffix = getUnitSuffix(displayUnit);
+  const roundedValue = Number(displayValue.toFixed(decimals));
 
-    return {
-        displayValue: roundedValue,
-        formatted: `${displayValue.toFixed(decimals)}${unitSuffix}`,
-        unitSuffix,
-    };
+  return {
+    displayValue: roundedValue,
+    formatted: `${displayValue.toFixed(decimals)}${unitSuffix}`,
+    unitSuffix,
+  };
 }
 
 /**
@@ -160,7 +164,7 @@ export function formatMeasurement(
  * @returns Rounded value
  */
 export function roundToStep(value: number, step: number): number {
-    return Math.round(value / step) * step;
+  return Math.round(value / step) * step;
 }
 
 /**
@@ -170,20 +174,28 @@ export function roundToStep(value: number, step: number): number {
  * @returns Config values converted to display unit
  */
 export function convertConfigToDisplayUnit(
-    config: MeasurementConfig,
-    displayUnit: MeasurementUnit
+  config: MeasurementConfig,
+  displayUnit: MeasurementUnit
 ): {
-    min: number;
-    max: number;
-    step: number;
-    defaultValue: number;
+  min: number;
+  max: number;
+  step: number;
+  defaultValue: number;
 } {
-    return {
-        min: Number(fromCanonicalInches(config.minInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])),
-        max: Number(fromCanonicalInches(config.maxInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])),
-        step: Number(fromCanonicalInches(config.stepInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])),
-        defaultValue: Number(fromCanonicalInches(config.defaultInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])),
-    };
+  return {
+    min: Number(
+      fromCanonicalInches(config.minInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
+    ),
+    max: Number(
+      fromCanonicalInches(config.maxInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
+    ),
+    step: Number(
+      fromCanonicalInches(config.stepInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
+    ),
+    defaultValue: Number(
+      fromCanonicalInches(config.defaultInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
+    ),
+  };
 }
 
 // ============================================================================
@@ -196,12 +208,12 @@ export function convertConfigToDisplayUnit(
  * Provides fine-grained control for positioning character/reminder/meta icons
  */
 export const ICON_OFFSET_CONFIG: MeasurementConfig = {
-    minInches: -0.5,
-    maxInches: 0.5,
-    stepInches: STEP_SIZES.FINE,
-    defaultInches: 0,
-    label: 'Icon Offset',
-    ariaLabel: 'Icon Position Offset',
+  minInches: -0.5,
+  maxInches: 0.5,
+  stepInches: STEP_SIZES.FINE,
+  defaultInches: 0,
+  label: 'Icon Offset',
+  ariaLabel: 'Icon Position Offset',
 };
 
 /**
@@ -210,12 +222,12 @@ export const ICON_OFFSET_CONFIG: MeasurementConfig = {
  * Used for fine-tuning printer alignment
  */
 export const PDF_OFFSET_CONFIG: MeasurementConfig = {
-    minInches: -0.5,
-    maxInches: 0.5,
-    stepInches: STEP_SIZES.COARSE,
-    defaultInches: 0,
-    label: 'PDF Offset',
-    ariaLabel: 'PDF Alignment Offset',
+  minInches: -0.5,
+  maxInches: 0.5,
+  stepInches: STEP_SIZES.COARSE,
+  defaultInches: 0,
+  label: 'PDF Offset',
+  ariaLabel: 'PDF Alignment Offset',
 };
 
 /**
@@ -224,10 +236,10 @@ export const PDF_OFFSET_CONFIG: MeasurementConfig = {
  * Extends edge colors outward for clean cutting
  */
 export const BLEED_CONFIG: MeasurementConfig = {
-    minInches: 0,
-    maxInches: 0.125,
-    stepInches: STEP_SIZES.MEDIUM,
-    defaultInches: 0.125,
-    label: 'Print Bleed',
-    ariaLabel: 'Print Bleed Margin',
+  minInches: 0,
+  maxInches: 0.125,
+  stepInches: STEP_SIZES.MEDIUM,
+  defaultInches: 0.125,
+  label: 'Print Bleed',
+  ariaLabel: 'Print Bleed Margin',
 };

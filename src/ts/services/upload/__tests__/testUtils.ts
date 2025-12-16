@@ -8,9 +8,9 @@
  */
 
 import { expect } from 'vitest';
-import type { DBAsset, AssetType, AssetMetadata } from '../types.js';
 import type { Character } from '../../../types/index.js';
 import { createAssetReference } from '../../../types/index.js';
+import type { AssetMetadata, AssetType, DBAsset } from '../types.js';
 
 // ============================================================================
 // Mock Asset Factories
@@ -40,12 +40,7 @@ export function createMockAssets(
     scope?: 'project' | 'global';
   } = {}
 ): DBAsset[] {
-  const {
-    type = 'character-icon',
-    projectId = null,
-    linkedTo = [],
-    scope = 'project'
-  } = options;
+  const { type = 'character-icon', projectId = null, linkedTo = [], scope = 'project' } = options;
 
   return Array.from({ length: count }, (_, i) => {
     const id = `mock-asset-${i}-${Date.now()}`;
@@ -56,7 +51,7 @@ export function createMockAssets(
       type,
       blob: new Blob([`mock-data-${i}`], { type: 'image/png' }),
       thumbnail: new Blob([`mock-thumbnail-${i}`], { type: 'image/png' }),
-      projectId: scope === 'global' ? null : (projectId || `project-${i % 3}`),
+      projectId: scope === 'global' ? null : projectId || `project-${i % 3}`,
       linkedTo: [...linkedTo],
       metadata: {
         filename: `asset-${i}.png`,
@@ -65,10 +60,10 @@ export function createMockAssets(
         width: 540,
         height: 540,
         uploadedAt: now - i * 1000,
-        sourceType: 'upload' as const
+        sourceType: 'upload' as const,
       },
       lastUsedAt: now - i * 500,
-      usageCount: i % 5
+      usageCount: i % 5,
     };
   });
 }
@@ -105,10 +100,10 @@ export function createMockAsset(overrides: Partial<DBAsset> = {}): DBAsset {
       width: 540,
       height: 540,
       uploadedAt: now,
-      sourceType: 'upload' as const
+      sourceType: 'upload' as const,
     },
     lastUsedAt: now,
-    usageCount: 0
+    usageCount: 0,
   };
 
   return { ...base, ...overrides } as DBAsset;
@@ -120,9 +115,7 @@ export function createMockAsset(overrides: Partial<DBAsset> = {}): DBAsset {
  * @param overrides - Properties to override
  * @returns Mock metadata
  */
-export function createMockAssetMetadata(
-  overrides: Partial<AssetMetadata> = {}
-): AssetMetadata {
+export function createMockAssetMetadata(overrides: Partial<AssetMetadata> = {}): AssetMetadata {
   const base: AssetMetadata = {
     filename: 'mock-asset.png',
     mimeType: 'image/png',
@@ -130,7 +123,7 @@ export function createMockAssetMetadata(
     width: 540,
     height: 540,
     uploadedAt: Date.now(),
-    sourceType: 'upload'
+    sourceType: 'upload',
   };
 
   return { ...base, ...overrides };
@@ -176,7 +169,7 @@ export function createMockCharacters(
     setup: i % 3 === 0,
     reminders: i % 2 === 0 ? [`Reminder ${i}`] : [],
     uuid: `uuid-${i}`,
-    source: 'custom' as const
+    source: 'custom' as const,
   }));
 }
 
@@ -205,7 +198,7 @@ export function createMockCharacter(overrides: Partial<Character> = {}): Charact
     setup: false,
     reminders: [],
     uuid: `uuid-${Date.now()}`,
-    source: 'custom'
+    source: 'custom',
   };
 
   return { ...base, ...overrides };
@@ -312,7 +305,7 @@ export function filterAssets(
     projectId?: string | null;
   }
 ): DBAsset[] {
-  return assets.filter(asset => {
+  return assets.filter((asset) => {
     if (criteria.orphaned !== undefined) {
       const isOrphaned = asset.linkedTo.length === 0;
       if (isOrphaned !== criteria.orphaned) return false;
@@ -374,10 +367,7 @@ export function calculateAssetStorageSize(assets: DBAsset[]): number {
  * await uploadService.processFiles(files);
  * ```
  */
-export function createMockFiles(
-  count: number,
-  type: string = 'image/png'
-): File[] {
+export function createMockFiles(count: number, type: string = 'image/png'): File[] {
   return Array.from({ length: count }, (_, i) => {
     const blob = new Blob([`mock-file-data-${i}`], { type });
     return new File([blob], `mock-file-${i}.png`, { type });
@@ -399,7 +389,7 @@ export function createMockFiles(
  * ```
  */
 export async function waitForDb(ms: number = 50): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

@@ -24,13 +24,13 @@
  * ```
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  type AssetFilter,
+  type AssetManagerOptions,
+  type AssetType,
+  type AssetWithUrl,
   assetStorageService,
-  AssetFilter,
-  AssetManagerOptions,
-  AssetWithUrl,
-  AssetType,
 } from '../ts/services/upload/index.js';
 import { useSelection } from './useSelection.js';
 
@@ -112,14 +112,8 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   const [totalCount, setTotalCount] = useState(0);
 
   // Use extracted selection hook
-  const {
-    selectedIds,
-    selectedCount,
-    toggleSelect,
-    clearSelection,
-    isSelected,
-    setSelection,
-  } = useSelection();
+  const { selectedIds, selectedCount, toggleSelect, clearSelection, isSelected, setSelection } =
+    useSelection();
 
   // Select all assets currently loaded
   const selectAll = useCallback(() => {
@@ -209,10 +203,13 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   }, []);
 
   // Filter methods
-  const setFilter = useCallback((updates: Partial<AssetFilter>) => {
-    setFilterState((prev) => ({ ...prev, ...updates }));
-    clearSelection(); // Clear selection on filter change
-  }, [clearSelection]);
+  const setFilter = useCallback(
+    (updates: Partial<AssetFilter>) => {
+      setFilterState((prev) => ({ ...prev, ...updates }));
+      clearSelection(); // Clear selection on filter change
+    },
+    [clearSelection]
+  );
 
   const resetFilter = useCallback(() => {
     setFilterState({ ...DEFAULT_FILTER, ...options.initialFilter });

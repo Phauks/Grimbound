@@ -6,10 +6,10 @@
 
 import { useState } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
-import { CHARACTER_PRESETS, applyCharacterPreset } from '../../../../ts/studio/characterPresets';
-import { getImageData, putImageData } from '../../../../ts/studio/canvasOperations';
-import { logger } from '../../../../ts/utils/logger.js';
 import styles from '../../../../styles/components/studio/Studio.module.css';
+import { getImageData, putImageData } from '../../../../ts/studio/canvasOperations';
+import { applyCharacterPreset, CHARACTER_PRESETS } from '../../../../ts/studio/characterPresets';
+import { logger } from '../../../../ts/utils/logger.js';
 
 export function PresetPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -32,11 +32,9 @@ export function PresetPanel() {
 
       // Store original for reset if this is the first preset application
       if (!originalImageData) {
-        setOriginalImageData(new ImageData(
-          new Uint8ClampedArray(imageData.data),
-          imageData.width,
-          imageData.height
-        ));
+        setOriginalImageData(
+          new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height)
+        );
       }
 
       // Find preset
@@ -47,11 +45,7 @@ export function PresetPanel() {
       }
 
       // Apply preset
-      const recolored = applyCharacterPreset(
-        originalImageData || imageData,
-        preset,
-        intensity
-      );
+      const recolored = applyCharacterPreset(originalImageData || imageData, preset, intensity);
 
       // Apply result to canvas
       putImageData(activeLayer.canvas, recolored);
@@ -71,7 +65,7 @@ export function PresetPanel() {
 
   // Reset to original image
   const handleReset = () => {
-    if (!activeLayer || !originalImageData) return;
+    if (!(activeLayer && originalImageData)) return;
 
     putImageData(activeLayer.canvas, originalImageData);
     updateLayer(activeLayer.id, { canvas: activeLayer.canvas });
@@ -110,7 +104,13 @@ export function PresetPanel() {
     <div className={styles.sidebarSection}>
       <h3 className={styles.sectionTitle}>Character Presets</h3>
 
-      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)' }}>
+      <p
+        style={{
+          fontSize: '0.75rem',
+          color: 'var(--text-secondary)',
+          marginBottom: 'var(--spacing-md)',
+        }}
+      >
         Apply character alignment colors to your image
       </p>
 
@@ -184,21 +184,26 @@ export function PresetPanel() {
 
       {/* Reset Button */}
       {originalImageData && (
-        <div style={{ paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
-          <button
-            className={styles.toolbarButton}
-            onClick={handleReset}
-            style={{ width: '100%' }}
-          >
+        <div
+          style={{ paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}
+        >
+          <button type="button" className={styles.toolbarButton} onClick={handleReset} style={{ width: '100%' }}>
             🔄 Reset to Original Colors
           </button>
         </div>
       )}
 
       {/* Info */}
-      <div style={{ marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}>
+      <div
+        style={{
+          marginTop: 'var(--spacing-md)',
+          paddingTop: 'var(--spacing-md)',
+          borderTop: '1px solid var(--color-primary)',
+        }}
+      >
         <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
-          <strong>How it works:</strong> Converts image to grayscale, then applies character alignment colors as an overlay.
+          <strong>How it works:</strong> Converts image to grayscale, then applies character
+          alignment colors as an overlay.
         </p>
         <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
           Presets with two colors use a gradient effect from top to bottom.

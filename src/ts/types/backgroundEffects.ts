@@ -13,29 +13,29 @@
  * Background base mode - solid color or gradient
  * Note: 'image' mode uses the existing asset system, not BackgroundStyle
  */
-export type BackgroundBaseMode = 'solid' | 'gradient'
+export type BackgroundBaseMode = 'solid' | 'gradient';
 
 /**
  * Gradient types supported by the background system
  */
-export type GradientType = 'linear' | 'radial' | 'conic'
+export type GradientType = 'linear' | 'radial' | 'conic';
 
 /**
  * Gradient configuration for backgrounds
  */
 export interface GradientConfig {
   /** Type of gradient */
-  type: GradientType
+  type: GradientType;
   /** Starting color (hex format) */
-  colorStart: string
+  colorStart: string;
   /** Ending color (hex format) */
-  colorEnd: string
+  colorEnd: string;
   /** Rotation in degrees (0-360) - used by linear and conic */
-  rotation: number
+  rotation: number;
   /** Center X position (0-1) - used by radial, default 0.5 */
-  centerX?: number
+  centerX?: number;
   /** Center Y position (0-1) - used by radial, default 0.5 */
-  centerY?: number
+  centerY?: number;
 }
 
 // ============================================================================
@@ -46,46 +46,52 @@ export interface GradientConfig {
  * Procedural texture overlay types
  */
 export type TextureType =
-  | 'none'           // No texture overlay
-  | 'marble'         // Organic flowing swirl patterns like marble stone
-  | 'clouds'         // Soft billowy plasma gradients
-  | 'watercolor'     // Bleeding color edges like wet watercolor
-  | 'perlin'         // Smooth mathematical noise - subtle organic undulation
-  | 'radial-fade'    // Edge-to-center fade
-  | 'organic-cells'  // Voronoi/cell-like patterns
-  | 'silk-flow'      // Flowing silk-like directional texture
-  | 'parchment'      // Aged paper with grain and subtle variations
-  | 'linen'          // Woven fabric crosshatch texture
-  | 'wood-grain'     // Directional wood patterns
-  | 'brushed-metal'  // Linear brushed metal streaks
+  | 'none' // No texture overlay
+  | 'marble' // Organic flowing swirl patterns like marble stone
+  | 'clouds' // Soft billowy plasma gradients
+  | 'watercolor' // Bleeding color edges like wet watercolor
+  | 'perlin' // Smooth mathematical noise - subtle organic undulation
+  | 'radial-fade' // Edge-to-center fade
+  | 'organic-cells' // Voronoi/cell-like patterns
+  | 'silk-flow' // Flowing silk-like directional texture
+  | 'parchment' // Aged paper with grain and subtle variations
+  | 'linen' // Woven fabric crosshatch texture
+  | 'wood-grain' // Directional wood patterns
+  | 'brushed-metal'; // Linear brushed metal streaks
 
 /**
  * Blend mode for texture overlay
  */
-export type TextureBlendMode = 'normal' | 'overlay' | 'multiply' | 'screen' | 'soft-light' | 'hard-light'
+export type TextureBlendMode =
+  | 'normal'
+  | 'overlay'
+  | 'multiply'
+  | 'screen'
+  | 'soft-light'
+  | 'hard-light';
 
 /**
  * Texture overlay configuration
  */
 export interface TextureConfig {
   /** Type of texture to apply */
-  type: TextureType
+  type: TextureType;
   /** Intensity of texture overlay (0-100), default 30 */
-  intensity: number
+  intensity: number;
   /** Scale of texture details (0.5-2.0), default 1.0 */
-  scale: number
+  scale: number;
   /** Seed for reproducible patterns (optional) */
-  seed?: number
+  seed?: number;
   /** When true, generate a unique random seed for each token (unique textures per token) */
-  randomizeSeedPerToken?: boolean
+  randomizeSeedPerToken?: boolean;
   /** Optional tint color to apply to texture */
-  tintColor?: string
+  tintColor?: string;
   /** Whether tint is enabled */
-  tintEnabled?: boolean
+  tintEnabled?: boolean;
   /** Contrast adjustment (-50 to 50), default 0 */
-  contrast?: number
+  contrast?: number;
   /** Blend mode for combining texture with background */
-  blendMode?: TextureBlendMode
+  blendMode?: TextureBlendMode;
 }
 
 // ============================================================================
@@ -97,13 +103,13 @@ export interface TextureConfig {
  */
 export interface LightConfig {
   /** Brightness adjustment (0-200), default 100 (no change) */
-  brightness: number
+  brightness: number;
   /** Contrast adjustment (0-200), default 100 (no change) */
-  contrast: number
+  contrast: number;
   /** Saturation adjustment (0-200), default 100 (no change) */
-  saturation: number
+  saturation: number;
   /** Vibrance adjustment - smart saturation (0-200), default 100 (no change) */
-  vibrance: number
+  vibrance: number;
 }
 
 /**
@@ -112,27 +118,27 @@ export interface LightConfig {
 export interface EffectsConfig {
   // Vignette (edge darkening)
   /** Enable vignette effect */
-  vignetteEnabled: boolean
+  vignetteEnabled: boolean;
   /** Vignette intensity (0-100), default 20 */
-  vignetteIntensity: number
+  vignetteIntensity: number;
   /** Vignette color, default '#000000' */
-  vignetteColor: string
+  vignetteColor: string;
 
   // Inner glow/shadow
   /** Enable inner glow effect */
-  innerGlowEnabled: boolean
+  innerGlowEnabled: boolean;
   /** Inner glow color */
-  innerGlowColor: string
+  innerGlowColor: string;
   /** Inner glow radius as percentage of diameter (0-50), default 10 */
-  innerGlowRadius: number
+  innerGlowRadius: number;
   /** Inner glow intensity (0-100), default 30 */
-  innerGlowIntensity: number
+  innerGlowIntensity: number;
 
   // Hue shift (legacy - kept for backwards compatibility)
   /** Enable hue shift effect */
-  hueShiftEnabled: boolean
+  hueShiftEnabled: boolean;
   /** Hue shift in degrees (0-360) */
-  hueShiftDegrees: number
+  hueShiftDegrees: number;
 }
 
 // ============================================================================
@@ -142,7 +148,7 @@ export interface EffectsConfig {
 /**
  * Background source type - styled (procedural) or image
  */
-export type BackgroundSourceType = 'styled' | 'image'
+export type BackgroundSourceType = 'styled' | 'image';
 
 /**
  * Complete background style configuration
@@ -152,21 +158,21 @@ export type BackgroundSourceType = 'styled' | 'image'
  */
 export interface BackgroundStyle {
   /** Source type: styled (procedural) or image */
-  sourceType: BackgroundSourceType
+  sourceType: BackgroundSourceType;
   /** Image URL or asset identifier when sourceType is 'image' */
-  imageUrl?: string
+  imageUrl?: string;
   /** Base mode: solid color or gradient (used when sourceType is 'styled') */
-  mode: BackgroundBaseMode
+  mode: BackgroundBaseMode;
   /** Solid color (hex format), used when mode is 'solid' */
-  solidColor: string
+  solidColor: string;
   /** Gradient configuration, used when mode is 'gradient' */
-  gradient: GradientConfig
+  gradient: GradientConfig;
   /** Texture overlay configuration */
-  texture: TextureConfig
+  texture: TextureConfig;
   /** Visual effects configuration */
-  effects: EffectsConfig
+  effects: EffectsConfig;
   /** Light and color adjustment configuration */
-  light: LightConfig
+  light: LightConfig;
 }
 
 // ============================================================================
@@ -183,7 +189,7 @@ export const DEFAULT_GRADIENT_CONFIG: GradientConfig = {
   rotation: 45,
   centerX: 0.5,
   centerY: 0.5,
-}
+};
 
 /**
  * Default texture configuration
@@ -198,7 +204,7 @@ export const DEFAULT_TEXTURE_CONFIG: TextureConfig = {
   tintEnabled: false,
   contrast: 0,
   blendMode: 'normal',
-}
+};
 
 /**
  * Default effects configuration
@@ -213,7 +219,7 @@ export const DEFAULT_EFFECTS_CONFIG: EffectsConfig = {
   innerGlowIntensity: 30,
   hueShiftEnabled: false,
   hueShiftDegrees: 0,
-}
+};
 
 /**
  * Default light/color adjustment configuration
@@ -223,7 +229,7 @@ export const DEFAULT_LIGHT_CONFIG: LightConfig = {
   contrast: 100,
   saturation: 100,
   vibrance: 100,
-}
+};
 
 /**
  * Default background style configuration
@@ -237,7 +243,7 @@ export const DEFAULT_BACKGROUND_STYLE: BackgroundStyle = {
   texture: DEFAULT_TEXTURE_CONFIG,
   effects: DEFAULT_EFFECTS_CONFIG,
   light: DEFAULT_LIGHT_CONFIG,
-}
+};
 
 // ============================================================================
 // UTILITY TYPES
@@ -247,11 +253,11 @@ export const DEFAULT_BACKGROUND_STYLE: BackgroundStyle = {
  * Texture option for UI display
  */
 export interface TextureOption {
-  value: TextureType
-  label: string
-  description: string
+  value: TextureType;
+  label: string;
+  description: string;
   /** ASCII preview characters for visual hint */
-  preview?: string
+  preview?: string;
 }
 
 /**
@@ -261,23 +267,33 @@ export const TEXTURE_OPTIONS: TextureOption[] = [
   { value: 'none', label: 'None', description: 'No texture overlay' },
   { value: 'marble', label: 'Marble', description: 'Organic flowing patterns', preview: '░▒▓░▒░' },
   { value: 'clouds', label: 'Clouds', description: 'Billowy plasma gradients', preview: '▒░░░░▒' },
-  { value: 'watercolor', label: 'Watercolor', description: 'Bleeding color edges', preview: '▓▒░░▒▓' },
+  {
+    value: 'watercolor',
+    label: 'Watercolor',
+    description: 'Bleeding color edges',
+    preview: '▓▒░░▒▓',
+  },
   { value: 'perlin', label: 'Perlin', description: 'Smooth organic undulation', preview: '░░▒░░▒' },
   { value: 'radial-fade', label: 'Radial', description: 'Center-to-edge fade', preview: '●○○○●' },
   { value: 'organic-cells', label: 'Cells', description: 'Cell-like patterns', preview: '⬡⬢⬡⬢⬡' },
   { value: 'silk-flow', label: 'Silk', description: 'Flowing silk texture', preview: '≈≈≈≈≈' },
   { value: 'parchment', label: 'Parchment', description: 'Aged paper grain', preview: '░▒░▒░' },
   { value: 'linen', label: 'Linen', description: 'Woven fabric texture', preview: '╬╬╬╬╬' },
-  { value: 'wood-grain', label: 'Wood', description: 'Directional wood patterns', preview: '║║║║║' },
+  {
+    value: 'wood-grain',
+    label: 'Wood',
+    description: 'Directional wood patterns',
+    preview: '║║║║║',
+  },
   { value: 'brushed-metal', label: 'Metal', description: 'Linear brushed metal', preview: '─────' },
-]
+];
 
 /**
  * Gradient type option for UI display
  */
 export interface GradientTypeOption {
-  value: GradientType
-  label: string
+  value: GradientType;
+  label: string;
 }
 
 /**
@@ -287,15 +303,15 @@ export const GRADIENT_TYPE_OPTIONS: GradientTypeOption[] = [
   { value: 'linear', label: 'Linear' },
   { value: 'radial', label: 'Radial' },
   { value: 'conic', label: 'Conic' },
-]
+];
 
 /**
  * Blend mode option for UI display
  */
 export interface BlendModeOption {
-  value: TextureBlendMode
-  label: string
-  description: string
+  value: TextureBlendMode;
+  label: string;
+  description: string;
 }
 
 /**
@@ -308,7 +324,7 @@ export const BLEND_MODE_OPTIONS: BlendModeOption[] = [
   { value: 'screen', label: 'Screen', description: 'Lightens colors' },
   { value: 'soft-light', label: 'Soft Light', description: 'Subtle blending' },
   { value: 'hard-light', label: 'Hard Light', description: 'Intense contrast' },
-]
+];
 
 // ============================================================================
 // BACKGROUND STYLE PRESETS
@@ -318,10 +334,10 @@ export const BLEND_MODE_OPTIONS: BlendModeOption[] = [
  * Preset option for UI display
  */
 export interface BackgroundPresetOption {
-  id: string
-  label: string
-  description: string
-  style: BackgroundStyle
+  id: string;
+  label: string;
+  description: string;
+  style: BackgroundStyle;
 }
 
 /**
@@ -569,4 +585,4 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
       light: { brightness: 90, contrast: 110, saturation: 100, vibrance: 105 },
     },
   },
-]
+];

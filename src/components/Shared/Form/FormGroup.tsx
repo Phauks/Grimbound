@@ -5,26 +5,26 @@
  * Provides consistent layout for form fields.
  */
 
-import { type ReactNode } from 'react'
-import styles from '../../../styles/components/shared/Form.module.css'
+import type { ReactNode } from 'react';
+import styles from '../../../styles/components/shared/Form.module.css';
 
 export interface FormGroupProps {
   /** Label text */
-  label?: ReactNode
+  label?: ReactNode;
   /** Label htmlFor attribute */
-  htmlFor?: string
+  htmlFor?: string;
   /** Required indicator */
-  required?: boolean
+  required?: boolean;
   /** Help text below the control */
-  helpText?: string
+  helpText?: string;
   /** Error message */
-  error?: string
+  error?: string;
   /** Form control */
-  children: ReactNode
+  children: ReactNode;
   /** Additional class name */
-  className?: string
+  className?: string;
   /** Horizontal layout (label beside control) */
-  horizontal?: boolean
+  horizontal?: boolean;
 }
 
 export function FormGroup({
@@ -44,7 +44,7 @@ export function FormGroup({
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <div className={groupClasses}>
@@ -56,13 +56,9 @@ export function FormGroup({
       )}
       <div className={styles.formControl}>
         {children}
-        {helpText && !error && (
-          <span className={styles.formHelpText}>{helpText}</span>
-        )}
-        {error && (
-          <span className={styles.formError}>{error}</span>
-        )}
+        {helpText && !error && <span className={styles.formHelpText}>{helpText}</span>}
+        {error && <span className={styles.formError}>{error}</span>}
       </div>
     </div>
-  )
+  );
 }

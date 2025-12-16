@@ -1,37 +1,37 @@
-import { memo, useRef, useMemo } from 'react'
-import { useContextMenu } from '../../../../hooks/useContextMenu'
-import { ContextMenu } from '../../../Shared/UI/ContextMenu'
-import type { ContextMenuItem } from '../../../Shared/UI/ContextMenu'
-import { cn } from '../../../../ts/utils'
-import styles from '../../../../styles/components/presets/PresetCard.module.css'
+import { memo, useMemo, useRef } from 'react';
+import { useContextMenu } from '../../../../hooks/useContextMenu';
+import styles from '../../../../styles/components/presets/PresetCard.module.css';
+import { cn } from '../../../../ts/utils';
+import type { ContextMenuItem } from '../../../Shared/UI/ContextMenu';
+import { ContextMenu } from '../../../Shared/UI/ContextMenu';
 
 interface MenuItemConfig {
-  icon: string
-  label: string
-  description?: string
-  onClick: () => void
+  icon: string;
+  label: string;
+  description?: string;
+  onClick: () => void;
 }
 
 interface PresetCardProps {
-  icon: string
-  name: string
-  title: string
-  isActive?: boolean
-  onApply: () => void
-  onMenuToggle: (e?: React.MouseEvent) => void
-  menuIsOpen?: boolean
-  menuItems?: MenuItemConfig[]
-  defaultStar?: boolean
-  isAddButton?: boolean
+  icon: string;
+  name: string;
+  title: string;
+  isActive?: boolean;
+  onApply: () => void;
+  onMenuToggle: (e?: React.MouseEvent) => void;
+  menuIsOpen?: boolean;
+  menuItems?: MenuItemConfig[];
+  defaultStar?: boolean;
+  isAddButton?: boolean;
   // Drag and drop props
-  draggable?: boolean
-  isDragging?: boolean
-  isDropTarget?: boolean
-  onDragStart?: (e: React.DragEvent) => void
-  onDragOver?: (e: React.DragEvent) => void
-  onDragLeave?: (e: React.DragEvent) => void
-  onDrop?: (e: React.DragEvent) => void
-  onDragEnd?: (e: React.DragEvent) => void
+  draggable?: boolean;
+  isDragging?: boolean;
+  isDropTarget?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
 }
 
 export const PresetCard = memo(
@@ -55,17 +55,17 @@ export const PresetCard = memo(
     onDrop,
     onDragEnd,
   }: PresetCardProps) => {
-    const cardRef = useRef<HTMLDivElement>(null)
+    const cardRef = useRef<HTMLDivElement>(null);
 
     // Use context menu hook in controlled mode (parent manages open state)
     const contextMenu = useContextMenu({
       isOpen: menuIsOpen,
       onToggle: (open) => {
-        if (!open) onMenuToggle()
+        if (!open) onMenuToggle();
       },
       positionMode: 'element',
       elementOffset: { x: 8, y: 0 },
-    })
+    });
 
     // Convert MenuItemConfig to ContextMenuItem format
     const contextMenuItems: ContextMenuItem[] = useMemo(() => {
@@ -74,35 +74,35 @@ export const PresetCard = memo(
         label: item.label,
         description: item.description,
         onClick: item.onClick,
-      }))
-    }, [menuItems])
+      }));
+    }, [menuItems]);
 
     const cardClasses = cn(
       styles.card,
       isActive && styles.active,
       isAddButton && styles.cardAdd,
       isDragging && styles.dragging,
-      isDropTarget && styles.dropTarget,
-    )
+      isDropTarget && styles.dropTarget
+    );
 
     const handleContextMenu = (e: React.MouseEvent) => {
       if (menuItems.length > 0) {
-        e.preventDefault()
+        e.preventDefault();
         // Open context menu positioned relative to the card element
-        contextMenu.open(e, undefined, cardRef.current)
-        onMenuToggle(e)
+        contextMenu.open(e, undefined, cardRef.current);
+        onMenuToggle(e);
       }
-    }
+    };
 
     // Calculate position for element-based positioning
     const menuPosition = useMemo(() => {
-      if (!menuIsOpen || !cardRef.current) return null
-      const rect = cardRef.current.getBoundingClientRect()
+      if (!(menuIsOpen && cardRef.current)) return null;
+      const rect = cardRef.current.getBoundingClientRect();
       return {
         x: rect.right + 8,
         y: rect.top,
-      }
-    }, [menuIsOpen])
+      };
+    }, [menuIsOpen]);
 
     return (
       <div
@@ -121,8 +121,8 @@ export const PresetCard = memo(
         onDragEnd={onDragEnd}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onApply()
+            e.preventDefault();
+            onApply();
           }
         }}
       >
@@ -139,8 +139,8 @@ export const PresetCard = memo(
           onClose={() => onMenuToggle()}
         />
       </div>
-    )
+    );
   }
-)
+);
 
-PresetCard.displayName = 'PresetCard'
+PresetCard.displayName = 'PresetCard';

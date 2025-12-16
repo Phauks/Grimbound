@@ -16,17 +16,16 @@
     <meta name="msapplication-TileColor" content="#6C3BAA">
     <meta name="msapplication-tap-highlight" content="no">
 
-    <!-- Icons -->
-    <link rel="icon" type="image/png" href="/images/favicon.png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- Icons (relative paths - Vite will add base path during build) -->
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- Stylesheets (CSS is bundled via main.tsx imports) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./src/main.tsx"></script>
 </body>
 </html>

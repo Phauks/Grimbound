@@ -13,9 +13,9 @@
  * @module hooks/useTabSynchronization
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { generateUuid } from '../ts/utils/nameGenerator.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { logger } from '../ts/utils/index.js';
+import { generateUuid } from '../ts/utils/nameGenerator.js';
 
 // Generate unique tab ID on module load (persists for session)
 const TAB_ID = generateUuid();
@@ -30,10 +30,10 @@ const INACTIVE_THRESHOLD_MS = HEARTBEAT_INTERVAL_MS * 2;
  * Message types for inter-tab communication
  */
 type TabMessageType =
-  | 'heartbeat'       // Regular heartbeat to indicate tab is alive
-  | 'editing'         // Tab is actively editing a project
-  | 'saved'           // Tab saved changes
-  | 'closed';         // Tab is closing
+  | 'heartbeat' // Regular heartbeat to indicate tab is alive
+  | 'editing' // Tab is actively editing a project
+  | 'saved' // Tab saved changes
+  | 'closed'; // Tab is closing
 
 interface TabMessage {
   type: TabMessageType;
@@ -62,10 +62,7 @@ interface TabSyncState {
  * @param enabled - Whether tab sync is enabled
  * @returns Tab synchronization state and control functions
  */
-export function useTabSynchronization(
-  projectId: string | null,
-  enabled: boolean = true
-) {
+export function useTabSynchronization(projectId: string | null, enabled: boolean = true) {
   const [syncState, setSyncState] = useState<TabSyncState>({
     activeTabs: new Map(),
     hasConflict: false,
@@ -80,22 +77,28 @@ export function useTabSynchronization(
   /**
    * Broadcast message to other tabs
    */
-  const broadcast = useCallback((message: Omit<TabMessage, 'tabId' | 'timestamp'>) => {
-    if (!channelRef.current || !enabled) return;
+  const broadcast = useCallback(
+    (message: Omit<TabMessage, 'tabId' | 'timestamp'>) => {
+      if (!(channelRef.current && enabled)) return;
 
-    const fullMessage: TabMessage = {
-      ...message,
-      tabId: TAB_ID,
-      timestamp: Date.now(),
-    };
+      const fullMessage: TabMessage = {
+        ...message,
+        tabId: TAB_ID,
+        timestamp: Date.now(),
+      };
 
-    try {
-      channelRef.current.postMessage(fullMessage);
-      logger.debug('TabSync', 'Broadcasted message', { type: message.type, projectId: message.projectId });
-    } catch (error) {
-      logger.error('TabSync', 'Failed to broadcast message', error);
-    }
-  }, [enabled]);
+      try {
+        channelRef.current.postMessage(fullMessage);
+        logger.debug('TabSync', 'Broadcasted message', {
+          type: message.type,
+          projectId: message.projectId,
+        });
+      } catch (error) {
+        logger.error('TabSync', 'Failed to broadcast message', error);
+      }
+    },
+    [enabled]
+  );
 
   /**
    * Update active tabs and detect conflicts
@@ -142,45 +145,49 @@ export function useTabSynchronization(
   /**
    * Handle incoming messages from other tabs
    */
-  const handleMessage = useCallback((event: MessageEvent<TabMessage>) => {
-    const message = event.data;
+  const handleMessage = useCallback(
+    (event: MessageEvent<TabMessage>) => {
+      const message = event.data;
 
-    // Ignore messages from self
-    if (message.tabId === TAB_ID) return;
+      // Ignore messages from self
+      if (message.tabId === TAB_ID) return;
 
-    logger.debug('TabSync', 'Received message', {
-      type: message.type,
-      from: message.tabId.slice(0, 8),
-    });
+      logger.debug('TabSync', 'Received message', {
+        type: message.type,
+        from: message.tabId.slice(0, 8),
+      });
 
-    const activeTabs = activeTabsRef.current;
+      const activeTabs = activeTabsRef.current;
 
-    switch (message.type) {
-      case 'heartbeat':
-      case 'editing':
-        activeTabs.set(message.tabId, {
-          tabId: message.tabId,
-          lastHeartbeat: message.timestamp,
-          isEditing: message.type === 'editing',
-          projectId: message.projectId,
-        });
-        break;
+      switch (message.type) {
+        case 'heartbeat':
+        case 'editing':
+          activeTabs.set(message.tabId, {
+            tabId: message.tabId,
+            lastHeartbeat: message.timestamp,
+            isEditing: message.type === 'editing',
+            projectId: message.projectId,
+          });
+          break;
 
-      case 'saved':
-        // Another tab saved - update their heartbeat
-        const existingTab = activeTabs.get(message.tabId);
-        if (existingTab) {
-          existingTab.lastHeartbeat = message.timestamp;
+        case 'saved': {
+          // Another tab saved - update their heartbeat
+          const existingTab = activeTabs.get(message.tabId);
+          if (existingTab) {
+            existingTab.lastHeartbeat = message.timestamp;
+          }
+          break;
         }
-        break;
 
-      case 'closed':
-        activeTabs.delete(message.tabId);
-        break;
-    }
+        case 'closed':
+          activeTabs.delete(message.tabId);
+          break;
+      }
 
-    updateActiveTabs();
-  }, [updateActiveTabs]);
+      updateActiveTabs();
+    },
+    [updateActiveTabs]
+  );
 
   /**
    * Send heartbeat to indicate this tab is alive

@@ -19,159 +19,152 @@
 // Canvas Module
 // ============================================================================
 export {
-    // Canvas utilities
-    createCanvas,
-    createCircularClipPath,
-    applyTextShadow,
-    applyAbilityTextShadow,
-    clearShadow,
-    wrapText,
-    drawImageCover,
-    fillCircle,
-    strokeCircle,
-    drawCenteredText,
-    drawMultiLineText,
-    measureCharacterWidths,
-    type Point,
-    type CanvasContext,
-    type CanvasOptions,
-    // Text drawing
-    drawCurvedText,
-    drawCenteredWrappedText,
-    drawTwoLineCenteredText,
-    drawAbilityText,
-    drawQROverlayText,
-    applyConfigurableShadow,
-    type CurvedTextOptions,
-    type CenteredTextOptions,
-    // Leaf drawing
-    drawLeaves,
-    type LeafDrawingOptions,
-    // QR generation
-    generateStyledQRCode,
-    QR_DEFAULTS,
-    type StyledQRCodeOptions,
+  applyAbilityTextShadow,
+  applyConfigurableShadow,
+  applyTextShadow,
+  type CanvasContext,
+  type CanvasOptions,
+  type CenteredTextOptions,
+  type CurvedTextOptions,
+  clearShadow,
+  // Canvas utilities
+  createCanvas,
+  createCircularClipPath,
+  drawAbilityText,
+  drawCenteredText,
+  drawCenteredWrappedText,
+  // Text drawing
+  drawCurvedText,
+  drawImageCover,
+  // Leaf drawing
+  drawLeaves,
+  drawMultiLineText,
+  drawQROverlayText,
+  drawTwoLineCenteredText,
+  fillCircle,
+  // QR generation
+  generateStyledQRCode,
+  type LeafDrawingOptions,
+  measureCharacterWidths,
+  type Point,
+  QR_DEFAULTS,
+  type StyledQRCodeOptions,
+  strokeCircle,
+  wrapText,
 } from './canvas/index.js';
-
-// ============================================================================
-// Data Module
-// ============================================================================
-export {
-    // Data loading
-    loadExampleScript,
-    loadJsonFile,
-    // Script parsing
-    parseScriptData,
-    validateAndParseScript,
-    extractScriptMeta,
-    isScriptMeta,
-    isCharacter,
-    isIdReference,
-    type ScriptValidationResult,
-    // Character utilities
-    validateCharacter,
-    getCharacterImageUrl,
-    countReminders,
-    getGlobalReminders,
-    groupByTeam,
-    calculateTokenCounts,
-} from './data/index.js';
-
-// ============================================================================
-// Export Module
-// ============================================================================
-export {
-    PDFGenerator,
-    createTokensZip,
-    downloadTokenPNG,
-    embedPngMetadata,
-    createCharacterMetadata,
-    createReminderMetadata,
-    createMetaTokenMetadata,
-    buildTokenMetadata,
-    type PngMetadata,
-} from './export/index.js';
-
-// ============================================================================
-// Generation Module
-// ============================================================================
-export {
-    TokenGenerator,
-    generateAllTokens,
-    PRESETS,
-    getPreset,
-    getPresetNames,
-} from './generation/index.js';
-
-// ============================================================================
-// UI Module
-// ============================================================================
-export {
-    // Detail view utilities
-    regenerateSingleToken,
-    regenerateCharacterAndReminders,
-    updateCharacterInJson,
-    downloadCharacterTokensAsZip,
-    downloadCharacterTokenOnly,
-    downloadReminderTokensOnly,
-    getCharacterChanges,
-    // JSON highlighting
-    tokenizeJSON,
-    TOKEN_CLASS_MAP,
-    type HighlightToken,
-} from './ui/index.js';
-
-// ============================================================================
-// Utilities
-// ============================================================================
-export {
-    // String utilities
-    generateUniqueFilename,
-    sanitizeFilename,
-    capitalize,
-    // Image utilities
-    loadImage,
-    loadLocalImage,
-    canvasToBlob,
-    downloadFile,
-    checkFontsLoaded,
-    // JSON utilities
-    formatJson,
-    validateJson,
-    deepClone,
-    // Color utilities
-    hexToRgb,
-    getContrastColor,
-    // Async utilities
-    shuffleArray,
-    debounce,
-    sleep,
-    // Progress utilities
-    createProgressState,
-    updateProgress,
-    type ProgressState,
-} from './utils/index.js';
-
 // ============================================================================
 // Configuration
 // ============================================================================
 export { default as CONFIG } from './config.js';
 export * from './constants.js';
-
+// ============================================================================
+// Data Module
+// ============================================================================
+export {
+  calculateTokenCounts,
+  countReminders,
+  extractScriptMeta,
+  getCharacterImageUrl,
+  getGlobalReminders,
+  groupByTeam,
+  isCharacter,
+  isIdReference,
+  isScriptMeta,
+  // Data loading
+  loadExampleScript,
+  loadJsonFile,
+  // Script parsing
+  parseScriptData,
+  type ScriptValidationResult,
+  validateAndParseScript,
+  // Character utilities
+  validateCharacter,
+} from './data/index.js';
+// ============================================================================
+// Export Module
+// ============================================================================
+export {
+  buildTokenMetadata,
+  createCharacterMetadata,
+  createMetaTokenMetadata,
+  createReminderMetadata,
+  createTokensZip,
+  downloadTokenPNG,
+  embedPngMetadata,
+  PDFGenerator,
+  type PngMetadata,
+} from './export/index.js';
+// ============================================================================
+// Generation Module
+// ============================================================================
+export {
+  generateAllTokens,
+  getPreset,
+  getPresetNames,
+  PRESETS,
+  TokenGenerator,
+} from './generation/index.js';
 // ============================================================================
 // Types (re-exported for convenience)
 // ============================================================================
 export type {
-    Character,
-    Team,
-    Token,
-    ScriptEntry,
-    ScriptMeta,
-    GenerationOptions,
-    ProgressCallback,
-    TokenCounts,
-    TeamCounts,
-    CharacterValidationResult,
-    PresetConfig,
-    PresetName,
+  Character,
+  CharacterValidationResult,
+  GenerationOptions,
+  PresetConfig,
+  PresetName,
+  ProgressCallback,
+  ScriptEntry,
+  ScriptMeta,
+  Team,
+  TeamCounts,
+  Token,
+  TokenCounts,
 } from './types/index.js';
+// ============================================================================
+// UI Module
+// ============================================================================
+export {
+  downloadCharacterTokenOnly,
+  downloadCharacterTokensAsZip,
+  downloadReminderTokensOnly,
+  getCharacterChanges,
+  type HighlightToken,
+  regenerateCharacterAndReminders,
+  // Detail view utilities
+  regenerateSingleToken,
+  TOKEN_CLASS_MAP,
+  // JSON highlighting
+  tokenizeJSON,
+  updateCharacterInJson,
+} from './ui/index.js';
+// ============================================================================
+// Utilities
+// ============================================================================
+export {
+  canvasToBlob,
+  capitalize,
+  checkFontsLoaded,
+  // Progress utilities
+  createProgressState,
+  debounce,
+  deepClone,
+  downloadFile,
+  // JSON utilities
+  formatJson,
+  // String utilities
+  generateUniqueFilename,
+  getContrastColor,
+  // Color utilities
+  hexToRgb,
+  // Image utilities
+  loadImage,
+  loadLocalImage,
+  type ProgressState,
+  sanitizeFilename,
+  // Async utilities
+  shuffleArray,
+  sleep,
+  updateProgress,
+  validateJson,
+} from './utils/index.js';

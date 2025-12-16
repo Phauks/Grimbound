@@ -12,9 +12,9 @@ export type ProgressCallback = (current: number, total: number) => void;
  * Progress state for tracking async operations
  */
 export interface ProgressState {
-    processed: number;
-    total: number;
-    callback: ProgressCallback | null;
+  processed: number;
+  total: number;
+  callback: ProgressCallback | null;
 }
 
 /**
@@ -24,14 +24,14 @@ export interface ProgressState {
  * @returns Progress state object
  */
 export function createProgressState(
-    total: number,
-    callback: ProgressCallback | null = null
+  total: number,
+  callback: ProgressCallback | null = null
 ): ProgressState {
-    return {
-        processed: 0,
-        total,
-        callback
-    };
+  return {
+    processed: 0,
+    total,
+    callback,
+  };
 }
 
 /**
@@ -39,10 +39,10 @@ export function createProgressState(
  * @param state - Progress state object
  */
 export function updateProgress(state: ProgressState): void {
-    state.processed++;
-    if (state.callback) {
-        state.callback(state.processed, state.total);
-    }
+  state.processed++;
+  if (state.callback) {
+    state.callback(state.processed, state.total);
+  }
 }
 
 /**
@@ -51,10 +51,10 @@ export function updateProgress(state: ProgressState): void {
  * @param newTotal - New total (optional, keeps current if not provided)
  */
 export function resetProgress(state: ProgressState, newTotal?: number): void {
-    state.processed = 0;
-    if (newTotal !== undefined) {
-        state.total = newTotal;
-    }
+  state.processed = 0;
+  if (newTotal !== undefined) {
+    state.total = newTotal;
+  }
 }
 
 /**
@@ -63,13 +63,13 @@ export function resetProgress(state: ProgressState, newTotal?: number): void {
  * @returns Progress as percentage (0-100)
  */
 export function getProgressPercentage(state: ProgressState): number {
-    if (state.total === 0) return 100;
-    return Math.round((state.processed / state.total) * 100);
+  if (state.total === 0) return 100;
+  return Math.round((state.processed / state.total) * 100);
 }
 
 export default {
-    createProgressState,
-    updateProgress,
-    resetProgress,
-    getProgressPercentage
+  createProgressState,
+  updateProgress,
+  resetProgress,
+  getProgressPercentage,
 };

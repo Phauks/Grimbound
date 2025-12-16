@@ -7,9 +7,9 @@
  * @module hooks/useAutoSavePreference
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { STORAGE_KEYS, getStorageItem, setStorageItem } from '../ts/utils/storageKeys.js';
+import { useCallback, useEffect, useState } from 'react';
 import { logger } from '../ts/utils/index.js';
+import { getStorageItem, STORAGE_KEYS, setStorageItem } from '../ts/utils/storageKeys.js';
 
 /**
  * Hook to manage auto-save preference
@@ -39,7 +39,10 @@ export function useAutoSavePreference() {
     if (stored !== null) {
       const enabled = stored === 'true';
       setIsEnabled(enabled);
-      logger.debug('AutoSavePreference', `Loaded preference from localStorage: ${enabled ? 'enabled' : 'disabled'}`);
+      logger.debug(
+        'AutoSavePreference',
+        `Loaded preference from localStorage: ${enabled ? 'enabled' : 'disabled'}`
+      );
     } else {
       // No preference stored yet - use default (enabled)
       logger.debug('AutoSavePreference', 'No stored preference, using default: enabled');

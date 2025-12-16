@@ -5,20 +5,21 @@
  * Supports standard HTML checkbox attributes plus custom styling options.
  */
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
-import styles from '../../../styles/components/shared/Form.module.css'
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import styles from '../../../styles/components/shared/Form.module.css';
 
-export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
+export interface CheckboxProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Checkbox size variant */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Label text */
-  label?: ReactNode
+  label?: ReactNode;
   /** Description text below label */
-  description?: string
+  description?: string;
   /** Error state */
-  error?: boolean
+  error?: boolean;
   /** Indeterminate state */
-  indeterminate?: boolean
+  indeterminate?: boolean;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
@@ -36,15 +37,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     },
     ref
   ) => {
-    const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`
+    const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
-    const wrapperClasses = [
-      styles.checkboxWrapper,
-      disabled && styles.checkboxDisabled,
-      className,
-    ]
+    const wrapperClasses = [styles.checkboxWrapper, disabled && styles.checkboxDisabled, className]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
     const checkboxClasses = [
       styles.checkbox,
@@ -52,19 +49,19 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       error && styles.checkboxError,
     ]
       .filter(Boolean)
-      .join(' ')
+      .join(' ');
 
     return (
       <label className={wrapperClasses} htmlFor={checkboxId}>
         <input
           ref={(node) => {
             if (node) {
-              node.indeterminate = indeterminate
+              node.indeterminate = indeterminate;
             }
             if (typeof ref === 'function') {
-              ref(node)
+              ref(node);
             } else if (ref) {
-              ref.current = node
+              ref.current = node;
             }
           }}
           type="checkbox"
@@ -81,8 +78,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           </div>
         )}
       </label>
-    )
+    );
   }
-)
+);
 
-Checkbox.displayName = 'Checkbox'
+Checkbox.displayName = 'Checkbox';

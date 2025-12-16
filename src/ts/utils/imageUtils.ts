@@ -20,13 +20,13 @@ import CONFIG from '../config.js';
  * @returns Proxied URL or original URL for local resources
  */
 export function applyCorsProxy(url: string): string {
-    // Don't proxy local URLs or data URLs
-    if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
-        return url;
-    }
+  // Don't proxy local URLs or data URLs
+  if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
+    return url;
+  }
 
-    // Always use Cloudflare Workers proxy for external URLs
-    return CONFIG.API.CORS_PROXY + encodeURIComponent(url);
+  // Always use Cloudflare Workers proxy for external URLs
+  return CONFIG.API.CORS_PROXY + encodeURIComponent(url);
 }
 
 // ============================================================================
@@ -37,32 +37,32 @@ export function applyCorsProxy(url: string): string {
  * Try to load an image directly (with CORS)
  */
 function tryDirectLoad(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = (): void => resolve(img);
-        img.onerror = (): void => {
-            img.src = ''; // Clean up to prevent memory leak
-            reject(new Error('CORS'));
-        };
-        img.src = url;
-    });
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = (): void => resolve(img);
+    img.onerror = (): void => {
+      img.src = ''; // Clean up to prevent memory leak
+      reject(new Error('CORS'));
+    };
+    img.src = url;
+  });
 }
 
 /**
  * Try to load an image via CORS proxy
  */
 function tryProxyLoad(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = (): void => resolve(img);
-        img.onerror = (): void => {
-            img.src = ''; // Clean up to prevent memory leak
-            reject(new Error(`Failed to load image via proxy: ${url}`));
-        };
-        img.src = CONFIG.API.CORS_PROXY + encodeURIComponent(url);
-    });
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = (): void => resolve(img);
+    img.onerror = (): void => {
+      img.src = ''; // Clean up to prevent memory leak
+      reject(new Error(`Failed to load image via proxy: ${url}`));
+    };
+    img.src = CONFIG.API.CORS_PROXY + encodeURIComponent(url);
+  });
 }
 
 /**
@@ -71,22 +71,22 @@ function tryProxyLoad(url: string): Promise<HTMLImageElement> {
  * @returns Loaded image element
  */
 export async function loadImage(url: string): Promise<HTMLImageElement> {
-    // Skip proxy logic for data URLs and local paths
-    if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
-        return tryDirectLoad(url);
-    }
+  // Skip proxy logic for data URLs and local paths
+  if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./')) {
+    return tryDirectLoad(url);
+  }
 
+  try {
+    // Try direct load first (faster when CORS works)
+    return await tryDirectLoad(url);
+  } catch (_error) {
+    // If direct load failed, try with Cloudflare Workers proxy
     try {
-        // Try direct load first (faster when CORS works)
-        return await tryDirectLoad(url);
-    } catch (error) {
-        // If direct load failed, try with Cloudflare Workers proxy
-        try {
-            return await tryProxyLoad(url);
-        } catch (proxyError) {
-            throw new Error(`Failed to load image from: ${url}. Direct load and proxy both failed.`);
-        }
+      return await tryProxyLoad(url);
+    } catch (_proxyError) {
+      throw new Error(`Failed to load image from: ${url}. Direct load and proxy both failed.`);
     }
+  }
 }
 
 /**
@@ -95,15 +95,15 @@ export async function loadImage(url: string): Promise<HTMLImageElement> {
  * @returns Loaded image element
  */
 export async function loadLocalImage(path: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = (): void => resolve(img);
-        img.onerror = (): void => {
-            img.src = ''; // Clean up to prevent memory leak
-            reject(new Error(`Failed to load local image: ${path}`));
-        };
-        img.src = path;
-    });
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = (): void => resolve(img);
+    img.onerror = (): void => {
+      img.src = ''; // Clean up to prevent memory leak
+      reject(new Error(`Failed to load local image: ${path}`));
+    };
+    img.src = path;
+  });
 }
 
 /**
@@ -114,19 +114,23 @@ export async function loadLocalImage(path: string): Promise<HTMLImageElement> {
  * @returns Image blob
  */
 export async function canvasToBlob(
-    canvas: HTMLCanvasElement,
-    type: string = 'image/png',
-    quality: number = 1
+  canvas: HTMLCanvasElement,
+  type: string = 'image/png',
+  quality: number = 1
 ): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-            if (blob) {
-                resolve(blob);
-            } else {
-                reject(new Error('Failed to convert canvas to blob'));
-            }
-        }, type, quality);
-    });
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to convert canvas to blob'));
+        }
+      },
+      type,
+      quality
+    );
+  });
 }
 
 /**
@@ -135,19 +139,19 @@ export async function canvasToBlob(
  * @param filename - Download filename
  */
 export function downloadFile(data: Blob | string, filename: string): void {
-    const link = document.createElement('a');
-    if (data instanceof Blob) {
-        link.href = URL.createObjectURL(data);
-    } else {
-        link.href = data;
-    }
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    if (data instanceof Blob) {
-        URL.revokeObjectURL(link.href);
-    }
+  const link = document.createElement('a');
+  if (data instanceof Blob) {
+    link.href = URL.createObjectURL(data);
+  } else {
+    link.href = data;
+  }
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  if (data instanceof Blob) {
+    URL.revokeObjectURL(link.href);
+  }
 }
 
 /**
@@ -156,16 +160,16 @@ export function downloadFile(data: Blob | string, filename: string): void {
  * @returns Whether fonts are loaded
  */
 export async function checkFontsLoaded(fontNames: string[]): Promise<boolean> {
-    if (!document.fonts) {
-        // Fallback for older browsers
-        return new Promise(resolve => setTimeout(() => resolve(true), 500));
-    }
+  if (!document.fonts) {
+    // Fallback for older browsers
+    return new Promise((resolve) => setTimeout(() => resolve(true), 500));
+  }
 
-    try {
-        await document.fonts.ready;
-        const checks = fontNames.map(name => document.fonts.check(`16px "${name}"`));
-        return checks.every(loaded => loaded);
-    } catch {
-        return false;
-    }
+  try {
+    await document.fonts.ready;
+    const checks = fontNames.map((name) => document.fonts.check(`16px "${name}"`));
+    return checks.every((loaded) => loaded);
+  } catch {
+    return false;
+  }
 }

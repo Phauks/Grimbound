@@ -9,35 +9,31 @@
  * @module components/Shared/ReminderCountSelector
  */
 
-import { memo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from './SettingsSelectorBase'
-import type { GenerationOptions, ReminderCountStyle } from '../../../ts/types/index'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css'
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css'
+import { memo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
+import type { GenerationOptions, ReminderCountStyle } from '../../../ts/types/index';
+import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface ReminderCountSelectorProps {
-  generationOptions: GenerationOptions
-  onOptionChange: (options: Partial<GenerationOptions>) => void
-  size?: 'small' | 'medium' | 'large'
-  disabled?: boolean
-  ariaLabel?: string
+  generationOptions: GenerationOptions;
+  onOptionChange: (options: Partial<GenerationOptions>) => void;
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
 // Simplified to just Arabic and Roman
 const NUMBER_STYLES: { value: ReminderCountStyle; label: string; preview: string }[] = [
   { value: 'arabic', label: 'Arabic', preview: '3' },
   { value: 'roman', label: 'Roman', preview: 'III' },
-]
+];
 
 interface PendingCountSettings {
-  style: ReminderCountStyle
+  style: ReminderCountStyle;
 }
 
 // ============================================================================
@@ -48,17 +44,17 @@ const CountPreview = memo(function CountPreview({
   style,
   isEnabled,
 }: {
-  style: ReminderCountStyle
-  isEnabled: boolean
+  style: ReminderCountStyle;
+  isEnabled: boolean;
 }) {
-  const previewText = style === 'roman' ? 'III' : '3'
+  const previewText = style === 'roman' ? 'III' : '3';
 
   return (
     <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
       <span className={styles.previewIcon}>{previewText}</span>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -71,24 +67,30 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
   disabled = false,
   ariaLabel,
 }: ReminderCountSelectorProps) {
-  const isEnabled = generationOptions.tokenCount !== false
+  const isEnabled = generationOptions.tokenCount !== false;
   // Map old styles to new ones (circled/dots -> arabic)
-  let currentStyle = generationOptions.reminderCountStyle || 'arabic'
+  let currentStyle = generationOptions.reminderCountStyle || 'arabic';
   if (currentStyle === 'circled' || currentStyle === 'dots') {
-    currentStyle = 'arabic'
+    currentStyle = 'arabic';
   }
 
   const currentSettings: PendingCountSettings = {
     style: currentStyle,
-  }
+  };
 
-  const handleToggle = useCallback((enabled: boolean) => {
-    onOptionChange({ tokenCount: enabled })
-  }, [onOptionChange])
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      onOptionChange({ tokenCount: enabled });
+    },
+    [onOptionChange]
+  );
 
-  const handlePanelChange = useCallback((settings: PendingCountSettings) => {
-    onOptionChange({ reminderCountStyle: settings.style })
-  }, [onOptionChange])
+  const handlePanelChange = useCallback(
+    (settings: PendingCountSettings) => {
+      onOptionChange({ reminderCountStyle: settings.style });
+    },
+    [onOptionChange]
+  );
 
   const panel = useExpandablePanel<PendingCountSettings>({
     value: currentSettings,
@@ -97,18 +99,18 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     disabled,
     panelHeight: 140,
     minPanelWidth: 200,
-  })
+  });
 
-  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings
+  const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
 
   const getSummary = () => {
-    if (!isEnabled) return 'Disabled'
-    return displaySettings.style === 'roman' ? 'Roman' : 'Arabic'
-  }
+    if (!isEnabled) return 'Disabled';
+    return displaySettings.style === 'roman' ? 'Roman' : 'Arabic';
+  };
 
   const defaultSettings: PendingCountSettings = {
     style: 'arabic',
-  }
+  };
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -127,10 +129,10 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
         On
       </button>
     </div>
-  )
+  );
 
   const renderPanel = () => {
-    if (!panel.isExpanded || !panel.panelPosition) return null
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -141,7 +143,7 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -182,44 +184,28 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
       ref={panel.containerRef}
       preview={
         <PreviewBox shape="square" size={size}>
-          <CountPreview
-            style={displaySettings.style}
-            isEnabled={isEnabled}
-          />
+          <CountPreview style={displaySettings.style} isEnabled={isEnabled} />
         </PreviewBox>
       }
-      info={
-        <InfoSection
-          label="Count"
-          summary={getSummary()}
-        />
-      }
+      info={<InfoSection label="Count" summary={getSummary()} />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -232,7 +218,7 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default ReminderCountSelector
+export default ReminderCountSelector;

@@ -112,11 +112,11 @@
     max-height: none;
     height: auto;
   }
-  
+
   .content {
     flex-direction: column;
   }
-  
+
   .left {
     width: 100%;
     min-width: auto;
@@ -124,5 +124,3 @@
     border-bottom: 1px solid var(--border-color);
   }
 }
-
-

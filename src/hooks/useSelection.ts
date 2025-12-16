@@ -7,7 +7,7 @@
  * @module hooks/useSelection
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -79,9 +79,7 @@ export function useSelection<T = unknown>(
 ): UseSelectionReturn {
   const { initialSelection = [], maxSelection, onSelectionChange } = options;
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(initialSelection)
-  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(initialSelection));
 
   // Notify on selection change
   const updateSelection = useCallback(
@@ -144,9 +142,7 @@ export function useSelection<T = unknown>(
   const selectAll = useCallback(
     (allIds: string[]) => {
       updateSelection(() => {
-        const idsToSelect = maxSelection !== undefined
-          ? allIds.slice(0, maxSelection)
-          : allIds;
+        const idsToSelect = maxSelection !== undefined ? allIds.slice(0, maxSelection) : allIds;
         return new Set(idsToSelect);
       });
     },
@@ -157,10 +153,7 @@ export function useSelection<T = unknown>(
     updateSelection(() => new Set());
   }, [updateSelection]);
 
-  const isSelected = useCallback(
-    (id: string) => selectedIds.has(id),
-    [selectedIds]
-  );
+  const isSelected = useCallback((id: string) => selectedIds.has(id), [selectedIds]);
 
   const isAllSelected = useCallback(
     (allIds: string[]) => {
@@ -182,9 +175,7 @@ export function useSelection<T = unknown>(
   const setSelection = useCallback(
     (ids: string[]) => {
       updateSelection(() => {
-        const idsToSelect = maxSelection !== undefined
-          ? ids.slice(0, maxSelection)
-          : ids;
+        const idsToSelect = maxSelection !== undefined ? ids.slice(0, maxSelection) : ids;
         return new Set(idsToSelect);
       });
     },

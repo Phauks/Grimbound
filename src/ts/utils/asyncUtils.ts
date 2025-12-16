@@ -9,21 +9,21 @@
  * @returns New shuffled array (original unchanged)
  */
 export function shuffleArray<T>(array: readonly T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 /**
  * Debounced function interface with cancel capability
  */
 export interface DebouncedFunction<T extends (...args: Parameters<T>) => void> {
-    (...args: Parameters<T>): void;
-    /** Cancel any pending debounced call */
-    cancel: () => void;
+  (...args: Parameters<T>): void;
+  /** Cancel any pending debounced call */
+  cancel: () => void;
 }
 
 /**
@@ -34,28 +34,28 @@ export interface DebouncedFunction<T extends (...args: Parameters<T>) => void> {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => void>(
-    func: T,
-    wait: number
+  func: T,
+  wait: number
 ): DebouncedFunction<T> {
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    
-    const debouncedFn = function executedFunction(...args: Parameters<T>): void {
-        const later = (): void => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    } as DebouncedFunction<T>;
-    
-    debouncedFn.cancel = (): void => {
-        if (timeout) {
-            clearTimeout(timeout);
-            timeout = undefined;
-        }
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  const debouncedFn = function executedFunction(...args: Parameters<T>): void {
+    const later = (): void => {
+      clearTimeout(timeout);
+      func(...args);
     };
-    
-    return debouncedFn;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  } as DebouncedFunction<T>;
+
+  debouncedFn.cancel = (): void => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = undefined;
+    }
+  };
+
+  return debouncedFn;
 }
 
 /**
@@ -64,5 +64,5 @@ export function debounce<T extends (...args: any[]) => void>(
  * @returns Promise that resolves after delay
  */
 export function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

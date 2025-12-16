@@ -22,32 +22,32 @@
  * ```
  */
 
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
-import { cn } from '../../../ts/utils'
-import styles from '../../../styles/components/shared/Button.module.css'
+import { type ButtonHTMLAttributes, forwardRef, type ReactNode } from 'react';
+import styles from '../../../styles/components/shared/Button.module.css';
+import { cn } from '../../../ts/utils';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger'
-export type ButtonSize = 'small' | 'medium' | 'large'
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger';
+export type ButtonSize = 'small' | 'medium' | 'large';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual style variant */
-  variant?: ButtonVariant
+  variant?: ButtonVariant;
   /** Size of the button */
-  size?: ButtonSize
+  size?: ButtonSize;
   /** Icon element to display */
-  icon?: ReactNode
+  icon?: ReactNode;
   /** Position of the icon relative to text */
-  iconPosition?: 'left' | 'right'
+  iconPosition?: 'left' | 'right';
   /** Whether this is an icon-only button (square aspect ratio) */
-  isIconOnly?: boolean
+  isIconOnly?: boolean;
   /** Whether the button should take full width of container */
-  fullWidth?: boolean
+  fullWidth?: boolean;
   /** Whether the button is in a loading state */
-  loading?: boolean
+  loading?: boolean;
   /** Text to show during loading (replaces children) */
-  loadingText?: string
+  loadingText?: string;
   /** Button content */
-  children?: ReactNode
+  children?: ReactNode;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -56,13 +56,13 @@ const variantClasses: Record<ButtonVariant, string> = {
   accent: styles.variantAccent,
   ghost: styles.variantGhost,
   danger: styles.variantDanger,
-}
+};
 
 const sizeClasses: Record<ButtonSize, string> = {
   small: styles.sizeSmall,
   medium: styles.sizeMedium,
   large: styles.sizeLarge,
-}
+};
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -89,12 +89,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isIconOnly && styles.iconOnly,
       fullWidth && styles.fullWidth,
       loading && styles.loading,
-      className,
-    )
+      className
+    );
 
     // Determine what content to show
-    const showLoadingText = loading && loadingText
-    const displayContent = showLoadingText ? loadingText : children
+    const showLoadingText = loading && loadingText;
+    const displayContent = showLoadingText ? loadingText : children;
 
     return (
       <button
@@ -105,9 +105,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {/* Loading spinner */}
-        {loading && (
-          <span className={styles.spinner} aria-hidden="true" />
-        )}
+        {loading && <span className={styles.spinner} aria-hidden="true" />}
 
         {/* Icon (hidden during loading unless no loading text) */}
         {icon && !loading && (
@@ -128,11 +126,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
       </button>
-    )
+    );
   }
-)
+);
 
-Button.displayName = 'Button'
+Button.displayName = 'Button';
 
 // ============================================
 // Toggle Button Variant
@@ -140,25 +138,18 @@ Button.displayName = 'Button'
 
 interface ToggleButtonProps extends ButtonProps {
   /** Whether the toggle is in active/pressed state */
-  active?: boolean
+  active?: boolean;
 }
 
 export const ToggleButton = forwardRef<HTMLButtonElement, ToggleButtonProps>(
   ({ active = false, className, ...props }, ref) => {
-    const classes = cn(styles.toggle, active && styles.active, className)
+    const classes = cn(styles.toggle, active && styles.active, className);
 
-    return (
-      <button
-        ref={ref}
-        className={classes}
-        aria-pressed={active}
-        {...props}
-      />
-    )
+    return <button ref={ref} className={classes} aria-pressed={active} {...props} />;
   }
-)
+);
 
-ToggleButton.displayName = 'ToggleButton'
+ToggleButton.displayName = 'ToggleButton';
 
 // ============================================
 // Button Group
@@ -166,12 +157,16 @@ ToggleButton.displayName = 'ToggleButton'
 
 interface ButtonGroupProps {
   /** Buttons to group together */
-  children: ReactNode
+  children: ReactNode;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
 }
 
 export function ButtonGroup({ children, className }: ButtonGroupProps) {
-  const classes = cn(styles.group, className)
-  return <div className={classes} role="group">{children}</div>
+  const classes = cn(styles.group, className);
+  return (
+    <div className={classes} role="group">
+      {children}
+    </div>
+  );
 }

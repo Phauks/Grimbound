@@ -10,12 +10,12 @@
 
 import type { AssetReference } from '../../types/index.js';
 import {
-  isAssetReference as isAssetRef,
+  createAssetReference as createRef,
   extractAssetId as extractId,
-  createAssetReference as createRef
+  isAssetReference as isAssetRef,
 } from '../../types/index.js';
-import { assetStorageService } from './AssetStorageService.js';
 import { logger } from '../../utils/logger.js';
+import { assetStorageService } from './AssetStorageService.js';
 
 // ============================================================================
 // Constants
@@ -108,7 +108,7 @@ export async function resolveAssetUrl(url: string): Promise<string> {
       resolvedUrlCache.set(assetId, asset.url);
 
       // Track asset usage (fire-and-forget, don't block resolution)
-      assetStorageService.trackAssetUsage(assetId).catch(err => {
+      assetStorageService.trackAssetUsage(assetId).catch((err) => {
         logger.warn('AssetResolver', `Failed to track asset usage for ${assetId}`, err);
       });
 
@@ -258,7 +258,7 @@ export async function preResolveAssetsWithPriority(
   const { concurrency = 5, onProgress } = options;
 
   // Filter out already cached assets
-  const uncachedTasks = tasks.filter(task => !resolvedUrlCache.has(task.assetId));
+  const uncachedTasks = tasks.filter((task) => !resolvedUrlCache.has(task.assetId));
 
   if (uncachedTasks.length === 0) {
     onProgress?.(0, 0);
@@ -295,12 +295,16 @@ export async function preResolveAssetsWithPriority(
             resolvedUrlCache.set(task.assetId, asset.url);
 
             // Track asset usage (fire-and-forget)
-            assetStorageService.trackAssetUsage(task.assetId).catch(err => {
+            assetStorageService.trackAssetUsage(task.assetId).catch((err) => {
               logger.warn('AssetResolver', `Failed to track asset usage for ${task.assetId}`, err);
             });
           }
         } catch (error) {
-          logger.warn('AssetResolver', `Failed to pre-resolve asset (priority: ${task.priority}): ${task.assetId}`, error);
+          logger.warn(
+            'AssetResolver',
+            `Failed to pre-resolve asset (priority: ${task.priority}): ${task.assetId}`,
+            error
+          );
         } finally {
           loaded++;
           onProgress?.(loaded, total);
@@ -347,7 +351,7 @@ export function createPreloadTasks(
           tasks.push({
             assetId,
             priority: index < highPriorityCount ? 'high' : 'normal',
-            index
+            index,
           });
         }
       }

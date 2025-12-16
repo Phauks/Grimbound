@@ -5,8 +5,8 @@
  * in the Studio editor.
  */
 
-import type { Layer, BlendMode, Point } from '../types/index.js';
 import { studioCanvasPool } from '../canvas/canvasPool.js';
+import type { BlendMode, Layer } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 // ============================================================================
@@ -20,7 +20,10 @@ import { logger } from '../utils/logger.js';
  * @param height - Canvas height in pixels
  * @returns Canvas element with configured 2D context
  */
-export function createStudioCanvas(width: number, height: number): {
+export function createStudioCanvas(
+  width: number,
+  height: number
+): {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
 } {
@@ -78,7 +81,7 @@ export function composeLayers(layers: Layer[], targetCanvas: HTMLCanvasElement):
 
   // Sort layers by z-index (lowest to highest)
   const sortedLayers = [...layers]
-    .filter(layer => layer.visible)
+    .filter((layer) => layer.visible)
     .sort((a, b) => a.zIndex - b.zIndex);
 
   // Composite each layer
@@ -145,12 +148,12 @@ function applyLayerTransform(ctx: CanvasRenderingContext2D, layer: Layer): void 
  */
 function blendModeToCompositeOp(mode: BlendMode): GlobalCompositeOperation {
   const modeMap: Record<BlendMode, GlobalCompositeOperation> = {
-    'normal': 'source-over',
-    'multiply': 'multiply',
-    'screen': 'screen',
-    'overlay': 'overlay',
-    'darken': 'darken',
-    'lighten': 'lighten',
+    normal: 'source-over',
+    multiply: 'multiply',
+    screen: 'screen',
+    overlay: 'overlay',
+    darken: 'darken',
+    lighten: 'lighten',
   };
 
   return modeMap[mode] || 'source-over';
@@ -230,7 +233,7 @@ export async function pasteFromClipboard(): Promise<HTMLCanvasElement | null> {
 
     for (const item of clipboardItems) {
       // Look for image types
-      const imageTypes = item.types.filter(type => type.startsWith('image/'));
+      const imageTypes = item.types.filter((type) => type.startsWith('image/'));
 
       if (imageTypes.length > 0) {
         const blob = await item.getType(imageTypes[0]);

@@ -3,35 +3,32 @@
  * Data Module - Barrel export for all data loading and parsing functionality
  */
 
-// Data loading (I/O operations)
-export {
-    loadExampleScript,
-    loadJsonFile,
-} from './dataLoader.js';
-
-// Script parsing
-export {
-    parseScriptData,
-    validateAndParseScript,
-    extractScriptMeta,
-    isScriptMeta,
-    isCharacter,
-    isIdReference,
-    type ScriptValidationResult,
-} from './scriptParser.js';
-
-// Character utilities
-export {
-    validateCharacter,
-    getCharacterImageUrl,
-    countReminders,
-    getGlobalReminders,
-    groupByTeam,
-    calculateTokenCounts,
-} from './characterUtils.js';
-
 // Character lookup service
 export {
-    characterLookup,
-    CharacterLookupService,
+  CharacterLookupService,
+  characterLookup,
 } from './characterLookup.js';
+// Character utilities
+export {
+  calculateTokenCounts,
+  countReminders,
+  getCharacterImageUrl,
+  getGlobalReminders,
+  groupByTeam,
+  validateCharacter,
+} from './characterUtils.js';
+// Data loading (I/O operations)
+export {
+  loadExampleScript,
+  loadJsonFile,
+} from './dataLoader.js';
+// Script parsing
+export {
+  extractScriptMeta,
+  isCharacter,
+  isIdReference,
+  isScriptMeta,
+  parseScriptData,
+  type ScriptValidationResult,
+  validateAndParseScript,
+} from './scriptParser.js';

@@ -17,15 +17,12 @@
  * @module components/Shared/ColorPreviewSelector
  */
 
-import { memo, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel'
-import {
-  SettingsSelectorBase,
-  InfoSection,
-} from './SettingsSelectorBase'
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css'
-import styles from '../../../styles/components/shared/ColorPreviewSelector.module.css'
+import { memo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
+import styles from '../../../styles/components/shared/ColorPreviewSelector.module.css';
+import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
 // Types
@@ -33,36 +30,36 @@ import styles from '../../../styles/components/shared/ColorPreviewSelector.modul
 
 export interface ColorPreset {
   /** Color value in hex format */
-  value: string
+  value: string;
   /** Display name for the color */
-  name: string
+  name: string;
   /** Optional group/category */
-  group?: string
+  group?: string;
 }
 
 export interface ColorPreviewSelectorProps {
   /** Current color value (hex format) */
-  value: string
+  value: string;
   /** Called when color is applied */
-  onChange: (value: string) => void
+  onChange: (value: string) => void;
   /** Called on every change for live preview (optional) */
-  onPreviewChange?: (value: string) => void
+  onPreviewChange?: (value: string) => void;
   /** Display label */
-  label?: string
+  label?: string;
   /** Preview shape */
-  shape?: 'circle' | 'square'
+  shape?: 'circle' | 'square';
   /** Component size */
-  size?: 'small' | 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large';
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Aria label for accessibility */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Custom preset colors (optional - uses defaults if not provided) */
-  presets?: ColorPreset[]
+  presets?: ColorPreset[];
   /** Show preset swatches */
-  showPresets?: boolean
+  showPresets?: boolean;
   /** Optional slot for content above the action button (e.g., toggle) */
-  headerSlot?: React.ReactNode
+  headerSlot?: React.ReactNode;
 }
 
 // ============================================================================
@@ -99,7 +96,7 @@ const DEFAULT_PRESETS: ColorPreset[] = [
   { value: '#27AE60', name: 'Green', group: 'Vivid' },
   { value: '#3498DB', name: 'Blue', group: 'Vivid' },
   { value: '#9B59B6', name: 'Purple', group: 'Vivid' },
-]
+];
 
 // ============================================================================
 // Utility Functions
@@ -109,9 +106,9 @@ const DEFAULT_PRESETS: ColorPreset[] = [
  * Convert hex color to a human-readable name or formatted hex
  */
 function getColorDisplayName(hex: string, presets: ColorPreset[]): string {
-  const normalized = hex.toUpperCase()
-  const preset = presets.find((p) => p.value.toUpperCase() === normalized)
-  if (preset) return preset.name
+  const normalized = hex.toUpperCase();
+  const preset = presets.find((p) => p.value.toUpperCase() === normalized);
+  if (preset) return preset.name;
 
   // Common color names
   const commonNames: Record<string, string> = {
@@ -123,21 +120,21 @@ function getColorDisplayName(hex: string, presets: ColorPreset[]): string {
     '#FFFF00': 'Yellow',
     '#FF00FF': 'Magenta',
     '#00FFFF': 'Cyan',
-  }
+  };
 
-  return commonNames[normalized] || 'Custom'
+  return commonNames[normalized] || 'Custom';
 }
 
 /**
  * Determine if a color is light or dark (for contrast)
  */
 function isLightColor(hex: string): boolean {
-  const color = hex.replace('#', '')
-  const r = parseInt(color.slice(0, 2), 16)
-  const g = parseInt(color.slice(2, 4), 16)
-  const b = parseInt(color.slice(4, 6), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5
+  const color = hex.replace('#', '');
+  const r = parseInt(color.slice(0, 2), 16);
+  const g = parseInt(color.slice(2, 4), 16);
+  const b = parseInt(color.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
 }
 
 // ============================================================================
@@ -149,11 +146,11 @@ const ColorPreview = memo(function ColorPreview({
   shape,
   size,
 }: {
-  color: string
-  shape: 'circle' | 'square'
-  size: 'small' | 'medium' | 'large'
+  color: string;
+  shape: 'circle' | 'square';
+  size: 'small' | 'medium' | 'large';
 }) {
-  const isLight = isLightColor(color)
+  const isLight = isLightColor(color);
 
   const previewClasses = [
     styles.preview,
@@ -161,20 +158,17 @@ const ColorPreview = memo(function ColorPreview({
     shape === 'circle' ? styles.previewCircle : styles.previewSquare,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <div className={previewClasses}>
-      <div
-        className={styles.colorSwatch}
-        style={{ backgroundColor: color }}
-      >
+      <div className={styles.colorSwatch} style={{ backgroundColor: color }}>
         {/* Border overlay for light colors */}
         {isLight && <div className={styles.swatchBorder} />}
       </div>
     </div>
-  )
-})
+  );
+});
 
 // ============================================================================
 // Component
@@ -193,10 +187,10 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   showPresets = true,
   headerSlot,
 }: ColorPreviewSelectorProps) {
-  const colorInputRef = useRef<HTMLInputElement>(null)
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   // Default color for reset
-  const defaultColor = '#FFFFFF'
+  const defaultColor = '#FFFFFF';
 
   // Use the shared expandable panel hook
   const panel = useExpandablePanel<string>({
@@ -206,40 +200,46 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
     disabled,
     panelHeight: 350,
     minPanelWidth: 280,
-  })
+  });
 
-  const displayColor = panel.isExpanded ? panel.pendingValue : value
-  const colorName = getColorDisplayName(displayColor, presets)
+  const displayColor = panel.isExpanded ? panel.pendingValue : value;
+  const colorName = getColorDisplayName(displayColor, presets);
 
   // Handle preset selection
-  const handlePresetClick = useCallback((presetValue: string) => {
-    panel.updatePending(presetValue)
-  }, [panel])
+  const handlePresetClick = useCallback(
+    (presetValue: string) => {
+      panel.updatePending(presetValue);
+    },
+    [panel]
+  );
 
   // Handle custom color picker
-  const handleColorInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    panel.updatePending(e.target.value)
-  }, [panel])
+  const handleColorInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      panel.updatePending(e.target.value);
+    },
+    [panel]
+  );
 
   // Open native color picker
   const handlePickerClick = useCallback(() => {
-    colorInputRef.current?.click()
-  }, [])
+    colorInputRef.current?.click();
+  }, []);
 
   // Group presets for display
   const presetsByGroup = presets.reduce(
     (acc, preset) => {
-      const group = preset.group || 'Other'
-      if (!acc[group]) acc[group] = []
-      acc[group].push(preset)
-      return acc
+      const group = preset.group || 'Other';
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(preset);
+      return acc;
     },
     {} as Record<string, ColorPreset[]>
-  )
+  );
 
   // Render expanded panel via portal
   const renderPanel = () => {
-    if (!panel.isExpanded || !showPresets || !panel.panelPosition) return null
+    if (!(panel.isExpanded && showPresets && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -250,7 +250,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
       left: panel.panelPosition.left,
       width: panel.panelPosition.width,
       zIndex: 10000,
-    }
+    };
 
     return createPortal(
       <div
@@ -261,11 +261,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
         <div className={baseStyles.panelContent}>
           {/* Custom Color Picker Row */}
           <div className={styles.customPickerRow}>
-            <button
-              type="button"
-              className={styles.pickerButton}
-              onClick={handlePickerClick}
-            >
+            <button type="button" className={styles.pickerButton} onClick={handlePickerClick}>
               <span className={styles.pickerIcon}>🎨</span>
               <span>Custom Color</span>
             </button>
@@ -275,9 +271,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
                 className={styles.currentColorSwatch}
                 style={{ backgroundColor: panel.pendingValue }}
               />
-              <span className={styles.currentColorHex}>
-                {panel.pendingValue.toUpperCase()}
-              </span>
+              <span className={styles.currentColorHex}>{panel.pendingValue.toUpperCase()}</span>
             </div>
 
             {/* Hidden native color input */}
@@ -299,8 +293,8 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
               <div className={styles.presetSwatches}>
                 {groupPresets.map((preset) => {
                   const isSelected =
-                    preset.value.toUpperCase() === panel.pendingValue.toUpperCase()
-                  const presetIsLight = isLightColor(preset.value)
+                    preset.value.toUpperCase() === panel.pendingValue.toUpperCase();
+                  const presetIsLight = isLightColor(preset.value);
 
                   return (
                     <button
@@ -318,11 +312,9 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
                       title={preset.name}
                       aria-label={`Select ${preset.name}`}
                     >
-                      {isSelected && (
-                        <span className={styles.presetCheck}>✓</span>
-                      )}
+                      {isSelected && <span className={styles.presetCheck}>✓</span>}
                     </button>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -339,43 +331,24 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={panel.cancel}
-            >
+            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={panel.apply}
-            >
+            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
               Apply
             </button>
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <SettingsSelectorBase
       ref={panel.containerRef}
-      preview={
-        <ColorPreview
-          color={displayColor}
-          shape={shape}
-          size={size}
-        />
-      }
-      info={
-        <InfoSection
-          label={label || colorName}
-          summary={displayColor.toUpperCase()}
-        />
-      }
+      preview={<ColorPreview color={displayColor} shape={shape} size={size} />}
+      info={<InfoSection label={label || colorName} summary={displayColor.toUpperCase()} />}
       headerSlot={headerSlot}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -387,7 +360,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
     >
       {renderPanel()}
     </SettingsSelectorBase>
-  )
-})
+  );
+});
 
-export default ColorPreviewSelector
+export default ColorPreviewSelector;

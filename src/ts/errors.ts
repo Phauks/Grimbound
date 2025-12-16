@@ -8,20 +8,23 @@
  */
 // V8-specific interface for captureStackTrace
 interface ErrorConstructorWithStackTrace extends ErrorConstructor {
-    captureStackTrace?(targetObject: object, constructorOpt?: Function): void;
+  captureStackTrace?(targetObject: object, constructorOpt?: Function): void;
 }
 
 export class TokenGeneratorError extends Error {
-    constructor(message: string, public cause?: Error) {
-        super(message);
-        this.name = 'TokenGeneratorError';
+  constructor(
+    message: string,
+    public cause?: Error
+  ) {
+    super(message);
+    this.name = 'TokenGeneratorError';
 
-        // Maintains proper stack trace for where our error was thrown (only available on V8)
-        const ErrorWithStackTrace = Error as ErrorConstructorWithStackTrace;
-        if (ErrorWithStackTrace.captureStackTrace) {
-            ErrorWithStackTrace.captureStackTrace(this, this.constructor);
-        }
+    // Maintains proper stack trace for where our error was thrown (only available on V8)
+    const ErrorWithStackTrace = Error as ErrorConstructorWithStackTrace;
+    if (ErrorWithStackTrace.captureStackTrace) {
+      ErrorWithStackTrace.captureStackTrace(this, this.constructor);
     }
+  }
 }
 
 /**
@@ -29,10 +32,10 @@ export class TokenGeneratorError extends Error {
  * Used for: JSON file loading, API fetching, example script loading
  */
 export class DataLoadError extends TokenGeneratorError {
-    constructor(message: string, cause?: Error) {
-        super(message, cause);
-        this.name = 'DataLoadError';
-    }
+  constructor(message: string, cause?: Error) {
+    super(message, cause);
+    this.name = 'DataLoadError';
+  }
 }
 
 /**
@@ -40,14 +43,14 @@ export class DataLoadError extends TokenGeneratorError {
  * Used for: JSON validation, character validation
  */
 export class ValidationError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public validationErrors: string[] = [],
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'ValidationError';
-    }
+  constructor(
+    message: string,
+    public validationErrors: string[] = [],
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'ValidationError';
+  }
 }
 
 /**
@@ -55,14 +58,14 @@ export class ValidationError extends TokenGeneratorError {
  * Used for: Canvas operations, image loading, token creation
  */
 export class TokenCreationError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public tokenName?: string,
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'TokenCreationError';
-    }
+  constructor(
+    message: string,
+    public tokenName?: string,
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'TokenCreationError';
+  }
 }
 
 /**
@@ -70,10 +73,10 @@ export class TokenCreationError extends TokenGeneratorError {
  * Used for: PDF layout, PDF export
  */
 export class PDFGenerationError extends TokenGeneratorError {
-    constructor(message: string, cause?: Error) {
-        super(message, cause);
-        this.name = 'PDFGenerationError';
-    }
+  constructor(message: string, cause?: Error) {
+    super(message, cause);
+    this.name = 'PDFGenerationError';
+  }
 }
 
 /**
@@ -81,10 +84,10 @@ export class PDFGenerationError extends TokenGeneratorError {
  * Used for: ZIP file creation, blob conversion
  */
 export class ZipCreationError extends TokenGeneratorError {
-    constructor(message: string, cause?: Error) {
-        super(message, cause);
-        this.name = 'ZipCreationError';
-    }
+  constructor(message: string, cause?: Error) {
+    super(message, cause);
+    this.name = 'ZipCreationError';
+  }
 }
 
 /**
@@ -92,15 +95,15 @@ export class ZipCreationError extends TokenGeneratorError {
  * Used for: Missing libraries (jsPDF, JSZip, QRCode), missing fonts, missing images
  */
 export class ResourceNotFoundError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public resourceType: 'library' | 'font' | 'image' | 'element',
-        public resourceName: string,
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'ResourceNotFoundError';
-    }
+  constructor(
+    message: string,
+    public resourceType: 'library' | 'font' | 'image' | 'element',
+    public resourceName: string,
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'ResourceNotFoundError';
+  }
 }
 
 /**
@@ -108,14 +111,14 @@ export class ResourceNotFoundError extends TokenGeneratorError {
  * Used for: Missing DOM elements, invalid state
  */
 export class UIInitializationError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public missingElements: string[] = [],
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'UIInitializationError';
-    }
+  constructor(
+    message: string,
+    public missingElements: string[] = [],
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'UIInitializationError';
+  }
 }
 
 /**
@@ -123,14 +126,14 @@ export class UIInitializationError extends TokenGeneratorError {
  * Used for: Sync initialization, update checks, data fetching
  */
 export class DataSyncError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public syncOperation?: string,
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'DataSyncError';
-    }
+  constructor(
+    message: string,
+    public syncOperation?: string,
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'DataSyncError';
+  }
 }
 
 /**
@@ -138,14 +141,14 @@ export class DataSyncError extends TokenGeneratorError {
  * Used for: IndexedDB operations, Cache API operations, quota exceeded
  */
 export class StorageError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public storageType: 'indexeddb' | 'cache-api' | 'quota',
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'StorageError';
-    }
+  constructor(
+    message: string,
+    public storageType: 'indexeddb' | 'cache-api' | 'quota',
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'StorageError';
+  }
 }
 
 /**
@@ -153,15 +156,15 @@ export class StorageError extends TokenGeneratorError {
  * Used for: API failures, rate limiting, network errors
  */
 export class GitHubAPIError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public statusCode?: number,
-        public rateLimited?: boolean,
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'GitHubAPIError';
-    }
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public rateLimited?: boolean,
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'GitHubAPIError';
+  }
 }
 
 /**
@@ -169,113 +172,112 @@ export class GitHubAPIError extends TokenGeneratorError {
  * Used for: Invalid ZIP structure, hash mismatch, schema validation
  */
 export class PackageValidationError extends TokenGeneratorError {
-    constructor(
-        message: string,
-        public validationType: 'structure' | 'hash' | 'schema',
-        cause?: Error
-    ) {
-        super(message, cause);
-        this.name = 'PackageValidationError';
-    }
+  constructor(
+    message: string,
+    public validationType: 'structure' | 'hash' | 'schema',
+    cause?: Error
+  ) {
+    super(message, cause);
+    this.name = 'PackageValidationError';
+  }
 }
 
 /**
  * Error handler utility to extract user-friendly messages
  */
 export class ErrorHandler {
-    /**
-     * Get a user-friendly error message from any error
-     */
-    static getUserMessage(error: unknown): string {
-        if (error instanceof ValidationError) {
-            const details = error.validationErrors.length > 0
-                ? `: ${error.validationErrors.join(', ')}`
-                : '';
-            return `${error.message}${details}`;
-        }
-
-        if (error instanceof TokenCreationError) {
-            const tokenInfo = error.tokenName ? ` (${error.tokenName})` : '';
-            return `${error.message}${tokenInfo}`;
-        }
-
-        if (error instanceof ResourceNotFoundError) {
-            return `${error.message}. Please ensure ${error.resourceName} is available.`;
-        }
-
-        if (error instanceof GitHubAPIError) {
-            if (error.rateLimited) {
-                return `${error.message}. GitHub API rate limit exceeded. Please try again later.`;
-            }
-            return error.message;
-        }
-
-        if (error instanceof StorageError) {
-            if (error.storageType === 'quota') {
-                return `${error.message}. Storage quota exceeded. Please clear some space.`;
-            }
-            return error.message;
-        }
-
-        if (error instanceof PackageValidationError) {
-            return `${error.message}. The data package may be corrupted.`;
-        }
-
-        if (error instanceof DataSyncError) {
-            const operation = error.syncOperation ? ` (${error.syncOperation})` : '';
-            return `${error.message}${operation}`;
-        }
-
-        if (error instanceof TokenGeneratorError) {
-            return error.message;
-        }
-
-        if (error instanceof Error) {
-            return error.message;
-        }
-
-        return 'An unknown error occurred';
+  /**
+   * Get a user-friendly error message from any error
+   */
+  static getUserMessage(error: unknown): string {
+    if (error instanceof ValidationError) {
+      const details =
+        error.validationErrors.length > 0 ? `: ${error.validationErrors.join(', ')}` : '';
+      return `${error.message}${details}`;
     }
 
-    /**
-     * Log error with appropriate level
-     */
-    static log(error: unknown, context: string = ''): void {
-        const prefix = context ? `[${context}]` : '';
-
-        if (error instanceof ValidationError) {
-            console.warn(prefix, error.message, error.validationErrors, error.cause);
-        } else if (error instanceof DataLoadError) {
-            console.warn(prefix, error.message, error.cause);
-        } else if (error instanceof TokenGeneratorError) {
-            console.error(prefix, error.message, error.cause);
-        } else {
-            console.error(prefix, error);
-        }
+    if (error instanceof TokenCreationError) {
+      const tokenInfo = error.tokenName ? ` (${error.tokenName})` : '';
+      return `${error.message}${tokenInfo}`;
     }
 
-    /**
-     * Check if error should be shown to user
-     */
-    static shouldShowToUser(error: unknown): boolean {
-        // All our custom errors should be shown to users
-        // System errors or unknown errors should show generic message
-        return error instanceof TokenGeneratorError;
+    if (error instanceof ResourceNotFoundError) {
+      return `${error.message}. Please ensure ${error.resourceName} is available.`;
     }
+
+    if (error instanceof GitHubAPIError) {
+      if (error.rateLimited) {
+        return `${error.message}. GitHub API rate limit exceeded. Please try again later.`;
+      }
+      return error.message;
+    }
+
+    if (error instanceof StorageError) {
+      if (error.storageType === 'quota') {
+        return `${error.message}. Storage quota exceeded. Please clear some space.`;
+      }
+      return error.message;
+    }
+
+    if (error instanceof PackageValidationError) {
+      return `${error.message}. The data package may be corrupted.`;
+    }
+
+    if (error instanceof DataSyncError) {
+      const operation = error.syncOperation ? ` (${error.syncOperation})` : '';
+      return `${error.message}${operation}`;
+    }
+
+    if (error instanceof TokenGeneratorError) {
+      return error.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'An unknown error occurred';
+  }
+
+  /**
+   * Log error with appropriate level
+   */
+  static log(error: unknown, context: string = ''): void {
+    const prefix = context ? `[${context}]` : '';
+
+    if (error instanceof ValidationError) {
+      console.warn(prefix, error.message, error.validationErrors, error.cause);
+    } else if (error instanceof DataLoadError) {
+      console.warn(prefix, error.message, error.cause);
+    } else if (error instanceof TokenGeneratorError) {
+      console.error(prefix, error.message, error.cause);
+    } else {
+      console.error(prefix, error);
+    }
+  }
+
+  /**
+   * Check if error should be shown to user
+   */
+  static shouldShowToUser(error: unknown): boolean {
+    // All our custom errors should be shown to users
+    // System errors or unknown errors should show generic message
+    return error instanceof TokenGeneratorError;
+  }
 }
 
 export default {
-    TokenGeneratorError,
-    DataLoadError,
-    ValidationError,
-    TokenCreationError,
-    PDFGenerationError,
-    ZipCreationError,
-    ResourceNotFoundError,
-    UIInitializationError,
-    DataSyncError,
-    StorageError,
-    GitHubAPIError,
-    PackageValidationError,
-    ErrorHandler
+  TokenGeneratorError,
+  DataLoadError,
+  ValidationError,
+  TokenCreationError,
+  PDFGenerationError,
+  ZipCreationError,
+  ResourceNotFoundError,
+  UIInitializationError,
+  DataSyncError,
+  StorageError,
+  GitHubAPIError,
+  PackageValidationError,
+  ErrorHandler,
 };

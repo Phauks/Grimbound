@@ -3,9 +3,9 @@
  * PNG Exporter - Single PNG download functionality
  */
 
+import type { PngExportOptions, Token } from '../types/index.js';
 import { canvasToBlob, downloadFile } from '../utils/index.js';
-import { embedPngMetadata, buildTokenMetadata } from './pngMetadata.js';
-import type { Token, PngExportOptions } from '../types/index.js';
+import { buildTokenMetadata, embedPngMetadata } from './pngMetadata.js';
 
 /**
  * Download a single token as PNG
@@ -13,16 +13,16 @@ import type { Token, PngExportOptions } from '../types/index.js';
  * @param pngSettings - Optional PNG export settings
  */
 export async function downloadTokenPNG(
-    token: Token,
-    pngSettings?: PngExportOptions
+  token: Token,
+  pngSettings?: PngExportOptions
 ): Promise<void> {
-    let blob = await canvasToBlob(token.canvas);
+  let blob = await canvasToBlob(token.canvas);
 
-    // Embed metadata if enabled
-    if (pngSettings?.embedMetadata) {
-        const metadata = buildTokenMetadata(token);
-        blob = await embedPngMetadata(blob, metadata);
-    }
+  // Embed metadata if enabled
+  if (pngSettings?.embedMetadata) {
+    const metadata = buildTokenMetadata(token);
+    blob = await embedPngMetadata(blob, metadata);
+  }
 
-    downloadFile(blob, `${token.filename}.png`);
+  downloadFile(blob, `${token.filename}.png`);
 }

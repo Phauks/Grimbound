@@ -1,10 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { DataSyncProvider } from './contexts/DataSyncContext'
-import { registerSW } from 'virtual:pwa-register'
-import './styles/index.css'
+import { registerSW } from 'virtual:pwa-register';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { DataSyncProvider } from './contexts/DataSyncContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import './styles/index.css';
 
 // Register service worker for PWA functionality
 // Using autoUpdate mode - the app will automatically update when a new version is available
@@ -22,20 +22,23 @@ const updateSW = registerSW({
 
     // Check for updates periodically (every hour)
     if (registration) {
-      setInterval(() => {
-        registration.update();
-      }, 60 * 60 * 1000);
+      setInterval(
+        () => {
+          registration.update();
+        },
+        60 * 60 * 1000
+      );
     }
   },
   onRegisterError(error) {
     console.error('[PWA] Service worker registration failed:', error);
-  }
+  },
 });
 
 // Export updateSW for manual update triggering if needed
 (window as { updateSW?: typeof updateSW }).updateSW = updateSW;
 
-const root = ReactDOM.createRoot(document.getElementById('root')!)
+const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
   <React.StrictMode>
     <ThemeProvider>
@@ -44,4 +47,4 @@ root.render(
       </DataSyncProvider>
     </ThemeProvider>
   </React.StrictMode>
-)
+);

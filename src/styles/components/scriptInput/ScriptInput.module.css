@@ -209,12 +209,12 @@
   grid-column: 1;
   grid-row: 1;
   padding: var(--spacing-md);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow: visible;  /* Let parent scroll */
+  overflow: visible; /* Let parent scroll */
   pointer-events: none;
   color: var(--text-primary);
   /* No background - parent has it */
@@ -225,12 +225,12 @@
   grid-column: 1;
   grid-row: 1;
   padding: var(--spacing-md);
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   border: none;
   resize: none;
-  overflow: visible;  /* Let parent scroll - no internal scrolling */
+  overflow: visible; /* Let parent scroll - no internal scrolling */
   background-color: transparent;
   color: transparent;
   caret-color: var(--text-primary);
@@ -382,5 +382,3 @@
   display: flex;
   justify-content: center;
 }
-
-

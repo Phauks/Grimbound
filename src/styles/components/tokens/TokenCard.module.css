@@ -9,7 +9,9 @@
   border-radius: 8px;
   padding: var(--spacing-md);
   text-align: center;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color);
@@ -82,7 +84,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {
@@ -136,14 +139,30 @@
   color: white;
 }
 
-.teamTownsfolk { background-color: #1a5f2a; }
-.teamOutsider { background-color: #1a3f5f; }
-.teamMinion { background-color: #5f1a3f; }
-.teamDemon { background-color: #8b0000; }
-.teamTraveller { background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%); }
-.teamFabled { background-color: #4f1a5f; }
-.teamLoric { background-color: #2a5f5f; }
-.teamMeta { background-color: #4a4a4a; }
+.teamTownsfolk {
+  background-color: #1a5f2a;
+}
+.teamOutsider {
+  background-color: #1a3f5f;
+}
+.teamMinion {
+  background-color: #5f1a3f;
+}
+.teamDemon {
+  background-color: #8b0000;
+}
+.teamTraveller {
+  background: linear-gradient(90deg, #8b0000 50%, #1a3f5f 50%);
+}
+.teamFabled {
+  background-color: #4f1a5f;
+}
+.teamLoric {
+  background-color: #2a5f5f;
+}
+.teamMeta {
+  background-color: #4a4a4a;
+}
 
 /* ---- Official Badge ---- */
 .official {
@@ -324,5 +343,3 @@
   justify-content: center;
   width: 20px;
 }
-
-

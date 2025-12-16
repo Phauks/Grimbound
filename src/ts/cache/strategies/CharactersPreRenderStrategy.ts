@@ -3,28 +3,28 @@
  * Pre-renders first character + reminders for instant characters view display.
  */
 
+import type { Character, GenerationOptions, Token } from '../../types/index.js';
+import { regenerateCharacterAndReminders } from '../../ui/detailViewUtils.js';
+import { globalImageCache } from '../../utils/imageCache.js';
 import type {
+  ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-  ICacheStrategy
-} from '../core/index.js'
-import type { Token, Character, GenerationOptions } from '../../types/index.js'
-import { regenerateCharacterAndReminders } from '../../ui/detailViewUtils.js'
-import { globalImageCache } from '../../utils/imageCache.js'
+} from '../core/index.js';
 
 /**
  * Cache entry for pre-rendered character tokens.
  */
 export interface CharactersPreRenderEntry {
   /** Main character token */
-  characterToken: Token
+  characterToken: Token;
   /** Array of reminder tokens */
-  reminderTokens: Token[]
+  reminderTokens: Token[];
   /** Character UUID for identity */
-  characterUuid: string
+  characterUuid: string;
   /** Hash of generation options */
-  optionsHash: string
+  optionsHash: string;
 }
 
 /**
@@ -32,7 +32,7 @@ export interface CharactersPreRenderEntry {
  */
 export interface CharactersStrategyOptions {
   /** Include reminder tokens (default: true) */
-  includeReminders: boolean
+  includeReminders: boolean;
 }
 
 /**
@@ -40,13 +40,13 @@ export interface CharactersStrategyOptions {
  * Pre-renders first character and its reminders for instant characters view.
  */
 export class CharactersPreRenderStrategy implements IPreRenderStrategy {
-  readonly name = 'characters'
-  readonly priority = 2
+  readonly name = 'characters';
+  readonly priority = 2;
 
   constructor(
     private cache: ICacheStrategy<string, CharactersPreRenderEntry>,
     private options: CharactersStrategyOptions = {
-      includeReminders: true
+      includeReminders: true,
     }
   ) {}
 
@@ -56,24 +56,24 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
       context.characters != null &&
       context.characters.length > 0 &&
       context.generationOptions != null
-    )
+    );
   }
 
   async preRender(context: PreRenderContext): Promise<PreRenderResult> {
-    const { characters, generationOptions } = context
+    const { characters, generationOptions } = context;
 
     if (!characters || characters.length === 0 || !generationOptions) {
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: 'Missing characters or generation options'
-      }
+        error: 'Missing characters or generation options',
+      };
     }
 
     // Pre-render only first character
-    const character = characters[0]
-    const cacheKey = this.getCacheKey(character, generationOptions)
+    const character = characters[0];
+    const cacheKey = this.getCacheKey(character, generationOptions);
 
     // Check if already cached with same options
     if (this.cache.has(cacheKey)) {
@@ -83,9 +83,9 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
         skipped: 1,
         metadata: {
           strategy: this.name,
-          cached: true
-        }
-      }
+          cached: true,
+        },
+      };
     }
 
     try {
@@ -93,17 +93,17 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
       const { characterToken, reminderTokens } = await regenerateCharacterAndReminders(
         character,
         generationOptions
-      )
+      );
 
       // Store in cache
       const entry: CharactersPreRenderEntry = {
         characterToken,
         reminderTokens: this.options.includeReminders ? reminderTokens : [],
         characterUuid: character.id,
-        optionsHash: this.hashOptions(generationOptions)
-      }
+        optionsHash: this.hashOptions(generationOptions),
+      };
 
-      await this.cache.set(cacheKey, entry)
+      await this.cache.set(cacheKey, entry);
 
       return {
         success: true,
@@ -113,16 +113,16 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
           strategy: this.name,
           characterId: character.id,
           reminderCount: reminderTokens.length,
-          cacheStats: this.cache.getStats()
-        }
-      }
+          cacheStats: this.cache.getStats(),
+        },
+      };
     } catch (error) {
       return {
         success: false,
         rendered: 0,
         skipped: 0,
-        error: error instanceof Error ? error.message : String(error)
-      }
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 
@@ -136,9 +136,9 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
     character: Character,
     options: GenerationOptions
   ): Promise<CharactersPreRenderEntry | null> {
-    const cacheKey = this.getCacheKey(character, options)
-    const entry = await this.cache.get(cacheKey)
-    return entry?.value ?? null
+    const cacheKey = this.getCacheKey(character, options);
+    const entry = await this.cache.get(cacheKey);
+    return entry?.value ?? null;
   }
 
   /**
@@ -153,57 +153,57 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
     context: PreRenderContext,
     onProgress?: (loaded: number, total: number) => void
   ): Promise<void> {
-    const { characters, generationOptions } = context
+    const { characters, generationOptions } = context;
 
     if (!characters || characters.length === 0) {
-      onProgress?.(0, 0)
-      return
+      onProgress?.(0, 0);
+      return;
     }
 
     // Extract image URLs from first character (customize view focuses on one character)
-    const imageUrls = new Set<string>()
-    const character = characters[0]
+    const imageUrls = new Set<string>();
+    const character = characters[0];
 
     // Add character images (including variants)
     if (character.image) {
       if (Array.isArray(character.image)) {
-        character.image.forEach(url => imageUrls.add(url))
+        character.image.forEach((url) => imageUrls.add(url));
       } else {
-        imageUrls.add(character.image)
+        imageUrls.add(character.image);
       }
     }
 
     // Add background images from generation options
     if (generationOptions) {
-      const { characterBackground, reminderBackground, logoUrl } = generationOptions
-      if (characterBackground) imageUrls.add(characterBackground)
-      if (reminderBackground) imageUrls.add(reminderBackground)
-      if (logoUrl) imageUrls.add(logoUrl)
+      const { characterBackground, reminderBackground, logoUrl } = generationOptions;
+      if (characterBackground) imageUrls.add(characterBackground);
+      if (reminderBackground) imageUrls.add(reminderBackground);
+      if (logoUrl) imageUrls.add(logoUrl);
     }
 
     // Filter out already cached images
-    const urlsToLoad = Array.from(imageUrls).filter(url => !globalImageCache.has(url))
+    const urlsToLoad = Array.from(imageUrls).filter((url) => !globalImageCache.has(url));
 
     if (urlsToLoad.length === 0) {
       // All images already cached
-      onProgress?.(0, 0)
-      return
+      onProgress?.(0, 0);
+      return;
     }
 
     // Preload images using idle callback for non-blocking behavior
     return new Promise((resolve) => {
       const preload = async () => {
-        await globalImageCache.preloadMany(urlsToLoad, false, onProgress)
-        resolve()
-      }
+        await globalImageCache.preloadMany(urlsToLoad, false, onProgress);
+        resolve();
+      };
 
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(preload, { timeout: 2000 })
+        (window as any).requestIdleCallback(preload, { timeout: 2000 });
       } else {
         // Fallback: use setTimeout for non-blocking behavior
-        setTimeout(preload, 0)
+        setTimeout(preload, 0);
       }
-    })
+    });
   }
 
   /**
@@ -213,8 +213,8 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
    * @returns Cache key string
    */
   private getCacheKey(character: Character, options: GenerationOptions): string {
-    const optionsHash = this.hashOptions(options)
-    return `${character.id}_${optionsHash}`
+    const optionsHash = this.hashOptions(options);
+    return `${character.id}_${optionsHash}`;
   }
 
   /**
@@ -239,18 +239,18 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
       characterBackgroundType: options.characterBackgroundType,
       characterNameFont: options.characterNameFont,
       characterNameColor: options.characterNameColor,
-      dpi: options.dpi
+      dpi: options.dpi,
       // Note: Omitting generateImageVariants, tokenCount as they don't affect individual token appearance
-    }
+    };
 
     // Simple hash: stringify and create hash code
-    const str = JSON.stringify(relevantOptions)
-    let hash = 0
+    const str = JSON.stringify(relevantOptions);
+    let hash = 0;
     for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
     }
-    return hash.toString(36)
+    return hash.toString(36);
   }
 }

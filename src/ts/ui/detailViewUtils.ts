@@ -3,33 +3,33 @@
  * Handles regeneration, editing, and exporting individual tokens
  */
 
-import { TokenGenerator } from '../generation/index.js'
-import { createTokensZip } from '../export/index.js'
-import { downloadFile, sanitizeFilename } from '../utils/index.js'
-import CONFIG from '../config.js'
-import type { Character, GenerationOptions, Token, Team } from '../types/index.js'
+import CONFIG from '../config.js';
+import { createTokensZip } from '../export/index.js';
+import { TokenGenerator } from '../generation/index.js';
+import type { Character, GenerationOptions, Team, Token } from '../types/index.js';
+import { downloadFile, sanitizeFilename } from '../utils/index.js';
 
 /**
  * Regenerate a single character token with edited data
  */
 export async function regenerateSingleToken(
   editedCharacter: Character,
-  originalCharacter: Character,
+  _originalCharacter: Character,
   generationOptions: GenerationOptions
 ): Promise<HTMLCanvasElement> {
   // Extract transparentBackground from pngSettings for TokenGenerator
   const generatorOptions = {
     ...generationOptions,
     transparentBackground: generationOptions.pngSettings?.transparentBackground ?? false,
-  }
-  const generator = new TokenGenerator(generatorOptions)
+  };
+  const generator = new TokenGenerator(generatorOptions);
 
   try {
-    const canvas = await generator.generateCharacterToken(editedCharacter)
-    return canvas
+    const canvas = await generator.generateCharacterToken(editedCharacter);
+    return canvas;
   } catch (error) {
-    console.error('Failed to regenerate character token:', error)
-    throw error
+    console.error('Failed to regenerate character token:', error);
+    throw error;
   }
 }
 
@@ -48,15 +48,15 @@ export async function regenerateCharacterAndReminders(
   const generatorOptions = {
     ...generationOptions,
     transparentBackground: generationOptions.pngSettings?.transparentBackground ?? false,
-  }
-  const generator = new TokenGenerator(generatorOptions)
-  const dpi = generationOptions.dpi ?? CONFIG.PDF.DPI
+  };
+  const generator = new TokenGenerator(generatorOptions);
+  const dpi = generationOptions.dpi ?? CONFIG.PDF.DPI;
 
   try {
     // Generate character token (with optional image override for variant preview)
-    const charCanvas = await generator.generateCharacterToken(editedCharacter, imageOverride)
-    const charFilename = sanitizeFilename(editedCharacter.name)
-    
+    const charCanvas = await generator.generateCharacterToken(editedCharacter, imageOverride);
+    const charFilename = sanitizeFilename(editedCharacter.name);
+
     const characterToken: Token = {
       type: 'character',
       name: editedCharacter.name,
@@ -65,28 +65,35 @@ export async function regenerateCharacterAndReminders(
       canvas: charCanvas,
       diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
       parentUuid: editedCharacter.uuid,
-    }
+    };
 
     // Generate reminder tokens
-    const reminderTokens: Token[] = []
-    
+    const reminderTokens: Token[] = [];
+
     if (editedCharacter.reminders && Array.isArray(editedCharacter.reminders)) {
-      const reminderNameCount = new Map<string, number>()
-      
+      const reminderNameCount = new Map<string, number>();
+
       for (const reminder of editedCharacter.reminders) {
         try {
-          const canvas = await generator.generateReminderToken(editedCharacter, reminder, imageOverride)
-          const reminderBaseName = sanitizeFilename(`${editedCharacter.name}_${reminder}`)
-          
+          const canvas = await generator.generateReminderToken(
+            editedCharacter,
+            reminder,
+            imageOverride
+          );
+          const reminderBaseName = sanitizeFilename(`${editedCharacter.name}_${reminder}`);
+
           // Handle duplicate reminders
           if (!reminderNameCount.has(reminderBaseName)) {
-            reminderNameCount.set(reminderBaseName, 0)
+            reminderNameCount.set(reminderBaseName, 0);
           }
-          const count = reminderNameCount.get(reminderBaseName) ?? 0
-          reminderNameCount.set(reminderBaseName, count + 1)
-          
-          const filename = count === 0 ? reminderBaseName : `${reminderBaseName}_${String(count).padStart(2, '0')}`
-          
+          const count = reminderNameCount.get(reminderBaseName) ?? 0;
+          reminderNameCount.set(reminderBaseName, count + 1);
+
+          const filename =
+            count === 0
+              ? reminderBaseName
+              : `${reminderBaseName}_${String(count).padStart(2, '0')}`;
+
           reminderTokens.push({
             type: 'reminder',
             name: `${editedCharacter.name} - ${reminder}`,
@@ -97,17 +104,20 @@ export async function regenerateCharacterAndReminders(
             parentCharacter: editedCharacter.name,
             parentUuid: editedCharacter.uuid,
             reminderText: reminder,
-          })
+          });
         } catch (error) {
-          console.error(`Failed to generate reminder token "${reminder}" for ${editedCharacter.name}:`, error)
+          console.error(
+            `Failed to generate reminder token "${reminder}" for ${editedCharacter.name}:`,
+            error
+          );
         }
       }
     }
 
-    return { characterToken, reminderTokens }
+    return { characterToken, reminderTokens };
   } catch (error) {
-    console.error('Failed to regenerate character and reminders:', error)
-    throw error
+    console.error('Failed to regenerate character and reminders:', error);
+    throw error;
   }
 }
 
@@ -120,25 +130,25 @@ export function updateCharacterInJson(
   updatedCharacter: Character
 ): string {
   try {
-    const parsed = JSON.parse(jsonString)
+    const parsed = JSON.parse(jsonString);
 
     // Handle both array-based and object-based scripts
     if (Array.isArray(parsed)) {
       const index = parsed.findIndex((item: any) => {
-        if (typeof item === 'string') return item === characterId
-        if (typeof item === 'object' && item.id === characterId) return true
-        return false
-      })
+        if (typeof item === 'string') return item === characterId;
+        if (typeof item === 'object' && item.id === characterId) return true;
+        return false;
+      });
 
       if (index !== -1) {
-        parsed[index] = updatedCharacter
+        parsed[index] = updatedCharacter;
       }
     }
 
-    return JSON.stringify(parsed, null, 2)
+    return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error('Failed to update character in JSON:', error)
-    throw error
+    console.error('Failed to update character in JSON:', error);
+    throw error;
   }
 }
 
@@ -148,30 +158,38 @@ export function updateCharacterInJson(
  */
 export function updateMetaInJson(
   jsonString: string,
-  updatedMeta: { id: '_meta'; name?: string; author?: string; version?: string; logo?: string; almanac?: string; background?: string }
+  updatedMeta: {
+    id: '_meta';
+    name?: string;
+    author?: string;
+    version?: string;
+    logo?: string;
+    almanac?: string;
+    background?: string;
+  }
 ): string {
   try {
-    const parsed = JSON.parse(jsonString)
+    const parsed = JSON.parse(jsonString);
 
     // Handle array-based scripts
     if (Array.isArray(parsed)) {
       const index = parsed.findIndex((item: any) => {
-        return typeof item === 'object' && item !== null && item.id === '_meta'
-      })
+        return typeof item === 'object' && item !== null && item.id === '_meta';
+      });
 
       if (index !== -1) {
         // Update existing _meta
-        parsed[index] = updatedMeta
+        parsed[index] = updatedMeta;
       } else {
         // Add _meta at the beginning
-        parsed.unshift(updatedMeta)
+        parsed.unshift(updatedMeta);
       }
     }
 
-    return JSON.stringify(parsed, null, 2)
+    return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error('Failed to update meta in JSON:', error)
-    throw error
+    console.error('Failed to update meta in JSON:', error);
+    throw error;
   }
 }
 
@@ -188,10 +206,10 @@ export async function downloadCharacterTokensAsZip(
 ): Promise<void> {
   try {
     // Combine all tokens for this character
-    const tokensToZip = [characterToken, ...reminderTokens]
+    const tokensToZip = [characterToken, ...reminderTokens];
 
     // Create character JSON if provided
-    const characterJson = characterData ? JSON.stringify(characterData, null, 2) : undefined
+    const characterJson = characterData ? JSON.stringify(characterData, null, 2) : undefined;
 
     // Use the existing createTokensZip function
     const blob = await createTokensZip(
@@ -202,17 +220,17 @@ export async function downloadCharacterTokensAsZip(
         saveRemindersSeparately: false,
         metaTokenFolder: false,
         includeScriptJson: !!characterJson,
-        compressionLevel: 'normal'
+        compressionLevel: 'normal',
       },
-      characterJson,  // scriptJson - we'll use this for character JSON
-      pngSettings  // pngSettings for metadata embedding
-    )
+      characterJson, // scriptJson - we'll use this for character JSON
+      pngSettings // pngSettings for metadata embedding
+    );
 
     // Download as ZIP
-    downloadFile(blob, `${characterName}_tokens.zip`)
+    downloadFile(blob, `${characterName}_tokens.zip`);
   } catch (error) {
-    console.error('Failed to create ZIP file:', error)
-    throw error
+    console.error('Failed to create ZIP file:', error);
+    throw error;
   }
 }
 
@@ -225,22 +243,22 @@ export async function downloadCharacterTokenOnly(
   _pngSettings?: { embedMetadata: boolean; transparentBackground: boolean }
 ): Promise<void> {
   try {
-    const canvas = characterToken.canvas
+    const canvas = characterToken.canvas;
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (blob) {
-          resolve(blob)
+          resolve(blob);
         } else {
-          reject(new Error('Failed to create blob from canvas'))
+          reject(new Error('Failed to create blob from canvas'));
         }
-      }, 'image/png')
-    })
-    
-    const filename = `${sanitizeFilename(characterName)}.png`
-    downloadFile(blob, filename)
+      }, 'image/png');
+    });
+
+    const filename = `${sanitizeFilename(characterName)}.png`;
+    downloadFile(blob, filename);
   } catch (error) {
-    console.error('Failed to download character token:', error)
-    throw error
+    console.error('Failed to download character token:', error);
+    throw error;
   }
 }
 
@@ -253,7 +271,7 @@ export async function downloadReminderTokensOnly(
   pngSettings?: { embedMetadata: boolean; transparentBackground: boolean }
 ): Promise<void> {
   if (reminderTokens.length === 0) {
-    throw new Error('No reminder tokens to download')
+    throw new Error('No reminder tokens to download');
   }
 
   try {
@@ -266,35 +284,32 @@ export async function downloadReminderTokensOnly(
         saveRemindersSeparately: false,
         metaTokenFolder: false,
         includeScriptJson: false,
-        compressionLevel: 'normal'
+        compressionLevel: 'normal',
       },
-      undefined,  // scriptJson
-      pngSettings  // pngSettings for metadata embedding
-    )
+      undefined, // scriptJson
+      pngSettings // pngSettings for metadata embedding
+    );
 
     // Download as ZIP
-    downloadFile(blob, `${characterName}_reminders.zip`)
+    downloadFile(blob, `${characterName}_reminders.zip`);
   } catch (error) {
-    console.error('Failed to create reminders ZIP file:', error)
-    throw error
+    console.error('Failed to create reminders ZIP file:', error);
+    throw error;
   }
 }
 
 /**
  * Calculate changes between original and edited character
  */
-export function getCharacterChanges(
-  original: Character,
-  edited: Character
-): Partial<Character> {
-  const changes: Partial<Character> = {}
-  const keys = Object.keys(edited) as (keyof Character)[]
+export function getCharacterChanges(original: Character, edited: Character): Partial<Character> {
+  const changes: Partial<Character> = {};
+  const keys = Object.keys(edited) as (keyof Character)[];
 
   for (const key of keys) {
     if (JSON.stringify(original[key]) !== JSON.stringify(edited[key])) {
-      (changes as any)[key] = edited[key]
+      (changes as any)[key] = edited[key];
     }
   }
 
-  return changes
+  return changes;
 }

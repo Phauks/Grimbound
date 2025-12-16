@@ -3,6 +3,6 @@
    Combines all base style files
    ============================================ */
 
-@import './fonts.css';
-@import './reset.css';
-@import './typography.css';
+@import "./fonts.css";
+@import "./reset.css";
+@import "./typography.css";

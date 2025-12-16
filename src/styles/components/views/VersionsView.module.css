@@ -112,7 +112,7 @@
 }
 
 .emptyHint {
-  font-size: 14px !important;
+  font-size: 14px;
   font-style: italic;
   opacity: 0.8;
 }

@@ -160,14 +160,30 @@
 }
 
 /* Team colors */
-.teamTownsfolk { border-left: 6px solid var(--color-team-townsfolk); }
-.teamOutsider { border-left: 6px solid var(--color-team-outsider); }
-.teamMinion { border-left: 6px solid var(--color-team-minion); }
-.teamDemon { border-left: 6px solid var(--color-team-demon); }
-.teamTraveller { border-left: 6px solid var(--color-team-traveller); }
-.teamFabled { border-left: 6px solid var(--color-team-fabled); }
-.teamLoric { border-left: 6px solid var(--color-team-loric); }
-.teamMeta { border-left: 6px solid var(--text-muted); }
+.teamTownsfolk {
+  border-left: 6px solid var(--color-team-townsfolk);
+}
+.teamOutsider {
+  border-left: 6px solid var(--color-team-outsider);
+}
+.teamMinion {
+  border-left: 6px solid var(--color-team-minion);
+}
+.teamDemon {
+  border-left: 6px solid var(--color-team-demon);
+}
+.teamTraveller {
+  border-left: 6px solid var(--color-team-traveller);
+}
+.teamFabled {
+  border-left: 6px solid var(--color-team-fabled);
+}
+.teamLoric {
+  border-left: 6px solid var(--color-team-loric);
+}
+.teamMeta {
+  border-left: 6px solid var(--text-muted);
+}
 
 .collapseIcon {
   font-size: 10px;
@@ -198,7 +214,7 @@
 }
 
 .itemWrapper.withDivider::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: var(--spacing-lg);
@@ -228,14 +244,30 @@
 }
 
 /* Team border colors for nav items */
-.item.teamTownsfolk { border-left-color: var(--color-team-townsfolk); }
-.item.teamOutsider { border-left-color: var(--color-team-outsider); }
-.item.teamMinion { border-left-color: var(--color-team-minion); }
-.item.teamDemon { border-left-color: var(--color-team-demon); }
-.item.teamTraveller { border-left-color: var(--color-team-traveller); }
-.item.teamFabled { border-left-color: var(--color-team-fabled); }
-.item.teamLoric { border-left-color: var(--color-team-loric); }
-.item.teamMeta { border-left-color: var(--text-muted); }
+.item.teamTownsfolk {
+  border-left-color: var(--color-team-townsfolk);
+}
+.item.teamOutsider {
+  border-left-color: var(--color-team-outsider);
+}
+.item.teamMinion {
+  border-left-color: var(--color-team-minion);
+}
+.item.teamDemon {
+  border-left-color: var(--color-team-demon);
+}
+.item.teamTraveller {
+  border-left-color: var(--color-team-traveller);
+}
+.item.teamFabled {
+  border-left-color: var(--color-team-fabled);
+}
+.item.teamLoric {
+  border-left-color: var(--color-team-loric);
+}
+.item.teamMeta {
+  border-left-color: var(--text-muted);
+}
 
 /* Official character indicator - right border accent */
 .item.official {

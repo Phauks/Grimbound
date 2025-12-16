@@ -7,14 +7,14 @@
  * @module services/upload/ImageProcessingService
  */
 
-import type { AssetType, ProcessedImage, AssetMetadata } from './types.js';
 import {
   ASSET_TYPE_CONFIGS,
   DEFAULT_THUMBNAIL_SIZE,
-  THUMBNAIL_QUALITY,
   PROCESSED_IMAGE_FORMAT,
   PROCESSED_IMAGE_QUALITY,
+  THUMBNAIL_QUALITY,
 } from './constants.js';
+import type { AssetMetadata, AssetType, ProcessedImage } from './types.js';
 
 // ============================================================================
 // Types
@@ -87,14 +87,7 @@ export class ImageProcessingService {
     );
 
     // Process main image
-    const processedBlob = await this.resizeImage(
-      img,
-      width,
-      height,
-      crop,
-      outputFormat,
-      quality
-    );
+    const processedBlob = await this.resizeImage(img, width, height, crop, outputFormat, quality);
 
     // Generate thumbnail
     const thumbnailSize = options.thumbnailSize ?? config.thumbnailSize ?? DEFAULT_THUMBNAIL_SIZE;
@@ -144,17 +137,7 @@ export class ImageProcessingService {
 
     // Apply crop or scale to fit
     if (crop) {
-      ctx.drawImage(
-        img,
-        crop.x,
-        crop.y,
-        crop.width,
-        crop.height,
-        0,
-        0,
-        size,
-        size
-      );
+      ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, size, size);
     } else {
       // Cover fit (crop to fill)
       const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
@@ -228,17 +211,7 @@ export class ImageProcessingService {
 
     if (crop) {
       // Draw cropped region
-      ctx.drawImage(
-        img,
-        crop.x,
-        crop.y,
-        crop.width,
-        crop.height,
-        0,
-        0,
-        width,
-        height
-      );
+      ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
     } else {
       // Draw full image scaled
       ctx.drawImage(img, 0, 0, width, height);
@@ -255,11 +228,7 @@ export class ImageProcessingService {
    * @param quality - Output quality
    * @returns Blob
    */
-  private canvasToBlob(
-    canvas: HTMLCanvasElement,
-    format: string,
-    quality: number
-  ): Promise<Blob> {
+  private canvasToBlob(canvas: HTMLCanvasElement, format: string, quality: number): Promise<Blob> {
     return new Promise((resolve, reject) => {
       canvas.toBlob(
         (blob) => {
@@ -355,13 +324,11 @@ export class ImageProcessingService {
    * Crop an image to a specific region
    * (For future icon editor)
    */
-  async crop(
-    source: File | Blob,
-    region: CropRegion
-  ): Promise<Blob> {
-    const file = source instanceof Blob && !(source instanceof File)
-      ? new File([source], 'image.png', { type: source.type })
-      : source as File;
+  async crop(source: File | Blob, region: CropRegion): Promise<Blob> {
+    const file =
+      source instanceof Blob && !(source instanceof File)
+        ? new File([source], 'image.png', { type: source.type })
+        : (source as File);
 
     const img = await this.loadImage(file);
 
@@ -379,13 +346,11 @@ export class ImageProcessingService {
    * Rotate an image by degrees
    * (For future icon editor)
    */
-  async rotate(
-    source: File | Blob,
-    degrees: number
-  ): Promise<Blob> {
-    const file = source instanceof Blob && !(source instanceof File)
-      ? new File([source], 'image.png', { type: source.type })
-      : source as File;
+  async rotate(source: File | Blob, degrees: number): Promise<Blob> {
+    const file =
+      source instanceof Blob && !(source instanceof File)
+        ? new File([source], 'image.png', { type: source.type })
+        : (source as File);
 
     const img = await this.loadImage(file);
 
@@ -437,7 +402,7 @@ export class ImageProcessingService {
 
     // Convert to hex string
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
     return hashHex;
   }
@@ -463,7 +428,7 @@ export class ImageProcessingService {
   ): Promise<{ mainHash: string; thumbnailHash: string }> {
     const [mainHash, thumbnailHash] = await Promise.all([
       this.hashBlob(processedBlob),
-      this.hashBlob(thumbnailBlob)
+      this.hashBlob(thumbnailBlob),
     ]);
 
     return { mainHash, thumbnailHash };

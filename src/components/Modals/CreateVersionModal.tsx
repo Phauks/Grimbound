@@ -6,21 +6,21 @@
  * release notes, and optional tags.
  */
 
-import { useState, useEffect } from 'react'
-import { projectDb } from '../../ts/db/projectDb'
-import { useToast } from '../../contexts/ToastContext'
-import { logger } from '../../ts/utils/logger'
-import { Modal } from '../Shared/ModalBase/Modal'
-import { Button } from '../Shared/UI/Button'
-import { Alert } from '../Shared/UI/Alert'
-import type { Project, VersionIncrementType } from '../../ts/types/project'
-import styles from '../../styles/components/modals/CreateVersionModal.module.css'
+import { useCallback, useEffect, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import styles from '../../styles/components/modals/CreateVersionModal.module.css';
+import { projectDb } from '../../ts/db/projectDb';
+import type { Project, VersionIncrementType } from '../../ts/types/project';
+import { logger } from '../../ts/utils/logger';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Alert } from '../Shared/UI/Alert';
+import { Button } from '../Shared/UI/Button';
 
 interface CreateVersionModalProps {
-  isOpen: boolean
-  onClose: () => void
-  project: Project
-  onVersionCreated: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  project: Project;
+  onVersionCreated: () => void;
 }
 
 export function CreateVersionModal({
@@ -29,75 +29,75 @@ export function CreateVersionModal({
   project,
   onVersionCreated,
 }: CreateVersionModalProps) {
-  const { addToast } = useToast()
+  const { addToast } = useToast();
 
-  const [versionNumber, setVersionNumber] = useState('')
-  const [releaseNotes, setReleaseNotes] = useState('')
-  const [tags, setTags] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [versionNumber, setVersionNumber] = useState('');
+  const [releaseNotes, setReleaseNotes] = useState('');
+  const [tags, setTags] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSuggestedVersion = useCallback(async () => {
+    try {
+      const suggested = await projectDb.suggestNextVersion(project.id, 'minor');
+      setVersionNumber(suggested);
+      logger.debug('CreateVersionModal', `Suggested version: ${suggested}`);
+    } catch (err) {
+      logger.error('CreateVersionModal', 'Failed to suggest version', err);
+      setVersionNumber('1.0.0'); // Fallback
+    }
+  }, [project.id]);
 
   // Suggest next version on mount
   useEffect(() => {
     if (isOpen) {
-      loadSuggestedVersion()
-      setReleaseNotes('')
-      setTags('')
-      setError(null)
+      loadSuggestedVersion();
+      setReleaseNotes('');
+      setTags('');
+      setError(null);
     }
-  }, [isOpen, project.id])
-
-  const loadSuggestedVersion = async () => {
-    try {
-      const suggested = await projectDb.suggestNextVersion(project.id, 'minor')
-      setVersionNumber(suggested)
-      logger.debug('CreateVersionModal', `Suggested version: ${suggested}`)
-    } catch (err) {
-      logger.error('CreateVersionModal', 'Failed to suggest version', err)
-      setVersionNumber('1.0.0') // Fallback
-    }
-  }
+  }, [isOpen, loadSuggestedVersion]);
 
   const handleBumpVersion = async (incrementType: VersionIncrementType) => {
     try {
-      const suggested = await projectDb.suggestNextVersion(project.id, incrementType)
-      setVersionNumber(suggested)
+      const suggested = await projectDb.suggestNextVersion(project.id, incrementType);
+      setVersionNumber(suggested);
     } catch (err) {
-      logger.error('CreateVersionModal', 'Failed to bump version', err)
+      logger.error('CreateVersionModal', 'Failed to bump version', err);
     }
-  }
+  };
 
   const validateVersionNumber = (version: string): boolean => {
-    const semanticVersionRegex = /^\d+\.\d+(\.\d+)?$/
-    return semanticVersionRegex.test(version)
-  }
+    const semanticVersionRegex = /^\d+\.\d+(\.\d+)?$/;
+    return semanticVersionRegex.test(version);
+  };
 
   const handleCreate = async () => {
     try {
-      setError(null)
+      setError(null);
 
       // Validate version number
       if (!versionNumber.trim()) {
-        setError('Version number is required')
-        return
+        setError('Version number is required');
+        return;
       }
 
       if (!validateVersionNumber(versionNumber)) {
-        setError('Invalid version format. Use: major.minor or major.minor.patch (e.g., 1.2.0)')
-        return
+        setError('Invalid version format. Use: major.minor or major.minor.patch (e.g., 1.2.0)');
+        return;
       }
 
-      setIsCreating(true)
+      setIsCreating(true);
       logger.info('CreateVersionModal', 'Creating version', {
         projectId: project.id,
         versionNumber,
-      })
+      });
 
       // Parse tags from comma-separated input
       const parsedTags = tags
         .split(',')
         .map((t) => t.trim())
-        .filter(Boolean)
+        .filter(Boolean);
 
       // Create version from current project state
       await projectDb.createProjectVersion(
@@ -106,23 +106,23 @@ export function CreateVersionModal({
         project.state,
         releaseNotes.trim() || undefined,
         parsedTags.length > 0 ? parsedTags : undefined
-      )
+      );
 
-      logger.info('CreateVersionModal', `Version ${versionNumber} created successfully`)
-      addToast(`Version ${versionNumber} created!`, 'success')
+      logger.info('CreateVersionModal', `Version ${versionNumber} created successfully`);
+      addToast(`Version ${versionNumber} created!`, 'success');
 
       // Notify parent and close modal
-      onVersionCreated()
-      onClose()
+      onVersionCreated();
+      onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create version'
-      logger.error('CreateVersionModal', 'Failed to create version', err)
-      setError(errorMessage)
-      addToast(errorMessage, 'error')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create version';
+      logger.error('CreateVersionModal', 'Failed to create version', err);
+      setError(errorMessage);
+      addToast(errorMessage, 'error');
     } finally {
-      setIsCreating(false)
+      setIsCreating(false);
     }
-  }
+  };
 
   return (
     <Modal
@@ -163,9 +163,7 @@ export function CreateVersionModal({
             className={styles.input}
             disabled={isCreating}
           />
-          <p className={styles.hint}>
-            Format: major.minor or major.minor.patch (e.g., 1.2.0)
-          </p>
+          <p className={styles.hint}>Format: major.minor or major.minor.patch (e.g., 1.2.0)</p>
         </div>
 
         {/* Quick Increment Buttons */}
@@ -233,8 +231,8 @@ export function CreateVersionModal({
 
         {/* Info Alert */}
         <Alert variant="info" title="Version Snapshot">
-          This will create a permanent snapshot of your current project state with
-          semantic version <strong>{versionNumber || '1.0.0'}</strong>.
+          This will create a permanent snapshot of your current project state with semantic version{' '}
+          <strong>{versionNumber || '1.0.0'}</strong>.
         </Alert>
 
         {/* Error Alert */}
@@ -245,5 +243,5 @@ export function CreateVersionModal({
         )}
       </div>
     </Modal>
-  )
+  );
 }

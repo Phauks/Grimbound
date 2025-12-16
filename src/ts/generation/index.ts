@@ -3,18 +3,16 @@
  * Generation Module - Barrel export for all token generation functionality
  */
 
-// Token Generator class
-export {
-    TokenGenerator,
-    generateAllTokens,
-} from './tokenGenerator.js';
-
 // Batch generation
 export { generateAllTokens as generateAllTokensBatch } from './batchGenerator.js';
-
 // Presets
 export {
-    PRESETS,
-    getPreset,
-    getPresetNames,
+  getPreset,
+  getPresetNames,
+  PRESETS,
 } from './presets.js';
+// Token Generator class
+export {
+  generateAllTokens,
+  TokenGenerator,
+} from './tokenGenerator.js';

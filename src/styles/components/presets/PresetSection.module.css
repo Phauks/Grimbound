@@ -25,7 +25,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-family: var(--font-family-display, 'Cinzel', serif);
+  font-family: var(--font-family-display, "Cinzel", serif);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -36,24 +36,14 @@
 
 .presetGroupLabel::before,
 .presetGroupLabel::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(201, 162, 39, 0.2) 50%,
-    transparent
-  );
+  background: linear-gradient(to right, transparent, rgba(201, 162, 39, 0.2) 50%, transparent);
 }
 
 .presetGroupLabel::before {
-  background: linear-gradient(
-    to left,
-    transparent,
-    rgba(201, 162, 39, 0.2) 50%,
-    transparent
-  );
+  background: linear-gradient(to left, transparent, rgba(201, 162, 39, 0.2) 50%, transparent);
 }
 
 /* ============================================

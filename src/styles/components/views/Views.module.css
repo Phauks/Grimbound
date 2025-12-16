@@ -296,10 +296,10 @@
 }
 
 .btnGenerateSmall {
-  padding: var(--spacing-sm) var(--spacing-md) !important;
-  font-size: 0.875rem !important;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.875rem;
   white-space: nowrap;
-  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm) !important;
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
 }
 
 .btnToggleSmall {
@@ -655,9 +655,9 @@
 }
 
 .noTokensHint {
-  margin-top: var(--spacing-sm) !important;
+  margin-top: var(--spacing-sm);
   font-size: 0.875rem;
-  color: var(--text-muted) !important;
+  color: var(--text-muted);
 }
 
 /* Export Progress Bar */
@@ -861,9 +861,9 @@
 }
 
 .placeholderHint {
-  margin-top: var(--spacing-sm) !important;
+  margin-top: var(--spacing-sm);
   font-size: 0.875rem;
-  color: var(--text-muted) !important;
+  color: var(--text-muted);
 }
 
 .remindersPlaceholder {
@@ -934,7 +934,7 @@
   background-color: var(--bg-darker);
   padding: var(--spacing-md);
   border-radius: var(--border-radius-sm);
-  font-family: var(--font-mono, 'Monaco', 'Consolas', monospace);
+  font-family: var(--font-mono, "Monaco", "Consolas", monospace);
   font-size: 0.875rem;
   color: var(--text-secondary);
   overflow-x: auto;
@@ -1128,7 +1128,7 @@
 }
 
 .toggleSwitch::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 20px;
   height: 20px;
@@ -1136,7 +1136,9 @@
   background-color: var(--text-secondary);
   top: 2px;
   left: 2px;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .toggleSwitch:checked {
@@ -1158,7 +1160,9 @@
   border-radius: var(--border-radius-sm);
   color: var(--text-primary);
   font-size: 0.8rem;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .selectInput:focus {
@@ -1183,7 +1187,9 @@
   border-radius: var(--border-radius-sm);
   color: var(--text-primary);
   font-size: 0.8rem;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .numberInput:focus {
@@ -1196,5 +1202,3 @@
   color: var(--text-muted);
   font-size: 0.8rem;
 }
-
-

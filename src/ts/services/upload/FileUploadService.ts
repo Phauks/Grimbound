@@ -7,17 +7,10 @@
  * @module services/upload/FileUploadService
  */
 
-import type {
-  AssetType,
-  UploadConfig,
-  UploadOutcome,
-  UploadResult,
-  UploadError,
-  AssetSourceType,
-} from './types.js';
+import { assetStorageService, type CreateAssetData } from './AssetStorageService.js';
 import { fileValidationService } from './FileValidationService.js';
 import { imageProcessingService } from './ImageProcessingService.js';
-import { assetStorageService, CreateAssetData } from './AssetStorageService.js';
+import type { AssetSourceType, AssetType, UploadConfig, UploadOutcome } from './types.js';
 
 // ============================================================================
 // FileUploadService
@@ -34,10 +27,7 @@ export class FileUploadService {
    * @param config - Upload configuration
    * @returns Array of upload results
    */
-  async upload(
-    files: File | File[],
-    config: UploadConfig
-  ): Promise<UploadOutcome[]> {
+  async upload(files: File | File[], config: UploadConfig): Promise<UploadOutcome[]> {
     const fileArray = Array.isArray(files) ? files : [files];
     const results: UploadOutcome[] = [];
     const total = fileArray.length;
@@ -121,10 +111,7 @@ export class FileUploadService {
    * @param config - Upload configuration
    * @returns Upload result
    */
-  async uploadFromUrl(
-    url: string,
-    config: UploadConfig
-  ): Promise<UploadOutcome> {
+  async uploadFromUrl(url: string, config: UploadConfig): Promise<UploadOutcome> {
     try {
       // Fetch the image
       const response = await fetch(url);
@@ -160,11 +147,7 @@ export class FileUploadService {
    * @param config - Upload configuration
    * @returns Upload result
    */
-  async uploadFromBlob(
-    blob: Blob,
-    filename: string,
-    config: UploadConfig
-  ): Promise<UploadOutcome> {
+  async uploadFromBlob(blob: Blob, filename: string, config: UploadConfig): Promise<UploadOutcome> {
     const file = new File([blob], filename, { type: blob.type });
     return this.uploadSingle(file, config, 'editor');
   }
@@ -278,10 +261,7 @@ export class FileUploadService {
    * @param multiple - Allow multiple file selection
    * @returns Promise that resolves with upload results
    */
-  openFilePicker(
-    config: UploadConfig,
-    multiple: boolean = false
-  ): Promise<UploadOutcome[]> {
+  openFilePicker(config: UploadConfig, multiple: boolean = false): Promise<UploadOutcome[]> {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';

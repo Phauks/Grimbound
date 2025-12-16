@@ -5,38 +5,38 @@
  * Migrated to use unified Modal and Button components.
  */
 
-import { useState, useEffect } from 'react'
-import { Modal } from '../../../Shared/ModalBase/Modal'
-import { Button } from '../../../Shared/UI/Button'
-import { Input, FormGroup } from '../../../Shared/Form'
-import type { CustomPreset } from '../../../../hooks/usePresets'
-import styles from '../../../../styles/components/presets/PresetModal.module.css'
+import { useEffect, useState } from 'react';
+import type { CustomPreset } from '../../../../hooks/usePresets';
+import styles from '../../../../styles/components/presets/PresetModal.module.css';
+import { FormGroup, Input } from '../../../Shared/Form';
+import { Modal } from '../../../Shared/ModalBase/Modal';
+import { Button } from '../../../Shared/UI/Button';
 
 interface EditPresetModalProps {
-  isOpen: boolean
-  preset: CustomPreset
-  onClose: () => void
-  onSave: (name: string, icon: string, description: string) => void
+  isOpen: boolean;
+  preset: CustomPreset;
+  onClose: () => void;
+  onSave: (name: string, icon: string, description: string) => void;
 }
 
-const EMOJI_OPTIONS = ['⭐', '🌸', '⬜', '🎨', '✨', '🎭', '🎪', '🎯', '🌙', '🔥', '💎', '🍀']
+const EMOJI_OPTIONS = ['⭐', '🌸', '⬜', '🎨', '✨', '🎭', '🎪', '🎯', '🌙', '🔥', '💎', '🍀'];
 
 export function EditPresetModal({ isOpen, preset, onClose, onSave }: EditPresetModalProps) {
-  const [presetName, setPresetName] = useState(preset.name)
-  const [presetDescription, setPresetDescription] = useState(preset.description || '')
-  const [presetIcon, setPresetIcon] = useState(preset.icon)
+  const [presetName, setPresetName] = useState(preset.name);
+  const [presetDescription, setPresetDescription] = useState(preset.description || '');
+  const [presetIcon, setPresetIcon] = useState(preset.icon);
 
   // Reset form when preset changes
   useEffect(() => {
-    setPresetName(preset.name)
-    setPresetDescription(preset.description || '')
-    setPresetIcon(preset.icon)
-  }, [preset])
+    setPresetName(preset.name);
+    setPresetDescription(preset.description || '');
+    setPresetIcon(preset.icon);
+  }, [preset]);
 
   const handleSave = () => {
-    if (!presetName.trim()) return
-    onSave(presetName, presetIcon, presetDescription)
-  }
+    if (!presetName.trim()) return;
+    onSave(presetName, presetIcon, presetDescription);
+  };
 
   return (
     <Modal
@@ -66,8 +66,8 @@ export function EditPresetModal({ isOpen, preset, onClose, onSave }: EditPresetM
             fullWidth
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                e.preventDefault()
-                handleSave()
+                e.preventDefault();
+                handleSave();
               }
             }}
           />
@@ -100,5 +100,5 @@ export function EditPresetModal({ isOpen, preset, onClose, onSave }: EditPresetM
         </FormGroup>
       </form>
     </Modal>
-  )
+  );
 }

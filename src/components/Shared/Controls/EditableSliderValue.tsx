@@ -14,26 +14,26 @@
  * @module components/Shared/Controls/EditableSliderValue
  */
 
-import { memo, useState, useCallback, useRef } from 'react'
-import styles from '../../../styles/components/shared/EditableSliderValue.module.css'
+import { memo, useCallback, useRef, useState } from 'react';
+import styles from '../../../styles/components/shared/EditableSliderValue.module.css';
 
 export interface EditableSliderValueProps {
   /** Current value */
-  value: number
+  value: number;
   /** Called when value changes */
-  onChange: (value: number) => void
+  onChange: (value: number) => void;
   /** Minimum allowed value */
-  min?: number
+  min?: number;
   /** Maximum allowed value */
-  max?: number
+  max?: number;
   /** Value suffix (%, °, x, px, etc.) */
-  suffix?: string
+  suffix?: string;
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Step for decimal handling (e.g., 0.1 for one decimal place) */
-  step?: number
+  step?: number;
   /** Additional CSS class */
-  className?: string
+  className?: string;
 }
 
 export const EditableSliderValue = memo(function EditableSliderValue({
@@ -46,35 +46,38 @@ export const EditableSliderValue = memo(function EditableSliderValue({
   step = 1,
   className,
 }: EditableSliderValueProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFocus = useCallback(() => {
-    setIsEditing(true)
+    setIsEditing(true);
     // Show just the number without suffix for editing
-    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)))
-  }, [value, step])
+    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
+  }, [value, step]);
 
   const handleBlur = useCallback(() => {
-    setIsEditing(false)
-    const parsed = parseFloat(editValue)
-    if (!isNaN(parsed)) {
-      const clamped = Math.min(max, Math.max(min, parsed))
-      onChange(clamped)
+    setIsEditing(false);
+    const parsed = parseFloat(editValue);
+    if (!Number.isNaN(parsed)) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped);
     }
-  }, [editValue, min, max, onChange])
+  }, [editValue, min, max, onChange]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      inputRef.current?.blur()
-    } else if (e.key === 'Escape') {
-      setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)))
-      inputRef.current?.blur()
-    }
-  }, [value, step])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        inputRef.current?.blur();
+      } else if (e.key === 'Escape') {
+        setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
+        inputRef.current?.blur();
+      }
+    },
+    [value, step]
+  );
 
-  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value)
+  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value);
 
   return (
     <input
@@ -89,7 +92,7 @@ export const EditableSliderValue = memo(function EditableSliderValue({
       disabled={disabled}
       title={`Click to edit (${min}-${max})`}
     />
-  )
-})
+  );
+});
 
-export default EditableSliderValue
+export default EditableSliderValue;

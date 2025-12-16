@@ -1,4 +1,4 @@
-import styles from '../../styles/components/views/Views.module.css'
+import styles from '../../styles/components/views/Views.module.css';
 
 export function TownSquareView() {
   return (
@@ -8,10 +8,11 @@ export function TownSquareView() {
         <h2>Town Square</h2>
         <p>Coming Soon</p>
         <p className={styles.placeholderDescription}>
-          Share and discover Blood on the Clocktower projects, scripts, and custom assets with the community.
-          Download presets, manage shared collections, and collaborate on content creation.
+          Share and discover Blood on the Clocktower projects, scripts, and custom assets with the
+          community. Download presets, manage shared collections, and collaborate on content
+          creation.
         </p>
       </div>
     </div>
-  )
+  );
 }

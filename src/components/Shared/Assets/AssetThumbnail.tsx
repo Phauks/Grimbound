@@ -7,11 +7,16 @@
  * @module components/Shared/AssetThumbnail
  */
 
-import { useCallback, useState, useMemo } from 'react';
-import { AssetWithUrl, AssetType, ASSET_TYPE_LABELS, ASSET_TYPE_ICONS } from '../../../ts/services/upload/index.js';
-import { ContextMenu, type ContextMenuItem } from '../UI/ContextMenu';
+import { useCallback, useMemo, useState } from 'react';
 import { useContextMenu } from '../../../hooks/useContextMenu';
 import styles from '../../../styles/components/shared/AssetThumbnail.module.css';
+import {
+  ASSET_TYPE_ICONS,
+  ASSET_TYPE_LABELS,
+  type AssetType,
+  type AssetWithUrl,
+} from '../../../ts/services/upload/index.js';
+import { ContextMenu, type ContextMenuItem } from '../UI/ContextMenu';
 
 // Asset types for reclassify submenu
 const ASSET_TYPES: AssetType[] = [
@@ -182,7 +187,17 @@ export function AssetThumbnail({
     }
 
     return items;
-  }, [asset.id, asset.type, asset.projectId, onRename, onReclassify, onDownload, onDuplicate, onPromoteToGlobal, onDelete]);
+  }, [
+    asset.id,
+    asset.type,
+    asset.projectId,
+    onRename,
+    onReclassify,
+    onDownload,
+    onDuplicate,
+    onPromoteToGlobal,
+    onDelete,
+  ]);
 
   // Build class names
   const cardClasses = [
@@ -252,16 +267,17 @@ export function AssetThumbnail({
             <span className={styles.typeBadge} title={typeLabel}>
               {typeIcon} {typeLabel}
             </span>
-            <span className={styles.size}>
-              {formatFileSize(asset.metadata.size)}
-            </span>
+            <span className={styles.size}>{formatFileSize(asset.metadata.size)}</span>
           </div>
           <div className={styles.scopeRow}>
             <span className={isGlobal ? styles.globalBadge : styles.projectBadge}>
               {isGlobal ? '🌐 Global' : '📁 Project'}
             </span>
             {asset.linkedTo.length > 0 && (
-              <span className={styles.usedBy} title={`Used by ${asset.linkedTo.length} character(s)`}>
+              <span
+                className={styles.usedBy}
+                title={`Used by ${asset.linkedTo.length} character(s)`}
+              >
                 Used: {asset.linkedTo.length}
               </span>
             )}

@@ -9,17 +9,17 @@
  * @module db/projectDb
  */
 
-import Dexie, { Table } from 'dexie';
+import Dexie, { type Table } from 'dexie';
+import type { DBAsset } from '../services/upload/types.js';
 import type {
-  DBProject,
   DBAutoSaveSnapshot,
-  DBProjectVersion,
   DBCustomIcon,
+  DBProject,
+  DBProjectVersion,
   ProjectState,
   ProjectVersion,
   StorageQuota,
 } from '../types/project.js';
-import type { DBAsset } from '../services/upload/types.js';
 
 // ============================================================================
 // Database Class
@@ -105,7 +105,8 @@ export class ProjectDatabase extends Dexie {
 
       // UPDATE: Assets table - add lastUsedAt and usageCount indexes for usage analytics
       // Enables sorting by "most used" and "least used" for cleanup decisions
-      assets: 'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+      assets:
+        'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
     });
 
     // Define schema version 5 (add project versions table)
@@ -113,7 +114,8 @@ export class ProjectDatabase extends Dexie {
       // Keep existing tables
       projects: 'id, name, lastModifiedAt, lastAccessedAt, *tags',
       autoSaveSnapshots: 'id, projectId, timestamp',
-      assets: 'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+      assets:
+        'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
 
       // NEW: Project versions table
       // Primary key: id
@@ -128,7 +130,8 @@ export class ProjectDatabase extends Dexie {
       // Keep existing tables
       projects: 'id, name, lastModifiedAt, lastAccessedAt, *tags',
       autoSaveSnapshots: 'id, projectId, timestamp',
-      assets: 'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+      assets:
+        'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
       projectVersions: 'id, projectId, [projectId+versionMajor+versionMinor], createdAt',
 
       // NEW: Custom icons table
@@ -149,7 +152,7 @@ export class ProjectDatabase extends Dexie {
    * @returns Storage quota details including usage and available space
    */
   async getStorageQuota(): Promise<StorageQuota> {
-    if (navigator.storage && navigator.storage.estimate) {
+    if (navigator.storage?.estimate) {
       const estimate = await navigator.storage.estimate();
       const usage = estimate.usage || 0;
       const quota = estimate.quota || 0;
@@ -240,19 +243,26 @@ export class ProjectDatabase extends Dexie {
    * @param projectId - Project ID to delete
    */
   async deleteProjectData(projectId: string): Promise<void> {
-    await this.transaction('rw', this.projects, this.assets, this.autoSaveSnapshots, this.projectVersions, async () => {
-      // Delete project
-      await this.projects.delete(projectId);
+    await this.transaction(
+      'rw',
+      this.projects,
+      this.assets,
+      this.autoSaveSnapshots,
+      this.projectVersions,
+      async () => {
+        // Delete project
+        await this.projects.delete(projectId);
 
-      // Delete associated project assets
-      await this.assets.where('projectId').equals(projectId).delete();
+        // Delete associated project assets
+        await this.assets.where('projectId').equals(projectId).delete();
 
-      // Delete associated snapshots
-      await this.autoSaveSnapshots.where('projectId').equals(projectId).delete();
+        // Delete associated snapshots
+        await this.autoSaveSnapshots.where('projectId').equals(projectId).delete();
 
-      // Delete associated versions
-      await this.projectVersions.where('projectId').equals(projectId).delete();
-    });
+        // Delete associated versions
+        await this.projectVersions.where('projectId').equals(projectId).delete();
+      }
+    );
   }
 
   // ==========================================================================
@@ -369,12 +379,14 @@ export class ProjectDatabase extends Dexie {
   private parseSemanticVersion(version: string): [number, number, number?] {
     const match = version.match(/^(\d+)\.(\d+)(?:\.(\d+))?$/);
     if (!match) {
-      throw new Error(`Invalid semantic version: ${version}. Use format: major.minor or major.minor.patch`);
+      throw new Error(
+        `Invalid semantic version: ${version}. Use format: major.minor or major.minor.patch`
+      );
     }
     return [
-      parseInt(match[1]),
-      parseInt(match[2]),
-      match[3] ? parseInt(match[3]) : undefined,
+      parseInt(match[1], 10),
+      parseInt(match[2], 10),
+      match[3] ? parseInt(match[3], 10) : undefined,
     ];
   }
 

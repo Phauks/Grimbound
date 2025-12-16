@@ -4,12 +4,15 @@
  * Dialog for saving Studio creations to the asset library
  */
 
-import { useState, useEffect } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
+import { useEffect, useState } from 'react';
 import { useProjectContext } from '../../../../contexts/ProjectContext';
-import { saveStudioAsset, type SaveStudioAssetOptions } from '../../../../ts/studio/assetIntegration';
-import { logger } from '../../../../ts/utils/logger.js';
+import { useStudio } from '../../../../contexts/StudioContext';
 import styles from '../../../../styles/components/studio/Studio.module.css';
+import {
+  type SaveStudioAssetOptions,
+  saveStudioAsset,
+} from '../../../../ts/studio/assetIntegration';
+import { logger } from '../../../../ts/utils/logger.js';
 
 interface SaveAssetModalProps {
   isOpen: boolean;
@@ -22,7 +25,9 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
   const { currentProject } = useProjectContext();
 
   // Form state
-  const [assetType, setAssetType] = useState<'studio-icon' | 'studio-logo' | 'studio-project'>('studio-icon');
+  const [assetType, setAssetType] = useState<'studio-icon' | 'studio-logo' | 'studio-project'>(
+    'studio-icon'
+  );
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [scope, setScope] = useState<'project' | 'global'>('project');
@@ -153,10 +158,23 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
           {/* Asset Type */}
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
               Asset Type
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--spacing-xs)' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 'var(--spacing-xs)',
+              }}
+            >
               <button
                 className={`${styles.toolbarButton} ${assetType === 'studio-icon' ? styles.active : ''}`}
                 onClick={() => setAssetType('studio-icon')}
@@ -191,7 +209,15 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
           {/* Name */}
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <label htmlFor="asset-name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+            <label
+              htmlFor="asset-name"
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
               Name *
             </label>
             <input
@@ -215,7 +241,15 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
           {/* Description */}
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <label htmlFor="asset-description" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+            <label
+              htmlFor="asset-description"
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
               Description (optional)
             </label>
             <textarea
@@ -241,10 +275,19 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
           {/* Scope */}
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
               Save to
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}
+            >
               <button
                 className={`${styles.toolbarButton} ${scope === 'project' ? styles.active : ''}`}
                 onClick={() => setScope('project')}
@@ -266,14 +309,22 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
               {scope === 'project' && currentProject
                 ? `Save to "${currentProject.name}"`
                 : scope === 'project'
-                ? 'No project open'
-                : 'Available to all projects'}
+                  ? 'No project open'
+                  : 'Available to all projects'}
             </p>
           </div>
 
           {/* Tags */}
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <label htmlFor="asset-tags" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-xs)' }}>
+            <label
+              htmlFor="asset-tags"
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
               Tags (optional)
             </label>
             <input
@@ -329,11 +380,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
         {/* Footer */}
         <div className={styles.modalFooter}>
-          <button
-            className={styles.secondaryButton}
-            onClick={handleCancel}
-            disabled={isSaving}
-          >
+          <button type="button" className={styles.secondaryButton} onClick={handleCancel} disabled={isSaving}>
             Cancel
           </button>
           <button

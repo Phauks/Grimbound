@@ -5,19 +5,19 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useState, useEffect } from 'react'
-import { useProjects } from '../../hooks/useProjects'
-import { useToast } from '../../contexts/ToastContext'
-import { Modal } from '../Shared/ModalBase/Modal'
-import { Button } from '../Shared/UI/Button'
-import { Alert } from '../Shared/UI/Alert'
-import type { Project } from '../../ts/types/project.js'
+import { useEffect, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { useProjects } from '../../hooks/useProjects';
+import type { Project } from '../../ts/types/project.js';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Alert } from '../Shared/UI/Alert';
+import { Button } from '../Shared/UI/Button';
 
 interface DeleteProjectModalProps {
-  isOpen: boolean
-  project: Project | null
-  onClose: () => void
-  onSuccess?: () => void
+  isOpen: boolean;
+  project: Project | null;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export function DeleteProjectModal({
@@ -26,35 +26,35 @@ export function DeleteProjectModal({
   onClose,
   onSuccess,
 }: DeleteProjectModalProps) {
-  const { deleteProject, isLoading } = useProjects()
-  const { addToast } = useToast()
-  const [error, setError] = useState<string | null>(null)
+  const { deleteProject, isLoading } = useProjects();
+  const { addToast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   // Reset error when modal opens
   useEffect(() => {
     if (isOpen) {
-      setError(null)
+      setError(null);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleDelete = async () => {
-    if (!project) return
+    if (!project) return;
 
     try {
-      setError(null)
-      const projectName = project.name
-      await deleteProject(project.id)
-      addToast(`Project "${projectName}" deleted successfully`, 'success')
-      onSuccess?.()
-      onClose()
+      setError(null);
+      const projectName = project.name;
+      await deleteProject(project.id);
+      addToast(`Project "${projectName}" deleted successfully`, 'success');
+      onSuccess?.();
+      onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete project'
-      setError(errorMessage)
-      addToast(errorMessage, 'error')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete project';
+      setError(errorMessage);
+      addToast(errorMessage, 'error');
     }
-  }
+  };
 
-  if (!project) return null
+  if (!project) return null;
 
   return (
     <Modal
@@ -79,13 +79,19 @@ export function DeleteProjectModal({
         </>
       }
     >
-      <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)', lineHeight: 1.6 }}>
+      <p
+        style={{
+          color: 'var(--text-secondary)',
+          marginBottom: 'var(--spacing-md)',
+          lineHeight: 1.6,
+        }}
+      >
         Are you sure you want to delete <strong>"{project.name}"</strong>?
       </p>
 
       <Alert variant="warning" title="Warning">
-        This action cannot be undone. All project data, including custom icons
-        and snapshots, will be permanently deleted.
+        This action cannot be undone. All project data, including custom icons and snapshots, will
+        be permanently deleted.
       </Alert>
 
       {error && (
@@ -94,5 +100,5 @@ export function DeleteProjectModal({
         </Alert>
       )}
     </Modal>
-  )
+  );
 }

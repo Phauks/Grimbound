@@ -19,7 +19,9 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .container:hover:not(.disabled) {
@@ -46,15 +48,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--bg-tertiary) 0%,
-    var(--bg-input) 100%
-  );
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-input) 100%);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
   overflow: hidden;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .container:hover:not(.disabled) .preview {

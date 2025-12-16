@@ -50,7 +50,7 @@ export class DrawingEngine {
   /**
    * Continue the current brush stroke
    */
-  continueBrushStroke(point: Point, settings: ToolSettings['brush']): void {
+  continueBrushStroke(point: Point, _settings: ToolSettings['brush']): void {
     if (!this.isDrawing) return;
 
     this.currentStroke.push(point);
@@ -145,11 +145,7 @@ export class DrawingEngine {
   /**
    * Draw a circle
    */
-  drawCircle(
-    center: Point,
-    radius: number,
-    settings: ToolSettings['shape']
-  ): void {
+  drawCircle(center: Point, radius: number, settings: ToolSettings['shape']): void {
     this.ctx.save();
 
     this.ctx.beginPath();
@@ -201,11 +197,7 @@ export class DrawingEngine {
   /**
    * Draw a line
    */
-  drawLine(
-    start: Point,
-    end: Point,
-    settings: ToolSettings['shape']
-  ): void {
+  drawLine(start: Point, end: Point, settings: ToolSettings['shape']): void {
     this.ctx.save();
 
     this.ctx.strokeStyle = settings.stroke;
@@ -257,11 +249,7 @@ export class DrawingEngine {
   /**
    * Draw text on the canvas
    */
-  drawText(
-    text: string,
-    position: Point,
-    settings: ToolSettings['text']
-  ): void {
+  drawText(text: string, position: Point, settings: ToolSettings['text']): void {
     this.ctx.save();
 
     // Set font
@@ -307,7 +295,7 @@ export class DrawingEngine {
     this.ctx.font = `${settings.size}px ${settings.font}`;
 
     const metrics = this.ctx.measureText(text);
-    const width = metrics.width + (settings.letterSpacing * (text.length - 1));
+    const width = metrics.width + settings.letterSpacing * (text.length - 1);
     const height = settings.size; // Approximate height
 
     this.ctx.restore();
@@ -370,7 +358,7 @@ export class DrawingEngine {
    * Calculate distance between two points
    */
   static distance(p1: Point, p2: Point): number {
-    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
   }
 
   /**
@@ -379,7 +367,7 @@ export class DrawingEngine {
   static midpoint(p1: Point, p2: Point): Point {
     return {
       x: (p1.x + p2.x) / 2,
-      y: (p1.y + p2.y) / 2
+      y: (p1.y + p2.y) / 2,
     };
   }
 
@@ -407,7 +395,7 @@ export class DrawingEngine {
       x: minX,
       y: minY,
       width: maxX - minX,
-      height: maxY - minY
+      height: maxY - minY,
     };
   }
 }

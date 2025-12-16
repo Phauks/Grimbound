@@ -5,42 +5,42 @@
  * Collapsed by default, expandable with pencil icon.
  */
 
-import { useState, useEffect } from 'react'
-import type { ScriptMeta } from '../../../ts/types/index.js'
-import styles from '../../../styles/components/projects/MetaSettingsPanel.module.css'
+import { useEffect, useState } from 'react';
+import styles from '../../../styles/components/projects/MetaSettingsPanel.module.css';
+import type { ScriptMeta } from '../../../ts/types/index.js';
 
 interface MetaSettingsPanelProps {
-  meta: ScriptMeta
-  onMetaChange: (meta: Partial<ScriptMeta>) => void
-  isEditing: boolean
-  onEditToggle: () => void
+  meta: ScriptMeta;
+  onMetaChange: (meta: Partial<ScriptMeta>) => void;
+  isEditing: boolean;
+  onEditToggle: () => void;
 }
 
 export function MetaSettingsPanel({
   meta,
   onMetaChange,
   isEditing,
-  onEditToggle
+  onEditToggle,
 }: MetaSettingsPanelProps) {
-  const [localMeta, setLocalMeta] = useState<ScriptMeta>(meta)
+  const [localMeta, setLocalMeta] = useState<ScriptMeta>(meta);
 
   useEffect(() => {
-    setLocalMeta(meta)
-  }, [meta])
+    setLocalMeta(meta);
+  }, [meta]);
 
   const handleChange = (field: keyof ScriptMeta, value: string | number) => {
-    setLocalMeta(prev => ({ ...prev, [field]: value }))
-  }
+    setLocalMeta((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSave = () => {
-    onMetaChange(localMeta)
-    onEditToggle()
-  }
+    onMetaChange(localMeta);
+    onEditToggle();
+  };
 
   const handleCancel = () => {
-    setLocalMeta(meta)
-    onEditToggle()
-  }
+    setLocalMeta(meta);
+    onEditToggle();
+  };
 
   if (!isEditing) {
     // Collapsed view - horizontal grid
@@ -90,7 +90,7 @@ export function MetaSettingsPanel({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Expanded editing view
@@ -224,22 +224,14 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formActions}>
-          <button
-            type="button"
-            onClick={handleCancel}
-            className={styles.cancelBtn}
-          >
+          <button type="button" onClick={handleCancel} className={styles.cancelBtn}>
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className={styles.saveBtn}
-          >
+          <button type="button" onClick={handleSave} className={styles.saveBtn}>
             Save Changes
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

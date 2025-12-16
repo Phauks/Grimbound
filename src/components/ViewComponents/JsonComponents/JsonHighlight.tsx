@@ -1,8 +1,8 @@
-import { memo, useMemo, Fragment } from 'react'
-import { tokenizeJSON, TOKEN_CLASS_MAP } from '../../../ts/ui/jsonHighlighter'
+import { Fragment, memo, useMemo } from 'react';
+import { TOKEN_CLASS_MAP, tokenizeJSON } from '../../../ts/ui/jsonHighlighter';
 
 interface JsonHighlightProps {
-  json: string
+  json: string;
 }
 
 /**
@@ -17,18 +17,18 @@ interface JsonHighlightProps {
 export const JsonHighlight = memo(({ json }: JsonHighlightProps) => {
   // Memoize tokenization - only re-run when json actually changes
   const tokens = useMemo(() => {
-    if (!json) return []
-    return tokenizeJSON(json)
-  }, [json])
+    if (!json) return [];
+    return tokenizeJSON(json);
+  }, [json]);
 
-  if (!json) return null
+  if (!json) return null;
 
   // Pre-render tokens to reduce React reconciliation work
   // Plain text tokens (brackets, whitespace) don't need spans
   return (
     <>
       {tokens.map((token, index) => {
-        const className = TOKEN_CLASS_MAP[token.type]
+        const className = TOKEN_CLASS_MAP[token.type];
         // Only wrap in span if the token has a color class
         // This reduces DOM nodes by ~30% for typical JSON
         if (className) {
@@ -36,13 +36,13 @@ export const JsonHighlight = memo(({ json }: JsonHighlightProps) => {
             <span key={index} className={className}>
               {token.value}
             </span>
-          )
+          );
         }
         // Plain text: use Fragment with key for React reconciliation
-        return <Fragment key={index}>{token.value}</Fragment>
+        return <Fragment key={index}>{token.value}</Fragment>;
       })}
     </>
-  )
-})
+  );
+});
 
-JsonHighlight.displayName = 'JsonHighlight'
+JsonHighlight.displayName = 'JsonHighlight';

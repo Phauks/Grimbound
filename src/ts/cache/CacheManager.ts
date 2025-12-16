@@ -13,19 +13,19 @@
  * Architecture: Application Service (Facade Pattern)
  */
 
-import { PreRenderCacheManager } from './manager/PreRenderCacheManager.js'
-import { globalImageCache } from '../utils/imageCache.js'
-import { fontCache, getFontCacheStats } from './instances/fontCache.js'
-import { cacheInvalidationService } from './CacheInvalidationService.js'
+import type { Token } from '../types/index.js';
+import { globalImageCache } from '../utils/imageCache.js';
+import type { InvalidationScope } from './CacheInvalidationService.js';
+import { cacheInvalidationService } from './CacheInvalidationService.js';
 import type {
-  PreRenderContext,
-  PreRenderResult,
   CacheStats,
   ICacheStrategy,
-  IPreRenderStrategy
-} from './core/index.js'
-import type { InvalidationScope } from './CacheInvalidationService.js'
-import type { Token } from '../types/index.js'
+  IPreRenderStrategy,
+  PreRenderContext,
+  PreRenderResult,
+} from './core/index.js';
+import { fontCache, getFontCacheStats } from './instances/fontCache.js';
+import { PreRenderCacheManager } from './manager/PreRenderCacheManager.js';
 
 // ============================================================================
 // Types
@@ -36,30 +36,30 @@ import type { Token } from '../types/index.js'
  */
 export interface CombinedCacheStats {
   /** Pre-render cache statistics by strategy name */
-  preRender: Record<string, CacheStats>
+  preRender: Record<string, CacheStats>;
   /** Image cache statistics */
   image: {
-    entries: number
-    sizeMB: number
-    maxSizeMB: number
-  }
+    entries: number;
+    sizeMB: number;
+    maxSizeMB: number;
+  };
   /** Font cache statistics */
   font: {
-    size: number
-    memoryUsage: number
-    maxSize: number
-    maxMemory: number
-    hitCount: number
-    missCount: number
-    evictionCount: number
-    hitRate: number
-  }
+    size: number;
+    memoryUsage: number;
+    maxSize: number;
+    maxMemory: number;
+    hitCount: number;
+    missCount: number;
+    evictionCount: number;
+    hitRate: number;
+  };
   /** Total cache summary */
   total: {
-    layers: number
-    totalEntries: number
-    totalSizeMB: number
-  }
+    layers: number;
+    totalEntries: number;
+    totalSizeMB: number;
+  };
 }
 
 /**
@@ -67,11 +67,11 @@ export interface CombinedCacheStats {
  */
 export interface CacheWarmingOptions {
   /** Whether to warm image cache */
-  warmImages?: boolean
+  warmImages?: boolean;
   /** Whether to warm pre-render cache */
-  warmPreRender?: boolean
+  warmPreRender?: boolean;
   /** Progress callback (loaded, total) */
-  onProgress?: (loaded: number, total: number) => void
+  onProgress?: (loaded: number, total: number) => void;
 }
 
 // ============================================================================
@@ -101,16 +101,16 @@ export interface CacheWarmingOptions {
  * ```
  */
 export class CacheManager {
-  private preRenderManager: PreRenderCacheManager
-  private imageCache: typeof globalImageCache
-  private fontCacheInstance: typeof fontCache
-  private invalidationService: typeof cacheInvalidationService
+  private preRenderManager: PreRenderCacheManager;
+  private imageCache: typeof globalImageCache;
+  private fontCacheInstance: typeof fontCache;
+  private invalidationService: typeof cacheInvalidationService;
 
   constructor() {
-    this.preRenderManager = new PreRenderCacheManager()
-    this.imageCache = globalImageCache
-    this.fontCacheInstance = fontCache
-    this.invalidationService = cacheInvalidationService
+    this.preRenderManager = new PreRenderCacheManager();
+    this.imageCache = globalImageCache;
+    this.fontCacheInstance = fontCache;
+    this.invalidationService = cacheInvalidationService;
   }
 
   // ==========================================================================
@@ -131,7 +131,7 @@ export class CacheManager {
    * ```
    */
   async getCharacterImage(url: string, isLocal: boolean = false): Promise<HTMLImageElement> {
-    return this.imageCache.get(url, isLocal)
+    return this.imageCache.get(url, isLocal);
   }
 
   /**
@@ -154,7 +154,7 @@ export class CacheManager {
     isLocal: boolean = false,
     onProgress?: (loaded: number, total: number) => void
   ): Promise<void> {
-    return this.imageCache.preloadMany(urls, isLocal, onProgress)
+    return this.imageCache.preloadMany(urls, isLocal, onProgress);
   }
 
   /**
@@ -164,7 +164,7 @@ export class CacheManager {
    * @returns True if image is in cache
    */
   hasImage(url: string): boolean {
-    return this.imageCache.has(url)
+    return this.imageCache.has(url);
   }
 
   // ==========================================================================
@@ -189,24 +189,24 @@ export class CacheManager {
   async getPreRenderedToken(filename: string, strategyName?: string): Promise<string | null> {
     // If strategy specified, use that cache
     if (strategyName) {
-      const cache = this.preRenderManager.getCache(strategyName)
+      const cache = this.preRenderManager.getCache(strategyName);
       if (cache) {
-        const entry = await cache.get(filename)
-        return entry?.value ?? null
+        const entry = await cache.get(filename);
+        return entry?.value ?? null;
       }
-      return null
+      return null;
     }
 
     // Try all caches (gallery, customize, project)
     for (const cacheName of this.preRenderManager.getCacheNames()) {
-      const cache = this.preRenderManager.getCache(cacheName)
+      const cache = this.preRenderManager.getCache(cacheName);
       if (cache) {
-        const entry = await cache.get(filename)
-        if (entry?.value) return entry.value
+        const entry = await cache.get(filename);
+        if (entry?.value) return entry.value;
       }
     }
 
-    return null
+    return null;
   }
 
   /**
@@ -227,7 +227,7 @@ export class CacheManager {
    * ```
    */
   async preRender(context: PreRenderContext): Promise<PreRenderResult> {
-    return this.preRenderManager.preRender(context)
+    return this.preRenderManager.preRender(context);
   }
 
   /**
@@ -245,11 +245,11 @@ export class CacheManager {
     const result = await this.preRender({
       type: type as any,
       tokens,
-      characters: tokens.map(t => t.characterData).filter(Boolean) as any[]
-    })
+      characters: tokens.map((t) => t.characterData).filter(Boolean) as any[],
+    });
 
     if (!result.success) {
-      throw new Error(`Failed to cache token batch: ${result.error}`)
+      throw new Error(`Failed to cache token batch: ${result.error}`);
     }
   }
 
@@ -272,7 +272,7 @@ export class CacheManager {
     assetId: string,
     reason: 'update' | 'delete' | 'manual' = 'manual'
   ): Promise<void> {
-    await this.invalidationService.invalidateAsset(assetId, reason)
+    await this.invalidationService.invalidateAsset(assetId, reason);
   }
 
   /**
@@ -285,7 +285,7 @@ export class CacheManager {
     characterId: string,
     reason: 'update' | 'delete' | 'manual' = 'manual'
   ): Promise<void> {
-    await this.invalidationService.invalidateCharacter(characterId, reason)
+    await this.invalidationService.invalidateCharacter(characterId, reason);
   }
 
   /**
@@ -298,7 +298,7 @@ export class CacheManager {
     projectId: string,
     reason: 'update' | 'delete' | 'manual' = 'manual'
   ): Promise<void> {
-    await this.invalidationService.invalidateProject(projectId, reason)
+    await this.invalidationService.invalidateProject(projectId, reason);
   }
 
   /**
@@ -317,7 +317,7 @@ export class CacheManager {
    */
   async invalidate(scope: InvalidationScope): Promise<void> {
     if (scope === 'global') {
-      await this.invalidationService.invalidateAll('manual')
+      await this.invalidationService.invalidateAll('manual');
     } else {
       // For other scopes, trigger appropriate invalidation
       // The listeners will handle clearing the right caches
@@ -325,9 +325,9 @@ export class CacheManager {
         scope,
         entityIds: [],
         reason: 'manual' as const,
-        timestamp: Date.now()
-      }
-      await (this.invalidationService as any).emit(event)
+        timestamp: Date.now(),
+      };
+      await (this.invalidationService as any).emit(event);
     }
   }
 
@@ -347,11 +347,11 @@ export class CacheManager {
    */
   async clearCache(name: string): Promise<void> {
     if (name === 'image') {
-      this.imageCache.clear()
+      this.imageCache.clear();
     } else if (name === 'font') {
-      this.fontCacheInstance.clear()
+      this.fontCacheInstance.clear();
     } else {
-      await this.preRenderManager.clearCache(name)
+      await this.preRenderManager.clearCache(name);
     }
   }
 
@@ -364,9 +364,9 @@ export class CacheManager {
    * ```
    */
   async clearAll(): Promise<void> {
-    await this.preRenderManager.clearAllCaches()
-    this.imageCache.clear()
-    this.fontCacheInstance.clear()
+    await this.preRenderManager.clearAllCaches();
+    this.imageCache.clear();
+    this.fontCacheInstance.clear();
   }
 
   // ==========================================================================
@@ -386,17 +386,17 @@ export class CacheManager {
    * ```
    */
   getStats(): CombinedCacheStats {
-    const preRenderStats = this.preRenderManager.getAllCacheStats()
-    const imageStats = this.imageCache.getStats()
-    const fontStats = getFontCacheStats()
+    const preRenderStats = this.preRenderManager.getAllCacheStats();
+    const imageStats = this.imageCache.getStats();
+    const fontStats = getFontCacheStats();
 
     // Calculate totals
     const preRenderEntries = Object.values(preRenderStats).reduce(
       (sum, stats) => sum + stats.size,
       0
-    )
-    const totalEntries = preRenderEntries + imageStats.entries + fontStats.size
-    const totalSizeMB = imageStats.sizeMB + (fontStats.memoryUsage / 1024 / 1024)
+    );
+    const totalEntries = preRenderEntries + imageStats.entries + fontStats.size;
+    const totalSizeMB = imageStats.sizeMB + fontStats.memoryUsage / 1024 / 1024;
 
     return {
       preRender: preRenderStats,
@@ -405,9 +405,9 @@ export class CacheManager {
       total: {
         layers: 3, // pre-render, image, font
         totalEntries,
-        totalSizeMB: Math.round(totalSizeMB * 100) / 100
-      }
-    }
+        totalSizeMB: Math.round(totalSizeMB * 100) / 100,
+      },
+    };
   }
 
   /**
@@ -416,7 +416,7 @@ export class CacheManager {
    * @returns Map of cache name to statistics
    */
   getAllCacheStats(): Record<string, CacheStats> {
-    return this.preRenderManager.getAllCacheStats()
+    return this.preRenderManager.getAllCacheStats();
   }
 
   /**
@@ -426,7 +426,7 @@ export class CacheManager {
    * @returns Cache statistics or null if not found
    */
   getCacheStats(name: string): CacheStats | null {
-    return this.preRenderManager.getCacheStats(name)
+    return this.preRenderManager.getCacheStats(name);
   }
 
   /**
@@ -436,7 +436,7 @@ export class CacheManager {
    * @returns True if strategy is rendering
    */
   isStrategyRendering(strategyName: string): boolean {
-    return this.preRenderManager.isStrategyRendering(strategyName)
+    return this.preRenderManager.isStrategyRendering(strategyName);
   }
 
   // ==========================================================================
@@ -448,7 +448,7 @@ export class CacheManager {
    * For advanced use cases that need full manager API.
    */
   get preRenderCacheManager(): PreRenderCacheManager {
-    return this.preRenderManager
+    return this.preRenderManager;
   }
 
   /**
@@ -458,7 +458,7 @@ export class CacheManager {
    * @returns Cache instance or undefined
    */
   getCache(name: string): ICacheStrategy | undefined {
-    return this.preRenderManager.getCache(name)
+    return this.preRenderManager.getCache(name);
   }
 
   /**
@@ -466,7 +466,7 @@ export class CacheManager {
    * Delegates to PreRenderCacheManager.
    */
   registerStrategy(strategy: IPreRenderStrategy): void {
-    this.preRenderManager.registerStrategy(strategy)
+    this.preRenderManager.registerStrategy(strategy);
   }
 
   /**
@@ -474,7 +474,7 @@ export class CacheManager {
    * Delegates to PreRenderCacheManager.
    */
   registerCache(name: string, cache: ICacheStrategy): void {
-    this.preRenderManager.registerCache(name, cache)
+    this.preRenderManager.registerCache(name, cache);
   }
 }
 
@@ -503,6 +503,6 @@ export class CacheManager {
  * const stats = cacheManager.getStats()
  * ```
  */
-export const cacheManager = new CacheManager()
+export const cacheManager = new CacheManager();
 
-export default cacheManager
+export default cacheManager;

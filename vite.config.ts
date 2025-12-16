@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   root: '.',
   publicDir: 'assets',
+  // GitHub Pages deploys to /Clocktower_Token_Generator/ subpath
+  base: '/Clocktower_Token_Generator/',
 
   plugins: [
     react(),
@@ -18,8 +20,8 @@ export default defineConfig({
         theme_color: '#6C3BAA',
         background_color: '#1a1a2e',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/Clocktower_Token_Generator/',
+        start_url: '/Clocktower_Token_Generator/',
         orientation: 'any',
         categories: ['games', 'utilities'],
         icons: [
@@ -45,6 +47,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot}'],
         // Don't precache PDF templates (large files, rarely used)
         globIgnores: ['**/avery_templates/**'],
+        // Allow larger chunks for PWA precaching (main bundle is ~2.8MB)
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
         runtimeCaching: [
           {
             // Cache external CDN scripts (jsPDF, jsZip, FileSaver, QRCode)

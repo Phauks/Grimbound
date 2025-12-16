@@ -9,8 +9,12 @@
 
 import { useCallback } from 'react';
 import { useFileUpload } from '../../../hooks/useFileUpload.js';
-import { fileValidationService, AssetType, ASSET_TYPE_LABELS } from '../../../ts/services/upload/index.js';
 import styles from '../../../styles/components/shared/FileDropzone.module.css';
+import {
+  ASSET_TYPE_LABELS,
+  type AssetType,
+  fileValidationService,
+} from '../../../ts/services/upload/index.js';
 
 // ============================================================================
 // Types
@@ -59,29 +63,20 @@ export function FileDropzone({
   className = '',
 }: FileDropzoneProps) {
   // Use the unified file upload hook
-  const {
-    isUploading,
-    progress,
-    error,
-    isDragOver,
-    dragHandlers,
-    openFilePicker,
-    results,
-  } = useFileUpload({
-    assetType,
-    projectId,
-    characterId,
-    multiple,
-    onComplete: (uploadResults) => {
-      const successfulIds = uploadResults
-        .filter((r) => r.success)
-        .map((r) => (r as any).assetId);
-      if (successfulIds.length > 0) {
-        onUploadComplete?.(successfulIds);
-      }
-    },
-    onError,
-  });
+  const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker, results } =
+    useFileUpload({
+      assetType,
+      projectId,
+      characterId,
+      multiple,
+      onComplete: (uploadResults) => {
+        const successfulIds = uploadResults.filter((r) => r.success).map((r) => (r as any).assetId);
+        if (successfulIds.length > 0) {
+          onUploadComplete?.(successfulIds);
+        }
+      },
+      onError,
+    });
 
   // Get allowed file description
   const allowedDescription = fileValidationService.getAllowedFilesDescription(assetType);
@@ -89,7 +84,7 @@ export function FileDropzone({
 
   // Handle click
   const handleClick = useCallback(() => {
-    if (!disabled && !isUploading) {
+    if (!(disabled || isUploading)) {
       openFilePicker();
     }
   }, [disabled, isUploading, openFilePicker]);
@@ -133,10 +128,7 @@ export function FileDropzone({
         {isUploading ? (
           <div className={styles.uploadingState}>
             <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{ width: `${progress}%` }}
-              />
+              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
             </div>
             <p className={styles.progressText}>Uploading... {progress}%</p>
           </div>

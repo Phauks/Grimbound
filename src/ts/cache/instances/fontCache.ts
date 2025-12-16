@@ -10,32 +10,32 @@
  * Configuration for font cache
  */
 interface FontCacheConfig {
-    maxSize: number;
-    maxMemory: number;
-    evictionRatio: number;
+  maxSize: number;
+  maxMemory: number;
+  evictionRatio: number;
 }
 
 /**
  * Cache entry with LRU tracking
  */
 interface CacheEntry {
-    value: string;
-    size: number;
-    lastAccessed: number;
+  value: string;
+  size: number;
+  lastAccessed: number;
 }
 
 /**
  * Cache statistics
  */
 interface CacheStats {
-    size: number;
-    memoryUsage: number;
-    maxSize: number;
-    maxMemory: number;
-    hitCount: number;
-    missCount: number;
-    evictionCount: number;
-    hitRate: number;
+  size: number;
+  memoryUsage: number;
+  maxSize: number;
+  maxMemory: number;
+  hitCount: number;
+  missCount: number;
+  evictionCount: number;
+  hitRate: number;
 }
 
 /**
@@ -43,132 +43,132 @@ interface CacheStats {
  * Prevents repeated string concatenation for font specifications
  */
 class FontCache {
-    private cache = new Map<string, CacheEntry>();
-    private config: FontCacheConfig;
-    private stats: CacheStats;
+  private cache = new Map<string, CacheEntry>();
+  private config: FontCacheConfig;
+  private stats: CacheStats;
 
-    constructor(config: FontCacheConfig) {
-        this.config = config;
-        this.stats = {
-            size: 0,
-            memoryUsage: 0,
-            maxSize: config.maxSize,
-            maxMemory: config.maxMemory,
-            hitCount: 0,
-            missCount: 0,
-            evictionCount: 0,
-            hitRate: 0
-        };
+  constructor(config: FontCacheConfig) {
+    this.config = config;
+    this.stats = {
+      size: 0,
+      memoryUsage: 0,
+      maxSize: config.maxSize,
+      maxMemory: config.maxMemory,
+      hitCount: 0,
+      missCount: 0,
+      evictionCount: 0,
+      hitRate: 0,
+    };
+  }
+
+  /**
+   * Get cached font string
+   */
+  get(key: string): string | null {
+    const entry = this.cache.get(key);
+
+    if (!entry) {
+      this.stats.missCount++;
+      this.updateHitRate();
+      return null;
     }
 
-    /**
-     * Get cached font string
-     */
-    get(key: string): string | null {
-        const entry = this.cache.get(key);
+    // Update LRU tracking
+    entry.lastAccessed = Date.now();
 
-        if (!entry) {
-            this.stats.missCount++;
-            this.updateHitRate();
-            return null;
-        }
+    this.stats.hitCount++;
+    this.updateHitRate();
 
-        // Update LRU tracking
-        entry.lastAccessed = Date.now();
+    return entry.value;
+  }
 
-        this.stats.hitCount++;
-        this.updateHitRate();
+  /**
+   * Set cached font string
+   */
+  set(key: string, value: string): void {
+    // Estimate size (characters * 2 bytes + key size)
+    const size = (value.length + key.length) * 2;
 
-        return entry.value;
+    // Check if we need to evict before adding
+    if (this.shouldEvict(size)) {
+      this.evict();
     }
 
-    /**
-     * Set cached font string
-     */
-    set(key: string, value: string): void {
-        // Estimate size (characters * 2 bytes + key size)
-        const size = (value.length + key.length) * 2;
+    const entry: CacheEntry = {
+      value,
+      size,
+      lastAccessed: Date.now(),
+    };
 
-        // Check if we need to evict before adding
-        if (this.shouldEvict(size)) {
-            this.evict();
-        }
-
-        const entry: CacheEntry = {
-            value,
-            size,
-            lastAccessed: Date.now()
-        };
-
-        // If key exists, update memory usage
-        const existingEntry = this.cache.get(key);
-        if (existingEntry) {
-            this.stats.memoryUsage -= existingEntry.size;
-            this.stats.size--;
-        }
-
-        this.cache.set(key, entry);
-        this.stats.size++;
-        this.stats.memoryUsage += size;
+    // If key exists, update memory usage
+    const existingEntry = this.cache.get(key);
+    if (existingEntry) {
+      this.stats.memoryUsage -= existingEntry.size;
+      this.stats.size--;
     }
 
-    /**
-     * Check if eviction is needed
-     */
-    private shouldEvict(newEntrySize: number): boolean {
-        const wouldExceedSize = this.stats.size >= this.config.maxSize;
-        const wouldExceedMemory = this.stats.memoryUsage + newEntrySize > this.config.maxMemory;
-        return wouldExceedSize || wouldExceedMemory;
+    this.cache.set(key, entry);
+    this.stats.size++;
+    this.stats.memoryUsage += size;
+  }
+
+  /**
+   * Check if eviction is needed
+   */
+  private shouldEvict(newEntrySize: number): boolean {
+    const wouldExceedSize = this.stats.size >= this.config.maxSize;
+    const wouldExceedMemory = this.stats.memoryUsage + newEntrySize > this.config.maxMemory;
+    return wouldExceedSize || wouldExceedMemory;
+  }
+
+  /**
+   * Evict least recently used entries based on eviction ratio
+   */
+  private evict(): void {
+    const evictCount = Math.ceil(this.cache.size * this.config.evictionRatio);
+
+    // Sort entries by last accessed (LRU first)
+    const entries = Array.from(this.cache.entries()).sort(
+      (a, b) => a[1].lastAccessed - b[1].lastAccessed
+    );
+
+    // Remove oldest entries
+    for (let i = 0; i < evictCount && i < entries.length; i++) {
+      const [key, entry] = entries[i];
+      this.cache.delete(key);
+      this.stats.size--;
+      this.stats.memoryUsage -= entry.size;
+      this.stats.evictionCount++;
     }
+  }
 
-    /**
-     * Evict least recently used entries based on eviction ratio
-     */
-    private evict(): void {
-        const evictCount = Math.ceil(this.cache.size * this.config.evictionRatio);
+  /**
+   * Clear all cache entries
+   */
+  clear(): void {
+    this.cache.clear();
+    this.stats.size = 0;
+    this.stats.memoryUsage = 0;
+    this.stats.evictionCount = 0;
+    this.stats.hitCount = 0;
+    this.stats.missCount = 0;
+    this.stats.hitRate = 0;
+  }
 
-        // Sort entries by last accessed (LRU first)
-        const entries = Array.from(this.cache.entries()).sort((a, b) =>
-            a[1].lastAccessed - b[1].lastAccessed
-        );
+  /**
+   * Get cache statistics
+   */
+  getStats(): CacheStats {
+    return { ...this.stats };
+  }
 
-        // Remove oldest entries
-        for (let i = 0; i < evictCount && i < entries.length; i++) {
-            const [key, entry] = entries[i];
-            this.cache.delete(key);
-            this.stats.size--;
-            this.stats.memoryUsage -= entry.size;
-            this.stats.evictionCount++;
-        }
-    }
-
-    /**
-     * Clear all cache entries
-     */
-    clear(): void {
-        this.cache.clear();
-        this.stats.size = 0;
-        this.stats.memoryUsage = 0;
-        this.stats.evictionCount = 0;
-        this.stats.hitCount = 0;
-        this.stats.missCount = 0;
-        this.stats.hitRate = 0;
-    }
-
-    /**
-     * Get cache statistics
-     */
-    getStats(): CacheStats {
-        return { ...this.stats };
-    }
-
-    /**
-     * Update hit rate calculation
-     */
-    private updateHitRate(): void {
-        const total = this.stats.hitCount + this.stats.missCount;
-        this.stats.hitRate = total > 0 ? this.stats.hitCount / total : 0;
-    }
+  /**
+   * Update hit rate calculation
+   */
+  private updateHitRate(): void {
+    const total = this.stats.hitCount + this.stats.missCount;
+    this.stats.hitRate = total > 0 ? this.stats.hitCount / total : 0;
+  }
 }
 
 /**
@@ -180,9 +180,9 @@ class FontCache {
  * - 10% LRU eviction ratio when limits exceeded
  */
 export const fontCache = new FontCache({
-    maxSize: 200,
-    maxMemory: 50000, // ~50KB (strings are ~50-80 bytes each)
-    evictionRatio: 0.1
+  maxSize: 200,
+  maxMemory: 50000, // ~50KB (strings are ~50-80 bytes each)
+  evictionRatio: 0.1,
 });
 
 /**
@@ -204,29 +204,29 @@ export const fontCache = new FontCache({
  * ```
  */
 export function getCachedFont(
-    weight: string,
-    size: number,
-    family: string,
-    fallback: string = 'Georgia, serif'
+  weight: string,
+  size: number,
+  family: string,
+  fallback: string = 'Georgia, serif'
 ): string {
-    // Create cache key from parameters
-    const key = `${weight}-${size}-${family}-${fallback}`;
+  // Create cache key from parameters
+  const key = `${weight}-${size}-${family}-${fallback}`;
 
-    // Check cache first
-    let font = fontCache.get(key);
+  // Check cache first
+  let font = fontCache.get(key);
 
-    if (!font) {
-        // Cache miss - construct font string
-        // Handle empty weight (for non-bold fonts like ability text)
-        font = weight
-            ? `${weight} ${size}px "${family}", ${fallback}`
-            : `${size}px "${family}", ${fallback}`;
+  if (!font) {
+    // Cache miss - construct font string
+    // Handle empty weight (for non-bold fonts like ability text)
+    font = weight
+      ? `${weight} ${size}px "${family}", ${fallback}`
+      : `${size}px "${family}", ${fallback}`;
 
-        // Store in cache for future use
-        fontCache.set(key, font);
-    }
+    // Store in cache for future use
+    fontCache.set(key, font);
+  }
 
-    return font;
+  return font;
 }
 
 /**
@@ -234,7 +234,7 @@ export function getCachedFont(
  * Useful for testing or memory pressure situations
  */
 export function clearFontCache(): void {
-    fontCache.clear();
+  fontCache.clear();
 }
 
 /**
@@ -249,12 +249,12 @@ export function clearFontCache(): void {
  * - evictionCount: Total evictions performed
  */
 export function getFontCacheStats() {
-    return fontCache.getStats();
+  return fontCache.getStats();
 }
 
 export default {
-    fontCache,
-    getCachedFont,
-    clearFontCache,
-    getFontCacheStats
+  fontCache,
+  getCachedFont,
+  clearFontCache,
+  getFontCacheStats,
 };

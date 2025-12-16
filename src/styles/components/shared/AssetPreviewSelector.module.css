@@ -19,7 +19,9 @@
   background: var(--bg-tertiary, var(--bg-input));
   border: 2px solid var(--border-color);
   overflow: hidden;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 /* Size variants */
@@ -79,7 +81,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.4;
   }
   50% {

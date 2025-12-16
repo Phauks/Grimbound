@@ -31,9 +31,7 @@ export function AutoSaveToggle({ isEnabled, onToggle, disabled = false }: AutoSa
     if (disabled) {
       return 'Auto-save requires an active project';
     }
-    return isEnabled
-      ? 'Auto-save: ON - Click to disable'
-      : 'Auto-save: OFF - Click to enable';
+    return isEnabled ? 'Auto-save: ON - Click to disable' : 'Auto-save: OFF - Click to enable';
   };
 
   return (
@@ -51,9 +49,7 @@ export function AutoSaveToggle({ isEnabled, onToggle, disabled = false }: AutoSa
       </span>
 
       {/* Label */}
-      <span className={styles.label}>
-        {isEnabled ? 'Auto-save' : 'Auto-save OFF'}
-      </span>
+      <span className={styles.label}>{isEnabled ? 'Auto-save' : 'Auto-save OFF'}</span>
     </button>
   );
 }

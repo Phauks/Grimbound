@@ -9,12 +9,12 @@
  * @module hooks/useProjects
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useProjectContext } from '../contexts/ProjectContext';
 import { useTokenContext } from '../contexts/TokenContext';
 import { projectService } from '../ts/services/project';
+import type { CreateProjectOptions, ListProjectsOptions, Project } from '../ts/types/project.js';
 import { handleAsyncOperation, logger } from '../ts/utils/index.js';
-import type { Project, CreateProjectOptions, ListProjectsOptions } from '../ts/types/project.js';
 
 export function useProjects() {
   const { currentProject, setCurrentProject, projects, setProjects } = useProjectContext();
@@ -40,20 +40,23 @@ export function useProjects() {
   /**
    * Load all projects
    */
-  const loadProjects = useCallback(async (options?: ListProjectsOptions) => {
-    await handleAsyncOperation(
-      () => projectService.listProjects(options),
-      'Load projects',
-      setIsLoading,
-      setError,
-      {
-        successMessage: `Loaded ${projects.length} projects`,
-        onSuccess: (loadedProjects) => {
-          setProjects(loadedProjects as Project[]);
+  const loadProjects = useCallback(
+    async (options?: ListProjectsOptions) => {
+      await handleAsyncOperation(
+        () => projectService.listProjects(options),
+        'Load projects',
+        setIsLoading,
+        setError,
+        {
+          successMessage: `Loaded ${projects.length} projects`,
+          onSuccess: (loadedProjects) => {
+            setProjects(loadedProjects as Project[]);
+          },
         }
-      }
-    );
-  }, [setProjects, projects.length]);
+      );
+    },
+    [setProjects, projects.length]
+  );
 
   /**
    * Create a new project from current state
@@ -85,10 +88,10 @@ export function useProjects() {
           onSuccess: (createdProject) => {
             setCurrentProject(createdProject as Project);
             // Refresh project list
-            loadProjects().catch(err =>
+            loadProjects().catch((err) =>
               logger.warn('Create project', 'Failed to refresh project list', err)
             );
-          }
+          },
         }
       );
 
@@ -109,82 +112,88 @@ export function useProjects() {
   /**
    * Delete a project
    */
-  const deleteProject = useCallback(async (projectId: string) => {
-    await handleAsyncOperation(
-      () => projectService.deleteProject(projectId),
-      'Delete project',
-      setIsLoading,
-      setError,
-      {
-        successMessage: `Project deleted successfully`,
-        onSuccess: () => {
-          // If we deleted the current project, clear it
-          if (currentProject?.id === projectId) {
-            setCurrentProject(null);
-            logger.info('Delete project', 'Current project cleared');
-          }
-          // Refresh project list
-          loadProjects().catch(err =>
-            logger.warn('Delete project', 'Failed to refresh project list', err)
-          );
+  const deleteProject = useCallback(
+    async (projectId: string) => {
+      await handleAsyncOperation(
+        () => projectService.deleteProject(projectId),
+        'Delete project',
+        setIsLoading,
+        setError,
+        {
+          successMessage: `Project deleted successfully`,
+          onSuccess: () => {
+            // If we deleted the current project, clear it
+            if (currentProject?.id === projectId) {
+              setCurrentProject(null);
+              logger.info('Delete project', 'Current project cleared');
+            }
+            // Refresh project list
+            loadProjects().catch((err) =>
+              logger.warn('Delete project', 'Failed to refresh project list', err)
+            );
+          },
         }
-      }
-    );
-  }, [currentProject, setCurrentProject, loadProjects]);
+      );
+    },
+    [currentProject, setCurrentProject, loadProjects]
+  );
 
   /**
    * Load a specific project
    */
-  const loadProject = useCallback(async (projectId: string) => {
-    const project = await handleAsyncOperation(
-      () => projectService.getProject(projectId),
-      'Load project',
-      setIsLoading,
-      setError,
-      {
-        successMessage: 'Project loaded successfully',
-        onSuccess: (loadedProject) => {
-          const proj = loadedProject as Project;
-          setCurrentProject(proj);
+  const loadProject = useCallback(
+    async (projectId: string) => {
+      const project = await handleAsyncOperation(
+        () => projectService.getProject(projectId),
+        'Load project',
+        setIsLoading,
+        setError,
+        {
+          successMessage: 'Project loaded successfully',
+          onSuccess: (loadedProject) => {
+            const proj = loadedProject as Project;
+            setCurrentProject(proj);
 
-          // Restore project state
-          if (proj.state) {
-            logger.debug('Load project', 'Restoring project state', {
-              characterCount: proj.state.characters?.length,
-              hasScriptMeta: !!proj.state.scriptMeta
-            });
-
-            setCharacters(proj.state.characters || []);
-            setScriptMeta(proj.state.scriptMeta || null);
-            setJsonInput(proj.state.jsonInput || '');
-            setTokens(proj.state.tokens || []);
-
-            if (proj.state.generationOptions) {
-              updateGenerationOptions(proj.state.generationOptions);
-            }
-
-            if (proj.state.characterMetadata) {
-              clearAllMetadata();
-              Object.entries(proj.state.characterMetadata).forEach(([uuid, metadata]) => {
-                setMetadata(uuid, metadata);
+            // Restore project state
+            if (proj.state) {
+              logger.debug('Load project', 'Restoring project state', {
+                characterCount: proj.state.characters?.length,
+                hasScriptMeta: !!proj.state.scriptMeta,
               });
-            }
-          }
-        }
-      }
-    );
 
-    return project as Project | undefined;
-  }, [
-    setCurrentProject,
-    setCharacters,
-    setScriptMeta,
-    setJsonInput,
-    setTokens,
-    updateGenerationOptions,
-    setMetadata,
-    clearAllMetadata,
-  ]);
+              setCharacters(proj.state.characters || []);
+              setScriptMeta(proj.state.scriptMeta || null);
+              setJsonInput(proj.state.jsonInput || '');
+              setTokens(proj.state.tokens || []);
+
+              if (proj.state.generationOptions) {
+                updateGenerationOptions(proj.state.generationOptions);
+              }
+
+              if (proj.state.characterMetadata) {
+                clearAllMetadata();
+                Object.entries(proj.state.characterMetadata).forEach(([uuid, metadata]) => {
+                  setMetadata(uuid, metadata);
+                });
+              }
+            }
+          },
+        }
+      );
+
+      return project as Project | undefined;
+    },
+    [
+      setCurrentProject,
+      setCharacters,
+      setScriptMeta,
+      setJsonInput,
+      setTokens,
+      updateGenerationOptions,
+      setMetadata,
+      clearAllMetadata,
+    ]
+  );
 
   /**
    * Update an existing project
@@ -204,10 +213,10 @@ export function useProjects() {
               setCurrentProject(updatedProject as Project);
             }
             // Refresh project list
-            loadProjects().catch(err =>
+            loadProjects().catch((err) =>
               logger.warn('Update project', 'Failed to refresh project list', err)
             );
-          }
+          },
         }
       );
 
@@ -250,76 +259,89 @@ export function useProjects() {
     generationOptions,
     filters,
     updateProject,
-    setError,
   ]);
 
   /**
    * Activate a project (load and make current)
    * Pass empty string to deactivate current project
    */
-  const activateProject = useCallback(async (projectId: string) => {
-    if (!projectId) {
-      // Deactivate current project
-      setCurrentProject(null);
-      setCharacters([]);
-      setScriptMeta(null);
-      setJsonInput('');
-      setTokens([]);
-      clearAllMetadata();
-      logger.info('Activate project', 'Deactivated current project');
-      return;
-    }
-    return loadProject(projectId);
-  }, [loadProject, setCurrentProject, setCharacters, setScriptMeta, setJsonInput, setTokens, clearAllMetadata]);
+  const activateProject = useCallback(
+    async (projectId: string) => {
+      if (!projectId) {
+        // Deactivate current project
+        setCurrentProject(null);
+        setCharacters([]);
+        setScriptMeta(null);
+        setJsonInput('');
+        setTokens([]);
+        clearAllMetadata();
+        logger.info('Activate project', 'Deactivated current project');
+        return;
+      }
+      return loadProject(projectId);
+    },
+    [
+      loadProject,
+      setCurrentProject,
+      setCharacters,
+      setScriptMeta,
+      setJsonInput,
+      setTokens,
+      clearAllMetadata,
+    ]
+  );
 
   /**
    * Duplicate a project
    */
-  const duplicateProject = useCallback(async (projectId: string) => {
-    // First load the source project
-    const sourceProject = await handleAsyncOperation(
-      () => projectService.getProject(projectId),
-      'Load project for duplication',
-      setIsLoading,
-      setError
-    ) as Project | undefined;
+  const duplicateProject = useCallback(
+    async (projectId: string) => {
+      // First load the source project
+      const sourceProject = (await handleAsyncOperation(
+        () => projectService.getProject(projectId),
+        'Load project for duplication',
+        setIsLoading,
+        setError
+      )) as Project | undefined;
 
-    if (!sourceProject) {
-      logger.warn('Duplicate project', 'Source project not found', { projectId });
-      return undefined;
-    }
-
-    // Create a copy with a new name
-    const duplicateName = `${sourceProject.name} (Copy)`;
-    const options: CreateProjectOptions = {
-      name: duplicateName,
-      description: sourceProject.description,
-      state: sourceProject.state,
-    };
-
-    const newProject = await handleAsyncOperation(
-      () => projectService.createProject(options),
-      'Duplicate project',
-      setIsLoading,
-      setError,
-      {
-        successMessage: `Project duplicated as "${duplicateName}"`,
-        onSuccess: () => {
-          // Refresh project list
-          loadProjects().catch(err =>
-            logger.warn('Duplicate project', 'Failed to refresh project list', err)
-          );
-        }
+      if (!sourceProject) {
+        logger.warn('Duplicate project', 'Source project not found', { projectId });
+        return undefined;
       }
-    );
 
-    return newProject as Project | undefined;
-  }, [loadProjects]);
+      // Create a copy with a new name
+      const duplicateName = `${sourceProject.name} (Copy)`;
+      const options: CreateProjectOptions = {
+        name: duplicateName,
+        description: sourceProject.description,
+        state: sourceProject.state,
+      };
+
+      const newProject = await handleAsyncOperation(
+        () => projectService.createProject(options),
+        'Duplicate project',
+        setIsLoading,
+        setError,
+        {
+          successMessage: `Project duplicated as "${duplicateName}"`,
+          onSuccess: () => {
+            // Refresh project list
+            loadProjects().catch((err) =>
+              logger.warn('Duplicate project', 'Failed to refresh project list', err)
+            );
+          },
+        }
+      );
+
+      return newProject as Project | undefined;
+    },
+    [loadProjects]
+  );
 
   // Auto-load projects on mount
   useEffect(() => {
     logger.info('useProjects', 'Hook mounted, loading projects');
-    loadProjects().catch(err =>
+    loadProjects().catch((err) =>
       logger.error('useProjects', 'Failed to load projects on mount', err)
     );
   }, [loadProjects]);

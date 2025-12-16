@@ -1,18 +1,18 @@
-import { useRef, useEffect, useCallback } from 'react'
-import { JsonHighlight } from '../../ViewComponents/JsonComponents/JsonHighlight'
-import styles from '../../../styles/components/shared/JsonEditorPanel.module.css'
+import { useCallback, useEffect, useRef } from 'react';
+import styles from '../../../styles/components/shared/JsonEditorPanel.module.css';
+import { JsonHighlight } from '../../ViewComponents/JsonComponents/JsonHighlight';
 
 interface JsonEditorPanelProps {
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onValidJson?: (parsed: unknown) => void
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  placeholder?: string
-  debounceMs?: number
-  minHeight?: string
-  className?: string
-  disabled?: boolean
-  showError?: boolean
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onValidJson?: (parsed: unknown) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  debounceMs?: number;
+  minHeight?: string;
+  className?: string;
+  disabled?: boolean;
+  showError?: boolean;
 }
 
 /**
@@ -36,48 +36,48 @@ export function JsonEditorPanel({
   disabled = false,
   showError = true,
 }: JsonEditorPanelProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const errorRef = useRef<string | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorRef = useRef<string | null>(null);
 
   // Auto-resize textarea to fit content (prevents internal scrolling)
   const autoResizeTextarea = useCallback(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-    textarea.style.height = 'auto'
-    textarea.style.height = `${textarea.scrollHeight}px`
-  }, [])
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, []);
 
   // Auto-resize on content change
   useEffect(() => {
-    autoResizeTextarea()
-  }, [value, autoResizeTextarea])
+    autoResizeTextarea();
+  }, [autoResizeTextarea]);
 
   // Debounced parse and validation
   useEffect(() => {
     if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
+      clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
       try {
-        const parsed = JSON.parse(value)
-        errorRef.current = null
+        const parsed = JSON.parse(value);
+        errorRef.current = null;
         if (onValidJson) {
-          onValidJson(parsed)
+          onValidJson(parsed);
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Invalid JSON'
-        errorRef.current = errorMessage
+        const errorMessage = error instanceof Error ? error.message : 'Invalid JSON';
+        errorRef.current = errorMessage;
       }
-    }, debounceMs)
+    }, debounceMs);
 
     return () => {
       if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
+        clearTimeout(debounceTimerRef.current);
       }
-    }
-  }, [value, debounceMs, onValidJson])
+    };
+  }, [value, debounceMs, onValidJson]);
 
   return (
     <div className={`${styles.editorContainer} ${className || ''}`} style={{ minHeight }}>
@@ -106,5 +106,5 @@ export function JsonEditorPanel({
         </div>
       )}
     </div>
-  )
+  );
 }

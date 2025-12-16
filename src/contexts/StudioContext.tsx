@@ -5,30 +5,35 @@
  * and canvas state. Provides actions for manipulating the editor state.
  */
 
-import { createContext, useContext, ReactNode, useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  canvasToDataURL,
+  cloneCanvas,
+  createBlankCanvas,
+  HistoryManager,
+  releaseStudioCanvas,
+} from '../ts/studio/index.js';
+import type { StudioEditMode } from '../ts/studio/navigationHelpers.js';
 import type {
-  Layer,
-  StudioTool,
-  ToolSettings,
-  HistoryEntry,
-  SerializedLayer,
-  CanvasSize,
-  Point,
   BorderConfig,
+  CanvasSize,
   GridConfig,
   Guide,
-  AssetScope,
+  Layer,
+  Point,
+  SerializedLayer,
   StudioAssetSaveOptions,
+  StudioTool,
+  ToolSettings,
 } from '../ts/types/index.js';
-import type { StudioEditMode } from '../ts/studio/navigationHelpers.js';
-import {
-  createBlankCanvas,
-  cloneCanvas,
-  canvasToDataURL,
-  releaseStudioCanvas,
-  HistoryManager,
-  createDebouncedPush,
-} from '../ts/studio/index.js';
 import { logger } from '../ts/utils/logger.js';
 
 // ============================================================================
@@ -45,7 +50,7 @@ interface StudioContextType {
   // Layer system
   layers: Layer[];
   activeLayerId: string | null;
-  activeLayer: Layer | null;  // Computed from activeLayerId
+  activeLayer: Layer | null; // Computed from activeLayerId
 
   // Tool state
   activeTool: StudioTool;
@@ -66,14 +71,14 @@ interface StudioContextType {
   isDirty: boolean;
   isProcessing: boolean;
   currentAssetId?: string;
-  editMode: StudioEditMode;  // 'full' or 'icon-only'
+  editMode: StudioEditMode; // 'full' or 'icon-only'
 
   // Canvas actions
   setCanvasSize: (size: CanvasSize) => void;
   setZoom: (zoom: number) => void;
   setPan: (pan: Point) => void;
   setBackgroundColor: (color: string) => void;
-  resetView: () => void;  // Reset zoom and pan
+  resetView: () => void; // Reset zoom and pan
 
   // Layer actions
   addLayer: (layer: Layer) => void;
@@ -224,7 +229,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // ========================================================================
 
   const activeLayer = useMemo(() => {
-    return layers.find(layer => layer.id === activeLayerId) || null;
+    return layers.find((layer) => layer.id === activeLayerId) || null;
   }, [layers, activeLayerId]);
 
   // Computed from HistoryManager - historyVersion triggers re-compute
@@ -257,36 +262,39 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // ========================================================================
 
   const addLayer = useCallback((layer: Layer) => {
-    setLayers(prev => [...prev, layer]);
+    setLayers((prev) => [...prev, layer]);
     setActiveLayerId(layer.id);
     setIsDirty(true);
   }, []);
 
-  const removeLayer = useCallback((id: string) => {
-    setLayers(prev => {
-      // Release canvas from pool before removing layer
-      const layerToRemove = prev.find(layer => layer.id === id);
-      if (layerToRemove) {
-        releaseStudioCanvas(layerToRemove.canvas);
+  const removeLayer = useCallback(
+    (id: string) => {
+      setLayers((prev) => {
+        // Release canvas from pool before removing layer
+        const layerToRemove = prev.find((layer) => layer.id === id);
+        if (layerToRemove) {
+          releaseStudioCanvas(layerToRemove.canvas);
+        }
+        return prev.filter((layer) => layer.id !== id);
+      });
+      if (activeLayerId === id) {
+        setActiveLayerId(null);
       }
-      return prev.filter(layer => layer.id !== id);
-    });
-    if (activeLayerId === id) {
-      setActiveLayerId(null);
-    }
-    setIsDirty(true);
-  }, [activeLayerId]);
+      setIsDirty(true);
+    },
+    [activeLayerId]
+  );
 
   const updateLayer = useCallback((id: string, updates: Partial<Layer>) => {
-    setLayers(prev =>
-      prev.map(layer => {
+    setLayers((prev) =>
+      prev.map((layer) => {
         if (layer.id !== id) return layer;
 
         // Auto-increment version if canvas is being updated to force React re-renders
         // This ensures that even when the canvas reference stays the same but pixels change,
         // React will detect the update and trigger composition
         const newUpdates = updates.canvas
-          ? { ...updates, version: (updates.version ?? (layer.version || 0) + 1) }
+          ? { ...updates, version: updates.version ?? (layer.version || 0) + 1 }
           : updates;
 
         return { ...layer, ...newUpdates };
@@ -300,7 +308,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
   }, []);
 
   const reorderLayers = useCallback((startIndex: number, endIndex: number) => {
-    setLayers(prev => {
+    setLayers((prev) => {
       const result = Array.from(prev);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);
@@ -315,8 +323,8 @@ export function StudioProvider({ children }: StudioProviderProps) {
   }, []);
 
   const duplicateLayer = useCallback((id: string) => {
-    setLayers(prev => {
-      const layerToDuplicate = prev.find(layer => layer.id === id);
+    setLayers((prev) => {
+      const layerToDuplicate = prev.find((layer) => layer.id === id);
       if (!layerToDuplicate) return prev;
 
       const newLayer: Layer = {
@@ -324,15 +332,13 @@ export function StudioProvider({ children }: StudioProviderProps) {
         id: crypto.randomUUID(),
         name: `${layerToDuplicate.name} Copy`,
         canvas: cloneCanvas(layerToDuplicate.canvas),
-        version: 0,  // New layer starts with version 0
+        version: 0, // New layer starts with version 0
         zIndex: layerToDuplicate.zIndex + 1,
       };
 
       // Increase z-index of layers above
-      const updated = prev.map(layer =>
-        layer.zIndex >= newLayer.zIndex
-          ? { ...layer, zIndex: layer.zIndex + 1 }
-          : layer
+      const updated = prev.map((layer) =>
+        layer.zIndex >= newLayer.zIndex ? { ...layer, zIndex: layer.zIndex + 1 } : layer
       );
 
       return [...updated, newLayer];
@@ -341,8 +347,8 @@ export function StudioProvider({ children }: StudioProviderProps) {
   }, []);
 
   const mergeLayerDown = useCallback((id: string) => {
-    setLayers(prev => {
-      const currentIndex = prev.findIndex(layer => layer.id === id);
+    setLayers((prev) => {
+      const currentIndex = prev.findIndex((layer) => layer.id === id);
       if (currentIndex <= 0) return prev; // Can't merge bottom layer
 
       const currentLayer = prev[currentIndex];
@@ -368,7 +374,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
             ...layer,
             canvas: mergedCanvas,
             name: `${layer.name} + ${currentLayer.name}`,
-            version: (layer.version || 0) + 1,  // Increment version for merged layer
+            version: (layer.version || 0) + 1, // Increment version for merged layer
           };
         }
         return layer;
@@ -406,7 +412,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       blendMode: 'normal',
       zIndex: 0,
       canvas: flatCanvas,
-      version: 0,  // New layer starts with version 0
+      version: 0, // New layer starts with version 0
       position: { x: 0, y: 0 },
       rotation: 0,
       scale: { x: 1, y: 1 },
@@ -422,54 +428,57 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // ========================================================================
 
   const setToolSettings = useCallback((settings: Partial<ToolSettings>) => {
-    setToolSettingsState(prev => ({ ...prev, ...settings }));
+    setToolSettingsState((prev) => ({ ...prev, ...settings }));
   }, []);
 
   // ========================================================================
   // History Actions
   // ========================================================================
 
-  const serializeLayers = useCallback((layersToSerialize: Layer[]): SerializedLayer[] => {
-    return layersToSerialize.map(layer => ({
+  const _serializeLayers = useCallback((layersToSerialize: Layer[]): SerializedLayer[] => {
+    return layersToSerialize.map((layer) => ({
       ...layer,
       canvasData: canvasToDataURL(layer.canvas),
     }));
   }, []);
 
-  const deserializeLayers = useCallback(async (serialized: SerializedLayer[]): Promise<Layer[]> => {
-    // Import createStudioCanvas dynamically
-    const { createStudioCanvas } = await import('../ts/studio/index.js');
+  const _deserializeLayers = useCallback(
+    async (serialized: SerializedLayer[]): Promise<Layer[]> => {
+      // Import createStudioCanvas dynamically
+      const { createStudioCanvas } = await import('../ts/studio/index.js');
 
-    const promises = serialized.map(async (layer) => {
-      return new Promise<Layer>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          // Use pooled canvas
-          const { canvas, ctx } = createStudioCanvas(img.width, img.height);
-          ctx.drawImage(img, 0, 0);
-          resolve({ ...layer, canvas });
-        };
-        img.onerror = () => reject(new Error('Failed to load layer image'));
-        img.src = layer.canvasData;
+      const promises = serialized.map(async (layer) => {
+        return new Promise<Layer>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            // Use pooled canvas
+            const { canvas, ctx } = createStudioCanvas(img.width, img.height);
+            ctx.drawImage(img, 0, 0);
+            resolve({ ...layer, canvas });
+          };
+          img.onerror = () => reject(new Error('Failed to load layer image'));
+          img.src = layer.canvasData;
+        });
       });
-    });
 
-    return Promise.all(promises);
-  }, []);
+      return Promise.all(promises);
+    },
+    []
+  );
 
-  const pushHistory = useCallback((action: string) => {
-    historyManager.current.pushState(
-      action,
-      layers,
-      canvasSize,
-      backgroundColor,
-      toolSettings
-    ).then(() => {
-      setHistoryVersion(v => v + 1);
-    }).catch(err => {
-      logger.error('StudioContext', 'Failed to push history:', err);
-    });
-  }, [layers, canvasSize, backgroundColor, toolSettings]);
+  const pushHistory = useCallback(
+    (action: string) => {
+      historyManager.current
+        .pushState(action, layers, canvasSize, backgroundColor, toolSettings)
+        .then(() => {
+          setHistoryVersion((v) => v + 1);
+        })
+        .catch((err) => {
+          logger.error('StudioContext', 'Failed to push history:', err);
+        });
+    },
+    [layers, canvasSize, backgroundColor, toolSettings]
+  );
 
   const undo = useCallback(async () => {
     const entry = historyManager.current.undo();
@@ -479,8 +488,8 @@ export function StudioProvider({ children }: StudioProviderProps) {
       const restoredLayers = await historyManager.current.deserializeLayers(entry.layers);
 
       // Release old canvases before replacing layers
-      setLayers(prev => {
-        prev.forEach(layer => releaseStudioCanvas(layer.canvas));
+      setLayers((prev) => {
+        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
         return restoredLayers;
       });
 
@@ -489,7 +498,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       if (entry.toolSettings) {
         setToolSettingsState(entry.toolSettings);
       }
-      setHistoryVersion(v => v + 1); // Trigger re-render
+      setHistoryVersion((v) => v + 1); // Trigger re-render
     } catch (err) {
       logger.error('StudioContext', 'Failed to undo:', err);
     }
@@ -503,8 +512,8 @@ export function StudioProvider({ children }: StudioProviderProps) {
       const restoredLayers = await historyManager.current.deserializeLayers(entry.layers);
 
       // Release old canvases before replacing layers
-      setLayers(prev => {
-        prev.forEach(layer => releaseStudioCanvas(layer.canvas));
+      setLayers((prev) => {
+        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
         return restoredLayers;
       });
 
@@ -513,7 +522,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
       if (entry.toolSettings) {
         setToolSettingsState(entry.toolSettings);
       }
-      setHistoryVersion(v => v + 1); // Trigger re-render
+      setHistoryVersion((v) => v + 1); // Trigger re-render
     } catch (err) {
       logger.error('StudioContext', 'Failed to redo:', err);
     }
@@ -521,7 +530,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
 
   const clearHistory = useCallback(() => {
     historyManager.current.clear();
-    setHistoryVersion(v => v + 1);
+    setHistoryVersion((v) => v + 1);
   }, []);
 
   // ========================================================================
@@ -529,7 +538,7 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // ========================================================================
 
   const setBorder = useCallback((borderUpdates: Partial<BorderConfig>) => {
-    setBorderState(prev => ({ ...prev, ...borderUpdates }));
+    setBorderState((prev) => ({ ...prev, ...borderUpdates }));
     setIsDirty(true);
   }, []);
 
@@ -538,15 +547,15 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // ========================================================================
 
   const setGrid = useCallback((gridUpdates: Partial<GridConfig>) => {
-    setGridState(prev => ({ ...prev, ...gridUpdates }));
+    setGridState((prev) => ({ ...prev, ...gridUpdates }));
   }, []);
 
   const addGuide = useCallback((guide: Guide) => {
-    setGuides(prev => [...prev, guide]);
+    setGuides((prev) => [...prev, guide]);
   }, []);
 
   const removeGuide = useCallback((id: string) => {
-    setGuides(prev => prev.filter(guide => guide.id !== id));
+    setGuides((prev) => prev.filter((guide) => guide.id !== id));
   }, []);
 
   const clearGuides = useCallback(() => {
@@ -557,12 +566,15 @@ export function StudioProvider({ children }: StudioProviderProps) {
   // Asset Integration
   // ========================================================================
 
-  const saveAsset = useCallback(async (options: Omit<StudioAssetSaveOptions, 'type'>): Promise<string> => {
-    // TODO: Implement actual asset saving to IndexedDB
-    // This is a placeholder that will be implemented in Phase 7
-    logger.debug('StudioContext', 'saveAsset called with options:', options);
-    return Promise.resolve('placeholder-asset-id');
-  }, []);
+  const saveAsset = useCallback(
+    async (options: Omit<StudioAssetSaveOptions, 'type'>): Promise<string> => {
+      // TODO: Implement actual asset saving to IndexedDB
+      // This is a placeholder that will be implemented in Phase 7
+      logger.debug('StudioContext', 'saveAsset called with options:', options);
+      return Promise.resolve('placeholder-asset-id');
+    },
+    []
+  );
 
   const loadFromAsset = useCallback(async (assetId: string): Promise<void> => {
     // TODO: Implement actual asset loading from IndexedDB
@@ -572,68 +584,74 @@ export function StudioProvider({ children }: StudioProviderProps) {
     return Promise.resolve();
   }, []);
 
-  const loadFromImage = useCallback(async (file: File | Blob, mode: StudioEditMode = 'full'): Promise<void> => {
-    setIsProcessing(true);
+  const loadFromImage = useCallback(
+    async (file: File | Blob, mode: StudioEditMode = 'full'): Promise<void> => {
+      setIsProcessing(true);
 
-    try {
-      // Import loadImageToCanvas dynamically to avoid circular dependency
-      const { loadImageToCanvas } = await import('../ts/studio/index.js');
-      const canvas = await loadImageToCanvas(file);
+      try {
+        // Import loadImageToCanvas dynamically to avoid circular dependency
+        const { loadImageToCanvas } = await import('../ts/studio/index.js');
+        const canvas = await loadImageToCanvas(file);
 
-      // Create new image layer
-      const newLayer: Layer = {
-        id: crypto.randomUUID(),
-        type: 'image',
-        name: file instanceof File ? file.name : 'Icon',
-        visible: true,
-        opacity: 1.0,
-        blendMode: 'normal',
-        zIndex: layers.length,
-        canvas,
-        version: 0,  // New layer starts with version 0
-        position: { x: 0, y: 0 },
-        rotation: 0,
-        scale: { x: 1, y: 1 },
-        locked: false,  // Icon layer is always editable
-        data: {
-          originalBlob: file,
-          filters: [],
-        },
-      };
+        // Create new image layer
+        const newLayer: Layer = {
+          id: crypto.randomUUID(),
+          type: 'image',
+          name: file instanceof File ? file.name : 'Icon',
+          visible: true,
+          opacity: 1.0,
+          blendMode: 'normal',
+          zIndex: layers.length,
+          canvas,
+          version: 0, // New layer starts with version 0
+          position: { x: 0, y: 0 },
+          rotation: 0,
+          scale: { x: 1, y: 1 },
+          locked: false, // Icon layer is always editable
+          data: {
+            originalBlob: file,
+            filters: [],
+          },
+        };
 
-      addLayer(newLayer);
+        addLayer(newLayer);
 
-      // Update canvas size to match if this is the first layer
-      if (layers.length === 0) {
-        setCanvasSize({ width: canvas.width, height: canvas.height });
+        // Update canvas size to match if this is the first layer
+        if (layers.length === 0) {
+          setCanvasSize({ width: canvas.width, height: canvas.height });
+        }
+
+        // Set edit mode
+        setEditModeState(mode);
+      } catch (error) {
+        logger.error('StudioContext', 'Failed to load image:', error);
+        throw error;
+      } finally {
+        setIsProcessing(false);
       }
+    },
+    [layers, addLayer, setCanvasSize]
+  );
 
-      // Set edit mode
-      setEditModeState(mode);
-    } catch (error) {
-      logger.error('StudioContext', 'Failed to load image:', error);
-      throw error;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [layers, addLayer, setCanvasSize]);
-
-  const newProject = useCallback((width: number, height: number) => {
-    // Release all canvases before clearing layers
-    setLayers(prev => {
-      prev.forEach(layer => releaseStudioCanvas(layer.canvas));
-      return [];
-    });
-    setActiveLayerId(null);
-    setCanvasSize({ width, height });
-    setZoom(1.0);
-    setPan({ x: 0, y: 0 });
-    setBackgroundColor('#ffffff');
-    clearHistory();
-    setIsDirty(false);
-    setCurrentAssetId(undefined);
-    setEditModeState('full');  // Reset to full edit mode
-  }, [clearHistory, setCanvasSize]);
+  const newProject = useCallback(
+    (width: number, height: number) => {
+      // Release all canvases before clearing layers
+      setLayers((prev) => {
+        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
+        return [];
+      });
+      setActiveLayerId(null);
+      setCanvasSize({ width, height });
+      setZoom(1.0);
+      setPan({ x: 0, y: 0 });
+      setBackgroundColor('#ffffff');
+      clearHistory();
+      setIsDirty(false);
+      setCurrentAssetId(undefined);
+      setEditModeState('full'); // Reset to full edit mode
+    },
+    [clearHistory, setCanvasSize]
+  );
 
   // ========================================================================
   // Utility Actions

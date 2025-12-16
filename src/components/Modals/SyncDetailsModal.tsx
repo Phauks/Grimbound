@@ -12,14 +12,14 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
-import { Alert } from '../Shared/UI/Alert';
+import { useCallback, useEffect, useState } from 'react';
 import { useDataSync } from '../../contexts/DataSyncContext';
-import { storageManager } from '../../ts/sync/index.js';
-import CONFIG from '../../ts/config.js';
 import styles from '../../styles/components/modals/SyncDetailsModal.module.css';
+import CONFIG from '../../ts/config.js';
+import { storageManager } from '../../ts/sync/index.js';
+import { Modal } from '../Shared/ModalBase/Modal';
+import { Alert } from '../Shared/UI/Alert';
+import { Button } from '../Shared/UI/Button';
 
 interface SyncDetailsModalProps {
   isOpen: boolean;
@@ -34,7 +34,8 @@ interface CacheStats {
 }
 
 export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
-  const { status, isInitialized, checkForUpdates, downloadUpdate, clearCacheAndResync } = useDataSync();
+  const { status, isInitialized, checkForUpdates, downloadUpdate, clearCacheAndResync } =
+    useDataSync();
   const [isChecking, setIsChecking] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -45,18 +46,11 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     cacheAge: null,
   });
 
-  // Load cache statistics
-  useEffect(() => {
-    if (isOpen && isInitialized) {
-      loadCacheStats();
-    }
-  }, [isOpen, isInitialized]);
-
-  const loadCacheStats = async () => {
+  const loadCacheStats = useCallback(async () => {
     try {
       const characters = await storageManager.getAllCharacters();
       const quota = await storageManager.getStorageQuota();
-      const lastSyncTimestamp = await storageManager.getMetadata('lastSync') as number | null;
+      const lastSyncTimestamp = (await storageManager.getMetadata('lastSync')) as number | null;
 
       setCacheStats({
         characterCount: characters.length,
@@ -67,7 +61,14 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } catch (error) {
       console.error('[SyncDetailsModal] Failed to load cache stats:', error);
     }
-  };
+  }, []);
+
+  // Load cache statistics
+  useEffect(() => {
+    if (isOpen && isInitialized) {
+      loadCacheStats();
+    }
+  }, [isOpen, isInitialized, loadCacheStats]);
 
   const handleCheckForUpdates = useCallback(async () => {
     try {
@@ -96,10 +97,14 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } finally {
       setIsDownloading(false);
     }
-  }, [downloadUpdate]);
+  }, [downloadUpdate, loadCacheStats]);
 
   const handleClearCache = useCallback(async () => {
-    if (!confirm('Are you sure you want to clear the cache? This will re-download all character data.')) {
+    if (
+      !confirm(
+        'Are you sure you want to clear the cache? This will re-download all character data.'
+      )
+    ) {
       return;
     }
 
@@ -114,14 +119,14 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } finally {
       setIsClearing(false);
     }
-  }, [clearCacheAndResync]);
+  }, [clearCacheAndResync, loadCacheStats]);
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
   };
 
   const getDataSourceLabel = () => {
@@ -132,7 +137,6 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
         return 'Local Cache';
       case 'api':
         return 'Legacy API';
-      case 'offline':
       default:
         return 'Offline';
     }
@@ -150,28 +154,20 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
         return 'Installing...';
       case 'error':
         return 'Error';
-      case 'idle':
       default:
         return 'Idle';
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Data Synchronization"
-      size="medium"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Data Synchronization" size="medium">
       {/* Status Section */}
       <section className={styles.section}>
         <h3>Status</h3>
         <div className={styles.infoGrid}>
           <div className={styles.infoItem}>
             <span className={styles.label}>Current Status:</span>
-            <span className={`${styles.value} ${styles[status.state]}`}>
-              {getStatusLabel()}
-            </span>
+            <span className={`${styles.value} ${styles[status.state]}`}>{getStatusLabel()}</span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.label}>Data Source:</span>
@@ -189,15 +185,15 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
                 >
                   {status.currentVersion}
                 </a>
-              ) : 'Unknown'}
+              ) : (
+                'Unknown'
+              )}
             </span>
           </div>
           {status.lastSync && (
             <div className={styles.infoItem}>
               <span className={styles.label}>Last Sync:</span>
-              <span className={styles.value}>
-                {status.lastSync.toLocaleString()}
-              </span>
+              <span className={styles.value}>{status.lastSync.toLocaleString()}</span>
             </div>
           )}
         </div>
@@ -237,9 +233,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
           </div>
           <div className={styles.infoItem}>
             <span className={styles.label}>Storage Used:</span>
-            <span className={styles.value}>
-              {formatBytes(cacheStats.storageUsed)}
-            </span>
+            <span className={styles.value}>{formatBytes(cacheStats.storageUsed)}</span>
           </div>
           {cacheStats.cacheAge && (
             <div className={styles.infoItem}>

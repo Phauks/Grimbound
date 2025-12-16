@@ -6,25 +6,17 @@
 
 import { useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
-import { SaveAssetModal } from './modals/SaveAssetModal';
-import { LogoWizardModal } from './modals/LogoWizardModal';
-import { logger } from '../../../ts/utils/logger.js';
 import styles from '../../../styles/components/studio/Studio.module.css';
+import { logger } from '../../../ts/utils/logger.js';
+import { LogoWizardModal } from './modals/LogoWizardModal';
+import { SaveAssetModal } from './modals/SaveAssetModal';
 
 interface StudioToolbarProps {
   onImportClick: () => void;
 }
 
 export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
-  const {
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    isDirty,
-    newProject,
-    layers,
-  } = useStudio();
+  const { canUndo, canRedo, undo, redo, isDirty, newProject, layers } = useStudio();
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLogoWizard, setShowLogoWizard] = useState(false);
@@ -41,11 +33,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
     <div className={styles.toolbar}>
       {/* File Operations */}
       <div className={styles.toolbarSection}>
-        <button
-          className={styles.toolbarButton}
-          onClick={handleNew}
-          title="New Project (Ctrl+N)"
-        >
+        <button type="button" className={styles.toolbarButton} onClick={handleNew} title="New Project (Ctrl+N)">
           ✨ New
         </button>
         <button
@@ -116,10 +104,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
       />
 
       {/* Logo Wizard */}
-      <LogoWizardModal
-        isOpen={showLogoWizard}
-        onClose={() => setShowLogoWizard(false)}
-      />
+      <LogoWizardModal isOpen={showLogoWizard} onClose={() => setShowLogoWizard(false)} />
     </div>
   );
 }

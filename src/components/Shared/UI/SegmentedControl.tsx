@@ -1,15 +1,15 @@
-import styles from '../../../styles/components/shared/SegmentedControl.module.css'
+import styles from '../../../styles/components/shared/SegmentedControl.module.css';
 
 interface SegmentedControlOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface SegmentedControlProps {
-  options: SegmentedControlOption[]
-  value: string
-  onChange: (value: string) => void
-  className?: string
+  options: SegmentedControlOption[];
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
 }
 
 export function SegmentedControl({ options, value, onChange, className }: SegmentedControlProps) {
@@ -26,5 +26,5 @@ export function SegmentedControl({ options, value, onChange, className }: Segmen
         </button>
       ))}
     </div>
-  )
+  );
 }
