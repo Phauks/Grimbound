@@ -399,6 +399,7 @@ export function ImageProcessingPanel() {
             style={{ width: '100%', marginBottom: 'var(--spacing-xs)' }}
           />
           <button
+            type="button"
             className={styles.toolbarButton}
             onClick={handleCropToContent}
             style={{ width: '100%' }}
@@ -438,6 +439,7 @@ export function ImageProcessingPanel() {
             />
           </div>
           <button
+            type="button"
             className={styles.toolbarButton}
             onClick={handleAddPadding}
             disabled={paddingSize === 0}

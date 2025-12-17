@@ -132,6 +132,7 @@ export function BackgroundRemovalPanel() {
 
       {/* Auto Remove Button */}
       <button
+        type="button"
         className={styles.toolbarButton}
         onClick={handleAutoRemove}
         disabled={isProcessing || isModelLoading}
@@ -215,6 +216,7 @@ export function BackgroundRemovalPanel() {
           <h4 style={{ fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)' }}>Preview</h4>
 
           <button
+            type="button"
             className={styles.toolbarButton}
             onClick={handleTogglePreview}
             style={{ width: '100%', marginBottom: 'var(--spacing-xs)' }}
@@ -222,7 +224,12 @@ export function BackgroundRemovalPanel() {
             {showBefore ? '👁️ Show After' : '👁️ Show Before'}
           </button>
 
-          <button type="button" className={styles.toolbarButton} onClick={handleReset} style={{ width: '100%' }}>
+          <button
+            type="button"
+            className={styles.toolbarButton}
+            onClick={handleReset}
+            style={{ width: '100%' }}
+          >
             🔄 Reset to Original
           </button>
         </div>

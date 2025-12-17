@@ -29,7 +29,7 @@ export function TokenPreviewRow() {
     exampleCharacterToken,
     setExampleCharacterToken,
     exampleMetaToken,
-    setExampleToken,
+    setExampleToken: _setExampleToken,
   } = useTokenContext();
   const { generateTokens } = useTokenGenerator();
 
@@ -291,6 +291,7 @@ export function TokenPreviewRow() {
           <div className={styles.actionsRow}>
             <div className={styles.generateGroup}>
               <button
+                type="button"
                 className={styles.generateBtn}
                 onClick={handleApplyToAll}
                 disabled={isLoading || characters.length === 0}
@@ -299,6 +300,7 @@ export function TokenPreviewRow() {
                 {isLoading ? 'Generating...' : 'Generate'}
               </button>
               <button
+                type="button"
                 className={`${styles.autoBtn} ${autoRegenerate ? styles.autoBtnActive : ''}`}
                 onClick={() => setAutoRegenerate(!autoRegenerate)}
                 title={autoRegenerate ? 'Auto-regenerate enabled' : 'Enable auto-regenerate'}

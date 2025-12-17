@@ -167,7 +167,9 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
     // Add character images (including variants)
     if (character.image) {
       if (Array.isArray(character.image)) {
-        character.image.forEach((url) => imageUrls.add(url));
+        for (const url of character.image) {
+          imageUrls.add(url);
+        }
       } else {
         imageUrls.add(character.image);
       }
@@ -198,7 +200,11 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
       };
 
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(preload, { timeout: 2000 });
+        (
+          window as Window & {
+            requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
+          }
+        ).requestIdleCallback(preload, { timeout: 2000 });
       } else {
         // Fallback: use setTimeout for non-blocking behavior
         setTimeout(preload, 0);

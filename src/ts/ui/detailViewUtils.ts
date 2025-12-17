@@ -134,9 +134,9 @@ export function updateCharacterInJson(
 
     // Handle both array-based and object-based scripts
     if (Array.isArray(parsed)) {
-      const index = parsed.findIndex((item: any) => {
+      const index = parsed.findIndex((item: unknown) => {
         if (typeof item === 'string') return item === characterId;
-        if (typeof item === 'object' && item.id === characterId) return true;
+        if (typeof item === 'object' && item !== null && (item as { id?: string }).id === characterId) return true;
         return false;
       });
 
@@ -173,8 +173,8 @@ export function updateMetaInJson(
 
     // Handle array-based scripts
     if (Array.isArray(parsed)) {
-      const index = parsed.findIndex((item: any) => {
-        return typeof item === 'object' && item !== null && item.id === '_meta';
+      const index = parsed.findIndex((item: unknown) => {
+        return typeof item === 'object' && item !== null && (item as { id?: string }).id === '_meta';
       });
 
       if (index !== -1) {
@@ -307,7 +307,7 @@ export function getCharacterChanges(original: Character, edited: Character): Par
 
   for (const key of keys) {
     if (JSON.stringify(original[key]) !== JSON.stringify(edited[key])) {
-      (changes as any)[key] = edited[key];
+      (changes as Record<string, unknown>)[key] = edited[key];
     }
   }
 

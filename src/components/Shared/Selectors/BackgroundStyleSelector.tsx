@@ -1,9 +1,11 @@
 /**
  * BackgroundStyleSelector Component
  *
- * A comprehensive two-panel settings selector for token backgrounds.
- * Left panel: Base color/gradient settings + visual effects
- * Right panel: Texture overlay selection
+ * A comprehensive four-column settings selector for token backgrounds.
+ * Column 1: Background (solid color/gradient/image selection)
+ * Column 2: Light & Color (brightness, contrast, saturation, vibrance)
+ * Column 3: Effects (vignette, inner glow)
+ * Column 4: Texture overlay selection
  *
  * Supports solid colors, gradients (linear/radial/conic), procedural textures,
  * and visual effects (vignette, inner glow, hue shift).
@@ -11,7 +13,7 @@
  * @module components/Shared/BackgroundStyleSelector
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import drawerStyles from '../../../styles/components/shared/BackgroundDrawer.module.css';
 import styles from '../../../styles/components/shared/BackgroundStyleSelector.module.css';
 import { createBackgroundGradient } from '../../../ts/canvas/gradientUtils';
@@ -41,6 +43,7 @@ import type {
   TextureConfig,
 } from '../../../ts/types/index';
 import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import { EditableSlider } from '../Controls/EditableSlider';
 import { BackgroundDrawer } from '../Drawer';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
@@ -250,79 +253,6 @@ const BackgroundPreview = memo(function BackgroundPreview({
 });
 
 // ============================================================================
-// Editable Slider Value Component
-// ============================================================================
-
-/**
- * Editable slider value that looks like a span but allows direct text input
- */
-const EditableSliderValue = memo(function EditableSliderValue({
-  value,
-  onChange,
-  min = 0,
-  max = 100,
-  suffix = '%',
-  disabled = false,
-  step = 1,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  suffix?: string;
-  disabled?: boolean;
-  step?: number;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFocus = useCallback(() => {
-    setIsEditing(true);
-    // Show just the number without suffix for editing
-    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
-  }, [value, step]);
-
-  const handleBlur = useCallback(() => {
-    setIsEditing(false);
-    const parsed = parseFloat(editValue);
-    if (!Number.isNaN(parsed)) {
-      const clamped = Math.min(max, Math.max(min, parsed));
-      onChange(clamped);
-    }
-  }, [editValue, min, max, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        inputRef.current?.blur();
-      } else if (e.key === 'Escape') {
-        setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
-        inputRef.current?.blur();
-      }
-    },
-    [value, step]
-  );
-
-  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value);
-
-  return (
-    <input
-      ref={inputRef}
-      type="text"
-      className={drawerStyles.sliderValueInput}
-      value={isEditing ? editValue : `${displayValue}${suffix}`}
-      onChange={(e) => setEditValue(e.target.value)}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      disabled={disabled}
-      title={`Click to edit (${min}-${max})`}
-    />
-  );
-});
-
-// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -344,14 +274,20 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   const [pendingResolvedImageUrl, setPendingResolvedImageUrl] = useState<string | null>(null);
 
   // Ensure value has all required fields with defaults
-  const currentStyle: BackgroundStyle = {
-    ...DEFAULT_BACKGROUND_STYLE,
-    ...value,
-    gradient: { ...DEFAULT_GRADIENT_CONFIG, ...value?.gradient },
-    texture: { ...DEFAULT_TEXTURE_CONFIG, ...value?.texture },
-    effects: { ...DEFAULT_EFFECTS_CONFIG, ...value?.effects },
-    light: { ...DEFAULT_LIGHT_CONFIG, ...value?.light },
-  };
+  const currentStyle: BackgroundStyle = useMemo(
+    () => ({
+      ...DEFAULT_BACKGROUND_STYLE,
+      ...value,
+      gradient: { ...DEFAULT_GRADIENT_CONFIG, ...value?.gradient },
+      texture: { ...DEFAULT_TEXTURE_CONFIG, ...value?.texture },
+      effects: { ...DEFAULT_EFFECTS_CONFIG, ...value?.effects },
+      light: { ...DEFAULT_LIGHT_CONFIG, ...value?.light },
+    }),
+    [value]
+  );
+
+  // Get token type display name for accessibility labels
+  const tokenLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
   // Resolve image URL when imageUrl changes (for left panel preview)
   useEffect(() => {
@@ -566,52 +502,6 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
     [updatePending, pendingValue]
   );
 
-  // Generate summary text
-  const getSummary = () => {
-    const parts: string[] = [];
-
-    // Source/Base mode
-    if (currentStyle.sourceType === 'image') {
-      parts.push('Image');
-    } else if (currentStyle.mode === 'solid') {
-      parts.push(`Solid ${currentStyle.solidColor.toUpperCase()}`);
-    } else {
-      parts.push(
-        `${currentStyle.gradient.type.charAt(0).toUpperCase() + currentStyle.gradient.type.slice(1)} gradient`
-      );
-    }
-
-    // Texture (available for all modes now)
-    if (currentStyle.texture.type !== 'none') {
-      const textureOpt = TEXTURE_OPTIONS.find((t) => t.value === currentStyle.texture.type);
-      parts.push(textureOpt?.label || currentStyle.texture.type);
-    }
-
-    // Effects count
-    const effectCount = [
-      currentStyle.effects.vignetteEnabled,
-      currentStyle.effects.innerGlowEnabled,
-    ].filter(Boolean).length;
-    if (effectCount > 0) {
-      parts.push(`${effectCount} effect${effectCount > 1 ? 's' : ''}`);
-    }
-
-    // Light adjustments
-    const hasLightAdjustments =
-      currentStyle.light &&
-      (currentStyle.light.brightness !== 100 ||
-        currentStyle.light.contrast !== 100 ||
-        currentStyle.light.saturation !== 100 ||
-        currentStyle.light.vibrance !== 100);
-    if (hasLightAdjustments) {
-      parts.push('Adjusted');
-    }
-
-    return parts.join(' • ');
-  };
-
-  // Token type label
-  const tokenLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
   // Render the drawer with all settings in 3-column layout (no scrolling)
   const renderDrawer = () => (
@@ -755,30 +645,17 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             </div>
             {(pendingValue.gradient.type === 'linear' ||
               pendingValue.gradient.type === 'conic') && (
-              <div className={drawerStyles.controlRow}>
-                <span className={drawerStyles.controlLabel}>Angle</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="360"
-                  step="15"
-                  value={pendingValue.gradient.rotation}
-                  onChange={(e) =>
-                    handleGradientChange({
-                      ...pendingValue.gradient,
-                      rotation: Number(e.target.value),
-                    })
-                  }
-                  className={drawerStyles.slider}
-                />
-                <EditableSliderValue
-                  value={pendingValue.gradient.rotation}
-                  onChange={(v) => handleGradientChange({ ...pendingValue.gradient, rotation: v })}
-                  min={0}
-                  max={360}
-                  suffix="°"
-                />
-              </div>
+              <EditableSlider
+                label="Angle"
+                value={pendingValue.gradient.rotation}
+                onChange={(v) => handleGradientChange({ ...pendingValue.gradient, rotation: v })}
+                min={0}
+                max={360}
+                step={15}
+                suffix="°"
+                defaultValue={DEFAULT_GRADIENT_CONFIG.rotation}
+                ariaLabel="Gradient angle"
+              />
             )}
           </>
         )}
@@ -805,156 +682,57 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         )}
       </div>
 
-      {/* Column 2: Light & Effects */}
+      {/* Column 2: Light & Color */}
       <div className={drawerStyles.column}>
         <div className={drawerStyles.sectionHeader}>Light & Color</div>
-        <div className={drawerStyles.controlRow}>
-          <button
-            type="button"
-            className={drawerStyles.resettableLabel}
-            onClick={() =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                brightness: 100,
-              })
-            }
-            title="Click to reset to 100%"
-            data-label="Bright"
-          >
-            <span className={drawerStyles.labelText}>Bright</span>
-            <span className={drawerStyles.resetText}>Reset</span>
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="200"
-            value={pendingValue.light?.brightness ?? 100}
-            onChange={(e) =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                brightness: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-          />
-          <EditableSliderValue
-            value={pendingValue.light?.brightness ?? 100}
-            onChange={(v) =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), brightness: v })
-            }
-            min={0}
-            max={200}
-          />
-        </div>
-        <div className={drawerStyles.controlRow}>
-          <button
-            type="button"
-            className={drawerStyles.resettableLabel}
-            onClick={() =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), contrast: 100 })
-            }
-            title="Click to reset to 100%"
-            data-label="Contrast"
-          >
-            <span className={drawerStyles.labelText}>Contrast</span>
-            <span className={drawerStyles.resetText}>Reset</span>
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="200"
-            value={pendingValue.light?.contrast ?? 100}
-            onChange={(e) =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                contrast: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-          />
-          <EditableSliderValue
-            value={pendingValue.light?.contrast ?? 100}
-            onChange={(v) =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), contrast: v })
-            }
-            min={0}
-            max={200}
-          />
-        </div>
-        <div className={drawerStyles.controlRow}>
-          <button
-            type="button"
-            className={drawerStyles.resettableLabel}
-            onClick={() =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                saturation: 100,
-              })
-            }
-            title="Click to reset to 100%"
-            data-label="Satur."
-          >
-            <span className={drawerStyles.labelText}>Satur.</span>
-            <span className={drawerStyles.resetText}>Reset</span>
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="200"
-            value={pendingValue.light?.saturation ?? 100}
-            onChange={(e) =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                saturation: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-          />
-          <EditableSliderValue
-            value={pendingValue.light?.saturation ?? 100}
-            onChange={(v) =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), saturation: v })
-            }
-            min={0}
-            max={200}
-          />
-        </div>
-        <div className={drawerStyles.controlRow}>
-          <button
-            type="button"
-            className={drawerStyles.resettableLabel}
-            onClick={() =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), vibrance: 100 })
-            }
-            title="Click to reset to 100%"
-            data-label="Vibrance"
-          >
-            <span className={drawerStyles.labelText}>Vibrance</span>
-            <span className={drawerStyles.resetText}>Reset</span>
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="200"
-            value={pendingValue.light?.vibrance ?? 100}
-            onChange={(e) =>
-              handleLightChange({
-                ...(pendingValue.light || DEFAULT_LIGHT_CONFIG),
-                vibrance: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-          />
-          <EditableSliderValue
-            value={pendingValue.light?.vibrance ?? 100}
-            onChange={(v) =>
-              handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), vibrance: v })
-            }
-            min={0}
-            max={200}
-          />
-        </div>
+        <EditableSlider
+          label="Bright"
+          value={pendingValue.light?.brightness ?? 100}
+          onChange={(v) =>
+            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), brightness: v })
+          }
+          min={0}
+          max={200}
+          defaultValue={DEFAULT_LIGHT_CONFIG.brightness}
+          ariaLabel="Brightness"
+        />
+        <EditableSlider
+          label="Contrast"
+          value={pendingValue.light?.contrast ?? 100}
+          onChange={(v) =>
+            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), contrast: v })
+          }
+          min={0}
+          max={200}
+          defaultValue={DEFAULT_LIGHT_CONFIG.contrast}
+          ariaLabel="Contrast"
+        />
+        <EditableSlider
+          label="Satur."
+          value={pendingValue.light?.saturation ?? 100}
+          onChange={(v) =>
+            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), saturation: v })
+          }
+          min={0}
+          max={200}
+          defaultValue={DEFAULT_LIGHT_CONFIG.saturation}
+          ariaLabel="Saturation"
+        />
+        <EditableSlider
+          label="Vibrance"
+          value={pendingValue.light?.vibrance ?? 100}
+          onChange={(v) =>
+            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), vibrance: v })
+          }
+          min={0}
+          max={200}
+          defaultValue={DEFAULT_LIGHT_CONFIG.vibrance}
+          ariaLabel="Vibrance"
+        />
+      </div>
 
+      {/* Column 3: Effects */}
+      <div className={drawerStyles.column}>
         <div className={drawerStyles.sectionHeader}>Effects</div>
         <div className={drawerStyles.controlRow}>
           <label className={drawerStyles.effectCheckbox}>
@@ -977,28 +755,18 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             disabled={!pendingValue.effects.vignetteEnabled}
             title="Vignette color"
           />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={pendingValue.effects.vignetteIntensity}
-            onChange={(e) =>
-              handleEffectsChange({
-                ...pendingValue.effects,
-                vignetteIntensity: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-            disabled={!pendingValue.effects.vignetteEnabled}
-          />
-          <EditableSliderValue
-            value={pendingValue.effects.vignetteIntensity}
-            onChange={(v) => handleEffectsChange({ ...pendingValue.effects, vignetteIntensity: v })}
-            min={0}
-            max={100}
-            disabled={!pendingValue.effects.vignetteEnabled}
-          />
         </div>
+        <EditableSlider
+          label="Intensity"
+          value={pendingValue.effects.vignetteIntensity}
+          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, vignetteIntensity: v })}
+          min={0}
+          max={100}
+          defaultValue={DEFAULT_EFFECTS_CONFIG.vignetteIntensity}
+          disabled={!pendingValue.effects.vignetteEnabled}
+          className={drawerStyles.subOptionIndent}
+          ariaLabel="Vignette intensity"
+        />
         <div className={drawerStyles.controlRow}>
           <label className={drawerStyles.effectCheckbox}>
             <input
@@ -1020,57 +788,33 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             disabled={!pendingValue.effects.innerGlowEnabled}
             title="Glow color"
           />
-          <input
-            type="range"
-            min="0"
-            max="50"
-            value={pendingValue.effects.innerGlowRadius}
-            onChange={(e) =>
-              handleEffectsChange({
-                ...pendingValue.effects,
-                innerGlowRadius: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-            disabled={!pendingValue.effects.innerGlowEnabled}
-            title="Glow radius"
-          />
-          <EditableSliderValue
-            value={pendingValue.effects.innerGlowRadius}
-            onChange={(v) => handleEffectsChange({ ...pendingValue.effects, innerGlowRadius: v })}
-            min={0}
-            max={50}
-            suffix=""
-            disabled={!pendingValue.effects.innerGlowEnabled}
-          />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={pendingValue.effects.innerGlowIntensity}
-            onChange={(e) =>
-              handleEffectsChange({
-                ...pendingValue.effects,
-                innerGlowIntensity: Number(e.target.value),
-              })
-            }
-            className={drawerStyles.slider}
-            disabled={!pendingValue.effects.innerGlowEnabled}
-            title="Glow intensity"
-          />
-          <EditableSliderValue
-            value={pendingValue.effects.innerGlowIntensity}
-            onChange={(v) =>
-              handleEffectsChange({ ...pendingValue.effects, innerGlowIntensity: v })
-            }
-            min={0}
-            max={100}
-            disabled={!pendingValue.effects.innerGlowEnabled}
-          />
         </div>
+        <EditableSlider
+          label="Radius"
+          value={pendingValue.effects.innerGlowRadius}
+          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, innerGlowRadius: v })}
+          min={0}
+          max={50}
+          suffix=""
+          defaultValue={DEFAULT_EFFECTS_CONFIG.innerGlowRadius}
+          disabled={!pendingValue.effects.innerGlowEnabled}
+          className={drawerStyles.subOptionIndent}
+          ariaLabel="Glow radius"
+        />
+        <EditableSlider
+          label="Intensity"
+          value={pendingValue.effects.innerGlowIntensity}
+          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, innerGlowIntensity: v })}
+          min={0}
+          max={100}
+          defaultValue={DEFAULT_EFFECTS_CONFIG.innerGlowIntensity}
+          disabled={!pendingValue.effects.innerGlowEnabled}
+          className={drawerStyles.subOptionIndent}
+          ariaLabel="Glow intensity"
+        />
       </div>
 
-      {/* Column 3: Texture */}
+      {/* Column 4: Texture */}
       <div className={drawerStyles.column}>
         <div className={drawerStyles.sectionHeader}>Texture</div>
         <div className={drawerStyles.textureGrid}>
@@ -1086,50 +830,28 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             </button>
           ))}
         </div>
-        <div className={drawerStyles.controlRow}>
-          <span className={drawerStyles.controlLabel}>Intensity</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={pendingValue.texture.intensity}
-            onChange={(e) =>
-              handleTextureChange({ ...pendingValue.texture, intensity: Number(e.target.value) })
-            }
-            className={drawerStyles.slider}
-            disabled={pendingValue.texture.type === 'none'}
-          />
-          <EditableSliderValue
-            value={pendingValue.texture.intensity}
-            onChange={(v) => handleTextureChange({ ...pendingValue.texture, intensity: v })}
-            min={0}
-            max={100}
-            disabled={pendingValue.texture.type === 'none'}
-          />
-        </div>
-        <div className={drawerStyles.controlRow}>
-          <span className={drawerStyles.controlLabel}>Scale</span>
-          <input
-            type="range"
-            min="50"
-            max="200"
-            value={pendingValue.texture.scale * 100}
-            onChange={(e) =>
-              handleTextureChange({ ...pendingValue.texture, scale: Number(e.target.value) / 100 })
-            }
-            className={drawerStyles.slider}
-            disabled={pendingValue.texture.type === 'none'}
-          />
-          <EditableSliderValue
-            value={pendingValue.texture.scale}
-            onChange={(v) => handleTextureChange({ ...pendingValue.texture, scale: v })}
-            min={0.5}
-            max={2}
-            step={0.1}
-            suffix="x"
-            disabled={pendingValue.texture.type === 'none'}
-          />
-        </div>
+        <EditableSlider
+          label="Intensity"
+          value={pendingValue.texture.intensity}
+          onChange={(v) => handleTextureChange({ ...pendingValue.texture, intensity: v })}
+          min={0}
+          max={100}
+          defaultValue={DEFAULT_TEXTURE_CONFIG.intensity}
+          disabled={pendingValue.texture.type === 'none'}
+          ariaLabel="Texture intensity"
+        />
+        <EditableSlider
+          label="Scale"
+          value={pendingValue.texture.scale}
+          onChange={(v) => handleTextureChange({ ...pendingValue.texture, scale: v })}
+          min={0.5}
+          max={2}
+          step={0.1}
+          suffix="x"
+          defaultValue={DEFAULT_TEXTURE_CONFIG.scale}
+          disabled={pendingValue.texture.type === 'none'}
+          ariaLabel="Texture scale"
+        />
         <div className={drawerStyles.controlRow}>
           <span className={drawerStyles.controlLabel}>Blend</span>
           <select
@@ -1214,7 +936,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             />
           </PreviewBox>
         }
-        info={<InfoSection label={`${tokenLabel} Background`} summary={getSummary()} />}
+        info={<InfoSection label="Background" />}
         onAction={handleToggle}
         actionLabel={isDrawerOpen ? 'Close' : 'Customize'}
         isExpanded={isDrawerOpen}

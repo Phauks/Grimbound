@@ -10,7 +10,13 @@ import styles from '../../../../styles/components/studio/Studio.module.css';
 import type { TextLayerData } from '../../../../ts/types/index';
 
 export function FontSelectorPanel() {
-  const { layers, activeLayerId, updateLayer, toolSettings, setToolSettings } = useStudio();
+  const {
+    layers,
+    activeLayerId,
+    updateLayer,
+    toolSettings: _toolSettings,
+    setToolSettings: _setToolSettings,
+  } = useStudio();
 
   // Get active text layer
   const activeLayer = layers.find((l) => l.id === activeLayerId);
@@ -174,6 +180,7 @@ export function FontSelectorPanel() {
           />
           <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
             <button
+              type="button"
               className={styles.smallButton}
               onClick={() => handleFontSizeChange(textData.fontSize - 1)}
               disabled={textData.fontSize <= 8}
@@ -190,6 +197,7 @@ export function FontSelectorPanel() {
               style={{ flex: 1, textAlign: 'center' }}
             />
             <button
+              type="button"
               className={styles.smallButton}
               onClick={() => handleFontSizeChange(textData.fontSize + 1)}
               disabled={textData.fontSize >= 200}
@@ -220,6 +228,7 @@ export function FontSelectorPanel() {
           <label className={styles.controlLabel}>Alignment</label>
           <div style={{ display: 'flex', gap: '4px' }}>
             <button
+              type="button"
               className={textData.alignment === 'left' ? styles.activeButton : styles.button}
               onClick={() => handleAlignmentChange('left')}
               style={{ flex: 1 }}
@@ -227,6 +236,7 @@ export function FontSelectorPanel() {
               ⬅ Left
             </button>
             <button
+              type="button"
               className={textData.alignment === 'center' ? styles.activeButton : styles.button}
               onClick={() => handleAlignmentChange('center')}
               style={{ flex: 1 }}
@@ -234,6 +244,7 @@ export function FontSelectorPanel() {
               ⬌ Center
             </button>
             <button
+              type="button"
               className={textData.alignment === 'right' ? styles.activeButton : styles.button}
               onClick={() => handleAlignmentChange('right')}
               style={{ flex: 1 }}
@@ -300,6 +311,7 @@ export function FontSelectorPanel() {
           <label className={styles.controlLabel}>Quick Presets</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
             <button
+              type="button"
               className={styles.button}
               onClick={() => {
                 handleFontChange('LHF Unlovable');
@@ -309,6 +321,7 @@ export function FontSelectorPanel() {
               Title
             </button>
             <button
+              type="button"
               className={styles.button}
               onClick={() => {
                 handleFontChange('Georgia');
@@ -318,6 +331,7 @@ export function FontSelectorPanel() {
               Subtitle
             </button>
             <button
+              type="button"
               className={styles.button}
               onClick={() => {
                 handleFontChange('TradeGothic');
@@ -327,6 +341,7 @@ export function FontSelectorPanel() {
               Body
             </button>
             <button
+              type="button"
               className={styles.button}
               onClick={() => {
                 handleFontChange('Courier New');

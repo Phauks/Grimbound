@@ -198,8 +198,8 @@ function compareGenerationOptions(
   const allKeys = new Set([...oldKeys, ...newKeys]);
 
   for (const key of allKeys) {
-    const oldValue = (oldOptions as any)[key];
-    const newValue = (newOptions as any)[key];
+    const oldValue = (oldOptions as unknown as Record<string, unknown>)[key];
+    const newValue = (newOptions as unknown as Record<string, unknown>)[key];
 
     if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
       fields.push(key);

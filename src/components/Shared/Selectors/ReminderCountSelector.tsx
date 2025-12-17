@@ -205,7 +205,7 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
           <CountPreview style={displaySettings.style} isEnabled={isEnabled} />
         </PreviewBox>
       }
-      info={<InfoSection label="Count" summary={getSummary()} />}
+      info={<InfoSection label="Count" />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}

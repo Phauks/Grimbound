@@ -15,7 +15,18 @@ export type WorkerMessageType = 'ENCODE_CANVAS' | 'ENCODE_BATCH';
 export interface WorkerTask {
   type: WorkerMessageType;
   id: string; // Unique task ID for response matching
-  data: any;
+  data: EncodeCanvasTask | EncodeBatchTask;
+}
+
+/**
+ * Worker response data types.
+ */
+export interface EncodeCanvasResult {
+  dataUrl: string;
+}
+
+export interface EncodeBatchResult {
+  dataUrls: string[];
 }
 
 /**
@@ -24,7 +35,7 @@ export interface WorkerTask {
 export interface WorkerResponse {
   type: 'SUCCESS' | 'ERROR';
   id: string; // Matches task ID
-  data?: any;
+  data?: EncodeCanvasResult | EncodeBatchResult;
   error?: string;
 }
 
@@ -159,4 +170,7 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
 };
 
 // Notify main thread that worker is ready
-self.postMessage({ type: 'READY' } as any);
+interface ReadyMessage {
+  type: 'READY';
+}
+self.postMessage({ type: 'READY' } as ReadyMessage);

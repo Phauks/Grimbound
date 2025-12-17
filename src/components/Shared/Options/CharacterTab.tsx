@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import styles from '../../../styles/components/options/OptionsTab.module.css';
 import type { GenerationOptions } from '../../../ts/types/index';
-import { SliderWithValue } from '../Controls/SliderWithValue';
+import { EditableSlider } from '../Controls/EditableSlider';
 import { AssetPreviewSelector } from '../Selectors/AssetPreviewSelector';
 import { ColorPreviewSelector } from '../Selectors/ColorPreviewSelector';
 import { OptionGroup } from '../UI/OptionGroup';
@@ -162,25 +162,25 @@ export const CharacterTab = memo(
                   description="Adjust the horizontal spacing between letters in the character name. Higher values spread letters apart."
                   isSlider
                 >
-                  <SliderWithValue
+                  <EditableSlider
                     value={generationOptions.fontSpacing?.characterName || 0}
                     onChange={(value) => handleFontSpacingChange('characterName', value)}
                     min={0}
                     max={20}
                     defaultValue={0}
-                    unit="px"
+                    suffix="px"
                     ariaLabel="Character Name Font Spacing value"
                   />
                 </OptionGroup>
 
                 <OptionGroup label="Text Shadow" helpText="Adjust text shadow intensity" isSlider>
-                  <SliderWithValue
+                  <EditableSlider
                     value={generationOptions.textShadow?.characterName || 0}
                     onChange={(value) => handleTextShadowChange('characterName', value)}
                     min={0}
                     max={20}
                     defaultValue={4}
-                    unit="px"
+                    suffix="px"
                     ariaLabel="Character Name Text Shadow value"
                   />
                 </OptionGroup>
@@ -229,25 +229,25 @@ export const CharacterTab = memo(
                   helpText="Adjust spacing between ability text characters"
                   isSlider
                 >
-                  <SliderWithValue
+                  <EditableSlider
                     value={generationOptions.fontSpacing?.abilityText || 0}
                     onChange={(value) => handleFontSpacingChange('abilityText', value)}
                     min={0}
                     max={20}
                     defaultValue={0}
-                    unit="px"
+                    suffix="px"
                     ariaLabel="Ability Text Font Spacing value"
                   />
                 </OptionGroup>
 
                 <OptionGroup label="Text Shadow" helpText="Adjust text shadow intensity" isSlider>
-                  <SliderWithValue
+                  <EditableSlider
                     value={generationOptions.textShadow?.abilityText || 0}
                     onChange={(value) => handleTextShadowChange('abilityText', value)}
                     min={0}
                     max={20}
                     defaultValue={3}
-                    unit="px"
+                    suffix="px"
                     ariaLabel="Ability Text Shadow value"
                   />
                 </OptionGroup>
@@ -275,7 +275,7 @@ export const CharacterTab = memo(
                   helpText="Maximum number of leaves to generate (0 = disabled)"
                   isSlider
                 >
-                  <SliderWithValue
+                  <EditableSlider
                     value={Math.min(
                       generationOptions.maximumLeaves ?? 0,
                       (generationOptions.leafSlots || 7) + 2
@@ -284,6 +284,7 @@ export const CharacterTab = memo(
                     min={0}
                     max={(generationOptions.leafSlots || 7) + 2}
                     defaultValue={0}
+                    suffix=""
                     ariaLabel="Maximum Leaves value"
                   />
                 </OptionGroup>
@@ -306,13 +307,13 @@ export const CharacterTab = memo(
                       helpText="Chance of each position spawning a leaf (0-100%)"
                       isSlider
                     >
-                      <SliderWithValue
+                      <EditableSlider
                         value={generationOptions.leafPopulationProbability || 30}
                         onChange={(value) => onOptionChange({ leafPopulationProbability: value })}
                         min={0}
                         max={100}
                         defaultValue={30}
-                        unit="%"
+                        suffix="%"
                         ariaLabel="Leaf Population Probability value"
                       />
                     </OptionGroup>
@@ -322,13 +323,13 @@ export const CharacterTab = memo(
                       helpText="Width of the arc for top leaves in degrees (30-180)"
                       isSlider
                     >
-                      <SliderWithValue
+                      <EditableSlider
                         value={generationOptions.leafArcSpan || 120}
                         onChange={(value) => onOptionChange({ leafArcSpan: value })}
                         min={30}
                         max={180}
                         defaultValue={120}
-                        unit="°"
+                        suffix="°"
                         ariaLabel="Leaf Arc Span value"
                       />
                     </OptionGroup>
@@ -338,12 +339,13 @@ export const CharacterTab = memo(
                       helpText="Number of leaf positions along the top arc (3-15)"
                       isSlider
                     >
-                      <SliderWithValue
+                      <EditableSlider
                         value={generationOptions.leafSlots || 7}
                         onChange={(value) => onOptionChange({ leafSlots: value })}
                         min={3}
                         max={15}
                         defaultValue={7}
+                        suffix=""
                         ariaLabel="Leaf Arc Slots value"
                       />
                     </OptionGroup>

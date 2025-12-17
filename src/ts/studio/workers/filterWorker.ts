@@ -28,7 +28,6 @@ interface ErrorResponse {
 }
 
 type WorkerRequest = FilterRequest;
-type WorkerResponse = FilterResponse | ErrorResponse;
 
 // ============================================================================
 // Filter Implementations
@@ -136,7 +135,9 @@ function adjustHue(imageData: ImageData, degrees: number): ImageData {
       return p;
     };
 
-    let r2, g2, b2;
+    let r2: number;
+    let g2: number;
+    let b2: number;
     if (s === 0) {
       r2 = g2 = b2 = l;
     } else {
@@ -279,7 +280,7 @@ function processFilter(imageData: ImageData, filter: ImageFilter): ImageData {
     case 'invert':
       return invertColors(imageData);
     default:
-      throw new Error(`Unknown filter type: ${(filter as any).type}`);
+      throw new Error(`Unknown filter type: ${(filter as { type: string }).type}`);
   }
 }
 

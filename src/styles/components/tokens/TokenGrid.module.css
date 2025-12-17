@@ -23,7 +23,6 @@
   align-content: start;
   justify-content: center;
   padding: var(--spacing-md);
-  padding-top: var(--spacing-lg);
 }
 
 /* Reminder Token Grid - smaller min/max for reminder tokens */

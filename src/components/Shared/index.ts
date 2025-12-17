@@ -8,7 +8,6 @@ export { FileDropzone } from './Controls/FileDropzone';
 export { IconUploader } from './Controls/IconUploader';
 export { ImageSelector, type ImageSelectorShape } from './Controls/ImageSelector';
 export { MeasurementSlider } from './Controls/MeasurementSlider';
-export { SliderWithValue } from './Controls/SliderWithValue';
 // Feedback Components (from Feedback/ subdirectory)
 export { AutoSaveIndicator } from './Feedback/AutoSaveIndicator';
 export { AutoSaveToggle } from './Feedback/AutoSaveToggle';

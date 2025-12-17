@@ -17,7 +17,7 @@
  * @module components/Shared/IconSettingsSelector
  */
 
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
 import iconStyles from '../../../styles/components/shared/IconSettingsSelector.module.css';
@@ -25,8 +25,8 @@ import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.m
 import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
 import type { MeasurementUnit } from '../../../ts/types/measurement';
 import { ICON_OFFSET_CONFIG } from '../../../ts/utils/measurementUtils';
+import { EditableSlider } from '../Controls/EditableSlider';
 import { MeasurementSlider } from '../Controls/MeasurementSlider';
-import { SliderWithValue } from '../Controls/SliderWithValue';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -181,25 +181,6 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
   // Get token type display name
   const tokenTypeLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
-  // Format offset for display
-  const formatOffset = useCallback(
-    (offset: number): string => {
-      if (displayUnit === 'millimeters') {
-        const mm = offset * 25.4;
-        return mm === 0 ? '0' : mm.toFixed(1);
-      }
-      return offset === 0 ? '0' : offset.toFixed(3);
-    },
-    [displayUnit]
-  );
-
-  const unitSuffix = displayUnit === 'millimeters' ? 'mm' : '"';
-
-  // Format summary text
-  const getSummary = useCallback(() => {
-    return `X: ${formatOffset(displaySettings.offsetX)}${unitSuffix} · Y: ${formatOffset(displaySettings.offsetY)}${unitSuffix}`;
-  }, [displaySettings, formatOffset, unitSuffix]);
-
   // Render the expandable panel via portal
   const renderPanel = () => {
     if (!(panel.isExpanded && panel.panelPosition)) return null;
@@ -226,64 +207,41 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
 
           {/* Scale */}
           <div className={iconStyles.sliderGroup}>
-            <div className={iconStyles.sliderHeader}>
-              <span className={iconStyles.sliderLabel}>Scale</span>
-              <span className={iconStyles.settingValue}>
-                {panel.pendingValue.scale.toFixed(1)}x
-              </span>
-            </div>
-            <div className={iconStyles.compactSlider}>
-              <SliderWithValue
-                value={panel.pendingValue.scale}
-                onChange={(val) => panel.updatePendingField('scale', val)}
-                min={0.5}
-                max={2.0}
-                step={0.1}
-                defaultValue={1.0}
-                unit="x"
-                ariaLabel={`${tokenTypeLabel} Icon Scale`}
-              />
-            </div>
+            <EditableSlider
+              label="Scale"
+              value={panel.pendingValue.scale}
+              onChange={(val) => panel.updatePendingField('scale', val)}
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              suffix="x"
+              defaultValue={DEFAULT_SETTINGS.scale}
+              ariaLabel={`${tokenTypeLabel} Icon Scale`}
+            />
           </div>
 
           {/* Offset X */}
           <div className={iconStyles.sliderGroup}>
-            <div className={iconStyles.sliderHeader}>
-              <span className={iconStyles.sliderLabel}>Offset X</span>
-              <span className={iconStyles.settingValue}>
-                {formatOffset(panel.pendingValue.offsetX)}
-                {unitSuffix}
-              </span>
-            </div>
-            <div className={iconStyles.compactSlider}>
-              <MeasurementSlider
-                value={panel.pendingValue.offsetX}
-                onChange={(val) => panel.updatePendingField('offsetX', val)}
-                config={ICON_OFFSET_CONFIG}
-                displayUnit={displayUnit}
-                ariaLabel={`${tokenTypeLabel} Icon Horizontal Offset`}
-              />
-            </div>
+            <MeasurementSlider
+              label="Offset X"
+              value={panel.pendingValue.offsetX}
+              onChange={(val) => panel.updatePendingField('offsetX', val)}
+              config={ICON_OFFSET_CONFIG}
+              displayUnit={displayUnit}
+              ariaLabel={`${tokenTypeLabel} Icon Horizontal Offset`}
+            />
           </div>
 
           {/* Offset Y */}
           <div className={iconStyles.sliderGroup}>
-            <div className={iconStyles.sliderHeader}>
-              <span className={iconStyles.sliderLabel}>Offset Y</span>
-              <span className={iconStyles.settingValue}>
-                {formatOffset(panel.pendingValue.offsetY)}
-                {unitSuffix}
-              </span>
-            </div>
-            <div className={iconStyles.compactSlider}>
-              <MeasurementSlider
-                value={panel.pendingValue.offsetY}
-                onChange={(val) => panel.updatePendingField('offsetY', val)}
-                config={ICON_OFFSET_CONFIG}
-                displayUnit={displayUnit}
-                ariaLabel={`${tokenTypeLabel} Icon Vertical Offset`}
-              />
-            </div>
+            <MeasurementSlider
+              label="Offset Y"
+              value={panel.pendingValue.offsetY}
+              onChange={(val) => panel.updatePendingField('offsetY', val)}
+              config={ICON_OFFSET_CONFIG}
+              displayUnit={displayUnit}
+              ariaLabel={`${tokenTypeLabel} Icon Vertical Offset`}
+            />
           </div>
         </div>
 
@@ -322,9 +280,7 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
           />
         </PreviewBox>
       }
-      info={
-        <InfoSection label={`${displaySettings.scale.toFixed(1)}x Scale`} summary={getSummary()} />
-      }
+      info={<InfoSection label="Icon" />}
       actionLabel="Customize"
       onAction={panel.toggle}
       isExpanded={panel.isExpanded}

@@ -2,8 +2,10 @@
  * BackgroundDrawer Component Styles
  *
  * Wide horizontal panel for background settings that positions itself
- * below the TokenPreviewRow. Uses 3-column layout for all settings
+ * below the TokenPreviewRow. Uses 4-column layout for all settings
  * visible at once WITHOUT scrolling.
+ *
+ * Columns: Background | Light & Color | Effects | Texture
  */
 
 /* ============================================
@@ -170,20 +172,25 @@
 }
 
 /* ============================================
-   Drawer Content - 3 Column Layout
+   Drawer Content - 4 Column Layout
+   Background | Light & Color | Effects | Texture
    ============================================ */
 
 .drawerContent {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 /* Each column */
 .column {
   padding: 0.625rem 0.75rem;
   border-right: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  /* Prevent content from forcing column wider than 1fr */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .column:last-of-type {
@@ -484,6 +491,84 @@
   accent-color: var(--color-accent, #8b5cf6);
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* Sub-option row - indented to show hierarchy */
+.subOptionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+  padding-left: 1rem;
+}
+
+.subOptionRow:last-child {
+  margin-bottom: 0;
+}
+
+.subOptionLabel {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+/* Sub-option indent class for EditableSlider */
+.subOptionIndent {
+  padding-left: 1rem;
+  margin-bottom: 0.375rem;
+}
+
+/* Sub-option resettable label - clickable to reset value */
+.subOptionResettableLabel {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+  min-width: 48px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.1s ease;
+}
+
+.subOptionResettableLabel .labelText {
+  display: inline;
+}
+
+.subOptionResettableLabel .resetText {
+  display: none;
+  color: var(--color-accent, #8b5cf6);
+}
+
+.subOptionResettableLabel:hover {
+  color: var(--color-accent, #8b5cf6);
+}
+
+.subOptionResettableLabel:hover .labelText {
+  display: none;
+}
+
+.subOptionResettableLabel:hover .resetText {
+  display: inline;
+}
+
+.subOptionResettableLabel:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.subOptionResettableLabel:disabled:hover {
+  color: var(--text-muted, #888);
+}
+
+.subOptionResettableLabel:disabled:hover .labelText {
+  display: inline;
+}
+
+.subOptionResettableLabel:disabled:hover .resetText {
+  display: none;
 }
 
 /* ============================================

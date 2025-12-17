@@ -119,7 +119,7 @@ export async function decompressBlob(blob: Blob): Promise<string> {
  * }
  * ```
  */
-export async function compressJSON<T = any>(obj: T): Promise<Blob | null> {
+export async function compressJSON<T = unknown>(obj: T): Promise<Blob | null> {
   const json = JSON.stringify(obj);
   return compressString(json);
 }
@@ -138,7 +138,7 @@ export async function compressJSON<T = any>(obj: T): Promise<Blob | null> {
  * const state = await decompressJSON<ProjectState>(project.stateBlob);
  * ```
  */
-export async function decompressJSON<T = any>(blob: Blob): Promise<T> {
+export async function decompressJSON<T = unknown>(blob: Blob): Promise<T> {
   const text = await decompressBlob(blob);
   return JSON.parse(text);
 }

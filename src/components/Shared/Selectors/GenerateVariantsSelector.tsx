@@ -200,7 +200,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
           <VariantPreview isEnabled={isEnabled} />
         </PreviewBox>
       }
-      info={<InfoSection label="Variants" summary={getSummary()} />}
+      info={<InfoSection label="Variants" />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}

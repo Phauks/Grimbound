@@ -13,7 +13,7 @@ interface StudioCanvasProps {
 }
 
 export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
-  const { canvasSize, zoom, pan, setZoom, setPan, resetView } = useStudio();
+  const { canvasSize, zoom, pan, setZoom, setPan, resetView: _resetView } = useStudio();
 
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -221,6 +221,7 @@ export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
       {/* Zoom Controls */}
       <div className={styles.zoomControls}>
         <button
+          type="button"
           className={styles.zoomButton}
           onClick={handleZoomOut}
           title="Zoom Out (Scroll Down)"
@@ -230,14 +231,29 @@ export function StudioCanvas({ compositeCanvasRef }: StudioCanvasProps) {
         <div className={styles.zoomLevel} onClick={handleResetZoom} title="Click to reset to 100%">
           {Math.round(zoom * 100)}%
         </div>
-        <button type="button" className={styles.zoomButton} onClick={handleZoomIn} title="Zoom In (Scroll Up)">
+        <button
+          type="button"
+          className={styles.zoomButton}
+          onClick={handleZoomIn}
+          title="Zoom In (Scroll Up)"
+        >
           +
         </button>
         <div className={styles.toolbarDivider} style={{ margin: '0 4px' }} />
-        <button type="button" className={styles.zoomButton} onClick={handleFitToScreen} title="Fit to Screen (F)">
+        <button
+          type="button"
+          className={styles.zoomButton}
+          onClick={handleFitToScreen}
+          title="Fit to Screen (F)"
+        >
           ⊡
         </button>
-        <button type="button" className={styles.zoomButton} onClick={handleResetZoom} title="100% Zoom (Ctrl+0)">
+        <button
+          type="button"
+          className={styles.zoomButton}
+          onClick={handleResetZoom}
+          title="100% Zoom (Ctrl+0)"
+        >
           1:1
         </button>
       </div>

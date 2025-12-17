@@ -30,7 +30,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
     projects,
     currentProject,
     updateProject,
-    deleteProject,
     duplicateProject,
     createProject,
     activateProject,

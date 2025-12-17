@@ -32,13 +32,22 @@ const Row: RowComponentType = memo(
     index,
     style,
     lines,
-  }: RowComponentProps<RowData> & { lines: HighlightLine[] }): ReactElement => (
-    <div
-      style={style}
-      className="json-highlight-line"
-      dangerouslySetInnerHTML={{ __html: lines[index]?.html || '&nbsp;' }}
-    />
-  )
+  }: RowComponentProps<RowData> & { lines: HighlightLine[] }): ReactElement => {
+    const line = lines[index];
+    // If your HighlightLine type has a "tokens" array, render each token as a span.
+    // Otherwise, fallback to rendering plain text.
+    return (
+      <div style={style} className="json-highlight-line">
+        {line?.tokens
+          ? line.tokens.map((token, i) => (
+              <span key={`${token.type}-${token.content}-${i}`} className={token.type}>
+                {token.content}
+              </span>
+            ))
+          : line?.text || '\u00A0'}
+      </div>
+    );
+  }
 ) as RowComponentType;
 
 (Row as unknown as { displayName: string }).displayName = 'VirtualizedJsonRow';

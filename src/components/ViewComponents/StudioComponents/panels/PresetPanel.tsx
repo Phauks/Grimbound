@@ -144,6 +144,7 @@ export function PresetPanel() {
       >
         {CHARACTER_PRESETS.map((preset) => (
           <button
+            type="button"
             key={preset.id}
             className={styles.toolbarButton}
             onClick={() => handleApplyPreset(preset.id)}
@@ -187,7 +188,12 @@ export function PresetPanel() {
         <div
           style={{ paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--color-primary)' }}
         >
-          <button type="button" className={styles.toolbarButton} onClick={handleReset} style={{ width: '100%' }}>
+          <button
+            type="button"
+            className={styles.toolbarButton}
+            onClick={handleReset}
+            style={{ width: '100%' }}
+          >
             🔄 Reset to Original Colors
           </button>
         </div>

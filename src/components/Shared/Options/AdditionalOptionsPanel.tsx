@@ -41,7 +41,6 @@ export const AdditionalOptionsPanel = memo(
         <div className={styles.settingsStack}>
           {/* 1. Ability Text */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Ability Text</h4>
             <AbilityTextSection
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -50,7 +49,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 2. Reminder Count */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Reminder Count</h4>
             <ReminderCountSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -59,7 +57,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 3. Setup (renamed from Setup Flower) */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Setup</h4>
             <SetupSettingsSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -69,7 +66,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 4. Accents */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Accents</h4>
             <AccentSettingsSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -79,7 +75,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 5. Variants */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Variants</h4>
             <GenerateVariantsSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -88,7 +83,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 6. Bootlegger */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Bootlegger</h4>
             <BootleggerSettingsSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -97,7 +91,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 7. Meta Tokens */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>Meta Tokens</h4>
             <MetaTokensSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}
@@ -106,7 +99,6 @@ export const AdditionalOptionsPanel = memo(
 
           {/* 8. QR Code Style */}
           <div className={styles.settingsGroup}>
-            <h4 className={styles.settingsGroupLabel}>QR Code Style</h4>
             <QRCodeSettingsSelector
               generationOptions={generationOptions}
               onOptionChange={onOptionChange}

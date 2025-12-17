@@ -15,7 +15,7 @@ import type {
  * Port: Main cache interface that all cache adapters must implement.
  * This is the hexagon's "port" - defines the contract without implementation.
  */
-export interface ICacheStrategy<K = string, V = any> {
+export interface ICacheStrategy<K = string, V = unknown> {
   /**
    * Retrieve cached value by key.
    * @param key - Cache key to look up

@@ -32,29 +32,39 @@ export const ImageSelector = memo(
       <div className={styles.container} role="radiogroup" aria-label={ariaLabel}>
         {/* None option */}
         {showNone && (
-          <button
-            type="button"
+          <label
             className={`${styles.thumbnail} ${shapeClass} ${value === 'none' ? styles.selected : ''}`}
-            onClick={() => onChange('none')}
             title={noneLabel}
-            role="radio"
-            aria-checked={value === 'none'}
           >
+            <input
+              type="radio"
+              name="image-selector"
+              value="none"
+              checked={value === 'none'}
+              onChange={() => onChange('none')}
+              style={{ display: 'none' }}
+              aria-label={noneLabel}
+            />
             <span className={styles.noneIcon}>∅</span>
-          </button>
+          </label>
         )}
 
         {/* Image options */}
         {options.map((option) => (
-          <button
+          <label
             key={option.id}
-            type="button"
             className={`${styles.thumbnail} ${shapeClass} ${value === option.id ? styles.selected : ''}`}
-            onClick={() => onChange(option.id)}
             title={option.label}
-            role="radio"
-            aria-checked={value === option.id}
           >
+            <input
+              type="radio"
+              name="image-selector"
+              value={option.id}
+              checked={value === option.id}
+              onChange={() => onChange(option.id)}
+              style={{ display: 'none' }}
+              aria-label={option.label}
+            />
             <img
               src={option.thumbnail || option.src}
               alt={option.label}
@@ -66,7 +76,7 @@ export const ImageSelector = memo(
                 {option.source === 'user' ? '★' : '◆'}
               </span>
             )}
-          </button>
+          </label>
         ))}
 
         {/* Add Custom placeholder */}

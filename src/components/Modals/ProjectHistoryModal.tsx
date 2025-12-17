@@ -356,9 +356,26 @@ function TimelineItemCard({
   const isVersion = item.type === 'version';
 
   return (
-    <div
+    <button
+      type="button"
       className={`${styles.timelineItem} ${isSelected ? styles.selected : ''} ${isVersion ? styles.version : styles.snapshot}`}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      tabIndex={0}
+      aria-pressed={isSelected}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+      }}
     >
       <div className={styles.itemHeader}>
         <div className={styles.itemType}>
@@ -405,7 +422,7 @@ function TimelineItemCard({
           </Button>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 

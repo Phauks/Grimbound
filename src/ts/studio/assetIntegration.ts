@@ -64,7 +64,7 @@ export async function saveStudioAsset(
     tags = [],
     createdFrom,
     sourceAssetId,
-    presetApplied,
+    presetApplied: _presetApplied,
   } = options;
 
   // Composite all layers to create the final image
@@ -142,8 +142,13 @@ export async function loadStudioAsset(assetId: string): Promise<{
 
   if (projectDataId) {
     // Load complete project state
-    const { layers, canvasSize, toolSettings, backgroundColor, preset } =
-      await loadStudioPreset(projectDataId);
+    const {
+      layers,
+      canvasSize,
+      toolSettings,
+      backgroundColor,
+      preset: _preset,
+    } = await loadStudioPreset(projectDataId);
 
     // Get metadata from asset storage
     const asset = await assetStorageService.getById(assetId);

@@ -30,12 +30,7 @@ interface JsonViewProps {
   onCreateProject?: () => void;
 }
 
-export function JsonView({
-  onGenerate,
-  onNavigateToCharacters,
-  onNavigateToProjects,
-  onCreateProject,
-}: JsonViewProps) {
+export function JsonView({ onGenerate }: JsonViewProps) {
   const {
     jsonInput,
     setJsonInput,
@@ -51,13 +46,11 @@ export function JsonView({
   const { currentProject } = useProjectContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
   const {
-    loadScript,
     loadExampleScriptByName,
     parseJson,
-    clearScript,
     addMetaToScript,
-    hasUnderscoresInIds,
-    removeUnderscoresFromIds,
+    hasSeparatorsInIds,
+    removeSeparatorsFromIds,
     updateScript,
   } = useScriptData();
   const { generateTokens } = useTokenGenerator();
@@ -248,19 +241,6 @@ export function JsonView({
     [updateScript]
   );
 
-  const _handleExampleChange = useCallback(
-    async (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const scriptName = e.target.value;
-      setSelectedExample(scriptName);
-      if (scriptName) {
-        isExternalChangeRef.current = true;
-        await loadExampleScriptByName(scriptName);
-        previousJsonRef.current = '';
-      }
-    },
-    [loadExampleScriptByName]
-  );
-
   const handleClear = useCallback(async () => {
     // Push current value to undo stack before clearing
     if (jsonInput.trim()) {
@@ -316,19 +296,25 @@ export function JsonView({
       }
 
       let modified = false;
-      const updated = parsed.map((entry: any) => {
+      const updated = parsed.map((entry: Record<string, unknown>) => {
         if (typeof entry !== 'object' || entry === null) return entry;
-        if (entry.id === '_meta') return entry;
+        if ((entry as { id?: string }).id === '_meta') return entry;
 
         const newEntry = { ...entry };
 
-        if (entry.firstNightReminder && analyzeReminderText(entry.firstNightReminder).length > 0) {
-          newEntry.firstNightReminder = normalizeReminderText(entry.firstNightReminder);
+        if (
+          typeof newEntry.firstNightReminder === 'string' &&
+          analyzeReminderText(newEntry.firstNightReminder).length > 0
+        ) {
+          newEntry.firstNightReminder = normalizeReminderText(newEntry.firstNightReminder);
           modified = true;
         }
 
-        if (entry.otherNightReminder && analyzeReminderText(entry.otherNightReminder).length > 0) {
-          newEntry.otherNightReminder = normalizeReminderText(entry.otherNightReminder);
+        if (
+          typeof newEntry.otherNightReminder === 'string' &&
+          analyzeReminderText(newEntry.otherNightReminder).length > 0
+        ) {
+          newEntry.otherNightReminder = normalizeReminderText(newEntry.otherNightReminder);
           modified = true;
         }
 
@@ -373,11 +359,6 @@ export function JsonView({
       }, 0);
     }
   }, [undoStack, updateScript]);
-
-  const _handleManualGenerate = useCallback(async () => {
-    await generateTokens();
-    if (onGenerate) onGenerate();
-  }, [generateTokens, onGenerate]);
 
   // Auto-resize textarea to fit content - this prevents internal scrolling
   // so the parent container handles all scrolling (no JS scroll sync needed)
@@ -537,6 +518,7 @@ export function JsonView({
             {/* Edit Group */}
             <div className={styles.toolbarGroup}>
               <button
+                type="button"
                 className={styles.toolbarButton}
                 onClick={() => {
                   navigator.clipboard
@@ -560,6 +542,7 @@ export function JsonView({
             {/* History Group */}
             <div className={styles.toolbarGroup}>
               <button
+                type="button"
                 className={styles.toolbarButton}
                 onClick={handleUndo}
                 disabled={!undoStack.canUndo}
@@ -568,6 +551,7 @@ export function JsonView({
                 Undo
               </button>
               <button
+                type="button"
                 className={styles.toolbarButton}
                 onClick={handleRedo}
                 disabled={!undoStack.canRedo}
@@ -582,6 +566,7 @@ export function JsonView({
             {/* Danger Group */}
             <div className={styles.toolbarGroup}>
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${styles.toolbarButtonDanger}`}
                 onClick={handleClear}
                 title="Clear editor"
@@ -592,11 +577,12 @@ export function JsonView({
           </div>
 
           {/* Editor Area */}
-          <div
+          <section
             className={`${styles.editorWrapper} ${isDragging ? styles.dragging : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            aria-label="JSON editor drop area"
           >
             <div className={scriptStyles.jsonHighlight}>
               <JsonHighlight json={jsonInput} />
@@ -614,13 +600,13 @@ export function JsonView({
                 <span>Drop JSON file here</span>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Messages indicator (errors/warnings) - below editor */}
           {(error ||
             warnings.length > 0 ||
             (characters.length > 0 && !scriptMeta) ||
-            hasUnderscoresInIds() ||
+            hasSeparatorsInIds() ||
             (characters.length > 0 && !isScriptSorted) ||
             hasCondensableRefs ||
             formatIssuesSummary ||
@@ -649,18 +635,19 @@ export function JsonView({
                   buttonTitle="Add _meta entry to script"
                 />
               )}
-              {/* Underscore in IDs recommendation */}
-              {hasUnderscoresInIds() && !error && (
+              {/* Separators in IDs recommendation */}
+              {hasSeparatorsInIds() && !error && (
                 <InfoMessage
                   message={
                     <>
-                      Some character IDs contain underscores. Official IDs don't use underscores
-                      (e.g., <code>fortune_teller</code> → <code>fortuneteller</code>).
+                      Some character IDs contain underscores or hyphens. Official IDs don't use
+                      separators (e.g., <code>fortune_teller</code> or <code>fortune-teller</code> →{' '}
+                      <code>fortuneteller</code>).
                     </>
                   }
-                  buttonLabel="Remove underscores"
-                  onClick={removeUnderscoresFromIds}
-                  buttonTitle="Remove underscores from character IDs"
+                  buttonLabel="Remove separators"
+                  onClick={removeSeparatorsFromIds}
+                  buttonTitle="Remove underscores and hyphens from character IDs"
                 />
               )}
               {/* Script not sorted recommendation */}
@@ -713,7 +700,7 @@ export function JsonView({
                       <div className={styles.messagesDropdownUp}>
                         {visibleMessages.map((msg, i) => (
                           <div
-                            key={i}
+                            key={`msg-${msg.type}-${msg.text}-${i}`}
                             className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}
                           >
                             {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
@@ -722,7 +709,7 @@ export function JsonView({
                         {showAllMessages &&
                           hiddenMessages.map((msg, i) => (
                             <div
-                              key={i + VISIBLE_MESSAGES_COUNT}
+                              key={`hidden-msg-${msg.type}-${msg.text}-${i}`}
                               className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}
                             >
                               {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
@@ -731,6 +718,7 @@ export function JsonView({
                       </div>
                       {hasMore && (
                         <button
+                          type="button"
                           className={styles.showMoreBtn}
                           onClick={() => setShowAllMessages(!showAllMessages)}
                         >

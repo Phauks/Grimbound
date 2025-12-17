@@ -16,7 +16,7 @@ import { estimateSize } from '../utils/memoryEstimator.js';
 /**
  * Eviction event data
  */
-export interface EvictionEvent<V = any> {
+export interface EvictionEvent<V = unknown> {
   key: string;
   reason: 'lru' | 'ttl' | 'manual';
   size: number;
@@ -43,7 +43,7 @@ export interface LRUCacheAdapterOptions {
  * Adapter: LRU cache implementation using Map.
  * Implements ICacheStrategy port with automatic eviction.
  */
-export class LRUCacheAdapter<K = string, V = any> implements ICacheStrategy<K, V> {
+export class LRUCacheAdapter<K = string, V = unknown> implements ICacheStrategy<K, V> {
   private cache = new Map<K, CacheEntry<V>>();
   private tagIndex = new Map<string, Set<K>>(); // tag → keys mapping for selective invalidation
   private stats: CacheStats = {

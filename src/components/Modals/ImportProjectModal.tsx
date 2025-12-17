@@ -212,7 +212,8 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       {!selectedFile && (
         <>
           {/* Drop Zone */}
-          <div
+          <button
+            type="button"
             className={`${styles.dropZone} ${isDragging ? styles.dragging : ''} ${
               error ? styles.error : ''
             }`}
@@ -221,6 +222,13 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onClick={handleBrowseClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleBrowseClick();
+              }
+            }}
+            style={{ background: 'none', border: 'none', padding: 0, width: '100%' }}
           >
             <input
               ref={fileInputRef}
@@ -246,7 +254,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
               <strong>Drop ZIP file here</strong> or click to browse
             </p>
             <p className={styles.dropHint}>Maximum file size: 50MB</p>
-          </div>
+          </button>
 
           {error && (
             <Alert variant="error" style={{ marginTop: 'var(--spacing-md)' }}>

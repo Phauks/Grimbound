@@ -24,7 +24,7 @@ const BUILT_IN_PRESETS: Array<{ name: PresetName; icon: string }> = [
 export function PresetSection({
   customPresets,
   onCustomPresetsChange,
-  onShowSaveModal,
+  onShowSaveModal: _onShowSaveModal,
 }: PresetSectionProps) {
   const {
     applyPreset,

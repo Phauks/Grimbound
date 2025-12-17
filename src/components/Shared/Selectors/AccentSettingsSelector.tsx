@@ -301,7 +301,19 @@ const VisualPreview = memo(function VisualPreview({
   return (
     <div className={styles.visualPreview}>
       {/* Arc visualization */}
-      <div className={styles.arcContainer} onClick={resimulate} title="Click to resimulate">
+      <div
+        className={styles.arcContainer}
+        onClick={resimulate}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            resimulate();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        title="Click to resimulate"
+      >
         <div className={styles.arcVisualization}>
           {/* Token circle */}
           <div className={styles.tokenCircle} />
@@ -325,9 +337,10 @@ const VisualPreview = memo(function VisualPreview({
           )}
 
           {/* Arc slot markers */}
+          {/* Static positions array, using compound key with position */}
           {slotPositions.map((pos, i) => (
             <div
-              key={i}
+              key={`slot-${pos.x}-${pos.y}-${i}`}
               className={`${styles.slotMarker} ${arcSimulation[i] ? styles.slotMarkerFilled : styles.slotMarkerPossible}`}
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             />
@@ -728,7 +741,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
             <LeafPreview leafGeneration={currentLeafStyle} isEnabled={isEnabled} />
           </PreviewBox>
         }
-        info={<InfoSection label="Accents" summary={getSummary()} />}
+        info={<InfoSection label="Accents" />}
         headerSlot={EnableToggle}
         actionLabel="Customize"
         onAction={panel.toggle}

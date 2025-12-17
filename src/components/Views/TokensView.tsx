@@ -250,13 +250,13 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
       {/* Right Content - Token Grid */}
       <ViewLayout.Panel position="right" width="flex" scrollable>
         <TokenPreviewRow />
-        <div className={styles.galleryHeader}>
-          {isLoading && generationProgress && (
+        {isLoading && generationProgress && (
+          <div className={styles.galleryHeader}>
             <div className={styles.generationProgress}>
               Generating {generationProgress.current}/{generationProgress.total}...
             </div>
-          )}
-        </div>
+          </div>
+        )}
         <TokenGrid onTokenClick={onTokenClick} onTabChange={onTabChange} />
       </ViewLayout.Panel>
     </ViewLayout>

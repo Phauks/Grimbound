@@ -112,7 +112,7 @@ export function Modal({
       aria-labelledby={titleId}
       aria-describedby={ariaDescribedBy}
     >
-      <div className={styles.backdrop} onClick={handleBackdropClick} />
+      <div className={styles.backdrop} onClick={handleBackdropClick} role="presentation" />
       <div className={cn(styles.container, sizeClasses[size], className)}>
         <div className={styles.header}>
           <h2 id={titleId} className={styles.title}>

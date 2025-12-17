@@ -63,20 +63,21 @@ export function FileDropzone({
   className = '',
 }: FileDropzoneProps) {
   // Use the unified file upload hook
-  const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker, results } =
-    useFileUpload({
-      assetType,
-      projectId,
-      characterId,
-      multiple,
-      onComplete: (uploadResults) => {
-        const successfulIds = uploadResults.filter((r) => r.success).map((r) => (r as any).assetId);
-        if (successfulIds.length > 0) {
-          onUploadComplete?.(successfulIds);
-        }
-      },
-      onError,
-    });
+  const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker } = useFileUpload({
+    assetType,
+    projectId,
+    characterId,
+    multiple,
+    onComplete: (uploadResults: { success: boolean; assetId?: string }[]) => {
+      const successfulIds = uploadResults
+        .filter((r) => r.success && r.assetId)
+        .map((r) => r.assetId as string);
+      if (successfulIds.length > 0) {
+        onUploadComplete?.(successfulIds);
+      }
+    },
+    onError,
+  });
 
   // Get allowed file description
   const allowedDescription = fileValidationService.getAllowedFilesDescription(assetType);
@@ -115,15 +116,17 @@ export function FileDropzone({
 
   return (
     <div className={styles.container}>
-      <div
+      <button
+        type="button"
         className={containerClasses}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
         aria-label={label || defaultLabel}
         aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        disabled={disabled}
         {...dragHandlers}
+        style={{ all: 'unset', display: 'block', width: '100%' }}
       >
         {isUploading ? (
           <div className={styles.uploadingState}>
@@ -154,7 +157,7 @@ export function FileDropzone({
             <p className={styles.formats}>{allowedDescription}</p>
           </div>
         )}
-      </div>
+      </button>
 
       {error && (
         <div className={styles.errorMessage} role="alert">

@@ -236,7 +236,7 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
           />
         </PreviewBox>
       }
-      info={<InfoSection label="Bootlegger" summary={getSummary()} />}
+      info={<InfoSection label="Bootlegger" />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}

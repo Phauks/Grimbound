@@ -34,7 +34,7 @@ export function ProjectNavigation({
   onHoverProject,
   onCreateProject,
   onImportProject,
-  onIconManagement,
+  onIconManagement: _onIconManagement,
   onDeleteProject,
 }: ProjectNavigationProps) {
   const [searchQuery, setSearchQuery] = useState('');

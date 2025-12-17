@@ -61,17 +61,15 @@ export function CharacterNavigation({
   characters,
   tokens,
   selectedCharacterUuid,
-  isMetaSelected,
   onSelectCharacter,
   onAddCharacter,
   onDeleteCharacter,
   onDuplicateCharacter,
   onSelectMetaToken,
-  onSelectMeta,
   onChangeTeam,
   onHoverCharacter,
 }: CharacterNavigationProps) {
-  const selectedRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLButtonElement>(null);
   // Meta section is always visible so we don't collapse it by default
   const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(
     () => new Set([...TEAM_ORDER.map((t) => t as string)])
@@ -121,10 +119,6 @@ export function CharacterNavigation({
   }, [contextMenu.data, characters, onDuplicateCharacter]);
 
   // Match by UUID only (UUID is required on all characters)
-  const _getCharacterToken = (char: Character) => {
-    if (!char.uuid) return undefined;
-    return tokens.find((t) => t.type === 'character' && t.parentUuid === char.uuid);
-  };
 
   // Match by UUID only (UUID is required on all characters)
   const getReminderCount = (char: Character) => {
@@ -202,8 +196,9 @@ export function CharacterNavigation({
         key={char.uuid || char.id}
         className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}
       >
-        <div
+        <button
           ref={isSelected ? selectedRef : null}
+          type="button"
           className={`${styles.item} ${teamStyle} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''} ${isOfficial ? styles.official : ''}`}
           onClick={() => char.uuid && onSelectCharacter(char.uuid)}
           onMouseEnter={() => char.uuid && onHoverCharacter?.(char.uuid)}
@@ -211,8 +206,6 @@ export function CharacterNavigation({
           draggable={!!onChangeTeam && !isOfficial}
           onDragStart={(e) => handleDragStart(e, char.id)}
           onDragEnd={handleDragEnd}
-          role="button"
-          tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               char.uuid && onSelectCharacter(char.uuid);
@@ -233,7 +226,7 @@ export function CharacterNavigation({
             <div className={styles.name}>{char.name}</div>
           </div>
           {reminderCount > 0 && <div className={styles.badge}>{reminderCount}</div>}
-        </div>
+        </button>
       </div>
     );
   };
@@ -244,10 +237,9 @@ export function CharacterNavigation({
         key={token.filename}
         className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}
       >
-        <div
+        <button
+          type="button"
           className={`${styles.item} ${styles.teamMeta}`}
-          role="button"
-          tabIndex={0}
           title={token.name}
           onClick={() => onSelectMetaToken?.(token)}
           onKeyDown={(e) => {
@@ -273,7 +265,7 @@ export function CharacterNavigation({
           <div className={styles.info}>
             <div className={styles.name}>{token.name}</div>
           </div>
-        </div>
+        </button>
       </div>
     );
   };
@@ -386,8 +378,28 @@ export function CharacterNavigation({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className={styles.confirmOverlay} onClick={() => setDeleteConfirm(null)}>
-          <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className={styles.confirmOverlay}
+          onClick={() => setDeleteConfirm(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setDeleteConfirm(null);
+            }
+          }}
+          aria-label="Close delete confirmation"
+        >
+          <section
+            className={styles.confirmModal}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              // Prevent propagation for keyboard events as well
+              e.stopPropagation();
+            }}
+          >
             <h3>Delete Character?</h3>
             <p>
               Are you sure you want to delete "{deleteConfirm.characterName}"? This action cannot be
@@ -412,8 +424,8 @@ export function CharacterNavigation({
                 Delete
               </button>
             </div>
-          </div>
-        </div>
+          </section>
+        </button>
       )}
     </aside>
   );

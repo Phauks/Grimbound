@@ -243,9 +243,11 @@ export class CacheManager {
    */
   async cacheTokenBatch(tokens: Token[], type: string = 'manual'): Promise<void> {
     const result = await this.preRender({
-      type: type as any,
+      type: type as PreRenderContext['type'],
       tokens,
-      characters: tokens.map((t) => t.characterData).filter(Boolean) as any[],
+      characters: tokens
+        .map((t) => t.characterData)
+        .filter((c): c is NonNullable<typeof c> => c !== null && c !== undefined),
     });
 
     if (!result.success) {
@@ -318,16 +320,15 @@ export class CacheManager {
   async invalidate(scope: InvalidationScope): Promise<void> {
     if (scope === 'global') {
       await this.invalidationService.invalidateAll('manual');
-    } else {
-      // For other scopes, trigger appropriate invalidation
-      // The listeners will handle clearing the right caches
-      const event = {
-        scope,
-        entityIds: [],
-        reason: 'manual' as const,
-        timestamp: Date.now(),
-      };
-      await (this.invalidationService as any).emit(event);
+    } else if (scope === 'asset') {
+      // Invalidate all assets by passing empty array (triggers scope-wide invalidation)
+      await this.invalidationService.invalidateAssets([], 'manual');
+    } else if (scope === 'character') {
+      // Invalidate all characters by passing empty array
+      await this.invalidationService.invalidateCharacters([], 'manual');
+    } else if (scope === 'project') {
+      // Invalidate all projects by passing empty array
+      await this.invalidationService.invalidateProjects([], 'manual');
     }
   }
 

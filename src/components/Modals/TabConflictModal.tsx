@@ -23,8 +23,28 @@ export function TabConflictModal({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <button
+      type="button"
+      className={styles.overlay}
+      aria-label="Close modal"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClose();
+        }
+      }}
+      style={{ all: 'unset', display: 'block' }}
+    >
+      <section
+        className={styles.modal}
+        aria-modal="true"
+        role="dialog"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          // Prevent propagation for keyboard events as well
+          e.stopPropagation();
+        }}
+      >
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.icon}>⚠️</div>
@@ -73,7 +93,7 @@ export function TabConflictModal({
             Continue Anyway
           </button>
         </div>
-      </div>
-    </div>
+      </section>
+    </button>
   );
 }

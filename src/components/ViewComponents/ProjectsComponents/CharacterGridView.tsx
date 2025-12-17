@@ -7,7 +7,7 @@
  * Loads images from character data or falls back to official character data.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '../../../contexts/TokenContext';
 import styles from '../../../styles/components/projects/CharacterGridView.module.css';
 import { TEAM_LABELS } from '../../../ts/config.js';
@@ -161,10 +161,13 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
   };
 
   // Get all character token variants by UUID
-  const getCharacterTokenVariants = (char: Character): Token[] => {
-    if (!char.uuid) return [];
-    return tokens.filter((t) => t.type === 'character' && t.parentUuid === char.uuid);
-  };
+  const getCharacterTokenVariants = useCallback(
+    (char: Character): Token[] => {
+      if (!char.uuid) return [];
+      return tokens.filter((t) => t.type === 'character' && t.parentUuid === char.uuid);
+    },
+    [tokens]
+  );
 
   // State to track active variant index per character
   const [activeVariants, setActiveVariants] = useState<Map<string, number>>(new Map());

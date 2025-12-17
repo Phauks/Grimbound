@@ -52,7 +52,7 @@ interface UrlCacheEntry {
   url: string;
   thumbnailUrl: string;
   refCount: number;
-  weakRefs: Set<WeakRef<any>>; // Track weak references for automatic cleanup
+  weakRefs: Set<WeakRef<object>>; // Track weak references for automatic cleanup
 }
 
 // ============================================================================
@@ -209,7 +209,9 @@ export class AssetStorageService {
    * @param ids - Array of asset IDs
    */
   async bulkDelete(ids: string[]): Promise<void> {
-    ids.forEach((id) => this.revokeUrl(id));
+    for (const id of ids) {
+      this.revokeUrl(id);
+    }
     await projectDb.assets.bulkDelete(ids);
 
     // Emit invalidation events for all deleted assets
@@ -278,7 +280,7 @@ export class AssetStorageService {
    * @returns Filtered assets
    */
   async list(filter: AssetFilter = {}): Promise<DBAsset[]> {
-    let collection;
+    let collection: Dexie.Collection<DBAsset, string>;
     let results: DBAsset[];
 
     // OPTIMIZATION: Use compound index when both type and projectId are provided (non-null)

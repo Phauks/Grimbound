@@ -32,8 +32,7 @@ export interface DebouncedFunction<T extends (...args: Parameters<T>) => void> {
  * @param wait - Wait time in milliseconds
  * @returns Debounced function with cancel method for cleanup (e.g., on component unmount)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function debounce<T extends (...args: any[]) => void>(
+export function debounce<T extends (...args: never[]) => void>(
   func: T,
   wait: number
 ): DebouncedFunction<T> {

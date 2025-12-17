@@ -265,13 +265,23 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
       timestamp: new Date().toISOString(),
       stats,
       userAgent: navigator.userAgent,
-      memory: (performance as any).memory
-        ? {
-            usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
-            totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
-            jsHeapSizeLimit: (performance as any).memory.jsHeapSizeLimit,
-          }
-        : null,
+      memory: (() => {
+        // Chrome-specific memory API
+        const perfWithMemory = performance as Performance & {
+          memory?: {
+            usedJSHeapSize: number;
+            totalJSHeapSize: number;
+            jsHeapSizeLimit: number;
+          };
+        };
+        return perfWithMemory.memory
+          ? {
+              usedJSHeapSize: perfWithMemory.memory.usedJSHeapSize,
+              totalJSHeapSize: perfWithMemory.memory.totalJSHeapSize,
+              jsHeapSizeLimit: perfWithMemory.memory.jsHeapSizeLimit,
+            }
+          : null;
+      })(),
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], {

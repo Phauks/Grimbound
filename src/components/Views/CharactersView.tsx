@@ -36,7 +36,6 @@ export function CharactersView({
   initialToken,
   selectedCharacterUuid: externalSelectedUuid,
   onCharacterSelect,
-  onGoToTokens,
   createNewCharacter,
 }: CharactersViewProps) {
   const {
@@ -52,7 +51,6 @@ export function CharactersView({
     getMetadata,
     scriptMeta,
     setScriptMeta,
-    officialData,
   } = useTokenContext();
   const { addToast } = useToast();
   const { setDownloads, clearDownloads } = useDownloadsContext();
@@ -554,7 +552,7 @@ export function CharactersView({
     }
   }, []);
 
-  const handleEditChange = (field: keyof Character, value: any) => {
+  const handleEditChange = <K extends keyof Character>(field: K, value: Character[K]) => {
     if (editedCharacter) {
       setEditedCharacter((prev) => {
         if (!prev) return prev;
@@ -705,7 +703,7 @@ export function CharactersView({
     try {
       const parsed = JSON.parse(jsonInput);
       if (Array.isArray(parsed)) {
-        const updatedParsed = parsed.filter((item: any) => {
+        const updatedParsed = parsed.filter((item: Character | string) => {
           if (typeof item === 'string') return item !== charToDelete.id;
           if (typeof item === 'object') return item.id !== charToDelete.id;
           return true;
@@ -767,7 +765,7 @@ export function CharactersView({
     try {
       const parsed = JSON.parse(jsonInput);
       if (Array.isArray(parsed)) {
-        const jsonIndex = parsed.findIndex((item: any) => {
+        const jsonIndex = parsed.findIndex((item: Character | string) => {
           if (typeof item === 'string') return item === characterId;
           if (typeof item === 'object') return item.id === characterId;
           return false;
@@ -805,46 +803,6 @@ export function CharactersView({
     setSelectedCharacterUuid(''); // Deselect character
     setIsMetaSelected(true);
   }, []);
-
-  const _handleApplyToScript = async () => {
-    if (!editedCharacter) return;
-
-    setIsLoading(true);
-    try {
-      // Use originalCharacterUuidRef to find the character (in case ID was changed)
-      const origUuid = originalCharacterUuidRef.current;
-      const origChar = characters.find((c) => c.uuid === origUuid);
-      const origId = origChar?.id || editedCharacter.id;
-
-      const updatedJson = updateCharacterInJson(jsonInput, origId, editedCharacter);
-      setJsonInput(updatedJson);
-
-      const updatedCharacters = characters.map((c) => (c.uuid === origUuid ? editedCharacter : c));
-      setCharacters(updatedCharacters);
-
-      const { characterToken, reminderTokens: newReminderTokens } =
-        await regenerateCharacterAndReminders(editedCharacter, generationOptions);
-
-      const originalName = origChar?.name || editedCharacter.name;
-
-      const updatedTokens = tokens.filter((t) => {
-        if (t.type === 'character' && t.name === originalName) return false;
-        if (t.type === 'reminder' && t.parentCharacter === originalName) return false;
-        return true;
-      });
-
-      updatedTokens.push(characterToken, ...newReminderTokens);
-      setTokens(updatedTokens);
-
-      setIsDirty(false);
-      addToast(`Regenerated ${editedCharacter.name} tokens`, 'success');
-    } catch (error) {
-      logger.error('CharactersView', 'Failed to apply changes', error);
-      addToast('Failed to apply changes to script', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Use preview tokens if available, otherwise fall back to global state tokens
   const displayCharacterToken = previewCharacterToken || characterTokens[0];

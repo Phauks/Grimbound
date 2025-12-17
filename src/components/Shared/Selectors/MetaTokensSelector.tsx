@@ -228,7 +228,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
           <MetaPreview enabledCount={displayCount} />
         </PreviewBox>
       }
-      info={<InfoSection label="Meta Tokens" summary={getSummary()} />}
+      info={<InfoSection label="Meta Tokens" />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}

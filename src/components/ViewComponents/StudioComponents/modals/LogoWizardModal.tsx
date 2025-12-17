@@ -24,7 +24,7 @@ interface LogoWizardModalProps {
 type WizardStep = 'template' | 'name' | 'font' | 'colors' | 'preview';
 
 export function LogoWizardModal({ isOpen, onClose }: LogoWizardModalProps) {
-  const { addLayer, setCanvasSize, setBackgroundColor, newProject } = useStudio();
+  const { addLayer, setCanvasSize: _setCanvasSize, setBackgroundColor, newProject } = useStudio();
   const { currentProject } = useProjectContext();
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('template');
@@ -92,7 +92,9 @@ export function LogoWizardModal({ isOpen, onClose }: LogoWizardModalProps) {
 
       // Apply template layers
       const layers = await applyTemplate(customized);
-      layers.forEach((layer) => addLayer(layer));
+      for (const layer of layers) {
+        addLayer(layer);
+      }
 
       // Close wizard
       onClose();
@@ -466,6 +468,7 @@ export function LogoWizardModal({ isOpen, onClose }: LogoWizardModalProps) {
         <div className={styles.modalFooter}>
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <button
+              type="button"
               className={styles.secondaryButton}
               onClick={handleBack}
               disabled={currentStep === 'template'}
@@ -482,6 +485,7 @@ export function LogoWizardModal({ isOpen, onClose }: LogoWizardModalProps) {
                 </button>
               ) : (
                 <button
+                  type="button"
                   className={styles.primaryButton}
                   onClick={handleNext}
                   disabled={!selectedTemplate}

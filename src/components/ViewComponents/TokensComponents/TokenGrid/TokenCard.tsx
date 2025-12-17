@@ -7,6 +7,18 @@ import type { Team, Token } from '../../../../ts/types/index.js';
 import type { ContextMenuItem } from '../../../Shared/UI/ContextMenu';
 import { ContextMenu } from '../../../Shared/UI/ContextMenu';
 
+/** Type for requestIdleCallback (non-standard but widely supported) */
+interface IdleDeadline {
+  readonly didTimeout: boolean;
+  timeRemaining(): number;
+}
+interface WindowWithIdleCallback {
+  requestIdleCallback: (
+    callback: (deadline: IdleDeadline) => void,
+    options?: { timeout?: number }
+  ) => number;
+}
+
 // Module-level cache for data URLs - persists across tab switches
 // Key: token filename, Value: data URL
 const dataUrlCache = new Map<string, string>();
@@ -24,7 +36,7 @@ export function preRenderGalleryTokens(tokens: Token[], maxTokens: number = 20):
   isPreRenderingGallery = true;
 
   // Use requestIdleCallback or setTimeout to avoid blocking
-  const encode = () => {
+  const encode = (_deadline?: IdleDeadline) => {
     let count = 0;
     for (const token of tokens) {
       if (count >= maxTokens) break;
@@ -40,7 +52,7 @@ export function preRenderGalleryTokens(tokens: Token[], maxTokens: number = 20):
 
   // Use requestIdleCallback if available, otherwise setTimeout
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(encode, { timeout: 100 });
+    (window as WindowWithIdleCallback).requestIdleCallback(encode, { timeout: 100 });
   } else {
     setTimeout(encode, 0);
   }
@@ -302,6 +314,7 @@ function TokenCardComponent({
         {hasVariants && (
           <div className={styles.variantNav}>
             <button
+              type="button"
               className={styles.variantButton}
               onClick={handlePrevVariant}
               aria-label="Previous variant"
@@ -313,6 +326,7 @@ function TokenCardComponent({
               v{activeVariantIndex + 1}/{variants.length}
             </span>
             <button
+              type="button"
               className={styles.variantButton}
               onClick={handleNextVariant}
               aria-label="Next variant"

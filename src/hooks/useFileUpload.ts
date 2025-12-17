@@ -34,6 +34,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fileUploadService,
+  type UploadError,
   type UploadOutcome,
   type UseFileUploadConfig,
 } from '../ts/services/upload/index.js';
@@ -133,9 +134,9 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
           setResults(uploadResults);
 
           // Check for errors
-          const errors = uploadResults.filter((r) => !r.success);
+          const errors = uploadResults.filter((r): r is UploadError => !r.success);
           if (errors.length > 0) {
-            const errorMsg = errors.map((e) => (e as any).error).join('; ');
+            const errorMsg = errors.map((e) => e.error).join('; ');
             setError(errorMsg);
             config.onError?.(errorMsg);
           }
@@ -170,7 +171,7 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
       if (result) {
         setResults([result]);
         if (!result.success) {
-          const errorMsg = (result as any).error;
+          const errorMsg = result.error;
           setError(errorMsg);
           config.onError?.(errorMsg);
         }
@@ -194,9 +195,9 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
     if (uploadResults.length > 0) {
       setResults(uploadResults);
 
-      const errors = uploadResults.filter((r) => !r.success);
+      const errors = uploadResults.filter((r): r is UploadError => !r.success);
       if (errors.length > 0) {
-        const errorMsg = errors.map((e) => (e as any).error).join('; ');
+        const errorMsg = errors.map((e) => e.error).join('; ');
         setError(errorMsg);
         config.onError?.(errorMsg);
       }

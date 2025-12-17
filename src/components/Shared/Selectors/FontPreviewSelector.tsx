@@ -73,7 +73,7 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
   value,
   onChange,
   options,
-  label,
+  label: _label,
   previewText = 'Aa',
   size = 'medium',
   disabled = false,
@@ -283,9 +283,16 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
                 .filter(Boolean)
                 .join(' ')}
               onClick={() => handleOptionClick(option.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOptionClick(option.value);
+                }
+              }}
               onMouseEnter={() => setFocusedIndex(index)}
               role="option"
               aria-selected={isSelected}
+              tabIndex={isFocused ? 0 : -1}
             >
               {/* Font Preview in Option */}
               <span className={styles.optionPreview} style={{ fontFamily: option.value }}>
@@ -316,7 +323,11 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
       ref={containerRef}
       className={containerClasses}
       onKeyDown={handleKeyDown}
+      role="combobox"
       aria-label={ariaLabel ?? 'Select font'}
+      aria-expanded={isOpen}
+      aria-haspopup="listbox"
+      tabIndex={0}
     >
       {/* Font Preview Box */}
       <div className={previewClasses} style={{ fontFamily: selectedOption?.value || 'inherit' }}>

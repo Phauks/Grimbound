@@ -18,7 +18,7 @@ export function useScriptData() {
     setWarnings,
     officialData,
     clearAllMetadata,
-    setMetadata,
+    setMetadata: _setMetadata,
     setTokens,
     jsonInput,
   } = useTokenContext();
@@ -220,6 +220,7 @@ export function useScriptData() {
         | 'condense'
         | 'add-meta'
         | 'remove-underscores'
+        | 'remove-separators'
         | 'upload'
         | 'load-example'
         | 'clear'
@@ -317,11 +318,11 @@ export function useScriptData() {
   );
 
   /**
-   * Check if the script contains character IDs with underscores that match official characters
-   * Returns true only if an ID with underscores removed would match an official character ID
-   * (e.g., "fortune_teller" -> "fortuneteller" matches official)
+   * Check if the script contains character IDs with underscores or hyphens that match official characters
+   * Returns true only if an ID with separators removed would match an official character ID
+   * (e.g., "fortune_teller" or "fortune-teller" -> "fortuneteller" matches official)
    */
-  const hasUnderscoresInIds = useCallback((): boolean => {
+  const hasSeparatorsInIds = useCallback((): boolean => {
     if (!jsonInput.trim()) return false;
     if (officialData.length === 0) return false;
 
@@ -335,22 +336,30 @@ export function useScriptData() {
       return parsed.some((entry: unknown) => {
         let id: string | null = null;
 
-        // Check string IDs (e.g., "fortune_teller")
-        if (typeof entry === 'string' && entry !== '_meta' && entry.includes('_')) {
+        // Check string IDs (e.g., "fortune_teller" or "fortune-teller")
+        if (
+          typeof entry === 'string' &&
+          entry !== '_meta' &&
+          (entry.includes('_') || entry.includes('-'))
+        ) {
           id = entry;
         }
         // Check object entries with id field
         else if (typeof entry === 'object' && entry !== null && 'id' in entry) {
           const entryId = (entry as { id: string }).id;
-          if (typeof entryId === 'string' && entryId !== '_meta' && entryId.includes('_')) {
+          if (
+            typeof entryId === 'string' &&
+            entryId !== '_meta' &&
+            (entryId.includes('_') || entryId.includes('-'))
+          ) {
             id = entryId;
           }
         }
 
-        // If we found an ID with underscore, check if removing underscores matches an official ID
+        // If we found an ID with separator, check if removing separators matches an official ID
         if (id) {
-          const withoutUnderscores = id.replace(/_/g, '').toLowerCase();
-          return officialIds.has(withoutUnderscores);
+          const withoutSeparators = id.replace(/_|-/g, '').toLowerCase();
+          return officialIds.has(withoutSeparators);
         }
         return false;
       });
@@ -360,10 +369,10 @@ export function useScriptData() {
   }, [jsonInput, officialData]);
 
   /**
-   * Remove underscores from all character IDs in the script
-   * Converts IDs like "fortune_teller" to "fortuneteller" to match official character IDs
+   * Remove underscores and hyphens from all character IDs in the script
+   * Converts IDs like "fortune_teller" or "fortune-teller" to "fortuneteller" to match official character IDs
    */
-  const removeUnderscoresFromIds = useCallback(async () => {
+  const removeSeparatorsFromIds = useCallback(async () => {
     if (!jsonInput.trim()) return;
 
     try {
@@ -371,15 +380,15 @@ export function useScriptData() {
       if (!Array.isArray(parsed)) return;
 
       const updatedScript = parsed.map((entry: unknown) => {
-        // Handle string IDs (e.g., "fortune_teller" -> "fortuneteller")
+        // Handle string IDs (e.g., "fortune_teller" or "fortune-teller" -> "fortuneteller")
         if (typeof entry === 'string' && entry !== '_meta') {
-          return entry.replace(/_/g, '');
+          return entry.replace(/_|-/g, '');
         }
         // Handle object entries with id field
         if (typeof entry === 'object' && entry !== null && 'id' in entry) {
           const obj = entry as { id: string; [key: string]: unknown };
           if (typeof obj.id === 'string' && obj.id !== '_meta') {
-            return { ...obj, id: obj.id.replace(/_/g, '') };
+            return { ...obj, id: obj.id.replace(/_|-/g, '') };
           }
         }
         return entry;
@@ -388,9 +397,9 @@ export function useScriptData() {
       const updatedJson = JSON.stringify(updatedScript, null, 2);
 
       // Use gateway to trigger auto-save
-      await updateScript(updatedJson, 'remove-underscores');
+      await updateScript(updatedJson, 'remove-separators');
     } catch (err) {
-      logger.error('useScriptData', 'Failed to remove underscores from IDs:', err);
+      logger.error('useScriptData', 'Failed to remove separators from IDs:', err);
       setError('Failed to update IDs: Invalid JSON');
     }
   }, [jsonInput, updateScript, setError]);
@@ -402,8 +411,8 @@ export function useScriptData() {
     parseJson,
     clearScript,
     addMetaToScript,
-    hasUnderscoresInIds,
-    removeUnderscoresFromIds,
+    hasSeparatorsInIds,
+    removeSeparatorsFromIds,
     updateScript, // ← NEW: Gateway for all script state updates
   };
 }

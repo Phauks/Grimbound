@@ -33,13 +33,13 @@ export const JsonHighlight = memo(({ json }: JsonHighlightProps) => {
         // This reduces DOM nodes by ~30% for typical JSON
         if (className) {
           return (
-            <span key={index} className={className}>
+            <span key={`${token.type}-${token.value}-${index}`} className={className}>
               {token.value}
             </span>
           );
         }
         // Plain text: use Fragment with key for React reconciliation
-        return <Fragment key={index}>{token.value}</Fragment>;
+        return <Fragment key={`text-${token.value}-${index}`}>{token.value}</Fragment>;
       })}
     </>
   );

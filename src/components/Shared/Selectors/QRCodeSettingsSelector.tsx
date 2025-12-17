@@ -28,7 +28,6 @@ import type {
   QRGradientType,
 } from '../../../ts/types/index';
 import { EditableSlider } from '../Controls/EditableSlider';
-import { EditableSliderValue } from '../Controls/EditableSliderValue';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -307,26 +306,17 @@ const ColorSection = memo(function ColorSection({
         )}
         {/* Rotation control for linear gradients */}
         {showRotation && useGradient && gradientType === 'linear' && onRotationChange && (
-          <div className={styles.rotationControl}>
-            <input
-              type="range"
-              min="0"
-              max="360"
-              step="15"
-              value={rotation}
-              onChange={(e) => onRotationChange(Number(e.target.value))}
-              className={styles.rotationSlider}
-            />
-            <EditableSliderValue
-              value={rotation ?? 0}
-              onChange={onRotationChange}
-              min={0}
-              max={360}
-              step={15}
-              suffix="°"
-              className={styles.rotationValue}
-            />
-          </div>
+          <EditableSlider
+            value={rotation ?? 0}
+            onChange={onRotationChange}
+            min={0}
+            max={360}
+            step={15}
+            suffix="°"
+            defaultValue={45}
+            className={styles.rotationControl}
+            ariaLabel={`${label} gradient rotation`}
+          />
         )}
       </div>
     </div>
@@ -697,31 +687,17 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
                 {/* Rotation control for linear gradients */}
                 {panel.pendingValue.backgroundUseGradient &&
                   panel.pendingValue.backgroundGradientType === 'linear' && (
-                    <div className={styles.rotationControl}>
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        step="15"
-                        value={panel.pendingValue.backgroundGradientRotation}
-                        onChange={(e) =>
-                          panel.updatePendingField(
-                            'backgroundGradientRotation',
-                            Number(e.target.value)
-                          )
-                        }
-                        className={styles.rotationSlider}
-                      />
-                      <EditableSliderValue
-                        value={panel.pendingValue.backgroundGradientRotation}
-                        onChange={(v) => panel.updatePendingField('backgroundGradientRotation', v)}
-                        min={0}
-                        max={360}
-                        step={15}
-                        suffix="°"
-                        className={styles.rotationValue}
-                      />
-                    </div>
+                    <EditableSlider
+                      value={panel.pendingValue.backgroundGradientRotation}
+                      onChange={(v) => panel.updatePendingField('backgroundGradientRotation', v)}
+                      min={0}
+                      max={360}
+                      step={15}
+                      suffix="°"
+                      defaultValue={45}
+                      className={styles.rotationControl}
+                      ariaLabel="Background gradient rotation"
+                    />
                   )}
               </div>
               {/* Row 3: Opacity slider */}
@@ -840,7 +816,7 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
           />
         </PreviewBox>
       }
-      info={<InfoSection label="QR Tokens" summary={getSummary()} />}
+      info={<InfoSection label="QR Tokens" />}
       headerSlot={EnableToggle}
       actionLabel="Customize"
       onAction={panel.toggle}

@@ -31,16 +31,11 @@ interface VersionsViewProps {
 
 export function VersionsView({ project }: VersionsViewProps) {
   const { addToast } = useToast();
-  const { updateProject, createProject } = useProjects();
+  const { updateProject } = useProjects();
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
-
-  // Load versions on mount and when project changes
-  useEffect(() => {
-    loadVersions();
-  }, [loadVersions]);
 
   const loadVersions = useCallback(async () => {
     try {
@@ -58,6 +53,11 @@ export function VersionsView({ project }: VersionsViewProps) {
       setIsLoading(false);
     }
   }, [project.id, addToast]);
+
+  // Load versions on mount and when project changes
+  useEffect(() => {
+    loadVersions();
+  }, [loadVersions]);
 
   const handleCreateVersion = useCallback(() => {
     setCreateModalOpen(true);

@@ -3,7 +3,7 @@
  * Provides cache manager instance to all components via context.
  */
 
-import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import {
   CacheLogger,
   CharactersPreRenderStrategy,
@@ -13,7 +13,6 @@ import {
   ProjectPreRenderStrategy,
   TokensPreRenderStrategy,
 } from '../ts/cache/index.js';
-import { logger } from '../ts/utils/logger.js';
 
 /**
  * Context value type.
@@ -127,33 +126,6 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
 
     return mgr;
   }, []);
-
-  // Set up event listeners for debugging (optional, remove in production)
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      const handlePreRenderStart = (event: any) => {
-        logger.debug('Cache', `Pre-render started:`, event.strategy);
-      };
-
-      const handlePreRenderComplete = (event: any) => {
-        logger.debug('Cache', `Pre-render complete:`, event.strategy, event.result);
-      };
-
-      const handlePreRenderError = (event: any) => {
-        logger.error('Cache', `Pre-render error:`, event.strategy, event.error);
-      };
-
-      manager.on('prerender:start', handlePreRenderStart);
-      manager.on('prerender:complete', handlePreRenderComplete);
-      manager.on('prerender:error', handlePreRenderError);
-
-      return () => {
-        manager.off('prerender:start', handlePreRenderStart);
-        manager.off('prerender:complete', handlePreRenderComplete);
-        manager.off('prerender:error', handlePreRenderError);
-      };
-    }
-  }, [manager]);
 
   return (
     <PreRenderCacheContext.Provider value={manager}>{children}</PreRenderCacheContext.Provider>

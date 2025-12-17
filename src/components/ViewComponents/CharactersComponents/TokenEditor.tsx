@@ -13,9 +13,26 @@ import {
 import { JsonEditorPanel } from '../../Shared/Json/JsonEditorPanel';
 import { AssetPreviewSelector } from '../../Shared/Selectors/AssetPreviewSelector';
 
+/**
+ * Extended character type that includes the optional `special` property
+ * used for app integration features (clocktower.online, etc.)
+ */
+interface CharacterWithSpecial extends Character {
+  special?: SpecialItem | SpecialItem[];
+}
+
+/** Special item for app integration features */
+interface SpecialItem {
+  type?: string;
+  name?: string;
+  value?: string | number;
+  time?: string;
+  global?: string;
+}
+
 interface TokenEditorProps {
   character: Character;
-  onEditChange: (field: keyof Character, value: any) => void;
+  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
   onReplaceCharacter?: (character: Character) => void;
   onRefreshPreview?: () => void;
   onPreviewVariant?: (imageUrl: string | undefined) => void; // Called when user wants to preview a specific variant
@@ -89,10 +106,13 @@ export function TokenEditor({
   const [localId, setLocalId] = useState(character.id || '');
 
   // Helper to strip internal fields for display/export
-  const getExportableCharacter = (char: Character): Omit<Character, 'uuid' | 'source'> => {
-    const { uuid, source, ...exportable } = char;
-    return exportable;
-  };
+  const getExportableCharacter = useCallback(
+    (char: Character): Omit<Character, 'uuid' | 'source'> => {
+      const { uuid, source, ...exportable } = char;
+      return exportable;
+    },
+    []
+  );
 
   // JSON editing state (strip internal fields from display)
   const [jsonText, setJsonText] = useState(() =>
@@ -297,13 +317,15 @@ export function TokenEditor({
     // Cleanup: revoke object URLs when component unmounts or URLs change
     return () => {
       isMounted = false;
-      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      for (const url of objectUrls) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [localImages]);
 
   // Debounced field update helper
   const debouncedUpdate = useCallback(
-    (field: keyof Character, value: any, delay = 500) => {
+    (field: keyof Character, value: Character[keyof Character], delay = 500) => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
@@ -529,24 +551,28 @@ export function TokenEditor({
       <div className={styles.tabsContainer}>
         <div className={styles.tabsNav}>
           <button
+            type="button"
             className={`${styles.tabButton} ${activeTab === 'info' ? styles.active : ''}`}
             onClick={() => setActiveTab('info')}
           >
             Gameplay
           </button>
           <button
+            type="button"
             className={`${styles.tabButton} ${activeTab === 'almanac' ? styles.active : ''}`}
             onClick={() => setActiveTab('almanac')}
           >
             Almanac
           </button>
           <button
+            type="button"
             className={`${styles.tabButton} ${activeTab === 'decoratives' ? styles.active : ''}`}
             onClick={() => setActiveTab('decoratives')}
           >
             Decoratives
           </button>
           <button
+            type="button"
             className={`${styles.tabButton} ${activeTab === 'json' ? styles.active : ''}`}
             onClick={() => setActiveTab('json')}
           >
@@ -747,12 +773,15 @@ export function TokenEditor({
             </div>
 
             <div className={styles.formGroup}>
-              <label>Image</label>
+              <span className={styles.label} id="image-urls-label">Image</span>
               <p className={styles.fieldHint}>Add one or more image URLs. Drag to reorder.</p>
-              <div className={styles.imageUrlsList}>
-                {localImages.map((url, index) => (
+              <div className={styles.imageUrlsList} role="list" aria-labelledby="image-urls-label">
+                {localImages.map((url, index) => {
+                  // Generate stable key based on occurrence count of same URL
+                  const occurrenceIndex = localImages.slice(0, index).filter(u => u === url).length;
+                  return (
                   <div
-                    key={index}
+                    key={`image-${url}-occurrence-${occurrenceIndex}`}
                     className={`${styles.imageUrlRow} ${draggedImageIndex === index ? styles.dragging : ''} ${dragOverImageIndex === index ? styles.dragOver : ''}`}
                     draggable={!isOfficial && localImages.length > 1}
                     onDragStart={(e) => {
@@ -856,7 +885,8 @@ export function TokenEditor({
                       ✕
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div className={styles.imageUrlActions}>
                 <button
@@ -958,15 +988,18 @@ export function TokenEditor({
             </div>
 
             <div className={styles.formGroup}>
-              <label>Reminders</label>
+              <span className={styles.label} id="reminders-label">Reminders</span>
               <p className={styles.fieldHint}>
                 Add reminder text that appears on reminder tokens. Use count to create multiple
                 copies. Drag to reorder.
               </p>
-              <div className={styles.remindersUrlsList}>
-                {groupedReminders.map(({ text, count }, index) => (
+              <div className={styles.remindersUrlsList} role="list" aria-labelledby="reminders-label">
+                {groupedReminders.map(({ text, count }, index) => {
+                  // Generate stable key based on occurrence count of same text
+                  const occurrenceIndex = groupedReminders.slice(0, index).filter(r => r.text === text).length;
+                  return (
                   <div
-                    key={index}
+                    key={`reminder-${text}-occurrence-${occurrenceIndex}`}
                     className={`${styles.reminderUrlRow} ${draggedReminderIndex === index ? styles.dragging : ''} ${dragOverReminderIndex === index ? styles.dragOver : ''}`}
                     draggable={!isOfficial && groupedReminders.length > 1}
                     onDragStart={(e) => {
@@ -1068,7 +1101,8 @@ export function TokenEditor({
                       ✕
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <button
                 type="button"
@@ -1153,8 +1187,8 @@ export function TokenEditor({
                     <span className={styles.warningTitle}>Non-standard format detected:</span>
                     <ul className={styles.warningList}>
                       {[...new Set(firstNightFormatIssues.map((i) => i.description))].map(
-                        (desc, idx) => (
-                          <li key={idx}>{desc}</li>
+                        (desc) => (
+                          <li key={`first-night-issue-${desc}`}>{desc}</li>
                         )
                       )}
                     </ul>
@@ -1239,8 +1273,8 @@ export function TokenEditor({
                     <span className={styles.warningTitle}>Non-standard format detected:</span>
                     <ul className={styles.warningList}>
                       {[...new Set(otherNightFormatIssues.map((i) => i.description))].map(
-                        (desc, idx) => (
-                          <li key={idx}>{desc}</li>
+                        (desc) => (
+                          <li key={`other-night-issue-${desc}`}>{desc}</li>
                         )
                       )}
                     </ul>
@@ -1265,10 +1299,11 @@ export function TokenEditor({
               <div className={styles.specialItemsList}>
                 {(() => {
                   // Ensure special is always treated as an array
-                  const specialArray = Array.isArray((character as any).special)
-                    ? (character as any).special
-                    : (character as any).special
-                      ? [(character as any).special]
+                  const charWithSpecial = character as CharacterWithSpecial;
+                  const specialArray = Array.isArray(charWithSpecial.special)
+                    ? charWithSpecial.special
+                    : charWithSpecial.special
+                      ? [charWithSpecial.special]
                       : [];
 
                   const SPECIAL_TYPES = [
@@ -1313,31 +1348,42 @@ export function TokenEditor({
                     'dead',
                   ] as const;
 
-                  return specialArray.map((item: any, index: number) => {
-                    // Parse item to get all properties
-                    const itemObj =
-                      typeof item === 'object' && item !== null
+                  return specialArray.map((item, index) => {
+                    // Parse item to get all properties (item is SpecialItem | SpecialItem[])
+                    const itemObj: SpecialItem =
+                      typeof item === 'object' && item !== null && !Array.isArray(item)
                         ? item
                         : { type: 'selection', name: '' };
-                    const itemType = itemObj.type || 'selection';
-                    const itemName = itemObj.name || '';
-                    const itemValue = itemObj.value !== undefined ? String(itemObj.value) : '';
-                    const itemTime = itemObj.time || '';
-                    const itemGlobal = itemObj.global || '';
+                    const itemType: string = String(itemObj.type || 'selection');
+                    const itemName: string = String(itemObj.name || '');
+                    const itemValue: string = itemObj.value !== undefined ? String(itemObj.value) : '';
+                    const itemTime: string = String(itemObj.time || '');
+                    const itemGlobal: string = String(itemObj.global || '');
 
-                    const updateSpecialItem = (updates: Record<string, any>) => {
-                      const special = [...specialArray];
-                      const newItem: Record<string, any> = { ...itemObj, ...updates };
+                    // Generate stable key based on occurrence count of same type+name combo
+                    const occurrenceIndex = specialArray.slice(0, index).filter((i) => {
+                      const prevItem = (typeof i === 'object' && i !== null && !Array.isArray(i)) ? i : null;
+                      const prevType = prevItem?.type || 'selection';
+                      const prevName = prevItem?.name || '';
+                      return prevType === itemType && prevName === itemName;
+                    }).length;
+
+                    const updateSpecialItem = (updates: Partial<SpecialItem>) => {
+                      const special = [...specialArray] as SpecialItem[];
+                      const newItem: SpecialItem = { ...itemObj, ...updates };
                       // Remove empty optional fields
                       if (!newItem.value && newItem.value !== 0) delete newItem.value;
                       if (!newItem.time) delete newItem.time;
                       if (!newItem.global) delete newItem.global;
                       special[index] = newItem;
-                      onEditChange('special' as keyof Character, special);
+                      onEditChange('special' as keyof Character, special as unknown as Character[keyof Character]);
                     };
 
                     return (
-                      <div key={index} className={styles.specialItemCard}>
+                      <div
+                        key={`special-${itemType}-${itemName}-occurrence-${occurrenceIndex}`}
+                        className={styles.specialItemCard}
+                      >
                         <div className={styles.specialItemHeader}>
                           <span className={styles.specialItemNumber}>#{index + 1}</span>
                           <button
@@ -1345,9 +1391,9 @@ export function TokenEditor({
                             className={`${styles.btnIcon} ${styles.btnDanger}`}
                             onClick={() => {
                               if (isOfficial) return;
-                              const special = [...specialArray];
+                              const special = [...specialArray] as SpecialItem[];
                               special.splice(index, 1);
-                              onEditChange('special' as keyof Character, special);
+                              onEditChange('special' as keyof Character, special as unknown as Character[keyof Character]);
                             }}
                             disabled={isOfficial}
                             title={
@@ -1398,8 +1444,9 @@ export function TokenEditor({
                             </select>
                           </div>
                           <div className={styles.specialField}>
-                            <label>Value</label>
+                            <label htmlFor={`special-value-${index}`}>Value</label>
                             <input
+                              id={`special-value-${index}`}
                               type="text"
                               value={itemValue}
                               disabled={isOfficial}
@@ -1463,13 +1510,14 @@ export function TokenEditor({
                 className={`${styles.btnSecondary} ${styles.btnSm}`}
                 onClick={() => {
                   if (isOfficial) return;
-                  const specialArray = Array.isArray((character as any).special)
-                    ? (character as any).special
-                    : (character as any).special
-                      ? [(character as any).special]
+                  const charWithSpecial = character as CharacterWithSpecial;
+                  const specialArray = Array.isArray(charWithSpecial.special)
+                    ? charWithSpecial.special
+                    : charWithSpecial.special
+                      ? [charWithSpecial.special]
                       : [];
-                  const special = [...specialArray, { type: 'selection', name: 'grimoire' }];
-                  onEditChange('special' as keyof Character, special);
+                  const special: SpecialItem[] = [...specialArray, { type: 'selection', name: 'grimoire' }];
+                  onEditChange('special' as keyof Character, special as unknown as Character[keyof Character]);
                 }}
                 disabled={isOfficial}
               >
@@ -1823,20 +1871,20 @@ export function TokenEditor({
                   </div>
                   <div className={styles.metadataContent}>
                     <div className={styles.metadataField}>
-                      <label>UUID</label>
+                      <span className={styles.metadataLabel}>UUID</span>
                       <code>{charUuid || '(none)'}</code>
                     </div>
                     <div className={styles.metadataField}>
-                      <label>Source</label>
+                      <span className={styles.metadataLabel}>Source</span>
                       <code>{character?.source || '(none)'}</code>
                     </div>
                     <div className={styles.metadataField}>
-                      <label>ID Linked to Name</label>
+                      <span className={styles.metadataLabel}>ID Linked to Name</span>
                       <code>{metadata.idLinkedToName ? 'true' : 'false'}</code>
                     </div>
                     {metadata.decoratives && Object.keys(metadata.decoratives).length > 0 && (
                       <div className={styles.metadataField}>
-                        <label>Decoratives</label>
+                        <span className={styles.metadataLabel}>Decoratives</span>
                         <pre className={styles.metadataJson}>
                           {JSON.stringify(metadata.decoratives, null, 2)}
                         </pre>

@@ -23,7 +23,7 @@ export interface CachePerformanceMetrics {
   operation: string;
   duration: number; // milliseconds
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -74,56 +74,59 @@ interface CacheAccessTracker {
   durations: number[];
 }
 
-export class CacheLogger {
-  private static level: CacheLogLevel = CacheLogLevel.WARN;
-  private static performanceMetrics: CachePerformanceMetrics[] = [];
-  private static maxMetricsHistory = 100; // Keep last 100 measurements
-  private static accessTrackers = new Map<string, CacheAccessTracker>(); // Track hits/misses per operation
+export namespace CacheLogger {
+  let level: CacheLogLevel = CacheLogLevel.WARN;
+  let performanceMetrics: CachePerformanceMetrics[] = [];
+  const maxMetricsHistory = 100; // Keep last 100 measurements
+  const accessTrackers = new Map<string, CacheAccessTracker>(); // Track hits/misses per operation
 
   /**
    * Initialize logger with persisted log level from localStorage.
    */
-  static initialize(): void {
+  export function initialize(): void {
     // Check localStorage for persisted log level
     const storedLevel = localStorage.getItem('cache:logLevel');
     if (storedLevel && storedLevel in CacheLogLevel) {
-      CacheLogger.level = CacheLogLevel[storedLevel as keyof typeof CacheLogLevel];
+      level = CacheLogLevel[storedLevel as keyof typeof CacheLogLevel];
     }
 
     // Check for debug flag
-    if (typeof window !== 'undefined' && (window as any).__CACHE_DEBUG__) {
-      CacheLogger.level = CacheLogLevel.DEBUG;
+    if (
+      typeof window !== 'undefined' &&
+      (window as unknown as { __CACHE_DEBUG__?: boolean }).__CACHE_DEBUG__
+    ) {
+      level = CacheLogLevel.DEBUG;
     }
 
-    CacheLogger.info('CacheLogger initialized', { level: CacheLogLevel[CacheLogger.level] });
+    info('CacheLogger initialized', { level: CacheLogLevel[level] });
   }
 
   /**
    * Set log level programmatically.
-   * @param level - New log level
+   * @param newLevel - New log level
    */
-  static setLevel(level: CacheLogLevel): void {
-    CacheLogger.level = level;
+  export function setLevel(newLevel: CacheLogLevel): void {
+    level = newLevel;
     // Persist to localStorage
-    localStorage.setItem('cache:logLevel', CacheLogLevel[level]);
-    console.info(`[Cache:INFO] Log level set to ${CacheLogLevel[level]}`);
+    localStorage.setItem('cache:logLevel', CacheLogLevel[newLevel]);
+    console.info(`[Cache:INFO] Log level set to ${CacheLogLevel[newLevel]}`);
   }
 
   /**
    * Get current log level.
    * @returns Current log level
    */
-  static getLevel(): CacheLogLevel {
-    return CacheLogger.level;
+  export function getLevel(): CacheLogLevel {
+    return level;
   }
 
   /**
    * Check if level is enabled.
-   * @param level - Level to check
+   * @param checkLevel - Level to check
    * @returns True if level is enabled
    */
-  static isLevelEnabled(level: CacheLogLevel): boolean {
-    return CacheLogger.level >= level;
+  export function isLevelEnabled(checkLevel: CacheLogLevel): boolean {
+    return level >= checkLevel;
   }
 
   /**
@@ -131,8 +134,8 @@ export class CacheLogger {
    * @param message - Message to log
    * @param data - Optional structured data
    */
-  static trace(message: string, data?: any): void {
-    if (CacheLogger.level >= CacheLogLevel.TRACE) {
+  export function trace(message: string, data?: Record<string, unknown>): void {
+    if (level >= CacheLogLevel.TRACE) {
       console.log(`[Cache:TRACE] ${message}`, data !== undefined ? data : '');
     }
   }
@@ -142,8 +145,8 @@ export class CacheLogger {
    * @param message - Message to log
    * @param data - Optional structured data
    */
-  static debug(message: string, data?: any): void {
-    if (CacheLogger.level >= CacheLogLevel.DEBUG) {
+  export function debug(message: string, data?: Record<string, unknown>): void {
+    if (level >= CacheLogLevel.DEBUG) {
       console.log(`[Cache:DEBUG] ${message}`, data !== undefined ? data : '');
     }
   }
@@ -153,8 +156,8 @@ export class CacheLogger {
    * @param message - Message to log
    * @param data - Optional structured data
    */
-  static info(message: string, data?: any): void {
-    if (CacheLogger.level >= CacheLogLevel.INFO) {
+  export function info(message: string, data?: Record<string, unknown>): void {
+    if (level >= CacheLogLevel.INFO) {
       console.info(`[Cache:INFO] ${message}`, data !== undefined ? data : '');
     }
   }
@@ -164,8 +167,8 @@ export class CacheLogger {
    * @param message - Message to log
    * @param data - Optional structured data
    */
-  static warn(message: string, data?: any): void {
-    if (CacheLogger.level >= CacheLogLevel.WARN) {
+  export function warn(message: string, data?: Record<string, unknown>): void {
+    if (level >= CacheLogLevel.WARN) {
       console.warn(`[Cache:WARN] ${message}`, data !== undefined ? data : '');
     }
   }
@@ -175,8 +178,8 @@ export class CacheLogger {
    * @param message - Message to log
    * @param error - Optional error object or data
    */
-  static error(message: string, error?: any): void {
-    if (CacheLogger.level >= CacheLogLevel.ERROR) {
+  export function error(message: string, error?: unknown): void {
+    if (level >= CacheLogLevel.ERROR) {
       console.error(`[Cache:ERROR] ${message}`, error !== undefined ? error : '');
     }
   }
@@ -187,10 +190,10 @@ export class CacheLogger {
    *
    * @param label - Unique label for this operation
    */
-  static startTiming(label: string): void {
+  export function startTiming(label: string): void {
     if (typeof performance !== 'undefined') {
       performance.mark(`cache:${label}:start`);
-      CacheLogger.trace(`Started timing: ${label}`);
+      trace(`Started timing: ${label}`);
     }
   }
 
@@ -202,7 +205,7 @@ export class CacheLogger {
    * @param metadata - Optional metadata to include with metrics
    * @returns Duration in milliseconds, or null if timing failed
    */
-  static endTiming(label: string, metadata?: Record<string, any>): number | null {
+  export function endTiming(label: string, metadata?: Record<string, unknown>): number | null {
     if (typeof performance === 'undefined') {
       return null;
     }
@@ -220,7 +223,7 @@ export class CacheLogger {
         const duration = measure.duration;
 
         // Store metrics
-        CacheLogger.recordMetrics({
+        recordMetrics({
           operation: label,
           duration,
           timestamp: Date.now(),
@@ -228,9 +231,9 @@ export class CacheLogger {
         });
 
         // Log if debug enabled
-        CacheLogger.debug(`${label} completed`, {
+        debug(`${label} completed`, {
           duration: `${duration.toFixed(2)}ms`,
-          ...metadata,
+          ...(metadata ?? {}),
         });
 
         // Clean up marks and measures
@@ -242,7 +245,7 @@ export class CacheLogger {
       }
     } catch (error) {
       // Marks don't exist, silently fail
-      CacheLogger.trace(`Timing failed for: ${label}`, error);
+      trace(`Timing failed for: ${label}`, error as Record<string, unknown>);
     }
 
     return null;
@@ -254,12 +257,12 @@ export class CacheLogger {
    *
    * @param metrics - Performance metrics to record
    */
-  private static recordMetrics(metrics: CachePerformanceMetrics): void {
-    CacheLogger.performanceMetrics.push(metrics);
+  function recordMetrics(metrics: CachePerformanceMetrics): void {
+    performanceMetrics.push(metrics);
 
     // Keep only last N metrics
-    if (CacheLogger.performanceMetrics.length > CacheLogger.maxMetricsHistory) {
-      CacheLogger.performanceMetrics.shift();
+    if (performanceMetrics.length > maxMetricsHistory) {
+      performanceMetrics.shift();
     }
   }
 
@@ -267,8 +270,8 @@ export class CacheLogger {
    * Get all recorded performance metrics.
    * @returns Array of performance metrics
    */
-  static getMetrics(): readonly CachePerformanceMetrics[] {
-    return [...CacheLogger.performanceMetrics];
+  export function getMetrics(): readonly CachePerformanceMetrics[] {
+    return [...performanceMetrics];
   }
 
   /**
@@ -276,8 +279,8 @@ export class CacheLogger {
    * @param operation - Operation name
    * @returns Array of matching metrics
    */
-  static getMetricsForOperation(operation: string): CachePerformanceMetrics[] {
-    return CacheLogger.performanceMetrics.filter((m) => m.operation === operation);
+  export function getMetricsForOperation(operation: string): CachePerformanceMetrics[] {
+    return performanceMetrics.filter((m) => m.operation === operation);
   }
 
   /**
@@ -285,8 +288,8 @@ export class CacheLogger {
    * @param operation - Operation name
    * @returns Average duration in ms, or null if no data
    */
-  static getAverageDuration(operation: string): number | null {
-    const metrics = CacheLogger.getMetricsForOperation(operation);
+  export function getAverageDuration(operation: string): number | null {
+    const metrics = getMetricsForOperation(operation);
     if (metrics.length === 0) return null;
 
     const total = metrics.reduce((sum, m) => sum + m.duration, 0);
@@ -301,12 +304,12 @@ export class CacheLogger {
    * @param hit - Whether this was a cache hit
    * @param durationMs - Duration of the operation in milliseconds
    */
-  static logAccess(operation: string, hit: boolean, durationMs: number): void {
+  export function logAccess(operation: string, hit: boolean, durationMs: number): void {
     // Get or create tracker for this operation
-    let tracker = CacheLogger.accessTrackers.get(operation);
+    let tracker = accessTrackers.get(operation);
     if (!tracker) {
       tracker = { hits: 0, misses: 0, durations: [] };
-      CacheLogger.accessTrackers.set(operation, tracker);
+      accessTrackers.set(operation, tracker);
     }
 
     // Update hit/miss count
@@ -318,12 +321,12 @@ export class CacheLogger {
 
     // Track duration (keep last 100 for percentile calculations)
     tracker.durations.push(durationMs);
-    if (tracker.durations.length > CacheLogger.maxMetricsHistory) {
+    if (tracker.durations.length > maxMetricsHistory) {
       tracker.durations.shift();
     }
 
     // Log at trace level for detailed debugging
-    CacheLogger.trace(`Cache access: ${operation}`, {
+    trace(`Cache access: ${operation}`, {
       hit,
       duration: `${durationMs.toFixed(2)}ms`,
       hitRate: `${((tracker.hits / (tracker.hits + tracker.misses)) * 100).toFixed(1)}%`,
@@ -337,8 +340,8 @@ export class CacheLogger {
    * @param operation - Operation name
    * @returns Aggregated metrics or null if no data
    */
-  static getMetricsAnalysis(operation: string): CacheMetrics | null {
-    const tracker = CacheLogger.accessTrackers.get(operation);
+  export function getMetricsAnalysis(operation: string): CacheMetrics | null {
+    const tracker = accessTrackers.get(operation);
     if (!tracker || tracker.durations.length === 0) {
       return null;
     }
@@ -378,77 +381,73 @@ export class CacheLogger {
     };
   }
 
-  /**
-   * Generate smart recommendations based on cache performance analysis.
-   * Analyzes all tracked operations and suggests optimizations.
-   *
-   * @returns Array of recommendations sorted by severity
-   */
-  static getRecommendations(): CacheRecommendation[] {
-    const recommendations: CacheRecommendation[] = [];
-
-    // Analyze each tracked operation
-    for (const [operation, _tracker] of CacheLogger.accessTrackers.entries()) {
-      const metrics = CacheLogger.getMetricsAnalysis(operation);
-      if (!metrics) continue;
-
-      // Check hit rate (critical if < 50%, warning if < 70%)
-      if (metrics.hitRate < 0.5) {
-        recommendations.push({
-          severity: 'critical',
-          category: 'hit-rate',
-          message: `${operation}: Very low hit rate (${(metrics.hitRate * 100).toFixed(1)}%)`,
-          details: `Only ${metrics.hitCount} hits out of ${metrics.totalCount} accesses`,
-          suggestedAction: 'Consider increasing cache size or reviewing cache key strategy',
-        });
-      } else if (metrics.hitRate < 0.7) {
-        recommendations.push({
-          severity: 'warning',
-          category: 'hit-rate',
-          message: `${operation}: Suboptimal hit rate (${(metrics.hitRate * 100).toFixed(1)}%)`,
-          details: `${metrics.hitCount} hits, ${metrics.missCount} misses`,
-          suggestedAction: 'Cache size may be too small for current workload',
-        });
-      }
-
-      // Check performance (warning if p95 > 100ms, critical if p95 > 500ms)
-      if (metrics.p95Duration > 500) {
-        recommendations.push({
-          severity: 'critical',
-          category: 'performance',
-          message: `${operation}: Slow performance (P95: ${metrics.p95Duration.toFixed(1)}ms)`,
-          details: `95% of operations take longer than 500ms`,
-          suggestedAction: 'Investigate slow operations, consider background preloading',
-        });
-      } else if (metrics.p95Duration > 100) {
-        recommendations.push({
-          severity: 'warning',
-          category: 'performance',
-          message: `${operation}: Moderate slowness (P95: ${metrics.p95Duration.toFixed(1)}ms)`,
-          details: `Some operations are slower than optimal`,
-          suggestedAction: 'Consider optimizing cache lookup or prefetching strategies',
-        });
-      }
-
-      // Check for high variability (P99 >> P50 indicates inconsistent performance)
-      const variability = metrics.p50Duration > 0 ? metrics.p99Duration / metrics.p50Duration : 0;
-      if (variability > 10) {
-        recommendations.push({
-          severity: 'warning',
-          category: 'performance',
-          message: `${operation}: Inconsistent performance`,
-          details: `P99 (${metrics.p99Duration.toFixed(1)}ms) is ${variability.toFixed(1)}x slower than P50 (${metrics.p50Duration.toFixed(1)}ms)`,
-          suggestedAction: 'Some operations are outliers - investigate cache misses or slow paths',
-        });
-      }
+  // Helper functions to reduce complexity in getRecommendations
+  function analyzeHitRate(metrics: CacheMetrics, operation: string): CacheRecommendation[] {
+    const recs: CacheRecommendation[] = [];
+    if (metrics.hitRate < 0.5) {
+      recs.push({
+        severity: 'critical',
+        category: 'hit-rate',
+        message: `${operation}: Very low hit rate (${(metrics.hitRate * 100).toFixed(1)}%)`,
+        details: `Only ${metrics.hitCount} hits out of ${metrics.totalCount} accesses`,
+        suggestedAction: 'Consider increasing cache size or reviewing cache key strategy',
+      });
+    } else if (metrics.hitRate < 0.7) {
+      recs.push({
+        severity: 'warning',
+        category: 'hit-rate',
+        message: `${operation}: Suboptimal hit rate (${(metrics.hitRate * 100).toFixed(1)}%)`,
+        details: `${metrics.hitCount} hits, ${metrics.missCount} misses`,
+        suggestedAction: 'Cache size may be too small for current workload',
+      });
     }
+    return recs;
+  }
 
-    // Check eviction tracking from performance metrics
-    const evictionMetrics = CacheLogger.performanceMetrics.filter(
-      (m) => m.metadata?.reason === 'lru' || m.metadata?.reason === 'ttl'
+  function analyzePerformance(metrics: CacheMetrics, operation: string): CacheRecommendation[] {
+    const recs: CacheRecommendation[] = [];
+    if (metrics.p95Duration > 500) {
+      recs.push({
+        severity: 'critical',
+        category: 'performance',
+        message: `${operation}: Slow performance (P95: ${metrics.p95Duration.toFixed(1)}ms)`,
+        details: `95% of operations take longer than 500ms`,
+        suggestedAction: 'Investigate slow operations, consider background preloading',
+      });
+    } else if (metrics.p95Duration > 100) {
+      recs.push({
+        severity: 'warning',
+        category: 'performance',
+        message: `${operation}: Moderate slowness (P95: ${metrics.p95Duration.toFixed(1)}ms)`,
+        details: `Some operations are slower than optimal`,
+        suggestedAction: 'Consider optimizing cache lookup or prefetching strategies',
+      });
+    }
+    return recs;
+  }
+
+  function analyzeVariability(metrics: CacheMetrics, operation: string): CacheRecommendation[] {
+    const recs: CacheRecommendation[] = [];
+    const variability = metrics.p50Duration > 0 ? metrics.p99Duration / metrics.p50Duration : 0;
+    if (variability > 10) {
+      recs.push({
+        severity: 'warning',
+        category: 'performance',
+        message: `${operation}: Inconsistent performance`,
+        details: `P99 (${metrics.p99Duration.toFixed(1)}ms) is ${variability.toFixed(1)}x slower than P50 (${metrics.p50Duration.toFixed(1)}ms)`,
+        suggestedAction: 'Some operations are outliers - investigate cache misses or slow paths',
+      });
+    }
+    return recs;
+  }
+
+  function analyzeEvictions(): CacheRecommendation[] {
+    const recs: CacheRecommendation[] = [];
+    const evictionMetrics = performanceMetrics.filter(
+      (m) => m.metadata && (m.metadata.reason === 'lru' || m.metadata.reason === 'ttl')
     );
     if (evictionMetrics.length > 20) {
-      recommendations.push({
+      recs.push({
         severity: 'warning',
         category: 'eviction',
         message: `High eviction rate detected (${evictionMetrics.length} evictions)`,
@@ -456,9 +455,32 @@ export class CacheLogger {
         suggestedAction: 'Increase maxSize or reduce TTL to keep more entries cached',
       });
     }
+    return recs;
+  }
+
+  /**
+   * Generate smart recommendations based on cache performance analysis.
+   * Analyzes all tracked operations and suggests optimizations.
+   *
+   * @returns Array of recommendations sorted by severity
+   */
+  export function getRecommendations(): CacheRecommendation[] {
+    const recommendations: CacheRecommendation[] = [];
+
+    // Analyze each tracked operation
+    for (const [operation] of accessTrackers.entries()) {
+      const metrics = getMetricsAnalysis(operation);
+      if (!metrics) continue;
+
+      recommendations.push(...analyzeHitRate(metrics, operation));
+      recommendations.push(...analyzePerformance(metrics, operation));
+      recommendations.push(...analyzeVariability(metrics, operation));
+    }
+
+    recommendations.push(...analyzeEvictions());
 
     // If no issues found, add positive feedback
-    if (recommendations.length === 0 && CacheLogger.accessTrackers.size > 0) {
+    if (recommendations.length === 0 && accessTrackers.size > 0) {
       recommendations.push({
         severity: 'info',
         category: 'hit-rate',
@@ -476,10 +498,10 @@ export class CacheLogger {
   /**
    * Clear all performance metrics and access tracking.
    */
-  static clearMetrics(): void {
-    CacheLogger.performanceMetrics = [];
-    CacheLogger.accessTrackers.clear();
-    CacheLogger.debug('Performance metrics and access tracking cleared');
+  export function clearMetrics(): void {
+    performanceMetrics = [];
+    accessTrackers.clear();
+    debug('Performance metrics and access tracking cleared');
   }
 
   /**
@@ -488,26 +510,26 @@ export class CacheLogger {
    *
    * @returns JSON string of all metrics including performance analysis and recommendations
    */
-  static exportMetrics(): string {
+  export function exportMetrics(): string {
     // Get analysis for all tracked operations
     const operationAnalysis: Record<string, CacheMetrics | null> = {};
-    for (const operation of CacheLogger.accessTrackers.keys()) {
-      operationAnalysis[operation] = CacheLogger.getMetricsAnalysis(operation);
+    for (const operation of accessTrackers.keys()) {
+      operationAnalysis[operation] = getMetricsAnalysis(operation);
     }
 
     return JSON.stringify(
       {
-        logLevel: CacheLogLevel[CacheLogger.level],
+        logLevel: CacheLogLevel[level],
         timestamp: Date.now(),
         performanceMetrics: {
-          count: CacheLogger.performanceMetrics.length,
-          recent: CacheLogger.performanceMetrics,
+          count: performanceMetrics.length,
+          recent: performanceMetrics,
         },
         accessTracking: {
-          operations: Array.from(CacheLogger.accessTrackers.keys()),
+          operations: Array.from(accessTrackers.keys()),
           analysis: operationAnalysis,
         },
-        recommendations: CacheLogger.getRecommendations(),
+        recommendations: getRecommendations(),
       },
       null,
       2
@@ -519,12 +541,12 @@ export class CacheLogger {
    * @param hits - Number of cache hits
    * @param misses - Number of cache misses
    */
-  static logHitRate(hits: number, misses: number): void {
+  export function logHitRate(hits: number, misses: number): void {
     const total = hits + misses;
     if (total === 0) return;
 
     const hitRate = ((hits / total) * 100).toFixed(1);
-    CacheLogger.info(`Cache hit rate: ${hitRate}%`, { hits, misses, total });
+    info(`Cache hit rate: ${hitRate}%`, { hits, misses, total });
   }
 
   /**
@@ -533,9 +555,9 @@ export class CacheLogger {
    * @param used - Memory used in bytes
    * @param max - Max memory in bytes
    */
-  static logMemoryUsage(cacheName: string, used: number, max?: number): void {
+  export function logMemoryUsage(cacheName: string, used: number, max?: number): void {
     const usedMB = (used / 1024 / 1024).toFixed(2);
-    const data: any = { cacheName, used: `${usedMB} MB` };
+    const data: Record<string, string | number> = { cacheName, used: `${usedMB} MB` };
 
     if (max) {
       const maxMB = (max / 1024 / 1024).toFixed(2);
@@ -544,7 +566,7 @@ export class CacheLogger {
       data.usage = `${percentage}%`;
     }
 
-    CacheLogger.debug(`Memory usage: ${cacheName}`, data);
+    debug(`Memory usage: ${cacheName}`, data);
   }
 
   /**
@@ -556,7 +578,7 @@ export class CacheLogger {
    * @param lastAccessed - Timestamp of last access
    * @param accessCount - Number of times entry was accessed
    */
-  static logEviction(
+  export function logEviction(
     cacheName: string,
     key: string,
     reason: 'lru' | 'ttl' | 'manual',
@@ -567,7 +589,7 @@ export class CacheLogger {
     const sizeMB = (size / 1024 / 1024).toFixed(2);
     const age = Math.floor((Date.now() - lastAccessed) / 1000); // seconds
 
-    CacheLogger.debug(`Cache eviction: ${cacheName}`, {
+    debug(`Cache eviction: ${cacheName}`, {
       key,
       reason,
       size: `${sizeMB} MB`,
@@ -584,5 +606,5 @@ if (typeof window !== 'undefined') {
 
 // Expose to window for DevTools access
 if (typeof window !== 'undefined') {
-  (window as any).__CacheLogger__ = CacheLogger;
+  (window as unknown as { __CacheLogger__?: typeof CacheLogger }).__CacheLogger__ = CacheLogger;
 }

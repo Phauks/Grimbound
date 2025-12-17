@@ -105,8 +105,8 @@ export function StorageWarning({
           {/* Suggestions */}
           {warning.suggestions.length > 0 && (
             <ul className={styles.suggestions}>
-              {warning.suggestions.map((suggestion, index) => (
-                <li key={index}>{suggestion}</li>
+              {warning.suggestions.map((suggestion) => (
+                <li key={suggestion}>{suggestion}</li>
               ))}
             </ul>
           )}
@@ -147,12 +147,15 @@ export function StorageWarning({
 
       {/* Progress Bar (if quota info available) */}
       {warning.quota && (
-        <div className={styles.progressBar}>
-          <div
-            className={styles.progressFill}
-            style={{ width: `${warning.quota.percentage}%` }}
-            aria-label={`Storage usage: ${Math.round(warning.quota.percentage)}%`}
-          />
+        <div
+          className={styles.progressBar}
+          role="progressbar"
+          aria-valuenow={Math.round(warning.quota.percentage)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Storage usage: ${Math.round(warning.quota.percentage)}%`}
+        >
+          <div className={styles.progressFill} style={{ width: `${warning.quota.percentage}%` }} />
         </div>
       )}
     </div>

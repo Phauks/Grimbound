@@ -8,7 +8,10 @@
  */
 // V8-specific interface for captureStackTrace
 interface ErrorConstructorWithStackTrace extends ErrorConstructor {
-  captureStackTrace?(targetObject: object, constructorOpt?: Function): void;
+  captureStackTrace?(
+    targetObject: object,
+    constructorOpt?: new (...args: unknown[]) => unknown
+  ): void;
 }
 
 export class TokenGeneratorError extends Error {
@@ -22,7 +25,12 @@ export class TokenGeneratorError extends Error {
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     const ErrorWithStackTrace = Error as ErrorConstructorWithStackTrace;
     if (ErrorWithStackTrace.captureStackTrace) {
-      ErrorWithStackTrace.captureStackTrace(this, this.constructor);
+      ErrorWithStackTrace.captureStackTrace(
+        this,
+        this.constructor as new (
+          ...args: unknown[]
+        ) => unknown
+      );
     }
   }
 }
@@ -185,64 +193,79 @@ export class PackageValidationError extends TokenGeneratorError {
 /**
  * Error handler utility to extract user-friendly messages
  */
-export class ErrorHandler {
+export const ErrorHandler = {
   /**
    * Get a user-friendly error message from any error
    */
-  static getUserMessage(error: unknown): string {
-    if (error instanceof ValidationError) {
-      const details =
-        error.validationErrors.length > 0 ? `: ${error.validationErrors.join(', ')}` : '';
-      return `${error.message}${details}`;
-    }
+  getUserMessage(error: unknown): string {
+    // Use specific error types with proper type guards
+    const handlers: Array<{ check: (e: unknown) => e is Error; handle: (e: Error) => string }> = [
+      {
+        check: (e): e is ValidationError => e instanceof ValidationError,
+        handle: (e: ValidationError) => {
+          const details = e.validationErrors.length > 0 ? `: ${e.validationErrors.join(', ')}` : '';
+          return `${e.message}${details}`;
+        },
+      },
+      {
+        check: (e): e is TokenCreationError => e instanceof TokenCreationError,
+        handle: (e: TokenCreationError) => {
+          const tokenInfo = e.tokenName ? ` (${e.tokenName})` : '';
+          return `${e.message}${tokenInfo}`;
+        },
+      },
+      {
+        check: (e): e is ResourceNotFoundError => e instanceof ResourceNotFoundError,
+        handle: (e: ResourceNotFoundError) =>
+          `${e.message}. Please ensure ${e.resourceName} is available.`,
+      },
+      {
+        check: (e): e is GitHubAPIError => e instanceof GitHubAPIError,
+        handle: (e: GitHubAPIError) =>
+          e.rateLimited
+            ? `${e.message}. GitHub API rate limit exceeded. Please try again later.`
+            : e.message,
+      },
+      {
+        check: (e): e is StorageError => e instanceof StorageError,
+        handle: (e: StorageError) =>
+          e.storageType === 'quota'
+            ? `${e.message}. Storage quota exceeded. Please clear some space.`
+            : e.message,
+      },
+      {
+        check: (e): e is PackageValidationError => e instanceof PackageValidationError,
+        handle: (e: PackageValidationError) => `${e.message}. The data package may be corrupted.`,
+      },
+      {
+        check: (e): e is DataSyncError => e instanceof DataSyncError,
+        handle: (e: DataSyncError) => {
+          const operation = e.syncOperation ? ` (${e.syncOperation})` : '';
+          return `${e.message}${operation}`;
+        },
+      },
+      {
+        check: (e): e is TokenGeneratorError => e instanceof TokenGeneratorError,
+        handle: (e) => e.message,
+      },
+      {
+        check: (e): e is Error => e instanceof Error,
+        handle: (e) => e.message,
+      },
+    ];
 
-    if (error instanceof TokenCreationError) {
-      const tokenInfo = error.tokenName ? ` (${error.tokenName})` : '';
-      return `${error.message}${tokenInfo}`;
-    }
-
-    if (error instanceof ResourceNotFoundError) {
-      return `${error.message}. Please ensure ${error.resourceName} is available.`;
-    }
-
-    if (error instanceof GitHubAPIError) {
-      if (error.rateLimited) {
-        return `${error.message}. GitHub API rate limit exceeded. Please try again later.`;
+    for (const { check, handle } of handlers) {
+      if (check(error)) {
+        return handle(error);
       }
-      return error.message;
     }
-
-    if (error instanceof StorageError) {
-      if (error.storageType === 'quota') {
-        return `${error.message}. Storage quota exceeded. Please clear some space.`;
-      }
-      return error.message;
-    }
-
-    if (error instanceof PackageValidationError) {
-      return `${error.message}. The data package may be corrupted.`;
-    }
-
-    if (error instanceof DataSyncError) {
-      const operation = error.syncOperation ? ` (${error.syncOperation})` : '';
-      return `${error.message}${operation}`;
-    }
-
-    if (error instanceof TokenGeneratorError) {
-      return error.message;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
     return 'An unknown error occurred';
-  }
+  },
 
   /**
    * Log error with appropriate level
    */
-  static log(error: unknown, context: string = ''): void {
+  log(error: unknown, context: string = ''): void {
     const prefix = context ? `[${context}]` : '';
 
     if (error instanceof ValidationError) {
@@ -254,17 +277,17 @@ export class ErrorHandler {
     } else {
       console.error(prefix, error);
     }
-  }
+  },
 
   /**
    * Check if error should be shown to user
    */
-  static shouldShowToUser(error: unknown): boolean {
+  shouldShowToUser(error: unknown): boolean {
     // All our custom errors should be shown to users
     // System errors or unknown errors should show generic message
     return error instanceof TokenGeneratorError;
-  }
-}
+  },
+};
 
 export default {
   TokenGeneratorError,

@@ -67,7 +67,7 @@ export class ProjectService implements IProjectService {
       characters: [],
       scriptMeta: null,
       characterMetadata: {},
-      generationOptions: {} as any, // Will be populated from context
+      generationOptions: {} as GenerationOptions, // Will be populated from context
       customIcons: [],
       filters: {
         teams: [],
@@ -181,8 +181,8 @@ export class ProjectService implements IProjectService {
     const sortOrder = options.sortOrder || 'desc';
 
     projects.sort((a, b) => {
-      let aVal: any = a[sortBy];
-      let bVal: any = b[sortBy];
+      let aVal: string | number | Date = a[sortBy] as string | number | Date;
+      let bVal: string | number | Date = b[sortBy] as string | number | Date;
 
       // Handle string comparison
       if (typeof aVal === 'string') {

@@ -128,6 +128,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
         <div className={styles.modalHeader}>
           <h2>Save to Asset Library</h2>
           <button
+            type="button"
             className={styles.closeButton}
             onClick={handleCancel}
             disabled={isSaving}
@@ -176,6 +177,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
               }}
             >
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${assetType === 'studio-icon' ? styles.active : ''}`}
                 onClick={() => setAssetType('studio-icon')}
                 disabled={isSaving}
@@ -184,6 +186,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
                 🎨 Icon
               </button>
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${assetType === 'studio-logo' ? styles.active : ''}`}
                 onClick={() => setAssetType('studio-logo')}
                 disabled={isSaving}
@@ -192,6 +195,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
                 📝 Logo
               </button>
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${assetType === 'studio-project' ? styles.active : ''}`}
                 onClick={() => setAssetType('studio-project')}
                 disabled={isSaving}
@@ -289,6 +293,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
               style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-xs)' }}
             >
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${scope === 'project' ? styles.active : ''}`}
                 onClick={() => setScope('project')}
                 disabled={isSaving || !currentProject}
@@ -297,6 +302,7 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
                 📁 Current Project
               </button>
               <button
+                type="button"
                 className={`${styles.toolbarButton} ${scope === 'global' ? styles.active : ''}`}
                 onClick={() => setScope('global')}
                 disabled={isSaving}
@@ -380,10 +386,16 @@ export function SaveAssetModal({ isOpen, onClose, onSave }: SaveAssetModalProps)
 
         {/* Footer */}
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.secondaryButton} onClick={handleCancel} disabled={isSaving}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
             Cancel
           </button>
           <button
+            type="button"
             className={styles.primaryButton}
             onClick={handleSave}
             disabled={isSaving || !name.trim()}

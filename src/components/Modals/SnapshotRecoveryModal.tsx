@@ -33,13 +33,6 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
   const [selectedSnapshot, setSelectedSnapshot] = useState<AutoSaveSnapshot | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Load snapshots when modal opens
-  useEffect(() => {
-    if (isOpen && currentProject) {
-      loadSnapshots();
-    }
-  }, [isOpen, currentProject?.id, currentProject, loadSnapshots]);
-
   const loadSnapshots = useCallback(async () => {
     if (!currentProject) return;
 
@@ -68,6 +61,13 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
       setIsLoading(false);
     }
   }, [currentProject]);
+
+  // Load snapshots when modal opens
+  useEffect(() => {
+    if (isOpen && currentProject) {
+      loadSnapshots();
+    }
+  }, [isOpen, currentProject?.id, currentProject, loadSnapshots]);
 
   const handleRestore = useCallback((snapshot: AutoSaveSnapshot) => {
     setSelectedSnapshot(snapshot);
@@ -173,8 +173,34 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <button
+      type="button"
+      className={styles.overlay}
+      onClick={onClose}
+      aria-label="Close modal"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClose();
+        }
+      }}
+      tabIndex={0}
+      style={{ all: 'unset' }}
+    >
+      <div
+        className={styles.modal}
+        role="dialog"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            // Optionally close modal or handle as needed
+          }
+        }}
+        aria-modal="true"
+      >
         {/* Header */}
         <div className={styles.header}>
           <h2>Version History</h2>
@@ -268,6 +294,6 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

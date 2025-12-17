@@ -489,7 +489,9 @@ export function StudioProvider({ children }: StudioProviderProps) {
 
       // Release old canvases before replacing layers
       setLayers((prev) => {
-        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
+        prev.forEach((layer) => {
+          releaseStudioCanvas(layer.canvas);
+        });
         return restoredLayers;
       });
 
@@ -513,7 +515,9 @@ export function StudioProvider({ children }: StudioProviderProps) {
 
       // Release old canvases before replacing layers
       setLayers((prev) => {
-        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
+        prev.forEach((layer) => {
+          releaseStudioCanvas(layer.canvas);
+        });
         return restoredLayers;
       });
 
@@ -637,7 +641,9 @@ export function StudioProvider({ children }: StudioProviderProps) {
     (width: number, height: number) => {
       // Release all canvases before clearing layers
       setLayers((prev) => {
-        prev.forEach((layer) => releaseStudioCanvas(layer.canvas));
+        prev.forEach((layer) => {
+          releaseStudioCanvas(layer.canvas);
+        });
         return [];
       });
       setActiveLayerId(null);

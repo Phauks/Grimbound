@@ -201,6 +201,7 @@ export function StudioLayersPanel() {
         {/* Flatten All Button */}
         {layers.length > 1 && (
           <button
+            type="button"
             className={styles.toolbarButton}
             onClick={() => {
               if (confirm('Flatten all layers? This cannot be undone.')) {
@@ -274,6 +275,7 @@ export function StudioLayersPanel() {
                 >
                   {/* Visibility Toggle */}
                   <button
+                    type="button"
                     className={styles.iconButton}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -324,6 +326,7 @@ export function StudioLayersPanel() {
                   {/* Quick Actions */}
                   <div style={{ display: 'flex', gap: '2px' }}>
                     <button
+                      type="button"
                       className={styles.iconButton}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -343,6 +346,7 @@ export function StudioLayersPanel() {
                       📋
                     </button>
                     <button
+                      type="button"
                       className={styles.iconButton}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -435,6 +439,7 @@ export function StudioLayersPanel() {
                 {/* Layer Order Buttons */}
                 <div style={{ marginTop: 'var(--spacing-xs)', display: 'flex', gap: '4px' }}>
                   <button
+                    type="button"
                     className={styles.iconButton}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -451,6 +456,7 @@ export function StudioLayersPanel() {
                     ▲
                   </button>
                   <button
+                    type="button"
                     className={styles.iconButton}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -507,6 +513,7 @@ export function StudioLayersPanel() {
             📋 Duplicate
           </button>
           <button
+            type="button"
             className={styles.contextMenuItem}
             onClick={handleMergeDown}
             disabled={getLayerIndex(contextMenu.layerId || '') === sortedLayers.length - 1}
@@ -523,6 +530,7 @@ export function StudioLayersPanel() {
             style={{ margin: '4px 0', border: 'none', borderTop: '1px solid var(--color-primary)' }}
           />
           <button
+            type="button"
             className={styles.contextMenuItem}
             onClick={handleDelete}
             style={{ color: 'var(--color-danger, #dc3545)' }}

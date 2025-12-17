@@ -1,7 +1,6 @@
 /* TokenPreviewRow.module.css - Preview row with sample tokens and generation controls */
 
 .container {
-  margin-top: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
 

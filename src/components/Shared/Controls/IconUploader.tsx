@@ -176,9 +176,14 @@ export function IconUploader({
 
   return (
     <div className={styles.container}>
-      {label && <label className={styles.label}>{label}</label>}
+      {label && (
+        <label className={styles.label} htmlFor="icon-uploader-input">
+          {label}
+        </label>
+      )}
 
-      <div
+      <button
+        type="button"
         className={`${styles.dropzone} ${isDragging ? styles.dragging : ''} ${
           value ? styles.hasImage : ''
         } ${disabled ? styles.disabled : ''} ${error ? styles.error : ''}`}
@@ -187,11 +192,19 @@ export function IconUploader({
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onClick={handleClick}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
         aria-label={`Upload icon${characterName ? ` for ${characterName}` : ''}`}
+        disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        style={{ background: 'none', border: 'none', padding: 0, width: '100%' }}
       >
         <input
+          id="icon-uploader-input"
           ref={fileInputRef}
           type="file"
           accept={acceptString}
@@ -245,7 +258,7 @@ export function IconUploader({
             </p>
           </div>
         )}
-      </div>
+      </button>
 
       {error && (
         <div className={styles.errorMessage} role="alert">

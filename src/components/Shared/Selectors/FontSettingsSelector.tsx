@@ -17,7 +17,7 @@
  * @module components/Shared/FontSettingsSelector
  */
 
-import { memo, useCallback, useRef } from 'react';
+import { memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
 import styles from '../../../styles/components/shared/FontSettingsSelector.module.css';
@@ -61,8 +61,8 @@ export interface FontSettingsSelectorProps {
   fontOptions: FontOption[];
   /** Preview text to display */
   previewText?: string;
-  /** Component label */
-  label?: string;
+  /** Display title for the selector (e.g., "Character Name", "Ability Text") */
+  title?: string;
   /** Component size variant */
   size?: 'small' | 'medium' | 'large';
   /** Disabled state */
@@ -151,8 +151,8 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   onChange,
   onPreviewChange,
   fontOptions,
-  previewText = 'Sample Text',
-  label,
+  previewText: _previewText = 'Sample Text',
+  title,
   size = 'medium',
   disabled = false,
   visuallyDisabled = false,
@@ -186,11 +186,6 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   // Get current font option for display
   const currentFontOption =
     fontOptions.find((f) => f.value === displaySettings.fontFamily) || fontOptions[0];
-
-  // Format summary text
-  const getSummary = useCallback(() => {
-    return `${displaySettings.color.toUpperCase()} · ${displaySettings.letterSpacing}px · ${displaySettings.shadowBlur}px shadow`;
-  }, [displaySettings]);
 
   // Render the expandable panel via portal
   const renderPanel = () => {
@@ -350,6 +345,9 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
     );
   };
 
+  // Display label: use title if provided, otherwise fall back to font name
+  const displayLabel = title || currentFontOption?.label || 'Select font';
+
   return (
     <SettingsSelectorBase
       ref={panel.containerRef}
@@ -358,9 +356,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
           <FontPreview settings={displaySettings} isLightText={isLightText} />
         </PreviewBox>
       }
-      info={
-        <InfoSection label={currentFontOption?.label || 'Select font'} summary={getSummary()} />
-      }
+      info={<InfoSection label={displayLabel} />}
       headerSlot={headerSlot}
       actionLabel="Customize"
       onAction={panel.toggle}
@@ -368,7 +364,7 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
       disabled={disabled}
       visuallyDisabled={visuallyDisabled}
       size={size}
-      ariaLabel={ariaLabel ?? 'Font settings'}
+      ariaLabel={ariaLabel ?? title ?? 'Font settings'}
       onKeyDown={panel.handleKeyDown}
     >
       {renderPanel()}

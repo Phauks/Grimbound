@@ -138,7 +138,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
             <FlowerPreview flowerStyle={isEnabled ? currentFlower : 'none'} isEnabled={isEnabled} />
           </PreviewBox>
         }
-        info={<InfoSection label="Setup" summary={getFlowerLabel()} />}
+        info={<InfoSection label="Setup" />}
         headerSlot={EnableToggle}
         actionLabel="Change"
         onAction={() => setShowAssetModal(true)}

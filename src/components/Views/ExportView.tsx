@@ -7,8 +7,8 @@ import styles from '../../styles/components/views/Views.module.css';
 import type { CompressionLevel, ZipExportOptions } from '../../ts/types/index';
 import { BLEED_CONFIG, PDF_OFFSET_CONFIG } from '../../ts/utils/measurementUtils';
 import { ViewLayout } from '../Layout/ViewLayout';
+import { EditableSlider } from '../Shared/Controls/EditableSlider';
 import { MeasurementSlider } from '../Shared/Controls/MeasurementSlider';
-import { SliderWithValue } from '../Shared/Controls/SliderWithValue';
 import { Button } from '../Shared/UI/Button';
 import { OptionGroup } from '../Shared/UI/OptionGroup';
 
@@ -21,18 +21,23 @@ const DEFAULT_ZIP_SETTINGS: ZipExportOptions = {
 };
 
 export function ExportView() {
-  const { tokens, generationOptions, updateGenerationOptions, characters, scriptMeta } =
-    useTokenContext();
+  const {
+    tokens,
+    generationOptions,
+    updateGenerationOptions,
+    characters,
+    scriptMeta: _scriptMeta,
+  } = useTokenContext();
   const {
     downloadZip,
     downloadPdf,
     downloadJson,
     downloadStyleFormat,
     downloadAll,
-    cancelExport,
-    isExporting,
-    exportProgress,
-    exportStep,
+    cancelExport: _cancelExport,
+    isExporting: _isExporting,
+    exportProgress: _exportProgress,
+    exportStep: _exportStep,
   } = useExport();
   const { addToast } = useToast();
   const [activeZipSubTab, setActiveZipSubTab] = useState<'structure' | 'quality'>('structure');
@@ -185,12 +190,14 @@ export function ExportView() {
               {/* Nested sub-tabs for ZIP */}
               <div className={styles.nestedSubtabs}>
                 <button
+                  type="button"
                   className={`${styles.nestedSubtabButton} ${activeZipSubTab === 'structure' ? styles.active : ''}`}
                   onClick={() => setActiveZipSubTab('structure')}
                 >
                   Structure
                 </button>
                 <button
+                  type="button"
                   className={`${styles.nestedSubtabButton} ${activeZipSubTab === 'quality' ? styles.active : ''}`}
                   onClick={() => setActiveZipSubTab('quality')}
                 >
@@ -292,12 +299,14 @@ export function ExportView() {
               {/* Nested sub-tabs for PDF */}
               <div className={styles.nestedSubtabs}>
                 <button
+                  type="button"
                   className={`${styles.nestedSubtabButton} ${activePdfSubTab === 'layout' ? styles.active : ''}`}
                   onClick={() => setActivePdfSubTab('layout')}
                 >
                   Layout
                 </button>
                 <button
+                  type="button"
                   className={`${styles.nestedSubtabButton} ${activePdfSubTab === 'quality' ? styles.active : ''}`}
                   onClick={() => setActivePdfSubTab('quality')}
                 >
@@ -357,14 +366,14 @@ export function ExportView() {
                   helpText="JPEG quality for PDF images (higher = larger file, better quality)"
                   isSlider
                 >
-                  <SliderWithValue
+                  <EditableSlider
                     value={(generationOptions.pdfImageQuality ?? 0.9) * 100}
                     onChange={(value) => updateGenerationOptions({ pdfImageQuality: value / 100 })}
                     min={70}
                     max={100}
                     step={5}
                     defaultValue={90}
-                    unit="%"
+                    suffix="%"
                     ariaLabel="PDF image quality percentage"
                   />
                 </OptionGroup>

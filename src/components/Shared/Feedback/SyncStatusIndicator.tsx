@@ -114,9 +114,7 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
 
       {/* Update badge */}
       {status.availableVersion && status.availableVersion !== status.currentVersion && (
-        <span className={styles.updateBadge} aria-label="Update available">
-          1
-        </span>
+        <span className={styles.updateBadge}>1</span>
       )}
 
       {/* Tooltip */}
@@ -124,8 +122,8 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
         <div className={styles.tooltip} role="tooltip">
           {getTooltipText()
             .split('\n')
-            .map((line, i) => (
-              <div key={i}>{line}</div>
+            .map((line) => (
+              <div key={line}>{line}</div>
             ))}
         </div>
       )}

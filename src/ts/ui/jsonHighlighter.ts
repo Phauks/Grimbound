@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /**
  * JSON Syntax Highlighting Utilities
  * Extracted from ScriptInput for reusability
@@ -5,6 +7,7 @@
 
 // Token interface for JSON highlighting
 export interface HighlightToken {
+  content: ReactNode;
   type: 'key' | 'string' | 'number' | 'boolean' | 'null' | 'text';
   value: string;
 }
@@ -25,7 +28,8 @@ export function tokenizeJSON(json: string): HighlightToken[] {
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(json)) !== null) {
+  match = regex.exec(json);
+  while (match !== null) {
     // Add any text before this match
     if (match.index > lastIndex) {
       tokens.push({ type: 'text', value: json.slice(lastIndex, match.index) });
@@ -46,6 +50,7 @@ export function tokenizeJSON(json: string): HighlightToken[] {
 
     tokens.push({ type, value });
     lastIndex = regex.lastIndex;
+    match = regex.exec(json);
   }
 
   // Add any remaining text
@@ -73,6 +78,7 @@ export const TOKEN_CLASS_MAP: Record<HighlightToken['type'], string> = {
  * Used for line-based rendering to reduce DOM nodes
  */
 export interface HighlightLine {
+  text: string;
   lineNumber: number;
   tokens: HighlightToken[];
   html: string; // Pre-rendered HTML string for dangerouslySetInnerHTML

@@ -90,12 +90,16 @@ export function AutoSaveIndicator() {
   return (
     <div className={styles.container}>
       {/* Status Indicator */}
-      <div
+      <button
+        type="button"
         className={`${styles.indicator} ${styles[statusInfo.color]}`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        aria-label={`Auto-save status: ${statusInfo.label}`}
         title={getTooltipText()}
+        aria-label={`Auto-save status: ${statusInfo.label}`}
+        tabIndex={0}
+        style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
+        disabled
       >
         <span
           className={`${styles.icon} ${autoSaveStatus.state === 'saving' ? styles.spinning : ''}`}
@@ -110,12 +114,12 @@ export function AutoSaveIndicator() {
           <div className={styles.tooltip} role="tooltip">
             {getTooltipText()
               .split('\n')
-              .map((line, i) => (
-                <div key={i}>{line}</div>
+              .map((line) => (
+                <div key={line}>{line}</div>
               ))}
           </div>
         )}
-      </div>
+      </button>
 
       {/* View History Button */}
       {isAutoSaveEnabled && (

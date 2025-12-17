@@ -394,6 +394,7 @@ export function ToolSettingsPanel() {
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px' }}>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${toolSettings.text.alignment === 'left' ? styles.active : ''}`}
                   onClick={() =>
                     setToolSettings({
@@ -405,6 +406,7 @@ export function ToolSettingsPanel() {
                   ⬅️ Left
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${toolSettings.text.alignment === 'center' ? styles.active : ''}`}
                   onClick={() =>
                     setToolSettings({
@@ -416,6 +418,7 @@ export function ToolSettingsPanel() {
                   ↔️ Center
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${toolSettings.text.alignment === 'right' ? styles.active : ''}`}
                   onClick={() =>
                     setToolSettings({

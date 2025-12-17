@@ -174,6 +174,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                 }}
               >
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${scope === 'project' ? styles.active : ''}`}
                   onClick={() => setScope('project')}
                   disabled={!currentProject}
@@ -182,6 +183,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                   📁 Current Project
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${scope === 'global' ? styles.active : ''}`}
                   onClick={() => setScope('global')}
                   style={{ padding: 'var(--spacing-sm)', fontSize: '0.75rem' }}
@@ -216,6 +218,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                 }}
               >
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${assetType === 'all' ? styles.active : ''}`}
                   onClick={() => setAssetType('all')}
                   style={{ padding: 'var(--spacing-sm)', fontSize: '0.75rem' }}
@@ -223,6 +226,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                   All
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${assetType === 'studio-icon' ? styles.active : ''}`}
                   onClick={() => setAssetType('studio-icon')}
                   style={{ padding: 'var(--spacing-sm)', fontSize: '0.75rem' }}
@@ -230,6 +234,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                   🎨 Icons
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${assetType === 'studio-logo' ? styles.active : ''}`}
                   onClick={() => setAssetType('studio-logo')}
                   style={{ padding: 'var(--spacing-sm)', fontSize: '0.75rem' }}
@@ -237,6 +242,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                   📝 Logos
                 </button>
                 <button
+                  type="button"
                   className={`${styles.toolbarButton} ${assetType === 'studio-project' ? styles.active : ''}`}
                   onClick={() => setAssetType('studio-project')}
                   style={{ padding: 'var(--spacing-sm)', fontSize: '0.75rem' }}
@@ -418,6 +424,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
                       }}
                     >
                       <button
+                        type="button"
                         className={styles.toolbarButton}
                         onClick={(e) => {
                           e.stopPropagation();

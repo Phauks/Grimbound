@@ -112,21 +112,28 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
   if (downloads.length === 0) return null;
 
   const drawerContent = (
-    <div
+    <section
       ref={containerRef}
       className={`${styles.container} ${isOpen ? styles.containerOpen : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      tabIndex={-1}
+      aria-label="Downloads drawer"
     >
       {/* Edge Tab - chevron hugging the right edge */}
-      <div
+      <button
+        type="button"
         className={`${styles.edgeTab} ${isOpen ? styles.edgeTabOpen : ''}`}
-        aria-label={isOpen ? 'Close downloads' : 'Open downloads'}
         aria-expanded={isOpen}
         aria-controls="downloads-drawer"
+        tabIndex={0}
+        onClick={isOpen ? closeDrawer : openDrawer}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
       >
         <span className={styles.edgeChevron}>{isOpen ? '›' : '‹'}</span>
-      </div>
+      </button>
 
       {/* Drawer Panel */}
       <div
@@ -156,7 +163,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 
   return createPortal(drawerContent, document.body);

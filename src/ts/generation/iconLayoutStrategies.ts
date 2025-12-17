@@ -225,7 +225,7 @@ export class MetaTokenLayout implements IconLayoutStrategy {
 /**
  * Factory for creating appropriate layout strategy
  */
-export class IconLayoutStrategyFactory {
+export const IconLayoutStrategyFactory = {
   /**
    * Create layout strategy for character tokens
    * @param hasAbilityText - Whether the character has ability text
@@ -233,7 +233,7 @@ export class IconLayoutStrategyFactory {
    * @param abilityTextStartY - Starting Y position of ability text
    * @returns Appropriate layout strategy
    */
-  static createCharacterLayout(
+  createCharacterLayout(
     hasAbilityText: boolean,
     abilityTextHeight?: number,
     abilityTextStartY?: number
@@ -243,7 +243,7 @@ export class IconLayoutStrategyFactory {
     } else {
       return new CharacterWithoutAbilityTextLayout();
     }
-  }
+  },
 
   /**
    * Create layout strategy based on token type
@@ -253,7 +253,7 @@ export class IconLayoutStrategyFactory {
    * @param abilityTextStartY - Starting Y position of ability text
    * @returns Appropriate layout strategy
    */
-  static create(
+  create(
     tokenType: TokenTypeValue,
     hasAbilityText?: boolean,
     abilityTextHeight?: number,
@@ -274,8 +274,8 @@ export class IconLayoutStrategyFactory {
         // Fallback to meta token layout
         return new MetaTokenLayout();
     }
-  }
-}
+  },
+};
 
 export default {
   IconLayoutStrategyFactory,

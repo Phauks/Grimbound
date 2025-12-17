@@ -10,7 +10,7 @@
  * @param value - Value to estimate size for
  * @returns Estimated size in bytes
  */
-export function estimateSize(value: any): number {
+export function estimateSize(value: unknown): number {
   // Handle null/undefined
   if (value == null) {
     return 0;

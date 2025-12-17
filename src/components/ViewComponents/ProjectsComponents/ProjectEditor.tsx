@@ -561,18 +561,21 @@ export function ProjectEditor({
       {/* Tab Navigation */}
       <div className={styles.tabNavigation}>
         <button
+          type="button"
           className={`${styles.tabButton} ${activeTab === 'overview' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           ⚙️ Overview
         </button>
         <button
+          type="button"
           className={`${styles.tabButton} ${activeTab === 'versions' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('versions')}
         >
           🏷️ Versions
         </button>
         <button
+          type="button"
           className={`${styles.tabButton} ${activeTab === 'settings' ? styles.tabActive : ''}`}
           onClick={() => setActiveTab('settings')}
         >
@@ -595,6 +598,7 @@ export function ProjectEditor({
                   {isEditingBasic ? (
                     <div className={styles.editActions}>
                       <button
+                        type="button"
                         onClick={handleCancelBasic}
                         disabled={isLoading}
                         className={styles.cancelButton}
@@ -602,6 +606,7 @@ export function ProjectEditor({
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={handleSaveBasic}
                         disabled={isLoading || !name.trim()}
                         className={styles.saveButton}
@@ -611,6 +616,7 @@ export function ProjectEditor({
                     </div>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => setIsEditingBasic(true)}
                       className={styles.editIcon}
                       title="Edit project settings"
@@ -622,8 +628,9 @@ export function ProjectEditor({
 
                 {/* Project Name */}
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Project Name</label>
+                  <label htmlFor="project-name" className={styles.label}>Project Name</label>
                   <input
+                    id="project-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -730,6 +737,7 @@ export function ProjectEditor({
                   {isEditingMeta ? (
                     <div className={styles.editActions}>
                       <button
+                        type="button"
                         onClick={handleCancelMeta}
                         disabled={isLoading}
                         className={styles.cancelButton}
@@ -737,6 +745,7 @@ export function ProjectEditor({
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={handleSaveMeta}
                         disabled={isLoading}
                         className={styles.saveButton}
@@ -746,6 +755,7 @@ export function ProjectEditor({
                     </div>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => setIsEditingMeta(true)}
                       className={styles.editIcon}
                       title="Edit meta settings"
@@ -843,6 +853,7 @@ export function ProjectEditor({
 
               <div className={styles.actionButtons}>
                 <button
+                  type="button"
                   onClick={handleToggleActive}
                   disabled={isLoading || isCompareMode}
                   className={isActiveProject ? styles.deactivateButton : styles.activateButton}
@@ -880,6 +891,7 @@ export function ProjectEditor({
               <div className={styles.viewToggle}>
                 <span className={styles.viewToggleLabel}>View:</span>
                 <button
+                  type="button"
                   className={`${styles.viewToggleButton} ${displayMode === 'tokens' ? styles.viewToggleActive : ''}`}
                   onClick={() => setDisplayMode('tokens')}
                   title="View as tokens"
@@ -887,6 +899,7 @@ export function ProjectEditor({
                   🎨 Tokens
                 </button>
                 <button
+                  type="button"
                   className={`${styles.viewToggleButton} ${displayMode === 'list' ? styles.viewToggleActive : ''}`}
                   onClick={() => setDisplayMode('list')}
                   title="View as list"
@@ -898,6 +911,7 @@ export function ProjectEditor({
                 {displayMode === 'list' && (
                   <div className={styles.listSettingsContainer}>
                     <button
+                      type="button"
                       className={styles.listSettingsButton}
                       onClick={() => setShowListSettings(!showListSettings)}
                       title="Configure list columns"
@@ -910,6 +924,7 @@ export function ProjectEditor({
                         <div className={styles.listSettingsHeader}>
                           <span>Columns</span>
                           <button
+                            type="button"
                             className={styles.listSettingsClose}
                             onClick={() => setShowListSettings(false)}
                           >
@@ -1011,10 +1026,18 @@ export function ProjectEditor({
           <div className={styles.settingsSection}>
             <h3 className={styles.settingsSectionTitle}>Project Actions</h3>
             <div className={styles.settingsActions}>
-              <button type="button" onClick={() => onExport(project)} className={styles.settingsButton}>
+              <button
+                type="button"
+                onClick={() => onExport(project)}
+                className={styles.settingsButton}
+              >
                 📥 Export Project
               </button>
-              <button type="button" onClick={() => onDuplicate(project)} className={styles.settingsButton}>
+              <button
+                type="button"
+                onClick={() => onDuplicate(project)}
+                className={styles.settingsButton}
+              >
                 📋 Duplicate Project
               </button>
             </div>
@@ -1026,6 +1049,7 @@ export function ProjectEditor({
               Deleting a project is permanent and cannot be undone.
             </p>
             <button
+              type="button"
               onClick={handleDelete}
               className={styles.deleteButtonLarge}
               disabled={isActiveProject}

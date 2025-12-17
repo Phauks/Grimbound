@@ -112,7 +112,9 @@ export function useCharacterImageResolver({
     // Cleanup: revoke blob URLs when component unmounts or characters change
     return () => {
       isMounted = false;
-      blobUrlsToCleanup.forEach((url) => URL.revokeObjectURL(url));
+      for (const url of blobUrlsToCleanup) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [enrichedCharacters]);
 

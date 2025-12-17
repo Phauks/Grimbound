@@ -141,6 +141,7 @@ const FontSection = memo(function FontSection({
       onPreviewChange={handleFontSettingsChange}
       fontOptions={config.fontOptions}
       previewText={config.previewText || 'Sample Text'}
+      title={config.label}
       defaults={{
         letterSpacing: config.defaultSpacing ?? 0,
         shadowBlur: config.defaultShadow ?? 4,
@@ -298,6 +299,7 @@ export const AbilityTextSection = memo(function AbilityTextSection({
       onPreviewChange={handleFontSettingsChange}
       fontOptions={fontOptions}
       previewText="Ability Text"
+      title="Ability Text"
       defaults={{
         letterSpacing: 0,
         shadowBlur: 3,
@@ -372,7 +374,7 @@ export const AppearancePanel = memo(
       ],
       spacingKey: 'characterName',
       previewText: 'Character Name',
-      label: 'Character Name',
+      label: 'Font',
       defaultSpacing: 0,
       defaultShadow: 4,
     };
@@ -394,7 +396,7 @@ export const AppearancePanel = memo(
       ],
       spacingKey: 'reminderText',
       previewText: 'Reminder Text',
-      label: 'Reminder Text',
+      label: 'Font',
       defaultSpacing: 0,
       defaultShadow: 4,
     };
@@ -417,7 +419,7 @@ export const AppearancePanel = memo(
       ],
       spacingKey: 'metaText',
       previewText: 'Meta Tokens',
-      label: 'Meta Token',
+      label: 'Font',
       defaultSpacing: 0,
       defaultShadow: 4,
     };
@@ -453,7 +455,6 @@ export const AppearancePanel = memo(
         {activeTokenType === 'character' && (
           <div className={styles.settingsStack}>
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Background</h4>
               <BackgroundSection
                 config={characterBackgroundConfig}
                 tokenType="character"
@@ -464,7 +465,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Character Name</h4>
               <FontSection
                 config={characterFontConfig}
                 generationOptions={generationOptions}
@@ -473,7 +473,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Icon</h4>
               <IconSection
                 tokenType="character"
                 generationOptions={generationOptions}
@@ -487,7 +486,6 @@ export const AppearancePanel = memo(
         {activeTokenType === 'reminder' && (
           <div className={styles.settingsStack}>
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Background</h4>
               <BackgroundSection
                 config={reminderBackgroundConfig}
                 tokenType="reminder"
@@ -498,7 +496,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Reminder Text</h4>
               <FontSection
                 config={reminderFontConfig}
                 generationOptions={generationOptions}
@@ -507,7 +504,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Icon</h4>
               <IconSection
                 tokenType="reminder"
                 generationOptions={generationOptions}
@@ -521,7 +517,6 @@ export const AppearancePanel = memo(
         {activeTokenType === 'meta' && (
           <div className={styles.settingsStack}>
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Background</h4>
               <BackgroundSection
                 config={metaBackgroundConfig}
                 tokenType="meta"
@@ -532,7 +527,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Meta Text</h4>
               <FontSection
                 config={metaFontConfig}
                 generationOptions={generationOptions}
@@ -541,7 +535,6 @@ export const AppearancePanel = memo(
             </div>
 
             <div className={styles.settingsGroup}>
-              <h4 className={styles.settingsGroupLabel}>Icon</h4>
               <IconSection
                 tokenType="meta"
                 generationOptions={generationOptions}

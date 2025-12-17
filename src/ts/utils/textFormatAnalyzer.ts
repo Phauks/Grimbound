@@ -137,7 +137,8 @@ export function analyzeReminderText(text: string): FormatIssue[] {
     const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
     let match: RegExpExecArray | null;
 
-    while ((match = regex.exec(text)) !== null) {
+    match = regex.exec(text);
+    while (match !== null) {
       const matchedText = match[0];
       const suggestedFix = matchedText.replace(
         new RegExp(pattern.regex.source, pattern.regex.flags),
@@ -160,6 +161,7 @@ export function analyzeReminderText(text: string): FormatIssue[] {
           });
         }
       }
+      match = regex.exec(text);
     }
   }
 

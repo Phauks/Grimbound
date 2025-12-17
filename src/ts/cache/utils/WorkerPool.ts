@@ -9,7 +9,7 @@ import type { WorkerResponse, WorkerTask } from '../../workers/prerender-worker.
 /**
  * Task in the queue.
  */
-interface QueuedTask<T = any> {
+interface QueuedTask<T = unknown> {
   task: WorkerTask;
   resolve: (value: T) => void;
   reject: (error: Error) => void;
@@ -104,7 +104,7 @@ export class WorkerPool {
    * @param task - Task to execute
    * @returns Promise resolving to task result
    */
-  async execute<T = any>(task: Omit<WorkerTask, 'id'>): Promise<T> {
+  async execute<T = unknown>(task: Omit<WorkerTask, 'id'>): Promise<T> {
     // Add unique ID to task
     const fullTask: WorkerTask = {
       ...task,

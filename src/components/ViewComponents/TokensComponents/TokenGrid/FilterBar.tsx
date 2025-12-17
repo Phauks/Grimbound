@@ -44,6 +44,7 @@ export function FilterBar() {
         <div className={styles.chipGroup}>
           {TEAMS.map(({ value, label, color }) => (
             <button
+              type="button"
               key={value}
               className={`${styles.chip} ${filters.teams.includes(value) ? styles.chipActive : ''}`}
               onClick={() => toggleTeam(value)}
@@ -58,7 +59,12 @@ export function FilterBar() {
           ))}
         </div>
         {filters.teams.length > 0 && (
-          <button type="button" className={styles.clearBtn} onClick={clearTeams} title="Clear team filter">
+          <button
+            type="button"
+            className={styles.clearBtn}
+            onClick={clearTeams}
+            title="Clear team filter"
+          >
             ✕
           </button>
         )}
@@ -69,6 +75,7 @@ export function FilterBar() {
         <div className={styles.chipGroup}>
           {TOKEN_TYPES.map(({ value, label }) => (
             <button
+              type="button"
               key={value}
               className={`${styles.chip} ${filters.tokenTypes.includes(value) ? styles.chipActive : ''}`}
               onClick={() => toggleTokenType(value)}
@@ -78,7 +85,12 @@ export function FilterBar() {
           ))}
         </div>
         {filters.tokenTypes.length > 0 && (
-          <button type="button" className={styles.clearBtn} onClick={clearTokenTypes} title="Clear type filter">
+          <button
+            type="button"
+            className={styles.clearBtn}
+            onClick={clearTokenTypes}
+            title="Clear type filter"
+          >
             ✕
           </button>
         )}
@@ -89,6 +101,7 @@ export function FilterBar() {
         <div className={styles.chipGroup}>
           {REMINDERS_OPTIONS.map(({ value, label }) => (
             <button
+              type="button"
               key={value}
               className={`${styles.chip} ${filters.reminders.includes(value) ? styles.chipActive : ''}`}
               onClick={() => toggleReminders(value)}
@@ -99,6 +112,7 @@ export function FilterBar() {
         </div>
         {filters.reminders.length > 0 && (
           <button
+            type="button"
             className={styles.clearBtn}
             onClick={clearReminders}
             title="Clear reminders filter"
@@ -113,6 +127,7 @@ export function FilterBar() {
         <div className={styles.chipGroup}>
           {ORIGIN_OPTIONS.map(({ value, label }) => (
             <button
+              type="button"
               key={value}
               className={`${styles.chip} ${filters.origin.includes(value) ? styles.chipActive : ''}`}
               onClick={() => toggleOrigin(value)}
@@ -122,7 +137,12 @@ export function FilterBar() {
           ))}
         </div>
         {filters.origin.length > 0 && (
-          <button type="button" className={styles.clearBtn} onClick={clearOrigin} title="Clear origin filter">
+          <button
+            type="button"
+            className={styles.clearBtn}
+            onClick={clearOrigin}
+            title="Clear origin filter"
+          >
             ✕
           </button>
         )}

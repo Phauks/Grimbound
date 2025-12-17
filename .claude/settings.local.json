@@ -70,7 +70,9 @@
       "Bash(del \"C:\\Users\\Trevo\\OneDrive\\Desktop\\Board Games\\Blood on the Clocktower\\Github - Token Generator\\Clocktower_Token_Generator\\src\\ts\\nightOrder\\nightOrderWysiwygExport.ts\")",
       "Bash(del \"C:\\Users\\Trevo\\OneDrive\\Desktop\\Board Games\\Blood on the Clocktower\\Github - Token Generator\\Clocktower_Token_Generator\\src\\ts\\nightOrder\\nightOrderExport.ts\")",
       "Bash(findstr:*)",
-      "Bash(npx biome:*)"
+      "Bash(npx biome:*)",
+      "Bash(del biome_output.txt lint_rules.txt)",
+      "mcp__plugin_episodic-memory_episodic-memory__search"
     ],
     "deny": [],
     "ask": []

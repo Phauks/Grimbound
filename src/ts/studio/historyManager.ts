@@ -395,7 +395,7 @@ export class HistoryManager {
   /**
    * Deep clone layer data
    */
-  private cloneLayerData(data: any): any {
+  private cloneLayerData<T>(data: T): T {
     return JSON.parse(JSON.stringify(data));
   }
 

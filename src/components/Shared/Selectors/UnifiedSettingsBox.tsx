@@ -134,7 +134,7 @@ function UnifiedSettingsBoxInner<T>({
   value,
   onChange,
   onPreviewChange,
-  mode,
+  mode: _mode,
   toggle,
   preview,
   label,
@@ -359,6 +359,7 @@ function UnifiedSettingsBoxInner<T>({
       ref={containerRef}
       className={containerClasses}
       onKeyDown={handleKeyDown}
+      role="group"
       aria-label={ariaLabel ?? `${label} settings`}
     >
       {/* Preview Box with optional toggle */}

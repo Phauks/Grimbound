@@ -186,8 +186,12 @@ export class AdaptiveWorkerPool extends WorkerPool {
 
     try {
       // Create new worker using parent's private method (via reflection workaround)
-      const worker = (this as any).createWorker();
-      (this as any).workers.push(worker);
+      type WorkerPoolInternal = {
+        createWorker: () => Worker;
+        workers: Worker[];
+      };
+      const worker = (this as unknown as WorkerPoolInternal).createWorker();
+      (this as unknown as WorkerPoolInternal).workers.push(worker);
       this.currentWorkerCount++;
       this.lastScaleTime = Date.now();
 
@@ -205,8 +209,12 @@ export class AdaptiveWorkerPool extends WorkerPool {
       return;
     }
 
-    const workers = (this as any).workers as Worker[];
-    const activeWorkers = (this as any).activeWorkers as Set<Worker>;
+    type WorkerPoolInternal = {
+      workers: Worker[];
+      activeWorkers: Set<Worker>;
+    };
+    const workers = (this as unknown as WorkerPoolInternal).workers;
+    const activeWorkers = (this as unknown as WorkerPoolInternal).activeWorkers;
 
     // Find an idle worker to terminate
     const idleWorker = workers.find((w) => !activeWorkers.has(w));
@@ -240,8 +248,15 @@ export class AdaptiveWorkerPool extends WorkerPool {
    */
   getMemoryInfo(): MemoryInfo {
     // Try to use performance.memory API (Chrome/Edge)
-    if ('memory' in performance && (performance as any).memory) {
-      const memory = (performance as any).memory;
+    type PerformanceMemory = {
+      totalJSHeapSize: number;
+      usedJSHeapSize: number;
+      jsHeapSizeLimit: number;
+    };
+    type PerformanceWithMemory = Performance & { memory?: PerformanceMemory };
+
+    if ('memory' in performance && (performance as PerformanceWithMemory).memory) {
+      const memory = (performance as PerformanceWithMemory).memory!;
       const pressure = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
 
       return {

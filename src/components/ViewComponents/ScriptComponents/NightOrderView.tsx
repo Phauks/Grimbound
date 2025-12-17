@@ -60,13 +60,8 @@ interface NightOrderViewProps {
   onEditCharacter?: (characterId: string) => void;
 }
 
-export function NightOrderView({
-  enableDragDrop = true,
-  activeTab,
-  onTabChange,
-  onEditCharacter,
-}: NightOrderViewProps) {
-  const { characters, scriptMeta, generationOptions } = useTokenContext();
+export function NightOrderView({ enableDragDrop = true, onEditCharacter }: NightOrderViewProps) {
+  const { characters, scriptMeta } = useTokenContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
   const {
     firstNight,
@@ -301,8 +296,11 @@ export function NightOrderView({
             <div className={layoutStyles.optionSection}>
               {/* Color Presets */}
               <div className={styles.settingGroup}>
-                <label className={styles.settingLabel}>Color Preset</label>
-                <div className={styles.colorPresets}>
+                <fieldset
+                  className={styles.colorPresets}
+                  style={{ border: 0, padding: 0, margin: 0, minInlineSize: 0 }}
+                >
+                  <legend className={styles.settingLabel}>Color Preset</legend>
                   {BACKGROUND_PRESETS.map((preset) => (
                     <button
                       key={preset.name}
@@ -310,16 +308,20 @@ export function NightOrderView({
                       style={{ backgroundColor: preset.color }}
                       onClick={() => handleColorPreset(preset.color)}
                       title={preset.name}
+                      type="button"
                     />
                   ))}
-                </div>
+                </fieldset>
               </div>
 
               {/* Custom Color */}
               <div className={styles.settingGroup}>
-                <label className={styles.settingLabel}>Custom Color</label>
+                <label className={styles.settingLabel} htmlFor="night-order-custom-color">
+                  Custom Color
+                </label>
                 <div className={styles.colorPickerRow}>
                   <input
+                    id="night-order-custom-color"
                     type="color"
                     value={background.baseColor}
                     onChange={handleCustomColor}
@@ -351,8 +353,11 @@ export function NightOrderView({
               {/* Texture Opacity */}
               {background.showTexture && (
                 <div className={styles.settingGroup}>
-                  <label className={styles.settingLabel}>Texture Intensity</label>
+                  <label className={styles.settingLabel} htmlFor="night-order-texture-opacity">
+                    Texture Intensity
+                  </label>
                   <input
+                    id="night-order-texture-opacity"
                     type="range"
                     min="0.01"
                     max="0.15"

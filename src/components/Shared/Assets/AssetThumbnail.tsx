@@ -216,16 +216,22 @@ export function AssetThumbnail({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         className={cardClasses}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        aria-selected={isSelected}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        disabled={disabled}
         aria-label={`${asset.metadata.filename} - ${typeLabel}`}
+        tabIndex={disabled ? -1 : 0}
       >
         {/* Thumbnail Image */}
         <div className={styles.thumbnailWrapper}>
@@ -283,7 +289,7 @@ export function AssetThumbnail({
             )}
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Context Menu */}
       <ContextMenu

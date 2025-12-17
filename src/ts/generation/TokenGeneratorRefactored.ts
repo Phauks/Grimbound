@@ -218,7 +218,7 @@ export class TokenGenerator {
     const hasAbilityText = Boolean(abilityTextToDisplay?.trim());
 
     // Calculate text layout if needed
-    let abilityTextLayout;
+    let abilityTextLayout: ReturnType<TokenTextRenderer['calculateAbilityTextLayout']> | undefined;
     if (hasAbilityText) {
       abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(
         ctx,

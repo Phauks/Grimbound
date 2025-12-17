@@ -222,7 +222,9 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
       for (const character of characters.slice(0, this.options.maxTokens)) {
         if (character.image) {
           if (Array.isArray(character.image)) {
-            character.image.forEach((url) => imageUrls.add(url));
+            character.image.forEach((url) => {
+              imageUrls.add(url);
+            });
           } else {
             imageUrls.add(character.image);
           }
@@ -255,7 +257,11 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
       };
 
       if (this.options.useIdleCallback && 'requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(preload, { timeout: 2000 });
+        (
+          window as Window & {
+            requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
+          }
+        ).requestIdleCallback(preload, { timeout: 2000 });
       } else {
         // Fallback: use setTimeout for non-blocking behavior
         setTimeout(preload, 0);
@@ -290,7 +296,11 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
       };
 
       if (this.options.useIdleCallback && 'requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(encode, { timeout: 100 });
+        (
+          window as Window & {
+            requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
+          }
+        ).requestIdleCallback(encode, { timeout: 100 });
       } else {
         setTimeout(encode, 0);
       }

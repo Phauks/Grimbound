@@ -23,8 +23,8 @@ export function StudioView() {
   const {
     layers,
     canvasSize,
-    zoom,
-    backgroundColor,
+    zoom: _zoom,
+    backgroundColor: _backgroundColor,
     isDirty,
     isProcessing,
     loadFromImage,
@@ -328,12 +328,17 @@ export function StudioView() {
                 </p>
                 <div className={styles.emptyStateActions}>
                   <button
+                    type="button"
                     className={styles.toolbarButton}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     📁 Import Image
                   </button>
-                  <button type="button" className={styles.toolbarButton} onClick={() => newProject(512, 512)}>
+                  <button
+                    type="button"
+                    className={styles.toolbarButton}
+                    onClick={() => newProject(512, 512)}
+                  >
                     ✨ New Project
                   </button>
                 </div>

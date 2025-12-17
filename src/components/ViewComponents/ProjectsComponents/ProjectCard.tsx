@@ -49,6 +49,14 @@ export function ProjectCard({
           transition: 'all 0.2s',
         }}
         onClick={() => onOpen?.(project)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen?.(project);
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         {/* Thumbnail */}
         <div
@@ -159,6 +167,14 @@ export function ProjectCard({
         transition: 'all 0.2s',
       }}
       onClick={() => onOpen?.(project)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen?.(project);
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
       {/* Thumbnail */}
       <div

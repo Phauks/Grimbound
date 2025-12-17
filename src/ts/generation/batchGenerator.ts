@@ -467,7 +467,9 @@ async function generateCharacterAndReminderTokens(
       );
     });
     const reminderResults = await Promise.all(reminderPromises);
-    reminderResults.forEach((reminders) => tokens.push(...reminders));
+    for (const reminders of reminderResults) {
+      tokens.push(...reminders);
+    }
   }
 
   return tokens;

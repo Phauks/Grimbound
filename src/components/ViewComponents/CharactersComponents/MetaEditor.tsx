@@ -51,10 +51,10 @@ export function MetaEditor({
   const [dragOverBootleggerIndex, setDragOverBootleggerIndex] = useState<number | null>(null);
 
   // JSON state - strip internal fields for display
-  const getExportableMeta = (m: ScriptMeta) => {
+  const getExportableMeta = useCallback((m: ScriptMeta) => {
     const { ...rest } = m;
     return rest;
-  };
+  }, []);
 
   const [jsonText, setJsonText] = useState(() => JSON.stringify(getExportableMeta(meta), null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
@@ -136,7 +136,7 @@ export function MetaEditor({
   }, [scriptMeta, getExportableMeta]);
 
   const debouncedUpdate = useCallback(
-    (field: keyof ScriptMeta | string, value: any, delay = 500) => {
+    (field: keyof ScriptMeta | string, value: unknown, delay = 500) => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(() => {
         onMetaChange({ ...meta, [field]: value } as ScriptMeta);
@@ -364,11 +364,14 @@ export function MetaEditor({
 
             {/* Bootlegger Section */}
             <div className={styles.formGroup}>
-              <label>Bootlegger</label>
-              <div className={styles.bootleggerList}>
-                {localBootlegger.map((entry, index) => (
+              <span className={styles.label}>Bootlegger</span>
+              <div className={styles.bootleggerList} role="list" aria-label="Bootlegger entries">
+                {localBootlegger.map((entry, index) => {
+                  // Generate stable key: count occurrences of same entry before this index
+                  const occurrenceIndex = localBootlegger.slice(0, index).filter(e => e === entry).length;
+                  return (
                   <div
-                    key={index}
+                    key={`bootlegger-${entry}-occurrence-${occurrenceIndex}`}
                     className={`${styles.bootleggerRow} ${draggedBootleggerIndex === index ? styles.dragging : ''} ${dragOverBootleggerIndex === index ? styles.dragOver : ''}`}
                     draggable={localBootlegger.length > 1}
                     onDragStart={(e) => {
@@ -429,7 +432,8 @@ export function MetaEditor({
                       ✕
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <button
                 type="button"

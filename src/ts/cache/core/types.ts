@@ -8,7 +8,7 @@ import type { Character, GenerationOptions, Token } from '../../types/index.js';
 /**
  * Cache entry wrapper - stores value with metadata.
  */
-export interface CacheEntry<V = any> {
+export interface CacheEntry<V = unknown> {
   /** The cached value */
   value: V;
   /** Cache key for this entry */
@@ -26,7 +26,7 @@ export interface CacheEntry<V = any> {
   /** Tags for selective invalidation (optional) */
   tags?: string[];
   /** Additional metadata (optional) */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -62,7 +62,7 @@ export interface CacheOptions {
   /** Tags for selective invalidation */
   tags?: string[];
   /** Additional metadata to store with entry */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -79,7 +79,7 @@ export type CacheEventType =
 /**
  * Cache event structure.
  */
-export interface CacheEvent<V = any> {
+export interface CacheEvent<V = unknown> {
   /** Event type */
   type: CacheEventType;
   /** Cache key involved in event */
@@ -89,7 +89,7 @@ export interface CacheEvent<V = any> {
   /** Timestamp of event */
   timestamp: number;
   /** Additional metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -118,7 +118,7 @@ export interface PreRenderContext {
   /** Project ID (if applicable) */
   projectId?: string;
   /** Additional metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -134,5 +134,5 @@ export interface PreRenderResult {
   /** Error message (if failed) */
   error?: string;
   /** Additional metadata about the operation */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

@@ -288,9 +288,9 @@ export function parseAbilityText(abilityText: string): AbilityTextSegment[] {
   const segments: AbilityTextSegment[] = [];
   const regex = /(\*([^*]+)\*)|(:reminder:)/g;
   let lastIndex = 0;
-  let match;
+  let match: RegExpExecArray | null = regex.exec(abilityText);
 
-  while ((match = regex.exec(abilityText)) !== null) {
+  while (match !== null) {
     // Add text before the match
     if (match.index > lastIndex) {
       segments.push({
@@ -318,6 +318,7 @@ export function parseAbilityText(abilityText: string): AbilityTextSegment[] {
     }
 
     lastIndex = regex.lastIndex;
+    match = regex.exec(abilityText);
   }
 
   // Add remaining text after last match

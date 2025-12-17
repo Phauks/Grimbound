@@ -254,7 +254,10 @@ export function CharacterListView({
                             <span className={styles.infoLabel}>Reminders:</span>
                             <div className={styles.reminderTagsContainer}>
                               {character.reminders.map((reminder, idx) => (
-                                <span key={idx} className={styles.reminderTag}>
+                                <span
+                                  key={`${character.uuid}-reminder-${reminder}-${idx}`}
+                                  className={styles.reminderTag}
+                                >
                                   {reminder}
                                 </span>
                               ))}

@@ -66,7 +66,11 @@ function AppContent() {
 
     // Run warming during idle time to avoid blocking initial render
     if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(warmAppStartCaches, { timeout: 3000 });
+      (
+        window as Window & {
+          requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
+        }
+      ).requestIdleCallback(warmAppStartCaches, { timeout: 3000 });
     } else {
       // Fallback for browsers without requestIdleCallback
       setTimeout(warmAppStartCaches, 500);
@@ -92,7 +96,7 @@ function AppContent() {
   }, []);
 
   return (
-    <div className={layoutStyles.appContainer} onContextMenu={handleContextMenu}>
+    <div className={layoutStyles.appContainer} onContextMenu={handleContextMenu} role="application">
       <AppHeader
         onSettingsClick={() => setShowSettings(true)}
         onInfoClick={() => setShowInfo(true)}

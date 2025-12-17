@@ -44,6 +44,7 @@ export function ScriptTabNavigation({ activeTab, onTabChange }: ScriptTabNavigat
     <nav className={styles.tabNavigation} aria-label="Script sub-navigation">
       {TABS.map((tab) => (
         <button
+          type="button"
           key={tab.id}
           role="tab"
           aria-selected={activeTab === tab.id}

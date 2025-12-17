@@ -20,16 +20,16 @@ import type { VersionInfo } from '../types/index.js';
 const VERSION_REGEX = /^v(\d{4})\.(\d{2})\.(\d{2})-r(\d+)$/;
 
 /**
- * Version Manager class for handling version operations
+ * Version Manager object for handling version operations
  */
-export class VersionManager {
+export const VersionManager = {
   /**
    * Parse a version string into structured VersionInfo
    * @param versionString - Version string in format vYYYY.MM.DD-rN
    * @returns Parsed version information
    * @throws ValidationError if version string is invalid
    */
-  static parse(versionString: string): VersionInfo {
+  parse(versionString: string): VersionInfo {
     const match = versionString.match(VERSION_REGEX);
 
     if (!match) {
@@ -71,7 +71,7 @@ export class VersionManager {
       revision,
       raw: versionString,
     };
-  }
+  },
 
   /**
    * Compare two version strings
@@ -79,7 +79,7 @@ export class VersionManager {
    * @param versionB - Second version string
    * @returns -1 if A < B, 0 if A === B, 1 if A > B
    */
-  static compare(versionA: string, versionB: string): number {
+  compare(versionA: string, versionB: string): number {
     const a = VersionManager.parse(versionA);
     const b = VersionManager.parse(versionB);
 
@@ -104,7 +104,7 @@ export class VersionManager {
     }
 
     return 0;
-  }
+  },
 
   /**
    * Check if version A is newer than version B
@@ -112,9 +112,9 @@ export class VersionManager {
    * @param versionB - Second version string
    * @returns true if A is newer than B
    */
-  static isNewer(versionA: string, versionB: string): boolean {
+  isNewer(versionA: string, versionB: string): boolean {
     return VersionManager.compare(versionA, versionB) > 0;
-  }
+  },
 
   /**
    * Check if version A is older than version B
@@ -122,9 +122,9 @@ export class VersionManager {
    * @param versionB - Second version string
    * @returns true if A is older than B
    */
-  static isOlder(versionA: string, versionB: string): boolean {
+  isOlder(versionA: string, versionB: string): boolean {
     return VersionManager.compare(versionA, versionB) < 0;
-  }
+  },
 
   /**
    * Check if two versions are equal
@@ -132,30 +132,30 @@ export class VersionManager {
    * @param versionB - Second version string
    * @returns true if versions are equal
    */
-  static isEqual(versionA: string, versionB: string): boolean {
+  isEqual(versionA: string, versionB: string): boolean {
     return VersionManager.compare(versionA, versionB) === 0;
-  }
+  },
 
   /**
    * Validate a version string without throwing
    * @param versionString - Version string to validate
    * @returns true if valid, false otherwise
    */
-  static isValid(versionString: string): boolean {
+  isValid(versionString: string): boolean {
     try {
       VersionManager.parse(versionString);
       return true;
     } catch {
       return false;
     }
-  }
+  },
 
   /**
    * Get a human-readable date string from a version
    * @param versionString - Version string
    * @returns Formatted date string (e.g., "December 3, 2025")
    */
-  static toDateString(versionString: string): string {
+  toDateString(versionString: string): string {
     const version = VersionManager.parse(versionString);
     const date = new Date(version.year, version.month - 1, version.day);
 
@@ -164,18 +164,18 @@ export class VersionManager {
       month: 'long',
       day: 'numeric',
     });
-  }
+  },
 
   /**
    * Get a human-readable version description
    * @param versionString - Version string
    * @returns Formatted description (e.g., "Version 6 from December 3, 2025")
    */
-  static toDescription(versionString: string): string {
+  toDescription(versionString: string): string {
     const version = VersionManager.parse(versionString);
     const dateStr = VersionManager.toDateString(versionString);
     return `Version ${version.revision} from ${dateStr}`;
-  }
+  },
 
   /**
    * Get the latest version from an array of version strings
@@ -183,7 +183,7 @@ export class VersionManager {
    * @returns Latest version string
    * @throws ValidationError if array is empty
    */
-  static getLatest(versions: string[]): string {
+  getLatest(versions: string[]): string {
     if (versions.length === 0) {
       throw new ValidationError('Cannot get latest version from empty array');
     }
@@ -191,26 +191,26 @@ export class VersionManager {
     return versions.reduce((latest, current) => {
       return VersionManager.isNewer(current, latest) ? current : latest;
     });
-  }
+  },
 
   /**
    * Sort an array of version strings (newest first)
    * @param versions - Array of version strings
    * @returns Sorted array (newest to oldest)
    */
-  static sortNewestFirst(versions: string[]): string[] {
+  sortNewestFirst(versions: string[]): string[] {
     return [...versions].sort((a, b) => VersionManager.compare(b, a));
-  }
+  },
 
   /**
    * Sort an array of version strings (oldest first)
    * @param versions - Array of version strings
    * @returns Sorted array (oldest to newest)
    */
-  static sortOldestFirst(versions: string[]): string[] {
+  sortOldestFirst(versions: string[]): string[] {
     return [...versions].sort((a, b) => VersionManager.compare(a, b));
-  }
-}
+  },
+};
 
 // Export singleton instance for convenience
 export const versionManager = VersionManager;

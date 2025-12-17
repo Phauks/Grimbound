@@ -20,7 +20,7 @@ import { EventEmitter } from '../utils/EventEmitter.js';
 export interface PreRenderCacheManagerEvents {
   'prerender:start': { strategy: string; context: PreRenderContext };
   'prerender:complete': { strategy: string; result: PreRenderResult };
-  'prerender:error': { strategy: string; error: any };
+  'prerender:error': { strategy: string; error: Error };
   'cache:cleared': { name: string };
 }
 

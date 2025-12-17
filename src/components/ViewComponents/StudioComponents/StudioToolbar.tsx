@@ -33,10 +33,16 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
     <div className={styles.toolbar}>
       {/* File Operations */}
       <div className={styles.toolbarSection}>
-        <button type="button" className={styles.toolbarButton} onClick={handleNew} title="New Project (Ctrl+N)">
+        <button
+          type="button"
+          className={styles.toolbarButton}
+          onClick={handleNew}
+          title="New Project (Ctrl+N)"
+        >
           ✨ New
         </button>
         <button
+          type="button"
           className={styles.toolbarButton}
           onClick={onImportClick}
           title="Import Image (Ctrl+O)"
@@ -45,6 +51,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
         </button>
         <div className={styles.toolbarDivider} style={{ margin: '0 4px' }} />
         <button
+          type="button"
           className={styles.toolbarButton}
           onClick={() => setShowLogoWizard(true)}
           title="Create Script Logo"
@@ -52,6 +59,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
           📝 Logo Wizard
         </button>
         <button
+          type="button"
           className={styles.toolbarButton}
           onClick={() => setShowSaveModal(true)}
           disabled={layers.length === 0}
@@ -67,6 +75,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
       {/* History Operations */}
       <div className={styles.toolbarSection}>
         <button
+          type="button"
           className={`${styles.toolbarButton} ${styles.iconButton}`}
           onClick={undo}
           disabled={!canUndo}
@@ -75,6 +84,7 @@ export function StudioToolbar({ onImportClick }: StudioToolbarProps) {
           ↶
         </button>
         <button
+          type="button"
           className={`${styles.toolbarButton} ${styles.iconButton}`}
           onClick={redo}
           disabled={!canRedo}

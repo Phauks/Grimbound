@@ -37,23 +37,34 @@ interface NightOrderEntryProps {
 function AbilityText({ text }: { text: string }) {
   const segments = useMemo(() => parseAbilityText(text), [text]);
 
+  // Pre-compute occurrence counts for stable keys
+  const getOccurrenceKey = (segment: typeof segments[0], idx: number): string => {
+    const prefix = segment.isCircle ? 'circle' : segment.isBold ? 'bold' : 'text';
+    const content = segment.isCircle ? 'dot' : segment.text;
+    const priorOccurrences = segments.slice(0, idx).filter(s =>
+      (s.isCircle === segment.isCircle) && (s.text === segment.text)
+    ).length;
+    return `${prefix}-${content}-${priorOccurrences}`;
+  };
+
   return (
     <span className={styles.abilityText}>
       {segments.map((segment, index) => {
+        const key = getOccurrenceKey(segment, index);
         if (segment.isCircle) {
           return (
-            <span key={index} className={styles.reminderCircle}>
+            <span key={key} className={styles.reminderCircle}>
               ●
             </span>
           );
         } else if (segment.isBold) {
           return (
-            <strong key={index} className={styles.reminderToken}>
+            <strong key={key} className={styles.reminderToken}>
               {segment.text}
             </strong>
           );
         } else {
-          return <span key={index}>{segment.text}</span>;
+          return <span key={key}>{segment.text}</span>;
         }
       })}
     </span>
@@ -99,7 +110,9 @@ export function NightOrderEntry({
     // Cleanup blob URLs on unmount or when image changes
     return () => {
       cancelled = true;
-      blobUrls.forEach((url) => URL.revokeObjectURL(url));
+      for (const url of blobUrls) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [entry.image, entry.id]);
 
@@ -130,11 +143,38 @@ export function NightOrderEntry({
   );
 
   return (
-    <div
+    <button
+      type="button"
       className={`${styles.entry} ${isDragging ? styles.dragging : ''} ${entry.type === 'special' ? styles.special : ''}`}
       data-team={entry.team}
       data-type={entry.type}
       onContextMenu={handleContextMenu}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && entry.type !== 'special') {
+          e.preventDefault();
+          contextMenu.onContextMenu(
+            // Create a synthetic MouseEvent for context menu
+            {
+              ...e,
+              preventDefault: () => {},
+              stopPropagation: () => {},
+              button: 2,
+              clientX: 0,
+              clientY: 0,
+            } as unknown as React.MouseEvent,
+            entry.id
+          );
+        }
+      }}
+      aria-label={`Night order entry for ${entry.name}`}
+      tabIndex={0}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        width: '100%',
+        textAlign: 'inherit',
+      }}
     >
       {/* Drag handle or lock icon */}
       <div className={styles.dragArea}>
@@ -190,6 +230,6 @@ export function NightOrderEntry({
         items={menuItems}
         onClose={contextMenu.close}
       />
-    </div>
+    </button>
   );
 }

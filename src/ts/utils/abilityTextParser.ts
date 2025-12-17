@@ -26,9 +26,9 @@ export function parseAbilityText(text: string): TextSegment[] {
   const segments: TextSegment[] = [];
   const regex = /(\[[^\]]*\])/g;
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
+  let match: RegExpExecArray | null = regex.exec(text);
 
-  while ((match = regex.exec(text)) !== null) {
+  while (match !== null) {
     // Add text before the match (non-bold)
     if (match.index > lastIndex) {
       segments.push({
@@ -42,6 +42,7 @@ export function parseAbilityText(text: string): TextSegment[] {
       isBold: true,
     });
     lastIndex = regex.lastIndex;
+    match = regex.exec(text);
   }
 
   // Add remaining text after last match

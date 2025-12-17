@@ -78,6 +78,7 @@ export function VersionCompareView({
             ✕ Exit Compare
           </button>
           <button
+            type="button"
             className={styles.restoreButton}
             onClick={() => onRestore(compareVersion)}
             disabled={isRestoring}

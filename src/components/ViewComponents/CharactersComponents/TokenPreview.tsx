@@ -20,7 +20,7 @@ const canvasToDataUrl = (canvas: HTMLCanvasElement | undefined): string | null =
 export function TokenPreview({
   characterToken,
   reminderTokens,
-  onReminderClick,
+  onReminderClick: _onReminderClick,
 }: TokenPreviewProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [startIndex, setStartIndex] = useState(0);

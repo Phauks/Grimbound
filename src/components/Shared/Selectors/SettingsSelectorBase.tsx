@@ -90,6 +90,7 @@ export const SettingsSelectorBase = memo(
           ref={ref}
           className={containerClasses}
           onKeyDown={onKeyDown}
+          role="group"
           aria-label={ariaLabel}
           aria-disabled={disabled || visuallyDisabled}
         >

@@ -1,13 +1,20 @@
 /**
  * MeasurementSlider Component
  *
- * A wrapper around SliderWithValue that automatically handles unit conversion
+ * A wrapper around EditableSlider that automatically handles unit conversion
  * between inches and millimeters. All values are stored in canonical inches
  * internally, but displayed in the user's preferred unit.
+ *
+ * Features:
+ * - Automatic unit conversion (inches ↔ millimeters)
+ * - Optional label with reset-on-hover behavior
+ * - Editable value display
+ * - Consistent styling with EditableSlider
  *
  * Usage:
  * ```tsx
  * <MeasurementSlider
+ *   label="Offset X"
  *   value={0.125}  // Value in inches
  *   onChange={(inches) => setOffset(inches)}
  *   config={ICON_OFFSET_CONFIG}
@@ -25,7 +32,7 @@ import {
   getUnitSuffix,
   toCanonicalInches,
 } from '../../../ts/utils/measurementUtils';
-import { SliderWithValue } from './SliderWithValue';
+import { EditableSlider } from './EditableSlider';
 
 interface MeasurementSliderProps {
   /** Value in canonical inches */
@@ -36,8 +43,12 @@ interface MeasurementSliderProps {
   config: MeasurementConfig;
   /** User's preferred display unit */
   displayUnit: MeasurementUnit;
+  /** Label text (optional, enables reset-on-hover when combined with default) */
+  label?: string;
   /** Custom aria label override (defaults to config.ariaLabel) */
   ariaLabel?: string;
+  /** Additional CSS class for the container */
+  className?: string;
 }
 
 /**
@@ -51,7 +62,9 @@ export function MeasurementSlider({
   onChange,
   config,
   displayUnit,
+  label,
   ariaLabel,
+  className,
 }: MeasurementSliderProps) {
   // Convert config bounds and step to display unit
   const displayConfig = useMemo(
@@ -79,15 +92,17 @@ export function MeasurementSlider({
   const unitSuffix = getUnitSuffix(displayUnit);
 
   return (
-    <SliderWithValue
+    <EditableSlider
+      label={label}
       value={displayValue}
       onChange={handleChange}
       min={displayConfig.min}
       max={displayConfig.max}
       step={displayConfig.step}
+      suffix={unitSuffix}
       defaultValue={displayConfig.defaultValue}
-      unit={unitSuffix}
       ariaLabel={ariaLabel || config.ariaLabel}
+      className={className}
     />
   );
 }

@@ -4,10 +4,19 @@
  * Panel for configuring border properties on the active layer
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useStudio } from '../../../../contexts/StudioContext';
 import styles from '../../../../styles/components/studio/Studio.module.css';
+import type { Layer } from '../../../../ts/types/index.js';
 import { logger } from '../../../../ts/utils/logger.js';
+
+/** Border configuration data stored on layers */
+interface BorderData {
+  enabled: boolean;
+  width: number;
+  color: string;
+  style: 'solid' | 'dashed' | 'dotted';
+}
 
 export function BorderPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -22,7 +31,7 @@ export function BorderPanel() {
   useEffect(() => {
     if (activeLayer && activeLayer.type === 'image') {
       // Extract border settings from layer metadata if available
-      const borderData = (activeLayer as any).borderData;
+      const borderData = (activeLayer as Layer & { borderData?: BorderData }).borderData;
       if (borderData) {
         setEnabled(borderData.enabled ?? false);
         setWidth(borderData.width ?? 5);
@@ -39,7 +48,7 @@ export function BorderPanel() {
   }, [activeLayer?.id, activeLayer]);
 
   // Apply border to canvas
-  const applyBorder = () => {
+  const applyBorder = useCallback(() => {
     if (!activeLayer || activeLayer.type !== 'image') return;
 
     const canvas = activeLayer.canvas;
@@ -74,13 +83,13 @@ export function BorderPanel() {
       // Update layer with border metadata
       updateLayer(activeLayer.id, {
         canvas,
-        ...(activeLayer as any),
+        ...activeLayer,
         borderData: { enabled, width, color, style },
-      });
+      } as Partial<Layer>);
     } catch (error) {
       logger.error('BorderPanel', 'Failed to apply border', error);
     }
-  };
+  }, [activeLayer, color, enabled, style, updateLayer, width]);
 
   // Apply border when settings change
   useEffect(() => {
@@ -187,6 +196,7 @@ export function BorderPanel() {
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-xs)' }}
         >
           <button
+            type="button"
             className={`${styles.toolbarButton} ${style === 'solid' ? styles.active : ''}`}
             onClick={() => setStyle('solid')}
             disabled={!enabled}
@@ -195,6 +205,7 @@ export function BorderPanel() {
             Solid
           </button>
           <button
+            type="button"
             className={`${styles.toolbarButton} ${style === 'dashed' ? styles.active : ''}`}
             onClick={() => setStyle('dashed')}
             disabled={!enabled}
@@ -203,6 +214,7 @@ export function BorderPanel() {
             Dashed
           </button>
           <button
+            type="button"
             className={`${styles.toolbarButton} ${style === 'dotted' ? styles.active : ''}`}
             onClick={() => setStyle('dotted')}
             disabled={!enabled}
@@ -223,6 +235,7 @@ export function BorderPanel() {
         }}
       >
         <button
+          type="button"
           className={styles.toolbarButton}
           onClick={handleApplyBorder}
           disabled={!enabled}
@@ -231,6 +244,7 @@ export function BorderPanel() {
           ✓ Apply Border
         </button>
         <button
+          type="button"
           className={styles.toolbarButton}
           onClick={handleRemoveBorder}
           style={{ width: '100%' }}

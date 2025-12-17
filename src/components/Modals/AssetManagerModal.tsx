@@ -116,7 +116,7 @@ export function AssetManagerModal({
     assets,
     isLoading,
     error,
-    filter,
+    filter: _filter,
     setFilter,
     selectedIds,
     toggleSelect,
@@ -515,7 +515,11 @@ export function AssetManagerModal({
               : 'No assets yet. Upload some files to get started!'}
           </p>
           {!showUpload && (
-            <button type="button" onClick={() => setShowUpload(true)} className={styles.uploadPrompt}>
+            <button
+              type="button"
+              onClick={() => setShowUpload(true)}
+              className={styles.uploadPrompt}
+            >
               Upload Assets
             </button>
           )}
@@ -594,6 +598,14 @@ export function AssetManagerModal({
             key={asset.id}
             className={`${styles.listItem} ${(selectionMode ? selectedAssetId === asset.id : isSelected(asset.id)) ? styles.selectedItem : ''}`}
             onClick={() => handleAssetClick(asset.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleAssetClick(asset.id);
+              }
+            }}
+            role="button"
+            tabIndex={0}
           >
             <img
               src={asset.thumbnailUrl}
@@ -722,8 +734,9 @@ export function AssetManagerModal({
       {showUpload && (
         <div className={styles.uploadSection}>
           <div className={styles.uploadTypeSelect}>
-            <label>Upload as:</label>
+            <label htmlFor="asset-upload-type">Upload as:</label>
             <select
+              id="asset-upload-type"
               value={uploadType}
               onChange={(e) => setUploadType(e.target.value as AssetType)}
               className={styles.typeSelect}

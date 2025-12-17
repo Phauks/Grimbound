@@ -59,6 +59,9 @@ export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
           left: position.x,
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose();
+        }}
         onContextMenu={(e) => e.preventDefault()}
         role="menu"
         aria-label="Context menu"

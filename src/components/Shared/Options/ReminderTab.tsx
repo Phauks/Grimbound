@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import styles from '../../../styles/components/options/OptionsTab.module.css';
 import type { GenerationOptions } from '../../../ts/types/index';
-import { SliderWithValue } from '../Controls/SliderWithValue';
+import { EditableSlider } from '../Controls/EditableSlider';
 import { OptionGroup } from '../UI/OptionGroup';
 import { SegmentedControl } from '../UI/SegmentedControl';
 
@@ -107,8 +107,12 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
                     value={generationOptions.reminderBackgroundImage || 'character_background_1'}
                     onChange={(e) => onOptionChange({ reminderBackgroundImage: e.target.value })}
                   >
+                    {/* Static array that never reorders, using index as key is acceptable */}
                     {Array.from({ length: 7 }, (_, i) => (
-                      <option key={i + 1} value={`character_background_${i + 1}`}>
+                      <option
+                        key={`character_background_${i + 1}`}
+                        value={`character_background_${i + 1}`}
+                      >
                         Background {i + 1}
                       </option>
                     ))}
@@ -148,25 +152,25 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
                 helpText="Adjust spacing between reminder text characters"
                 isSlider
               >
-                <SliderWithValue
+                <EditableSlider
                   value={generationOptions.fontSpacing?.reminderText || 0}
                   onChange={(value) => handleFontSpacingChange('reminderText', value)}
                   min={0}
                   max={20}
                   defaultValue={0}
-                  unit="px"
+                  suffix="px"
                   ariaLabel="Reminder Text Font Spacing value"
                 />
               </OptionGroup>
 
               <OptionGroup label="Text Shadow" helpText="Adjust text shadow intensity" isSlider>
-                <SliderWithValue
+                <EditableSlider
                   value={generationOptions.textShadow?.reminderText || 0}
                   onChange={(value) => handleTextShadowChange('reminderText', value)}
                   min={0}
                   max={20}
                   defaultValue={4}
-                  unit="px"
+                  suffix="px"
                   ariaLabel="Reminder Text Shadow value"
                 />
               </OptionGroup>

@@ -354,7 +354,9 @@ async function loadCharacterImages(
     );
     // Check for cancellation between batches
     if (signal?.aborted) {
-      blobUrls.forEach((url) => URL.revokeObjectURL(url));
+      for (const url of blobUrls) {
+        URL.revokeObjectURL(url);
+      }
       throw new DOMException('Export cancelled', 'AbortError');
     }
 
@@ -386,7 +388,9 @@ async function loadCharacterImages(
   }
 
   // Cleanup blob URLs
-  blobUrls.forEach((url) => URL.revokeObjectURL(url));
+  for (const url of blobUrls) {
+    URL.revokeObjectURL(url);
+  }
 
   const elapsed = performance.now() - startTime;
   logger.info(
