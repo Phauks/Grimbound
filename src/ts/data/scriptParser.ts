@@ -3,10 +3,10 @@
  * Script Parser - Parse and validate script JSON data
  */
 
-import CONFIG from '../config.js';
-import type { Character, ScriptEntry, ScriptMeta } from '../types/index.js';
-import { logger } from '../utils/logger.js';
-import { generateStableUuid, generateUuid } from '../utils/nameGenerator.js';
+import CONFIG from '@/ts/config.js';
+import type { Character, ScriptEntry, ScriptMeta } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { generateStableUuid, generateUuid } from '@/ts/utils/nameGenerator.js';
 
 // ============================================================================
 // Types

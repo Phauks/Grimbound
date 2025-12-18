@@ -4,7 +4,7 @@
  * Used in JsonView for script improvement suggestions (format, sort, add meta, etc.)
  */
 
-import styles from '../../../styles/components/views/Views.module.css';
+import styles from '@/styles/components/views/Views.module.css';
 
 interface InfoMessageProps {
   /** The message content - supports text and React nodes like <code> */

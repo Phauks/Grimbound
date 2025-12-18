@@ -8,13 +8,10 @@
  */
 
 import { useCallback } from 'react';
-import { useFileUpload } from '../../../hooks/useFileUpload.js';
-import styles from '../../../styles/components/shared/FileDropzone.module.css';
-import {
-  ASSET_TYPE_LABELS,
-  type AssetType,
-  fileValidationService,
-} from '../../../ts/services/upload/index.js';
+import { useFileValidationService } from '@/contexts/ServiceContext';
+import { useFileUpload } from '@/hooks/useFileUpload.js';
+import styles from '@/styles/components/shared/FileDropzone.module.css';
+import { ASSET_TYPE_LABELS, type AssetType } from '@/ts/services/upload/index.js';
 
 // ============================================================================
 // Types
@@ -62,6 +59,9 @@ export function FileDropzone({
   compact = false,
   className = '',
 }: FileDropzoneProps) {
+  // Get service from DI context
+  const fileValidationService = useFileValidationService();
+
   // Use the unified file upload hook
   const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker } = useFileUpload({
     assetType,

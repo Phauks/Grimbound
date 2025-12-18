@@ -5,7 +5,7 @@
  * These types support both _meta array ordering and per-character number ordering.
  */
 
-import type { Character, ScriptMeta, Team } from '../types/index.js';
+import type { Character, ScriptMeta, Team } from '@/ts/types/index.js';
 
 /**
  * Type of night order entry

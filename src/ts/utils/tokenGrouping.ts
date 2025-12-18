@@ -4,7 +4,7 @@
  * Handles variants (different images) separately from duplicates (same token multiple times)
  */
 
-import type { Token } from '../types/index.js';
+import type { Token } from '@/ts/types/index.js';
 
 export interface GroupedToken {
   token: Token; // The first (representative) token of the group

@@ -21,9 +21,9 @@
  */
 
 import JSZip from 'jszip';
-import { downloadFile } from '../../utils/imageUtils.js';
-import { logger } from '../../utils/logger.js';
-import { sanitizeFilename } from '../../utils/stringUtils.js';
+import { downloadFile } from '@/ts/utils/imageUtils.js';
+import { logger } from '@/ts/utils/logger.js';
+import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 import { assetStorageService } from './AssetStorageService.js';
 import type { DBAsset } from './types.js';
 

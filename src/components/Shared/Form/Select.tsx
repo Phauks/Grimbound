@@ -6,7 +6,7 @@
  */
 
 import { forwardRef, type ReactNode, type SelectHTMLAttributes } from 'react';
-import styles from '../../../styles/components/shared/Form.module.css';
+import styles from '@/styles/components/shared/Form.module.css';
 
 export interface SelectOption {
   value: string;

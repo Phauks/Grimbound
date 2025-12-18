@@ -3,7 +3,9 @@
  * Gradient Utilities - Canvas gradient creation for backgrounds
  */
 
-import type { GradientConfig } from '../types/backgroundEffects.js';
+import type { GradientConfig } from '@/ts/types/backgroundEffects.js';
+// Re-export interpolateColors from colorUtils for backwards compatibility
+export { interpolateColors } from '@/ts/utils/colorUtils.js';
 
 // ============================================================================
 // GRADIENT CREATION
@@ -174,30 +176,3 @@ export function getCSSGradient(config: GradientConfig): string {
   }
 }
 
-// ============================================================================
-// GRADIENT MANIPULATION
-// ============================================================================
-
-/**
- * Interpolate between two colors
- *
- * @param color1 - First color (hex)
- * @param color2 - Second color (hex)
- * @param t - Interpolation factor (0-1)
- * @returns Interpolated color (hex)
- */
-export function interpolateColors(color1: string, color2: string, t: number): string {
-  const r1 = parseInt(color1.slice(1, 3), 16);
-  const g1 = parseInt(color1.slice(3, 5), 16);
-  const b1 = parseInt(color1.slice(5, 7), 16);
-
-  const r2 = parseInt(color2.slice(1, 3), 16);
-  const g2 = parseInt(color2.slice(3, 5), 16);
-  const b2 = parseInt(color2.slice(5, 7), 16);
-
-  const r = Math.round(r1 + (r2 - r1) * t);
-  const g = Math.round(g1 + (g2 - g1) * t);
-  const b = Math.round(b1 + (b2 - b1) * t);
-
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}

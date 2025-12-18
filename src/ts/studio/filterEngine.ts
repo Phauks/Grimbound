@@ -481,7 +481,7 @@ export function applyFilters(
 // Async Filter Processing (Web Worker)
 // ============================================================================
 
-import type { ImageFilter } from '../types/index';
+import type { ImageFilter } from '@/ts/types/index';
 
 /**
  * Worker pool for parallel filter processing

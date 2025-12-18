@@ -14,10 +14,10 @@
  */
 
 import { PDFDocument, type PDFImage, type PDFPage, rgb } from 'pdf-lib';
-import type { ScriptMeta } from '../types/index.js';
-import { resolveCharacterImageUrl } from '../utils/characterImageResolver.js';
-import { globalImageCache } from '../utils/imageCache.js';
-import { logger } from '../utils/logger.js';
+import type { ScriptMeta } from '@/ts/types/index.js';
+import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { logger } from '@/ts/utils/logger.js';
 import { type FontSet, loadFonts } from './fontLoader.js';
 import {
   ABILITY_LINE_HEIGHT_RATIO,
@@ -207,8 +207,9 @@ async function loadSingleImage(
   // Priority 1: Check PDF bytes cache (instant for repeat exports)
   const cached = imageBytesCache.get(cacheKey);
   if (cached) {
-    console.log(
-      `⚡ ${entry.id}: bytes cache hit (${(performance.now() - startTime).toFixed(0)}ms)`
+    logger.debug(
+      'NightOrderPdfLib',
+      `${entry.id}: bytes cache hit (${(performance.now() - startTime).toFixed(0)}ms)`
     );
     return {
       id: entry.id,
@@ -226,8 +227,9 @@ async function loadSingleImage(
       const cachedImg = await globalImageCache.get(cacheKey);
       const bytes = await imageElementToBytes(cachedImg);
       if (bytes) {
-        console.log(
-          `🎯 ${entry.id}: global cache hit, converted in ${(performance.now() - cacheStart).toFixed(0)}ms`
+        logger.debug(
+          'NightOrderPdfLib',
+          `${entry.id}: global cache hit, converted in ${(performance.now() - cacheStart).toFixed(0)}ms`
         );
         imageBytesCache.set(cacheKey, { bytes, type: 'png' });
         return {
@@ -245,8 +247,9 @@ async function loadSingleImage(
     const result = await resolveCharacterImageUrl(entry.image, entry.id, {
       logContext: 'NightOrderPdfLib',
     });
-    console.log(
-      `📍 ${entry.id}: URL resolved in ${(performance.now() - resolveStart).toFixed(0)}ms → ${result.url?.substring(0, 50)}...`
+    logger.debug(
+      'NightOrderPdfLib',
+      `${entry.id}: URL resolved in ${(performance.now() - resolveStart).toFixed(0)}ms → ${result.url?.substring(0, 50)}...`
     );
 
     if (!result.url) {
@@ -254,7 +257,7 @@ async function loadSingleImage(
     }
 
     // Fetch from network
-    console.log(`🌐 ${entry.id}: fetching from network...`);
+    logger.debug('NightOrderPdfLib', `${entry.id}: fetching from network...`);
     const fetchStart = performance.now();
     const response = await fetch(result.url);
     if (!response.ok) {
@@ -263,8 +266,9 @@ async function loadSingleImage(
     }
 
     const bytes = await response.arrayBuffer();
-    console.log(
-      `✅ ${entry.id}: network fetch completed in ${(performance.now() - fetchStart).toFixed(0)}ms`
+    logger.debug(
+      'NightOrderPdfLib',
+      `${entry.id}: network fetch completed in ${(performance.now() - fetchStart).toFixed(0)}ms`
     );
 
     const type = detectImageType(bytes);
@@ -332,11 +336,9 @@ async function loadCharacterImages(
   signal?: AbortSignal
 ): Promise<Map<string, PDFImage>> {
   // DEBUG: Verify parallel code is running
-  console.log(
-    '🚀 PARALLEL IMAGE LOADING - Batch size:',
-    IMAGE_BATCH_SIZE,
-    'Total entries:',
-    entries.length
+  logger.debug(
+    'NightOrderPdfLib',
+    `PARALLEL IMAGE LOADING - Batch size: ${IMAGE_BATCH_SIZE}, Total entries: ${entries.length}`
   );
 
   const imageMap = new Map<string, PDFImage>();
@@ -349,8 +351,9 @@ async function loadCharacterImages(
 
   // Process in parallel batches
   for (let i = 0; i < entries.length; i += IMAGE_BATCH_SIZE) {
-    console.log(
-      `🔄 Processing batch ${Math.floor(i / IMAGE_BATCH_SIZE) + 1} of ${Math.ceil(entries.length / IMAGE_BATCH_SIZE)}`
+    logger.debug(
+      'NightOrderPdfLib',
+      `Processing batch ${Math.floor(i / IMAGE_BATCH_SIZE) + 1} of ${Math.ceil(entries.length / IMAGE_BATCH_SIZE)}`
     );
     // Check for cancellation between batches
     if (signal?.aborted) {

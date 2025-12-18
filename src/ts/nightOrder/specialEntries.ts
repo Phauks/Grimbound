@@ -11,6 +11,9 @@
 import type { NightOrderEntry } from './nightOrderTypes.js';
 import { SPECIAL_ENTRY_IDS } from './nightOrderTypes.js';
 
+/** Base path for script assets (using Vite BASE_URL for GitHub Pages) */
+const SCRIPTS_PATH = `${import.meta.env.BASE_URL}scripts/`;
+
 /**
  * Dusk - Always first in any night order
  */
@@ -19,7 +22,7 @@ export const DUSK_ENTRY: NightOrderEntry = {
   type: 'special',
   name: 'Dusk',
   ability: 'Start the Night Phase.',
-  image: '/scripts/dusk.webp',
+  image: `${SCRIPTS_PATH}dusk.webp`,
   team: 'special',
   order: -1000, // Very low to always sort first
   isOfficial: true,
@@ -35,7 +38,7 @@ export const DAWN_ENTRY: NightOrderEntry = {
   type: 'special',
   name: 'Dawn',
   ability: 'Wait for a few seconds. End the Night Phase.',
-  image: '/scripts/dawn.webp',
+  image: `${SCRIPTS_PATH}dawn.webp`,
   team: 'special',
   order: 1000, // Very high to always sort last
   isOfficial: true,
@@ -53,7 +56,7 @@ export const MINION_INFO_ENTRY: NightOrderEntry = {
   name: 'Minion Info',
   ability:
     'If there are 7 or more players, wake all Minions: Show the *THIS IS THE DEMON* token. Point to the Demon. Show the *THESE ARE YOUR MINIONS* token. Point to the other Minions.',
-  image: '/scripts/minioninfo.webp',
+  image: `${SCRIPTS_PATH}minioninfo.webp`,
   team: 'special',
   order: 92.5, // Near end of first night, before Demon Info
   isOfficial: true,
@@ -71,7 +74,7 @@ export const DEMON_INFO_ENTRY: NightOrderEntry = {
   name: 'Demon Info',
   ability:
     'If there are 7 or more players, wake the Demon: Show the *THESE ARE YOUR MINIONS* token. Point to all Minions. Show the *THESE CHARACTERS ARE NOT IN PLAY* token. Show 3 not-in-play good character tokens.',
-  image: '/scripts/demoninfo.webp',
+  image: `${SCRIPTS_PATH}demoninfo.webp`,
   team: 'special',
   order: 95.5, // After Minion Info, near end of first night
   isOfficial: true,

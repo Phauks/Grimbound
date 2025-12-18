@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import styles from '../../../styles/components/shared/OptionGroup.module.css';
+import styles from '@/styles/components/shared/OptionGroup.module.css';
 
 interface OptionGroupProps {
   label: string;

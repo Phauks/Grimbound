@@ -7,11 +7,12 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import styles from '../../../../styles/components/presets/PresetModal.module.css';
-import { FormGroup, Input } from '../../../Shared/Form';
-import { Modal } from '../../../Shared/ModalBase/Modal';
-import { Alert } from '../../../Shared/UI/Alert';
-import { Button } from '../../../Shared/UI/Button';
+import styles from '@/styles/components/presets/PresetModal.module.css';
+import { logger } from '@/ts/utils/logger.js';
+import { FormGroup, Input } from '@/components/Shared/Form';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface SavePresetModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export function SavePresetModal({
       setPresetDescription('');
       setPresetIcon('⭐');
     } catch (err) {
-      console.error('Failed to save preset:', err);
+      logger.error('SavePresetModal', 'Failed to save preset', err);
     }
   };
 

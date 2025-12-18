@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logger } from '@/ts/utils/logger.js';
+
+// Create child logger for PWA operations
+const pwaLogger = logger.child('PWA');
 
 /**
  * BeforeInstallPrompt event interface
@@ -74,7 +78,7 @@ export function usePWAInstall(): PWAInstallState {
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
-      console.log('[PWA] App was installed successfully');
+      pwaLogger.info('App was installed successfully');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -89,7 +93,7 @@ export function usePWAInstall(): PWAInstallState {
 
   const promptInstall = useCallback(async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
     if (!deferredPrompt) {
-      console.log('[PWA] Install prompt not available');
+      pwaLogger.info('Install prompt not available');
       return 'unavailable';
     }
 
@@ -101,14 +105,14 @@ export function usePWAInstall(): PWAInstallState {
 
       // Wait for the user's response
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`[PWA] User ${outcome} the install prompt`);
+      pwaLogger.info(`User ${outcome} the install prompt`);
 
       // Clear the deferred prompt - it can only be used once
       setDeferredPrompt(null);
 
       return outcome;
     } catch (error) {
-      console.error('[PWA] Error showing install prompt:', error);
+      pwaLogger.error('Error showing install prompt', error);
       return 'unavailable';
     } finally {
       setIsPrompting(false);

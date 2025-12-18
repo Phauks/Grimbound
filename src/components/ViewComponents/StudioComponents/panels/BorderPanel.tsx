@@ -5,10 +5,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
-import type { Layer } from '../../../../ts/types/index.js';
-import { logger } from '../../../../ts/utils/logger.js';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
+import type { Layer } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /** Border configuration data stored on layers */
 interface BorderData {
@@ -82,8 +82,8 @@ export function BorderPanel() {
 
       // Update layer with border metadata
       updateLayer(activeLayer.id, {
-        canvas,
         ...activeLayer,
+        canvas,
         borderData: { enabled, width, color, style },
       } as Partial<Layer>);
     } catch (error) {

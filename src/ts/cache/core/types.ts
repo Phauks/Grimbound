@@ -3,7 +3,7 @@
  * These types are used across all cache implementations.
  */
 
-import type { Character, GenerationOptions, Token } from '../../types/index.js';
+import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
 
 /**
  * Cache entry wrapper - stores value with metadata.
@@ -98,6 +98,7 @@ export interface CacheEvent<V = unknown> {
 export type PreRenderContextType =
   | 'tokens-hover' // User hovered over tokens tab
   | 'characters-hover' // User hovered over characters tab
+  | 'script-hover' // User hovered over script tab
   | 'project-hover' // User hovered over project card
   | 'project-open' // User opened a project
   | 'manual' // Manually triggered

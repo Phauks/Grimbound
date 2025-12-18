@@ -164,6 +164,26 @@ export function calculateRadius(diameter) {
 }
 ```
 
+### Path Aliases (REQUIRED)
+
+**Always use `@/` path aliases instead of relative imports with `../`**
+
+```typescript
+// ✅ CORRECT - Use @/ alias
+import { logger } from '@/ts/utils/logger.js';
+import { useTokenGenerator } from '@/hooks/useTokenGenerator';
+import styles from '@/styles/components/Button.module.css';
+
+// ❌ WRONG - Avoid deep relative imports
+import { logger } from '../../../ts/utils/logger.js';
+
+// ⚠️ ACCEPTABLE - Same directory or one level up
+import { ButtonProps } from './types';
+import { BaseComponent } from '../BaseComponent';
+```
+
+The `@` alias maps to `src/`. See [CLAUDE.md](./CLAUDE.md#import-conventions) for full details.
+
 ### Module Organization
 
 Follow the structure defined in [CLAUDE.md](./CLAUDE.md):
@@ -203,10 +223,33 @@ const imageSize = diameter * 0.65;
 const textRadius = radius * 0.85;
 
 // ✅ Good - Use constants
-import { CHARACTER_LAYOUT } from './constants.js';
+import { CHARACTER_LAYOUT } from '@/ts/constants.js';
 
 const imageSize = diameter * CHARACTER_LAYOUT.IMAGE_SIZE_RATIO;
 const textRadius = radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
+```
+
+### Logging
+
+**ALWAYS use logger, never console:**
+
+```typescript
+import { logger } from '@/ts/utils/logger.js';
+
+// Basic logging
+logger.debug('Component', 'Debug info', data);
+logger.info('Service', 'Operation completed');
+logger.warn('Cache', 'Cache miss', { key });
+logger.error('Generator', 'Failed to generate', error);
+
+// Child loggers for modules
+const syncLogger = logger.child('DataSync');
+syncLogger.info('Checking for updates');
+
+// Performance timing
+const result = await logger.time('Generator', 'Generate tokens', async () => {
+  return await generateAllTokens(characters);
+});
 ```
 
 ### Error Handling
@@ -214,13 +257,21 @@ const textRadius = radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
 Use typed error classes from `src/ts/errors.ts`:
 
 ```typescript
-import { TokenCreationError, ValidationError } from './errors.js';
+import { TokenCreationError, ValidationError, ErrorHandler } from '@/ts/errors.js';
 
 // For token generation errors
 throw new TokenCreationError('Failed to render text', characterName, error);
 
 // For validation errors
 throw new ValidationError('Invalid script data', validationErrors);
+
+// Handling errors
+try {
+  await operation();
+} catch (error) {
+  const message = ErrorHandler.getUserMessage(error);
+  ErrorHandler.log(error, 'ComponentName');
+}
 ```
 
 ---
@@ -383,11 +434,21 @@ Migration:
    npm run validate  # Must pass!
    ```
 
-2. **Update Documentation**
-   - Update README.md if adding features
-   - Update CLAUDE.md if changing architecture
+2. **Update Documentation** (REQUIRED - see table below)
    - Update CHANGELOG.md with your changes
    - Add JSDoc comments to public APIs
+
+### Documentation Update Requirements
+
+| Change Type | Documents to Update |
+|-------------|---------------------|
+| New utility/hook | CLAUDE.md (utility tables) |
+| Architecture change | ARCHITECTURE.md |
+| Feature complete | ROADMAP.md, CHANGELOG.md |
+| Bug fix | CHANGELOG.md |
+| API change | CLAUDE.md, JSDoc comments |
+| New pattern | CLAUDE.md (patterns section) |
+| New error class | CLAUDE.md (error hierarchy) |
 
 3. **Sync with Main**
    ```bash
@@ -449,7 +510,9 @@ Migration:
 
 ### Essential Reading
 
-- **[CLAUDE.md](./CLAUDE.md)**: Complete architecture guide (READ THIS FIRST!)
+- **[CLAUDE.md](./CLAUDE.md)**: Complete code generation guide (READ THIS FIRST!)
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)**: System design and technical decisions
+- **[ROADMAP.md](./ROADMAP.md)**: Development plans and priorities
 - **[README.md](./README.md)**: Project overview and features
 - **[CHANGELOG.md](./CHANGELOG.md)**: Version history and changes
 
@@ -461,7 +524,7 @@ Each module follows this pattern:
 // src/ts/canvas/index.ts (barrel export)
 export * from './canvasUtils.js';
 export * from './textDrawing.js';
-export * from './leafDrawing.js';
+export * from './accentDrawing.js';
 export * from './qrGeneration.js';
 ```
 
@@ -484,6 +547,7 @@ import { createCanvas } from '@/ts/canvas/canvasUtils.js';
 
 - [ ] Is there existing code I can reuse? (Check CLAUDE.md)
 - [ ] Does this belong in an existing module or need a new one?
+- [ ] **Am I using `@/` path aliases for imports?** (No `../../../`)
 - [ ] Have I added appropriate types to `types/index.ts`?
 - [ ] Have I added constants to `constants.ts` instead of magic numbers?
 - [ ] Have I written tests with >80% coverage?

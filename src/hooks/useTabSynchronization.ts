@@ -14,8 +14,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { logger } from '../ts/utils/index.js';
-import { generateUuid } from '../ts/utils/nameGenerator.js';
+import { logger } from '@/ts/utils/index.js';
+import { generateUuid } from '@/ts/utils/nameGenerator.js';
 
 // Generate unique tab ID on module load (persists for session)
 const TAB_ID = generateUuid();

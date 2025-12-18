@@ -1,9 +1,9 @@
 import { useCallback, useRef } from 'react';
-import { clearDataUrlCache } from '../components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
-import { useTokenContext } from '../contexts/TokenContext';
-import { generateAllTokens } from '../ts/generation/batchGenerator.js';
-import type { ProgressCallback, Token, TokenCallback } from '../ts/types/index.js';
-import { logger } from '../ts/utils/logger.js';
+import { clearDataUrlCache } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { generateAllTokens } from '@/ts/generation/batchGenerator.js';
+import type { ProgressCallback, Token, TokenCallback } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 export function useTokenGenerator() {
   const {

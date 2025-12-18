@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import styles from '../../../styles/components/projects/LogoSelector.module.css';
+import styles from '@/styles/components/projects/LogoSelector.module.css';
 
 export type LogoMode = 'text' | 'upload' | 'url';
 

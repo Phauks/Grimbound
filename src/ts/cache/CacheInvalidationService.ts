@@ -9,7 +9,7 @@
  * Pattern: Observer (Publish-Subscribe)
  */
 
-import { logger } from '../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Types

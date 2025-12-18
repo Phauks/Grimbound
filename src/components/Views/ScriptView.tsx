@@ -7,11 +7,12 @@
  * - Player Script: (Coming soon) Player-facing script view
  */
 
-import { useState } from 'react';
-import { NightOrderProvider } from '../../contexts/NightOrderContext';
-import styles from '../../styles/components/views/Views.module.css';
-import { NightOrderView } from '../ViewComponents/ScriptComponents/NightOrderView';
-import type { ScriptSubTab } from '../ViewComponents/ScriptComponents/ScriptTabNavigation';
+import { useMemo, useState } from 'react';
+import { NightOrderProvider } from '@/contexts/NightOrderContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/views/Views.module.css';
+import { NightOrderView } from '@/components/ViewComponents/ScriptComponents/NightOrderView';
+import type { ScriptSubTab } from '@/components/ViewComponents/ScriptComponents/ScriptTabNavigation';
 
 interface ScriptViewProps {
   /** Callback when "Edit Character" is selected from night order context menu */
@@ -20,12 +21,19 @@ interface ScriptViewProps {
 
 export function ScriptView({ onEditCharacter }: ScriptViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<ScriptSubTab>('night-order');
+  const { characters, scriptMeta } = useTokenContext();
+
+  // Build script data array for initializing NightOrderProvider from cache
+  const initialScriptData = useMemo(
+    () => (scriptMeta ? [scriptMeta, ...characters] : characters),
+    [characters, scriptMeta]
+  );
 
   return (
     <div className={styles.scriptView}>
       <div className={styles.scriptContent}>
         {activeSubTab === 'night-order' && (
-          <NightOrderProvider>
+          <NightOrderProvider initialScriptData={initialScriptData}>
             <NightOrderView
               activeTab={activeSubTab}
               onTabChange={setActiveSubTab}

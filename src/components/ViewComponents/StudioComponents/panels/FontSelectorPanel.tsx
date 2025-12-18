@@ -5,9 +5,9 @@
  */
 
 import { useCallback } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
-import type { TextLayerData } from '../../../../ts/types/index';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
+import type { TextLayerData } from '@/ts/types/index';
 
 export function FontSelectorPanel() {
   const {

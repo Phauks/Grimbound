@@ -10,10 +10,10 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTokenContext } from '../contexts/TokenContext.js';
-import type { Character } from '../ts/types/index.js';
-import { getFirstImageUrl, resolveCharacterImages } from '../ts/utils/characterImageResolver.js';
-import { logger } from '../ts/utils/logger.js';
+import { useTokenContext } from '@/contexts/TokenContext.js';
+import type { Character } from '@/ts/types/index.js';
+import { getFirstImageUrl, resolveCharacterImages } from '@/ts/utils/characterImageResolver.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface UseCharacterImageResolverOptions {
   /** Characters to resolve images for */

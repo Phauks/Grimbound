@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import styles from '../../../styles/components/characterEditor/ActionButtons.module.css';
+import styles from '@/styles/components/characterEditor/ActionButtons.module.css';
 
 interface ActionButtonsProps {
   isLoading: boolean;

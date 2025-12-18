@@ -6,10 +6,10 @@
  */
 
 import { useState } from 'react';
-import { useStudio } from '../../../contexts/StudioContext';
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../../styles/components/studio/Studio.module.css';
-import { logger } from '../../../ts/utils/logger.js';
+import { useStudio } from '@/contexts/StudioContext';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/studio/Studio.module.css';
+import { logger } from '@/ts/utils/logger.js';
 import { LogoWizardModal } from './modals/LogoWizardModal';
 import { SaveAssetModal } from './modals/SaveAssetModal';
 import { BorderPanel } from './panels/BorderPanel';

@@ -3,7 +3,7 @@
  * JSON Utility Functions
  */
 
-import type { Character, ScriptEntry, ValidationResult } from '../types/index.js';
+import type { Character, ScriptEntry, ValidationResult } from '@/ts/types/index.js';
 
 /**
  * Format JSON with pretty printing

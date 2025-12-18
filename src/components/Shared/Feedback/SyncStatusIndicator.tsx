@@ -10,9 +10,9 @@
  */
 
 import { useCallback, useState } from 'react';
-import { useDataSync } from '../../../contexts/DataSyncContext';
-import styles from '../../../styles/components/shared/SyncStatusIndicator.module.css';
-import type { SyncState } from '../../../ts/types/index.js';
+import { useDataSync } from '@/contexts/DataSyncContext';
+import styles from '@/styles/components/shared/SyncStatusIndicator.module.css';
+import type { SyncState } from '@/ts/types/index.js';
 
 interface SyncStatusIndicatorProps {
   onDetailsClick?: () => void;

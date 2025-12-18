@@ -3,13 +3,13 @@
  * Batch Token Generation - Orchestrates bulk token creation with parallel processing
  */
 
-import type { TextLayoutResult } from '../canvas/index.js';
-import CONFIG from '../config.js';
-import { getAllCharacterImageUrls } from '../data/characterUtils.js';
+import type { TextLayoutResult } from '@/ts/canvas/index.js';
+import CONFIG from '@/ts/config.js';
+import { getAllCharacterImageUrls } from '@/ts/data/characterUtils.js';
 import {
   createPreloadTasks,
   preResolveAssetsWithPriority,
-} from '../services/upload/assetResolver.js';
+} from '@/ts/services/upload/assetResolver.js';
 import type {
   Character,
   GenerationOptions,
@@ -18,16 +18,16 @@ import type {
   Team,
   Token,
   TokenCallback,
-} from '../types/index.js';
-import type { ProgressState } from '../utils/index.js';
+} from '@/ts/types/index.js';
+import type { ProgressState } from '@/ts/utils/index.js';
 import {
   createProgressState,
   generateUniqueFilename,
   logger,
   sanitizeFilename,
   updateProgress,
-} from '../utils/index.js';
-import { TokenGenerator } from './tokenGenerator.js';
+} from '@/ts/utils/index.js';
+import { TokenGenerator } from './TokenGenerator.js';
 
 // ============================================================================
 // TOKEN COUNT CALCULATION

@@ -5,7 +5,7 @@
  * and utilities for recoloring images to match character types
  */
 
-import type { CharacterPreset } from '../types/index.js';
+import type { CharacterPreset } from '@/ts/types/index.js';
 
 /**
  * Character alignment color presets

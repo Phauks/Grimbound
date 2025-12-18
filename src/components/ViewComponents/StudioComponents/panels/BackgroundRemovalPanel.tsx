@@ -5,11 +5,11 @@
  */
 
 import { useState } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
-import { backgroundRemovalService } from '../../../../ts/studio/backgroundRemoval';
-import { getImageData, putImageData } from '../../../../ts/studio/canvasOperations';
-import { logger } from '../../../../ts/utils/logger.js';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
+import { backgroundRemovalService } from '@/ts/studio/backgroundRemoval';
+import { getImageData, putImageData } from '@/ts/studio/canvasOperations';
+import { logger } from '@/ts/utils/logger.js';
 
 export function BackgroundRemovalPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();

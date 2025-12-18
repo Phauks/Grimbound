@@ -46,8 +46,8 @@
  */
 
 import { type ReactNode, useId } from 'react';
-import { useModalBehavior } from '../../../hooks/useModalBehavior';
-import { cn } from '../../../ts/utils';
+import { useModalBehavior } from '@/hooks/useModalBehavior';
+import { cn } from '@/ts/utils';
 import styles from './Modal.module.css';
 
 export type ModalSize = 'small' | 'medium' | 'large' | 'xlarge' | 'full';

@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import styles from '../../../styles/components/shared/IconUploader.module.css';
+import styles from '@/styles/components/shared/IconUploader.module.css';
 
 interface IconUploaderProps {
   /** Current image data URL (if any) */

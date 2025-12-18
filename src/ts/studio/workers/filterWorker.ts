@@ -5,7 +5,7 @@
  * Processes filters on a separate thread to avoid blocking the main UI.
  */
 
-import type { ImageFilter } from '../../types/index';
+import type { ImageFilter } from '@/ts/types/index';
 
 // ============================================================================
 // Message Types

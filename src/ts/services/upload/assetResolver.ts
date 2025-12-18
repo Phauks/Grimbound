@@ -8,13 +8,13 @@
  * @module services/upload/assetResolver
  */
 
-import type { AssetReference } from '../../types/index.js';
+import type { AssetReference } from '@/ts/types/index.js';
 import {
   createAssetReference as createRef,
   extractAssetId as extractId,
   isAssetReference as isAssetRef,
-} from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
+} from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 import { assetStorageService } from './AssetStorageService.js';
 
 // ============================================================================

@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
-import { useTokenContext } from '../../contexts/TokenContext';
-import styles from '../../styles/components/layout/TabNavigation.module.css';
-import { preRenderFirstCharacter } from '../../ts/cache/index.js';
-import { preRenderGalleryTokens } from '../ViewComponents/TokensComponents/TokenGrid/TokenCard';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/layout/TabNavigation.module.css';
+import { tabPreRenderService, type PreRenderableTab } from '@/ts/cache/index.js';
 
 export type EditorTab =
   | 'projects'
@@ -26,31 +25,27 @@ export function TabNavigation({
   onTabChange,
   lastSelectedCharacterUuid,
 }: TabNavigationProps) {
-  const { tokens, jsonInput, characters, generationOptions } = useTokenContext();
+  const { tokens, jsonInput, characters, scriptMeta, generationOptions } = useTokenContext();
   const _hasTokens = tokens.length > 0;
   const _hasScript = jsonInput.trim() !== '';
 
-  // Pre-render tokens when hovering over tabs
+  // Pre-render data when hovering over tabs (unified service)
   const handleTabHover = useCallback(
     (tabId: EditorTab) => {
-      if (tabId === 'characters' && characters.length > 0) {
-        // Pre-render the last selected character (or first if none selected)
-        let characterToPreRender = characters[0]; // Default fallback
+      // Only pre-render for supported tabs with data
+      const preRenderableTabs: PreRenderableTab[] = ['characters', 'tokens', 'script'];
+      if (!preRenderableTabs.includes(tabId as PreRenderableTab)) return;
+      if (characters.length === 0 && tokens.length === 0) return;
 
-        if (lastSelectedCharacterUuid) {
-          const lastSelected = characters.find((c) => c.uuid === lastSelectedCharacterUuid);
-          if (lastSelected) {
-            characterToPreRender = lastSelected;
-          }
-        }
-
-        preRenderFirstCharacter(characterToPreRender, generationOptions);
-      } else if (tabId === 'tokens' && tokens.length > 0) {
-        // Pre-render data URLs for gallery tokens (first 20)
-        preRenderGalleryTokens(tokens, 20);
-      }
+      tabPreRenderService.preRenderTab(tabId as PreRenderableTab, {
+        characters,
+        tokens,
+        scriptMeta,
+        generationOptions,
+        lastSelectedCharacterUuid,
+      });
     },
-    [characters, generationOptions, tokens, lastSelectedCharacterUuid]
+    [characters, scriptMeta, generationOptions, tokens, lastSelectedCharacterUuid]
   );
 
   const tabs: { id: EditorTab; label: string; disabled?: boolean }[] = [

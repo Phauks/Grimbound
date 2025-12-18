@@ -6,8 +6,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { assetStorageService } from '../ts/services/upload/AssetStorageService.js';
-import { logger } from '../ts/utils/logger.js';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Types
@@ -76,6 +76,9 @@ export interface UseStorageQuotaOptions {
  * ```
  */
 export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const {
     checkInterval = 5 * 60 * 1000, // 5 minutes
     warningThreshold = 80,
@@ -175,7 +178,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
       logger.error('useStorageQuota', 'Cleanup failed:', error);
       return 0;
     }
-  }, [checkQuota]);
+  }, [assetStorageService, checkQuota]);
 
   /**
    * Clean up old cached assets (LRU eviction)
@@ -221,7 +224,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
         return 0;
       }
     },
-    [checkQuota]
+    [assetStorageService, checkQuota]
   );
 
   /**

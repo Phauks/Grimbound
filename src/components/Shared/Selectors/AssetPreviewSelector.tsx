@@ -22,12 +22,12 @@
  */
 
 import { memo, useEffect, useRef, useState } from 'react';
-import styles from '../../../styles/components/shared/AssetPreviewSelector.module.css';
-import { getBuiltInAsset, isBuiltInAsset } from '../../../ts/constants/builtInAssets.js';
-import { extractAssetId, isAssetReference } from '../../../ts/services/upload/assetResolver.js';
-import { assetStorageService } from '../../../ts/services/upload/index.js';
-import type { AssetType } from '../../../ts/services/upload/types.js';
-import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import styles from '@/styles/components/shared/AssetPreviewSelector.module.css';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { getBuiltInAsset, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
+import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import type { AssetType } from '@/ts/services/upload/types.js';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -128,6 +128,9 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
   previewTokenType = 'character',
   headerSlot,
 }: AssetPreviewSelectorProps) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -197,7 +200,7 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
     return () => {
       cancelled = true;
     };
-  }, [value, assetType, noneLabel, label]);
+  }, [value, assetType, noneLabel, label, assetStorageService]);
 
   // Handle asset selection from modal
   const handleSelectAsset = (selectedId: string) => {

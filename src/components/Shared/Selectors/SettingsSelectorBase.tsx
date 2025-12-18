@@ -13,7 +13,7 @@
  */
 
 import { forwardRef, memo } from 'react';
-import styles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 
 // ============================================================================
 // Types

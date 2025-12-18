@@ -14,7 +14,7 @@ import type {
   DisplayMeasurement,
   MeasurementConfig,
   MeasurementUnit,
-} from '../types/measurement.js';
+} from '@/ts/types/measurement.js';
 
 // ============================================================================
 // CONSTANTS

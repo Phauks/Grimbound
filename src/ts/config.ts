@@ -57,12 +57,12 @@ export const CONFIG: Config = {
 
   // Style Defaults
   STYLE: {
-    LEAF_GENERATION: 'classic',
-    MAXIMUM_LEAVES: 5,
-    LEAF_POPULATION_PROBABILITY: 30,
-    LEAF_ARC_SPAN: 120,
-    LEAF_SLOTS: 7,
-    SETUP_FLOWER_STYLE: 'setup_flower_1',
+    ACCENT_GENERATION: 'classic',
+    MAXIMUM_ACCENTS: 5,
+    ACCENT_POPULATION_PROBABILITY: 30,
+    ACCENT_ARC_SPAN: 120,
+    ACCENT_SLOTS: 7,
+    SETUP_STYLE: 'setup_flower_1',
     REMINDER_BACKGROUND: '#6C3BAA',
     CHARACTER_BACKGROUND: 'character_background_1',
     CHARACTER_NAME_FONT: 'Dumbledor',
@@ -162,13 +162,14 @@ export const CONFIG: Config = {
     CORS_PROXY: 'https://cors-header-proxy.infiniteinstants.com/?', // Cloudflare Workers CORS proxy
   },
 
-  // Asset Paths (served from publicDir 'assets' at root path)
+  // Asset Paths (served from publicDir 'assets')
+  // Uses import.meta.env.BASE_URL for correct path resolution on GitHub Pages
   ASSETS: {
-    FONTS: '/fonts/',
-    IMAGES: '/images/',
-    CHARACTER_BACKGROUNDS: '/images/character_background/',
-    SETUP_FLOWERS: '/images/setup_flower/',
-    LEAVES: '/images/',
+    FONTS: `${import.meta.env.BASE_URL}fonts/`,
+    IMAGES: `${import.meta.env.BASE_URL}images/`,
+    CHARACTER_BACKGROUNDS: `${import.meta.env.BASE_URL}images/character_background/`,
+    SETUP_OVERLAYS: `${import.meta.env.BASE_URL}images/setup_overlays/`,
+    ACCENTS: `${import.meta.env.BASE_URL}images/`,
   },
 
   // Example Scripts (auto-populated from example_scripts folder)

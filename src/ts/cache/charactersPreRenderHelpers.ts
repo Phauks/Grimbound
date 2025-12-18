@@ -7,7 +7,7 @@
  * @module ts/cache/charactersPreRenderHelpers
  */
 
-import type { Character, GenerationOptions } from '../types/index.js';
+import type { Character, GenerationOptions } from '@/ts/types/index.js';
 import { cacheManager } from './CacheManager.js';
 import type { CharactersPreRenderEntry } from './strategies/CharactersPreRenderStrategy.js';
 
@@ -20,7 +20,7 @@ export function hashOptions(options: GenerationOptions): string {
     displayAbilityText: options.displayAbilityText,
     generateBootleggerRules: options.generateBootleggerRules,
     tokenCount: options.tokenCount,
-    setupFlowerStyle: options.setupFlowerStyle,
+    setupStyle: options.setupStyle,
     characterBackground: options.characterBackground,
     characterBackgroundType: options.characterBackgroundType,
     reminderBackground: options.reminderBackground,
@@ -28,7 +28,7 @@ export function hashOptions(options: GenerationOptions): string {
     characterNameFont: options.characterNameFont,
     characterReminderFont: options.characterReminderFont,
     dpi: options.dpi,
-    leafGeneration: options.leafGeneration,
+    accentGeneration: options.accentGeneration,
   });
   // Simple hash
   let hash = 0;

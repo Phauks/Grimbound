@@ -9,28 +9,28 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTokenContext } from '../../contexts/TokenContext.js';
-import { useAssetManager } from '../../hooks/useAssetManager.js';
-import styles from '../../styles/components/modals/AssetManagerModal.module.css';
-import { getBuiltInAssets } from '../../ts/constants/builtInAssets.js';
-import { getBestPreviewCharacter } from '../../ts/data/characterUtils.js';
-import { TokenGenerator } from '../../ts/generation/tokenGenerator.js';
-import { createAssetReference } from '../../ts/services/upload/assetResolver.js';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { useTokenContext } from '@/contexts/TokenContext.js';
+import { useAssetManager } from '@/hooks/useAssetManager.js';
+import styles from '@/styles/components/modals/AssetManagerModal.module.css';
+import { getBuiltInAssets } from '@/ts/constants/builtInAssets.js';
+import { getBestPreviewCharacter } from '@/ts/data/characterUtils.js';
+import { TokenGenerator } from '@/ts/generation/index.js';
+import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
 import {
   ASSET_TYPE_ICONS,
   ASSET_TYPE_LABELS,
   ASSET_TYPE_LABELS_PLURAL,
   type AssetType,
-  assetStorageService,
-} from '../../ts/services/upload/index.js';
-import { DEFAULT_BACKGROUND_STYLE } from '../../ts/types/backgroundEffects.js';
-import type { BackgroundStyle, Character, GenerationOptions } from '../../ts/types/index.js';
-import { logger } from '../../ts/utils/logger.js';
-import { AssetThumbnail } from '../Shared/Assets/AssetThumbnail.js';
-import { FileDropzone } from '../Shared/Controls/FileDropzone.js';
-import { ConfirmDialog } from '../Shared/ModalBase/ConfirmDialog';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
+} from '@/ts/services/upload/index.js';
+import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects.js';
+import type { BackgroundStyle, Character, GenerationOptions } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { AssetThumbnail } from '@/components/Shared/Assets/AssetThumbnail.js';
+import { FileDropzone } from '@/components/Shared/Controls/FileDropzone.js';
+import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Button } from '@/components/Shared/UI/Button';
 
 // ============================================================================
 // Types
@@ -71,8 +71,8 @@ const ASSET_TYPES: AssetType[] = [
   'character-icon',
   'token-background',
   'script-background',
-  'setup-flower',
-  'leaf',
+  'setup-overlay',
+  'accent',
   'logo',
 ];
 
@@ -93,6 +93,9 @@ export function AssetManagerModal({
   generationOptions,
   previewTokenType = 'character',
 }: AssetManagerModalProps) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   // Local state
   const [activeTab, setActiveTab] = useState<AssetType | 'all'>(initialAssetType ?? 'all');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>(projectId ? 'project' : 'all');
@@ -250,23 +253,26 @@ export function AssetManagerModal({
         refresh();
       }
     },
-    [assets, refresh]
+    [assetStorageService, assets, refresh]
   );
 
   // Handle download
-  const handleDownload = useCallback(async (id: string) => {
-    const asset = await assetStorageService.getById(id);
-    if (!asset) return;
+  const handleDownload = useCallback(
+    async (id: string) => {
+      const asset = await assetStorageService.getById(id);
+      if (!asset) return;
 
-    const url = URL.createObjectURL(asset.blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = asset.metadata.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, []);
+      const url = URL.createObjectURL(asset.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = asset.metadata.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    [assetStorageService]
+  );
 
   // Handle duplicate
   const handleDuplicate = useCallback(
@@ -290,7 +296,7 @@ export function AssetManagerModal({
       });
       refresh();
     },
-    [refresh]
+    [assetStorageService, refresh]
   );
 
   // Handle reclassify (change asset type) - directly from submenu
@@ -302,7 +308,7 @@ export function AssetManagerModal({
       await assetStorageService.update(id, { type: newType });
       refresh();
     },
-    [refresh]
+    [assetStorageService, refresh]
   );
 
   // Get built-in assets for the current filter type
@@ -381,10 +387,10 @@ export function AssetManagerModal({
 
       // Handle other asset types
       switch (assetType) {
-        case 'setup-flower':
-          return { setupFlowerStyle: assetValue };
-        case 'leaf':
-          return { leafGeneration: assetValue };
+        case 'setup-overlay':
+          return { setupStyle: assetValue };
+        case 'accent':
+          return { accentGeneration: assetValue };
         case 'script-background':
           return {
             metaBackgroundType: 'image' as const,

@@ -11,9 +11,9 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { assetStorageService } from '../ts/services/upload/AssetStorageService.js';
-import { globalImageCache } from '../ts/utils/imageCache.js';
-import { logger } from '../ts/utils/logger.js';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Cache statistics for a single layer
@@ -69,7 +69,9 @@ function getImageCacheStats(): CacheLayerStats {
 /**
  * Get statistics from the asset URL cache
  */
-async function getAssetUrlCacheStats(): Promise<CacheLayerStats> {
+async function getAssetUrlCacheStats(
+  assetStorageService: ReturnType<typeof useAssetStorageService>
+): Promise<CacheLayerStats> {
   const stats = assetStorageService.getUrlCacheStats();
 
   return {
@@ -182,6 +184,9 @@ function generateRecommendations(stats: AllCacheStats): string[] {
  * ```
  */
 export function useCacheStats(options: UseCacheStatsOptions = {}) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const { refreshInterval = 1000, includeRecommendations = true } = options;
 
   const [stats, setStats] = useState<AllCacheStats>({
@@ -209,7 +214,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
         Promise.resolve(getPreRenderCacheStats()),
         Promise.resolve(getImageCacheStats()),
         Promise.resolve(getFontCacheStats()),
-        getAssetUrlCacheStats(),
+        getAssetUrlCacheStats(assetStorageService),
       ]);
 
       const totalMemoryMB =
@@ -237,7 +242,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [includeRecommendations]);
+  }, [assetStorageService, includeRecommendations]);
 
   /**
    * Clear all caches
@@ -255,7 +260,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
     } catch (error) {
       logger.error('useCacheStats', 'Failed to clear caches:', error);
     }
-  }, [refresh]);
+  }, [assetStorageService, refresh]);
 
   /**
    * Export cache report as JSON

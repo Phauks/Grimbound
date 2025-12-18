@@ -11,8 +11,13 @@ export {
   getPresetNames,
   PRESETS,
 } from './presets.js';
-// Token Generator class
+// Token Generator class (using composition and dependency injection)
 export {
   generateAllTokens,
   TokenGenerator,
-} from './tokenGenerator.js';
+} from './TokenGenerator.js';
+// Export renderers for advanced usage
+export { TokenImageRenderer, type IImageCache } from './TokenImageRenderer.js';
+export { TokenTextRenderer } from './TokenTextRenderer.js';
+// Export image cache adapter
+export { defaultImageCache } from './ImageCacheAdapter.js';

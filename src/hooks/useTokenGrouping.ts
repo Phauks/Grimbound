@@ -6,8 +6,8 @@
  */
 
 import { useMemo } from 'react';
-import type { Token } from '../ts/types/index.js';
-import { groupTokensByIdentity } from '../ts/utils/tokenGrouping.js';
+import type { Token } from '@/ts/types/index.js';
+import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping.js';
 
 interface TokenGroup {
   token: Token;

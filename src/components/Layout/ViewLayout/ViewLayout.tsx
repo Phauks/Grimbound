@@ -32,8 +32,8 @@
  * ```
  */
 
-import styles from '../../../styles/components/layout/ViewLayout.module.css';
-import { cn } from '../../../ts/utils/classNames';
+import styles from '@/styles/components/layout/ViewLayout.module.css';
+import { cn } from '@/ts/utils/classNames';
 import type { ViewLayoutComponent, ViewLayoutProps } from './types';
 import { ViewLayoutPanel } from './ViewLayoutPanel';
 

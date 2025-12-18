@@ -6,7 +6,7 @@
  */
 
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
-import styles from '../../../styles/components/shared/Form.module.css';
+import styles from '@/styles/components/shared/Form.module.css';
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {

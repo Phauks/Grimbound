@@ -14,13 +14,13 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import drawerStyles from '../../../styles/components/shared/BackgroundDrawer.module.css';
-import styles from '../../../styles/components/shared/BackgroundStyleSelector.module.css';
-import { createBackgroundGradient } from '../../../ts/canvas/gradientUtils';
-import { getBuiltInAssetPath, isBuiltInAsset } from '../../../ts/constants/builtInAssets';
-import { extractAssetId, isAssetReference } from '../../../ts/services/upload/assetResolver';
-import { assetStorageService } from '../../../ts/services/upload/index';
-import type { TextureBlendMode } from '../../../ts/types/backgroundEffects';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import drawerStyles from '@/styles/components/shared/BackgroundDrawer.module.css';
+import styles from '@/styles/components/shared/BackgroundStyleSelector.module.css';
+import { createBackgroundGradient } from '@/ts/canvas/gradientUtils';
+import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets';
+import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver';
+import type { TextureBlendMode } from '@/ts/types/backgroundEffects';
 import {
   BLEND_MODE_OPTIONS,
   DEFAULT_BACKGROUND_STYLE,
@@ -30,7 +30,7 @@ import {
   DEFAULT_TEXTURE_CONFIG,
   GRADIENT_TYPE_OPTIONS,
   TEXTURE_OPTIONS,
-} from '../../../ts/types/backgroundEffects';
+} from '@/ts/types/backgroundEffects';
 import type {
   BackgroundBaseMode,
   BackgroundSourceType,
@@ -41,10 +41,10 @@ import type {
   GradientType,
   LightConfig,
   TextureConfig,
-} from '../../../ts/types/index';
-import { AssetManagerModal } from '../../Modals/AssetManagerModal';
-import { EditableSlider } from '../Controls/EditableSlider';
-import { BackgroundDrawer } from '../Drawer';
+} from '@/ts/types/index';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { BackgroundDrawer } from '@/components/Shared/Drawer';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -267,6 +267,9 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   projectId,
   generationOptions,
 }: BackgroundStyleSelectorProps) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   // State for image selection modal
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
@@ -331,7 +334,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
     return () => {
       cancelled = true;
     };
-  }, [currentStyle.imageUrl]);
+  }, [assetStorageService, currentStyle.imageUrl]);
 
   // Drawer state management (replacing useExpandablePanel)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -386,7 +389,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
     return () => {
       cancelled = true;
     };
-  }, [pendingValue?.imageUrl]);
+  }, [assetStorageService, pendingValue?.imageUrl]);
 
   // Update pending value and trigger preview
   const updatePending = useCallback(

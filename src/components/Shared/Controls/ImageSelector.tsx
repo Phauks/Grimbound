@@ -1,6 +1,6 @@
 import { memo } from 'react';
-import styles from '../../../styles/components/shared/ImageSelector.module.css';
-import type { ImageOption } from '../../../ts/types/index';
+import styles from '@/styles/components/shared/ImageSelector.module.css';
+import type { ImageOption } from '@/ts/types/index';
 
 export type ImageSelectorShape = 'square' | 'circle';
 

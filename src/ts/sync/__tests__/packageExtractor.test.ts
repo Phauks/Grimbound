@@ -5,9 +5,9 @@
 
 import JSZip from 'jszip';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PackageValidationError } from '../../errors.js';
-import type { Character, PackageManifest } from '../../types/index.js';
-import { PackageExtractor } from '../packageExtractor.js';
+import { PackageValidationError } from '@/ts/errors.js';
+import type { Character, PackageManifest } from '@/ts/types/index.js';
+import { PackageExtractor } from '@/ts/sync/packageExtractor.js';
 
 // Mock data
 const mockManifest: PackageManifest = {

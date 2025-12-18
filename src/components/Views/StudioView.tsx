@@ -6,20 +6,23 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useStudio } from '../../contexts/StudioContext';
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../styles/components/studio/Studio.module.css';
-import { assetStorageService } from '../../ts/services/upload/AssetStorageService';
-import { composeLayers, consumePendingStudioOperation } from '../../ts/studio/index';
-import { extractAssetId, isAssetReference } from '../../ts/types/index';
-import { applyCorsProxy } from '../../ts/utils/imageUtils';
-import { logger } from '../../ts/utils/logger.js';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { StudioCanvas } from '../ViewComponents/StudioComponents/StudioCanvas';
-import { StudioLayersPanel } from '../ViewComponents/StudioComponents/StudioLayersPanel';
-import { StudioSidebar } from '../ViewComponents/StudioComponents/StudioSidebar';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { useStudio } from '@/contexts/StudioContext';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/studio/Studio.module.css';
+import { composeLayers, consumePendingStudioOperation } from '@/ts/studio/index';
+import { extractAssetId, isAssetReference } from '@/ts/types/index';
+import { applyCorsProxy } from '@/ts/utils/imageUtils';
+import { logger } from '@/ts/utils/logger.js';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { StudioCanvas } from '@/components/ViewComponents/StudioComponents/StudioCanvas';
+import { StudioLayersPanel } from '@/components/ViewComponents/StudioComponents/StudioLayersPanel';
+import { StudioSidebar } from '@/components/ViewComponents/StudioComponents/StudioSidebar';
 
 export function StudioView() {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const {
     layers,
     canvasSize,
@@ -104,7 +107,7 @@ export function StudioView() {
     };
 
     loadPendingOperation();
-  }, [loadFromImage]);
+  }, [assetStorageService, loadFromImage]);
 
   // Composite canvas for rendering all layers
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);

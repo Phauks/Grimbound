@@ -3,8 +3,8 @@
  * Icon Layout Strategies - Separate layout calculation from rendering
  */
 
-import type { Point } from '../canvas/index.js';
-import { CHARACTER_LAYOUT, REMINDER_LAYOUT, TokenType, type TokenTypeValue } from '../constants.js';
+import type { Point } from '@/ts/canvas/index.js';
+import { CHARACTER_LAYOUT, REMINDER_LAYOUT, TokenType, type TokenTypeValue } from '@/ts/constants.js';
 
 // ============================================================================
 // LAYOUT RESULT TYPES

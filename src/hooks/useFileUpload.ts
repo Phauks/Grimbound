@@ -32,12 +32,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  fileUploadService,
-  type UploadError,
-  type UploadOutcome,
-  type UseFileUploadConfig,
-} from '../ts/services/upload/index.js';
+import { useFileUploadService } from '@/contexts/ServiceContext';
+import type { UploadError, UploadOutcome, UseFileUploadConfig } from '@/ts/services/upload/index.js';
 
 // ============================================================================
 // Types
@@ -75,6 +71,9 @@ export interface UseFileUploadReturn {
  * Hook for handling file uploads
  */
 export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn {
+  // Get service from DI context
+  const fileUploadService = useFileUploadService();
+
   // State
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -156,7 +155,7 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
         }
       }
     },
-    [config]
+    [fileUploadService, config]
   );
 
   // Handle paste event
@@ -178,7 +177,7 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
         config.onComplete?.([result]);
       }
     },
-    [config]
+    [fileUploadService, config]
   );
 
   // Open file picker
@@ -204,7 +203,7 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
 
       config.onComplete?.(uploadResults);
     }
-  }, [config]);
+  }, [fileUploadService, config]);
 
   // Drag handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {

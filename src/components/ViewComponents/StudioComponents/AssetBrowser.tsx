@@ -6,13 +6,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useProjectContext } from '../../../contexts/ProjectContext';
-import { useStudio } from '../../../contexts/StudioContext';
-import styles from '../../../styles/components/studio/Studio.module.css';
-import { assetStorageService } from '../../../ts/services/upload/index';
-import type { AssetType, AssetWithUrl } from '../../../ts/services/upload/types';
-import { loadStudioAsset } from '../../../ts/studio/assetIntegration';
-import { logger } from '../../../ts/utils/logger.js';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
+import type { AssetType, AssetWithUrl } from '@/ts/services/upload/types';
+import { loadStudioAsset } from '@/ts/studio/assetIntegration';
+import { logger } from '@/ts/utils/logger.js';
 
 interface AssetBrowserProps {
   isOpen: boolean;
@@ -23,6 +23,9 @@ type StudioAssetType = 'studio-icon' | 'studio-logo' | 'studio-project';
 type AssetScope = 'project' | 'global';
 
 export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const { currentProject } = useProjectContext();
   const studioContext = useStudio();
 
@@ -66,7 +69,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [scope, assetType, searchQuery, currentProject?.id]);
+  }, [scope, assetType, searchQuery, currentProject?.id, assetStorageService]);
 
   // Reload assets when filters change
   useEffect(() => {
@@ -122,7 +125,7 @@ export function AssetBrowser({ isOpen, onClose }: AssetBrowserProps) {
         setError(err instanceof Error ? err.message : 'Failed to delete asset');
       }
     },
-    [loadAssets]
+    [loadAssets, assetStorageService]
   );
 
   // Filter assets locally if needed (for additional client-side filtering)

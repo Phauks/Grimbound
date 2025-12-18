@@ -9,11 +9,11 @@
  * - ZIP asset downloading
  */
 
-import CONFIG from '../config.js';
-import { DataSyncError, GitHubAPIError } from '../errors.js';
-import type { GitHubAsset, GitHubRelease } from '../types/index.js';
-import { applyCorsProxy } from '../utils/imageUtils.js';
-import { logger } from '../utils/logger.js';
+import CONFIG from '@/ts/config.js';
+import { DataSyncError, GitHubAPIError } from '@/ts/errors.js';
+import type { GitHubAsset, GitHubRelease } from '@/ts/types/index.js';
+import { applyCorsProxy } from '@/ts/utils/imageUtils.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Rate limit information from GitHub API headers
@@ -257,12 +257,7 @@ export class GitHubReleaseClient {
     // Use browser_download_url with CORS proxy
     const url = applyCorsProxy(asset.browser_download_url);
 
-    const proxyType = url.includes('corsproxy.io')
-      ? 'corsproxy.io'
-      : url.includes('allorigins')
-        ? 'allorigins'
-        : 'direct';
-    logger.info('GitHubReleaseClient', `Downloading asset via: ${proxyType}`);
+    logger.info('GitHubReleaseClient', `Downloading asset via CORS proxy`);
 
     try {
       const response = await this.fetchWithRetry(url, {

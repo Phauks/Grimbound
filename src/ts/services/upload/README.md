@@ -200,8 +200,8 @@ Configured in `constants.ts`:
 | `character-icon` | PNG, JPEG, WebP | 5 MB | 200×200 | No | No |
 | `token-background` | PNG, WebP | 10 MB | 540×540 | Yes | Yes |
 | `script-background` | PNG, JPEG, WebP | 20 MB | 1920×1080 | No | No |
-| `setup-flower` | PNG, WebP | 5 MB | 200×200 | Yes | Yes |
-| `leaf` | PNG, WebP | 1 MB | 50×25 | No | Yes |
+| `setup-overlay` | PNG, WebP | 5 MB | 200×200 | Yes | Yes |
+| `accent` | PNG, WebP | 1 MB | 50×25 | No | Yes |
 | `logo` | PNG, JPEG, WebP, SVG | 2 MB | 64×64 | No | No |
 
 #### Magic Byte Detection
@@ -402,8 +402,8 @@ Six asset types supported:
 | `character-icon` | Character portrait images | Washerwoman icon |
 | `token-background` | Custom token backgrounds | Ornate frame |
 | `script-background` | Script info page background | Parchment texture |
-| `setup-flower` | Setup checklist decorations | Rose icon |
-| `leaf` | Token border decorations | Oak leaf |
+| `setup-overlay` | Setup checklist decorations | Rose overlay |
+| `accent` | Token border decorations | Decorative accent |
 | `logo` | Custom script logos | Custom edition logo |
 
 ## Upload Configuration

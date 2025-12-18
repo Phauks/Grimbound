@@ -1,7 +1,7 @@
 import { type RefCallback, useCallback, useEffect, useRef, useState } from 'react';
-import styles from '../../../styles/components/characterEditor/MetaEditor.module.css';
-import type { ScriptMeta } from '../../../ts/types/index.js';
-import { JsonEditorPanel } from '../../Shared/Json/JsonEditorPanel';
+import styles from '@/styles/components/characterEditor/MetaEditor.module.css';
+import type { ScriptMeta } from '@/ts/types/index.js';
+import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
 
 interface MetaEditorProps {
   scriptMeta: ScriptMeta | null;

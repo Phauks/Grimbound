@@ -7,8 +7,8 @@
  * @module ts/constants/builtInAssets
  */
 
-import { CONFIG } from '../config.js';
-import type { AssetType } from '../services/upload/types.js';
+import { CONFIG } from '@/ts/config.js';
+import type { AssetType } from '@/ts/services/upload/types.js';
 
 // ============================================================================
 // Types
@@ -42,27 +42,27 @@ export const BUILT_IN_BACKGROUNDS: BuiltInAsset[] = Array.from({ length: 7 }, (_
 }));
 
 // ============================================================================
-// Built-in Setup Flowers
+// Built-in Setup Overlays
 // ============================================================================
 
-export const BUILT_IN_FLOWERS: BuiltInAsset[] = Array.from({ length: 7 }, (_, i) => ({
+export const BUILT_IN_SETUP_OVERLAYS: BuiltInAsset[] = Array.from({ length: 7 }, (_, i) => ({
   id: `setup_flower_${i + 1}`,
-  label: `Flower ${i + 1}`,
-  src: `${CONFIG.ASSETS.SETUP_FLOWERS}setup_flower_${i + 1}.webp`,
-  type: 'setup-flower' as AssetType,
+  label: `Setup ${i + 1}`,
+  src: `${CONFIG.ASSETS.SETUP_OVERLAYS}setup_flower_${i + 1}.webp`,
+  type: 'setup-overlay' as AssetType,
   source: 'builtin' as const,
 }));
 
 // ============================================================================
-// Built-in Leaf Styles
+// Built-in Accent Styles
 // ============================================================================
 
-export const BUILT_IN_LEAVES: BuiltInAsset[] = [
+export const BUILT_IN_ACCENTS: BuiltInAsset[] = [
   {
     id: 'classic',
     label: 'Classic',
-    src: `${CONFIG.ASSETS.LEAVES}leaves/classic/leaf_1.webp`,
-    type: 'leaf' as AssetType,
+    src: `${CONFIG.ASSETS.ACCENTS}leaves/classic/leaf_1.webp`,
+    type: 'accent' as AssetType,
     source: 'builtin' as const,
   },
 ];
@@ -78,10 +78,10 @@ export function getBuiltInAssets(type: AssetType): BuiltInAsset[] {
   switch (type) {
     case 'token-background':
       return BUILT_IN_BACKGROUNDS;
-    case 'setup-flower':
-      return BUILT_IN_FLOWERS;
-    case 'leaf':
-      return BUILT_IN_LEAVES;
+    case 'setup-overlay':
+      return BUILT_IN_SETUP_OVERLAYS;
+    case 'accent':
+      return BUILT_IN_ACCENTS;
     default:
       return [];
   }
@@ -95,7 +95,7 @@ export function isBuiltInAsset(value: string, type?: AssetType): boolean {
 
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_FLOWERS, ...BUILT_IN_LEAVES];
+    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
 
   return checkAssets.some((asset) => asset.id === value);
 }
@@ -106,7 +106,7 @@ export function isBuiltInAsset(value: string, type?: AssetType): boolean {
 export function getBuiltInAssetPath(id: string, type?: AssetType): string | null {
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_FLOWERS, ...BUILT_IN_LEAVES];
+    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
 
   const asset = checkAssets.find((a) => a.id === id);
   return asset?.src ?? null;
@@ -118,7 +118,7 @@ export function getBuiltInAssetPath(id: string, type?: AssetType): string | null
 export function getBuiltInAsset(id: string, type?: AssetType): BuiltInAsset | null {
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_FLOWERS, ...BUILT_IN_LEAVES];
+    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
 
   return checkAssets.find((a) => a.id === id) ?? null;
 }

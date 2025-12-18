@@ -8,9 +8,9 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useProjectContext } from '../contexts/ProjectContext.js';
-import { useTokenContext } from '../contexts/TokenContext.js';
-import { logger } from '../ts/utils/index.js';
+import { useProjectContext } from '@/contexts/ProjectContext.js';
+import { useTokenContext } from '@/contexts/TokenContext.js';
+import { logger } from '@/ts/utils/index.js';
 
 /**
  * Detects when project state changes and marks it as dirty

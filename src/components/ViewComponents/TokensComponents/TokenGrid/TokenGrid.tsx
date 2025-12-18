@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
-import { useToast } from '../../../../contexts/ToastContext';
-import { useTokenContext } from '../../../../contexts/TokenContext';
-import { useStudioNavigation } from '../../../../hooks/useStudioNavigation';
-import { useTokenDeletion } from '../../../../hooks/useTokenDeletion';
-import { useTokenGrouping } from '../../../../hooks/useTokenGrouping';
-import styles from '../../../../styles/components/tokens/TokenGrid.module.css';
-import { buildTokenMetadata, embedPngMetadata } from '../../../../ts/export/pngMetadata';
-import type { Token } from '../../../../ts/types/index.js';
-import { canvasToBlob, downloadFile } from '../../../../ts/utils/imageUtils';
-import { logger } from '../../../../ts/utils/logger';
-import type { TabType } from '../../../Layout/TabNavigation';
-import { ConfirmDialog } from '../../../Shared/ModalBase/ConfirmDialog';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useStudioNavigation } from '@/hooks/useStudioNavigation';
+import { useTokenDeletion } from '@/hooks/useTokenDeletion';
+import { useTokenGrouping } from '@/hooks/useTokenGrouping';
+import styles from '@/styles/components/tokens/TokenGrid.module.css';
+import { buildTokenMetadata, embedPngMetadata } from '@/ts/export/pngMetadata';
+import type { Token } from '@/ts/types/index.js';
+import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils';
+import { logger } from '@/ts/utils/logger';
+import type { TabType } from '@/components/Layout/TabNavigation';
+import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { TokenCard } from './TokenCard';
 
 interface TokenGridProps {

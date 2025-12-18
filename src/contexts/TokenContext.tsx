@@ -6,8 +6,8 @@ import type {
   ScriptMeta,
   SyncStatus,
   Token,
-} from '../ts/types/index.js';
-import { nameToId } from '../ts/utils/nameGenerator';
+} from '@/ts/types/index.js';
+import { nameToId } from '@/ts/utils/nameGenerator';
 import { useDataSync } from './DataSyncContext';
 
 interface TokenContextType {
@@ -168,7 +168,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
     displayAbilityText: false,
     generateBootleggerRules: false,
     tokenCount: false,
-    setupFlowerStyle: 'setup_flower_1',
+    setupStyle: 'setup_flower_1',
     reminderBackground: '#6C3BAA',
     reminderBackgroundImage: 'character_background_1',
     reminderBackgroundType: 'color',
@@ -184,11 +184,11 @@ export function TokenProvider({ children }: TokenProviderProps) {
     abilityTextFont: 'TradeGothic',
     abilityTextColor: '#000000',
     reminderTextColor: '#FFFFFF',
-    leafGeneration: 'classic',
-    maximumLeaves: 0,
-    leafPopulationProbability: 30,
-    leafArcSpan: 120,
-    leafSlots: 7,
+    accentGeneration: 'classic',
+    maximumAccents: 0,
+    accentPopulationProbability: 30,
+    accentArcSpan: 120,
+    accentSlots: 7,
     dpi: 300,
     fontSpacing: {
       characterName: 0,

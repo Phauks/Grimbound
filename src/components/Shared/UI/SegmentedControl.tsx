@@ -1,4 +1,4 @@
-import styles from '../../../styles/components/shared/SegmentedControl.module.css';
+import styles from '@/styles/components/shared/SegmentedControl.module.css';
 
 interface SegmentedControlOption {
   value: string;

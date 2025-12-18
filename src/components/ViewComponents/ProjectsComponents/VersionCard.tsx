@@ -6,9 +6,9 @@
  */
 
 import { useMemo } from 'react';
-import styles from '../../../styles/components/projects/VersionCard.module.css';
-import type { Project, ProjectVersion } from '../../../ts/types/project';
-import { Button } from '../../Shared/UI/Button';
+import styles from '@/styles/components/projects/VersionCard.module.css';
+import type { Project, ProjectVersion } from '@/ts/types/project';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface VersionCardProps {
   version: ProjectVersion;

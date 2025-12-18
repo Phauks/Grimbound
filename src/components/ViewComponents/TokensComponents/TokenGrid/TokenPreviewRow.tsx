@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTokenContext } from '../../../../contexts/TokenContext';
-import { useTokenGenerator } from '../../../../hooks/useTokenGenerator';
-import styles from '../../../../styles/components/tokens/TokenPreviewRow.module.css';
-import { CONFIG } from '../../../../ts/config.js';
-import { calculateTokenCounts, getBestPreviewCharacter } from '../../../../ts/data/characterUtils';
-import { TokenGenerator } from '../../../../ts/generation/tokenGenerator.js';
-import type { Character, Token } from '../../../../ts/types/index.js';
-import { sanitizeFilename } from '../../../../ts/utils/stringUtils.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useTokenGenerator } from '@/hooks/useTokenGenerator';
+import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
+import { CONFIG } from '@/ts/config.js';
+import { calculateTokenCounts, getBestPreviewCharacter } from '@/ts/data/characterUtils';
+import { TokenGenerator } from '@/ts/generation/index.js';
+import type { Character, Token } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 
 // Sample character for preview when no script is loaded
+// Uses 'washerwoman' as id so sync storage can resolve the icon
 const SAMPLE_CHARACTER: Character = {
-  id: '_preview_sample',
+  id: 'washerwoman',
   name: 'Washerwoman',
   team: 'townsfolk',
   ability: 'You start knowing that 1 of 2 players is a particular Townsfolk.',
-  image: '',
+  image: 'washerwoman.webp', // Extension needed for sync storage lookup
   reminders: ['Townsfolk', 'Wrong'],
   setup: false,
 };
@@ -98,7 +100,8 @@ export function TokenPreviewRow() {
       setPreviewCharCanvas(charCanvas);
 
       // If we auto-selected this character (no example was set), set it as the example character token
-      if (wasAutoSelected && sampleCharacter.id !== '_preview_sample') {
+      // Don't set the sample Washerwoman as the example token - only script characters
+      if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
         const dpi = generationOptions.dpi || 300;
         const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi;
 
@@ -164,7 +167,7 @@ export function TokenPreviewRow() {
       }
       setPreviewMetaCanvas(metaCanvas);
     } catch (error) {
-      console.error('Failed to generate preview:', error);
+      logger.error('TokenPreviewRow', 'Failed to generate preview', error);
     } finally {
       setIsGeneratingPreview(false);
     }

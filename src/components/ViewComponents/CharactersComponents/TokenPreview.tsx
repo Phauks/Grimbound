@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import styles from '../../../styles/components/characterEditor/TokenPreview.module.css';
-import type { Token } from '../../../ts/types/index.js';
-import { groupTokensByIdentity } from '../../../ts/utils/tokenGrouping';
+import styles from '@/styles/components/characterEditor/TokenPreview.module.css';
+import type { Token } from '@/ts/types/index.js';
+import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping';
 
 interface TokenPreviewProps {
   characterToken: Token;

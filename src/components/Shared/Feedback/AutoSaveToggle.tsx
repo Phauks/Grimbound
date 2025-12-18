@@ -9,7 +9,7 @@
  * - Disabled state when no project is active
  */
 
-import styles from '../../../styles/components/shared/AutoSaveToggle.module.css';
+import styles from '@/styles/components/shared/AutoSaveToggle.module.css';
 
 interface AutoSaveToggleProps {
   /** Whether auto-save is currently enabled */

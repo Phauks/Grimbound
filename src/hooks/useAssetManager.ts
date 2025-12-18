@@ -25,13 +25,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  type AssetFilter,
-  type AssetManagerOptions,
-  type AssetType,
-  type AssetWithUrl,
-  assetStorageService,
-} from '../ts/services/upload/index.js';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
+import type {
+  AssetFilter,
+  AssetManagerOptions,
+  AssetType,
+  AssetWithUrl,
+} from '@/ts/services/upload/index.js';
 import { useSelection } from './useSelection.js';
 
 // ============================================================================
@@ -98,6 +98,9 @@ const DEFAULT_FILTER: AssetFilter = {
  * Hook for managing assets
  */
 export function useAssetManager(options: AssetManagerOptions = {}): UseAssetManagerReturn {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   // State
   const [assets, setAssets] = useState<AssetWithUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,7 +154,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     } finally {
       setIsLoading(false);
     }
-  }, [filter, options.currentProjectId]);
+  }, [assetStorageService, filter, options.currentProjectId]);
 
   // Load more assets (for infinite scroll)
   const loadMore = useCallback(async () => {
@@ -180,7 +183,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     } finally {
       setIsLoadingMore(false);
     }
-  }, [filter, isLoadingMore, options.currentProjectId]);
+  }, [assetStorageService, filter, isLoadingMore, options.currentProjectId]);
 
   // Initial fetch
   useEffect(() => {
@@ -200,7 +203,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     return () => {
       assetStorageService.revokeAllUrls();
     };
-  }, []);
+  }, [assetStorageService]);
 
   // Filter methods
   const setFilter = useCallback(
@@ -227,7 +230,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
         throw err;
       }
     },
-    [fetchAssets]
+    [assetStorageService, fetchAssets]
   );
 
   const deleteSelected = useCallback(async () => {
@@ -241,7 +244,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [selectedIds, fetchAssets, clearSelection]);
+  }, [assetStorageService, selectedIds, fetchAssets, clearSelection]);
 
   const promoteToGlobal = useCallback(
     async (id: string) => {
@@ -253,7 +256,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
         throw err;
       }
     },
-    [fetchAssets]
+    [assetStorageService, fetchAssets]
   );
 
   const moveToProject = useCallback(
@@ -266,7 +269,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
         throw err;
       }
     },
-    [fetchAssets]
+    [assetStorageService, fetchAssets]
   );
 
   const promoteSelectedToGlobal = useCallback(async () => {
@@ -280,7 +283,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [selectedIds, fetchAssets, clearSelection]);
+  }, [assetStorageService, selectedIds, fetchAssets, clearSelection]);
 
   const moveSelectedToProject = useCallback(
     async (projectId: string) => {
@@ -295,7 +298,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
         throw err;
       }
     },
-    [selectedIds, fetchAssets, clearSelection]
+    [assetStorageService, selectedIds, fetchAssets, clearSelection]
   );
 
   const cleanupOrphans = useCallback(async () => {
@@ -307,7 +310,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [fetchAssets]);
+  }, [assetStorageService, fetchAssets]);
 
   const refresh = useCallback(async () => {
     await fetchAssets();

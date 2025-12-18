@@ -1,15 +1,15 @@
 import { memo, useCallback, useState } from 'react';
-import styles from '../../../styles/components/options/OptionsPanel.module.css';
-import { DEFAULT_BACKGROUND_STYLE } from '../../../ts/types/backgroundEffects';
-import type { BackgroundStyle, GenerationOptions, MeasurementUnit } from '../../../ts/types/index';
-import { AssetPreviewSelector } from '../Selectors/AssetPreviewSelector';
-import { BackgroundStyleSelector } from '../Selectors/BackgroundStyleSelector';
+import styles from '@/styles/components/options/OptionsPanel.module.css';
+import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
+import type { BackgroundStyle, GenerationOptions, MeasurementUnit } from '@/ts/types/index';
+import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
+import { BackgroundStyleSelector } from '@/components/Shared/Selectors/BackgroundStyleSelector';
 import {
   type FontOption,
   type FontSettings,
   FontSettingsSelector,
-} from '../Selectors/FontSettingsSelector';
-import { type IconSettings, IconSettingsSelector } from '../Selectors/IconSettingsSelector';
+} from '@/components/Shared/Selectors/FontSettingsSelector';
+import { type IconSettings, IconSettingsSelector } from '@/components/Shared/Selectors/IconSettingsSelector';
 
 interface AppearancePanelProps {
   generationOptions: GenerationOptions;
@@ -328,19 +328,19 @@ export const SetupSection = memo(function SetupSection({
 }: SetupSectionProps) {
   const handleSetupChange = useCallback(
     (value: string) => {
-      onOptionChange({ setupFlowerStyle: value });
+      onOptionChange({ setupStyle: value });
     },
     [onOptionChange]
   );
 
   return (
     <AssetPreviewSelector
-      value={generationOptions.setupFlowerStyle || 'setup_flower_1'}
+      value={generationOptions.setupStyle || 'setup_flower_1'}
       onChange={handleSetupChange}
-      assetType="setup-flower"
+      assetType="setup-overlay"
       shape="square"
       showNone={true}
-      noneLabel="No flower"
+      noneLabel="No overlay"
       projectId={projectId}
       generationOptions={generationOptions}
     />

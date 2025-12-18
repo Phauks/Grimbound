@@ -4,7 +4,7 @@
  * Utilities for navigating to Studio from other parts of the app
  */
 
-import type { EditorTab } from '../../components/Layout/TabNavigation';
+import type { EditorTab } from '@/components/Layout/TabNavigation';
 
 /**
  * Edit mode for Studio

@@ -3,15 +3,15 @@
  * Implements ICacheStrategy with automatic eviction based on LRU policy.
  */
 
-import { logger } from '../../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 import type {
   CacheEntry,
   CacheOptions,
   CacheStats,
   ICacheStrategy,
   IEvictionPolicy,
-} from '../core/index.js';
-import { estimateSize } from '../utils/memoryEstimator.js';
+} from '@/ts/cache/core/index.js';
+import { estimateSize } from '@/ts/cache/utils/memoryEstimator.js';
 
 /**
  * Eviction event data

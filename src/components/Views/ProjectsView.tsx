@@ -6,20 +6,20 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToast } from '../../contexts/ToastContext';
-import { useTokenContext } from '../../contexts/TokenContext';
-import { useProjects } from '../../hooks/useProjects';
-import { generateScriptNameTokenOnly } from '../../ts/generation/batchGenerator.js';
-import type { Token } from '../../ts/types/index.js';
-import type { CustomIconMetadata, Project } from '../../ts/types/project.js';
-import { logger } from '../../ts/utils/logger.js';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { DeleteProjectModal } from '../Modals/DeleteProjectModal';
-import { ExportProjectModal } from '../Modals/ExportProjectModal';
-import { IconManagementModal } from '../Modals/IconManagementModal';
-import { ImportProjectModal } from '../Modals/ImportProjectModal';
-import { ProjectEditor } from '../ViewComponents/ProjectsComponents/ProjectEditor';
-import { ProjectNavigation } from '../ViewComponents/ProjectsComponents/ProjectNavigation';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useProjects } from '@/hooks/useProjects';
+import { generateScriptNameTokenOnly } from '@/ts/generation/batchGenerator.js';
+import type { Token } from '@/ts/types/index.js';
+import type { CustomIconMetadata, Project } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { DeleteProjectModal } from '@/components/Modals/DeleteProjectModal';
+import { ExportProjectModal } from '@/components/Modals/ExportProjectModal';
+import { IconManagementModal } from '@/components/Modals/IconManagementModal';
+import { ImportProjectModal } from '@/components/Modals/ImportProjectModal';
+import { ProjectEditor } from '@/components/ViewComponents/ProjectsComponents/ProjectEditor';
+import { ProjectNavigation } from '@/components/ViewComponents/ProjectsComponents/ProjectNavigation';
 
 interface ProjectsViewProps {
   initialProjectId?: string;

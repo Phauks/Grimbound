@@ -30,8 +30,8 @@
  * ```
  */
 
-import { Alert } from '../UI/Alert';
-import { Button } from '../UI/Button';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 import { Modal } from './Modal';
 
 export interface ConfirmDialogProps {

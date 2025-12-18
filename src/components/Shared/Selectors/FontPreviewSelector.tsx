@@ -16,7 +16,7 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import styles from '../../../styles/components/shared/FontPreviewSelector.module.css';
+import styles from '@/styles/components/shared/FontPreviewSelector.module.css';
 
 // ============================================================================
 // Types

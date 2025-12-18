@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { useTokenContext } from '../contexts/TokenContext';
-import { getPreset } from '../ts/generation/presets.js';
-import type { GenerationOptions, PresetName } from '../ts/types/index.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { getPreset } from '@/ts/generation/presets.js';
+import type { GenerationOptions, PresetName } from '@/ts/types/index.js';
 import {
   generateUuid,
   getStorageItem,
@@ -10,7 +10,7 @@ import {
   STORAGE_KEYS,
   sanitizeFilename,
   setStorageItem,
-} from '../ts/utils/index.js';
+} from '@/ts/utils/index.js';
 
 export interface CustomPreset {
   id: string;

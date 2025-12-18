@@ -3,8 +3,8 @@
  * Token Generator Options - Types and Defaults
  */
 
-import type { Point } from '../canvas/index.js';
-import CONFIG from '../config.js';
+import type { Point } from '@/ts/canvas/index.js';
+import CONFIG from '@/ts/config.js';
 import type { ReminderCountStyle } from './index.js';
 
 // ============================================================================
@@ -160,7 +160,7 @@ export interface TokenGeneratorOptions {
   logoUrl?: string;
   tokenCount: boolean;
   reminderCountStyle?: ReminderCountStyle;
-  setupFlowerStyle: string;
+  setupStyle: string;
   reminderBackground: string;
   reminderBackgroundImage?: string;
   reminderBackgroundType?: 'color' | 'image';
@@ -184,15 +184,15 @@ export interface TokenGeneratorOptions {
   abilityTextFont: string;
   abilityTextColor: string;
   reminderTextColor: string;
-  leafGeneration: string;
-  leafEnabled: boolean;
-  maximumLeaves: number;
-  leafPopulationProbability: number;
-  leafArcSpan: number;
-  leafSlots: number;
-  enableLeftLeaf: boolean;
-  enableRightLeaf: boolean;
-  sideLeafProbability: number;
+  accentGeneration: string;
+  accentEnabled: boolean;
+  maximumAccents: number;
+  accentPopulationProbability: number;
+  accentArcSpan: number;
+  accentSlots: number;
+  enableLeftAccent: boolean;
+  enableRightAccent: boolean;
+  sideAccentProbability: number;
   transparentBackground: boolean;
   dpi: number;
   fontSpacing: {
@@ -223,7 +223,7 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
   generateBootleggerRules: false,
   tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
-  setupFlowerStyle: CONFIG.STYLE.SETUP_FLOWER_STYLE,
+  setupStyle: CONFIG.STYLE.SETUP_STYLE,
   reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
   characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
   characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
@@ -234,15 +234,15 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   abilityTextFont: CONFIG.STYLE.ABILITY_TEXT_FONT,
   abilityTextColor: CONFIG.STYLE.ABILITY_TEXT_COLOR,
   reminderTextColor: CONFIG.STYLE.REMINDER_TEXT_COLOR,
-  leafGeneration: CONFIG.STYLE.LEAF_GENERATION,
-  leafEnabled: true,
-  maximumLeaves: CONFIG.STYLE.MAXIMUM_LEAVES,
-  leafPopulationProbability: CONFIG.STYLE.LEAF_POPULATION_PROBABILITY,
-  leafArcSpan: CONFIG.STYLE.LEAF_ARC_SPAN,
-  leafSlots: CONFIG.STYLE.LEAF_SLOTS,
-  enableLeftLeaf: true,
-  enableRightLeaf: true,
-  sideLeafProbability: 50, // Side leaves have 50% probability by default
+  accentGeneration: CONFIG.STYLE.ACCENT_GENERATION,
+  accentEnabled: true,
+  maximumAccents: CONFIG.STYLE.MAXIMUM_ACCENTS,
+  accentPopulationProbability: CONFIG.STYLE.ACCENT_POPULATION_PROBABILITY,
+  accentArcSpan: CONFIG.STYLE.ACCENT_ARC_SPAN,
+  accentSlots: CONFIG.STYLE.ACCENT_SLOTS,
+  enableLeftAccent: true,
+  enableRightAccent: true,
+  sideAccentProbability: 50, // Side accents have 50% probability by default
   transparentBackground: false,
   dpi: CONFIG.PDF.DPI,
   fontSpacing: {

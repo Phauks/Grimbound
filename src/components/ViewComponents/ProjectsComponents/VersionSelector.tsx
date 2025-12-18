@@ -9,10 +9,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import styles from '../../../styles/components/projects/VersionSelector.module.css';
-import { projectDb } from '../../../ts/db/projectDb';
-import type { Project, ProjectVersion } from '../../../ts/types/project';
-import { logger } from '../../../ts/utils/logger';
+import styles from '@/styles/components/projects/VersionSelector.module.css';
+import { projectDb } from '@/ts/db/projectDb';
+import type { Project, ProjectVersion } from '@/ts/types/project';
+import { logger } from '@/ts/utils/logger';
 
 interface VersionSelectorProps {
   /** The current project to load versions for */

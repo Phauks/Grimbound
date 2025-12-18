@@ -3,16 +3,16 @@
  * Coordinates multiple caches and strategies, provides unified API.
  */
 
-import { cacheInvalidationService } from '../CacheInvalidationService.js';
+import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService.js';
 import type {
   CacheStats,
   ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-} from '../core/index.js';
-import { CacheLogger } from '../utils/CacheLogger.js';
-import { EventEmitter } from '../utils/EventEmitter.js';
+} from '@/ts/cache/core/index.js';
+import { CacheLogger } from '@/ts/cache/utils/CacheLogger.js';
+import { EventEmitter } from '@/ts/cache/utils/EventEmitter.js';
 
 /**
  * Events emitted by PreRenderCacheManager.

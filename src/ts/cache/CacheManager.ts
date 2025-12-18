@@ -13,8 +13,8 @@
  * Architecture: Application Service (Facade Pattern)
  */
 
-import type { Token } from '../types/index.js';
-import { globalImageCache } from '../utils/imageCache.js';
+import type { Token } from '@/ts/types/index.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
 import type { InvalidationScope } from './CacheInvalidationService.js';
 import { cacheInvalidationService } from './CacheInvalidationService.js';
 import type {
@@ -192,7 +192,7 @@ export class CacheManager {
       const cache = this.preRenderManager.getCache(strategyName);
       if (cache) {
         const entry = await cache.get(filename);
-        return entry?.value ?? null;
+        return (entry?.value as string) ?? null;
       }
       return null;
     }
@@ -202,7 +202,7 @@ export class CacheManager {
       const cache = this.preRenderManager.getCache(cacheName);
       if (cache) {
         const entry = await cache.get(filename);
-        if (entry?.value) return entry.value;
+        if (entry?.value) return entry.value as string;
       }
     }
 
@@ -327,8 +327,8 @@ export class CacheManager {
       // Invalidate all characters by passing empty array
       await this.invalidationService.invalidateCharacters([], 'manual');
     } else if (scope === 'project') {
-      // Invalidate all projects by passing empty array
-      await this.invalidationService.invalidateProjects([], 'manual');
+      // Invalidate all projects - use global invalidation since batch method doesn't exist
+      await this.invalidationService.invalidateAll('manual');
     }
   }
 

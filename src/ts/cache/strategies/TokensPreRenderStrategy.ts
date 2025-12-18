@@ -3,16 +3,16 @@
  * Pre-renders first N tokens as data URLs for instant tokens view display.
  */
 
-import { globalImageCache } from '../../utils/imageCache.js';
-import { logger } from '../../utils/logger.js';
-import type { EncodeCanvasTask } from '../../workers/prerender-worker.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { logger } from '@/ts/utils/logger.js';
+import type { EncodeCanvasTask } from '@/ts/workers/prerender-worker.js';
 import type {
   ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-} from '../core/index.js';
-import { WorkerPool } from '../utils/WorkerPool.js';
+} from '@/ts/cache/core/index.js';
+import { WorkerPool } from '@/ts/cache/utils/WorkerPool.js';
 
 /**
  * Configuration options for tokens pre-rendering.

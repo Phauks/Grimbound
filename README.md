@@ -19,7 +19,7 @@ A web-based tool for generating custom Blood on the Clocktower character and rem
 - **ZIP Download**: Download all tokens as a ZIP archive organized by type
 - **Filter & Sort**: Filter tokens by team type, token type, or reminder status
 - **Curved Text**: Character names and reminder text curve along the bottom of tokens
-- **Setup Flower Overlay**: Characters with setup modifications display decorative overlays
+- **Setup Overlay**: Characters with setup modifications display decorative overlays
 - **No Installation Required**: Runs entirely in your browser!
 
 ### 🆕 GitHub Data Sync (v0.3.0)
@@ -189,7 +189,7 @@ This project uses TypeScript with strict type checking enabled. All data structu
    - Adjust token diameters for character and reminder tokens
    - Enable ability text display on character tokens
    - Show reminder count badges on character tokens
-   - Choose background patterns and setup flower styles
+   - Choose background patterns and setup overlay styles
    - Set reminder token background color
    - Select fonts for character names and reminder text
 
@@ -262,7 +262,7 @@ This project uses TypeScript with strict type checking enabled. All data structu
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| Setup Flower Style | Setup Flower 1 | Decorative overlay for setup characters |
+| Setup Overlay Style | Setup 1 | Decorative overlay for setup characters |
 | Reminder Background | #FFFFFF | Background color for reminder tokens |
 | Character Background | Background 1 | Background pattern for character tokens |
 | Character Name Font | Dumbledor | Font for character names |
@@ -458,6 +458,16 @@ The project uses GitHub Actions for:
 - **PDF generation**: Can be slow for 50+ tokens; be patient and watch progress indicator
 - **Browser choice**: Chrome and Edge typically have best Canvas performance
 
+## Documentation
+
+For contributors and developers, see these guides:
+
+- **[CLAUDE.md](./CLAUDE.md)** - Code generation guide with patterns and utilities
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design and technical decisions
+- **[ROADMAP.md](./ROADMAP.md)** - Development plans and feature priorities
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines and workflow
+- **[CHANGELOG.md](./CHANGELOG.md)** - Version history and changes
+
 ## Contributing
 
 ### Code Quality Standards
@@ -555,12 +565,18 @@ Character images are automatically cached in memory to improve performance when 
 
 When generating large token sets or PDFs, the application provides real-time progress updates showing the current operation status.
 
-## To Be Implemented (TBI)
+## Roadmap
 
-The following features are planned but not yet implemented:
-- Decorative leaf generation and probability system (referenced in config)
-- Official vs custom character filtering in the UI
-- Additional preset configurations (Full Bloom and Minimal are partially implemented)
-- Light theme and high contrast theme options
-- A4 paper size support for PDF generation
-- Custom DPI configuration for PDF export
+See **[ROADMAP.md](./ROADMAP.md)** for detailed development plans including:
+
+- **v0.4.x** - CodeMirror 6 integration for enhanced JSON editing
+- **v0.5.x** - Advanced export and multi-source support
+- **v0.6.x** - UI/UX improvements and theme system
+- **v1.0.0** - Production release
+
+### Planned Features
+- Visual autocomplete for character IDs
+- Hover tooltips for character preview
+- Multi-source support for community data
+- Theme system (light/dark/high contrast)
+- A4 paper size and custom DPI for PDF

@@ -5,7 +5,7 @@
  * Provides a clean interface for dependency injection into TokenGenerator.
  */
 
-import { globalImageCache } from '../utils/imageCache.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
 import type { IImageCache } from './TokenImageRenderer.js';
 
 /**

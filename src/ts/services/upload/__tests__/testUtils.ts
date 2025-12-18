@@ -8,9 +8,9 @@
  */
 
 import { expect } from 'vitest';
-import type { Character } from '../../../types/index.js';
-import { createAssetReference } from '../../../types/index.js';
-import type { AssetMetadata, AssetType, DBAsset } from '../types.js';
+import type { Character } from '@/ts/types/index.js';
+import { createAssetReference } from '@/ts/types/index.js';
+import type { AssetMetadata, AssetType, DBAsset } from '@/ts/services/upload/types.js';
 
 // ============================================================================
 // Mock Asset Factories

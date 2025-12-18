@@ -11,17 +11,18 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToast } from '../../../contexts/ToastContext';
-import { useTokenContext } from '../../../contexts/TokenContext';
-import { useProjects } from '../../../hooks/useProjects';
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../../styles/components/projects/ProjectEditor.module.css';
-import { generateAllTokens } from '../../../ts/generation/batchGenerator.js';
-import type { ScriptMeta, Token } from '../../../ts/types/index.js';
-import type { Project, ProjectVersion } from '../../../ts/types/project.js';
-import { Button } from '../../Shared/UI/Button';
-import { VersionsView } from '../../Views/VersionsView';
-import { TokenGrid } from '../TokensComponents/TokenGrid/TokenGrid';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useProjects } from '@/hooks/useProjects';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/projects/ProjectEditor.module.css';
+import { generateAllTokens } from '@/ts/generation/batchGenerator.js';
+import type { ScriptMeta, Token } from '@/ts/types/index.js';
+import type { Project, ProjectVersion } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
+import { Button } from '@/components/Shared/UI/Button';
+import { VersionsView } from '@/components/Views/VersionsView';
+import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
 import { CharacterListView } from './CharacterListView';
 import { VersionCompareView } from './VersionCompareView';
 import { VersionSelector } from './VersionSelector';
@@ -241,7 +242,7 @@ export function ProjectEditor({
         lastPreviewTokensRef.current = generated;
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Failed to generate preview tokens:', err);
+          logger.error('ProjectEditor', 'Failed to generate preview tokens', err);
         }
       } finally {
         setIsGeneratingPreview(false);
@@ -286,7 +287,7 @@ export function ProjectEditor({
         setTokens(generated);
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Failed to generate tokens for active project:', err);
+          logger.error('ProjectEditor', 'Failed to generate tokens for active project', err);
         }
       } finally {
         setIsGeneratingPreview(false);

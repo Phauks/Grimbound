@@ -3,8 +3,8 @@
  * Preset Configurations
  */
 
-import CONFIG from '../config.js';
-import type { PresetConfig, PresetName } from '../types/index.js';
+import CONFIG from '@/ts/config.js';
+import type { PresetConfig, PresetName } from '@/ts/types/index.js';
 
 export const PRESETS: Record<PresetName, PresetConfig> = {
   classic: {
@@ -14,7 +14,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
     settings: {
       displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
       tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
-      setupFlowerStyle: CONFIG.STYLE.SETUP_FLOWER_STYLE,
+      setupStyle: CONFIG.STYLE.SETUP_STYLE,
       reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
       characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
       characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
@@ -23,7 +23,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       abilityTextFont: 'TradeGothic',
       abilityTextColor: '#000000',
       reminderTextColor: '#000000',
-      maximumLeaves: 0,
+      maximumAccents: 0,
       pandemoniumToken: true,
       scriptNameToken: true,
       almanacToken: true,
@@ -60,7 +60,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       displayAbilityText: true,
       generateBootleggerRules: false,
       tokenCount: true,
-      setupFlowerStyle: 'setup_flower_3',
+      setupStyle: 'setup_flower_3',
       reminderBackground: '#FFF8DC',
       characterBackground: 'character_background_3',
       characterNameFont: 'Dumbledor 1',
@@ -69,7 +69,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       abilityTextFont: 'TradeGothic',
       abilityTextColor: '#2d2d44',
       reminderTextColor: '#1a1a2e',
-      maximumLeaves: 5,
+      maximumAccents: 5,
       pandemoniumToken: true,
       scriptNameToken: true,
       almanacToken: true,
@@ -106,7 +106,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       displayAbilityText: false,
       generateBootleggerRules: false,
       tokenCount: false,
-      setupFlowerStyle: 'setup_flower_1',
+      setupStyle: 'setup_flower_1',
       reminderBackground: '#FFFFFF',
       characterBackground: 'character_background_1',
       characterNameFont: 'TradeGothic',
@@ -115,7 +115,7 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       abilityTextFont: 'TradeGothic',
       abilityTextColor: '#333333',
       reminderTextColor: '#000000',
-      maximumLeaves: 0,
+      maximumAccents: 0,
       pandemoniumToken: false,
       scriptNameToken: false,
       almanacToken: false,

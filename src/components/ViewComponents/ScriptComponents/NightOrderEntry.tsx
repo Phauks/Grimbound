@@ -10,12 +10,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useContextMenu } from '../../../hooks/useContextMenu';
-import styles from '../../../styles/components/script/NightOrderEntry.module.css';
-import type { NightOrderEntry as NightOrderEntryType } from '../../../ts/nightOrder/nightOrderTypes.js';
-import { getTeamColor, parseAbilityText } from '../../../ts/nightOrder/nightOrderUtils.js';
-import { resolveCharacterImageUrl } from '../../../ts/utils/characterImageResolver.js';
-import { ContextMenu, type ContextMenuItem } from '../../Shared/UI/ContextMenu';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import styles from '@/styles/components/script/NightOrderEntry.module.css';
+import { tabPreRenderService } from '@/ts/cache/index.js';
+import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
+import { getTeamColor, parseAbilityText } from '@/ts/nightOrder/nightOrderUtils.js';
+import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
+import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 
 interface NightOrderEntryProps {
   entry: NightOrderEntryType;
@@ -84,10 +85,20 @@ export function NightOrderEntry({
   // Context menu using shared hook
   const contextMenu = useContextMenu<string>();
 
+  // Check for pre-cached image URL first (from TabPreRenderService)
+  const cachedImageUrl = tabPreRenderService.getCachedCharacterImageUrl(entry.id);
+
   // Resolve image URL using SSOT utility (handles asset refs, external URLs, and sync storage)
-  const [resolvedImageUrl, setResolvedImageUrl] = useState<string>('');
+  // Initialize with cached URL if available for instant display
+  const [resolvedImageUrl, setResolvedImageUrl] = useState<string>(cachedImageUrl || '');
 
   useEffect(() => {
+    // Skip async resolution if we already have a cached URL
+    if (cachedImageUrl) {
+      setResolvedImageUrl(cachedImageUrl);
+      return;
+    }
+
     let cancelled = false;
     const blobUrls: string[] = [];
 
@@ -114,7 +125,7 @@ export function NightOrderEntry({
         URL.revokeObjectURL(url);
       }
     };
-  }, [entry.image, entry.id]);
+  }, [entry.image, entry.id, cachedImageUrl]);
 
   // Handle right-click to show context menu (only for character entries)
   const handleContextMenu = useCallback(

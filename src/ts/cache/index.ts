@@ -74,3 +74,11 @@ export {
   estimateSize,
   formatBytes,
 } from './utils/memoryEstimator.js';
+export { combineHashes, hashArray, hashObject, simpleHash } from './utils/hashUtils.js';
+// Tab Pre-Render Service (unified tab hover pre-rendering)
+export type {
+  PreRenderableTab,
+  TabPreRenderContext,
+  TabPreRenderResult,
+} from './TabPreRenderService.js';
+export { TabPreRenderService, tabPreRenderService } from './TabPreRenderService.js';

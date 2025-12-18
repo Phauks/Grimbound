@@ -3,13 +3,13 @@
  * Pre-renders script name tokens when hovering over projects.
  */
 
-import type { Token } from '../../types/index.js';
+import type { Token } from '@/ts/types/index.js';
 import type {
   ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-} from '../core/index.js';
+} from '@/ts/cache/core/index.js';
 
 /**
  * Configuration options for project pre-rendering.

@@ -6,8 +6,8 @@
  */
 
 import { useCallback, useState } from 'react';
-import type { Character, GenerationOptions, Token } from '../ts/types/index.js';
-import { logger } from '../ts/utils/logger.js';
+import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface UseTokenDeletionProps {
   /** All tokens in the grid */

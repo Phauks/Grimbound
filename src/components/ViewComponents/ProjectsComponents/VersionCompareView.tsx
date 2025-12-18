@@ -4,14 +4,25 @@
  * Displays a data-focused comparison between the current project state
  * and a selected previous version. Shows side-by-side comparisons with
  * visual diff indicators for added (+), removed (-), and modified (≈) items.
+ *
+ * Modified characters are expandable to show detailed field-by-field
+ * differences including inline word-level diffs for text fields.
  */
 
-import { useMemo } from 'react';
-import styles from '../../../styles/components/projects/VersionCompareView.module.css';
-import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js';
-import type { Character, Team } from '../../../ts/types/index';
-import type { ProjectState, ProjectVersion } from '../../../ts/types/project';
-import { calculateProjectDiff, getDiffSummary } from '../../../ts/utils/projectDiff';
+import { useMemo, useState, useCallback } from 'react';
+import styles from '@/styles/components/projects/VersionCompareView.module.css';
+import { TEAM_COLORS, TEAM_LABELS } from '@/ts/config.js';
+import type { Character, Team } from '@/ts/types/index';
+import type { ProjectState, ProjectVersion } from '@/ts/types/project';
+import {
+  calculateProjectDiffDetailed,
+  getDiffSummary,
+  calculateProjectDiff,
+  type ModifiedCharacterDetailed,
+  type FieldChange,
+  type ArrayDiffResult,
+} from '@/ts/utils/projectDiff';
+import { formatValueForDisplay } from '@/ts/utils/textDiff.js';
 
 interface VersionCompareViewProps {
   /** Current project state */
@@ -50,12 +61,33 @@ export function VersionCompareView({
   onRestore,
   isRestoring = false,
 }: VersionCompareViewProps) {
-  // Calculate the diff between current and version states
+  // Track which modified characters are expanded
+  const [expandedCharacters, setExpandedCharacters] = useState<Set<string>>(new Set());
+
+  // Calculate the detailed diff between current and version states
+  const detailedDiff = useMemo(() => {
+    return calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState);
+  }, [currentState, compareVersion.stateSnapshot]);
+
+  // Also calculate simple diff for summary (reuses existing logic)
   const diff = useMemo(() => {
     return calculateProjectDiff(compareVersion.stateSnapshot, currentState);
   }, [currentState, compareVersion.stateSnapshot]);
 
   const summary = useMemo(() => getDiffSummary(diff), [diff]);
+
+  // Toggle expanded state for a character
+  const toggleExpanded = useCallback((characterId: string) => {
+    setExpandedCharacters((prev) => {
+      const next = new Set(prev);
+      if (next.has(characterId)) {
+        next.delete(characterId);
+      } else {
+        next.add(characterId);
+      }
+      return next;
+    });
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -130,73 +162,82 @@ export function VersionCompareView({
           )}
 
           {/* Characters Section */}
-          {(diff.characters.added.length > 0 ||
-            diff.characters.removed.length > 0 ||
-            diff.characters.modified.length > 0) && (
+          {(detailedDiff.characters.added.length > 0 ||
+            detailedDiff.characters.removed.length > 0 ||
+            detailedDiff.characters.modified.length > 0) && (
             <div className={styles.section}>
               <h4 className={styles.sectionTitle}>
                 Characters
                 <span className={styles.countBadge}>
-                  {diff.characters.added.length +
-                    diff.characters.removed.length +
-                    diff.characters.modified.length}{' '}
+                  {detailedDiff.characters.added.length +
+                    detailedDiff.characters.removed.length +
+                    detailedDiff.characters.modified.length}{' '}
                   changes
                 </span>
               </h4>
 
-              {/* Side-by-side columns */}
-              <div className={styles.columnsContainer}>
-                <div className={styles.column}>
-                  <div className={styles.columnHeader}>
-                    <span>Current ({currentState.characters.length})</span>
+              {/* Side-by-side columns for added/removed */}
+              {(detailedDiff.characters.added.length > 0 ||
+                detailedDiff.characters.removed.length > 0) && (
+                <div className={styles.columnsContainer}>
+                  <div className={styles.column}>
+                    <div className={styles.columnHeader}>
+                      <span>Added to Current</span>
+                    </div>
+                    <div className={styles.columnContent}>
+                      {detailedDiff.characters.added.length > 0 ? (
+                        detailedDiff.characters.added.map((char) => (
+                          <CharacterRow key={`added-${char.id}`} character={char} status="added" />
+                        ))
+                      ) : (
+                        <div className={styles.noGroupChanges}>No characters added</div>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.columnContent}>
-                    {/* Added characters (in current, not in version) */}
-                    {diff.characters.added.map((char) => (
-                      <CharacterRow key={`added-${char.id}`} character={char} status="added" />
-                    ))}
 
-                    {/* Modified characters (show current version) */}
-                    {diff.characters.modified.map(({ character, changes }) => (
-                      <CharacterRow
-                        key={`modified-${character.id}`}
-                        character={character}
-                        status="modified"
-                        changedFields={changes}
+                  <div className={styles.column}>
+                    <div className={styles.columnHeader}>
+                      <span>Removed from v{compareVersion.versionNumber}</span>
+                    </div>
+                    <div className={styles.columnContent}>
+                      {detailedDiff.characters.removed.length > 0 ? (
+                        detailedDiff.characters.removed.map((char) => (
+                          <CharacterRow
+                            key={`removed-${char.id}`}
+                            character={char}
+                            status="removed"
+                          />
+                        ))
+                      ) : (
+                        <div className={styles.noGroupChanges}>No characters removed</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modified characters - expandable full width */}
+              {detailedDiff.characters.modified.length > 0 && (
+                <div className={styles.modifiedSection}>
+                  <div className={styles.modifiedSectionTitle}>
+                    <span>Modified Characters</span>
+                    <span className={styles.countBadge}>
+                      {detailedDiff.characters.modified.length}
+                    </span>
+                  </div>
+                  <div className={styles.modifiedCharactersList}>
+                    {detailedDiff.characters.modified.map((mod) => (
+                      <ExpandableCharacterRow
+                        key={`modified-${mod.currentCharacter.id}`}
+                        modification={mod}
+                        isExpanded={expandedCharacters.has(mod.currentCharacter.id)}
+                        onToggle={() => toggleExpanded(mod.currentCharacter.id)}
+                        versionLabel={`v${compareVersion.versionNumber}`}
                       />
                     ))}
                   </div>
                 </div>
-
-                <div className={styles.column}>
-                  <div className={styles.columnHeader}>
-                    <span>
-                      v{compareVersion.versionNumber} (
-                      {compareVersion.stateSnapshot.characters.length})
-                    </span>
-                  </div>
-                  <div className={styles.columnContent}>
-                    {/* Removed characters (in version, not in current) */}
-                    {diff.characters.removed.map((char) => (
-                      <CharacterRow key={`removed-${char.id}`} character={char} status="removed" />
-                    ))}
-
-                    {/* Modified characters (show version's version) */}
-                    {diff.characters.modified.map(({ character }) => {
-                      const versionChar = compareVersion.stateSnapshot.characters.find(
-                        (c) => c.id === character.id
-                      );
-                      return versionChar ? (
-                        <CharacterRow
-                          key={`modified-old-${versionChar.id}`}
-                          character={versionChar}
-                          status="modified"
-                        />
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -291,6 +332,208 @@ function CharacterRow({ character, status, changedFields }: CharacterRowProps) {
       {changedFields && changedFields.length > 0 && (
         <span className={styles.changedFields}>({changedFields.join(', ')})</span>
       )}
+    </div>
+  );
+}
+
+// ==========================================================================
+// Expandable Character Row Components
+// ==========================================================================
+
+interface ExpandableCharacterRowProps {
+  modification: ModifiedCharacterDetailed;
+  isExpanded: boolean;
+  onToggle: () => void;
+  versionLabel: string;
+}
+
+/**
+ * Expandable row for modified characters
+ * Click to expand and see detailed field-by-field changes
+ */
+function ExpandableCharacterRow({
+  modification,
+  isExpanded,
+  onToggle,
+  versionLabel,
+}: ExpandableCharacterRowProps) {
+  const { currentCharacter, changedFieldNames } = modification;
+  const team = currentCharacter.team as Team;
+
+  return (
+    <div className={styles.expandableRow}>
+      {/* Summary row - clickable to expand */}
+      <button
+        type="button"
+        className={styles.characterRowClickable}
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+      >
+        <span
+          className={`${styles.expandIcon} ${isExpanded ? styles.expandIconExpanded : ''}`}
+          aria-hidden="true"
+        >
+          ▶
+        </span>
+        <span className={styles.statusIndicator} style={{ color: '#ff9800' }}>
+          ≈
+        </span>
+        <div
+          className={styles.teamIndicator}
+          style={{ backgroundColor: TEAM_COLORS[team] || '#808080' }}
+          title={TEAM_LABELS[team] || team}
+        />
+        <span className={styles.characterName}>{currentCharacter.name}</span>
+        <span className={styles.changedFields}>({changedFieldNames.length} fields changed)</span>
+      </button>
+
+      {/* Expanded detail panel */}
+      {isExpanded && <CharacterDiffDetail modification={modification} versionLabel={versionLabel} />}
+    </div>
+  );
+}
+
+interface CharacterDiffDetailProps {
+  modification: ModifiedCharacterDetailed;
+  versionLabel: string;
+}
+
+/**
+ * Detailed diff view for a character showing all field changes
+ */
+function CharacterDiffDetail({ modification, versionLabel }: CharacterDiffDetailProps) {
+  const { changes } = modification;
+
+  return (
+    <div className={styles.diffDetail}>
+      {/* Text Fields Section */}
+      {changes.text.length > 0 && (
+        <div className={styles.fieldGroup}>
+          <h5 className={styles.fieldGroupTitle}>Text Fields</h5>
+          {changes.text.map((change) => (
+            <TextFieldDiff key={change.fieldName} change={change} versionLabel={versionLabel} />
+          ))}
+        </div>
+      )}
+
+      {/* Reminders Section */}
+      {changes.arrays.length > 0 && (
+        <div className={styles.fieldGroup}>
+          <h5 className={styles.fieldGroupTitle}>Reminders</h5>
+          {changes.arrays.map((change) => (
+            <ArrayFieldDiff key={change.fieldName} change={change} />
+          ))}
+        </div>
+      )}
+
+      {/* Night Order Section */}
+      {changes.nightOrder.length > 0 && (
+        <div className={styles.fieldGroup}>
+          <h5 className={styles.fieldGroupTitle}>Night Order</h5>
+          {changes.nightOrder.map((change) => (
+            <SimpleFieldDiff key={change.fieldName} change={change} versionLabel={versionLabel} />
+          ))}
+        </div>
+      )}
+
+      {/* Metadata Section */}
+      {changes.metadata.length > 0 && (
+        <div className={styles.fieldGroup}>
+          <h5 className={styles.fieldGroupTitle}>Metadata</h5>
+          {changes.metadata.map((change) => (
+            <SimpleFieldDiff key={change.fieldName} change={change} versionLabel={versionLabel} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TextFieldDiffProps {
+  change: FieldChange<string | undefined>;
+  versionLabel: string;
+}
+
+/**
+ * Renders text field changes with old and new values on separate lines
+ */
+function TextFieldDiff({ change, versionLabel }: TextFieldDiffProps) {
+  const { displayName, oldValue, newValue } = change;
+
+  return (
+    <div className={styles.fieldDiff}>
+      <span className={styles.fieldLabel}>{displayName}:</span>
+      <div className={styles.textCompare}>
+        <div className={styles.textOld}>
+          <span className={styles.textLabel}>{versionLabel}:</span>
+          <span className={styles.textContent}>{oldValue || '(empty)'}</span>
+        </div>
+        <div className={styles.textNew}>
+          <span className={styles.textLabel}>Current:</span>
+          <span className={styles.textContent}>{newValue || '(empty)'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ArrayFieldDiffProps {
+  change: FieldChange<string[] | undefined>;
+}
+
+/**
+ * Renders array changes (reminders) with added/removed indicators
+ */
+function ArrayFieldDiff({ change }: ArrayFieldDiffProps) {
+  const { displayName, arrayDiff } = change;
+
+  if (!arrayDiff) return null;
+
+  return (
+    <div className={styles.fieldDiff}>
+      <span className={styles.fieldLabel}>{displayName}:</span>
+      <div className={styles.arrayDiff}>
+        {arrayDiff.removed.map((item, idx) => (
+          <span key={`removed-${idx}`} className={styles.arrayItemRemoved}>
+            {item}
+          </span>
+        ))}
+        {arrayDiff.added.map((item, idx) => (
+          <span key={`added-${idx}`} className={styles.arrayItemAdded}>
+            {item}
+          </span>
+        ))}
+        {arrayDiff.unchanged.length > 0 && (
+          <span className={styles.arrayUnchangedCount}>
+            ({arrayDiff.unchanged.length} unchanged)
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SimpleFieldDiffProps {
+  change: FieldChange<unknown>;
+  versionLabel: string;
+}
+
+/**
+ * Renders simple field changes (numbers, booleans, etc.)
+ */
+function SimpleFieldDiff({ change, versionLabel }: SimpleFieldDiffProps) {
+  const { displayName, oldValue, newValue } = change;
+
+  return (
+    <div className={styles.fieldDiff}>
+      <span className={styles.fieldLabel}>{displayName}:</span>
+      <div className={styles.simpleFieldChange}>
+        <span className={styles.simpleVersionLabel}>{versionLabel}:</span>
+        <span className={styles.simpleOldValue}>{formatValueForDisplay(oldValue)}</span>
+        <span className={styles.simpleArrow}>→</span>
+        <span className={styles.simpleVersionLabel}>Current:</span>
+        <span className={styles.simpleNewValue}>{formatValueForDisplay(newValue)}</span>
+      </div>
     </div>
   );
 }

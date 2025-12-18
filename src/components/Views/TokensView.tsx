@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type DownloadItem, useDownloadsContext } from '../../contexts/DownloadsContext';
-import { useToast } from '../../contexts/ToastContext';
-import { useTokenContext } from '../../contexts/TokenContext';
-import { type CustomPreset, usePresets } from '../../hooks/usePresets';
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../styles/components/views/Views.module.css';
-import { createTokensZip, isMetaToken } from '../../ts/export/zipExporter';
-import type { Token } from '../../ts/types/index';
-import { downloadFile } from '../../ts/utils/imageUtils';
-import { logger } from '../../ts/utils/logger';
-import type { TabType } from '../Layout/TabNavigation';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { AdditionalOptionsPanel } from '../Shared/Options/AdditionalOptionsPanel';
-import { AppearancePanel } from '../Shared/Options/AppearancePanel';
-import { PresetSection } from '../ViewComponents/TokensComponents/Presets/PresetSection';
-import { TokenGrid } from '../ViewComponents/TokensComponents/TokenGrid/TokenGrid';
-import { TokenPreviewRow } from '../ViewComponents/TokensComponents/TokenGrid/TokenPreviewRow';
+import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { type CustomPreset, usePresets } from '@/hooks/usePresets';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/views/Views.module.css';
+import { createTokensZip, isMetaToken } from '@/ts/export/zipExporter';
+import type { Token } from '@/ts/types/index';
+import { downloadFile } from '@/ts/utils/imageUtils';
+import { logger } from '@/ts/utils/logger';
+import type { TabType } from '@/components/Layout/TabNavigation';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { AdditionalOptionsPanel } from '@/components/Shared/Options/AdditionalOptionsPanel';
+import { AppearancePanel } from '@/components/Shared/Options/AppearancePanel';
+import { PresetSection } from '@/components/ViewComponents/TokensComponents/Presets/PresetSection';
+import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
+import { TokenPreviewRow } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenPreviewRow';
 
 interface TokensViewProps {
   onTokenClick: (token: Token) => void;

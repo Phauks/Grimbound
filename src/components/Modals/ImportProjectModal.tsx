@@ -7,13 +7,13 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import styles from '../../styles/components/modals/ImportProjectModal.module.css';
-import { ProjectImporter } from '../../ts/services/project/ProjectImporter';
-import type { ProjectPreview } from '../../ts/types/project.js';
-import { logger } from '../../ts/utils/index.js';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Alert } from '../Shared/UI/Alert';
-import { Button } from '../Shared/UI/Button';
+import { useProjectImporter } from '@/contexts/ServiceContext';
+import styles from '@/styles/components/modals/ImportProjectModal.module.css';
+import type { ProjectPreview } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/index.js';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface ImportProjectModalProps {
   /** Whether modal is open */
@@ -25,6 +25,9 @@ interface ImportProjectModalProps {
 }
 
 export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectModalProps) {
+  // Get factory hook for creating importer instances
+  const createImporter = useProjectImporter();
+
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ProjectPreview | null>(null);
@@ -42,7 +45,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
     setPreview(null);
 
     try {
-      const importer = new ProjectImporter();
+      const importer = createImporter();
 
       // Validate ZIP
       const validation = await importer.validateZip(file);
@@ -67,7 +70,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       setError(errorMessage);
       setIsValidating(false);
     }
-  }, []);
+  }, [createImporter]);
 
   // Handle file drop
   const handleDrop = useCallback(
@@ -142,7 +145,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
     setProgress(10);
 
     try {
-      const importer = new ProjectImporter();
+      const importer = createImporter();
 
       // Simulate progress updates
       const progressInterval = setInterval(() => {
@@ -166,7 +169,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       setIsImporting(false);
       setProgress(0);
     }
-  }, [selectedFile, onImport, handleClose]);
+  }, [selectedFile, onImport, handleClose, createImporter]);
 
   const footerContent =
     selectedFile && preview ? (

@@ -1,2 +1,0 @@
-Checked 443 files in 358ms. No fixes applied.
-Found 216 warnings.

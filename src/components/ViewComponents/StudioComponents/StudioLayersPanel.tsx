@@ -13,11 +13,11 @@
  */
 
 import { useState } from 'react';
-import { useStudio } from '../../../contexts/StudioContext';
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../../styles/components/studio/Studio.module.css';
-import { layerManager } from '../../../ts/studio/layerManager';
-import type { BlendMode } from '../../../ts/types/index';
+import { useStudio } from '@/contexts/StudioContext';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/studio/Studio.module.css';
+import { layerManager } from '@/ts/studio/layerManager';
+import type { BlendMode } from '@/ts/types/index';
 
 interface ContextMenuState {
   visible: boolean;

@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type DownloadItem, useDownloadsContext } from '../../contexts/DownloadsContext';
-import { useProjectContext } from '../../contexts/ProjectContext';
-import { useTokenContext } from '../../contexts/TokenContext';
-import { useScriptData } from '../../hooks/useScriptData';
-import { useTokenGenerator } from '../../hooks/useTokenGenerator';
-import { useUndoStack } from '../../hooks/useUndoStack';
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
-import scriptStyles from '../../styles/components/scriptInput/ScriptInput.module.css';
-import styles from '../../styles/components/views/Views.module.css';
-import CONFIG from '../../ts/config.js';
+import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useScriptData } from '@/hooks/useScriptData';
+import { useTokenGenerator } from '@/hooks/useTokenGenerator';
+import { useUndoStack } from '@/hooks/useUndoStack';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import scriptStyles from '@/styles/components/scriptInput/ScriptInput.module.css';
+import styles from '@/styles/components/views/Views.module.css';
+import CONFIG from '@/ts/config.js';
 import {
   analyzeReminderText,
   condenseScript,
@@ -17,11 +17,11 @@ import {
   logger,
   normalizeReminderText,
   sortScriptJsonBySAO,
-} from '../../ts/utils/index.js';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { InfoMessage } from '../Shared/Feedback/InfoMessage';
-import { Button } from '../Shared/UI/Button';
-import { JsonHighlight } from '../ViewComponents/JsonComponents/JsonHighlight';
+} from '@/ts/utils/index.js';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { InfoMessage } from '@/components/Shared/Feedback/InfoMessage';
+import { Button } from '@/components/Shared/UI/Button';
+import { JsonHighlight } from '@/components/ViewComponents/JsonComponents/JsonHighlight';
 
 interface JsonViewProps {
   onGenerate?: () => void;

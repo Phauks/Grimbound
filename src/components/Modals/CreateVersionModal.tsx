@@ -7,14 +7,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useToast } from '../../contexts/ToastContext';
-import styles from '../../styles/components/modals/CreateVersionModal.module.css';
-import { projectDb } from '../../ts/db/projectDb';
-import type { Project, VersionIncrementType } from '../../ts/types/project';
-import { logger } from '../../ts/utils/logger';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Alert } from '../Shared/UI/Alert';
-import { Button } from '../Shared/UI/Button';
+import { useToast } from '@/contexts/ToastContext';
+import styles from '@/styles/components/modals/CreateVersionModal.module.css';
+import { projectDb } from '@/ts/db/projectDb';
+import type { Project, VersionIncrementType } from '@/ts/types/project';
+import { logger } from '@/ts/utils/logger';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface CreateVersionModalProps {
   isOpen: boolean;

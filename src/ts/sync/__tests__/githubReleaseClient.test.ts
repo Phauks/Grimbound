@@ -4,9 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DataSyncError, GitHubAPIError } from '../../errors.js';
-import type { GitHubRelease } from '../../types/index.js';
-import { GitHubReleaseClient } from '../githubReleaseClient.js';
+import { DataSyncError, GitHubAPIError } from '@/ts/errors.js';
+import type { GitHubRelease } from '@/ts/types/index.js';
+import { GitHubReleaseClient } from '@/ts/sync/githubReleaseClient.js';
 
 // Mock release data
 const mockRelease: GitHubRelease = {

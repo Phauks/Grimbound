@@ -12,7 +12,7 @@
  */
 
 import { useEffect } from 'react';
-import { useProjectContext } from '../contexts/ProjectContext.js';
+import { useProjectContext } from '@/contexts/ProjectContext.js';
 import { useAutoSaveDetector } from './useAutoSaveDetector.js';
 import { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
 

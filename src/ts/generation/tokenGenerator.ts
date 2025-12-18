@@ -1,142 +1,101 @@
 /**
  * Blood on the Clocktower Token Generator
  * Token Generator - Canvas operations for token generation
+ *
+ * Uses composition and dependency injection for better testability.
+ * Orchestrates TokenImageRenderer and TokenTextRenderer for token generation.
  */
 
 import {
   type CanvasContext,
-  calculateCircularTextLayout,
   createCanvas,
   createCircularClipPath,
-  drawAbilityText,
-  drawCenteredWrappedText,
-  drawCurvedText,
-  drawImageCover,
-  drawLeaves,
-  type LeafDrawingOptions,
   type Point,
   renderBackground,
   type TextLayoutResult,
-} from '../canvas/index.js';
-import { generateStyledQRCode } from '../canvas/qrGeneration.js';
-import CONFIG from '../config.js';
-import { getBuiltInAssetPath, isBuiltInAsset } from '../constants/builtInAssets.js';
-import {
-  CHARACTER_LAYOUT,
-  DEFAULT_COLORS,
-  LINE_HEIGHTS,
-  META_TOKEN_LAYOUT,
-  QR_COLORS,
-  QR_TOKEN_LAYOUT,
-  REMINDER_LAYOUT,
-  TOKEN_COUNT_BADGE,
-  TokenType,
-  type TokenTypeValue,
-} from '../constants.js';
-import { countReminders, getCharacterImageUrl } from '../data/index.js';
-import { TokenCreationError, ValidationError } from '../errors.js';
-import { isAssetReference, resolveAssetUrl } from '../services/upload/assetResolver.js';
-import type { AssetType } from '../services/upload/types.js';
-import { dataSyncService } from '../sync/index.js';
-import type { Character, ReminderCountStyle } from '../types/index.js';
+} from '@/ts/canvas/index.js';
+import { generateStyledQRCode } from '@/ts/canvas/qrGeneration.js';
+import CONFIG from '@/ts/config.js';
+import { CHARACTER_LAYOUT, DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT } from '@/ts/constants.js';
+import { countReminders, getCharacterImageUrl } from '@/ts/data/index.js';
+import { ValidationError } from '@/ts/errors.js';
+import type { Character } from '@/ts/types/index.js';
 import {
   DEFAULT_TOKEN_OPTIONS,
   type MetaTokenContentRenderer,
   type TokenGeneratorOptions,
-} from '../types/tokenOptions.js';
-import { globalImageCache, logger } from '../utils/index.js';
-import {
-  type IconLayoutStrategy,
-  IconLayoutStrategyFactory,
-  type LayoutContext,
-} from './iconLayoutStrategies.js';
+} from '@/ts/types/tokenOptions.js';
+import { logger } from '@/ts/utils/logger.js';
+import { defaultImageCache } from './ImageCacheAdapter.js';
+import { type IImageCache, TokenImageRenderer } from './TokenImageRenderer.js';
+import { TokenTextRenderer } from './TokenTextRenderer.js';
 
-// Re-export generateAllTokens for backward compatibility
+// Re-export for backward compatibility
 export { generateAllTokens } from './batchGenerator.js';
-
-// ============================================================================
-// REMINDER COUNT FORMATTING
-// ============================================================================
-
-/**
- * Format reminder count based on the selected style
- * @param count - The numeric count to format
- * @param style - The display style (arabic, roman, circled, dots)
- * @returns Formatted string representation
- */
-function formatReminderCount(count: number, style: ReminderCountStyle = 'arabic'): string {
-  switch (style) {
-    case 'roman': {
-      // Roman numerals up to 10
-      const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-      return romanNumerals[count - 1] || count.toString();
-    }
-    case 'circled':
-      // Unicode circled numbers (① = U+2460, starts at code point 0x2460 for 1)
-      if (count >= 1 && count <= 20) {
-        return String.fromCodePoint(0x245f + count);
-      }
-      return count.toString();
-    case 'dots':
-      // Bullet points representation
-      return '\u2022'.repeat(count); // Unicode bullet •
-    default:
-      return count.toString();
-  }
-}
-
-// ============================================================================
-// TOKEN GENERATOR CLASS
-// ============================================================================
 
 /**
  * TokenGenerator class handles all canvas operations for creating tokens
+ *
+ * Architecture:
+ * - Uses composition with TokenImageRenderer and TokenTextRenderer
+ * - Supports dependency injection for the image cache
+ * - Dependency injection for better testability
+ * - Separation of concerns (orchestration vs rendering)
+ * - Each renderer can be tested independently
  */
 export class TokenGenerator {
   private options: TokenGeneratorOptions;
-  // Note: Using globalImageCache singleton instead of instance cache
-  // for better cache utilization across regenerations
+  private imageRenderer: TokenImageRenderer;
+  private textRenderer: TokenTextRenderer;
+  private imageCache: IImageCache;
 
-  constructor(options: Partial<TokenGeneratorOptions> = {}) {
+  /**
+   * Create a new TokenGenerator with dependency injection
+   *
+   * @param options - Token generation options
+   * @param imageCache - Image cache implementation (optional, uses global cache by default)
+   */
+  constructor(
+    options: Partial<TokenGeneratorOptions> = {},
+    imageCache: IImageCache = defaultImageCache
+  ) {
     this.options = { ...DEFAULT_TOKEN_OPTIONS, ...options };
+
+    // Merge nested options
     if (options.fontSpacing) {
       this.options.fontSpacing = { ...DEFAULT_TOKEN_OPTIONS.fontSpacing, ...options.fontSpacing };
     }
     if (options.textShadow) {
       this.options.textShadow = { ...DEFAULT_TOKEN_OPTIONS.textShadow, ...options.textShadow };
     }
+
+    // Initialize dependencies
+    this.imageCache = imageCache;
+    this.imageRenderer = new TokenImageRenderer(this.options, imageCache);
+    this.textRenderer = new TokenTextRenderer(this.options);
+
+    logger.debug('TokenGenerator', 'Initialized with options', {
+      dpi: this.options.dpi,
+      transparentBackground: this.options.transparentBackground,
+    });
   }
 
-  /** Update generator options */
+  /**
+   * Update generator options (updates all renderers)
+   */
   updateOptions(newOptions: Partial<TokenGeneratorOptions>): void {
     this.options = { ...this.options, ...newOptions };
-  }
-
-  // ========================================================================
-  // IMAGE CACHING (using global singleton)
-  // ========================================================================
-
-  async getCachedImage(url: string): Promise<HTMLImageElement> {
-    return globalImageCache.get(url, false);
-  }
-
-  async getLocalImage(path: string): Promise<HTMLImageElement> {
-    return globalImageCache.get(path, true);
-  }
-
-  clearCache(): void {
-    globalImageCache.clear();
+    this.imageRenderer.updateOptions(this.options);
+    this.textRenderer.updateOptions(this.options);
+    logger.debug('TokenGenerator', 'Options updated');
   }
 
   /**
    * Pre-warm the image cache with all character images
-   * This improves performance by loading all images before generation starts
-   * @param characters - Array of characters to pre-load images for
    */
   async prewarmImageCache(characters: Character[]): Promise<void> {
     const imageUrls = new Set<string>();
 
-    // Collect all unique image URLs
     for (const character of characters) {
       const url = getCharacterImageUrl(character.image);
       if (url) {
@@ -144,8 +103,18 @@ export class TokenGenerator {
       }
     }
 
-    // Pre-load all images in parallel
-    await Promise.allSettled(Array.from(imageUrls).map((url) => this.getCachedImage(url)));
+    logger.info('TokenGenerator', `Pre-warming image cache with ${imageUrls.size} images`);
+    await Promise.allSettled(
+      Array.from(imageUrls).map((url) => this.imageRenderer.getCachedImage(url))
+    );
+  }
+
+  /**
+   * Clear the image cache
+   */
+  clearCache(): void {
+    this.imageCache.clear();
+    logger.info('TokenGenerator', 'Cache cleared');
   }
 
   // ========================================================================
@@ -159,66 +128,6 @@ export class TokenGenerator {
   private applyCircularClip(ctx: CanvasRenderingContext2D, center: Point, radius: number): void {
     ctx.save();
     createCircularClipPath(ctx, center, radius);
-  }
-
-  /**
-   * Resolve a decorative asset value to a loadable image URL/path
-   * Handles built-in asset IDs, user-uploaded asset references, and legacy paths
-   */
-  private async resolveDecorativeAsset(
-    value: string,
-    assetType: AssetType,
-    legacyPathPrefix: string
-  ): Promise<string | null> {
-    if (!value || value === 'none') return null;
-
-    // Check if it's a user-uploaded asset reference (asset:uuid)
-    if (isAssetReference(value)) {
-      const resolvedUrl = await resolveAssetUrl(value);
-      return resolvedUrl || null;
-    }
-
-    // Check if it's a built-in asset ID
-    if (isBuiltInAsset(value, assetType)) {
-      return getBuiltInAssetPath(value, assetType);
-    }
-
-    // Legacy fallback: treat as filename pattern
-    return `${legacyPathPrefix}${value}.png`;
-  }
-
-  private async drawBackground(
-    ctx: CanvasRenderingContext2D,
-    backgroundName: string,
-    diameter: number,
-    fallbackColor: string = DEFAULT_COLORS.FALLBACK_BACKGROUND
-  ): Promise<void> {
-    try {
-      const bgPath = await this.resolveDecorativeAsset(
-        backgroundName,
-        'token-background',
-        CONFIG.ASSETS.CHARACTER_BACKGROUNDS
-      );
-
-      if (!bgPath) {
-        if (!this.options.transparentBackground) {
-          ctx.fillStyle = fallbackColor;
-          ctx.fill();
-        }
-        return;
-      }
-
-      // Determine if it's a local path or a blob URL
-      const bgImage = bgPath.startsWith('blob:')
-        ? await this.getCachedImage(bgPath)
-        : await this.getLocalImage(bgPath);
-      drawImageCover(ctx, bgImage, diameter, diameter);
-    } catch {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = fallbackColor;
-        ctx.fill();
-      }
-    }
   }
 
   // ========================================================================
@@ -237,6 +146,8 @@ export class TokenGenerator {
       throw new ValidationError('DPI must be positive');
     }
 
+    logger.debug('TokenGenerator', 'Generating character token', character.name);
+
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
@@ -253,271 +164,71 @@ export class TokenGenerator {
         ctx.fill();
       }
     } else {
-      await this.drawBackground(ctx, this.options.characterBackground, diameter);
+      await this.imageRenderer.drawBackground(
+        ctx,
+        this.options.characterBackground,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
     }
 
-    // Determine ability text to display
+    // Determine ability text
     const abilityTextToDisplay = this.options.displayAbilityText ? character.ability : undefined;
     const hasAbilityText = Boolean(abilityTextToDisplay?.trim());
 
-    // Calculate text layout once (replaces redundant calculation)
-    let abilityTextLayout: TextLayoutResult | undefined;
+    // Calculate text layout if needed
+    let abilityTextLayout: ReturnType<TokenTextRenderer['calculateAbilityTextLayout']> | undefined;
     if (hasAbilityText) {
-      abilityTextLayout = this.calculateAbilityTextLayout(ctx, abilityTextToDisplay!, diameter);
+      abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(
+        ctx,
+        abilityTextToDisplay!,
+        diameter
+      );
     }
 
-    // Draw character image with adjusted layout based on ability text presence
-    await this.drawCharacterImage(
+    // Draw character image
+    await this.imageRenderer.drawCharacterImage(
       ctx,
       character,
       diameter,
-      TokenType.CHARACTER,
+      'character',
       imageOverride,
       hasAbilityText,
       abilityTextLayout
     );
 
+    // Draw setup overlay if needed
     if (character.setup) {
-      await this.drawSetupFlower(ctx, diameter);
+      await this.imageRenderer.drawSetupOverlay(ctx, diameter);
     }
 
     ctx.restore();
 
-    if (this.options.leafEnabled !== false && this.options.maximumLeaves > 0) {
-      await this.drawLeavesOnToken(ctx, diameter);
+    // Draw accents
+    if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
+      await this.imageRenderer.drawAccents(ctx, diameter);
     }
 
+    // Draw ability text
     if (hasAbilityText) {
-      this.drawCharacterAbilityText(ctx, abilityTextToDisplay!, diameter);
+      this.textRenderer.drawAbilityText(ctx, abilityTextToDisplay!, diameter);
     }
 
+    // Draw character name
     if (character.name) {
-      this.drawCharacterName(ctx, character.name, center, radius, diameter);
+      this.textRenderer.drawCharacterName(ctx, character.name, center, radius, diameter);
     }
 
+    // Draw token count badge
     if (this.options.tokenCount) {
       const reminderCount = countReminders(character);
       if (reminderCount > 0) {
-        this.drawTokenCount(ctx, reminderCount, diameter);
+        this.textRenderer.drawTokenCount(ctx, reminderCount, diameter);
       }
     }
 
+    logger.info('TokenGenerator', 'Generated character token', character.name);
     return canvas;
-  }
-
-  /**
-   * Calculate ability text layout (optimized version using cached layout calculation)
-   * @param ctx - Canvas context
-   * @param ability - Ability text
-   * @param diameter - Token diameter
-   * @returns Text layout result with lines and height
-   */
-  private calculateAbilityTextLayout(
-    ctx: CanvasRenderingContext2D,
-    ability: string,
-    diameter: number
-  ): TextLayoutResult {
-    ctx.save();
-    const fontSize = diameter * CONFIG.FONTS.ABILITY_TEXT.SIZE_RATIO;
-    ctx.font = `${fontSize}px "${this.options.abilityTextFont}", sans-serif`;
-    const lineHeightMultiplier = CONFIG.FONTS.ABILITY_TEXT.LINE_HEIGHT ?? LINE_HEIGHTS.STANDARD;
-    const startY = diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
-
-    // Use optimized circular text layout calculation
-    const layout = calculateCircularTextLayout(
-      ctx,
-      ability,
-      diameter,
-      fontSize,
-      lineHeightMultiplier,
-      startY,
-      CHARACTER_LAYOUT.ABILITY_TEXT_CIRCULAR_PADDING
-    );
-
-    ctx.restore();
-    return layout;
-  }
-
-  /**
-   * Draw character image on token (optimized with layout strategies)
-   * @param ctx - Canvas context
-   * @param character - Character data
-   * @param diameter - Token diameter
-   * @param tokenType - Type of token
-   * @param imageOverride - Optional image URL override
-   * @param hasAbilityText - Whether character has ability text
-   * @param abilityTextLayout - Pre-calculated ability text layout
-   */
-  private async drawCharacterImage(
-    ctx: CanvasRenderingContext2D,
-    character: Character,
-    diameter: number,
-    tokenType: TokenTypeValue,
-    imageOverride?: string,
-    hasAbilityText?: boolean,
-    abilityTextLayout?: TextLayoutResult
-  ): Promise<void> {
-    const imageUrl = imageOverride || getCharacterImageUrl(character.image);
-    if (!imageUrl) return;
-
-    try {
-      const charImage = await this.getCachedImage(imageUrl);
-
-      // Get icon settings for this token type
-      const defaultIconSettings = { scale: 1.0, offsetX: 0, offsetY: 0 };
-      const iconSettings =
-        this.options.iconSettings?.[tokenType as 'character' | 'reminder' | 'meta'] ||
-        defaultIconSettings;
-
-      // Create layout context (offsets are in inches, converted to pixels in strategy)
-      const layoutContext: LayoutContext = {
-        diameter,
-        dpi: this.options.dpi || 300,
-        iconScale: iconSettings.scale,
-        iconOffsetX: iconSettings.offsetX,
-        iconOffsetY: iconSettings.offsetY,
-      };
-
-      // Get appropriate layout strategy
-      let strategy: IconLayoutStrategy;
-      if (tokenType === TokenType.CHARACTER) {
-        const abilityTextStartY = abilityTextLayout
-          ? diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION
-          : undefined;
-        strategy = IconLayoutStrategyFactory.create(
-          tokenType,
-          hasAbilityText,
-          abilityTextLayout?.totalHeight,
-          abilityTextStartY
-        );
-      } else {
-        strategy = IconLayoutStrategyFactory.create(tokenType);
-      }
-
-      // Calculate layout using strategy
-      const layout = strategy.calculate(layoutContext);
-
-      // Draw image at calculated position
-      ctx.drawImage(charImage, layout.position.x, layout.position.y, layout.size, layout.size);
-    } catch (error) {
-      throw new TokenCreationError(
-        `Failed to load character image`,
-        character.name,
-        error instanceof Error ? error : new Error(String(error))
-      );
-    }
-  }
-
-  private async drawSetupFlower(ctx: CanvasRenderingContext2D, diameter: number): Promise<void> {
-    try {
-      const flowerPath = await this.resolveDecorativeAsset(
-        this.options.setupFlowerStyle,
-        'setup-flower',
-        CONFIG.ASSETS.SETUP_FLOWERS
-      );
-
-      if (!flowerPath) return;
-
-      // Determine if it's a local path or a blob URL
-      const flowerImage = flowerPath.startsWith('blob:')
-        ? await this.getCachedImage(flowerPath)
-        : await this.getLocalImage(flowerPath);
-      drawImageCover(ctx, flowerImage, diameter, diameter);
-    } catch (error) {
-      // Log warning but don't throw - setup flower is optional decoration
-      logger.warn(
-        'TokenGenerator',
-        `Could not load setup flower: ${this.options.setupFlowerStyle}`,
-        error
-      );
-    }
-  }
-
-  private async drawLeavesOnToken(ctx: CanvasRenderingContext2D, diameter: number): Promise<void> {
-    const leafOptions: LeafDrawingOptions = {
-      maximumLeaves: this.options.maximumLeaves,
-      leafPopulationProbability: this.options.leafPopulationProbability,
-      leafGeneration: this.options.leafGeneration,
-      leafArcSpan: this.options.leafArcSpan,
-      leafSlots: this.options.leafSlots,
-      enableLeftLeaf: this.options.enableLeftLeaf,
-      enableRightLeaf: this.options.enableRightLeaf,
-      sideLeafProbability: this.options.sideLeafProbability,
-    };
-    await drawLeaves(ctx, diameter, leafOptions);
-  }
-
-  private drawCharacterAbilityText(
-    ctx: CanvasRenderingContext2D,
-    ability: string,
-    diameter: number
-  ): void {
-    drawAbilityText(
-      ctx,
-      ability,
-      diameter,
-      this.options.abilityTextFont,
-      CONFIG.FONTS.ABILITY_TEXT.SIZE_RATIO,
-      CONFIG.FONTS.ABILITY_TEXT.LINE_HEIGHT ?? LINE_HEIGHTS.STANDARD,
-      CHARACTER_LAYOUT.ABILITY_TEXT_MAX_WIDTH,
-      CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION,
-      this.options.abilityTextColor,
-      this.options.fontSpacing.abilityText,
-      this.options.textShadow?.abilityText ?? 3
-    );
-  }
-
-  private drawCharacterName(
-    ctx: CanvasRenderingContext2D,
-    name: string,
-    center: Point,
-    radius: number,
-    diameter: number
-  ): void {
-    drawCurvedText(ctx, {
-      text: name.toUpperCase(),
-      centerX: center.x,
-      centerY: center.y,
-      radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-      fontFamily: this.options.characterNameFont,
-      fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
-      position: 'bottom',
-      color: this.options.characterNameColor,
-      letterSpacing: this.options.fontSpacing.characterName,
-      shadowBlur: this.options.textShadow?.characterName ?? 4,
-    });
-  }
-
-  private drawTokenCount(ctx: CanvasRenderingContext2D, count: number, diameter: number): void {
-    ctx.save();
-    const fontSize = diameter * CONFIG.FONTS.TOKEN_COUNT.SIZE_RATIO;
-    ctx.font = `bold ${fontSize}px "${this.options.characterNameFont}", Georgia, serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const y = diameter * CHARACTER_LAYOUT.TOKEN_COUNT_Y_POSITION;
-
-    // Format the count based on the selected style
-    const style = this.options.reminderCountStyle || 'arabic';
-    const displayText = formatReminderCount(count, style);
-
-    // Adjust badge size for dots style (wider)
-    const badgeRadius =
-      style === 'dots'
-        ? fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS * (1 + count * 0.15)
-        : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
-
-    ctx.beginPath();
-    ctx.arc(diameter / 2, y, badgeRadius, 0, Math.PI * 2);
-    ctx.fillStyle = DEFAULT_COLORS.BADGE_BACKGROUND;
-    ctx.fill();
-    ctx.strokeStyle = DEFAULT_COLORS.TEXT_PRIMARY;
-    ctx.lineWidth = TOKEN_COUNT_BADGE.STROKE_WIDTH;
-    ctx.stroke();
-
-    ctx.fillStyle = DEFAULT_COLORS.TEXT_PRIMARY;
-    ctx.fillText(displayText, diameter / 2, y);
-    ctx.restore();
   }
 
   // ========================================================================
@@ -540,6 +251,11 @@ export class TokenGenerator {
       throw new ValidationError('DPI must be positive');
     }
 
+    logger.debug('TokenGenerator', 'Generating reminder token', {
+      character: character.name,
+      reminder: reminderText,
+    });
+
     const diameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
@@ -552,7 +268,12 @@ export class TokenGenerator {
       await renderBackground(ctx, this.options.reminderBackgroundStyle, diameter);
     } else if (this.options.reminderBackgroundType === 'image') {
       const bgImage = this.options.reminderBackgroundImage || 'character_background_1';
-      await this.drawBackground(ctx, bgImage, diameter);
+      await this.imageRenderer.drawBackground(
+        ctx,
+        bgImage,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
     } else {
       if (!this.options.transparentBackground) {
         ctx.fillStyle = this.options.reminderBackground;
@@ -560,22 +281,23 @@ export class TokenGenerator {
       }
     }
 
-    await this.drawCharacterImage(ctx, character, diameter, TokenType.REMINDER, imageOverride);
+    // Draw character image
+    await this.imageRenderer.drawCharacterImage(
+      ctx,
+      character,
+      diameter,
+      'reminder',
+      imageOverride
+    );
     ctx.restore();
 
-    drawCurvedText(ctx, {
-      text: reminderText.toUpperCase(),
-      centerX: center.x,
-      centerY: center.y,
-      radius: radius * REMINDER_LAYOUT.CURVED_TEXT_RADIUS,
-      fontFamily: this.options.characterReminderFont,
-      fontSize: diameter * CONFIG.FONTS.REMINDER_TEXT.SIZE_RATIO,
-      position: 'bottom',
-      color: this.options.reminderTextColor,
-      letterSpacing: this.options.fontSpacing.reminderText,
-      shadowBlur: this.options.textShadow?.reminderText ?? 4,
-    });
+    // Draw reminder text
+    this.textRenderer.drawReminderText(ctx, reminderText, center, radius, diameter);
 
+    logger.info('TokenGenerator', 'Generated reminder token', {
+      character: character.name,
+      reminder: reminderText,
+    });
     return canvas;
   }
 
@@ -605,7 +327,12 @@ export class TokenGenerator {
     } else {
       const bgName =
         backgroundOverride || this.options.metaBackground || this.options.characterBackground;
-      await this.drawBackground(ctx, bgName, diameter);
+      await this.imageRenderer.drawBackground(
+        ctx,
+        bgName,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
     }
 
     ctx.restore();
@@ -619,98 +346,38 @@ export class TokenGenerator {
     author?: string,
     hideAuthor?: boolean
   ): Promise<HTMLCanvasElement> {
-    const metaFont = this.options.metaNameFont || this.options.characterNameFont;
-    const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
-
-    // Try to load custom logo if provided
-    let logoImage: HTMLImageElement | null = null;
-    if (this.options.logoUrl) {
-      try {
-        logoImage = await this.getCachedImage(this.options.logoUrl);
-      } catch {
-        // Silently fall back to text-only token
-        logoImage = null;
-      }
-    }
+    logger.debug('TokenGenerator', 'Generating script name token', scriptName);
 
     return this.generateMetaToken(async (ctx, diameter, center, radius) => {
-      if (logoImage) {
-        // Draw logo image centered on token
-        const maxSize = diameter * 0.7;
-        const aspectRatio = logoImage.width / logoImage.height;
-        let drawWidth: number, drawHeight: number;
-
-        if (aspectRatio > 1) {
-          // Wider than tall
-          drawWidth = Math.min(logoImage.width, maxSize);
-          drawHeight = drawWidth / aspectRatio;
-        } else {
-          // Taller than wide or square
-          drawHeight = Math.min(logoImage.height, maxSize);
-          drawWidth = drawHeight * aspectRatio;
-        }
-
-        const x = center.x - drawWidth / 2;
-        const y = center.y - drawHeight / 2;
-        ctx.drawImage(logoImage, x, y, drawWidth, drawHeight);
-      } else {
-        // Fall back to text-only
-        drawCenteredWrappedText(ctx, {
-          text: scriptName.toUpperCase(),
+      // Try to draw logo if provided
+      let logoDrawn = false;
+      if (this.options.logoUrl) {
+        logoDrawn = await this.imageRenderer.drawLogo(
+          ctx,
+          this.options.logoUrl,
           diameter,
-          fontFamily: metaFont,
-          fontSizeRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_SIZE,
-          maxWidthRatio: META_TOKEN_LAYOUT.CENTERED_TEXT_MAX_WIDTH,
-          color: metaColor,
-          shadowBlur: this.options.textShadow?.metaText ?? 4,
-        });
+          center.x,
+          center.y
+        );
       }
 
+      // Fall back to text if no logo
+      if (!logoDrawn) {
+        this.textRenderer.drawCenteredText(ctx, scriptName, diameter);
+      }
+
+      // Draw author if provided
       if (author && !hideAuthor) {
-        drawCurvedText(ctx, {
-          text: author,
-          centerX: center.x,
-          centerY: center.y,
-          radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-          fontFamily: metaFont,
-          fontSize:
-            diameter *
-            CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO *
-            META_TOKEN_LAYOUT.AUTHOR_TEXT_SIZE_FACTOR,
-          position: 'bottom',
-          color: metaColor,
-          letterSpacing: this.options.fontSpacing.metaText ?? 0,
-          shadowBlur: this.options.textShadow?.metaText ?? 4,
-        });
+        this.textRenderer.drawAuthorText(ctx, author, center, radius, diameter);
       }
     });
   }
 
   async generatePandemoniumToken(): Promise<HTMLCanvasElement> {
-    // Load the Pandemonium Institute image
-    const pandemoniumImage = await this.getCachedImage(
-      '/images/Pandemonium_Institute/the_pandemonium_institute.webp'
-    );
+    logger.debug('TokenGenerator', 'Generating Pandemonium token');
 
     return this.generateMetaToken(async (ctx, diameter, center) => {
-      // Draw image centered on token
-      const maxSize = diameter * 0.75;
-      const aspectRatio = pandemoniumImage.width / pandemoniumImage.height;
-      let drawWidth: number, drawHeight: number;
-
-      if (aspectRatio > 1) {
-        // Wider than tall
-        drawWidth = Math.min(pandemoniumImage.width, maxSize);
-        drawHeight = drawWidth / aspectRatio;
-      } else {
-        // Taller than wide or square
-        drawHeight = Math.min(pandemoniumImage.height, maxSize);
-        drawWidth = drawHeight * aspectRatio;
-      }
-
-      const x = center.x - drawWidth / 2;
-      const y = center.y - drawHeight / 2;
-      ctx.drawImage(pandemoniumImage, x, y, drawWidth, drawHeight);
+      await this.imageRenderer.drawPandemoniumImage(ctx, diameter, center.x, center.y);
     });
   }
 
@@ -719,6 +386,8 @@ export class TokenGenerator {
     _scriptName: string,
     scriptLogoUrl?: string
   ): Promise<HTMLCanvasElement> {
+    logger.debug('TokenGenerator', 'Generating almanac QR token', _scriptName);
+
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
@@ -735,7 +404,7 @@ export class TokenGenerator {
     if (scriptLogoUrl && showLogo) {
       try {
         // Load through our CORS proxy (getCachedImage → loadImage → proxy fallback)
-        const logoImage = await this.getCachedImage(scriptLogoUrl);
+        const logoImage = await this.imageRenderer.getCachedImage(scriptLogoUrl);
 
         // Convert to data URL (data URLs don't have CORS issues)
         const logoCanvas = document.createElement('canvas');
@@ -800,7 +469,12 @@ export class TokenGenerator {
       }
     } else {
       const bgName = this.options.metaBackground || this.options.characterBackground;
-      await this.drawBackground(ctx, bgName, diameter);
+      await this.imageRenderer.drawBackground(
+        ctx,
+        bgName,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
     }
     ctx.restore();
 
@@ -854,20 +528,10 @@ export class TokenGenerator {
 
     // Optionally draw "ALMANAC" curved at bottom
     if (showAlmanacLabel) {
-      drawCurvedText(ctx, {
-        text: 'ALMANAC',
-        centerX: center.x,
-        centerY: center.y,
-        radius: radius * QR_TOKEN_LAYOUT.SCRIPT_NAME_RADIUS,
-        fontFamily: this.options.metaNameFont || this.options.characterNameFont,
-        fontSize: diameter * QR_TOKEN_LAYOUT.SCRIPT_NAME_SIZE,
-        position: 'bottom',
-        color: QR_COLORS.GRADIENT_END,
-        letterSpacing: this.options.fontSpacing.metaText ?? 0,
-        shadowBlur: 0,
-      });
+      this.textRenderer.drawAlmanacLabel(ctx, center, radius, diameter);
     }
 
+    logger.info('TokenGenerator', 'Generated almanac QR token', _scriptName);
     return canvas;
   }
 
@@ -887,51 +551,72 @@ export class TokenGenerator {
     abilityText: string,
     normalizedLayout?: TextLayoutResult
   ): Promise<HTMLCanvasElement> {
+    logger.debug('TokenGenerator', 'Generating bootlegger token');
+
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
     this.applyCircularClip(ctx, center, radius);
 
     // Draw background (same as character tokens)
-    if (this.options.characterBackgroundType === 'color') {
+    // Priority: BackgroundStyle > color > image
+    if (this.options.characterBackgroundStyle) {
+      await renderBackground(ctx, this.options.characterBackgroundStyle, diameter);
+    } else if (this.options.characterBackgroundType === 'color') {
       if (!this.options.transparentBackground) {
         ctx.fillStyle = this.options.characterBackgroundColor || '#FFFFFF';
         ctx.fill();
       }
     } else {
-      await this.drawBackground(ctx, this.options.characterBackground, diameter);
+      await this.imageRenderer.drawBackground(
+        ctx,
+        this.options.characterBackground,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
     }
 
     // Bootlegger tokens always have ability text
     const hasAbilityText = Boolean(abilityText?.trim());
     let abilityTextLayout: TextLayoutResult | undefined;
     if (hasAbilityText) {
-      abilityTextLayout = this.calculateAbilityTextLayout(ctx, abilityText, diameter);
+      abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(ctx, abilityText, diameter);
     }
 
     // Use normalized layout for icon sizing if provided (for consistent icon sizes)
     const layoutForIcon = normalizedLayout || abilityTextLayout;
 
+    // Check if we should use script logo instead of bootlegger icon
+    const useScriptLogo = this.options.bootleggerIconType === 'script';
+
     // Draw Bootlegger character image
-    await this.drawBootleggerImage(ctx, diameter, hasAbilityText, layoutForIcon);
+    await this.imageRenderer.drawBootleggerImage(
+      ctx,
+      diameter,
+      hasAbilityText,
+      layoutForIcon,
+      useScriptLogo,
+      this.options.logoUrl
+    );
 
     ctx.restore();
 
-    // Draw leaves if enabled
-    if (this.options.leafEnabled !== false && this.options.maximumLeaves > 0) {
-      await this.drawLeavesOnToken(ctx, diameter);
+    // Draw accents if enabled
+    if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
+      await this.imageRenderer.drawAccents(ctx, diameter);
     }
 
     // Always draw ability text for bootlegger tokens
     if (hasAbilityText) {
-      this.drawCharacterAbilityText(ctx, abilityText, diameter);
+      this.textRenderer.drawAbilityText(ctx, abilityText, diameter);
     }
 
     // Draw "BOOTLEGGER" at the bottom (like character name) unless hidden
     if (!this.options.bootleggerHideName) {
-      this.drawCharacterName(ctx, 'Bootlegger', center, radius, diameter);
+      this.textRenderer.drawCharacterName(ctx, 'Bootlegger', center, radius, diameter);
     }
 
+    logger.info('TokenGenerator', 'Generated bootlegger token');
     return canvas;
   }
 
@@ -939,7 +624,7 @@ export class TokenGenerator {
    * Calculate ability text layout for a bootlegger token without drawing.
    * Used for pre-calculating layouts to normalize icon sizes.
    * @param abilityText - The ability text to calculate layout for
-   * @returns The calculated text layout result
+   * @returns The calculated text layout result, or undefined if no text
    */
   calculateBootleggerLayout(abilityText: string): TextLayoutResult | undefined {
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
@@ -949,127 +634,7 @@ export class TokenGenerator {
       return undefined;
     }
 
-    return this.calculateAbilityTextLayout(ctx, abilityText, diameter);
-  }
-
-  /**
-   * Draw Bootlegger token image.
-   * Uses either the official Bootlegger art or the script logo based on options.
-   */
-  private async drawBootleggerImage(
-    ctx: CanvasRenderingContext2D,
-    diameter: number,
-    hasAbilityText: boolean,
-    abilityTextLayout?: TextLayoutResult
-  ): Promise<void> {
-    let imageUrl: string | null = null;
-    let blobToRevoke: string | null = null;
-
-    // Check if we should use script logo instead of bootlegger icon
-    const useScriptLogo = this.options.bootleggerIconType === 'script';
-
-    if (useScriptLogo && this.options.logoUrl) {
-      // Use script logo
-      imageUrl = this.options.logoUrl;
-    } else {
-      // Use Bootlegger character image
-      try {
-        // Try to get Bootlegger image from sync service
-        const blob = await dataSyncService.getCharacterImage('bootlegger');
-        if (blob) {
-          imageUrl = URL.createObjectURL(blob);
-          blobToRevoke = imageUrl;
-        }
-      } catch (error) {
-        logger.warn('TokenGenerator', 'Failed to load Bootlegger image from sync', error);
-      }
-
-      // Fallback: try loading from local asset if sync failed
-      if (!imageUrl) {
-        try {
-          // Attempt a fallback URL path
-          imageUrl = '/images/icons/bootlegger.webp';
-        } catch {
-          logger.warn('TokenGenerator', 'No Bootlegger fallback image available');
-        }
-      }
-    }
-
-    if (!imageUrl) {
-      logger.warn('TokenGenerator', 'No Bootlegger image available, token will be missing icon');
-      return;
-    }
-
-    try {
-      const charImage = await this.getCachedImage(imageUrl);
-
-      // Get icon settings for character type
-      const defaultIconSettings = { scale: 1.0, offsetX: 0, offsetY: 0 };
-      const iconSettings = this.options.iconSettings?.character || defaultIconSettings;
-
-      // Create layout context
-      const layoutContext: LayoutContext = {
-        diameter,
-        dpi: this.options.dpi || 300,
-        iconScale: iconSettings.scale,
-        iconOffsetX: iconSettings.offsetX,
-        iconOffsetY: iconSettings.offsetY,
-      };
-
-      // Use character layout strategy since bootlegger looks like a character token
-      const abilityTextStartY = abilityTextLayout
-        ? diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION
-        : undefined;
-
-      const strategy = IconLayoutStrategyFactory.create(
-        TokenType.CHARACTER,
-        hasAbilityText,
-        abilityTextLayout?.totalHeight,
-        abilityTextStartY
-      );
-
-      const layout = strategy.calculate(layoutContext);
-
-      // Calculate draw dimensions - handle aspect ratio and scaling for script logos
-      let drawWidth = layout.size;
-      let drawHeight = layout.size;
-      let drawX = layout.position.x;
-      let drawY = layout.position.y;
-
-      if (useScriptLogo) {
-        // Script logos use a 1.0 space ratio instead of the 1.5x ratio used for character icons
-        // This keeps the logo fully within the available space between ability text and name
-        const scriptLogoScale = 1.0 / CHARACTER_LAYOUT.ICON_SPACE_RATIO_WITH_ABILITY;
-        const scaledSize = layout.size * scriptLogoScale;
-
-        // Handle aspect ratio - script logos may not be square
-        const aspectRatio = charImage.width / charImage.height;
-
-        if (aspectRatio > 1) {
-          // Wider than tall
-          drawWidth = scaledSize;
-          drawHeight = scaledSize / aspectRatio;
-        } else {
-          // Taller than wide (or square)
-          drawHeight = scaledSize;
-          drawWidth = scaledSize * aspectRatio;
-        }
-
-        // Center the image within the original layout position
-        drawX = layout.position.x + (layout.size - drawWidth) / 2;
-        drawY = layout.position.y + (layout.size - drawHeight) / 2;
-      }
-
-      // Draw image at calculated position
-      ctx.drawImage(charImage, drawX, drawY, drawWidth, drawHeight);
-    } catch (error) {
-      logger.error('TokenGenerator', 'Failed to draw Bootlegger image', error);
-    } finally {
-      // Clean up blob URL if we created one
-      if (blobToRevoke) {
-        URL.revokeObjectURL(blobToRevoke);
-      }
-    }
+    return this.textRenderer.calculateAbilityTextLayout(ctx, abilityText, diameter);
   }
 }
 

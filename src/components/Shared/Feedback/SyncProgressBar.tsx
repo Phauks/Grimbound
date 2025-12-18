@@ -10,9 +10,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useDataSync } from '../../../contexts/DataSyncContext';
-import styles from '../../../styles/components/shared/SyncProgressBar.module.css';
-import type { SyncEvent } from '../../../ts/sync/index.js';
+import { useDataSync } from '@/contexts/DataSyncContext';
+import styles from '@/styles/components/shared/SyncProgressBar.module.css';
+import type { SyncEvent } from '@/ts/sync/index.js';
 
 export function SyncProgressBar() {
   const { status, subscribeToEvents } = useDataSync();

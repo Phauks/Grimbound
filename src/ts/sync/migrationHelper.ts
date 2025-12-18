@@ -8,7 +8,7 @@
  * - Version-specific migration logic
  */
 
-import { logger } from '../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 import { storageManager } from './storageManager.js';
 
 /**

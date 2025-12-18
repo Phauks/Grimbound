@@ -4,7 +4,7 @@
  */
 
 import { jsPDF } from 'jspdf';
-import CONFIG, { AVERY_TEMPLATES } from '../config.js';
+import CONFIG, { AVERY_TEMPLATES } from '@/ts/config.js';
 import type {
   AveryTemplate,
   jsPDFDocument,
@@ -12,7 +12,7 @@ import type {
   ProgressCallback,
   Token,
   TokenLayoutItem,
-} from '../types/index.js';
+} from '@/ts/types/index.js';
 
 export { downloadTokenPNG } from './pngExporter.js';
 // Re-export ZIP and PNG functions for backward compatibility
@@ -40,6 +40,8 @@ export class PDFGenerator {
   private marginPx: number;
   private usableWidth: number;
   private usableHeight: number;
+  private xOffsetPx: number;
+  private yOffsetPx: number;
 
   /**
    * Convert inches to pixels at given DPI

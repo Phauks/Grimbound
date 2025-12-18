@@ -56,12 +56,3 @@ export function debounce<T extends (...args: never[]) => void>(
 
   return debouncedFn;
 }
-
-/**
- * Sleep for specified milliseconds
- * @param ms - Milliseconds to sleep
- * @returns Promise that resolves after delay
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

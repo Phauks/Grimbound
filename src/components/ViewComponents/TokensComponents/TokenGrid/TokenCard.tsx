@@ -1,11 +1,11 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import { useContextMenu } from '../../../../hooks/useContextMenu';
-import { useIntersectionObserver } from '../../../../hooks/useIntersectionObserver.js';
-import styles from '../../../../styles/components/tokens/TokenCard.module.css';
-import { TEAM_LABELS } from '../../../../ts/config.js';
-import type { Team, Token } from '../../../../ts/types/index.js';
-import type { ContextMenuItem } from '../../../Shared/UI/ContextMenu';
-import { ContextMenu } from '../../../Shared/UI/ContextMenu';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver.js';
+import styles from '@/styles/components/tokens/TokenCard.module.css';
+import { TEAM_LABELS } from '@/ts/config.js';
+import type { Team, Token } from '@/ts/types/index.js';
+import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
+import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 
 /** Type for requestIdleCallback (non-standard but widely supported) */
 interface IdleDeadline {

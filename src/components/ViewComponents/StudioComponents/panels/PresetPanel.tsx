@@ -5,11 +5,11 @@
  */
 
 import { useState } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
-import { getImageData, putImageData } from '../../../../ts/studio/canvasOperations';
-import { applyCharacterPreset, CHARACTER_PRESETS } from '../../../../ts/studio/characterPresets';
-import { logger } from '../../../../ts/utils/logger.js';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
+import { getImageData, putImageData } from '@/ts/studio/canvasOperations';
+import { applyCharacterPreset, CHARACTER_PRESETS } from '@/ts/studio/characterPresets';
+import { logger } from '@/ts/utils/logger.js';
 
 export function PresetPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();

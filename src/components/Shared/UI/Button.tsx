@@ -23,8 +23,8 @@
  */
 
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode } from 'react';
-import styles from '../../../styles/components/shared/Button.module.css';
-import { cn } from '../../../ts/utils';
+import styles from '@/styles/components/shared/Button.module.css';
+import { cn } from '@/ts/utils';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger';
 export type ButtonSize = 'small' | 'medium' | 'large';

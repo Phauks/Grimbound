@@ -1,8 +1,8 @@
 /**
  * AccentSettingsSelector Component Styles
  *
- * Three-panel layout for accent/leaf settings:
- * - Left: Leaf style image selection
+ * Three-panel layout for accent settings:
+ * - Left: Accent style image selection
  * - Middle: Numeric settings (sliders)
  * - Right: Visual preview showing probability outcomes
  */
@@ -25,13 +25,13 @@
   filter: grayscale(100%);
 }
 
-.leafImage {
+.accentImage {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
 
-.leafFallback {
+.accentFallback {
   font-size: 1.25rem;
 }
 
@@ -143,6 +143,132 @@
   display: flex;
   flex-direction: column;
   gap: 0.1875rem;
+}
+
+/* ============================================
+   Arc Slot Control - Combined slots + max
+   ============================================ */
+
+.arcSlotControl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.25rem;
+}
+
+.arcSlotHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arcSlotLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.arcSlotSummary {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+.arcSlotSummary strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.arcSlotRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slotAdjustButton {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.slotAdjustButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.slotAdjustButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.slotDotsContainer {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
+  padding: 0.25rem 0;
+}
+
+.slotDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.slotDot:hover {
+  transform: scale(1.2);
+}
+
+.slotDotActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.slotDotActive:hover {
+  background: var(--color-accent-hover, var(--color-accent));
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.slotDotInactive {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.slotDotInactive:hover {
+  opacity: 1;
+  border-color: var(--text-muted);
+}
+
+/* Threshold dot (last active) gets a subtle indicator */
+.slotDotThreshold {
+  box-shadow: 0 0 0 2px var(--bg-tertiary), 0 0 0 4px var(--color-accent);
+}
+
+.arcSlotHint {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  text-align: center;
+  opacity: 0.7;
 }
 
 .settingRow {
@@ -346,7 +472,7 @@
   min-height: 24px;
 }
 
-.simLeaf {
+.simAccent {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -362,7 +488,7 @@
 }
 
 /* ============================================
-   Side Leaves Controls
+   Side Accents Controls
    ============================================ */
 
 .sectionDivider {
@@ -374,6 +500,11 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* First section divider right after panel title needs less top margin */
+.panelTitle + .sectionDivider {
+  margin-top: 0;
 }
 
 .sectionDivider::before,
@@ -437,8 +568,8 @@
   transform: rotate(45deg);
 }
 
-/* Side leaf markers (larger than arc markers) */
-.sideLeafMarker {
+/* Side accent markers (larger than arc markers) */
+.sideAccentMarker {
   width: 10px;
   height: 10px;
 }

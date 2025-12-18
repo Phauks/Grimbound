@@ -1,20 +1,20 @@
 /**
  * SetupSettingsSelector Component
  *
- * A simple settings selector for setup flower display on tokens.
- * Shows flower asset preview with On/Off toggle.
+ * A simple settings selector for setup overlay display on tokens.
+ * Shows setup asset preview with On/Off toggle.
  * Clicking "Customize" opens the asset manager modal directly.
  *
  * @module components/Shared/SetupSettingsSelector
  */
 
 import { memo, useCallback, useState } from 'react';
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
-import { CONFIG } from '../../../ts/config';
-import { BUILT_IN_FLOWERS } from '../../../ts/constants/builtInAssets';
-import type { GenerationOptions } from '../../../ts/types/index';
-import { AssetManagerModal } from '../../Modals/AssetManagerModal';
+import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
+import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
+import { CONFIG } from '@/ts/config';
+import { BUILT_IN_SETUP_OVERLAYS } from '@/ts/constants/builtInAssets';
+import type { GenerationOptions } from '@/ts/types/index';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface SetupSettingsSelectorProps {
@@ -30,26 +30,26 @@ export interface SetupSettingsSelectorProps {
 // Preview Component
 // ============================================================================
 
-const FlowerPreview = memo(function FlowerPreview({
-  flowerStyle,
+const SetupPreview = memo(function SetupPreview({
+  setupStyle,
   isEnabled,
 }: {
-  flowerStyle: string;
+  setupStyle: string;
   isEnabled: boolean;
 }) {
-  const getFlowerPreviewSrc = () => {
-    if (!flowerStyle || flowerStyle === 'none') return null;
-    return `${CONFIG.ASSETS.SETUP_FLOWERS}${flowerStyle}.webp`;
+  const getSetupPreviewSrc = () => {
+    if (!setupStyle || setupStyle === 'none') return null;
+    return `${CONFIG.ASSETS.SETUP_OVERLAYS}${setupStyle}.webp`;
   };
 
-  const previewSrc = getFlowerPreviewSrc();
+  const previewSrc = getSetupPreviewSrc();
 
   return (
     <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
       {previewSrc ? (
         <img
           src={previewSrc}
-          alt={`${flowerStyle} setup flower`}
+          alt={`${setupStyle} setup overlay`}
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           onError={(e) => {
             e.currentTarget.style.display = 'none';
@@ -76,39 +76,39 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
 }: SetupSettingsSelectorProps) {
   const [showAssetModal, setShowAssetModal] = useState(false);
 
-  const currentFlower = generationOptions.setupFlowerStyle || 'setup_flower_1';
-  const isEnabled = currentFlower !== 'none';
+  const currentSetup = generationOptions.setupStyle || 'setup_flower_1';
+  const isEnabled = currentSetup !== 'none';
 
-  // Store last selected flower for when toggling back on
-  const [lastFlower, setLastFlower] = useState(isEnabled ? currentFlower : 'setup_flower_1');
+  // Store last selected setup for when toggling back on
+  const [lastSetup, setLastSetup] = useState(isEnabled ? currentSetup : 'setup_flower_1');
 
   const handleToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
-        onOptionChange({ setupFlowerStyle: lastFlower });
+        onOptionChange({ setupStyle: lastSetup });
       } else {
-        if (currentFlower !== 'none') {
-          setLastFlower(currentFlower);
+        if (currentSetup !== 'none') {
+          setLastSetup(currentSetup);
         }
-        onOptionChange({ setupFlowerStyle: 'none' });
+        onOptionChange({ setupStyle: 'none' });
       }
     },
-    [onOptionChange, currentFlower, lastFlower]
+    [onOptionChange, currentSetup, lastSetup]
   );
 
   const handleAssetChange = useCallback(
     (assetId: string) => {
-      onOptionChange({ setupFlowerStyle: assetId });
-      setLastFlower(assetId);
+      onOptionChange({ setupStyle: assetId });
+      setLastSetup(assetId);
       setShowAssetModal(false);
     },
     [onOptionChange]
   );
 
-  const getFlowerLabel = () => {
+  const getSetupLabel = () => {
     if (!isEnabled) return 'Disabled';
-    const flower = BUILT_IN_FLOWERS.find((f) => f.id === currentFlower);
-    return flower?.label || currentFlower.replace('setup_flower_', 'Flower ');
+    const setup = BUILT_IN_SETUP_OVERLAYS.find((f) => f.id === currentSetup);
+    return setup?.label || currentSetup.replace('setup_flower_', 'Setup ');
   };
 
   const EnableToggle = (
@@ -135,7 +135,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
       <SettingsSelectorBase
         preview={
           <PreviewBox shape="square" size={size}>
-            <FlowerPreview flowerStyle={isEnabled ? currentFlower : 'none'} isEnabled={isEnabled} />
+            <SetupPreview setupStyle={isEnabled ? currentSetup : 'none'} isEnabled={isEnabled} />
           </PreviewBox>
         }
         info={<InfoSection label="Setup" />}
@@ -146,7 +146,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
         disabled={disabled}
         visuallyDisabled={!isEnabled}
         size={size}
-        ariaLabel={ariaLabel ?? 'Setup flower settings'}
+        ariaLabel={ariaLabel ?? 'Setup overlay settings'}
       />
 
       {showAssetModal && (
@@ -154,7 +154,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
           isOpen={showAssetModal}
           onClose={() => setShowAssetModal(false)}
           onSelectAsset={handleAssetChange}
-          initialAssetType="setup-flower"
+          initialAssetType="setup-overlay"
           selectionMode={true}
           includeBuiltIn={true}
           projectId={projectId}

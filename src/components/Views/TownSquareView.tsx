@@ -1,4 +1,4 @@
-import styles from '../../styles/components/views/Views.module.css';
+import styles from '@/styles/components/views/Views.module.css';
 
 export function TownSquareView() {
   return (

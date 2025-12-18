@@ -4,8 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Character, GitHubRelease } from '../../types/index.js';
-import { DataSyncService, type SyncEvent } from '../dataSyncService.js';
+import type { Character, GitHubRelease } from '@/ts/types/index.js';
+import { DataSyncService, type SyncEvent } from '@/ts/sync/dataSyncService.js';
 
 // Mock modules
 vi.mock('../storageManager.js', () => ({

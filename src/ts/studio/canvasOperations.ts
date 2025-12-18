@@ -5,9 +5,9 @@
  * in the Studio editor.
  */
 
-import { studioCanvasPool } from '../canvas/canvasPool.js';
-import type { BlendMode, Layer } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import { studioCanvasPool } from '@/ts/canvas/canvasPool.js';
+import type { BlendMode, Layer } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Canvas Pool Utilities

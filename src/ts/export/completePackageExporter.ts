@@ -10,8 +10,8 @@ import type {
   ScriptMeta,
   Token,
   ZipExportOptions,
-} from '../types/index.js';
-import { downloadFile } from '../utils/index.js';
+} from '@/ts/types/index.js';
+import { downloadFile } from '@/ts/utils/index.js';
 import { PDFGenerator } from './pdfGenerator.js';
 import { getTokenFilename, getTokenFolderPath, processTokenToBlob } from './zipExporter.js';
 

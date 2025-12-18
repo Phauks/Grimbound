@@ -4,7 +4,7 @@
  * Draw grid, guides, and other overlay helpers on the canvas
  */
 
-import type { GridConfig, Guide, Point } from '../types/index.js';
+import type { GridConfig, Guide, Point } from '@/ts/types/index.js';
 
 /**
  * Draw grid overlay on canvas

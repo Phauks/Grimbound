@@ -16,8 +16,8 @@ import type {
   QRDotType,
   QRErrorCorrectionLevel,
   QRGradientType,
-} from '../types/tokenOptions.js';
-import { logger } from '../utils/logger.js';
+} from '@/ts/types/tokenOptions.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // QR CODE TYPES

@@ -3,7 +3,7 @@
  * Error Handling Utilities - Standardized error handling for hooks and components
  */
 
-import { ErrorHandler } from '../errors.js';
+import { ErrorHandler } from '@/ts/errors.js';
 import { logger } from './logger.js';
 
 /**

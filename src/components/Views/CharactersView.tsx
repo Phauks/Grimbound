@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type DownloadItem, useDownloadsContext } from '../../contexts/DownloadsContext';
-import { useToast } from '../../contexts/ToastContext';
-import { useTokenContext } from '../../contexts/TokenContext';
-import previewStyles from '../../styles/components/characterEditor/TokenPreview.module.css';
-import layoutStyles from '../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../styles/components/views/Views.module.css';
-import { getPreRenderedTokens, hashOptions } from '../../ts/cache/index.js';
-import type { Character, Team, Token } from '../../ts/types/index.js';
+import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import previewStyles from '@/styles/components/characterEditor/TokenPreview.module.css';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/views/Views.module.css';
+import { getPreRenderedTokens, hashOptions } from '@/ts/cache/index.js';
+import type { Character, Team, Token } from '@/ts/types/index.js';
 import {
   downloadCharacterTokenOnly,
   downloadCharacterTokensAsZip,
@@ -14,15 +14,15 @@ import {
   regenerateCharacterAndReminders,
   updateCharacterInJson,
   updateMetaInJson,
-} from '../../ts/ui/detailViewUtils';
-import { logger } from '../../ts/utils/logger.js';
-import { generateRandomName, generateStableUuid, nameToId } from '../../ts/utils/nameGenerator';
-import { ViewLayout } from '../Layout/ViewLayout';
-import { Button } from '../Shared/UI/Button';
-import { CharacterNavigation } from '../ViewComponents/CharactersComponents/CharacterNavigation';
-import { MetaEditor } from '../ViewComponents/CharactersComponents/MetaEditor';
-import { TokenEditor } from '../ViewComponents/CharactersComponents/TokenEditor';
-import { TokenPreview } from '../ViewComponents/CharactersComponents/TokenPreview';
+} from '@/ts/ui/detailViewUtils';
+import { logger } from '@/ts/utils/logger.js';
+import { generateRandomName, generateStableUuid, nameToId } from '@/ts/utils/nameGenerator';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { Button } from '@/components/Shared/UI/Button';
+import { CharacterNavigation } from '@/components/ViewComponents/CharactersComponents/CharacterNavigation';
+import { MetaEditor } from '@/components/ViewComponents/CharactersComponents/MetaEditor';
+import { TokenEditor } from '@/components/ViewComponents/CharactersComponents/TokenEditor';
+import { TokenPreview } from '@/components/ViewComponents/CharactersComponents/TokenPreview';
 
 interface CharactersViewProps {
   initialToken?: Token;
@@ -261,12 +261,15 @@ export function CharactersView({
     setMetadata,
   ]);
 
-  // Sync with external selected UUID
+  // Sync with external selected UUID - only when external changes, not internal
+  const prevExternalUuidRef = useRef(externalSelectedUuid);
   useEffect(() => {
-    if (externalSelectedUuid && externalSelectedUuid !== selectedCharacterUuid) {
+    // Only react to external UUID changes, not internal selection changes
+    if (externalSelectedUuid && externalSelectedUuid !== prevExternalUuidRef.current) {
+      prevExternalUuidRef.current = externalSelectedUuid;
       setSelectedCharacterUuid(externalSelectedUuid);
     }
-  }, [externalSelectedUuid, selectedCharacterUuid]);
+  }, [externalSelectedUuid]);
 
   // Notify parent of character selection changes
   useEffect(() => {
@@ -275,20 +278,22 @@ export function CharactersView({
     }
   }, [selectedCharacterUuid, onCharacterSelect]);
 
+  // Sync editedCharacter when selected character changes
   useEffect(() => {
     // Skip if we just saved - the editedCharacter is already up to date
     if (justSavedRef.current) {
       justSavedRef.current = false;
       return;
     }
+
     if (selectedCharacterUuid && characters.length > 0) {
       const char = characters.find((c) => c.uuid === selectedCharacterUuid);
-      if (char) {
+      if (char && editedCharacter?.uuid !== char.uuid) {
         setEditedCharacter(JSON.parse(JSON.stringify(char)));
         setIsDirty(false);
       }
     }
-  }, [selectedCharacterUuid, characters]);
+  }, [selectedCharacterUuid, characters, editedCharacter?.uuid]);
 
   const selectedCharacter = useMemo(
     () => editedCharacter || characters.find((c) => c.uuid === selectedCharacterUuid),
@@ -373,25 +378,38 @@ export function CharactersView({
     [editedCharacter, generationOptions]
   );
 
-  // Regenerate token on every edit - instant, no debounce
+  // Regenerate preview when editedCharacter or options change
   useEffect(() => {
-    if (!editedCharacter) return;
+    if (!editedCharacter) {
+      setPreviewCharacterToken(null);
+      setPreviewReminderTokens([]);
+      return;
+    }
 
-    // Skip if we just applied cached tokens from hover pre-render for this character
+    // Skip if we just applied cached tokens for this character
     if (skipRegenerateForUuidRef.current === editedCharacter.uuid) {
       skipRegenerateForUuidRef.current = null;
       return;
     }
 
-    // Generate directly to avoid stale closure issues
+    let cancelled = false;
+
     regenerateCharacterAndReminders(editedCharacter, generationOptions)
-      .then(({ characterToken, reminderTokens: newReminderTokens }) => {
-        setPreviewCharacterToken(characterToken);
-        setPreviewReminderTokens(newReminderTokens);
+      .then(({ characterToken, reminderTokens }) => {
+        if (!cancelled) {
+          setPreviewCharacterToken(characterToken);
+          setPreviewReminderTokens(reminderTokens);
+        }
       })
       .catch((error) => {
-        logger.error('CharactersView', 'Failed to regenerate preview', error);
+        if (!cancelled) {
+          logger.error('CharactersView', 'Failed to regenerate preview', error);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [editedCharacter, generationOptions]);
 
   // Ref to track pending save data for flush on unmount
@@ -535,19 +553,17 @@ export function CharactersView({
     const cacheKey = `${newCharacterUuid}:${currentOptionsHashRef.current}`;
 
     previousCharacterUuidRef.current = newCharacterUuid;
-    originalCharacterUuidRef.current = newCharacterUuid; // Reset original UUID when switching characters
+    originalCharacterUuidRef.current = newCharacterUuid;
     setSelectedCharacterUuid(newCharacterUuid);
-    setSelectedMetaToken(null); // Clear meta token selection when selecting character
-    setIsMetaSelected(false); // Clear meta selection when selecting character
+    setSelectedMetaToken(null);
+    setIsMetaSelected(false);
 
     // Check pre-render cache for instant display
     const cached = preRenderCacheRef.current.get(cacheKey);
     if (cached) {
       setPreviewCharacterToken(cached.characterToken);
       setPreviewReminderTokens(cached.reminderTokens);
-      // Remove from cache after use
       preRenderCacheRef.current.delete(cacheKey);
-      // Skip the next regeneration for this specific character since we already have the tokens
       skipRegenerateForUuidRef.current = newCharacterUuid;
     }
   }, []);
@@ -804,10 +820,10 @@ export function CharactersView({
     setIsMetaSelected(true);
   }, []);
 
-  // Use preview tokens if available, otherwise fall back to global state tokens
-  const displayCharacterToken = previewCharacterToken || characterTokens[0];
-  const displayReminderTokens =
-    previewReminderTokens.length > 0 ? previewReminderTokens : reminderTokens;
+  // Simple: just use preview state directly
+  // The regeneration effect cleanup prevents stale results
+  const displayCharacterToken = previewCharacterToken;
+  const displayReminderTokens = previewReminderTokens;
 
   const handleDownloadAll = useCallback(async () => {
     if (!displayCharacterToken) return;

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useDataSync } from '../contexts/DataSyncContext';
-import { useTokenContext } from '../contexts/TokenContext';
-import { characterLookup } from '../ts/data/characterLookup.js';
-import { loadExampleScript } from '../ts/data/dataLoader.js';
-import { extractScriptMeta, validateAndParseScript } from '../ts/data/scriptParser.js';
-import type { SyncEvent } from '../ts/sync/index.js';
-import { logger, validateJson } from '../ts/utils/index.js';
+import { useDataSync } from '@/contexts/DataSyncContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { characterLookup } from '@/ts/data/characterLookup.js';
+import { loadExampleScript } from '@/ts/data/dataLoader.js';
+import { extractScriptMeta, validateAndParseScript } from '@/ts/data/scriptParser.js';
+import type { SyncEvent } from '@/ts/sync/index.js';
+import { logger, validateJson } from '@/ts/utils/index.js';
 
 export function useScriptData() {
   const {

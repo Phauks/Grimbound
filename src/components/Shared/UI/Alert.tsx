@@ -24,8 +24,8 @@
  */
 
 import type { CSSProperties, ReactNode } from 'react';
-import styles from '../../../styles/components/shared/Alert.module.css';
-import { cn } from '../../../ts/utils';
+import styles from '@/styles/components/shared/Alert.module.css';
+import { cn } from '@/ts/utils';
 
 export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
 

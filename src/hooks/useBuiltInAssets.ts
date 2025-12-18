@@ -16,16 +16,16 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAssetStorageService } from '@/contexts/ServiceContext';
 import {
   type BuiltInAsset,
   getBuiltInAsset,
   getBuiltInAssetPath,
   getBuiltInAssets,
   isBuiltInAsset,
-} from '../ts/constants/builtInAssets.js';
-import { extractAssetId, isAssetReference } from '../ts/services/upload/assetResolver.js';
-import { assetStorageService } from '../ts/services/upload/index.js';
-import type { AssetType, AssetWithUrl } from '../ts/services/upload/types.js';
+} from '@/ts/constants/builtInAssets.js';
+import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import type { AssetType, AssetWithUrl } from '@/ts/services/upload/types.js';
 
 // ============================================================================
 // Types
@@ -87,6 +87,9 @@ export function useBuiltInAssets({
   projectId,
   includeGlobal = true,
 }: UseBuiltInAssetsOptions): UseBuiltInAssetsReturn {
+  // Get service from DI context
+  const assetStorageService = useAssetStorageService();
+
   const [userAssets, setUserAssets] = useState<AssetWithUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export function useBuiltInAssets({
     } finally {
       setIsLoading(false);
     }
-  }, [assetType, projectId, includeGlobal]);
+  }, [assetStorageService, assetType, projectId, includeGlobal]);
 
   // Load on mount and when dependencies change
   useEffect(() => {
@@ -183,7 +186,7 @@ export function useBuiltInAssets({
       // Fallback: try as a direct path
       return value;
     },
-    [assetType]
+    [assetStorageService, assetType]
   );
 
   // Get label for any asset value

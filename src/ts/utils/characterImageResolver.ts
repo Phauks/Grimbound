@@ -15,9 +15,9 @@
  * @module utils/characterImageResolver
  */
 
-import { isAssetReference, resolveAssetUrl } from '../services/upload/assetResolver.js';
-import { dataSyncService } from '../sync/index.js';
-import type { Character } from '../types/index.js';
+import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
+import { dataSyncService } from '@/ts/sync/index.js';
+import type { Character } from '@/ts/types/index.js';
 import { logger } from './logger.js';
 
 // ============================================================================
@@ -68,6 +68,32 @@ export interface BatchResolveResult {
  */
 export function isExternalUrl(url: string): boolean {
   return /^(https?:\/\/|data:|blob:)/.test(url);
+}
+
+/**
+ * Check if a path is a local asset path (starts with / but not a protocol)
+ * These are paths like /scripts/dusk.webp that need base URL prepended
+ *
+ * @param path - Path string to check
+ * @returns True if it's a local asset path
+ */
+export function isLocalAssetPath(path: string): boolean {
+  return path.startsWith('/') && !isExternalUrl(path);
+}
+
+/**
+ * Resolve a local asset path to a full URL by prepending the base URL
+ *
+ * In development: /scripts/dusk.webp -> /scripts/dusk.webp
+ * In production: /scripts/dusk.webp -> /Clocktower_Token_Generator/scripts/dusk.webp
+ *
+ * @param path - Local asset path starting with /
+ * @returns Full URL with base path prepended
+ */
+export function resolveLocalAssetPath(path: string): string {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  // Remove leading slash from path since baseUrl already ends with /
+  return `${baseUrl}${path.substring(1)}`;
 }
 
 /**
@@ -126,8 +152,9 @@ export function getFirstImageUrl(imageField: string | string[] | undefined): str
  * 1. Empty URL -> return fallback
  * 2. Asset reference (asset:uuid) -> resolve via AssetStorageService
  * 3. External URL (http/https/data/blob) -> return as-is
- * 4. Path/ID -> try dataSyncService for official character images
- * 5. Fallback -> return original URL
+ * 4. Local asset path (/scripts/dusk.webp) -> resolve with base URL
+ * 5. Path/ID -> try dataSyncService for official character images
+ * 6. Fallback -> return original URL
  *
  * @param imageUrl - The image URL from character data (may be asset ref, URL, or path)
  * @param characterId - The character ID (used for sync storage lookup)
@@ -173,7 +200,13 @@ export async function resolveCharacterImageUrl(
       return { url: imageUrl, source: 'external' };
     }
 
-    // 4. Try sync storage for official character images
+    // 4. Local asset path (e.g., /scripts/dusk.webp) -> resolve with base URL
+    if (isLocalAssetPath(imageUrl)) {
+      const resolvedPath = resolveLocalAssetPath(imageUrl);
+      return { url: resolvedPath, source: 'external' };
+    }
+
+    // 5. Try sync storage for official character images
     if (!skipSyncStorage) {
       // Extract character ID from the path if different from provided ID
       const extractedId = extractCharacterIdFromPath(imageUrl);
@@ -193,7 +226,7 @@ export async function resolveCharacterImageUrl(
       }
     }
 
-    // 5. Fallback -> return original URL
+    // 6. Fallback -> return original URL
     return { url: imageUrl, source: 'fallback' };
   } catch (error) {
     if (logContext) {

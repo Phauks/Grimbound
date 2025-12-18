@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import styles from '../../../styles/components/shared/JsonEditorPanel.module.css';
-import { JsonHighlight } from '../../ViewComponents/JsonComponents/JsonHighlight';
+import styles from '@/styles/components/shared/JsonEditorPanel.module.css';
+import { JsonHighlight } from '@/components/ViewComponents/JsonComponents/JsonHighlight';
 
 interface JsonEditorPanelProps {
   value: string;

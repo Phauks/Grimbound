@@ -6,8 +6,8 @@ import {
   type ThemeId,
   UI_THEMES,
   type UITheme,
-} from '../ts/themes';
-import { getStorageItem, logger, STORAGE_KEYS, setStorageItem } from '../ts/utils/index.js';
+} from '@/ts/themes';
+import { getStorageItem, logger, STORAGE_KEYS, setStorageItem } from '@/ts/utils/index.js';
 
 export interface CustomTheme extends UITheme {
   isCustom: true;

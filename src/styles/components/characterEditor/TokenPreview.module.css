@@ -20,6 +20,9 @@
   /* Add padding to accommodate the close button positioned outside */
   padding: 10px;
   box-sizing: content-box;
+  /* Prevent flash during image swap by having background */
+  background: radial-gradient(circle, var(--bg-tertiary) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .canvasLarge {
@@ -27,6 +30,10 @@
   height: 300px;
   border-radius: 50%;
   box-shadow: var(--shadow-lg);
+  /* Smooth transition when image source changes */
+  transition: opacity 0.15s ease-out;
+  /* Prevent layout shifts during image swap */
+  contain: layout style;
 }
 
 .closeBtn {

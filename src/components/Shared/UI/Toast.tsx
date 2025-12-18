@@ -1,5 +1,5 @@
-import { type Toast as ToastType, useToast } from '../../../contexts/ToastContext';
-import styles from '../../../styles/components/shared/Toast.module.css';
+import { type Toast as ToastType, useToast } from '@/contexts/ToastContext';
+import styles from '@/styles/components/shared/Toast.module.css';
 
 const icons: Record<string, string> = {
   success: '✓',

@@ -7,12 +7,12 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import styles from '../../styles/components/modals/ExportProjectModal.module.css';
-import { ProjectExporter } from '../../ts/services/project/ProjectExporter';
-import type { ExportOptions, Project } from '../../ts/types/project.js';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Alert } from '../Shared/UI/Alert';
-import { Button } from '../Shared/UI/Button';
+import { useProjectExporter } from '@/contexts/ServiceContext';
+import styles from '@/styles/components/modals/ExportProjectModal.module.css';
+import type { ExportOptions, Project } from '@/ts/types/project.js';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface ExportProjectModalProps {
   /** Whether modal is open */
@@ -24,6 +24,9 @@ interface ExportProjectModalProps {
 }
 
 export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectModalProps) {
+  // Get factory hook for creating exporter instances
+  const createExporter = useProjectExporter();
+
   const [options, setOptions] = useState<ExportOptions>({
     includeCustomIcons: true,
     includeThumbnail: true,
@@ -78,7 +81,7 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
     setProgress(10);
 
     try {
-      const exporter = new ProjectExporter();
+      const exporter = createExporter();
 
       // Simulate progress updates
       const progressInterval = setInterval(() => {
@@ -113,7 +116,7 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
       setIsExporting(false);
       setProgress(0);
     }
-  }, [project, options, onClose]);
+  }, [project, options, onClose, createExporter]);
 
   // Reset state when modal closes
   const handleClose = useCallback(() => {

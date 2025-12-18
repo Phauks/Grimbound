@@ -14,11 +14,11 @@
 
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
-import styles from '../../../styles/components/shared/QRCodeSettingsSelector.module.css';
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
-import { QR_COLORS } from '../../../ts/constants.js';
+import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
+import styles from '@/styles/components/shared/QRCodeSettingsSelector.module.css';
+import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import { QR_COLORS } from '@/ts/constants.js';
 import type {
   GenerationOptions,
   QRCodeOptions,
@@ -26,8 +26,8 @@ import type {
   QRCornerSquareType,
   QRDotType,
   QRGradientType,
-} from '../../../ts/types/index';
-import { EditableSlider } from '../Controls/EditableSlider';
+} from '@/ts/types/index';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================

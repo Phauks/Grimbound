@@ -10,14 +10,15 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useProjectContext } from '../contexts/ProjectContext';
-import { useTokenContext } from '../contexts/TokenContext';
-import { projectService } from '../ts/services/project';
-import type { CreateProjectOptions, ListProjectsOptions, Project } from '../ts/types/project.js';
-import { handleAsyncOperation, logger } from '../ts/utils/index.js';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useProjectService } from '@/contexts/ServiceContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import type { CreateProjectOptions, ListProjectsOptions, Project } from '@/ts/types/project.js';
+import { handleAsyncOperation, logger } from '@/ts/utils/index.js';
 
 export function useProjects() {
   const { currentProject, setCurrentProject, projects, setProjects } = useProjectContext();
+  const projectService = useProjectService();
   const {
     characters,
     scriptMeta,
@@ -55,7 +56,7 @@ export function useProjects() {
         }
       );
     },
-    [setProjects, projects.length]
+    [projectService, setProjects, projects.length]
   );
 
   /**
@@ -98,6 +99,7 @@ export function useProjects() {
       return project as Project | undefined;
     },
     [
+      projectService,
       jsonInput,
       characters,
       scriptMeta,
@@ -135,7 +137,7 @@ export function useProjects() {
         }
       );
     },
-    [currentProject, setCurrentProject, loadProjects]
+    [projectService, currentProject, setCurrentProject, loadProjects]
   );
 
   /**
@@ -184,6 +186,7 @@ export function useProjects() {
       return project as Project | undefined;
     },
     [
+      projectService,
       setCurrentProject,
       setCharacters,
       setScriptMeta,
@@ -222,7 +225,7 @@ export function useProjects() {
 
       return project as Project | undefined;
     },
-    [currentProject, setCurrentProject, loadProjects]
+    [projectService, currentProject, setCurrentProject, loadProjects]
   );
 
   /**
@@ -335,7 +338,7 @@ export function useProjects() {
 
       return newProject as Project | undefined;
     },
-    [loadProjects]
+    [projectService, loadProjects]
   );
 
   // Auto-load projects on mount

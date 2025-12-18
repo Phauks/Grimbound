@@ -19,11 +19,11 @@
 
 import { memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
-import styles from '../../../styles/components/shared/FontSettingsSelector.module.css';
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
-import panelStyles from '../../../styles/components/shared/SimplePanelSelector.module.css';
-import { EditableSlider } from '../Controls/EditableSlider';
+import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import styles from '@/styles/components/shared/FontSettingsSelector.module.css';
+import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import panelStyles from '@/styles/components/shared/SimplePanelSelector.module.css';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================

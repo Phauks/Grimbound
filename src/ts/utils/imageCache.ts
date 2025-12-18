@@ -3,8 +3,8 @@
  * Global Image Cache - Singleton for sharing cached images across TokenGenerator instances
  */
 
-import { cacheInvalidationService } from '../cache/CacheInvalidationService.js';
-import { dataSyncService } from '../sync/index.js';
+import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService.js';
+import { dataSyncService } from '@/ts/sync/index.js';
 import { loadImage, loadLocalImage } from './imageUtils.js';
 import { logger } from './logger.js';
 
@@ -34,17 +34,25 @@ interface ImageCacheOptions {
  * - icons/carousel/steward.webp → steward
  * - /icons/chef.webp → chef
  * - washerwoman.png → washerwoman
+ * - washerwoman → washerwoman (plain ID without extension)
  */
 function extractCharacterIdFromUrl(url: string): string | null {
   // Get the filename from the path (last segment)
   const segments = url.split('/');
   const filename = segments[segments.length - 1];
 
-  // Extract character ID from filename (remove extension)
-  const match = filename.match(/^([a-z_]+)\.(?:webp|png|jpg|jpeg|gif)$/i);
-  if (match) {
-    return match[1].toLowerCase();
+  // First try: Extract character ID from filename with extension
+  const matchWithExt = filename.match(/^([a-z_]+)\.(?:webp|png|jpg|jpeg|gif)$/i);
+  if (matchWithExt) {
+    return matchWithExt[1].toLowerCase();
   }
+
+  // Second try: Plain character ID without extension (e.g., "washerwoman")
+  const matchPlainId = filename.match(/^([a-z_]+)$/i);
+  if (matchPlainId) {
+    return matchPlainId[1].toLowerCase();
+  }
+
   return null;
 }
 

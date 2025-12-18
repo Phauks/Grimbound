@@ -3,8 +3,8 @@
  * Canvas Optimization Utilities - Performance optimizations for canvas rendering
  */
 
-import { clearFontCache, getCachedFont } from '../cache/instances/fontCache.js';
-import { CHARACTER_LAYOUT } from '../constants.js';
+import { clearFontCache, getCachedFont } from '@/ts/cache/instances/fontCache.js';
+import { CHARACTER_LAYOUT } from '@/ts/constants.js';
 
 // ============================================================================
 // TEXT LAYOUT CACHING

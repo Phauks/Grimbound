@@ -5,8 +5,8 @@
  * Uses serialized layer snapshots with configurable history depth.
  */
 
-import type { Layer, ToolSettings } from '../types/index';
-import { logger } from '../utils/logger.js';
+import type { Layer, ToolSettings } from '@/ts/types/index';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Types

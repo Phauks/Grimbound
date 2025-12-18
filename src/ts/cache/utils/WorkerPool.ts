@@ -3,15 +3,15 @@
  * Provides load balancing, queuing, and automatic worker management.
  */
 
-import { logger } from '../../utils/logger.js';
-import type { WorkerResponse, WorkerTask } from '../../workers/prerender-worker.js';
+import { logger } from '@/ts/utils/logger.js';
+import type { WorkerResponse, WorkerTask } from '@/ts/workers/prerender-worker.js';
 
 /**
  * Task in the queue.
  */
-interface QueuedTask<T = unknown> {
+interface QueuedTask {
   task: WorkerTask;
-  resolve: (value: T) => void;
+  resolve: (value: unknown) => void;
   reject: (error: Error) => void;
 }
 
@@ -124,8 +124,8 @@ export class WorkerPool {
       if (availableWorker) {
         this.runTask(availableWorker, fullTask, resolve, reject);
       } else {
-        // Queue task for later
-        this.queue.push({ task: fullTask, resolve, reject });
+        // Queue task for later - cast resolve since T is assignable to unknown
+        this.queue.push({ task: fullTask, resolve: resolve as (value: unknown) => void, reject });
       }
     });
   }

@@ -10,8 +10,8 @@ import {
   ImageSegmenter,
   type ImageSegmenterResult,
 } from '@mediapipe/tasks-vision';
-import type { BackgroundRemovalOptions } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import type { BackgroundRemovalOptions } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // WASM files location - can be changed to self-host
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm';

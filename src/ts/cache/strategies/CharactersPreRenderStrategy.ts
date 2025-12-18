@@ -3,15 +3,15 @@
  * Pre-renders first character + reminders for instant characters view display.
  */
 
-import type { Character, GenerationOptions, Token } from '../../types/index.js';
-import { regenerateCharacterAndReminders } from '../../ui/detailViewUtils.js';
-import { globalImageCache } from '../../utils/imageCache.js';
+import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
+import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
 import type {
   ICacheStrategy,
   IPreRenderStrategy,
   PreRenderContext,
   PreRenderResult,
-} from '../core/index.js';
+} from '@/ts/cache/core/index.js';
 
 /**
  * Cache entry for pre-rendered character tokens.
@@ -236,7 +236,7 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
     const relevantOptions = {
       displayAbilityText: options.displayAbilityText,
       generateBootleggerRules: options.generateBootleggerRules,
-      setupFlowerStyle: options.setupFlowerStyle,
+      setupStyle: options.setupStyle,
       reminderBackground: options.reminderBackground,
       reminderBackgroundImage: options.reminderBackgroundImage,
       reminderBackgroundType: options.reminderBackgroundType,

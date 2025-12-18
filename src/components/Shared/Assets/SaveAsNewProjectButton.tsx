@@ -11,10 +11,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTokenContext } from '../../../contexts/TokenContext';
-import { useProjects } from '../../../hooks/useProjects.js';
-import styles from '../../../styles/components/shared/AutoSaveIndicator.module.css';
-import { logger } from '../../../ts/utils/index.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useProjects } from '@/hooks/useProjects.js';
+import styles from '@/styles/components/shared/AutoSaveIndicator.module.css';
+import { logger } from '@/ts/utils/index.js';
 
 interface SaveAsNewProjectButtonProps {
   /** Optional callback for tab navigation */

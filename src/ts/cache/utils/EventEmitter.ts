@@ -3,7 +3,7 @@
  * Provides basic pub/sub functionality without Node.js dependencies.
  */
 
-import { logger } from '../../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Type-safe event listener function

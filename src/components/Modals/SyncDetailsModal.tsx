@@ -13,13 +13,17 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useDataSync } from '../../contexts/DataSyncContext';
-import styles from '../../styles/components/modals/SyncDetailsModal.module.css';
-import CONFIG from '../../ts/config.js';
-import { storageManager } from '../../ts/sync/index.js';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Alert } from '../Shared/UI/Alert';
-import { Button } from '../Shared/UI/Button';
+import { useDataSync } from '@/contexts/DataSyncContext';
+import styles from '@/styles/components/modals/SyncDetailsModal.module.css';
+import CONFIG from '@/ts/config.js';
+import { storageManager } from '@/ts/sync/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
+
+// Create child logger for sync details modal
+const syncLogger = logger.child('SyncDetailsModal');
 
 interface SyncDetailsModalProps {
   isOpen: boolean;
@@ -59,7 +63,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
         cacheAge: lastSyncTimestamp ? formatTimeSince(new Date(lastSyncTimestamp)) : null,
       });
     } catch (error) {
-      console.error('[SyncDetailsModal] Failed to load cache stats:', error);
+      syncLogger.error('Failed to load cache stats', error);
     }
   }, []);
 
@@ -78,7 +82,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
         alert('You are already on the latest version!');
       }
     } catch (error) {
-      console.error('[SyncDetailsModal] Update check failed:', error);
+      syncLogger.error('Update check failed', error);
       alert('Failed to check for updates. Please try again.');
     } finally {
       setIsChecking(false);
@@ -92,7 +96,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
       await loadCacheStats(); // Refresh stats after download
       alert('Update installed successfully!');
     } catch (error) {
-      console.error('[SyncDetailsModal] Download failed:', error);
+      syncLogger.error('Download failed', error);
       alert('Failed to download update. Please try again.');
     } finally {
       setIsDownloading(false);
@@ -114,7 +118,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
       await loadCacheStats(); // Refresh stats after clearing
       alert('Cache cleared and data resynced successfully!');
     } catch (error) {
-      console.error('[SyncDetailsModal] Clear cache failed:', error);
+      syncLogger.error('Clear cache failed', error);
       alert('Failed to clear cache. Please try again.');
     } finally {
       setIsClearing(false);

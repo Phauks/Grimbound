@@ -16,12 +16,26 @@ import type {
   ProjectState,
   ProjectStats,
   ProjectThumbnail,
-} from '../../types/project.js';
-import { generateUuid } from '../../utils/nameGenerator.js';
-import type { IProjectService } from './IProjectService.js';
+} from '@/ts/types/project.js';
+import type { GenerationOptions } from '@/ts/types/index.js';
+import { generateUuid } from '@/ts/utils/nameGenerator.js';
+import type { IProjectDatabase, IProjectExporter, IProjectImporter, IProjectService } from './IProjectService.js';
 import { projectDatabaseService } from './ProjectDatabaseService.js';
 import { projectExporter } from './ProjectExporter.js';
 import { projectImporter } from './ProjectImporter.js';
+
+// ============================================================================
+// Dependency Injection Types
+// ============================================================================
+
+/**
+ * Dependencies for ProjectService
+ */
+export interface ProjectServiceDeps {
+  database: IProjectDatabase;
+  exporter: IProjectExporter;
+  importer: IProjectImporter;
+}
 
 // ============================================================================
 // ProjectService Implementation
@@ -29,6 +43,19 @@ import { projectImporter } from './ProjectImporter.js';
 
 /**
  * Main project management service
+ *
+ * Uses constructor injection for testability. All dependencies have defaults
+ * for convenient usage, but can be overridden for testing.
+ *
+ * @example
+ * ```typescript
+ * // Production usage (uses defaults)
+ * const service = new ProjectService();
+ *
+ * // Testing with mocks
+ * const mockDb = { saveProject: vi.fn(), loadProject: vi.fn(), ... };
+ * const service = new ProjectService({ database: mockDb });
+ * ```
  */
 export class ProjectService implements IProjectService {
   private currentProject: Project | null = null;
@@ -36,6 +63,22 @@ export class ProjectService implements IProjectService {
     state: 'idle',
     isDirty: false,
   };
+
+  // Injected dependencies
+  private readonly db: IProjectDatabase;
+  private readonly exporter: IProjectExporter;
+  private readonly importer: IProjectImporter;
+
+  /**
+   * Create a new ProjectService instance
+   *
+   * @param deps - Optional dependencies for injection (defaults to singleton instances)
+   */
+  constructor(deps: Partial<ProjectServiceDeps> = {}) {
+    this.db = deps.database ?? projectDatabaseService;
+    this.exporter = deps.exporter ?? projectExporter;
+    this.importer = deps.importer ?? projectImporter;
+  }
 
   // ==========================================================================
   // CRUD Operations
@@ -99,7 +142,7 @@ export class ProjectService implements IProjectService {
     };
 
     // Save to database
-    await projectDatabaseService.saveProject(project);
+    await this.db.saveProject(project);
 
     return project;
   }
@@ -108,12 +151,12 @@ export class ProjectService implements IProjectService {
    * Get a project by ID
    */
   async getProject(id: string): Promise<Project | null> {
-    const project = await projectDatabaseService.loadProject(id);
+    const project = await this.db.loadProject(id);
 
     if (project) {
       // Update last accessed timestamp
       project.lastAccessedAt = Date.now();
-      await projectDatabaseService.saveProject(project);
+      await this.db.saveProject(project);
     }
 
     return project;
@@ -123,7 +166,7 @@ export class ProjectService implements IProjectService {
    * Update a project
    */
   async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
-    const existing = await projectDatabaseService.loadProject(id);
+    const existing = await this.db.loadProject(id);
     if (!existing) {
       throw new Error(`Project not found: ${id}`);
     }
@@ -135,7 +178,7 @@ export class ProjectService implements IProjectService {
       lastModifiedAt: Date.now(),
     };
 
-    await projectDatabaseService.saveProject(updated);
+    await this.db.saveProject(updated);
 
     // Update current project if it's the one being updated
     if (this.currentProject?.id === id) {
@@ -149,7 +192,7 @@ export class ProjectService implements IProjectService {
    * Delete a project
    */
   async deleteProject(id: string): Promise<void> {
-    await projectDatabaseService.deleteProject(id);
+    await this.db.deleteProject(id);
 
     // Clear current project if it was deleted
     if (this.currentProject?.id === id) {
@@ -161,11 +204,12 @@ export class ProjectService implements IProjectService {
    * List all projects with optional filtering and sorting
    */
   async listProjects(options: ListProjectsOptions = {}): Promise<Project[]> {
-    let projects = await projectDatabaseService.listProjects();
+    let projects = await this.db.listProjects();
 
     // Filter by tags
     if (options.filter?.tags && options.filter.tags.length > 0) {
-      projects = projects.filter((p) => p.tags?.some((tag) => options.filter.tags!.includes(tag)));
+      const filterTags = options.filter.tags;
+      projects = projects.filter((p) => p.tags?.some((tag) => filterTags.includes(tag)));
     }
 
     // Filter by search query
@@ -242,7 +286,7 @@ export class ProjectService implements IProjectService {
       throw new Error(`Project not found: ${projectId}`);
     }
 
-    return projectExporter.exportAsZip(project, options);
+    return this.exporter.exportAsZip(project, options);
   }
 
   /**
@@ -254,17 +298,29 @@ export class ProjectService implements IProjectService {
       throw new Error(`Project not found: ${projectId}`);
     }
 
-    await projectExporter.exportAndDownload(project, options);
+    // Use the exporter to create the zip first
+    const zipBlob = await this.exporter.exportAsZip(project, options);
+    const filename = this.exporter.generateFilename(project.name);
+
+    // Download the file
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   /**
    * Import a project from a ZIP file
    */
   async importProject(file: File): Promise<Project> {
-    const project = await projectImporter.importFromZip(file);
+    const project = await this.importer.importFromZip(file);
 
     // Save to database
-    await projectDatabaseService.saveProject(project);
+    await this.db.saveProject(project);
 
     return project;
   }
@@ -306,15 +362,15 @@ export class ProjectService implements IProjectService {
    * Get storage quota information
    */
   async getStorageQuota() {
-    return projectDatabaseService.getStorageQuota();
+    return this.db.getStorageQuota();
   }
 
   /**
    * Get database statistics
    */
   async getStats() {
-    const quota = await projectDatabaseService.getStorageQuota();
-    const projects = await projectDatabaseService.listProjects();
+    const quota = await this.db.getStorageQuota();
+    const projects = await this.db.listProjects();
 
     return {
       projectCount: projects.length,

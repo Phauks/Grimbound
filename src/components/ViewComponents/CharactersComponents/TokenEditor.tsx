@@ -1,17 +1,18 @@
 import { type RefCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTokenContext } from '../../../contexts/TokenContext';
-import styles from '../../../styles/components/characterEditor/TokenEditor.module.css';
-import viewStyles from '../../../styles/components/views/Views.module.css';
-import { dataSyncService } from '../../../ts/sync/index.js';
-import type { Character, DecorativeOverrides } from '../../../ts/types/index.js';
-import { generateRandomName, nameToId } from '../../../ts/utils/nameGenerator';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
+import viewStyles from '@/styles/components/views/Views.module.css';
+import { dataSyncService } from '@/ts/sync/index.js';
+import type { Character, DecorativeOverrides } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
 import {
   analyzeReminderText,
   type FormatIssue,
   normalizeReminderText,
-} from '../../../ts/utils/textFormatAnalyzer';
-import { JsonEditorPanel } from '../../Shared/Json/JsonEditorPanel';
-import { AssetPreviewSelector } from '../../Shared/Selectors/AssetPreviewSelector';
+} from '@/ts/utils/textFormatAnalyzer';
+import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
+import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
 
 /**
  * Extended character type that includes the optional `special` property
@@ -298,7 +299,7 @@ export function TokenEditor({
                 return objectUrl;
               }
             } catch (error) {
-              console.warn(`Failed to resolve official character image: ${characterId}`, error);
+              logger.warn('TokenEditor', `Failed to resolve official character image: ${characterId}`, error);
             }
           }
 
@@ -1652,31 +1653,31 @@ export function TokenEditor({
               Override global decorative settings for this character only.
             </p>
 
-            {/* Leaf Settings */}
+            {/* Accent Settings */}
             <div className={styles.decorativesSection}>
-              <h4>Leaf Decorations</h4>
+              <h4>Accent Decorations</h4>
 
               <div className={styles.formGroup}>
-                <label htmlFor="use-custom-leaves">
-                  Use custom leaf settings for this character
+                <label htmlFor="use-custom-accents">
+                  Use custom accent settings for this character
                 </label>
                 <input
-                  id="use-custom-leaves"
+                  id="use-custom-accents"
                   type="checkbox"
                   className={viewStyles.toggleSwitch}
-                  checked={decoratives.useCustomLeaves}
-                  onChange={(e) => updateDecoratives({ useCustomLeaves: e.target.checked })}
+                  checked={decoratives.useCustomAccents}
+                  onChange={(e) => updateDecoratives({ useCustomAccents: e.target.checked })}
                 />
               </div>
 
-              {decoratives.useCustomLeaves && (
+              {decoratives.useCustomAccents && (
                 <>
                   <div className={styles.formGroup}>
-                    <label htmlFor="leaf-style">Leaf Style</label>
+                    <label htmlFor="accent-style">Accent Style</label>
                     <AssetPreviewSelector
-                      value={decoratives.leafStyle || 'classic'}
-                      onChange={(value) => updateDecoratives({ leafStyle: value })}
-                      assetType="leaf"
+                      value={decoratives.accentStyle || 'classic'}
+                      onChange={(value) => updateDecoratives({ accentStyle: value })}
+                      assetType="accent"
                       shape="square"
                       size="small"
                       showNone={true}
@@ -1686,33 +1687,33 @@ export function TokenEditor({
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label htmlFor="leaf-count">Maximum Leaves</label>
+                    <label htmlFor="accent-count">Maximum Accents</label>
                     <input
-                      id="leaf-count"
+                      id="accent-count"
                       type="range"
                       min={0}
                       max={9}
-                      value={decoratives.leafCount ?? 0}
+                      value={decoratives.accentCount ?? 0}
                       onChange={(e) =>
-                        updateDecoratives({ leafCount: parseInt(e.target.value, 10) })
+                        updateDecoratives({ accentCount: parseInt(e.target.value, 10) })
                       }
                     />
-                    <span className={styles.sliderValue}>{decoratives.leafCount ?? 0}</span>
+                    <span className={styles.sliderValue}>{decoratives.accentCount ?? 0}</span>
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label htmlFor="leaf-probability">Leaf Probability</label>
+                    <label htmlFor="accent-probability">Accent Probability</label>
                     <input
-                      id="leaf-probability"
+                      id="accent-probability"
                       type="range"
                       min={0}
                       max={100}
-                      value={decoratives.leafProbability ?? 30}
+                      value={decoratives.accentProbability ?? 30}
                       onChange={(e) =>
-                        updateDecoratives({ leafProbability: parseInt(e.target.value, 10) })
+                        updateDecoratives({ accentProbability: parseInt(e.target.value, 10) })
                       }
                     />
-                    <span className={styles.sliderValue}>{decoratives.leafProbability ?? 30}%</span>
+                    <span className={styles.sliderValue}>{decoratives.accentProbability ?? 30}%</span>
                   </div>
                 </>
               )}
@@ -1721,26 +1722,26 @@ export function TokenEditor({
             {/* Setup Flower Settings */}
             {character.setup && (
               <div className={styles.decorativesSection}>
-                <h4>Setup Flower</h4>
+                <h4>Setup Overlay</h4>
 
                 <div className={styles.formGroup}>
-                  <label htmlFor="hide-setup-flower">Hide setup flower for this character</label>
+                  <label htmlFor="hide-setup-overlay">Hide setup overlay for this character</label>
                   <input
-                    id="hide-setup-flower"
+                    id="hide-setup-overlay"
                     type="checkbox"
                     className={viewStyles.toggleSwitch}
-                    checked={decoratives.hideSetupFlower}
-                    onChange={(e) => updateDecoratives({ hideSetupFlower: e.target.checked })}
+                    checked={decoratives.hideSetupOverlay}
+                    onChange={(e) => updateDecoratives({ hideSetupOverlay: e.target.checked })}
                   />
                 </div>
 
-                {!decoratives.hideSetupFlower && (
+                {!decoratives.hideSetupOverlay && (
                   <div className={styles.formGroup}>
-                    <label htmlFor="setup-flower-style">Flower Style</label>
+                    <label htmlFor="setup-overlay-style">Overlay Style</label>
                     <AssetPreviewSelector
-                      value={decoratives.setupFlowerStyle || 'setup_flower_1'}
-                      onChange={(value) => updateDecoratives({ setupFlowerStyle: value })}
-                      assetType="setup-flower"
+                      value={decoratives.setupStyle || 'setup_flower_1'}
+                      onChange={(value) => updateDecoratives({ setupStyle: value })}
+                      assetType="setup-overlay"
                       shape="square"
                       size="small"
                       showNone={false}
@@ -1806,7 +1807,7 @@ export function TokenEditor({
                               // Could add a toast here if needed
                             })
                             .catch((err) => {
-                              console.error('Failed to copy:', err);
+                              logger.error('TokenEditor', 'Failed to copy', err);
                             });
                         }}
                         title="Copy JSON to clipboard"

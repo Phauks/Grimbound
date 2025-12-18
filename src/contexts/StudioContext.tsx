@@ -20,8 +20,8 @@ import {
   createBlankCanvas,
   HistoryManager,
   releaseStudioCanvas,
-} from '../ts/studio/index.js';
-import type { StudioEditMode } from '../ts/studio/navigationHelpers.js';
+} from '@/ts/studio/index.js';
+import type { StudioEditMode } from '@/ts/studio/navigationHelpers.js';
 import type {
   BorderConfig,
   CanvasSize,
@@ -33,8 +33,8 @@ import type {
   StudioAssetSaveOptions,
   StudioTool,
   ToolSettings,
-} from '../ts/types/index.js';
-import { logger } from '../ts/utils/logger.js';
+} from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Context Type Definition

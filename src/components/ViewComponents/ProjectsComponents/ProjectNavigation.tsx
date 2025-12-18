@@ -6,13 +6,14 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useContextMenu } from '../../../hooks/useContextMenu';
-import layoutStyles from '../../../styles/components/layout/ViewLayout.module.css';
-import styles from '../../../styles/components/projects/ProjectNavigation.module.css';
-import contextMenuStyles from '../../../styles/components/shared/ContextMenu.module.css';
-import { projectDb } from '../../../ts/db/projectDb';
-import type { Project, ProjectVersion } from '../../../ts/types/project.js';
-import { Button } from '../../Shared/UI/Button';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
+import styles from '@/styles/components/projects/ProjectNavigation.module.css';
+import contextMenuStyles from '@/styles/components/shared/ContextMenu.module.css';
+import { projectDb } from '@/ts/db/projectDb';
+import type { Project, ProjectVersion } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface ProjectNavigationProps {
   projects: Project[];
@@ -60,7 +61,7 @@ export function ProjectNavigation({
           }
         } catch (error) {
           // Silently skip errors - version badges are optional
-          console.debug(`Failed to load version for project ${project.id}:`, error);
+          logger.debug('ProjectNavigation', `Failed to load version for project ${project.id}`, error);
         }
       }
 

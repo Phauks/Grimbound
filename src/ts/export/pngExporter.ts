@@ -3,8 +3,8 @@
  * PNG Exporter - Single PNG download functionality
  */
 
-import type { PngExportOptions, Token } from '../types/index.js';
-import { canvasToBlob, downloadFile } from '../utils/index.js';
+import type { PngExportOptions, Token } from '@/ts/types/index.js';
+import { canvasToBlob, downloadFile } from '@/ts/utils/index.js';
 import { buildTokenMetadata, embedPngMetadata } from './pngMetadata.js';
 
 /**

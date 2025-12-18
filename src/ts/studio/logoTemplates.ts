@@ -5,7 +5,7 @@
  * and styling patterns.
  */
 
-import type { CanvasSize, Layer } from '../types/index.js';
+import type { CanvasSize, Layer } from '@/ts/types/index.js';
 import { createStudioCanvas } from './canvasOperations.js';
 
 // ============================================================================

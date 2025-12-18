@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { useTokenContext } from '../contexts/TokenContext';
-import type { Character, Token } from '../ts/types/index.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import type { Character, Token } from '@/ts/types/index.js';
 import {
   downloadCharacterTokensAsZip,
   regenerateSingleToken,
   updateCharacterInJson,
-} from '../ts/ui/detailViewUtils.js';
-import { debounce, logger } from '../ts/utils/index.js';
+} from '@/ts/ui/detailViewUtils.js';
+import { debounce, logger } from '@/ts/utils/index.js';
 
 interface UseTokenDetailEditorProps {
   character: Character;

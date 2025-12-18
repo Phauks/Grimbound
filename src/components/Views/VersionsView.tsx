@@ -13,23 +13,26 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useToast } from '../../contexts/ToastContext';
-import { useProjects } from '../../hooks/useProjects';
-import styles from '../../styles/components/views/VersionsView.module.css';
-import { projectDb } from '../../ts/db/projectDb';
-import { projectService } from '../../ts/services/project';
-import type { CreateProjectOptions, Project, ProjectVersion } from '../../ts/types/project';
-import { logger } from '../../ts/utils/logger';
-import { CreateVersionModal } from '../Modals/CreateVersionModal';
-import { ProjectHistoryModal } from '../Modals/ProjectHistoryModal';
-import { Button } from '../Shared/UI/Button';
-import { VersionCard } from '../ViewComponents/ProjectsComponents/VersionCard';
+import { useProjectService } from '@/contexts/ServiceContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useProjects } from '@/hooks/useProjects';
+import styles from '@/styles/components/views/VersionsView.module.css';
+import { projectDb } from '@/ts/db/projectDb';
+import type { CreateProjectOptions, Project, ProjectVersion } from '@/ts/types/project';
+import { logger } from '@/ts/utils/logger';
+import { CreateVersionModal } from '@/components/Modals/CreateVersionModal';
+import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
+import { Button } from '@/components/Shared/UI/Button';
+import { VersionCard } from '@/components/ViewComponents/ProjectsComponents/VersionCard';
 
 interface VersionsViewProps {
   project: Project;
 }
 
 export function VersionsView({ project }: VersionsViewProps) {
+  // Get service from DI context
+  const projectService = useProjectService();
+
   const { addToast } = useToast();
   const { updateProject } = useProjects();
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
@@ -110,7 +113,7 @@ export function VersionsView({ project }: VersionsViewProps) {
         addToast('Failed to duplicate version', 'error');
       }
     },
-    [project, addToast]
+    [projectService, project, addToast]
   );
 
   const handleRestoreVersion = useCallback(

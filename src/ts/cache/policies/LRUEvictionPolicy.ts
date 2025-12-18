@@ -3,7 +3,7 @@
  * Evicts entries that haven't been accessed recently when cache limits are exceeded.
  */
 
-import type { CacheEntry, CacheStats, IEvictionPolicy } from '../core/index.js';
+import type { CacheEntry, CacheStats, IEvictionPolicy } from '@/ts/cache/core/index.js';
 
 /**
  * Configuration options for LRU eviction policy.

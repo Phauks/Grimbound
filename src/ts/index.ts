@@ -36,15 +36,15 @@ export {
   // Text drawing
   drawCurvedText,
   drawImageCover,
-  // Leaf drawing
-  drawLeaves,
+  // Accent drawing
+  drawAccents,
   drawMultiLineText,
   drawQROverlayText,
   drawTwoLineCenteredText,
   fillCircle,
   // QR generation
   generateStyledQRCode,
-  type LeafDrawingOptions,
+  type AccentDrawingOptions,
   measureCharacterWidths,
   type Point,
   QR_DEFAULTS,
@@ -164,7 +164,6 @@ export {
   sanitizeFilename,
   // Async utilities
   shuffleArray,
-  sleep,
   updateProgress,
   validateJson,
 } from './utils/index.js';

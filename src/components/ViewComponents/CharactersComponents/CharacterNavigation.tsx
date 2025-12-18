@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCharacterImageResolver } from '../../../hooks/useCharacterImageResolver';
-import { useContextMenu } from '../../../hooks/useContextMenu';
-import styles from '../../../styles/components/characterEditor/CharacterNavigation.module.css';
-import type { Character, Team, Token } from '../../../ts/types/index.js';
-import type { ContextMenuItem } from '../../Shared/UI/ContextMenu';
-import { ContextMenu } from '../../Shared/UI/ContextMenu';
+import { useCharacterImageResolver } from '@/hooks/useCharacterImageResolver';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import styles from '@/styles/components/characterEditor/CharacterNavigation.module.css';
+import type { Character, Team, Token } from '@/ts/types/index.js';
+import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
+import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 
 interface CharacterNavigationProps {
   characters: Character[];
@@ -226,6 +226,7 @@ export function CharacterNavigation({
             <div className={styles.name}>{char.name}</div>
           </div>
           {reminderCount > 0 && <div className={styles.badge}>{reminderCount}</div>}
+          {isOfficial && <div className={styles.officialBadge} title="Official character">✦</div>}
         </button>
       </div>
     );

@@ -7,8 +7,8 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import styles from '../../../styles/components/script/NightOrderEntry.module.css';
-import type { NightOrderEntry as NightOrderEntryType } from '../../../ts/nightOrder/nightOrderTypes.js';
+import styles from '@/styles/components/script/NightOrderEntry.module.css';
+import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import { NightOrderEntry } from './NightOrderEntry';
 
 interface SortableNightOrderEntryProps {

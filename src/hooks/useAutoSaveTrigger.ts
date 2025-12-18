@@ -8,14 +8,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useProjectContext } from '../contexts/ProjectContext.js';
-import { useTokenContext } from '../contexts/TokenContext.js';
-import { projectDatabaseService } from '../ts/services/project/index.js';
-import type { AutoSaveSnapshot, Project, ProjectState } from '../ts/types/project.js';
-import type { DebouncedFunction } from '../ts/utils/asyncUtils.js';
-import { retryOperation } from '../ts/utils/errorUtils.js';
-import { debounce, logger } from '../ts/utils/index.js';
-import { generateUuid } from '../ts/utils/nameGenerator.js';
+import { useProjectContext } from '@/contexts/ProjectContext.js';
+import { useProjectDatabaseService } from '@/contexts/ServiceContext';
+import { useTokenContext } from '@/contexts/TokenContext.js';
+import type { AutoSaveSnapshot, Project, ProjectState } from '@/ts/types/project.js';
+import type { DebouncedFunction } from '@/ts/utils/asyncUtils.js';
+import { retryOperation } from '@/ts/utils/errorUtils.js';
+import { debounce, logger } from '@/ts/utils/index.js';
+import { generateUuid } from '@/ts/utils/nameGenerator.js';
 import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
 import { useTabSynchronization } from './useTabSynchronization.js';
 
@@ -37,6 +37,9 @@ const MAX_SNAPSHOTS = 10; // Keep last 10 snapshots
  * - Returns saveNow for manual saves
  */
 export function useAutoSaveTrigger(enabled: boolean = true) {
+  // Get service from DI context
+  const projectDatabaseService = useProjectDatabaseService();
+
   const {
     currentProject,
     isDirty,

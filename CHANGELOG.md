@@ -18,6 +18,43 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 
 ## [Unreleased]
 
+### Added
+- **Enhanced Version Comparison**: Complete field-by-field character comparison with inline diff highlighting
+  - Word-level diff for text fields (ability, flavor, overview, tips, night reminders, etc.)
+  - Added/removed indicator lists for reminders and global reminders
+  - Night order changes (first night, other night) with old→new display
+  - Metadata changes (team, setup, edition, image) tracking
+  - Expandable character rows - click to see all field-level changes
+  - Green highlighting for added text, red strikethrough for removed text
+  - New `textDiff.ts` utility using LCS algorithm for accurate word-level comparison
+  - Extended `projectDiff.ts` with `calculateProjectDiffDetailed()` function
+- **TabPreRenderService**: Unified service for all tab hover pre-rendering (`src/ts/cache/TabPreRenderService.ts`)
+  - Single API for triggering pre-render on tab hover: `tabPreRenderService.preRenderTab(tab, context)`
+  - Consistent cache key generation for reliable cache hits
+  - Supports characters, tokens, and script tabs
+  - Night order pre-computation for instant Script tab navigation
+  - Character image preloading for instant night order display
+- **Character image URL caching**: Preloads and caches resolved image URLs during script pre-render
+  - `getCachedCharacterImageUrl(characterId)` - Get cached resolved image URL
+  - `hasCharacterImageUrl(characterId)` - Check if URL is cached
+  - Used by NightOrderEntry for instant image display without loading flash
+- **Hash utilities**: Shared hash functions for cache key generation (`src/ts/cache/utils/hashUtils.ts`)
+  - `simpleHash()`, `hashArray()`, `hashObject()`, `combineHashes()`
+  - Eliminates duplicated hash code across modules
+- **Script hover pre-render context type**: Added `'script-hover'` to `PreRenderContextType`
+
+### Changed
+- **TabNavigation**: Refactored to use unified `tabPreRenderService` instead of separate pre-render functions
+- **NightOrderContext**: Updated to use `tabPreRenderService.getCachedNightOrder()` for cache lookup
+- **Cache module exports**: Added TabPreRenderService and hashUtils exports to barrel file
+
+### Fixed
+- **Script tab flash**: Fixed visual flash when navigating to Script tab by ensuring cache keys match between pre-render trigger and lookup
+  - TabNavigation now passes `scriptMeta ? [scriptMeta, ...characters] : characters` to match ScriptView's data structure
+- **Character image flash in night order**: Fixed images showing placeholder before loading by preloading and caching resolved URLs
+  - NightOrderEntry now checks `tabPreRenderService.getCachedCharacterImageUrl()` before async resolution
+  - Images display instantly when cached from tab hover pre-rendering
+
 ## [0.3.0] - 2025-12-05
 
 ### 🎉 Major Feature: GitHub Data Sync Integration

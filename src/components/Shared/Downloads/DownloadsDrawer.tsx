@@ -9,8 +9,8 @@
 
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { type DownloadItem, useDownloadsContext } from '../../../contexts/DownloadsContext';
-import styles from '../../../styles/components/shared/DownloadsDrawer.module.css';
+import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import styles from '@/styles/components/shared/DownloadsDrawer.module.css';
 
 /**
  * Individual download item card
@@ -74,12 +74,12 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
     openDrawer();
   }, [openDrawer, clearCloseTimeout]);
 
-  // Handle mouse leave - close after small delay
+  // Handle mouse leave - close after delay to prevent finicky behavior
   const handleMouseLeave = useCallback(() => {
     clearCloseTimeout();
     closeTimeoutRef.current = setTimeout(() => {
       closeDrawer();
-    }, 150); // Small delay to allow moving to drawer
+    }, 300); // Longer delay for smoother UX
   }, [closeDrawer, clearCloseTimeout]);
 
   // Cleanup timeout on unmount
@@ -115,23 +115,31 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
     <section
       ref={containerRef}
       className={`${styles.container} ${isOpen ? styles.containerOpen : ''}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       tabIndex={-1}
       aria-label="Downloads drawer"
     >
-      {/* Edge Tab - chevron hugging the right edge */}
+      {/* Edge Tab - download icon hugging the right edge */}
       <button
         type="button"
         className={`${styles.edgeTab} ${isOpen ? styles.edgeTabOpen : ''}`}
         aria-expanded={isOpen}
         aria-controls="downloads-drawer"
+        aria-label="Downloads"
         tabIndex={0}
         onClick={isOpen ? closeDrawer : openDrawer}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
       >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="currentColor"
+          aria-hidden="true"
+          className={styles.edgeIcon}
+        >
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+        </svg>
         <span className={styles.edgeChevron}>{isOpen ? '›' : '‹'}</span>
       </button>
 
@@ -142,6 +150,8 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
         role="dialog"
         aria-label="Downloads"
         aria-hidden={!isOpen}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Header */}
         <div className={styles.header}>

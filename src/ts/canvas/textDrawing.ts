@@ -3,9 +3,9 @@
  * Text Drawing Utilities - Curved and styled text rendering
  */
 
-import { getCachedFont } from '../cache/instances/fontCache.js';
-import { CHARACTER_LAYOUT, DEFAULT_COLORS, LINE_HEIGHTS } from '../constants.js';
-import { getLineSegments, parseAbilityText } from '../utils/abilityTextParser.js';
+import { getCachedFont } from '@/ts/cache/instances/fontCache.js';
+import { CHARACTER_LAYOUT, DEFAULT_COLORS, LINE_HEIGHTS } from '@/ts/constants.js';
+import { getLineSegments, parseAbilityText } from '@/ts/utils/abilityTextParser.js';
 import {
   calculateCircularTextLayout,
   precalculateCurvedTextPositions,

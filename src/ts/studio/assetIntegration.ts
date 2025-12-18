@@ -4,10 +4,10 @@
  * Integration between Studio and the global asset storage system
  */
 
-import { assetStorageService } from '../services/upload/AssetStorageService.js';
-import type { StudioAssetMetadata } from '../services/upload/types.js';
-import type { CanvasSize, Layer, ToolSettings } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
+import type { StudioAssetMetadata } from '@/ts/services/upload/types.js';
+import type { CanvasSize, Layer, ToolSettings } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 import { loadStudioPreset, saveStudioPreset } from './studioPresets.js';
 
 /**
@@ -64,7 +64,7 @@ export async function saveStudioAsset(
     tags = [],
     createdFrom,
     sourceAssetId,
-    presetApplied: _presetApplied,
+    presetApplied,
   } = options;
 
   // Composite all layers to create the final image

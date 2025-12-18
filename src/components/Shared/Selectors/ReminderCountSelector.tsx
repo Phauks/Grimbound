@@ -11,11 +11,11 @@
 
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
-import type { GenerationOptions, ReminderCountStyle } from '../../../ts/types/index';
+import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
+import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
+import type { GenerationOptions, ReminderCountStyle } from '@/ts/types/index';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface ReminderCountSelectorProps {

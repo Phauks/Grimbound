@@ -5,16 +5,16 @@
  */
 
 import { useCallback, useState } from 'react';
-import { useProjectContext } from '../../../../contexts/ProjectContext';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
 import {
   applyTemplate,
   customizeTemplateWithName,
   LOGO_TEMPLATES,
   type LogoTemplate,
-} from '../../../../ts/studio/index';
-import { logger } from '../../../../ts/utils/logger.js';
+} from '@/ts/studio/index';
+import { logger } from '@/ts/utils/logger.js';
 
 interface LogoWizardModalProps {
   isOpen: boolean;

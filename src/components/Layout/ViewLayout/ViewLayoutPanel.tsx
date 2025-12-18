@@ -5,8 +5,8 @@
  * and flexible content areas with optional scrolling.
  */
 
-import styles from '../../../styles/components/layout/ViewLayout.module.css';
-import { cn } from '../../../ts/utils/classNames';
+import styles from '@/styles/components/layout/ViewLayout.module.css';
+import { cn } from '@/ts/utils/classNames';
 import type { PanelWidth, ViewLayoutPanelProps } from './types';
 
 /**

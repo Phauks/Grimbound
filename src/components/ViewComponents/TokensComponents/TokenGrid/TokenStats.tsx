@@ -1,7 +1,7 @@
-import { useTokenContext } from '../../../../contexts/TokenContext';
-import styles from '../../../../styles/components/tokens/TokenStats.module.css';
-import { TEAM_LABELS } from '../../../../ts/config';
-import { calculateTokenCounts } from '../../../../ts/data/characterUtils';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/tokens/TokenStats.module.css';
+import { TEAM_LABELS } from '@/ts/config';
+import { calculateTokenCounts } from '@/ts/data/characterUtils';
 
 export function TokenStats() {
   const { characters, tokens } = useTokenContext();

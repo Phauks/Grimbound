@@ -10,9 +10,9 @@
  */
 
 import JSZip from 'jszip';
-import { DataSyncError, PackageValidationError } from '../errors.js';
-import type { Character, ExtractedPackage, PackageManifest } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import { DataSyncError, PackageValidationError } from '@/ts/errors.js';
+import type { Character, ExtractedPackage, PackageManifest } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Package Extractor for processing GitHub release ZIP files

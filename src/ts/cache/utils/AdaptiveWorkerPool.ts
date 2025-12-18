@@ -16,7 +16,7 @@
  * @module cache/utils/AdaptiveWorkerPool
  */
 
-import { logger } from '../../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 import { WorkerPool, type WorkerPoolOptions } from './WorkerPool.js';
 
 /**

@@ -11,11 +11,12 @@
  * - Graceful error handling with fallback
  */
 
-import CONFIG from '../config.js';
-import { DataSyncError, GitHubAPIError } from '../errors.js';
-import type { CachedCharacter, Character, SyncStatus } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import CONFIG from '@/ts/config.js';
+import { DataSyncError, GitHubAPIError } from '@/ts/errors.js';
+import type { CachedCharacter, Character, SyncStatus } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 import { githubReleaseClient } from './githubReleaseClient.js';
+import type { IGitHubReleaseClient, IPackageExtractor, IStorageManager } from './ISyncServices.js';
 import { packageExtractor } from './packageExtractor.js';
 import { storageManager } from './storageManager.js';
 import { VersionManager } from './versionManager.js';
@@ -51,7 +52,29 @@ export interface SyncEvent {
 export type SyncEventListener = (event: SyncEvent) => void;
 
 /**
+ * Dependencies for DataSyncService
+ */
+export interface DataSyncServiceDeps {
+  storageManager: IStorageManager;
+  githubClient: IGitHubReleaseClient;
+  packageExtractor: IPackageExtractor;
+}
+
+/**
  * Data Sync Service - Orchestrates all sync operations
+ *
+ * Uses constructor injection for testability. All dependencies have defaults
+ * for convenient usage, but can be overridden for testing.
+ *
+ * @example
+ * ```typescript
+ * // Production usage (uses defaults)
+ * const service = new DataSyncService();
+ *
+ * // Testing with mocks
+ * const mockStorage = { initialize: vi.fn(), ... };
+ * const service = new DataSyncService({ storageManager: mockStorage });
+ * ```
  */
 export class DataSyncService {
   private listeners: Set<SyncEventListener> = new Set();
@@ -66,6 +89,22 @@ export class DataSyncService {
   private initPromise: Promise<void> | null = null;
   private isInitialized = false;
   private updateCheckInterval: number | null = null;
+
+  // Injected dependencies
+  private readonly storage: IStorageManager;
+  private readonly github: IGitHubReleaseClient;
+  private readonly extractor: IPackageExtractor;
+
+  /**
+   * Create a new DataSyncService instance
+   *
+   * @param deps - Optional dependencies for injection (defaults to singleton instances)
+   */
+  constructor(deps: Partial<DataSyncServiceDeps> = {}) {
+    this.storage = deps.storageManager ?? storageManager;
+    this.github = deps.githubClient ?? githubReleaseClient;
+    this.extractor = deps.packageExtractor ?? packageExtractor;
+  }
 
   /**
    * Initialize the sync service
@@ -100,11 +139,11 @@ export class DataSyncService {
 
     try {
       // Initialize storage
-      await storageManager.initialize();
+      await this.storage.initialize();
 
       // Try to load cached data
-      const cachedVersion = (await storageManager.getMetadata('version')) as string | null;
-      const lastSyncTimestamp = (await storageManager.getMetadata('lastSync')) as number | null;
+      const cachedVersion = (await this.storage.getMetadata('version')) as string | null;
+      const lastSyncTimestamp = (await this.storage.getMetadata('lastSync')) as number | null;
 
       if (cachedVersion) {
         // We have cached data!
@@ -168,7 +207,7 @@ export class DataSyncService {
       this.emitEvent('checking', this.currentStatus);
 
       // Fetch latest release from GitHub
-      const release = await githubReleaseClient.fetchLatestRelease();
+      const release = await this.github.fetchLatestRelease();
 
       if (!release) {
         // 304 Not Modified - no update available
@@ -236,7 +275,7 @@ export class DataSyncService {
       this.emitEvent('downloading', this.currentStatus);
 
       // Fetch latest release
-      const release = await githubReleaseClient.fetchLatestRelease(true); // Force refresh
+      const release = await this.github.fetchLatestRelease(true); // Force refresh
 
       if (!release) {
         throw new DataSyncError('No release found', 'download');
@@ -246,13 +285,13 @@ export class DataSyncService {
       logger.info('DataSyncService', `Downloading version: ${version}`);
 
       // Find ZIP asset
-      const zipAsset = githubReleaseClient.findZipAsset(release);
+      const zipAsset = this.github.findZipAsset(release);
       if (!zipAsset) {
         throw new DataSyncError('No ZIP asset found in release', 'download');
       }
 
       // Download ZIP with progress
-      const zipBlob = await githubReleaseClient.downloadAsset(zipAsset, (current, total) => {
+      const zipBlob = await this.github.downloadAsset(zipAsset, (current, total) => {
         this.emitEvent('progress', this.currentStatus, {
           progress: { current, total },
         });
@@ -263,29 +302,29 @@ export class DataSyncService {
       this.currentStatus.state = 'extracting';
       this.emitEvent('extracting', this.currentStatus);
 
-      const extractedPackage = await packageExtractor.extract(zipBlob);
+      const extractedPackage = await this.extractor.extract(zipBlob);
 
       // Verify content hash
-      const isValid = await packageExtractor.verifyContentHash(extractedPackage);
+      const isValid = await this.extractor.verifyContentHash(extractedPackage);
       if (!isValid) {
         logger.warn('DataSyncService', 'Content hash verification failed, but continuing...');
       }
 
       // Store characters in IndexedDB
       logger.info('DataSyncService', `Storing ${extractedPackage.characters.length} characters...`);
-      await storageManager.storeCharacters(extractedPackage.characters, version);
+      await this.storage.storeCharacters(extractedPackage.characters, version);
 
       // Store icons in Cache API
       logger.info('DataSyncService', `Caching ${extractedPackage.icons.size} icons...`);
       for (const [characterId, iconBlob] of extractedPackage.icons) {
-        await storageManager.cacheImage(characterId, iconBlob);
+        await this.storage.cacheImage(characterId, iconBlob);
       }
 
       // Update metadata
-      await storageManager.setMetadata('version', version);
-      await storageManager.setMetadata('lastSync', Date.now());
-      await storageManager.setMetadata('characterCount', extractedPackage.characters.length);
-      await storageManager.setMetadata('contentHash', extractedPackage.manifest.contentHash);
+      await this.storage.setMetadata('version', version);
+      await this.storage.setMetadata('lastSync', Date.now());
+      await this.storage.setMetadata('characterCount', extractedPackage.characters.length);
+      await this.storage.setMetadata('contentHash', extractedPackage.manifest.contentHash);
 
       // Update status
       this.currentStatus = {
@@ -318,7 +357,7 @@ export class DataSyncService {
       await this.initialize();
     }
 
-    const characters = await storageManager.getAllCharacters();
+    const characters = await this.storage.getAllCharacters();
 
     // Strip internal fields before returning
     return characters.map((char) => {
@@ -335,7 +374,7 @@ export class DataSyncService {
       await this.initialize();
     }
 
-    const character = await storageManager.getCharacter(id);
+    const character = await this.storage.getCharacter(id);
 
     if (!character) {
       return null;
@@ -354,7 +393,7 @@ export class DataSyncService {
       await this.initialize();
     }
 
-    const characters = await storageManager.searchCharacters(query);
+    const characters = await this.storage.searchCharacters(query);
 
     // Strip internal fields
     return characters.map((char) => {
@@ -374,7 +413,7 @@ export class DataSyncService {
     }
 
     try {
-      return await storageManager.getImage(characterId);
+      return await this.storage.getImage(characterId);
     } catch (error) {
       logger.warn('DataSyncService', `Failed to get cached image for ${characterId}:`, error);
       return null;
@@ -405,8 +444,8 @@ export class DataSyncService {
     logger.info('DataSyncService', 'Clearing cache and resyncing...');
 
     try {
-      await storageManager.clearAll();
-      githubReleaseClient.clearCache();
+      await this.storage.clearAll();
+      this.github.clearCache();
 
       this.currentStatus.currentVersion = null;
       this.currentStatus.lastSync = null;

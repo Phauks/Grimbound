@@ -7,7 +7,7 @@
  * @module services/project/ProjectDatabaseService
  */
 
-import { projectDb } from '../../db/projectDb.js';
+import { projectDb } from '@/ts/db/projectDb.js';
 import type {
   AutoSaveSnapshot,
   CustomIcon,
@@ -16,8 +16,8 @@ import type {
   DBProject,
   Project,
   StorageQuota,
-} from '../../types/project.js';
-import { generateUuid } from '../../utils/nameGenerator.js';
+} from '@/ts/types/project.js';
+import { generateUuid } from '@/ts/utils/nameGenerator.js';
 import type { IProjectDatabase } from './IProjectService.js';
 
 // ============================================================================

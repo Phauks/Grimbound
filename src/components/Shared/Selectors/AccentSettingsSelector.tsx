@@ -1,26 +1,26 @@
 /**
  * AccentSettingsSelector Component
  *
- * A three-panel settings selector for token accent/leaf decorations:
- * - Left: Leaf style image selection
- * - Middle: Numeric settings (max leaves, probability, arc span, slots)
+ * A three-panel settings selector for token accent decorations:
+ * - Left: Accent style image selection
+ * - Middle: Numeric settings (max accents, probability, arc span, slots)
  * - Right: Visual preview showing probability outcomes
  *
  * The visual preview helps users understand the probabilistic nature of
- * leaf placement by showing simulated outcomes and distribution stats.
+ * accent placement by showing simulated outcomes and distribution stats.
  *
  * @module components/Shared/AccentSettingsSelector
  */
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
-import optionStyles from '../../../styles/components/options/OptionsPanel.module.css';
-import styles from '../../../styles/components/shared/AccentSettingsSelector.module.css';
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
-import type { GenerationOptions } from '../../../ts/types/index';
-import { AssetManagerModal } from '../../Modals/AssetManagerModal';
-import { EditableSlider } from '../Controls/EditableSlider';
+import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
+import styles from '@/styles/components/shared/AccentSettingsSelector.module.css';
+import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface AccentSettingsSelectorProps {
@@ -32,18 +32,128 @@ export interface AccentSettingsSelectorProps {
   ariaLabel?: string;
 }
 
-interface PendingLeafSettings {
-  maximumLeaves: number;
-  leafPopulationProbability: number;
-  leafArcSpan: number;
-  leafSlots: number;
-  enableLeftLeaf: boolean;
-  enableRightLeaf: boolean;
-  sideLeafProbability: number;
+interface PendingAccentSettings {
+  maximumAccents: number;
+  accentPopulationProbability: number;
+  accentArcSpan: number;
+  accentSlots: number;
+  enableLeftAccent: boolean;
+  enableRightAccent: boolean;
+  sideAccentProbability: number;
 }
 
-// Built-in leaf styles (only classic available for now)
-const LEAF_STYLES = [{ id: 'classic', label: 'Classic' }];
+// Built-in accent styles (only classic available for now)
+const ACCENT_STYLES = [{ id: 'classic', label: 'Classic' }];
+
+// ============================================================================
+// Arc Slot Control - Combined slots + max accents visualization
+// ============================================================================
+
+interface ArcSlotControlProps {
+  slots: number;
+  maxAccents: number;
+  onSlotsChange: (slots: number) => void;
+  onMaxAccentsChange: (max: number) => void;
+  minSlots?: number;
+  maxSlots?: number;
+}
+
+/**
+ * Visual control showing arc slots as clickable dots.
+ * - Total dots = arc slots (adjustable with +/- buttons)
+ * - Filled dots = max accents threshold (click a dot to set)
+ * - Makes the relationship between slots and max obvious
+ */
+const ArcSlotControl = memo(function ArcSlotControl({
+  slots,
+  maxAccents,
+  onSlotsChange,
+  onMaxAccentsChange,
+  minSlots = 3,
+  maxSlots = 15,
+}: ArcSlotControlProps) {
+  const handleSlotClick = (index: number) => {
+    const clickedPosition = index + 1;
+    // If clicking the current max position, toggle to 0 (disable arc accents)
+    // Otherwise set max to the clicked position
+    if (clickedPosition === maxAccents) {
+      onMaxAccentsChange(0);
+    } else {
+      onMaxAccentsChange(clickedPosition);
+    }
+  };
+
+  const decreaseSlots = () => {
+    if (slots > minSlots) {
+      const newSlots = slots - 1;
+      onSlotsChange(newSlots);
+      // Auto-clamp max if needed
+      if (maxAccents > newSlots) {
+        onMaxAccentsChange(newSlots);
+      }
+    }
+  };
+
+  const increaseSlots = () => {
+    if (slots < maxSlots) {
+      onSlotsChange(slots + 1);
+    }
+  };
+
+  return (
+    <div className={styles.arcSlotControl}>
+      <div className={styles.arcSlotHeader}>
+        <span className={styles.arcSlotLabel}>Arc Slots</span>
+        <span className={styles.arcSlotSummary}>
+          {maxAccents === 0 ? (
+            <strong>disabled</strong>
+          ) : (
+            <>max <strong>{maxAccents}</strong> of <strong>{slots}</strong></>
+          )}
+        </span>
+      </div>
+      <div className={styles.arcSlotRow}>
+        <button
+          type="button"
+          className={styles.slotAdjustButton}
+          onClick={decreaseSlots}
+          disabled={slots <= minSlots}
+          aria-label="Remove slot"
+        >
+          −
+        </button>
+        <div className={styles.slotDotsContainer}>
+          {Array.from({ length: slots }, (_, i) => {
+            const isActive = i < maxAccents;
+            const isThreshold = i === maxAccents - 1;
+            return (
+              <button
+                key={i}
+                type="button"
+                className={`${styles.slotDot} ${isActive ? styles.slotDotActive : styles.slotDotInactive} ${isThreshold ? styles.slotDotThreshold : ''}`}
+                onClick={() => handleSlotClick(i)}
+                title={`Set max to ${i + 1}`}
+                aria-label={`Slot ${i + 1}${isActive ? ' (will fill)' : ' (won\'t fill)'}`}
+              />
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          className={styles.slotAdjustButton}
+          onClick={increaseSlots}
+          disabled={slots >= maxSlots}
+          aria-label="Add slot"
+        >
+          +
+        </button>
+      </div>
+      <div className={styles.arcSlotHint}>
+        Click dot to set max • Click again to disable • ± to add/remove slots
+      </div>
+    </div>
+  );
+});
 
 // ============================================================================
 // Probability Calculation Utilities
@@ -67,54 +177,54 @@ function binomialProbability(n: number, k: number, p: number): number {
 }
 
 /**
- * Calculate expected value and distribution for leaf placement
- * Now includes side leaves in the calculation via distribution convolution
+ * Calculate expected value and distribution for accent placement
+ * Now includes side accents in the calculation via distribution convolution
  */
 function calculateDistribution(
   slots: number,
   probability: number,
-  maxLeaves: number,
-  enableLeftLeaf: boolean,
-  enableRightLeaf: boolean,
-  sideLeafProbability: number
+  maxAccents: number,
+  enableLeftAccent: boolean,
+  enableRightAccent: boolean,
+  sideAccentProbability: number
 ) {
   const arcProb = probability / 100;
-  const sideProb = sideLeafProbability / 100;
+  const sideProb = sideAccentProbability / 100;
 
-  // Calculate arc leaf probabilities (0 to maxLeaves)
+  // Calculate arc accent probabilities (0 to maxAccents)
   const arcDistribution: number[] = [];
   let cumulativeBeforeMax = 0;
 
   for (let k = 0; k <= slots; k++) {
     const prob = binomialProbability(slots, k, arcProb);
-    if (k < maxLeaves) {
+    if (k < maxAccents) {
       arcDistribution[k] = prob;
       cumulativeBeforeMax += prob;
-    } else if (k === maxLeaves) {
-      // Probability of exactly maxLeaves or more (capped)
+    } else if (k === maxAccents) {
+      // Probability of exactly maxAccents or more (capped)
       arcDistribution[k] = 1 - cumulativeBeforeMax;
     }
   }
 
-  // Calculate side leaf probabilities (0, 1, or 2 side leaves)
-  const leftProb = enableLeftLeaf ? sideProb : 0;
-  const rightProb = enableRightLeaf ? sideProb : 0;
+  // Calculate side accent probabilities (0, 1, or 2 side accents)
+  const leftProb = enableLeftAccent ? sideProb : 0;
+  const rightProb = enableRightAccent ? sideProb : 0;
 
   // P(side = 0), P(side = 1), P(side = 2)
   const sideDistribution = [
-    (1 - leftProb) * (1 - rightProb), // 0 side leaves
-    leftProb * (1 - rightProb) + (1 - leftProb) * rightProb, // 1 side leaf
-    leftProb * rightProb, // 2 side leaves
+    (1 - leftProb) * (1 - rightProb), // 0 side accents
+    leftProb * (1 - rightProb) + (1 - leftProb) * rightProb, // 1 side accent
+    leftProb * rightProb, // 2 side accents
   ];
 
   // Convolve arc and side distributions to get total distribution
-  const maxSideLeaves = (enableLeftLeaf ? 1 : 0) + (enableRightLeaf ? 1 : 0);
-  const maxTotal = maxLeaves + maxSideLeaves;
+  const maxSideAccents = (enableLeftAccent ? 1 : 0) + (enableRightAccent ? 1 : 0);
+  const maxTotal = maxAccents + maxSideAccents;
   const totalDistribution: number[] = new Array(maxTotal + 1).fill(0);
 
-  for (let arc = 0; arc <= maxLeaves; arc++) {
+  for (let arc = 0; arc <= maxAccents; arc++) {
     const arcP = arcDistribution[arc] ?? 0;
-    for (let side = 0; side <= maxSideLeaves; side++) {
+    for (let side = 0; side <= maxSideAccents; side++) {
       const sideP = sideDistribution[side] ?? 0;
       const total = arc + side;
       if (total <= maxTotal) {
@@ -123,11 +233,11 @@ function calculateDistribution(
     }
   }
 
-  // Expected arc leaves (capped)
+  // Expected arc accents (capped)
   const expectedArcRaw = slots * arcProb;
-  const expectedArc = Math.min(expectedArcRaw, maxLeaves);
+  const expectedArc = Math.min(expectedArcRaw, maxAccents);
 
-  // Expected side leaves
+  // Expected side accents
   const expectedSide = leftProb + rightProb;
 
   // Total expected
@@ -143,7 +253,7 @@ function calculateDistribution(
     expectedArc: expectedArc.toFixed(1),
     expectedSide: expectedSide.toFixed(1),
     expectedTotal: expectedTotal.toFixed(1),
-    maxArc: maxLeaves,
+    maxArc: maxAccents,
     maxTotal,
     probZero,
     probLow,
@@ -154,15 +264,15 @@ function calculateDistribution(
 }
 
 /**
- * Simulate a single leaf placement outcome
+ * Simulate a single accent placement outcome
  */
-function simulateOutcome(slots: number, probability: number, maxLeaves: number): boolean[] {
+function simulateOutcome(slots: number, probability: number, maxAccents: number): boolean[] {
   const p = probability / 100;
   const result: boolean[] = [];
   let count = 0;
 
   for (let i = 0; i < slots; i++) {
-    const filled = Math.random() < p && count < maxLeaves;
+    const filled = Math.random() < p && count < maxAccents;
     result.push(filled);
     if (filled) count++;
   }
@@ -174,27 +284,27 @@ function simulateOutcome(slots: number, probability: number, maxLeaves: number):
 // Preview Components
 // ============================================================================
 
-const LeafPreview = memo(function LeafPreview({
-  leafGeneration,
+const AccentPreview = memo(function AccentPreview({
+  accentGeneration,
   isEnabled,
 }: {
-  leafGeneration: string;
+  accentGeneration: string;
   isEnabled: boolean;
 }) {
-  const getLeafPreviewSrc = () => {
-    if (!leafGeneration || leafGeneration === 'none') return null;
-    return `/assets/images/leaves/${leafGeneration}/leaf_1.webp`;
+  const getAccentPreviewSrc = () => {
+    if (!accentGeneration || accentGeneration === 'none') return null;
+    return `/assets/images/accents/${accentGeneration}/accent_1.webp`;
   };
 
-  const previewSrc = getLeafPreviewSrc();
+  const previewSrc = getAccentPreviewSrc();
 
   return (
     <div className={`${styles.previewImage} ${!isEnabled ? styles.previewDisabledState : ''}`}>
       {previewSrc ? (
         <img
           src={previewSrc}
-          alt={`${leafGeneration} leaf style`}
-          className={styles.leafImage}
+          alt={`${accentGeneration} accent style`}
+          className={styles.accentImage}
           onError={(e) => {
             e.currentTarget.style.display = 'none';
             const fallback = e.currentTarget.nextElementSibling;
@@ -202,7 +312,7 @@ const LeafPreview = memo(function LeafPreview({
           }}
         />
       ) : null}
-      <span className={`${styles.leafFallback} ${previewSrc ? styles.hidden : ''}`}>🍂</span>
+      <span className={`${styles.accentFallback} ${previewSrc ? styles.hidden : ''}`}>🍂</span>
     </div>
   );
 });
@@ -214,51 +324,51 @@ const LeafPreview = memo(function LeafPreview({
 const VisualPreview = memo(function VisualPreview({
   slots,
   probability,
-  maxLeaves,
+  maxAccents,
   arcSpan,
-  enableLeftLeaf,
-  enableRightLeaf,
-  sideLeafProbability,
+  enableLeftAccent,
+  enableRightAccent,
+  sideAccentProbability,
 }: {
   slots: number;
   probability: number;
-  maxLeaves: number;
+  maxAccents: number;
   arcSpan: number;
-  enableLeftLeaf: boolean;
-  enableRightLeaf: boolean;
-  sideLeafProbability: number;
+  enableLeftAccent: boolean;
+  enableRightAccent: boolean;
+  sideAccentProbability: number;
 }) {
   const [arcSimulation, setArcSimulation] = useState<boolean[]>([]);
   const [leftSimulation, setLeftSimulation] = useState(false);
   const [rightSimulation, setRightSimulation] = useState(false);
 
-  // Recalculate distribution when settings change (now includes side leaves)
+  // Recalculate distribution when settings change (now includes side accents)
   const stats = useMemo(
     () =>
       calculateDistribution(
         slots,
         probability,
-        maxLeaves,
-        enableLeftLeaf,
-        enableRightLeaf,
-        sideLeafProbability
+        maxAccents,
+        enableLeftAccent,
+        enableRightAccent,
+        sideAccentProbability
       ),
-    [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]
+    [slots, probability, maxAccents, enableLeftAccent, enableRightAccent, sideAccentProbability]
   );
 
   // Run simulation on settings change
   useEffect(() => {
-    setArcSimulation(simulateOutcome(slots, probability, maxLeaves));
-    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability);
-    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability);
-  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]);
+    setArcSimulation(simulateOutcome(slots, probability, maxAccents));
+    setLeftSimulation(enableLeftAccent && Math.random() * 100 < sideAccentProbability);
+    setRightSimulation(enableRightAccent && Math.random() * 100 < sideAccentProbability);
+  }, [slots, probability, maxAccents, enableLeftAccent, enableRightAccent, sideAccentProbability]);
 
   // Regenerate simulation
   const resimulate = useCallback(() => {
-    setArcSimulation(simulateOutcome(slots, probability, maxLeaves));
-    setLeftSimulation(enableLeftLeaf && Math.random() * 100 < sideLeafProbability);
-    setRightSimulation(enableRightLeaf && Math.random() * 100 < sideLeafProbability);
-  }, [slots, probability, maxLeaves, enableLeftLeaf, enableRightLeaf, sideLeafProbability]);
+    setArcSimulation(simulateOutcome(slots, probability, maxAccents));
+    setLeftSimulation(enableLeftAccent && Math.random() * 100 < sideAccentProbability);
+    setRightSimulation(enableRightAccent && Math.random() * 100 < sideAccentProbability);
+  }, [slots, probability, maxAccents, enableLeftAccent, enableRightAccent, sideAccentProbability]);
 
   // Calculate slot positions on arc at TOP of token
   // In screen coordinates: Y increases downward, so -90° points UP
@@ -273,10 +383,10 @@ const VisualPreview = memo(function VisualPreview({
 
     // Container is 2in, token is 1.75in (radius 0.875in)
     // Token radius as % of container: 0.875 / 2 = 43.75%
-    // Leaves at 78% of token radius (LEAF_LAYOUT.ARC_LEAVES.RADIAL_OFFSET)
+    // Accents at 78% of token radius (ACCENT_LAYOUT.ARC_ACCENTS.RADIAL_OFFSET)
     // Arc radius: 43.75% * 0.78 = 34.125%
     const tokenRadiusPercent = (0.875 / 2) * 100; // 43.75%
-    const arcRadius = tokenRadiusPercent * 0.78; // ~34.1% - matches actual leaf placement
+    const arcRadius = tokenRadiusPercent * 0.78; // ~34.1% - matches actual accent placement
     const centerX = 50; // center of 2in container
     const centerY = 50; // center of 2in container
 
@@ -292,8 +402,8 @@ const VisualPreview = memo(function VisualPreview({
     return positions;
   }, [slots, arcSpan]);
 
-  // Side leaf positions (at 88% of token radius - SIDE_LEAVES.RADIAL_OFFSET)
-  const sideLeafRadius = (0.875 / 2) * 100 * 0.88; // ~38.5%
+  // Side accent positions (at 88% of token radius - SIDE_ACCENTS.RADIAL_OFFSET)
+  const sideAccentRadius = (0.875 / 2) * 100 * 0.88; // ~38.5%
 
   const arcFilledCount = arcSimulation.filter(Boolean).length;
   const totalFilledCount = arcFilledCount + (leftSimulation ? 1 : 0) + (rightSimulation ? 1 : 0);
@@ -318,21 +428,21 @@ const VisualPreview = memo(function VisualPreview({
           {/* Token circle */}
           <div className={styles.tokenCircle} />
 
-          {/* Left side leaf marker */}
-          {enableLeftLeaf && (
+          {/* Left side accent marker */}
+          {enableLeftAccent && (
             <div
-              className={`${styles.slotMarker} ${styles.sideLeafMarker} ${leftSimulation ? styles.slotMarkerFilled : styles.slotMarkerPossible}`}
-              style={{ left: `${50 - sideLeafRadius}%`, top: '50%' }}
-              title="Left leaf"
+              className={`${styles.slotMarker} ${styles.sideAccentMarker} ${leftSimulation ? styles.slotMarkerFilled : styles.slotMarkerPossible}`}
+              style={{ left: `${50 - sideAccentRadius}%`, top: '50%' }}
+              title="Left accent"
             />
           )}
 
-          {/* Right side leaf marker */}
-          {enableRightLeaf && (
+          {/* Right side accent marker */}
+          {enableRightAccent && (
             <div
-              className={`${styles.slotMarker} ${styles.sideLeafMarker} ${rightSimulation ? styles.slotMarkerFilled : styles.slotMarkerPossible}`}
-              style={{ left: `${50 + sideLeafRadius}%`, top: '50%' }}
-              title="Right leaf"
+              className={`${styles.slotMarker} ${styles.sideAccentMarker} ${rightSimulation ? styles.slotMarkerFilled : styles.slotMarkerPossible}`}
+              style={{ left: `${50 + sideAccentRadius}%`, top: '50%' }}
+              title="Right accent"
             />
           )}
 
@@ -348,7 +458,7 @@ const VisualPreview = memo(function VisualPreview({
         </div>
       </div>
 
-      {/* Distribution bar - shows combined arc + side leaf probabilities */}
+      {/* Distribution bar - shows combined arc + side accent probabilities */}
       <div className={styles.distributionSection}>
         <div className={styles.distributionTitle}>Total Distribution</div>
         <div className={styles.distributionBar}>
@@ -356,7 +466,7 @@ const VisualPreview = memo(function VisualPreview({
             <div
               className={`${styles.distributionSegment}`}
               style={{ width: `${stats.probZero}%`, background: 'var(--text-muted)' }}
-              title={`${stats.probZero.toFixed(0)}% chance of 0 total leaves`}
+              title={`${stats.probZero.toFixed(0)}% chance of 0 total accents`}
             >
               {stats.probZero > 10 ? '0' : ''}
             </div>
@@ -365,7 +475,7 @@ const VisualPreview = memo(function VisualPreview({
             <div
               className={`${styles.distributionSegment} ${styles.distributionLow}`}
               style={{ width: `${stats.probLow}%` }}
-              title={`${stats.probLow.toFixed(0)}% chance of 1-2 total leaves`}
+              title={`${stats.probLow.toFixed(0)}% chance of 1-2 total accents`}
             >
               {stats.probLow > 10 ? '1-2' : ''}
             </div>
@@ -374,7 +484,7 @@ const VisualPreview = memo(function VisualPreview({
             <div
               className={`${styles.distributionSegment} ${styles.distributionMed}`}
               style={{ width: `${stats.probMed}%` }}
-              title={`${stats.probMed.toFixed(0)}% chance of 3-4 total leaves`}
+              title={`${stats.probMed.toFixed(0)}% chance of 3-4 total accents`}
             >
               {stats.probMed > 10 ? '3-4' : ''}
             </div>
@@ -383,14 +493,14 @@ const VisualPreview = memo(function VisualPreview({
             <div
               className={`${styles.distributionSegment} ${styles.distributionHigh}`}
               style={{ width: `${stats.probHigh}%` }}
-              title={`${stats.probHigh.toFixed(0)}% chance of 5+ total leaves`}
+              title={`${stats.probHigh.toFixed(0)}% chance of 5+ total accents`}
             >
               {stats.probHigh > 10 ? '5+' : ''}
             </div>
           )}
         </div>
 
-        {/* Stats - now includes side leaves */}
+        {/* Stats - now includes side accents */}
         <div className={styles.statsRow}>
           <div
             className={styles.statItem}
@@ -433,81 +543,82 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
 }: AccentSettingsSelectorProps) {
   const [showAssetModal, setShowAssetModal] = useState(false);
 
-  const isEnabled = generationOptions.leafEnabled !== false;
-  const currentLeafStyle = generationOptions.leafGeneration || 'classic';
+  const isEnabled = generationOptions.accentEnabled !== false;
+  const currentAccentStyle = generationOptions.accentGeneration || 'classic';
 
-  const currentSettings: PendingLeafSettings = {
-    maximumLeaves: generationOptions.maximumLeaves ?? 5,
-    leafPopulationProbability: generationOptions.leafPopulationProbability ?? 30,
-    leafArcSpan: generationOptions.leafArcSpan ?? 120,
-    leafSlots: generationOptions.leafSlots ?? 7,
-    enableLeftLeaf: generationOptions.enableLeftLeaf ?? true,
-    enableRightLeaf: generationOptions.enableRightLeaf ?? true,
-    sideLeafProbability: generationOptions.sideLeafProbability ?? 50,
+  const currentSettings: PendingAccentSettings = {
+    maximumAccents: generationOptions.maximumAccents ?? 5,
+    accentPopulationProbability: generationOptions.accentPopulationProbability ?? 30,
+    accentArcSpan: generationOptions.accentArcSpan ?? 120,
+    accentSlots: generationOptions.accentSlots ?? 7,
+    enableLeftAccent: generationOptions.enableLeftAccent ?? true,
+    enableRightAccent: generationOptions.enableRightAccent ?? true,
+    sideAccentProbability: generationOptions.sideAccentProbability ?? 50,
   };
 
   const handleToggle = useCallback(
     (enabled: boolean) => {
-      onOptionChange({ leafEnabled: enabled });
+      onOptionChange({ accentEnabled: enabled });
     },
     [onOptionChange]
   );
 
   const handlePanelChange = useCallback(
-    (settings: PendingLeafSettings) => {
+    (settings: PendingAccentSettings) => {
       onOptionChange({
-        maximumLeaves: settings.maximumLeaves,
-        leafPopulationProbability: settings.leafPopulationProbability,
-        leafArcSpan: settings.leafArcSpan,
-        leafSlots: settings.leafSlots,
-        enableLeftLeaf: settings.enableLeftLeaf,
-        enableRightLeaf: settings.enableRightLeaf,
-        sideLeafProbability: settings.sideLeafProbability,
+        maximumAccents: settings.maximumAccents,
+        accentPopulationProbability: settings.accentPopulationProbability,
+        accentArcSpan: settings.accentArcSpan,
+        accentSlots: settings.accentSlots,
+        enableLeftAccent: settings.enableLeftAccent,
+        enableRightAccent: settings.enableRightAccent,
+        sideAccentProbability: settings.sideAccentProbability,
       });
     },
     [onOptionChange]
   );
 
-  const handleLeafStyleChange = useCallback(
+  const handleAccentStyleChange = useCallback(
     (styleId: string) => {
-      onOptionChange({ leafGeneration: styleId });
+      onOptionChange({ accentGeneration: styleId });
     },
     [onOptionChange]
   );
 
   const handleAssetChange = useCallback(
     (assetId: string) => {
-      onOptionChange({ leafGeneration: assetId });
+      onOptionChange({ accentGeneration: assetId });
       setShowAssetModal(false);
     },
     [onOptionChange]
   );
 
-  const panel = useExpandablePanel<PendingLeafSettings>({
+  const panel = useExpandablePanel<PendingAccentSettings>({
     value: currentSettings,
     onChange: handlePanelChange,
     onPreviewChange: handlePanelChange,
     disabled,
-    panelHeight: 340,
+    panelHeight: 380,
     minPanelWidth: 580,
   });
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
-  const currentMaxLeavesLimit = displaySettings.leafSlots + 2;
+  // Max arc accents is limited by the number of arc slots (side accents are separate)
+  const currentMaxAccentsLimit = displaySettings.accentSlots;
 
   const getSummary = () => {
     if (!isEnabled) return 'Disabled';
-    return `${displaySettings.maximumLeaves} max · ${displaySettings.leafPopulationProbability}%`;
+    return `${displaySettings.maximumAccents} max · ${displaySettings.accentPopulationProbability}%`;
   };
 
-  const defaultSettings: PendingLeafSettings = {
-    maximumLeaves: 5,
-    leafPopulationProbability: 30,
-    leafArcSpan: 120,
-    leafSlots: 7,
-    enableLeftLeaf: true,
-    enableRightLeaf: true,
-    sideLeafProbability: 50,
+  const defaultSettings: PendingAccentSettings = {
+    maximumAccents: 5,
+    accentPopulationProbability: 30,
+    accentArcSpan: 120,
+    accentSlots: 7,
+    enableLeftAccent: true,
+    enableRightAccent: true,
+    sideAccentProbability: 50,
   };
 
   const EnableToggle = (
@@ -550,20 +661,20 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
         style={panelStyle}
       >
         <div className={styles.threePanelLayout}>
-          {/* LEFT PANEL - Leaf Style Selection */}
+          {/* LEFT PANEL - Accent Style Selection */}
           <div className={styles.leftPanel}>
-            <div className={styles.panelTitle}>Leaf Style</div>
+            <div className={styles.panelTitle}>Accent Style</div>
             <div className={styles.imageGrid}>
-              {LEAF_STYLES.map((style) => (
+              {ACCENT_STYLES.map((style) => (
                 <button
                   key={style.id}
                   type="button"
-                  className={`${styles.imageOption} ${currentLeafStyle === style.id ? styles.imageOptionSelected : ''}`}
-                  onClick={() => handleLeafStyleChange(style.id)}
+                  className={`${styles.imageOption} ${currentAccentStyle === style.id ? styles.imageOptionSelected : ''}`}
+                  onClick={() => handleAccentStyleChange(style.id)}
                   title={style.label}
                 >
                   <img
-                    src={`/assets/images/leaves/${style.id}/leaf_1.webp`}
+                    src={`/assets/images/accents/${style.id}/accent_1.webp`}
                     alt={style.label}
                     className={styles.imageOptionImg}
                     onError={(e) => {
@@ -587,39 +698,25 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
           <div className={styles.middlePanel}>
             <div className={styles.panelTitle}>Settings</div>
 
-            {/* Max Leaves */}
-            <div className={styles.settingGroup}>
-              <EditableSlider
-                label="Max Leaves"
-                value={Math.min(panel.pendingValue.maximumLeaves, currentMaxLeavesLimit)}
-                onChange={(v) => panel.updatePendingField('maximumLeaves', v)}
-                min={1}
-                max={currentMaxLeavesLimit}
-                suffix=""
-                defaultValue={5}
-              />
+            {/* Arc Accents Section */}
+            <div className={styles.sectionDivider}>
+              <span>Arc Accents</span>
             </div>
 
-            {/* Probability */}
-            <div className={styles.settingGroup}>
-              <EditableSlider
-                label="Probability"
-                value={panel.pendingValue.leafPopulationProbability}
-                onChange={(v) => panel.updatePendingField('leafPopulationProbability', v)}
-                min={0}
-                max={100}
-                step={5}
-                suffix="%"
-                defaultValue={30}
-              />
-            </div>
+            {/* Combined Arc Slots + Max Accents Control */}
+            <ArcSlotControl
+              slots={panel.pendingValue.accentSlots}
+              maxAccents={Math.min(panel.pendingValue.maximumAccents, currentMaxAccentsLimit)}
+              onSlotsChange={(v) => panel.updatePendingField('accentSlots', v)}
+              onMaxAccentsChange={(v) => panel.updatePendingField('maximumAccents', v)}
+            />
 
             {/* Arc Span */}
             <div className={styles.settingGroup}>
               <EditableSlider
                 label="Arc Span"
-                value={panel.pendingValue.leafArcSpan}
-                onChange={(v) => panel.updatePendingField('leafArcSpan', v)}
+                value={panel.pendingValue.accentArcSpan}
+                onChange={(v) => panel.updatePendingField('accentArcSpan', v)}
                 min={30}
                 max={180}
                 step={10}
@@ -628,67 +725,62 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
               />
             </div>
 
-            {/* Arc Slots */}
+            {/* Probability */}
             <div className={styles.settingGroup}>
               <EditableSlider
-                label="Arc Slots"
-                value={panel.pendingValue.leafSlots}
-                onChange={(v) => {
-                  panel.updatePendingField('leafSlots', v);
-                  const newLimit = v + 2;
-                  if (panel.pendingValue.maximumLeaves > newLimit) {
-                    panel.updatePendingField('maximumLeaves', newLimit);
-                  }
-                }}
-                min={3}
-                max={15}
-                suffix=""
-                defaultValue={7}
+                label="Accent Probability"
+                value={panel.pendingValue.accentPopulationProbability}
+                onChange={(v) => panel.updatePendingField('accentPopulationProbability', v)}
+                min={0}
+                max={100}
+                step={5}
+                suffix="%"
+                defaultValue={30}
               />
             </div>
 
-            {/* Side Leaves Section Divider */}
+            {/* Side Accents Section Divider */}
             <div className={styles.sectionDivider}>
-              <span>Side Leaves</span>
+              <span>Side Accents</span>
             </div>
 
-            {/* Left/Right Leaf Toggles */}
+            {/* Left/Right Accent Toggles */}
             <div className={styles.settingGroup}>
               <div className={styles.checkboxRow}>
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
-                    checked={panel.pendingValue.enableLeftLeaf}
-                    onChange={(e) => panel.updatePendingField('enableLeftLeaf', e.target.checked)}
+                    checked={panel.pendingValue.enableLeftAccent}
+                    onChange={(e) => panel.updatePendingField('enableLeftAccent', e.target.checked)}
                     className={styles.checkbox}
                   />
-                  <span>Left Leaf</span>
+                  <span>Left Accent</span>
                 </label>
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
-                    checked={panel.pendingValue.enableRightLeaf}
-                    onChange={(e) => panel.updatePendingField('enableRightLeaf', e.target.checked)}
+                    checked={panel.pendingValue.enableRightAccent}
+                    onChange={(e) => panel.updatePendingField('enableRightAccent', e.target.checked)}
                     className={styles.checkbox}
                   />
-                  <span>Right Leaf</span>
+                  <span>Right Accent</span>
                 </label>
               </div>
             </div>
 
-            {/* Side Leaf Probability */}
+            {/* Side Accent Probability */}
             <div className={styles.settingGroup}>
               <EditableSlider
                 label="Side Prob."
-                value={panel.pendingValue.sideLeafProbability}
-                onChange={(v) => panel.updatePendingField('sideLeafProbability', v)}
+                value={panel.pendingValue.sideAccentProbability}
+                onChange={(v) => panel.updatePendingField('sideAccentProbability', v)}
                 min={0}
                 max={100}
                 step={5}
                 suffix="%"
                 defaultValue={50}
                 disabled={
-                  !(panel.pendingValue.enableLeftLeaf || panel.pendingValue.enableRightLeaf)
+                  !(panel.pendingValue.enableLeftAccent || panel.pendingValue.enableRightAccent)
                 }
               />
             </div>
@@ -698,13 +790,13 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
           <div className={styles.rightPanel}>
             <div className={styles.panelTitle}>Preview</div>
             <VisualPreview
-              slots={panel.pendingValue.leafSlots}
-              probability={panel.pendingValue.leafPopulationProbability}
-              maxLeaves={Math.min(panel.pendingValue.maximumLeaves, currentMaxLeavesLimit)}
-              arcSpan={panel.pendingValue.leafArcSpan}
-              enableLeftLeaf={panel.pendingValue.enableLeftLeaf}
-              enableRightLeaf={panel.pendingValue.enableRightLeaf}
-              sideLeafProbability={panel.pendingValue.sideLeafProbability}
+              slots={panel.pendingValue.accentSlots}
+              probability={panel.pendingValue.accentPopulationProbability}
+              maxAccents={Math.min(panel.pendingValue.maximumAccents, currentMaxAccentsLimit)}
+              arcSpan={panel.pendingValue.accentArcSpan}
+              enableLeftAccent={panel.pendingValue.enableLeftAccent}
+              enableRightAccent={panel.pendingValue.enableRightAccent}
+              sideAccentProbability={panel.pendingValue.sideAccentProbability}
             />
           </div>
         </div>
@@ -738,7 +830,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
         ref={panel.containerRef}
         preview={
           <PreviewBox shape="square" size={size}>
-            <LeafPreview leafGeneration={currentLeafStyle} isEnabled={isEnabled} />
+            <AccentPreview accentGeneration={currentAccentStyle} isEnabled={isEnabled} />
           </PreviewBox>
         }
         info={<InfoSection label="Accents" />}
@@ -760,7 +852,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
           isOpen={showAssetModal}
           onClose={() => setShowAssetModal(false)}
           onSelectAsset={handleAssetChange}
-          initialAssetType="leaf"
+          initialAssetType="accent"
           selectionMode={true}
           includeBuiltIn={true}
           projectId={projectId}

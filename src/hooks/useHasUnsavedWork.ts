@@ -8,8 +8,8 @@
  */
 
 import { useMemo } from 'react';
-import { useProjectContext } from '../contexts/ProjectContext.js';
-import { useTokenContext } from '../contexts/TokenContext.js';
+import { useProjectContext } from '@/contexts/ProjectContext.js';
+import { useTokenContext } from '@/contexts/TokenContext.js';
 
 /**
  * Hook to detect if user has unsaved work

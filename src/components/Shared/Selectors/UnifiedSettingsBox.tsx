@@ -26,7 +26,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import styles from '../../../styles/components/shared/UnifiedSettingsBox.module.css';
+import styles from '@/styles/components/shared/UnifiedSettingsBox.module.css';
 
 // ============================================================================
 // Types

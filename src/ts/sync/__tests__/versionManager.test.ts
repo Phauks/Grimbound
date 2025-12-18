@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { ValidationError } from '../../errors.js';
-import { VersionManager } from '../versionManager.js';
+import { ValidationError } from '@/ts/errors.js';
+import { VersionManager } from '@/ts/sync/versionManager.js';
 
 describe('VersionManager', () => {
   describe('parse', () => {

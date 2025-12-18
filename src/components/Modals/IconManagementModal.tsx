@@ -7,12 +7,12 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import styles from '../../styles/components/modals/IconManagementModal.module.css';
-import type { Character } from '../../ts/types/index.js';
-import type { CustomIconMetadata } from '../../ts/types/project.js';
-import { IconUploader } from '../Shared/Controls/IconUploader';
-import { Modal } from '../Shared/ModalBase/Modal';
-import { Button } from '../Shared/UI/Button';
+import styles from '@/styles/components/modals/IconManagementModal.module.css';
+import type { Character } from '@/ts/types/index.js';
+import type { CustomIconMetadata } from '@/ts/types/project.js';
+import { IconUploader } from '@/components/Shared/Controls/IconUploader';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Button } from '@/components/Shared/UI/Button';
 
 interface IconManagementModalProps {
   /** Whether modal is open */

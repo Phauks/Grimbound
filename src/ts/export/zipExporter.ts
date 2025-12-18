@@ -4,14 +4,14 @@
  */
 
 import JSZip from 'jszip';
-import { TEAM_LABELS } from '../config.js';
+import { TEAM_LABELS } from '@/ts/config.js';
 import type {
   PngExportOptions,
   ProgressCallback,
   Token,
   ZipExportOptions,
-} from '../types/index.js';
-import { canvasToBlob } from '../utils/index.js';
+} from '@/ts/types/index.js';
+import { canvasToBlob } from '@/ts/utils/index.js';
 import { buildTokenMetadata, embedPngMetadata } from './pngMetadata.js';
 
 // ============================================================================

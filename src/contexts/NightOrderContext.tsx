@@ -6,15 +6,16 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
-import { extractScriptMeta } from '../ts/data/scriptParser.js';
+import { tabPreRenderService } from '@/ts/cache/index.js';
+import { extractScriptMeta } from '@/ts/data/scriptParser.js';
 import type {
   NightOrderContextValue,
   NightOrderState,
   ScriptMetaWithNightOrder,
-} from '../ts/nightOrder/nightOrderTypes.js';
-import { buildNightOrder, moveNightOrderEntry } from '../ts/nightOrder/nightOrderUtils.js';
-import type { ScriptEntry, ScriptMeta } from '../ts/types/index.js';
-import { logger } from '../ts/utils/logger.js';
+} from '@/ts/nightOrder/nightOrderTypes.js';
+import { buildNightOrder, moveNightOrderEntry } from '@/ts/nightOrder/nightOrderUtils.js';
+import type { ScriptEntry, ScriptMeta } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Default empty night order state
@@ -32,31 +33,103 @@ const NightOrderContext = createContext<NightOrderContextValue | undefined>(unde
 
 interface NightOrderProviderProps {
   children: ReactNode;
+  /** Optional initial script data to pre-populate from cache */
+  initialScriptData?: ScriptEntry[];
+}
+
+/**
+ * Initialize state from cache if available.
+ * Uses TabPreRenderService for unified cache access.
+ */
+function getInitialState(scriptData?: ScriptEntry[]): {
+  firstNight: NightOrderState;
+  otherNight: NightOrderState;
+  scriptMeta: ScriptMeta | null;
+} {
+  if (!scriptData || scriptData.length === 0) {
+    return {
+      firstNight: createEmptyNightOrderState(),
+      otherNight: createEmptyNightOrderState(),
+      scriptMeta: null,
+    };
+  }
+
+  // Check for pre-computed cache (via unified TabPreRenderService)
+  const cached = tabPreRenderService.getCachedNightOrder(scriptData);
+  if (cached) {
+    logger.debug('NightOrderContext', 'Initializing from TabPreRenderService cache');
+    const meta = extractScriptMeta(scriptData) as ScriptMetaWithNightOrder | null;
+    return {
+      firstNight: {
+        entries: cached.firstNight.entries,
+        source: cached.firstNight.source,
+        customPositions: new Map(),
+      },
+      otherNight: {
+        entries: cached.otherNight.entries,
+        source: cached.otherNight.source,
+        customPositions: new Map(),
+      },
+      scriptMeta: meta,
+    };
+  }
+
+  return {
+    firstNight: createEmptyNightOrderState(),
+    otherNight: createEmptyNightOrderState(),
+    scriptMeta: null,
+  };
 }
 
 /**
  * Night Order Provider Component
  */
-export function NightOrderProvider({ children }: NightOrderProviderProps) {
+export function NightOrderProvider({ children, initialScriptData }: NightOrderProviderProps) {
+  // Initialize state - use cache if available for instant display
+  const initial = useMemo(() => getInitialState(initialScriptData), [initialScriptData]);
+
   // State
-  const [firstNight, setFirstNight] = useState<NightOrderState>(createEmptyNightOrderState());
-  const [otherNight, setOtherNight] = useState<NightOrderState>(createEmptyNightOrderState());
-  const [scriptMeta, setScriptMeta] = useState<ScriptMeta | null>(null);
+  const [firstNight, setFirstNight] = useState<NightOrderState>(initial.firstNight);
+  const [otherNight, setOtherNight] = useState<NightOrderState>(initial.otherNight);
+  const [scriptMeta, setScriptMeta] = useState<ScriptMeta | null>(initial.scriptMeta);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Initialize night order from script data
+   * Initialize night order from script data.
+   * Uses TabPreRenderService for unified cache access.
    */
   const initializeFromScript = useCallback((scriptData: ScriptEntry[]) => {
-    setIsLoading(true);
     setError(null);
 
     try {
       // Extract script metadata
       const meta = extractScriptMeta(scriptData) as ScriptMetaWithNightOrder | null;
       setScriptMeta(meta);
+
+      // Check for pre-computed cache (via unified TabPreRenderService)
+      const cached = tabPreRenderService.getCachedNightOrder(scriptData);
+
+      if (cached) {
+        // Use cached results - no loading state needed
+        logger.debug('NightOrderContext', 'Using TabPreRenderService cached night order');
+        setFirstNight({
+          entries: cached.firstNight.entries,
+          source: cached.firstNight.source,
+          customPositions: new Map(),
+        });
+        setOtherNight({
+          entries: cached.otherNight.entries,
+          source: cached.otherNight.source,
+          customPositions: new Map(),
+        });
+        setIsDirty(false);
+        return;
+      }
+
+      // No cache - build fresh (show loading state for longer operations)
+      setIsLoading(true);
 
       // Build first night order
       const firstNightResult = buildNightOrder(scriptData, 'first');

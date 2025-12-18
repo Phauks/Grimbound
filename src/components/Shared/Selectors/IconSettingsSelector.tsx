@@ -19,14 +19,14 @@
 
 import { memo } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '../../../hooks/useExpandablePanel';
-import iconStyles from '../../../styles/components/shared/IconSettingsSelector.module.css';
-import baseStyles from '../../../styles/components/shared/SettingsSelectorBase.module.css';
-import styles from '../../../styles/components/shared/SimplePanelSelector.module.css';
-import type { MeasurementUnit } from '../../../ts/types/measurement';
-import { ICON_OFFSET_CONFIG } from '../../../ts/utils/measurementUtils';
-import { EditableSlider } from '../Controls/EditableSlider';
-import { MeasurementSlider } from '../Controls/MeasurementSlider';
+import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import iconStyles from '@/styles/components/shared/IconSettingsSelector.module.css';
+import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
+import type { MeasurementUnit } from '@/ts/types/measurement';
+import { ICON_OFFSET_CONFIG } from '@/ts/utils/measurementUtils';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================

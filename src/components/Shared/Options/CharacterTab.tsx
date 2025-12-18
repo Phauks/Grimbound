@@ -1,11 +1,11 @@
 import { memo, useState } from 'react';
-import styles from '../../../styles/components/options/OptionsTab.module.css';
-import type { GenerationOptions } from '../../../ts/types/index';
-import { EditableSlider } from '../Controls/EditableSlider';
-import { AssetPreviewSelector } from '../Selectors/AssetPreviewSelector';
-import { ColorPreviewSelector } from '../Selectors/ColorPreviewSelector';
-import { OptionGroup } from '../UI/OptionGroup';
-import { SegmentedControl } from '../UI/SegmentedControl';
+import styles from '@/styles/components/options/OptionsTab.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
+import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
+import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
+import { SegmentedControl } from '@/components/Shared/UI/SegmentedControl';
 
 interface CharacterTabProps {
   generationOptions: GenerationOptions;
@@ -259,11 +259,11 @@ export const CharacterTab = memo(
           {activeSubTab === 'decoratives' && (
             <div className={styles.subtabContent}>
               <div className={styles.subsection}>
-                {/* Setup Flower - clean selector matching AppearancePanel style */}
+                {/* Setup Overlay - clean selector matching AppearancePanel style */}
                 <AssetPreviewSelector
-                  value={generationOptions.setupFlowerStyle || 'setup_flower_1'}
-                  onChange={(value) => onOptionChange({ setupFlowerStyle: value })}
-                  assetType="setup-flower"
+                  value={generationOptions.setupStyle || 'setup_flower_1'}
+                  onChange={(value) => onOptionChange({ setupStyle: value })}
+                  assetType="setup-overlay"
                   shape="square"
                   showNone={false}
                   projectId={projectId}
@@ -271,31 +271,31 @@ export const CharacterTab = memo(
                 />
 
                 <OptionGroup
-                  label="Maximum Leaves"
-                  helpText="Maximum number of leaves to generate (0 = disabled)"
+                  label="Maximum Accents"
+                  helpText="Maximum number of accents to generate (0 = disabled)"
                   isSlider
                 >
                   <EditableSlider
                     value={Math.min(
-                      generationOptions.maximumLeaves ?? 0,
-                      (generationOptions.leafSlots || 7) + 2
+                      generationOptions.maximumAccents ?? 0,
+                      (generationOptions.accentSlots || 7) + 2
                     )}
-                    onChange={(value) => onOptionChange({ maximumLeaves: value })}
+                    onChange={(value) => onOptionChange({ maximumAccents: value })}
                     min={0}
-                    max={(generationOptions.leafSlots || 7) + 2}
+                    max={(generationOptions.accentSlots || 7) + 2}
                     defaultValue={0}
                     suffix=""
-                    ariaLabel="Maximum Leaves value"
+                    ariaLabel="Maximum Accents value"
                   />
                 </OptionGroup>
 
-                {(generationOptions.maximumLeaves ?? 0) > 0 && (
+                {(generationOptions.maximumAccents ?? 0) > 0 && (
                   <>
-                    {/* Leaf Style - clean selector */}
+                    {/* Accent Style - clean selector */}
                     <AssetPreviewSelector
-                      value={generationOptions.leafGeneration || 'classic'}
-                      onChange={(value) => onOptionChange({ leafGeneration: value })}
-                      assetType="leaf"
+                      value={generationOptions.accentGeneration || 'classic'}
+                      onChange={(value) => onOptionChange({ accentGeneration: value })}
+                      assetType="accent"
                       shape="square"
                       showNone={false}
                       projectId={projectId}
@@ -303,50 +303,50 @@ export const CharacterTab = memo(
                     />
 
                     <OptionGroup
-                      label="Leaf Probability"
-                      helpText="Chance of each position spawning a leaf (0-100%)"
+                      label="Accent Probability"
+                      helpText="Chance of each position spawning an accent (0-100%)"
                       isSlider
                     >
                       <EditableSlider
-                        value={generationOptions.leafPopulationProbability || 30}
-                        onChange={(value) => onOptionChange({ leafPopulationProbability: value })}
+                        value={generationOptions.accentPopulationProbability || 30}
+                        onChange={(value) => onOptionChange({ accentPopulationProbability: value })}
                         min={0}
                         max={100}
                         defaultValue={30}
                         suffix="%"
-                        ariaLabel="Leaf Population Probability value"
+                        ariaLabel="Accent Population Probability value"
                       />
                     </OptionGroup>
 
                     <OptionGroup
                       label="Arc Span"
-                      helpText="Width of the arc for top leaves in degrees (30-180)"
+                      helpText="Width of the arc for top accents in degrees (30-180)"
                       isSlider
                     >
                       <EditableSlider
-                        value={generationOptions.leafArcSpan || 120}
-                        onChange={(value) => onOptionChange({ leafArcSpan: value })}
+                        value={generationOptions.accentArcSpan || 120}
+                        onChange={(value) => onOptionChange({ accentArcSpan: value })}
                         min={30}
                         max={180}
                         defaultValue={120}
                         suffix="°"
-                        ariaLabel="Leaf Arc Span value"
+                        ariaLabel="Accent Arc Span value"
                       />
                     </OptionGroup>
 
                     <OptionGroup
                       label="Arc Slots"
-                      helpText="Number of leaf positions along the top arc (3-15)"
+                      helpText="Number of accent positions along the top arc (3-15)"
                       isSlider
                     >
                       <EditableSlider
-                        value={generationOptions.leafSlots || 7}
-                        onChange={(value) => onOptionChange({ leafSlots: value })}
+                        value={generationOptions.accentSlots || 7}
+                        onChange={(value) => onOptionChange({ accentSlots: value })}
                         min={3}
                         max={15}
                         defaultValue={7}
                         suffix=""
-                        ariaLabel="Leaf Arc Slots value"
+                        ariaLabel="Accent Arc Slots value"
                       />
                     </OptionGroup>
                   </>

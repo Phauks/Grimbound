@@ -21,8 +21,8 @@ export * from './project.js';
 import type { MeasurementUnit } from './measurement.js';
 
 // UI Theme types
-export type { ThemeId, UITheme } from '../themes.js';
-export { DEFAULT_THEME_ID, getTheme, getThemeIds, isValidThemeId, UI_THEMES } from '../themes.js';
+export type { ThemeId, UITheme } from '@/ts/themes.js';
+export { DEFAULT_THEME_ID, getTheme, getThemeIds, isValidThemeId, UI_THEMES } from '@/ts/themes.js';
 
 // ============================================================================
 // Asset Reference Types - Type-safe references to IndexedDB assets
@@ -125,12 +125,12 @@ export type Team =
 
 // Decorative overrides for per-character styling
 export interface DecorativeOverrides {
-  useCustomLeaves?: boolean;
-  leafStyle?: string;
-  leafCount?: number;
-  leafProbability?: number;
-  hideSetupFlower?: boolean;
-  setupFlowerStyle?: string;
+  useCustomAccents?: boolean;
+  accentStyle?: string;
+  accentCount?: number;
+  accentProbability?: number;
+  hideSetupOverlay?: boolean;
+  setupStyle?: string;
 }
 
 // Internal metadata stored separately from character JSON
@@ -204,10 +204,10 @@ export interface TokenConfig {
   pandemoniumToken: boolean;
 
   // Style Options
-  leafGeneration: string;
-  maximumLeaves: number;
-  leafPopulationProbability: number;
-  setupFlowerStyle: string;
+  accentGeneration: string;
+  maximumAccents: number;
+  accentPopulationProbability: number;
+  setupStyle: string;
   reminderBackground: string;
   characterBackground: string;
   characterNameFont: string;
@@ -302,7 +302,7 @@ export interface GenerationOptions {
   reminderCountStyle?: ReminderCountStyle;
   generateImageVariants?: boolean;
   generateReminderVariants?: boolean;
-  setupFlowerStyle: string;
+  setupStyle: string;
   reminderBackground: string;
   reminderBackgroundImage?: string;
   reminderBackgroundType?: 'color' | 'image';
@@ -328,15 +328,15 @@ export interface GenerationOptions {
   hideScriptNameAuthor?: boolean;
   almanacToken: boolean;
   pandemoniumToken: boolean;
-  leafGeneration?: string;
-  leafEnabled?: boolean; // Whether accent leaves are enabled
-  maximumLeaves?: number;
-  leafPopulationProbability?: number;
-  leafArcSpan?: number;
-  leafSlots?: number;
-  enableLeftLeaf?: boolean;
-  enableRightLeaf?: boolean;
-  sideLeafProbability?: number;
+  accentGeneration?: string;
+  accentEnabled?: boolean; // Whether accents are enabled
+  maximumAccents?: number;
+  accentPopulationProbability?: number;
+  accentArcSpan?: number;
+  accentSlots?: number;
+  enableLeftAccent?: boolean;
+  enableRightAccent?: boolean;
+  sideAccentProbability?: number;
   dpi?: DPIOption;
   fontSpacing?: FontSpacingOptions;
   textShadow?: TextShadowOptions;
@@ -584,12 +584,12 @@ export interface Config {
     TOKEN_COUNT: boolean;
   };
   STYLE: {
-    LEAF_GENERATION: string;
-    MAXIMUM_LEAVES: number;
-    LEAF_POPULATION_PROBABILITY: number;
-    LEAF_ARC_SPAN: number;
-    LEAF_SLOTS: number;
-    SETUP_FLOWER_STYLE: string;
+    ACCENT_GENERATION: string;
+    MAXIMUM_ACCENTS: number;
+    ACCENT_POPULATION_PROBABILITY: number;
+    ACCENT_ARC_SPAN: number;
+    ACCENT_SLOTS: number;
+    SETUP_STYLE: string;
     REMINDER_BACKGROUND: string;
     CHARACTER_BACKGROUND: string;
     CHARACTER_NAME_FONT: string;
@@ -653,8 +653,8 @@ export interface Config {
     FONTS: string;
     IMAGES: string;
     CHARACTER_BACKGROUNDS: string;
-    SETUP_FLOWERS: string;
-    LEAVES: string;
+    SETUP_OVERLAYS: string;
+    ACCENTS: string;
   };
   EXAMPLE_SCRIPTS: string[];
   TEAMS: Team[];
@@ -704,7 +704,7 @@ export interface UIElements {
   dpiSelection: HTMLSelectElement | null;
 
   // Style Options
-  setupFlowerStyle: HTMLSelectElement | null;
+  setupStyle: HTMLSelectElement | null;
   reminderBackground: HTMLInputElement | null;
   characterBackground: HTMLSelectElement | null;
   characterNameFont: HTMLSelectElement | null;
@@ -713,9 +713,9 @@ export interface UIElements {
   abilityTextFont: HTMLSelectElement | null;
   abilityTextColor: HTMLInputElement | null;
   reminderTextColor: HTMLInputElement | null;
-  leafGeneration: HTMLSelectElement | null;
-  maximumLeaves: HTMLInputElement | null;
-  leafPopulationProbability: HTMLInputElement | null;
+  accentGeneration: HTMLSelectElement | null;
+  maximumAccents: HTMLInputElement | null;
+  accentPopulationProbability: HTMLInputElement | null;
 
   // PDF Options
   tokenPadding: HTMLInputElement | null;
@@ -795,7 +795,7 @@ export interface PresetConfig {
   settings: Partial<GenerationOptions> & {
     // Additional preset-specific settings
     characterBackground?: string;
-    setupFlowerStyle?: string;
+    setupStyle?: string;
     reminderBackground?: string;
     characterNameFont?: string;
     characterReminderFont?: string;

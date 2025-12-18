@@ -346,6 +346,269 @@
   font-weight: 500;
 }
 
+/* ============================================
+   Expandable Character Row
+   ============================================ */
+
+.expandableRow {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.expandableRow:last-child {
+  border-bottom: none;
+}
+
+.characterRowClickable {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 152, 0, 0.1);
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.characterRowClickable:hover {
+  background: rgba(255, 152, 0, 0.2);
+}
+
+.characterRowClickable:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.expandIcon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  width: 1em;
+  text-align: center;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.expandIconExpanded {
+  transform: rotate(90deg);
+}
+
+/* ============================================
+   Diff Detail Panel
+   ============================================ */
+
+.diffDetail {
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+}
+
+.fieldGroup {
+  margin-bottom: var(--spacing-md);
+}
+
+.fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.fieldGroupTitle {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fieldDiff {
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px dotted var(--border-color);
+}
+
+.fieldDiff:last-child {
+  border-bottom: none;
+}
+
+.fieldLabel {
+  display: block;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ============================================
+   Text Compare (Old vs New)
+   ============================================ */
+
+.textCompare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.textOld,
+.textNew {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.textOld {
+  background: rgba(211, 47, 47, 0.1);
+  border-left: 3px solid #d32f2f;
+}
+
+.textNew {
+  background: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid #4caf50;
+}
+
+.textLabel {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.textOld .textLabel {
+  color: #d32f2f;
+}
+
+.textNew .textLabel {
+  color: #4caf50;
+}
+
+.textContent {
+  color: var(--text-primary);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+/* ============================================
+   Array Diff (Reminders)
+   ============================================ */
+
+.arrayDiff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+}
+
+.arrayItemAdded {
+  color: #4caf50;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.arrayItemAdded::before {
+  content: "+";
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.arrayItemRemoved {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  text-decoration: line-through;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.arrayItemRemoved::before {
+  content: "-";
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.arrayUnchangedCount {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* ============================================
+   Simple Field Diff (Numbers, Booleans)
+   ============================================ */
+
+.simpleFieldChange {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.85rem;
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+}
+
+.simpleVersionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.simpleOldValue {
+  color: #d32f2f;
+}
+
+.simpleNewValue {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.simpleArrow {
+  color: var(--text-muted);
+}
+
+/* ============================================
+   Modified Characters Section (Full Width)
+   ============================================ */
+
+.modifiedSection {
+  margin-top: var(--spacing-md);
+}
+
+.modifiedSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.modifiedCharactersList {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* ============================================
+   No Changes in Group
+   ============================================ */
+
+.noGroupChanges {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: var(--spacing-xs) 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .header {

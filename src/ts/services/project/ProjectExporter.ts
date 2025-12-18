@@ -19,18 +19,23 @@
  */
 
 import JSZip from 'jszip';
-import { CONFIG } from '../../config.js';
+import { CONFIG } from '@/ts/config.js';
 import type {
   CustomIconMetadata,
   ExportOptions,
   Project,
   ProjectManifest,
-} from '../../types/project.js';
-import { downloadFile } from '../../utils/imageUtils.js';
-import { sanitizeFilename } from '../../utils/stringUtils.js';
-import { assetStorageService } from '../upload/AssetStorageService.js';
-import type { DBAsset } from '../upload/types.js';
+} from '@/ts/types/project.js';
+import { downloadFile } from '@/ts/utils/imageUtils.js';
+import { logger } from '@/ts/utils/logger.js';
+import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
+import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
+import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
+import type { DBAsset } from '@/ts/services/upload/types.js';
 import type { IProjectExporter } from './IProjectService.js';
+
+// Create child logger for project export operations
+const exportLogger = logger.child('ProjectExporter');
 
 // ============================================================================
 // Constants
@@ -45,13 +50,48 @@ const DEFAULT_EXPORT_OPTIONS: Required<ExportOptions> = {
 };
 
 // ============================================================================
+// Dependency Injection Types
+// ============================================================================
+
+/**
+ * Dependencies for ProjectExporter
+ */
+export interface ProjectExporterDeps {
+  assetStorage: IAssetStorageService;
+}
+
+// ============================================================================
 // ProjectExporter Implementation
 // ============================================================================
 
 /**
  * Service for exporting projects as ZIP files
+ *
+ * Uses constructor injection for testability. Dependencies have defaults
+ * for convenient usage, but can be overridden for testing.
+ *
+ * @example
+ * ```typescript
+ * // Production usage (uses defaults)
+ * const exporter = new ProjectExporter();
+ *
+ * // Testing with mocks
+ * const mockAssetStorage = { list: vi.fn(), count: vi.fn(), ... };
+ * const exporter = new ProjectExporter({ assetStorage: mockAssetStorage });
+ * ```
  */
 export class ProjectExporter implements IProjectExporter {
+  // Injected dependencies
+  private readonly assetStorage: IAssetStorageService;
+
+  /**
+   * Create a new ProjectExporter instance
+   *
+   * @param deps - Optional dependencies for injection (defaults to singleton instances)
+   */
+  constructor(deps: Partial<ProjectExporterDeps> = {}) {
+    this.assetStorage = deps.assetStorage ?? assetStorageService;
+  }
   /**
    * Export a project as a ZIP file
    *
@@ -68,7 +108,7 @@ export class ProjectExporter implements IProjectExporter {
     // Determine if we should use streaming (for large projects)
     const STREAMING_THRESHOLD = 50; // Use streaming for 50+ assets
     const assetCount = opts.includeAssets
-      ? await assetStorageService.count({ type: 'character-icon', projectId: project.id })
+      ? await this.assetStorage.count({ type: 'character-icon', projectId: project.id })
       : 0;
     const useStreaming = assetCount >= STREAMING_THRESHOLD;
 
@@ -79,7 +119,7 @@ export class ProjectExporter implements IProjectExporter {
       projectAssets = await this.fetchProjectAssets(project.id, opts.includeUnusedAssets);
     } else if (opts.includeAssets && useStreaming) {
       // Large projects: fetch lightweight metadata only
-      projectAssets = await assetStorageService.list({
+      projectAssets = await this.assetStorage.list({
         type: 'character-icon',
         projectId: project.id,
       });
@@ -104,8 +144,8 @@ export class ProjectExporter implements IProjectExporter {
     // 4. Add assets (if enabled and available)
     if (opts.includeAssets && assetCount > 0) {
       if (useStreaming) {
-        console.log(
-          `[ProjectExporter] Using streaming export for ${assetCount} assets (threshold: ${STREAMING_THRESHOLD})`
+        exportLogger.info(
+          `Using streaming export for ${assetCount} assets (threshold: ${STREAMING_THRESHOLD})`
         );
         await this.addAssetsStreaming(zip, project.id, opts.includeUnusedAssets);
       } else {
@@ -161,7 +201,7 @@ export class ProjectExporter implements IProjectExporter {
   private async fetchProjectAssets(projectId: string, includeUnused: boolean): Promise<DBAsset[]> {
     try {
       // Fetch all character-icon assets for this project
-      const assets = await assetStorageService.list({
+      const assets = await this.assetStorage.list({
         type: 'character-icon',
         projectId,
       });
@@ -173,7 +213,7 @@ export class ProjectExporter implements IProjectExporter {
 
       return assets;
     } catch (error) {
-      console.warn(`Failed to fetch assets for project ${projectId}:`, error);
+      exportLogger.warn(`Failed to fetch assets for project ${projectId}`, error);
       return [];
     }
   }
@@ -280,7 +320,7 @@ export class ProjectExporter implements IProjectExporter {
       // Add to ZIP
       zip.file(`thumbnail.${extension}`, blob);
     } catch (error) {
-      console.warn('Failed to add thumbnail to ZIP:', error);
+      exportLogger.warn('Failed to add thumbnail to ZIP', error);
       // Continue export without thumbnail
     }
   }
@@ -299,7 +339,7 @@ export class ProjectExporter implements IProjectExporter {
         // Use the blob directly from the asset
         assetsFolder.file(asset.metadata.filename, asset.blob);
       } catch (error) {
-        console.warn(`Failed to add asset ${asset.metadata.filename}:`, error);
+        exportLogger.warn(`Failed to add asset ${asset.metadata.filename}`, error);
         // Continue with other assets
       }
     }
@@ -326,14 +366,14 @@ export class ProjectExporter implements IProjectExporter {
     }
 
     // Stream assets one at a time
-    for await (const asset of assetStorageService.streamExportableAssets(
+    for await (const asset of this.assetStorage.streamExportableAssets(
       projectId,
       includeUnused
     )) {
       try {
         assetsFolder.file(asset.filename, asset.blob);
       } catch (error) {
-        console.warn(`Failed to add asset ${asset.filename}:`, error);
+        exportLogger.warn(`Failed to add asset ${asset.filename}`, error);
         // Continue with other assets
       }
     }

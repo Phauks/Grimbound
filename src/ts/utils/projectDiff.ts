@@ -5,8 +5,15 @@
  * Useful for showing what changed between versions in the UI.
  */
 
-import type { Character } from '../types/index';
-import type { ProjectState } from '../types/project';
+import type { Character } from '@/ts/types/index';
+import type { ProjectState } from '@/ts/types/project';
+import {
+  diffText,
+  diffArrays,
+  valuesAreDifferent,
+  type TextDiffResult,
+  type ArrayDiffResult,
+} from './textDiff.js';
 
 // ==========================================================================
 // Types
@@ -56,6 +63,59 @@ export interface CustomIconsDiff {
 export interface FiltersDiff {
   changed: boolean;
   fields: string[]; // List of changed filter keys
+}
+
+// ==========================================================================
+// Detailed Diff Types (for expanded view)
+// ==========================================================================
+
+/** A single field change with old/new values and optional diff data */
+export interface FieldChange<T = unknown> {
+  fieldName: string;
+  displayName: string;
+  oldValue: T;
+  newValue: T;
+  /** Pre-computed word-level diff for text fields */
+  textDiff?: TextDiffResult;
+  /** Pre-computed diff for array fields */
+  arrayDiff?: ArrayDiffResult<string>;
+}
+
+/** Character changes grouped by category */
+export interface CharacterChangesGrouped {
+  /** Text fields: ability, flavor, overview, examples, howToRun, tips, nightReminders */
+  text: FieldChange<string | undefined>[];
+  /** Array fields: reminders, remindersGlobal */
+  arrays: FieldChange<string[] | undefined>[];
+  /** Night order: firstNight, otherNight */
+  nightOrder: FieldChange<number | undefined>[];
+  /** Metadata: name, team, setup, edition, image */
+  metadata: FieldChange<unknown>[];
+}
+
+/** Extended modified character with detailed change information */
+export interface ModifiedCharacterDetailed {
+  /** Current (new) version of character */
+  currentCharacter: Character;
+  /** Previous (old) version of character */
+  previousCharacter: Character;
+  /** List of field names that changed (for summary display) */
+  changedFieldNames: string[];
+  /** Detailed changes grouped by category */
+  changes: CharacterChangesGrouped;
+}
+
+/** Extended character diff with detailed modifications */
+export interface CharacterDiffDetailed {
+  added: Character[];
+  removed: Character[];
+  modified: ModifiedCharacterDetailed[];
+  unchanged: number;
+}
+
+/** Extended project diff with detailed character changes */
+export interface ProjectDiffDetailed extends Omit<ProjectDiff, 'characters'> {
+  characters: CharacterDiffDetailed;
 }
 
 // ==========================================================================
@@ -352,3 +412,228 @@ export function getChangeCount(diff: ProjectDiff): number {
 
   return count;
 }
+
+// ==========================================================================
+// Detailed Diff Functions
+// ==========================================================================
+
+/** Field name to display name mapping */
+const FIELD_DISPLAY_NAMES: Record<string, string> = {
+  ability: 'Ability',
+  flavor: 'Flavor Text',
+  overview: 'Overview',
+  examples: 'Examples',
+  howToRun: 'How to Run',
+  tips: 'Tips',
+  firstNightReminder: 'First Night Reminder',
+  otherNightReminder: 'Other Night Reminder',
+  reminders: 'Reminders',
+  remindersGlobal: 'Global Reminders',
+  firstNight: 'First Night Order',
+  otherNight: 'Other Night Order',
+  name: 'Name',
+  team: 'Team',
+  setup: 'Affects Setup',
+  edition: 'Edition',
+  image: 'Image',
+};
+
+/**
+ * Convert camelCase field name to display name
+ */
+function getFieldDisplayName(fieldName: string): string {
+  if (FIELD_DISPLAY_NAMES[fieldName]) {
+    return FIELD_DISPLAY_NAMES[fieldName];
+  }
+  // Fallback: convert camelCase to Title Case
+  return fieldName
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
+/** Text fields to compare (with word-level diff) */
+const TEXT_FIELDS: (keyof Character)[] = [
+  'ability',
+  'flavor',
+  'overview',
+  'examples',
+  'howToRun',
+  'tips',
+  'firstNightReminder',
+  'otherNightReminder',
+];
+
+/** Array fields to compare */
+const ARRAY_FIELDS: (keyof Character)[] = ['reminders', 'remindersGlobal'];
+
+/** Night order fields (numeric) */
+const NIGHT_ORDER_FIELDS: (keyof Character)[] = ['firstNight', 'otherNight'];
+
+/** Metadata fields */
+const METADATA_FIELDS: (keyof Character)[] = ['name', 'team', 'setup', 'edition', 'image'];
+
+/**
+ * Find detailed changes between two characters
+ * Returns null if no changes found
+ */
+export function findCharacterChangesDetailed(
+  oldChar: Character,
+  newChar: Character
+): ModifiedCharacterDetailed | null {
+  const changedFieldNames: string[] = [];
+  const changes: CharacterChangesGrouped = {
+    text: [],
+    arrays: [],
+    nightOrder: [],
+    metadata: [],
+  };
+
+  // Compare text fields (with word-level diff)
+  for (const field of TEXT_FIELDS) {
+    const oldValue = oldChar[field] as string | undefined;
+    const newValue = newChar[field] as string | undefined;
+
+    if (valuesAreDifferent(oldValue, newValue)) {
+      changedFieldNames.push(field);
+      const textDiff = diffText(oldValue, newValue);
+      changes.text.push({
+        fieldName: field,
+        displayName: getFieldDisplayName(field),
+        oldValue,
+        newValue,
+        textDiff,
+      });
+    }
+  }
+
+  // Compare array fields
+  for (const field of ARRAY_FIELDS) {
+    const oldValue = oldChar[field] as string[] | undefined;
+    const newValue = newChar[field] as string[] | undefined;
+
+    if (valuesAreDifferent(oldValue, newValue)) {
+      changedFieldNames.push(field);
+      const arrayDiff = diffArrays(oldValue, newValue);
+      changes.arrays.push({
+        fieldName: field,
+        displayName: getFieldDisplayName(field),
+        oldValue,
+        newValue,
+        arrayDiff,
+      });
+    }
+  }
+
+  // Compare night order fields
+  for (const field of NIGHT_ORDER_FIELDS) {
+    const oldValue = oldChar[field] as number | undefined;
+    const newValue = newChar[field] as number | undefined;
+
+    if (valuesAreDifferent(oldValue, newValue)) {
+      changedFieldNames.push(field);
+      changes.nightOrder.push({
+        fieldName: field,
+        displayName: getFieldDisplayName(field),
+        oldValue,
+        newValue,
+      });
+    }
+  }
+
+  // Compare metadata fields
+  for (const field of METADATA_FIELDS) {
+    const oldValue = oldChar[field];
+    const newValue = newChar[field];
+
+    if (valuesAreDifferent(oldValue, newValue)) {
+      changedFieldNames.push(field);
+      changes.metadata.push({
+        fieldName: field,
+        displayName: getFieldDisplayName(field),
+        oldValue,
+        newValue,
+      });
+    }
+  }
+
+  // Return null if no changes
+  if (changedFieldNames.length === 0) {
+    return null;
+  }
+
+  return {
+    currentCharacter: newChar,
+    previousCharacter: oldChar,
+    changedFieldNames,
+    changes,
+  };
+}
+
+/**
+ * Compare character arrays with detailed diff information
+ */
+function compareCharactersDetailed(
+  oldChars: Character[],
+  newChars: Character[]
+): CharacterDiffDetailed {
+  const oldMap = new Map(oldChars.map((c) => [c.id, c]));
+  const newMap = new Map(newChars.map((c) => [c.id, c]));
+
+  const added: Character[] = [];
+  const removed: Character[] = [];
+  const modified: ModifiedCharacterDetailed[] = [];
+  let unchanged = 0;
+
+  // Find added and modified
+  for (const newChar of newChars) {
+    const oldChar = oldMap.get(newChar.id);
+    if (!oldChar) {
+      added.push(newChar);
+    } else {
+      const detailedChanges = findCharacterChangesDetailed(oldChar, newChar);
+      if (detailedChanges) {
+        modified.push(detailedChanges);
+      } else {
+        unchanged++;
+      }
+    }
+  }
+
+  // Find removed
+  for (const oldChar of oldChars) {
+    if (!newMap.has(oldChar.id)) {
+      removed.push(oldChar);
+    }
+  }
+
+  return { added, removed, modified, unchanged };
+}
+
+/**
+ * Calculate detailed difference between two project states
+ * Use this for the expanded comparison view
+ *
+ * @param oldState - Previous project state
+ * @param newState - New project state
+ * @returns Detailed diff with full character change information
+ */
+export function calculateProjectDiffDetailed(
+  oldState: ProjectState,
+  newState: ProjectState
+): ProjectDiffDetailed {
+  return {
+    hasChanges: !areStatesEqual(oldState, newState),
+    characters: compareCharactersDetailed(oldState.characters, newState.characters),
+    scriptMeta: compareScriptMeta(oldState.scriptMeta, newState.scriptMeta),
+    generationOptions: compareGenerationOptions(
+      oldState.generationOptions,
+      newState.generationOptions
+    ),
+    customIcons: compareCustomIcons(oldState.customIcons, newState.customIcons),
+    filters: compareFilters(oldState.filters, newState.filters),
+  };
+}
+
+// Re-export types from textDiff for convenience
+export type { TextDiffResult, ArrayDiffResult } from './textDiff.js';

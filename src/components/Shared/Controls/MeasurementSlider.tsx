@@ -24,14 +24,14 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import type { MeasurementConfig, MeasurementUnit } from '../../../ts/types/measurement';
+import type { MeasurementConfig, MeasurementUnit } from '@/ts/types/measurement';
 import {
   convertConfigToDisplayUnit,
   DECIMAL_PLACES,
   fromCanonicalInches,
   getUnitSuffix,
   toCanonicalInches,
-} from '../../../ts/utils/measurementUtils';
+} from '@/ts/utils/measurementUtils';
 import { EditableSlider } from './EditableSlider';
 
 interface MeasurementSliderProps {

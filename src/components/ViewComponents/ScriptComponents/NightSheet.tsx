@@ -22,10 +22,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { forwardRef, useCallback, useMemo } from 'react';
-import styles from '../../../styles/components/script/NightSheet.module.css';
-import { calculateScaleConfig, getScaleWarning } from '../../../ts/nightOrder/index.js';
-import type { NightOrderEntry as NightOrderEntryType } from '../../../ts/nightOrder/nightOrderTypes.js';
-import type { ScriptMeta } from '../../../ts/types/index.js';
+import styles from '@/styles/components/script/NightSheet.module.css';
+import { calculateScaleConfig, getScaleWarning } from '@/ts/nightOrder/index.js';
+import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
+import type { ScriptMeta } from '@/ts/types/index.js';
 import { NightOrderEntry } from './NightOrderEntry';
 import type { NightSheetBackground } from './NightOrderView';
 import { SortableNightOrderEntry } from './SortableNightOrderEntry';

@@ -16,7 +16,7 @@
  */
 
 import { memo, useCallback, useRef, useState } from 'react';
-import styles from '../../../styles/components/shared/EditableSlider.module.css';
+import styles from '@/styles/components/shared/EditableSlider.module.css';
 
 export interface EditableSliderProps {
   /** Current value */

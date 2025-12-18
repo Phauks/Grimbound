@@ -7,9 +7,10 @@
  * @module services/upload/AssetStorageService
  */
 
-import { cacheInvalidationService } from '../../cache/CacheInvalidationService.js';
-import { projectDb } from '../../db/projectDb.js';
-import { logger } from '../../utils/logger.js';
+import type { Collection } from 'dexie';
+import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService.js';
+import { projectDb } from '@/ts/db/projectDb.js';
+import { logger } from '@/ts/utils/logger.js';
 import { ASSET_ZIP_PATHS } from './constants.js';
 import { imageProcessingService } from './ImageProcessingService.js';
 import type {
@@ -280,7 +281,7 @@ export class AssetStorageService {
    * @returns Filtered assets
    */
   async list(filter: AssetFilter = {}): Promise<DBAsset[]> {
-    let collection: Dexie.Collection<DBAsset, string>;
+    let collection: Collection<DBAsset, string>;
     let results: DBAsset[];
 
     // OPTIMIZATION: Use compound index when both type and projectId are provided (non-null)
@@ -330,7 +331,7 @@ export class AssetStorageService {
     // Handle projectId = null (global assets) - filter manually
     else if (filter.projectId === null) {
       collection = projectDb.assets.toCollection();
-      results = (await collection.toArray()).filter((a) => a.projectId === null);
+      results = (await collection.toArray()).filter((a: DBAsset) => a.projectId === null);
     }
     // Fallback: No indexed filters, get all
     else {
@@ -992,8 +993,8 @@ export class AssetStorageService {
       'character-icon': { count: 0, size: 0 },
       'token-background': { count: 0, size: 0 },
       'script-background': { count: 0, size: 0 },
-      'setup-flower': { count: 0, size: 0 },
-      leaf: { count: 0, size: 0 },
+      'setup-overlay': { count: 0, size: 0 },
+      accent: { count: 0, size: 0 },
       logo: { count: 0, size: 0 },
       'studio-icon': { count: 0, size: 0 },
       'studio-logo': { count: 0, size: 0 },

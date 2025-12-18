@@ -6,8 +6,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import styles from '../../../styles/components/projects/MetaSettingsPanel.module.css';
-import type { ScriptMeta } from '../../../ts/types/index.js';
+import styles from '@/styles/components/projects/MetaSettingsPanel.module.css';
+import type { ScriptMeta } from '@/ts/types/index.js';
 
 interface MetaSettingsPanelProps {
   meta: ScriptMeta;

@@ -7,7 +7,7 @@
  * - Player Script (placeholder for future)
  */
 
-import styles from '../../../styles/components/script/ScriptTabNavigation.module.css';
+import styles from '@/styles/components/script/ScriptTabNavigation.module.css';
 
 export type ScriptSubTab = 'night-order' | 'player-script';
 

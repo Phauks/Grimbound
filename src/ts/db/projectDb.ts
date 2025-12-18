@@ -10,7 +10,7 @@
  */
 
 import Dexie, { type Table } from 'dexie';
-import type { DBAsset } from '../services/upload/types.js';
+import type { DBAsset } from '@/ts/services/upload/types.js';
 import type {
   DBAutoSaveSnapshot,
   DBCustomIcon,
@@ -19,7 +19,7 @@ import type {
   ProjectState,
   ProjectVersion,
   StorageQuota,
-} from '../types/project.js';
+} from '@/ts/types/project.js';
 
 // ============================================================================
 // Database Class
@@ -140,6 +140,33 @@ export class ProjectDatabase extends Dexie {
       // Indexes: characterId, projectId for filtering
       customIcons: 'id, characterId, projectId, [characterId+projectId]',
     });
+
+    // Define schema version 7 (migrate asset types: setup-flower → setup-overlay, leaf → accent)
+    this.version(7)
+      .stores({
+        // Schema unchanged - just running data migration
+        projects: 'id, name, lastModifiedAt, lastAccessedAt, *tags',
+        autoSaveSnapshots: 'id, projectId, timestamp',
+        assets:
+          'id, type, projectId, [type+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+        projectVersions: 'id, projectId, [projectId+versionMajor+versionMinor], createdAt',
+        customIcons: 'id, characterId, projectId, [characterId+projectId]',
+      })
+      .upgrade(async (tx) => {
+        // Migrate old asset types to new names
+        const assets = tx.table('assets');
+
+        // Update 'setup-flower' → 'setup-overlay'
+        await assets
+          .where('type')
+          .equals('setup-flower')
+          .modify({ type: 'setup-overlay' });
+
+        // Update 'leaf' → 'accent'
+        await assets.where('type').equals('leaf').modify({ type: 'accent' });
+
+        console.log('[DB Migration v7] Asset types migrated: setup-flower → setup-overlay, leaf → accent');
+      });
   }
 
   // ==========================================================================

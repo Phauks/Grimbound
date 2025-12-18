@@ -3,7 +3,7 @@
  * Canvas Utilities - Reusable canvas helper functions
  */
 
-import { ABILITY_TEXT_SHADOW, DEFAULT_COLORS, TEXT_SHADOW } from '../constants.js';
+import { ABILITY_TEXT_SHADOW, DEFAULT_COLORS, TEXT_SHADOW } from '@/ts/constants.js';
 
 /**
  * Point interface for x, y coordinates

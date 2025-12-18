@@ -18,7 +18,7 @@ import type {
   ProjectPreview,
   StorageQuota,
   ValidationResult,
-} from '../../types/project.js';
+} from '@/ts/types/project.js';
 
 // ============================================================================
 // Main Project Service Interface

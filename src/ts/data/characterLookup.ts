@@ -9,8 +9,8 @@
  * - Integrates with DataSync service
  */
 
-import type { Character } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import type { Character } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Character Lookup Service

@@ -8,11 +8,11 @@
  * Architecture: Strategy Pattern (Domain Services)
  */
 
-import { assetStorageService } from '../../services/upload/AssetStorageService.js';
-import type { Character, Token } from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
-import { cacheManager } from '../CacheManager.js';
-import type { PreRenderContext } from '../core/index.js';
+import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
+import type { Character, Token } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
+import { cacheManager } from '@/ts/cache/CacheManager.js';
+import type { PreRenderContext } from '@/ts/cache/core/index.js';
 
 // ============================================================================
 // Types

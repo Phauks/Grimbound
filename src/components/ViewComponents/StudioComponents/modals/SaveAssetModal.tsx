@@ -5,14 +5,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useProjectContext } from '../../../../contexts/ProjectContext';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
 import {
   type SaveStudioAssetOptions,
   saveStudioAsset,
-} from '../../../../ts/studio/assetIntegration';
-import { logger } from '../../../../ts/utils/logger.js';
+} from '@/ts/studio/assetIntegration';
+import { logger } from '@/ts/utils/logger.js';
 
 interface SaveAssetModalProps {
   isOpen: boolean;

@@ -16,7 +16,7 @@
 
 import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import styles from '../../../styles/components/shared/BackgroundDrawer.module.css';
+import styles from '@/styles/components/shared/BackgroundDrawer.module.css';
 
 export interface BackgroundDrawerProps {
   /** Whether the drawer is open */

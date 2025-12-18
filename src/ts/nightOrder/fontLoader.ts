@@ -13,7 +13,7 @@
 
 import fontkit from '@pdf-lib/fontkit';
 import type { PDFDocument, PDFFont } from 'pdf-lib';
-import { logger } from '../utils/logger.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Types
@@ -46,22 +46,25 @@ interface FontConfig {
 // Font Paths
 // ============================================================================
 
+/** Base path for fonts (using Vite BASE_URL for GitHub Pages) */
+const FONTS_PATH = `${import.meta.env.BASE_URL}fonts/`;
+
 const FONT_CONFIGS: FontConfig[] = [
   {
     key: 'title',
-    path: '/assets/fonts/Dumbledor/Dumbledor.ttf',
+    path: `${FONTS_PATH}Dumbledor/Dumbledor.ttf`,
   },
   {
     key: 'name',
-    path: '/assets/fonts/GoudyOldStyle/GoudyOldStyle.ttf',
+    path: `${FONTS_PATH}GoudyOldStyle/GoudyOldStyle.ttf`,
   },
   {
     key: 'ability',
-    path: '/assets/fonts/TradeGothic/TradeGothic.otf',
+    path: `${FONTS_PATH}TradeGothic/TradeGothic.otf`,
   },
   {
     key: 'abilityBold',
-    path: '/assets/fonts/TradeGothic/TradeGothicBold.otf',
+    path: `${FONTS_PATH}TradeGothic/TradeGothicBold.otf`,
   },
 ];
 

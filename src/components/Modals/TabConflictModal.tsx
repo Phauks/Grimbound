@@ -5,7 +5,7 @@
  * Helps prevent data loss from concurrent modifications.
  */
 
-import styles from '../../styles/components/modals/TabConflictModal.module.css';
+import styles from '@/styles/components/modals/TabConflictModal.module.css';
 
 interface TabConflictModalProps {
   isOpen: boolean;

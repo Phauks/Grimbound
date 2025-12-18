@@ -8,15 +8,15 @@
  * - Storage quota monitoring
  */
 
-import CONFIG from '../config.js';
-import { StorageError } from '../errors.js';
+import CONFIG from '@/ts/config.js';
+import { StorageError } from '@/ts/errors.js';
 import type {
   CachedCharacter,
   Character,
   StorageQuota,
   SyncMetadata,
   SyncSettings,
-} from '../types/index.js';
+} from '@/ts/types/index.js';
 
 /**
  * Storage Manager class for persistent data storage

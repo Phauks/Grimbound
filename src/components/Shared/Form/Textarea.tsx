@@ -7,7 +7,7 @@
  */
 
 import { forwardRef, type TextareaHTMLAttributes, useCallback, useEffect, useRef } from 'react';
-import styles from '../../../styles/components/shared/Form.module.css';
+import styles from '@/styles/components/shared/Form.module.css';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   /** Textarea size variant */

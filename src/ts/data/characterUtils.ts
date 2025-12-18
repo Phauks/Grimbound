@@ -3,14 +3,14 @@
  * Character Utilities - Character data manipulation and counting
  */
 
-import CONFIG from '../config.js';
+import CONFIG from '@/ts/config.js';
 import type {
   Character,
   CharacterValidationResult,
   Team,
   TeamCounts,
   TokenCounts,
-} from '../types/index.js';
+} from '@/ts/types/index.js';
 
 // ============================================================================
 // Character Validation

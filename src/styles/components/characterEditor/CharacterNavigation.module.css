@@ -232,6 +232,8 @@
   cursor: pointer;
   transition: background-color var(--transition-fast);
   border: 2px solid transparent;
+  width: 100%;
+  text-align: left;
 }
 
 .item:hover {
@@ -269,9 +271,13 @@
   border-left-color: var(--text-muted);
 }
 
-/* Official character indicator - right border accent */
-.item.official {
-  border-right-color: var(--color-accent);
+/* Official character indicator - visual badge on right */
+.officialBadge {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: var(--spacing-xs);
 }
 
 .thumbnail {

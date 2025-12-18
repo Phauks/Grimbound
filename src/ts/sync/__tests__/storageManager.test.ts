@@ -7,8 +7,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Character } from '../../types/index.js';
-import { StorageManager } from '../storageManager.js';
+import type { Character } from '@/ts/types/index.js';
+import { StorageManager } from '@/ts/sync/storageManager.js';
 
 // Mock character data for testing
 const mockCharacter: Character = {

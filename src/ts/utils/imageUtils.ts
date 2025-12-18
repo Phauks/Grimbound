@@ -3,7 +3,7 @@
  * Image Utility Functions
  */
 
-import CONFIG from '../config.js';
+import CONFIG from '@/ts/config.js';
 
 // ============================================================================
 // CORS PROXY CONFIGURATION

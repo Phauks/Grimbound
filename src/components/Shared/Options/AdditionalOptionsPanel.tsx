@@ -5,7 +5,7 @@
  * - Ability Text (with font settings)
  * - Reminder Count (with style options)
  * - Setup (setup flower asset selector)
- * - Accents (leaf decorations)
+ * - Accents (accent decorations)
  * - Variants (character and reminder variants)
  * - Bootlegger Tokens (custom bootlegger token settings)
  * - Meta Tokens (Pandemonium, Script Name, Almanac)
@@ -17,15 +17,15 @@
  */
 
 import { memo } from 'react';
-import styles from '../../../styles/components/options/OptionsPanel.module.css';
-import type { GenerationOptions } from '../../../ts/types/index';
-import { AccentSettingsSelector } from '../Selectors/AccentSettingsSelector';
-import { BootleggerSettingsSelector } from '../Selectors/BootleggerSettingsSelector';
-import { GenerateVariantsSelector } from '../Selectors/GenerateVariantsSelector';
-import { MetaTokensSelector } from '../Selectors/MetaTokensSelector';
-import { QRCodeSettingsSelector } from '../Selectors/QRCodeSettingsSelector';
-import { ReminderCountSelector } from '../Selectors/ReminderCountSelector';
-import { SetupSettingsSelector } from '../Selectors/SetupSettingsSelector';
+import styles from '@/styles/components/options/OptionsPanel.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
+import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
+import { BootleggerSettingsSelector } from '@/components/Shared/Selectors/BootleggerSettingsSelector';
+import { GenerateVariantsSelector } from '@/components/Shared/Selectors/GenerateVariantsSelector';
+import { MetaTokensSelector } from '@/components/Shared/Selectors/MetaTokensSelector';
+import { QRCodeSettingsSelector } from '@/components/Shared/Selectors/QRCodeSettingsSelector';
+import { ReminderCountSelector } from '@/components/Shared/Selectors/ReminderCountSelector';
+import { SetupSettingsSelector } from '@/components/Shared/Selectors/SetupSettingsSelector';
 import { AbilityTextSection } from './AppearancePanel';
 
 interface AdditionalOptionsPanelProps {

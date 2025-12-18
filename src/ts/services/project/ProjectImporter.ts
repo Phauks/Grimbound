@@ -12,16 +12,20 @@
  */
 
 import JSZip from 'jszip';
-import { CONFIG } from '../../config.js';
+import { CONFIG } from '@/ts/config.js';
 import type {
   CustomIconMetadata,
   Project,
   ProjectManifest,
   ProjectPreview,
   ValidationResult,
-} from '../../types/project.js';
-import { generateUuid } from '../../utils/nameGenerator.js';
+} from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
+import { generateUuid } from '@/ts/utils/nameGenerator.js';
 import type { IProjectImporter } from './IProjectService.js';
+
+// Create child logger for project import operations
+const importLogger = logger.child('ProjectImporter');
 
 // ============================================================================
 // Constants
@@ -242,7 +246,7 @@ export class ProjectImporter implements IProjectImporter {
       const iconFile = zip.files[iconPath];
 
       if (!iconFile) {
-        console.warn(`Custom icon not found in ZIP: ${iconPath}`);
+        importLogger.warn(`Custom icon not found in ZIP: ${iconPath}`);
         continue;
       }
 
@@ -259,7 +263,7 @@ export class ProjectImporter implements IProjectImporter {
           lastModified: Date.now(),
         });
       } catch (error) {
-        console.warn(`Failed to load icon ${iconPath}:`, error);
+        importLogger.warn(`Failed to load icon ${iconPath}`, error);
       }
     }
 

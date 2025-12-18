@@ -8,7 +8,7 @@
  * - imageUtils: image loading, canvas operations, file downloads
  * - jsonUtils: JSON formatting, validation, deep cloning
  * - colorUtils: hex to RGB conversion, contrast colors
- * - asyncUtils: debounce, sleep, array shuffling
+ * - asyncUtils: debounce, array shuffling
  * - compressionUtils: gzip compression/decompression for storage optimization
  */
 
@@ -25,7 +25,6 @@ export type { DebouncedFunction } from './asyncUtils.js';
 export {
   debounce,
   shuffleArray,
-  sleep,
 } from './asyncUtils.js';
 export type {
   BatchResolveResult,
@@ -37,8 +36,10 @@ export {
   extractCharacterIdFromPath,
   getFirstImageUrl,
   isExternalUrl,
+  isLocalAssetPath,
   resolveCharacterImages,
   resolveCharacterImageUrl,
+  resolveLocalAssetPath,
 } from './characterImageResolver.js';
 // Class name utilities
 export {
@@ -49,6 +50,10 @@ export {
 export {
   getContrastColor,
   hexToRgb,
+  hslToRgb,
+  interpolateColors,
+  parseHexColor,
+  rgbToHsl,
 } from './colorUtils.js';
 // Compression utilities
 export {
@@ -176,3 +181,15 @@ export {
   hasFormatIssues,
   normalizeReminderText,
 } from './textFormatAnalyzer.js';
+export type {
+  ArrayDiffResult,
+  DiffSegment,
+  TextDiffResult,
+} from './textDiff.js';
+// Text diff utilities (for version comparison)
+export {
+  diffArrays,
+  diffText,
+  formatValueForDisplay,
+  valuesAreDifferent,
+} from './textDiff.js';

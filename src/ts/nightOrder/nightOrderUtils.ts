@@ -5,8 +5,8 @@
  * Supports both _meta array ordering and per-character number ordering.
  */
 
-import { extractScriptMeta, isCharacter, isScriptMeta } from '../data/scriptParser.js';
-import type { Character, ScriptEntry, Team } from '../types/index.js';
+import { extractScriptMeta, isCharacter, isScriptMeta } from '@/ts/data/scriptParser.js';
+import type { Character, ScriptEntry, Team } from '@/ts/types/index.js';
 import type {
   NightOrderEntry,
   NightOrderSource,
@@ -382,4 +382,102 @@ export function getNightOrderStats(entries: NightOrderEntry[]): NightOrderStats 
     lockedCount: entries.filter((e) => e.isLocked).length,
     movableCount: entries.filter((e) => !e.isLocked).length,
   };
+}
+
+// ============================================================================
+// Pre-render Cache for Night Order
+// ============================================================================
+
+/**
+ * Cached night order results (module-level, persists across tab switches)
+ */
+interface NightOrderCache {
+  /** Hash of the script data used to generate this cache */
+  scriptHash: string;
+  /** Pre-built first night order */
+  firstNight: NightOrderResult;
+  /** Pre-built other night order */
+  otherNight: NightOrderResult;
+  /** Timestamp when cache was created */
+  timestamp: number;
+}
+
+let nightOrderCache: NightOrderCache | null = null;
+
+/**
+ * Generate a simple hash of script data for cache invalidation
+ */
+function hashScriptData(scriptData: ScriptEntry[]): string {
+  const key = scriptData.map((e) => (isCharacter(e) ? e.id : '_meta')).join(',');
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    const char = key.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+}
+
+/**
+ * Pre-render the night order for faster Script tab loading.
+ * Call this on Script tab hover to build the night order ahead of time.
+ *
+ * @param scriptData - Raw script data array (characters + optional meta)
+ * @returns The pre-built night order results
+ */
+export function preRenderNightOrder(scriptData: ScriptEntry[]): {
+  firstNight: NightOrderResult;
+  otherNight: NightOrderResult;
+} {
+  const scriptHash = hashScriptData(scriptData);
+
+  // Return cached result if still valid
+  if (nightOrderCache && nightOrderCache.scriptHash === scriptHash) {
+    return {
+      firstNight: nightOrderCache.firstNight,
+      otherNight: nightOrderCache.otherNight,
+    };
+  }
+
+  // Build and cache night orders
+  const firstNight = buildNightOrder(scriptData, 'first');
+  const otherNight = buildNightOrder(scriptData, 'other');
+
+  nightOrderCache = {
+    scriptHash,
+    firstNight,
+    otherNight,
+    timestamp: Date.now(),
+  };
+
+  return { firstNight, otherNight };
+}
+
+/**
+ * Get cached night order if available and still valid.
+ *
+ * @param scriptData - Raw script data to validate cache against
+ * @returns Cached night order or null if cache is invalid/missing
+ */
+export function getCachedNightOrder(scriptData: ScriptEntry[]): {
+  firstNight: NightOrderResult;
+  otherNight: NightOrderResult;
+} | null {
+  if (!nightOrderCache) return null;
+
+  const scriptHash = hashScriptData(scriptData);
+  if (nightOrderCache.scriptHash !== scriptHash) return null;
+
+  return {
+    firstNight: nightOrderCache.firstNight,
+    otherNight: nightOrderCache.otherNight,
+  };
+}
+
+/**
+ * Clear the night order cache.
+ * Call when script data changes significantly.
+ */
+export function clearNightOrderCache(): void {
+  nightOrderCache = null;
 }

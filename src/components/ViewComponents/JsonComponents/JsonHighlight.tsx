@@ -1,5 +1,5 @@
 import { Fragment, memo, useMemo } from 'react';
-import { TOKEN_CLASS_MAP, tokenizeJSON } from '../../../ts/ui/jsonHighlighter';
+import { TOKEN_CLASS_MAP, tokenizeJSON } from '@/ts/ui/jsonHighlighter';
 
 interface JsonHighlightProps {
   json: string;

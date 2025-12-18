@@ -6,8 +6,8 @@
  * Example: v2025.12.03-r6
  */
 
-import { ValidationError } from '../errors.js';
-import type { VersionInfo } from '../types/index.js';
+import { ValidationError } from '@/ts/errors.js';
+import type { VersionInfo } from '@/ts/types/index.js';
 
 /**
  * Regular expression for parsing date-based version strings

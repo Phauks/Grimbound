@@ -17,8 +17,8 @@ export type AssetType =
   | 'character-icon'
   | 'token-background'
   | 'script-background'
-  | 'setup-flower'
-  | 'leaf'
+  | 'setup-overlay'
+  | 'accent'
   | 'logo'
   | 'studio-icon' // Custom icon created in Studio
   | 'studio-logo' // Script logo created in Studio

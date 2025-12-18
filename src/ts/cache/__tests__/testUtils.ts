@@ -7,8 +7,8 @@
  * @module ts/cache/__tests__/testUtils
  */
 
-import type { ICacheStrategy } from '../core/interfaces.js';
-import type { CacheEntry, CacheOptions, CacheStats } from '../core/types.js';
+import type { ICacheStrategy } from '@/ts/cache/core/interfaces.js';
+import type { CacheEntry, CacheOptions, CacheStats } from '@/ts/cache/core/types.js';
 
 // ============================================================================
 // Mock Cache Implementation

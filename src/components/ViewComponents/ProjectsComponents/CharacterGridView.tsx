@@ -8,10 +8,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTokenContext } from '../../../contexts/TokenContext';
-import styles from '../../../styles/components/projects/CharacterGridView.module.css';
-import { TEAM_LABELS } from '../../../ts/config.js';
-import type { Character, Team, Token } from '../../../ts/types/index.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/projects/CharacterGridView.module.css';
+import { TEAM_LABELS } from '@/ts/config.js';
+import type { Character, Team, Token } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface CharacterGridViewProps {
   characters: Character[];
@@ -215,7 +216,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
             return next;
           });
         } catch (error) {
-          console.error('Failed to generate data URL for token:', token.name, error);
+          logger.error('CharacterGridView', `Failed to generate data URL for token: ${token.name}`, error);
         }
       }
     };

@@ -4,8 +4,8 @@
  * Save and load complete Studio projects with all layers and settings
  */
 
-import type { CanvasSize, Layer, ToolSettings } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import type { CanvasSize, Layer, ToolSettings } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Serialized layer for storage

@@ -14,7 +14,7 @@
  * Reference: https://bloodontheclocktower.com/blogs/news/sort-order-sao-update
  */
 
-import type { Character, ScriptEntry, ScriptMeta, Team } from '../types/index.js';
+import type { Character, ScriptEntry, ScriptMeta, Team } from '@/ts/types/index.js';
 import { logger } from './logger.js';
 
 // ============================================================================

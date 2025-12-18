@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useTokenContext } from '../contexts/TokenContext';
+import { useTokenContext } from '@/contexts/TokenContext';
 
 // Type for filter keys that have string array values
 type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders' | 'origin';

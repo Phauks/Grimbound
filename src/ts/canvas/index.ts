@@ -9,12 +9,35 @@ export {
   fontCache,
   getCachedFont,
   getFontCacheStats,
-} from '../cache/instances/fontCache.js';
-// Background effects (textures, vignette, glow, etc.)
+} from '@/ts/cache/instances/fontCache.js';
+
+// Background effects module (textures, effects, noise)
 export {
+  // Main renderer
   renderBackground,
   renderTexturePreview,
-} from './backgroundEffects.js';
+  // Effects
+  applyEffects,
+  applyVibrance,
+  type EffectContext,
+  type EffectResult,
+  type EffectStrategy,
+  InnerGlowEffect,
+  isVibranceEnabled,
+  VignetteEffect,
+  // Textures
+  BaseTextureStrategy,
+  type TextureContext,
+  TextureFactory,
+  type TextureResult,
+  type TextureStrategy,
+  // Noise utilities
+  fbm,
+  initPermutation,
+  perlin2D,
+  ridgedNoise,
+  turbulence,
+} from './backgroundEffects/index.js';
 // Canvas optimization utilities
 export {
   type CharacterPosition,
@@ -54,11 +77,11 @@ export {
   getCSSGradient,
   interpolateColors,
 } from './gradientUtils.js';
-// Leaf drawing utilities
+// Accent drawing utilities
 export {
-  drawLeaves,
-  type LeafDrawingOptions,
-} from './leafDrawing.js';
+  drawAccents,
+  type AccentDrawingOptions,
+} from './accentDrawing.js';
 // QR code generation
 export {
   generateStyledQRCode,

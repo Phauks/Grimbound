@@ -11,12 +11,12 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useProjectContext } from '../../contexts/ProjectContext';
-import { useTokenContext } from '../../contexts/TokenContext';
-import styles from '../../styles/components/modals/SnapshotRecoveryModal.module.css';
-import { projectDatabaseService } from '../../ts/services/project/index.js';
-import type { AutoSaveSnapshot } from '../../ts/types/project.js';
-import { logger } from '../../ts/utils/index.js';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { useProjectDatabaseService } from '@/contexts/ServiceContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import styles from '@/styles/components/modals/SnapshotRecoveryModal.module.css';
+import type { AutoSaveSnapshot } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/index.js';
 
 interface SnapshotRecoveryModalProps {
   isOpen: boolean;
@@ -24,6 +24,9 @@ interface SnapshotRecoveryModalProps {
 }
 
 export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModalProps) {
+  // Get service from DI context
+  const projectDatabaseService = useProjectDatabaseService();
+
   const { currentProject, setCurrentProject } = useProjectContext();
   const { setCharacters, setScriptMeta, setJsonInput, clearAllMetadata } = useTokenContext();
 
@@ -60,7 +63,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
     } finally {
       setIsLoading(false);
     }
-  }, [currentProject]);
+  }, [currentProject, projectDatabaseService]);
 
   // Load snapshots when modal opens
   useEffect(() => {
@@ -120,6 +123,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
   }, [
     selectedSnapshot,
     currentProject,
+    projectDatabaseService,
     setCharacters,
     setScriptMeta,
     setJsonInput,

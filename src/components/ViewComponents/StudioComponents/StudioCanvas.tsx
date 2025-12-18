@@ -5,8 +5,8 @@
  */
 
 import { type MutableRefObject, useEffect, useRef, useState } from 'react';
-import { useStudio } from '../../../contexts/StudioContext';
-import styles from '../../../styles/components/studio/Studio.module.css';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
 
 interface StudioCanvasProps {
   compositeCanvasRef: MutableRefObject<HTMLCanvasElement | null>;

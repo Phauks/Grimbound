@@ -1,6 +1,6 @@
-import { useTokenContext } from '../../../../contexts/TokenContext';
-import { useFilters } from '../../../../hooks/useFilters';
-import styles from '../../../../styles/components/tokens/FilterBar.module.css';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useFilters } from '@/hooks/useFilters';
+import styles from '@/styles/components/tokens/FilterBar.module.css';
 
 const TEAMS = [
   { value: 'townsfolk', label: 'Townsfolk', color: '#1e90ff' },

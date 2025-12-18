@@ -6,9 +6,9 @@
  */
 
 import { useEffect } from 'react';
-import { warmingPolicyManager } from '../ts/cache/index.js';
-import type { Project } from '../ts/types/project.js';
-import { logger } from '../ts/utils/logger.js';
+import { warmingPolicyManager } from '@/ts/cache/index.js';
+import type { Project } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Schedule a task to run during idle time

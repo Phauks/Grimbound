@@ -10,9 +10,9 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { dataSyncService, type SyncEvent } from '../ts/sync/index.js';
-import type { Character, SyncStatus } from '../ts/types/index.js';
-import { logger } from '../ts/utils/logger.js';
+import { dataSyncService, type SyncEvent } from '@/ts/sync/index.js';
+import type { Character, SyncStatus } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface DataSyncContextType {
   // Sync status

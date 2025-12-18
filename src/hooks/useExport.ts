@@ -1,15 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
-import { useTokenContext } from '../contexts/TokenContext';
-import { createCompletePackage } from '../ts/export/completePackageExporter.js';
-import { PDFGenerator } from '../ts/export/pdfGenerator.js';
-import { createTokensZip } from '../ts/export/zipExporter.js';
-import type { ProgressCallback } from '../ts/types/index.js';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { createCompletePackage } from '@/ts/export/completePackageExporter.js';
+import { PDFGenerator } from '@/ts/export/pdfGenerator.js';
+import { createTokensZip } from '@/ts/export/zipExporter.js';
+import type { ProgressCallback } from '@/ts/types/index.js';
 import {
   downloadFile,
   getCleanJsonForExport,
   logger,
   sanitizeFilename,
-} from '../ts/utils/index.js';
+} from '@/ts/utils/index.js';
 
 export type ExportStep = 'zip' | 'pdf' | 'json' | 'style' | 'tokens' | null;
 
@@ -163,6 +163,7 @@ export function useExport() {
           `${getBaseFilename()}.pdf`,
           progressCallback ?? null
         );
+        return undefined;
       },
     });
   }, [tokens, generationOptions, getBaseFilename, executeDownload]);

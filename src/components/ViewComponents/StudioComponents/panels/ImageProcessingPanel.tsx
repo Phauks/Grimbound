@@ -5,8 +5,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
 import {
   addPadding,
   adjustBrightness,
@@ -21,8 +21,8 @@ import {
   getImageData,
   invertColors,
   putImageData,
-} from '../../../../ts/studio/index';
-import { logger } from '../../../../ts/utils/logger.js';
+} from '@/ts/studio/index';
+import { logger } from '@/ts/utils/logger.js';
 
 export function ImageProcessingPanel() {
   const { activeLayer, updateLayer, pushHistory } = useStudio();
@@ -66,7 +66,7 @@ export function ImageProcessingPanel() {
     } else {
       setOriginalImageData(null);
     }
-  }, [activeLayer?.id, activeLayer.canvas, activeLayer]); // Only reset when layer ID changes
+  }, [activeLayer?.id, activeLayer?.canvas, activeLayer]); // Only reset when layer ID changes
 
   // Apply all filters
   const applyAllFilters = useCallback(() => {

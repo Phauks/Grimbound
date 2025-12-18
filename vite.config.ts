@@ -1,12 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: '.',
   publicDir: 'assets',
   // GitHub Pages deploys to /Clocktower_Token_Generator/ subpath
-  base: '/Clocktower_Token_Generator/',
+  // Use '/' in development for easier local testing
+  base: mode === 'production' ? '/Clocktower_Token_Generator/' : '/',
+
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 
   plugins: [
     react(),
@@ -143,4 +151,4 @@ export default defineConfig({
     exclude: ['jspdf', 'file-saver', 'qrcodejs'],
     include: ['jszip']  // Include JSZip for proper CommonJS-to-ESM conversion
   }
-});
+}));

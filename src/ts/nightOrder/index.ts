@@ -71,10 +71,13 @@ export type {
 export {
   buildNightOrder,
   characterToNightOrderEntry,
+  clearNightOrderCache,
+  getCachedNightOrder,
   getNightOrderStats,
   getTeamColor,
   moveNightOrderEntry,
   parseAbilityText,
+  preRenderNightOrder,
   shouldShowEntry,
 } from './nightOrderUtils.js';
 // Special entries

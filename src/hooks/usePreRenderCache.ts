@@ -3,13 +3,13 @@
  * Provides convenient API for components to trigger pre-rendering and access caches.
  */
 
-import { usePreRenderCacheManager } from '../contexts/PreRenderCacheContext.js';
+import { usePreRenderCacheManager } from '@/contexts/PreRenderCacheContext.js';
 import type {
   CacheStats,
   ICacheStrategy,
   PreRenderContext,
   PreRenderResult,
-} from '../ts/cache/index.js';
+} from '@/ts/cache/index.js';
 
 /**
  * Return type for usePreRenderCache hook.

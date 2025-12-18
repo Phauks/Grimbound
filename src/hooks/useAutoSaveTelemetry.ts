@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useRef } from 'react';
-import { logger } from '../ts/utils/index.js';
+import { logger } from '@/ts/utils/index.js';
 
 // ============================================================================
 // Constants

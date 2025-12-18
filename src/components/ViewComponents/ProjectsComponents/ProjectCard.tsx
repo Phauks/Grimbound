@@ -5,7 +5,7 @@
  * Supports both grid and list layouts.
  */
 
-import type { Project } from '../../../ts/types/project.js';
+import type { Project } from '@/ts/types/project.js';
 
 interface ProjectCardProps {
   project: Project;

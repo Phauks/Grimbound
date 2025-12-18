@@ -1,4 +1,4 @@
-import styles from '../../styles/components/layout/Footer.module.css';
+import styles from '@/styles/components/layout/Footer.module.css';
 
 export function AppFooter() {
   const currentYear = new Date().getFullYear();

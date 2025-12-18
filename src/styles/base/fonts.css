@@ -1,9 +1,11 @@
 /* ============================================
    Base Styles: Font Faces
    Custom font declarations
-   
+
    Note: Vite serves the 'assets' folder at root,
    so /assets/fonts becomes /fonts
+   In production with base path, import.meta.env.BASE_URL
+   is used in JS for dynamic paths, but CSS uses absolute.
    ============================================ */
 
 @font-face {

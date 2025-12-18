@@ -4,8 +4,8 @@
  * Dynamic settings panel that shows different controls based on the active tool
  */
 
-import { useStudio } from '../../../../contexts/StudioContext';
-import styles from '../../../../styles/components/studio/Studio.module.css';
+import { useStudio } from '@/contexts/StudioContext';
+import styles from '@/styles/components/studio/Studio.module.css';
 
 export function ToolSettingsPanel() {
   const { activeTool, toolSettings, setToolSettings } = useStudio();

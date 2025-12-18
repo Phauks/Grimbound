@@ -3,11 +3,14 @@
  * Handles regeneration, editing, and exporting individual tokens
  */
 
-import CONFIG from '../config.js';
-import { createTokensZip } from '../export/index.js';
-import { TokenGenerator } from '../generation/index.js';
-import type { Character, GenerationOptions, Team, Token } from '../types/index.js';
-import { downloadFile, sanitizeFilename } from '../utils/index.js';
+import CONFIG from '@/ts/config.js';
+import { createTokensZip } from '@/ts/export/index.js';
+import { TokenGenerator } from '@/ts/generation/index.js';
+import type { Character, GenerationOptions, Team, Token } from '@/ts/types/index.js';
+import { downloadFile, sanitizeFilename, logger } from '@/ts/utils/index.js';
+
+// Create child logger for detail view operations
+const detailLogger = logger.child('DetailView');
 
 /**
  * Regenerate a single character token with edited data
@@ -28,7 +31,7 @@ export async function regenerateSingleToken(
     const canvas = await generator.generateCharacterToken(editedCharacter);
     return canvas;
   } catch (error) {
-    console.error('Failed to regenerate character token:', error);
+    detailLogger.error('Failed to regenerate character token', error);
     throw error;
   }
 }
@@ -106,8 +109,8 @@ export async function regenerateCharacterAndReminders(
             reminderText: reminder,
           });
         } catch (error) {
-          console.error(
-            `Failed to generate reminder token "${reminder}" for ${editedCharacter.name}:`,
+          detailLogger.error(
+            `Failed to generate reminder token "${reminder}" for ${editedCharacter.name}`,
             error
           );
         }
@@ -116,7 +119,7 @@ export async function regenerateCharacterAndReminders(
 
     return { characterToken, reminderTokens };
   } catch (error) {
-    console.error('Failed to regenerate character and reminders:', error);
+    detailLogger.error('Failed to regenerate character and reminders', error);
     throw error;
   }
 }
@@ -147,7 +150,7 @@ export function updateCharacterInJson(
 
     return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error('Failed to update character in JSON:', error);
+    detailLogger.error('Failed to update character in JSON', error);
     throw error;
   }
 }
@@ -188,7 +191,7 @@ export function updateMetaInJson(
 
     return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error('Failed to update meta in JSON:', error);
+    detailLogger.error('Failed to update meta in JSON', error);
     throw error;
   }
 }
@@ -229,7 +232,7 @@ export async function downloadCharacterTokensAsZip(
     // Download as ZIP
     downloadFile(blob, `${characterName}_tokens.zip`);
   } catch (error) {
-    console.error('Failed to create ZIP file:', error);
+    detailLogger.error('Failed to create ZIP file', error);
     throw error;
   }
 }
@@ -257,7 +260,7 @@ export async function downloadCharacterTokenOnly(
     const filename = `${sanitizeFilename(characterName)}.png`;
     downloadFile(blob, filename);
   } catch (error) {
-    console.error('Failed to download character token:', error);
+    detailLogger.error('Failed to download character token', error);
     throw error;
   }
 }
@@ -293,7 +296,7 @@ export async function downloadReminderTokensOnly(
     // Download as ZIP
     downloadFile(blob, `${characterName}_reminders.zip`);
   } catch (error) {
-    console.error('Failed to create reminders ZIP file:', error);
+    detailLogger.error('Failed to create reminders ZIP file', error);
     throw error;
   }
 }

@@ -93,7 +93,7 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
     thumbnailSize: 512, // Large - high-res preview needed for layout assessment
   },
 
-  'setup-flower': {
+  'setup-overlay': {
     allowedMimeTypes: ['image/png', 'image/webp'],
     allowedExtensions: ['.png', '.webp'],
     maxSize: 5 * MB,
@@ -106,7 +106,7 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
     thumbnailSize: 128, // Standard size for setup tokens
   },
 
-  leaf: {
+  accent: {
     allowedMimeTypes: ['image/png', 'image/webp'],
     allowedExtensions: ['.png', '.webp'],
     maxSize: 1 * MB,
@@ -207,8 +207,8 @@ export const ASSET_ZIP_PATHS: Record<AssetType, string> = {
   'character-icon': 'assets/character-icons/',
   'token-background': 'assets/token-backgrounds/',
   'script-background': 'assets/script-backgrounds/',
-  'setup-flower': 'assets/setup-flowers/',
-  leaf: 'assets/leaves/',
+  'setup-overlay': 'assets/setup-overlays/',
+  accent: 'assets/accents/',
   logo: 'assets/logos/',
   'studio-icon': 'assets/studio-icons/',
   'studio-logo': 'assets/studio-logos/',
@@ -226,8 +226,8 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   'character-icon': 'Character Icon',
   'token-background': 'Token Background',
   'script-background': 'Script Background',
-  'setup-flower': 'Setup Flower',
-  leaf: 'Leaf',
+  'setup-overlay': 'Setup Overlay',
+  accent: 'Accent',
   logo: 'Logo',
   'studio-icon': 'Studio Icon',
   'studio-logo': 'Studio Logo',
@@ -241,8 +241,8 @@ export const ASSET_TYPE_LABELS_PLURAL: Record<AssetType, string> = {
   'character-icon': 'Character Icons',
   'token-background': 'Token Backgrounds',
   'script-background': 'Script Backgrounds',
-  'setup-flower': 'Setup Flowers',
-  leaf: 'Leaves',
+  'setup-overlay': 'Setup Overlays',
+  accent: 'Accents',
   logo: 'Logos',
   'studio-icon': 'Studio Icons',
   'studio-logo': 'Studio Logos',
@@ -256,8 +256,8 @@ export const ASSET_TYPE_ICONS: Record<AssetType, string> = {
   'character-icon': '👤',
   'token-background': '🎨',
   'script-background': '📜',
-  'setup-flower': '🌸',
-  leaf: '🍃',
+  'setup-overlay': '✨',
+  accent: '🍃',
   logo: '🏷️',
   'studio-icon': '✨',
   'studio-logo': '🎭',

@@ -7,9 +7,9 @@ import type { ReactNode } from 'react';
 
 // Token interface for JSON highlighting
 export interface HighlightToken {
-  content: ReactNode;
   type: 'key' | 'string' | 'number' | 'boolean' | 'null' | 'text';
   value: string;
+  content?: ReactNode;
 }
 
 /**
@@ -78,10 +78,10 @@ export const TOKEN_CLASS_MAP: Record<HighlightToken['type'], string> = {
  * Used for line-based rendering to reduce DOM nodes
  */
 export interface HighlightLine {
-  text: string;
   lineNumber: number;
   tokens: HighlightToken[];
   html: string; // Pre-rendered HTML string for dangerouslySetInnerHTML
+  text?: string;
 }
 
 /**

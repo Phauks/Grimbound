@@ -8,8 +8,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { logger } from '../ts/utils/index.js';
-import { getStorageItem, STORAGE_KEYS, setStorageItem } from '../ts/utils/storageKeys.js';
+import { logger } from '@/ts/utils/index.js';
+import { getStorageItem, STORAGE_KEYS, setStorageItem } from '@/ts/utils/storageKeys.js';
 
 /**
  * Hook to manage auto-save preference

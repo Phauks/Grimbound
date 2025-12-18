@@ -1,9 +1,9 @@
 import { memo, useMemo, useRef } from 'react';
-import { useContextMenu } from '../../../../hooks/useContextMenu';
-import styles from '../../../../styles/components/presets/PresetCard.module.css';
-import { cn } from '../../../../ts/utils';
-import type { ContextMenuItem } from '../../../Shared/UI/ContextMenu';
-import { ContextMenu } from '../../../Shared/UI/ContextMenu';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import styles from '@/styles/components/presets/PresetCard.module.css';
+import { cn } from '@/ts/utils';
+import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
+import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 
 interface MenuItemConfig {
   icon: string;

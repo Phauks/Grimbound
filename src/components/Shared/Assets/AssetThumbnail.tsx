@@ -8,23 +8,23 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useContextMenu } from '../../../hooks/useContextMenu';
-import styles from '../../../styles/components/shared/AssetThumbnail.module.css';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import styles from '@/styles/components/shared/AssetThumbnail.module.css';
 import {
   ASSET_TYPE_ICONS,
   ASSET_TYPE_LABELS,
   type AssetType,
   type AssetWithUrl,
-} from '../../../ts/services/upload/index.js';
-import { ContextMenu, type ContextMenuItem } from '../UI/ContextMenu';
+} from '@/ts/services/upload/index.js';
+import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 
 // Asset types for reclassify submenu
 const ASSET_TYPES: AssetType[] = [
   'character-icon',
   'token-background',
   'script-background',
-  'setup-flower',
-  'leaf',
+  'setup-overlay',
+  'accent',
   'logo',
 ];
 
@@ -211,8 +211,9 @@ export function AssetThumbnail({
     .join(' ');
 
   const isGlobal = asset.projectId === null;
-  const typeIcon = ASSET_TYPE_ICONS[asset.type];
-  const typeLabel = ASSET_TYPE_LABELS[asset.type];
+  // Provide fallbacks for unknown asset types (backward compatibility)
+  const typeIcon = ASSET_TYPE_ICONS[asset.type] ?? '📄';
+  const typeLabel = ASSET_TYPE_LABELS[asset.type] ?? asset.type;
 
   return (
     <>

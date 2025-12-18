@@ -1,6 +1,6 @@
 import { forwardRef, memo, type ReactElement, useImperativeHandle, useMemo, useRef } from 'react';
 import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
-import { type HighlightLine, tokenizeJSONByLine } from '../../../ts/ui/jsonHighlighter';
+import { type HighlightLine, tokenizeJSONByLine } from '@/ts/ui/jsonHighlighter';
 
 interface VirtualizedJsonHighlightProps {
   json: string;

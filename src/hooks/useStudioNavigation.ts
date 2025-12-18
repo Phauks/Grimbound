@@ -6,11 +6,11 @@
  */
 
 import { useCallback } from 'react';
-import type { TabType } from '../components/Layout/TabNavigation';
-import { navigateToStudioWithBlob } from '../ts/studio/navigationHelpers.js';
-import type { Token } from '../ts/types/index.js';
-import { globalImageCache } from '../ts/utils/imageCache.js';
-import { logger } from '../ts/utils/logger.js';
+import type { TabType } from '@/components/Layout/TabNavigation';
+import { navigateToStudioWithBlob } from '@/ts/studio/navigationHelpers.js';
+import type { Token } from '@/ts/types/index.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface UseStudioNavigationProps {
   /** Function to change tabs */

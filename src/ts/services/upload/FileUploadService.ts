@@ -10,7 +10,25 @@
 import { assetStorageService, type CreateAssetData } from './AssetStorageService.js';
 import { fileValidationService } from './FileValidationService.js';
 import { imageProcessingService } from './ImageProcessingService.js';
+import type {
+  IAssetStorageService,
+  IFileValidationService,
+  IImageProcessingService,
+} from './IUploadServices.js';
 import type { AssetSourceType, AssetType, UploadConfig, UploadOutcome } from './types.js';
+
+// ============================================================================
+// Dependency Injection Types
+// ============================================================================
+
+/**
+ * Dependencies for FileUploadService
+ */
+export interface FileUploadServiceDeps {
+  assetStorage: IAssetStorageService;
+  fileValidation: IFileValidationService;
+  imageProcessing: IImageProcessingService;
+}
 
 // ============================================================================
 // FileUploadService
@@ -18,8 +36,42 @@ import type { AssetSourceType, AssetType, UploadConfig, UploadOutcome } from './
 
 /**
  * Service for handling file uploads
+ *
+ * Uses constructor injection for testability. Dependencies have defaults
+ * for convenient usage, but can be overridden for testing.
+ *
+ * @example
+ * ```typescript
+ * // Production usage (uses defaults)
+ * const service = new FileUploadService();
+ *
+ * // Testing with mocks
+ * const mockStorage = { save: vi.fn(), getById: vi.fn() };
+ * const mockValidation = { validate: vi.fn() };
+ * const mockProcessing = { process: vi.fn() };
+ * const service = new FileUploadService({
+ *   assetStorage: mockStorage,
+ *   fileValidation: mockValidation,
+ *   imageProcessing: mockProcessing,
+ * });
+ * ```
  */
 export class FileUploadService {
+  // Injected dependencies
+  private readonly assetStorage: IAssetStorageService;
+  private readonly fileValidation: IFileValidationService;
+  private readonly imageProcessing: IImageProcessingService;
+
+  /**
+   * Create a new FileUploadService instance
+   *
+   * @param deps - Optional dependencies for injection (defaults to singleton instances)
+   */
+  constructor(deps: Partial<FileUploadServiceDeps> = {}) {
+    this.assetStorage = deps.assetStorage ?? assetStorageService;
+    this.fileValidation = deps.fileValidation ?? fileValidationService;
+    this.imageProcessing = deps.imageProcessing ?? imageProcessingService;
+  }
   /**
    * Upload one or more files
    *
@@ -165,7 +217,7 @@ export class FileUploadService {
     sourceType: AssetSourceType
   ): Promise<UploadOutcome> {
     // 1. Validate the file
-    const validation = await fileValidationService.validate(file, config.assetType);
+    const validation = await this.fileValidation.validate(file, config.assetType);
 
     if (!validation.valid) {
       return {
@@ -190,7 +242,7 @@ export class FileUploadService {
     if (config.skipProcessing) {
       // Use original file
       processedBlob = file;
-      thumbnailBlob = await imageProcessingService.generateThumbnail(file);
+      thumbnailBlob = await this.imageProcessing.generateThumbnail(file);
       metadata = {
         filename: file.name,
         mimeType: file.type,
@@ -200,7 +252,7 @@ export class FileUploadService {
       };
     } else {
       // Process the image
-      const processed = await imageProcessingService.process(file, config.assetType);
+      const processed = await this.imageProcessing.process(file, config.assetType);
       processedBlob = processed.blob;
       thumbnailBlob = processed.thumbnail;
       metadata = processed.metadata;
@@ -221,10 +273,10 @@ export class FileUploadService {
     };
 
     // 4. Save to database
-    const assetId = await assetStorageService.save(assetData);
+    const assetId = await this.assetStorage.save(assetData);
 
     // 5. Get the saved asset
-    const asset = await assetStorageService.getById(assetId);
+    const asset = await this.assetStorage.getById(assetId);
     if (!asset) {
       throw new Error('Failed to retrieve saved asset');
     }
@@ -291,7 +343,7 @@ export class FileUploadService {
    * Get accept string for file input based on asset type
    */
   getAcceptString(assetType: AssetType): string {
-    const config = fileValidationService.getConfig(assetType);
+    const config = this.fileValidation.getConfig(assetType);
     return config.allowedMimeTypes.join(',');
   }
 
@@ -299,7 +351,7 @@ export class FileUploadService {
    * Check if a file type is valid for an asset type
    */
   isValidFileType(file: File, assetType: AssetType): boolean {
-    const config = fileValidationService.getConfig(assetType);
+    const config = this.fileValidation.getConfig(assetType);
     return config.allowedMimeTypes.includes(file.type);
   }
 }

@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { createPortal } from 'react-dom';
-import type { ContextMenuPosition } from '../../../hooks/useContextMenu';
-import styles from '../../../styles/components/shared/ContextMenu.module.css';
+import type { ContextMenuPosition } from '@/hooks/useContextMenu';
+import styles from '@/styles/components/shared/ContextMenu.module.css';
 
 export interface ContextMenuItem {
   /** Icon to display (emoji or text) */

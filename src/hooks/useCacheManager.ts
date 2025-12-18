@@ -8,11 +8,11 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import type { InvalidationScope } from '../ts/cache/CacheInvalidationService.js';
-import type { CombinedCacheStats } from '../ts/cache/CacheManager.js';
-import { cacheManager } from '../ts/cache/CacheManager.js';
-import type { CacheStats, PreRenderContext, PreRenderResult } from '../ts/cache/index.js';
-import type { Token } from '../ts/types/index.js';
+import type { InvalidationScope } from '@/ts/cache/CacheInvalidationService.js';
+import type { CombinedCacheStats } from '@/ts/cache/CacheManager.js';
+import { cacheManager } from '@/ts/cache/CacheManager.js';
+import type { CacheStats, PreRenderContext, PreRenderResult } from '@/ts/cache/index.js';
+import type { Token } from '@/ts/types/index.js';
 
 /**
  * Return type for useCacheManager hook.

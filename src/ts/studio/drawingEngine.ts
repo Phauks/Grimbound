@@ -4,7 +4,7 @@
  * Core drawing logic for brush, eraser, shapes, and text tools
  */
 
-import type { Point, ToolSettings } from '../types/index.js';
+import type { Point, ToolSettings } from '@/ts/types/index.js';
 
 /**
  * Drawing Engine class for handling all drawing operations

@@ -75,6 +75,10 @@ export const META_TOKEN_LAYOUT = {
   AUTHOR_TEXT_SIZE_FACTOR: 0.7,
   /** Font size ratio for "Blood on the Clocktower" text */
   BOTC_TEXT_SIZE_FACTOR: 0.75,
+  /** Max size ratio for script name logo image */
+  LOGO_MAX_SIZE_RATIO: 0.7,
+  /** Max size ratio for Pandemonium Institute image */
+  PANDEMONIUM_IMAGE_MAX_SIZE_RATIO: 0.75,
 } as const;
 
 /**
@@ -113,14 +117,16 @@ export const TOKEN_COUNT_BADGE = {
   BACKGROUND_RADIUS: 0.8,
   /** Line width for badge stroke */
   STROKE_WIDTH: 2,
+  /** Size growth per reminder item (for dots style) */
+  SIZE_GROWTH_PER_ITEM: 0.15,
 } as const;
 
 /**
- * Leaf decoration configuration for token generation
- * Uses leaf assets dynamically positioned around the token edge
+ * Accent decoration configuration for token generation
+ * Uses accent assets dynamically positioned around the token edge
  */
-export const LEAF_LAYOUT = {
-  /** Arc configuration for top leaves (in degrees, centered at top) */
+export const ACCENT_LAYOUT = {
+  /** Arc configuration for top accents (in degrees, centered at top) */
   ARC: {
     /** Default arc span in degrees (e.g., 120 = 60deg left to 60deg right of top) */
     DEFAULT_SPAN: 120,
@@ -129,43 +135,43 @@ export const LEAF_LAYOUT = {
     /** Minimum configurable arc span */
     MIN_SPAN: 30,
   },
-  /** Number of potential leaf positions along the arc */
+  /** Number of potential accent positions along the arc */
   SLOTS: {
     DEFAULT: 7,
     MIN: 3,
     MAX: 15,
   },
-  /** Left and right side leaf configuration */
-  SIDE_LEAVES: {
+  /** Left and right side accent configuration */
+  SIDE_ACCENTS: {
     /** How far from center (as ratio of radius) */
     RADIAL_OFFSET: 0.88,
     /** Scale relative to diameter */
     SCALE: 0.3,
-    /** Rotation in degrees (positive = clockwise) - leaves point outward */
+    /** Rotation in degrees (positive = clockwise) - accents point outward */
     LEFT_ROTATION: -90,
     RIGHT_ROTATION: 90,
   },
-  /** Arc leaf configuration */
-  ARC_LEAVES: {
-    /** How far from center leaves are placed (as ratio of radius) */
+  /** Arc accent configuration */
+  ARC_ACCENTS: {
+    /** How far from center accents are placed (as ratio of radius) */
     RADIAL_OFFSET: 0.78,
     /** Scale relative to diameter */
     SCALE: 0.22,
   },
   /** Asset configuration */
   ASSETS: {
-    /** Base path for leaves folder */
-    LEAVES_PATH: 'leaves/',
-    /** Filename prefix for leaf variants (leaf_1.png, leaf_2.png, etc.) */
-    LEAF_FILENAME: 'leaf',
-    /** Number of leaf variants available */
+    /** Base path for accents folder */
+    ACCENTS_PATH: 'accents/',
+    /** Filename prefix for accent variants (accent_1.png, accent_2.png, etc.) */
+    ACCENT_FILENAME: 'accent',
+    /** Number of accent variants available */
     DEFAULT_VARIANTS: 1,
     MIN_VARIANTS: 1,
     MAX_VARIANTS: 10,
   },
   /** Default generation settings */
   DEFAULTS: {
-    MAX_LEAVES: 5,
+    MAX_ACCENTS: 5,
     PROBABILITY: 30,
   },
 } as const;
@@ -286,7 +292,7 @@ export default {
   QR_TOKEN_LAYOUT,
   LINE_HEIGHTS,
   TOKEN_COUNT_BADGE,
-  LEAF_LAYOUT,
+  ACCENT_LAYOUT,
   DEFAULT_COLORS,
   QR_COLORS,
   TEXT_SHADOW,

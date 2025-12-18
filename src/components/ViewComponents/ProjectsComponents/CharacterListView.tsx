@@ -10,10 +10,10 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useCharacterImageResolver } from '../../../hooks/useCharacterImageResolver.js';
-import styles from '../../../styles/components/projects/CharacterListView.module.css';
-import { TEAM_COLORS, TEAM_LABELS } from '../../../ts/config.js';
-import type { Character, Team, Token } from '../../../ts/types/index.js';
+import { useCharacterImageResolver } from '@/hooks/useCharacterImageResolver.js';
+import styles from '@/styles/components/projects/CharacterListView.module.css';
+import { TEAM_COLORS, TEAM_LABELS } from '@/ts/config.js';
+import type { Character, Team, Token } from '@/ts/types/index.js';
 
 interface CharacterListViewProps {
   /** Characters to display directly (preferred - instant loading) */

@@ -11,7 +11,7 @@ import type {
   LayerType,
   ShapeLayerData,
   TextLayerData,
-} from '../types/index.js';
+} from '@/ts/types/index.js';
 import { cloneCanvas } from './canvasOperations.js';
 
 /**

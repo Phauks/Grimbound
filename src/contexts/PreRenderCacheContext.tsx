@@ -12,7 +12,7 @@ import {
   PreRenderCacheManager,
   ProjectPreRenderStrategy,
   TokensPreRenderStrategy,
-} from '../ts/cache/index.js';
+} from '@/ts/cache/index.js';
 
 /**
  * Context value type.
@@ -71,7 +71,7 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
     );
 
     // ===== Characters Cache =====
-    const charactersCache = new LRUCacheAdapter({
+    const charactersCache = new LRUCacheAdapter<string, unknown>({
       maxSize: 5, // 5 character sets
       maxMemory: 10_000_000, // 10MB
       evictionPolicy: new LRUEvictionPolicy({
@@ -91,14 +91,15 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
       },
     });
     mgr.registerCache('characters', charactersCache);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mgr.registerStrategy(
-      new CharactersPreRenderStrategy(charactersCache, {
+      new CharactersPreRenderStrategy(charactersCache as any, {
         includeReminders: true,
       })
     );
 
     // ===== Project Cache =====
-    const projectCache = new LRUCacheAdapter({
+    const projectCache = new LRUCacheAdapter<string, unknown>({
       maxSize: 20, // 20 projects
       maxMemory: 5_000_000, // 5MB
       evictionPolicy: new LRUEvictionPolicy({
@@ -118,8 +119,9 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
       },
     });
     mgr.registerCache('project', projectCache);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mgr.registerStrategy(
-      new ProjectPreRenderStrategy(projectCache, {
+      new ProjectPreRenderStrategy(projectCache as any, {
         abortOnUnhover: true,
       })
     );

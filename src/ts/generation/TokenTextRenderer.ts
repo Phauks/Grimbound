@@ -13,8 +13,8 @@ import {
   drawCurvedText,
   type Point,
   type TextLayoutResult,
-} from '../canvas/index.js';
-import CONFIG from '../config.js';
+} from '@/ts/canvas/index.js';
+import CONFIG from '@/ts/config.js';
 import {
   CHARACTER_LAYOUT,
   DEFAULT_COLORS,
@@ -24,10 +24,10 @@ import {
   QR_TOKEN_LAYOUT,
   REMINDER_LAYOUT,
   TOKEN_COUNT_BADGE,
-} from '../constants.js';
-import type { ReminderCountStyle } from '../types/index.js';
-import type { TokenGeneratorOptions } from '../types/tokenOptions.js';
-import { logger } from '../utils/logger.js';
+} from '@/ts/constants.js';
+import type { ReminderCountStyle } from '@/ts/types/index.js';
+import type { TokenGeneratorOptions } from '@/ts/types/tokenOptions.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Format reminder count based on the selected style
@@ -199,7 +199,7 @@ export class TokenTextRenderer {
     // Adjust badge size for dots style (wider)
     const badgeRadius =
       style === 'dots'
-        ? fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS * (1 + count * 0.15)
+        ? fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS * (1 + count * TOKEN_COUNT_BADGE.SIZE_GROWTH_PER_ITEM)
         : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
 
     // Draw background circle
