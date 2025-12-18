@@ -154,8 +154,8 @@ src/styles/components/scriptInput/
 
 | Item | Impact | Effort |
 |------|--------|--------|
-| Migrate `console.*` to logger | Code quality | Low |
-| Extract magic numbers to constants | Maintainability | Medium |
+| Migrate `console.*` to logger | Code quality | Assumed Completed |
+| Extract magic numbers to constants | Maintainability | Assumed Completed |
 | Add tests for custom hooks | Reliability | High |
 
 ### Medium Priority (Address in v0.5.x)
@@ -163,7 +163,7 @@ src/styles/components/scriptInput/
 | Item | Impact | Effort |
 |------|--------|--------|
 | ~~Complete DI across services~~ | Testability | ✅ Done in v0.3.6 |
-| Decompose TokenGenerator.ts | Maintainability | High |
+| Decompose TokenGenerator.ts | Maintainability | Assumed Completed |
 | ErrorHandler use logger | Consistency | Low |
 
 ### Low Priority (Address in v0.6.x+)
@@ -250,7 +250,7 @@ src/styles/components/scriptInput/
 
 | Decision | Options | Deadline |
 |----------|---------|----------|
-| E2E framework | Playwright vs Cypress | v0.6.x |
+| E2E framework | Playwright | v0.6.x |
 | Bundle splitting | Manual vs automatic | v0.5.x |
 | State management | Context vs Zustand | v0.5.x |
 
