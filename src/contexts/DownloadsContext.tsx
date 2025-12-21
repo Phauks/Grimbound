@@ -10,6 +10,21 @@
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 /**
+ * Data returned by getBlob for bundling into a combined ZIP
+ */
+export interface BundleData {
+  /** The file blob */
+  blob: Blob;
+  /** Filename to use in the ZIP */
+  filename: string;
+}
+
+/**
+ * Download categories for grouping in ExportView
+ */
+export type DownloadCategory = 'featured' | 'json' | 'tokens' | 'script' | 'token-sets' | 'character';
+
+/**
  * Represents a single downloadable item
  */
 export interface DownloadItem {
@@ -23,12 +38,20 @@ export interface DownloadItem {
   description: string;
   /** Function to execute the download */
   action: () => Promise<void> | void;
+  /** Optional: Returns blob data for bundling into combined ZIP (used by Download All) */
+  getBlob?: () => Promise<BundleData | BundleData[] | null>;
   /** Whether this download is currently disabled */
   disabled?: boolean;
   /** Reason why the download is disabled */
   disabledReason?: string;
   /** Optional: Show loading state during action */
   showProgress?: boolean;
+  /** Category for grouping in ExportView */
+  category: DownloadCategory;
+  /** Show in Featured section (always visible in ExportView) */
+  featured?: boolean;
+  /** Which view registered this download (for debugging) */
+  sourceView?: string;
 }
 
 /**

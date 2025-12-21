@@ -12,7 +12,7 @@
 
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
@@ -107,14 +107,6 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
   const displayCount = countEnabled(displaySettings);
-
-  const getSummary = () => {
-    if (displayCount === 0) return 'None';
-    const parts: string[] = [];
-    if (displaySettings.pandemonium) parts.push('Pandemonium');
-    if (displaySettings.scriptName) parts.push('Script');
-    return parts.join(', ');
-  };
 
   const defaultSettings: PendingMetaSettings = {
     pandemonium: true,

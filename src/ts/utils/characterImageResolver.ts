@@ -21,6 +21,69 @@ import type { Character } from '@/ts/types/index.js';
 import { logger } from './logger.js';
 
 // ============================================================================
+// Persistent URL Cache (avoids repeated blob URL creation)
+// ============================================================================
+
+/**
+ * Cache for resolved character icon URLs
+ *
+ * Key: character ID (lowercase)
+ * Value: resolved URL string (blob URL or external URL)
+ *
+ * Blob URLs are persisted here and NOT revoked - they stay valid for the session.
+ * This dramatically improves performance for list views that re-render frequently.
+ */
+const characterIconUrlCache = new Map<string, string>();
+
+/**
+ * Get a cached URL for a character icon
+ */
+export function getCachedIconUrl(characterId: string): string | undefined {
+  return characterIconUrlCache.get(characterId.toLowerCase());
+}
+
+/**
+ * Set a cached URL for a character icon
+ */
+export function setCachedIconUrl(characterId: string, url: string): void {
+  characterIconUrlCache.set(characterId.toLowerCase(), url);
+}
+
+/**
+ * Check if an icon URL is already cached
+ */
+export function hasIconUrlCached(characterId: string): boolean {
+  return characterIconUrlCache.has(characterId.toLowerCase());
+}
+
+/**
+ * Clear the icon URL cache (e.g., when re-syncing data)
+ */
+export function clearIconUrlCache(): void {
+  // Revoke all blob URLs before clearing
+  for (const url of characterIconUrlCache.values()) {
+    if (url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  }
+  characterIconUrlCache.clear();
+  logger.debug('CharacterImageResolver', 'Icon URL cache cleared');
+}
+
+/**
+ * Get cache statistics
+ */
+export function getIconUrlCacheStats(): { size: number; blobUrls: number } {
+  let blobUrls = 0;
+  for (const url of characterIconUrlCache.values()) {
+    if (url.startsWith('blob:')) {
+      blobUrls++;
+    }
+  }
+  return { size: characterIconUrlCache.size, blobUrls };
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -149,6 +212,7 @@ export function getFirstImageUrl(imageField: string | string[] | undefined): str
  * Resolve a single character image URL to a displayable URL
  *
  * Resolution order:
+ * 0. Check persistent URL cache first (fastest path)
  * 1. Empty URL -> return fallback
  * 2. Asset reference (asset:uuid) -> resolve via AssetStorageService
  * 3. External URL (http/https/data/blob) -> return as-is
@@ -168,10 +232,7 @@ export function getFirstImageUrl(imageField: string | string[] | undefined): str
  *   <img src={result.url} />
  * }
  *
- * // Cleanup blob URLs on unmount
- * if (result.blobUrl) {
- *   URL.revokeObjectURL(result.blobUrl)
- * }
+ * // Note: blob URLs are cached and managed by the resolver - no manual cleanup needed
  */
 export async function resolveCharacterImageUrl(
   imageUrl: string | undefined,
@@ -179,6 +240,12 @@ export async function resolveCharacterImageUrl(
   options: ResolveOptions = {}
 ): Promise<ResolvedImage> {
   const { skipSyncStorage = false, logContext } = options;
+
+  // 0. Check persistent URL cache first (fastest path for repeated calls)
+  const cachedUrl = getCachedIconUrl(characterId);
+  if (cachedUrl) {
+    return { url: cachedUrl, source: 'sync' };
+  }
 
   // 1. Empty URL -> fallback
   if (!imageUrl?.trim()) {
@@ -216,6 +283,8 @@ export async function resolveCharacterImageUrl(
         const blob = await dataSyncService.getCharacterImage(lookupId);
         if (blob) {
           const blobUrl = URL.createObjectURL(blob);
+          // Cache the blob URL for future use (persists for session)
+          setCachedIconUrl(lookupId, blobUrl);
           return { url: blobUrl, source: 'sync', blobUrl };
         }
       } catch (_error) {
@@ -240,22 +309,23 @@ export async function resolveCharacterImageUrl(
  * Resolve images for a batch of characters
  *
  * This is optimized for list-based components that display many characters.
- * Returns a Map for O(1) lookup by UUID and tracks all blob URLs for cleanup.
+ * Uses parallel resolution with Promise.all for maximum performance.
+ * Returns a Map for O(1) lookup by UUID.
+ *
+ * Note: Blob URLs are cached in the persistent URL cache and should NOT be
+ * revoked by callers. The cache manages blob URL lifecycle for the session.
  *
  * @param characters - Array of characters to resolve images for
  * @param officialCharMap - Optional map of official character data for fallback
- * @returns Map of UUIDs to resolved URLs and list of blob URLs to cleanup
+ * @returns Map of UUIDs to resolved URLs and list of new blob URLs created
  *
  * @example
- * const { urls, blobUrls } = await resolveCharacterImages(characters, officialCharMap)
+ * const { urls } = await resolveCharacterImages(characters, officialCharMap)
  *
  * // Use in render
  * const iconUrl = urls.get(character.uuid)
  *
- * // Cleanup on unmount
- * useEffect(() => {
- *   return () => blobUrls.forEach(url => URL.revokeObjectURL(url))
- * }, [blobUrls])
+ * // Note: No cleanup needed - blob URLs are cached for the session
  */
 export async function resolveCharacterImages(
   characters: Character[],
@@ -264,31 +334,106 @@ export async function resolveCharacterImages(
   const urls = new Map<string, string>();
   const blobUrls: string[] = [];
 
-  for (const char of characters) {
-    if (!char.uuid) continue;
+  // Prepare resolution tasks
+  const resolutionTasks = characters
+    .filter((char) => char.uuid)
+    .map(async (char) => {
+      // Get image URL from character or fallback to official data
+      let imageUrl = getFirstImageUrl(char.image as string | string[] | undefined);
 
-    // Get image URL from character or fallback to official data
-    let imageUrl = getFirstImageUrl(char.image as string | string[] | undefined);
-
-    if (!imageUrl && officialCharMap) {
-      const officialChar = officialCharMap.get(char.id.toLowerCase());
-      if (officialChar) {
-        imageUrl = getFirstImageUrl(officialChar.image as string | string[] | undefined);
+      if (!imageUrl && officialCharMap) {
+        const officialChar = officialCharMap.get(char.id.toLowerCase());
+        if (officialChar) {
+          imageUrl = getFirstImageUrl(officialChar.image as string | string[] | undefined);
+        }
       }
-    }
 
-    if (!imageUrl) continue;
+      if (!imageUrl) return null;
 
-    const result = await resolveCharacterImageUrl(imageUrl, char.id);
+      const result = await resolveCharacterImageUrl(imageUrl, char.id);
 
-    if (result.url) {
-      urls.set(char.uuid, result.url);
-    }
+      return {
+        uuid: char.uuid!,
+        url: result.url,
+        blobUrl: result.blobUrl,
+      };
+    });
 
-    if (result.blobUrl) {
-      blobUrls.push(result.blobUrl);
+  // Resolve all in parallel
+  const results = await Promise.all(resolutionTasks);
+
+  // Collect results
+  for (const result of results) {
+    if (result && result.url) {
+      urls.set(result.uuid, result.url);
+      if (result.blobUrl) {
+        blobUrls.push(result.blobUrl);
+      }
     }
   }
 
   return { urls, blobUrls };
+}
+
+// ============================================================================
+// Pre-warming Functions
+// ============================================================================
+
+/**
+ * Pre-warm the icon URL cache with all official character images
+ *
+ * This should be called after data sync completes to ensure all character
+ * icons are readily available without async lookups.
+ *
+ * @param characterIds - Array of character IDs to pre-warm
+ * @param onProgress - Optional progress callback
+ * @returns Number of icons successfully cached
+ */
+export async function prewarmIconCache(
+  characterIds: string[],
+  onProgress?: (loaded: number, total: number) => void
+): Promise<number> {
+  const total = characterIds.length;
+  let loaded = 0;
+  let cached = 0;
+
+  logger.info('CharacterImageResolver', `Pre-warming icon cache for ${total} characters...`);
+
+  // Process in parallel with concurrency limit to avoid overwhelming the browser
+  const BATCH_SIZE = 20;
+
+  for (let i = 0; i < characterIds.length; i += BATCH_SIZE) {
+    const batch = characterIds.slice(i, i + BATCH_SIZE);
+
+    await Promise.all(
+      batch.map(async (characterId) => {
+        try {
+          // Skip if already cached
+          if (hasIconUrlCached(characterId)) {
+            loaded++;
+            if (onProgress) onProgress(loaded, total);
+            cached++;
+            return;
+          }
+
+          // Resolve the image (this will cache the blob URL)
+          const blob = await dataSyncService.getCharacterImage(characterId);
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            setCachedIconUrl(characterId, blobUrl);
+            cached++;
+          }
+        } catch (error) {
+          // Silent fail - icon will be loaded on demand
+          logger.debug('CharacterImageResolver', `Failed to pre-warm ${characterId}:`, error);
+        } finally {
+          loaded++;
+          if (onProgress) onProgress(loaded, total);
+        }
+      })
+    );
+  }
+
+  logger.info('CharacterImageResolver', `Pre-warmed ${cached}/${total} icons`);
+  return cached;
 }

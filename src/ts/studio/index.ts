@@ -1,33 +1,71 @@
 /**
  * Studio Module
  *
- * Barrel export for all Studio-related utilities
+ * Simplified barrel export for Studio utilities.
+ * Exports icon processing, character presets, and basic canvas operations.
  */
 
-// Asset integration (connects Studio to global asset storage)
-export * from './assetIntegration.js';
-// Background removal
-export * from './backgroundRemoval.js';
-// Canvas operations
-export * from './canvasOperations.js';
-export { createStudioCanvas, getCanvasPoolStats, releaseStudioCanvas } from './canvasOperations.js';
-// Canvas overlay (grid, guides, rulers)
-export * from './canvasOverlay.js';
-// Character presets
-export * from './characterPresets.js';
-// Drawing engine
-export * from './drawingEngine.js';
-// Filter engine
-export * from './filterEngine.js';
-// History manager (undo/redo system)
-export * from './historyManager.js';
-// Layer manager
-export * from './layerManager.js';
-// Logo templates (script logo generation)
-export * from './logoTemplates.js';
-// Memory manager (memory monitoring and cleanup)
-export * from './memoryManager.js';
-// Navigation helpers (cross-tab navigation to Studio)
-export * from './navigationHelpers.js';
-// Studio presets
-export * from './studioPresets.js';
+// Icon color replacement (HSL-based selective recoloring)
+export {
+  replaceIconColor,
+  replaceIconColorWithHex,
+  replaceIconColorSplit,
+  applyTeamColorPreset,
+  detectOptimalThreshold,
+  getTeamPresetById,
+  hueToPreviewColor,
+  TEAM_COLOR_PRESETS,
+  DEFAULT_COLOR_OPTIONS,
+} from './iconColorReplacer.js';
+export type {
+  ColorReplacementOptions,
+  TeamColorPreset,
+  SplitColorConfig,
+} from './iconColorReplacer.js';
+
+// Icon border rendering
+export {
+  addIconBorder,
+  addCircularBorder,
+  shrinkIconContent,
+  DEFAULT_BORDER_OPTIONS,
+} from './iconBorderRenderer.js';
+export type { BorderOptions } from './iconBorderRenderer.js';
+
+// Legacy character presets (for backwards compatibility)
+export {
+  CHARACTER_PRESETS,
+  applyCharacterPreset,
+  getPresetById,
+  getPresetByName,
+} from './characterPresets.js';
+export type { CharacterPreset } from '@/ts/types/index.js';
+
+// Canvas operations (basic utilities)
+export {
+  createStudioCanvas,
+  releaseStudioCanvas,
+  getCanvasPoolStats,
+  loadImageToCanvas,
+  loadImageFromUrl,
+  pasteFromClipboard,
+  createBlankCanvas,
+  cloneCanvas,
+  resizeCanvas,
+  getImageData,
+  putImageData,
+  clearCanvas,
+  fillCanvas,
+  canvasToDataURL,
+} from './canvasOperations.js';
+
+// Navigation helpers (for "Edit in Studio" functionality)
+export {
+  navigateToStudioWithUrl,
+  navigateToStudioWithBlob,
+  navigateToStudioWithAsset,
+  consumePendingStudioOperation,
+  hasPendingStudioOperation,
+  clearPendingStudioOperation,
+} from './navigationHelpers.js';
+export type { StudioEditMode } from './navigationHelpers.js';

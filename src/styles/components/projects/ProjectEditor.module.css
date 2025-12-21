@@ -43,6 +43,13 @@
   background: transparent;
 }
 
+/* Preview Header Section - Token preview with statistics */
+.previewHeaderSection {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-background);
+}
+
 /* Versions Container */
 .versionsContainer {
   flex: 1;
@@ -161,55 +168,6 @@
   gap: var(--spacing-md);
   overflow: visible; /* Allow dropdown to overflow */
   position: relative; /* Establish positioning context */
-}
-
-/* Logo Display Container */
-.logoDisplayContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.logoLabel {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
-}
-
-.logoPreview {
-  max-width: 240px;
-  max-height: 180px;
-  object-fit: contain;
-  border-radius: var(--border-radius-sm);
-}
-
-.logoPlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 240px;
-  height: 160px;
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius);
-  color: var(--text-muted);
-  text-align: center;
-  padding: var(--spacing-sm);
-  background: var(--bg-secondary);
-}
-
-.logoPlaceholder span {
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.logoPlaceholder small {
-  font-size: 0.7rem;
-  margin-top: var(--spacing-xs);
-  opacity: 0.8;
 }
 
 .actionButtons {
@@ -507,6 +465,15 @@
   /* CharacterGridView handles its own styling */
 }
 
+/* JSON View Container */
+.jsonViewContainer {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-sm);
+  overflow: hidden;
+}
+
 /* Compare Section - For version comparison view */
 .compareSection {
   margin-top: var(--spacing-lg);
@@ -566,6 +533,22 @@
   border-color: var(--color-accent);
   color: white;
   opacity: 0.9;
+}
+
+.selectionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  background: var(--color-warning, #f0ad4e);
+  color: #000;
+  border-radius: 9px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ============================================

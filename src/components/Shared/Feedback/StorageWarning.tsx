@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import type { StorageWarningInfo } from '@/hooks/useStorageQuota.js';
+import type { StorageWarningInfo } from '@/hooks/sync/useStorageQuota.js';
 import { logger } from '@/ts/utils/logger.js';
 import styles from './StorageWarning.module.css';
 

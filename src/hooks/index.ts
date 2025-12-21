@@ -2,81 +2,174 @@
  * Hooks Barrel Export
  *
  * Central export point for all custom React hooks.
- * Organized by category for easy discovery.
+ * Hooks are organized into domain-based subdirectories for scalability.
+ *
+ * @module hooks
  */
 
-export { useAssetManager } from './useAssetManager.js';
-export { useAutoResizeTextarea } from './useAutoResizeTextarea.js';
+// ============================================================================
+// Token Hooks
+// ============================================================================
+export {
+  useTokenGenerator,
+  useMissingTokenGenerator,
+  type UseMissingTokenGeneratorResult,
+  useTokenGrouping,
+  type TokenGroup,
+  type UseTokenGroupingReturn,
+  useTokenPreviewCache,
+  type UseTokenPreviewCacheOptions,
+  type UseTokenPreviewCacheResult,
+  useTokenDeletion,
+  useTokenDetailEditor,
+  useTokenEditorLocalState,
+  type TokenEditorLocalState,
+  type UseTokenEditorLocalStateOptions,
+  type UseTokenEditorLocalStateResult,
+} from './tokens/index.js';
+
+// ============================================================================
+// Character Hooks
+// ============================================================================
+export {
+  useCharacterEditor,
+  type UseCharacterEditorOptions,
+  type UseCharacterEditorResult,
+  useCharacterOperations,
+  type UseCharacterOperationsOptions,
+  type UseCharacterOperationsResult,
+  useCharacterDownloads,
+  type UseCharacterDownloadsOptions,
+  type UseCharacterDownloadsResult,
+  useCharacterImageResolver,
+  useBackgroundImageUrl,
+} from './characters/index.js';
+
 // ============================================================================
 // Auto-Save Hooks
 // ============================================================================
-export { useAutoSaveDetector } from './useAutoSaveDetector.js';
-export { useAutoSavePreference } from './useAutoSavePreference.js';
 export {
+  useProjectAutoSave,
+  useUnsavedChangesWarning,
+  useAutoSaveDetector,
+  useAutoSaveTrigger,
+  useAutoSavePreference,
+  useAutoSaveTelemetry,
   type AutoSaveTelemetry,
   type AutoSaveTelemetryStats,
-  useAutoSaveTelemetry,
-} from './useAutoSaveTelemetry.js';
-export { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
-export { useBuiltInAssets } from './useBuiltInAssets.js';
-export { useCacheManager } from './useCacheManager.js';
-export { useCacheStats } from './useCacheStats.js';
-export { useCharacterImageResolver } from './useCharacterImageResolver.js';
+} from './autosave/index.js';
+
 // ============================================================================
-// UI & Interaction Hooks
+// Cache Hooks
 // ============================================================================
-export { useContextMenu } from './useContextMenu.js';
 export {
+  useCacheManager,
+  useCacheStats,
+  usePreRenderCache,
+  useProjectCacheWarming,
+} from './cache/index.js';
+
+// ============================================================================
+// Export Hooks
+// ============================================================================
+export {
+  useExport,
+  useScriptPdfDownloads,
+  useExportDownloads,
+  type UseScriptPdfDownloadsOptions,
+  type UseExportDownloadsResult,
+} from './export/index.js';
+
+// ============================================================================
+// Script Hooks
+// ============================================================================
+export {
+  useScriptData,
+  useScriptTransformations,
+  type FormatIssue,
+  type FormatIssuesSummary,
+  type ScriptAnalysis,
+  type ScriptTransformationHandlers,
+  type UseScriptTransformationsOptions,
+  type UseScriptTransformationsResult,
+  useGroupedReminders,
+  type GroupedReminder,
+  type UseGroupedRemindersOptions,
+  type UseGroupedRemindersResult,
+} from './scripts/index.js';
+
+// ============================================================================
+// Asset Hooks
+// ============================================================================
+export {
+  useAssetManager,
+  useBuiltInAssets,
+  useFileUpload,
+} from './assets/index.js';
+
+// ============================================================================
+// Editor Hooks
+// ============================================================================
+export {
+  useJsonEditor,
+  type UseJsonEditorOptions,
+  type UseJsonEditorResult,
+  useCodeMirrorEditor,
+  type UseCodeMirrorEditorOptions,
+  type UseCodeMirrorEditorResult,
+  usePresets,
+  type CustomPreset,
+} from './editors/index.js';
+
+// ============================================================================
+// UI Hooks
+// ============================================================================
+export {
+  useSelection,
+  type UseSelectionOptions,
+  type UseSelectionReturn,
+  useUndoStack,
+  useModalBehavior,
+  useContextMenu,
+  useExpandablePanel,
   type PanelPosition,
   type UseExpandablePanelOptions,
   type UseExpandablePanelReturn,
-  useExpandablePanel,
-} from './useExpandablePanel.js';
+  useDraggableList,
+  type UseDraggableListOptions,
+  type UseDraggableListResult,
+  useFilters,
+  useAutoResizeTextarea,
+  useIntersectionObserver,
+} from './ui/index.js';
 
 // ============================================================================
-// Export & File Management Hooks
+// Sync Hooks
 // ============================================================================
-export { useExport } from './useExport.js';
-export { useFileUpload } from './useFileUpload.js';
-export { useFilters } from './useFilters.js';
-export { useHasUnsavedWork } from './useHasUnsavedWork.js';
-export { useIntersectionObserver } from './useIntersectionObserver.js';
-export { useModalBehavior } from './useModalBehavior.js';
+export {
+  useTabSynchronization,
+  useHasUnsavedWork,
+  useStorageQuota,
+} from './sync/index.js';
 
-// ============================================================================
-// Cache Management Hooks
-// ============================================================================
-export { usePreRenderCache } from './usePreRenderCache.js';
-export { usePresets } from './usePresets.js';
-export { useProjectAutoSave } from './useProjectAutoSave.js';
-export { useProjectCacheWarming } from './useProjectCacheWarming.js';
-// ============================================================================
-// Project Management Hooks
-// ============================================================================
-export { useProjects } from './useProjects.js';
 // ============================================================================
 // PWA Hooks
 // ============================================================================
-export { type PWAInstallState, usePWAInstall } from './usePWAInstall.js';
+export {
+  usePWAInstall,
+  type PWAInstallState,
+} from './pwa/index.js';
+
 // ============================================================================
-// Script & Data Hooks
+// Studio Hooks
 // ============================================================================
-export { useScriptData } from './useScriptData.js';
-export { type UseSelectionOptions, type UseSelectionReturn, useSelection } from './useSelection.js';
+export {
+  useStudioNavigation,
+} from './studio/index.js';
+
 // ============================================================================
-// Utility Hooks
+// Project Hooks
 // ============================================================================
-export { useStorageQuota } from './useStorageQuota.js';
-// ============================================================================
-// Studio & Navigation Hooks
-// ============================================================================
-export { useStudioNavigation } from './useStudioNavigation.js';
-export { useTabSynchronization } from './useTabSynchronization.js';
-export { useTokenDeletion } from './useTokenDeletion.js';
-export { useTokenDetailEditor } from './useTokenDetailEditor.js';
-// ============================================================================
-// Token Management Hooks
-// ============================================================================
-export { useTokenGenerator } from './useTokenGenerator.js';
-export { useTokenGrouping } from './useTokenGrouping.js';
-export { useUndoStack } from './useUndoStack.js';
+export {
+  useProjects,
+} from './projects/index.js';

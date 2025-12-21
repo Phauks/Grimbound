@@ -12,6 +12,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { dataSyncService, type SyncEvent } from '@/ts/sync/index.js';
 import type { Character, SyncStatus } from '@/ts/types/index.js';
+import { prewarmIconCache } from '@/ts/utils/characterImageResolver.js';
 import { logger } from '@/ts/utils/logger.js';
 
 interface DataSyncContextType {
@@ -22,6 +23,7 @@ interface DataSyncContextType {
   // Character data
   getCharacters: () => Promise<Character[]>;
   getCharacter: (id: string) => Promise<Character | null>;
+  getCharacterImage: (characterId: string) => Promise<Blob | null>;
   searchCharacters: (query: string) => Promise<Character[]>;
 
   // Sync operations
@@ -79,6 +81,17 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
           setStatus(initialStatus);
           setIsInitialized(true);
           logger.info('DataSyncContext', 'Initialization complete:', initialStatus);
+
+          // Pre-warm icon cache with all official character icons (background task)
+          // This ensures fast icon loading in CharacterListView
+          dataSyncService.getCharacters().then((characters) => {
+            if (!mounted || characters.length === 0) return;
+            const characterIds = characters.map((c) => c.id);
+            // Run pre-warming in background without blocking UI
+            prewarmIconCache(characterIds).catch((err) => {
+              logger.warn('DataSyncContext', 'Icon cache pre-warming failed:', err);
+            });
+          });
         }
 
         // Cleanup
@@ -121,6 +134,10 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
     return dataSyncService.searchCharacters(query);
   }, []);
 
+  const getCharacterImage = useCallback(async (characterId: string) => {
+    return dataSyncService.getCharacterImage(characterId);
+  }, []);
+
   // Sync operations
   const checkForUpdates = useCallback(async () => {
     return dataSyncService.checkForUpdates();
@@ -147,6 +164,7 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
     isInitialized,
     getCharacters,
     getCharacter,
+    getCharacterImage,
     searchCharacters,
     checkForUpdates,
     downloadUpdate,

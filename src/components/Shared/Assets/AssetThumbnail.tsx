@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useContextMenu } from '@/hooks/useContextMenu';
+import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/shared/AssetThumbnail.module.css';
 import {
   ASSET_TYPE_ICONS,

@@ -202,9 +202,9 @@ src/styles/components/scriptInput/
 
 | Document | Status | Last Updated |
 |----------|--------|--------------|
-| CLAUDE.md | Updated | 2025-12-18 |
+| CLAUDE.md | Restructured | 2025-12-20 |
 | ROADMAP.md | Updated | 2025-12-18 |
-| ARCHITECTURE.md | Created | 2025-12-17 |
+| .claude/rules/* | Created | 2025-12-20 |
 | DI_MIGRATION.md | Completed | 2025-12-18 |
 | CONTRIBUTING.md | Needs Update | 2025-12-10 |
 | README.md | Good | 2025-12-10 |

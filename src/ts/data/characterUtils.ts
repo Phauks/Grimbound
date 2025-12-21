@@ -11,6 +11,17 @@ import type {
   TeamCounts,
   TokenCounts,
 } from '@/ts/types/index.js';
+import { generateRandomName, generateStableUuid, nameToId } from '@/ts/utils/nameGenerator.js';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Debounce delay for auto-saving character edits (ms) */
+export const SAVE_DEBOUNCE_MS = 100;
+
+/** Delay before pre-rendering on hover (ms) */
+export const HOVER_DELAY_MS = 100;
 
 // ============================================================================
 // Character Validation
@@ -217,6 +228,78 @@ export function getBestPreviewCharacter(characters: Character[]): Character | nu
   return characters[0];
 }
 
+// ============================================================================
+// Character Creation
+// ============================================================================
+
+/**
+ * Options for creating a new character template
+ */
+export interface CreateCharacterOptions {
+  /** Optional name (generates random if not provided) */
+  name?: string;
+  /** Optional team (defaults to 'townsfolk') */
+  team?: Team;
+  /** Optional ID (derives from name if not provided) */
+  id?: string;
+}
+
+/**
+ * Create a new character template with all required fields.
+ * Generates a random name, derives ID from name, and creates a stable UUID.
+ *
+ * @param options - Optional overrides for name, team, id
+ * @returns Promise resolving to a complete Character object
+ *
+ * @example
+ * ```ts
+ * const newChar = await createCharacterTemplate();
+ * // { id: 'mysticoracle', name: 'Mystic Oracle', team: 'townsfolk', uuid: '...', ... }
+ *
+ * const customChar = await createCharacterTemplate({ name: 'Custom Hero', team: 'outsider' });
+ * // { id: 'customhero', name: 'Custom Hero', team: 'outsider', uuid: '...', ... }
+ * ```
+ */
+export async function createCharacterTemplate(
+  options: CreateCharacterOptions = {}
+): Promise<Character> {
+  const name = options.name || generateRandomName();
+  const id = options.id || nameToId(name);
+  const team = options.team || 'townsfolk';
+  const uuid = await generateStableUuid(id, name);
+
+  return {
+    id,
+    name,
+    team,
+    ability: '',
+    flavor: '',
+    image: '',
+    setup: false,
+    reminders: [],
+    remindersGlobal: [],
+    edition: '',
+    firstNight: 0,
+    otherNight: 0,
+    firstNightReminder: '',
+    otherNightReminder: '',
+    uuid,
+    source: 'custom',
+  };
+}
+
+/**
+ * Check if a character's ID is linked to its name
+ * (i.e., ID equals the name converted to ID format)
+ *
+ * @param character - Character to check
+ * @returns true if ID matches name-derived ID
+ */
+export function isIdLinkedToName(character: Character): boolean {
+  const expectedId = nameToId(character.name);
+  return character.id === expectedId;
+}
+
 export default {
   validateCharacter,
   getCharacterImageUrl,
@@ -226,4 +309,8 @@ export default {
   groupByTeam,
   calculateTokenCounts,
   getBestPreviewCharacter,
+  createCharacterTemplate,
+  isIdLinkedToName,
+  SAVE_DEBOUNCE_MS,
+  HOVER_DELAY_MS,
 };

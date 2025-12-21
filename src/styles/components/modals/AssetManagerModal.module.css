@@ -375,7 +375,15 @@
   height: 80px;
   object-fit: contain;
   border-radius: 50%;
-  background: var(--bg-tertiary, #f0f0f0);
+  /* Checkerboard pattern to indicate transparency */
+  background-color: #e0e0e0;
+  background-image:
+    linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(-45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
+    linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
 }
 
 .builtInLabel {
@@ -476,7 +484,15 @@
   height: 48px;
   object-fit: contain;
   border-radius: 4px;
-  background: var(--bg-tertiary, #f0f0f0);
+  /* Checkerboard pattern to indicate transparency */
+  background-color: #e0e0e0;
+  background-image:
+    linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(-45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
+    linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
 }
 
 .listInfo {
@@ -808,7 +824,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-tertiary, rgba(0, 0, 0, 0.05));
+  /* Checkerboard pattern to indicate transparency */
+  background-color: #e0e0e0;
+  background-image:
+    linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(-45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
+    linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;

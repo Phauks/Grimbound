@@ -33,14 +33,28 @@ export type {
 } from './characterImageResolver.js';
 // Character image resolution utilities (SSOT for all character icon resolution)
 export {
+  clearIconUrlCache,
   extractCharacterIdFromPath,
+  getCachedIconUrl,
   getFirstImageUrl,
+  getIconUrlCacheStats,
+  hasIconUrlCached,
   isExternalUrl,
   isLocalAssetPath,
+  prewarmIconCache,
   resolveCharacterImages,
   resolveCharacterImageUrl,
   resolveLocalAssetPath,
+  setCachedIconUrl,
 } from './characterImageResolver.js';
+// Character filtering utilities (for enable/disable feature)
+export {
+  countDisabledCharacters,
+  filterEnabledCharacters,
+  getCharacterSelectionSummary,
+  getEnabledCharacterUuids,
+  isCharacterEnabled,
+} from './characterFiltering.js';
 // Class name utilities
 export {
   cn,
@@ -193,3 +207,10 @@ export {
   formatValueForDisplay,
   valuesAreDifferent,
 } from './textDiff.js';
+// Script encoder utilities (for official BOTC Script Tool integration)
+export {
+  decodeScriptFromUrl,
+  encodeScriptForUrl,
+  getOfficialScriptToolUrl,
+  openInOfficialScriptTool,
+} from './scriptEncoder.js';

@@ -272,13 +272,11 @@
 .tabContent.disabled::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 200vh;
+  inset: 0;
   background: rgba(128, 128, 128, 0.3);
   pointer-events: none;
   z-index: 10;
+  border-radius: inherit;
 }
 
 /* Form groups */
@@ -750,12 +748,96 @@
 }
 
 /* Decoratives tab */
-.decorativesDescription {
+.decorativesHeader {
   margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.decorativesToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.decorativesToggleLabel {
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.decorativesDescription {
+  margin: 0;
   font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.decorativesSections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.decorativesSectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.decorativesSectionHeader:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.decorativesSectionHeader h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.decorativesSectionHint {
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
+.decorativesSubsection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.decorativesSubsectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.decorativesSubsectionLabel {
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.decorativesInlineToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* Legacy decoratives section (for backwards compat) */
 .decorativesSection {
   background: var(--color-background);
   border: 1px solid var(--border-color);

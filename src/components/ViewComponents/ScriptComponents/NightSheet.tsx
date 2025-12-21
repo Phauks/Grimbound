@@ -25,7 +25,7 @@ import { forwardRef, useCallback, useMemo } from 'react';
 import styles from '@/styles/components/script/NightSheet.module.css';
 import { calculateScaleConfig, getScaleWarning } from '@/ts/nightOrder/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
-import type { ScriptMeta } from '@/ts/types/index.js';
+import type { Character, ScriptMeta } from '@/ts/types/index.js';
 import { NightOrderEntry } from './NightOrderEntry';
 import type { NightSheetBackground } from './NightOrderView';
 import { SortableNightOrderEntry } from './SortableNightOrderEntry';
@@ -35,6 +35,8 @@ export type NightSheetType = 'first' | 'other';
 interface NightSheetProps {
   type: NightSheetType;
   entries: NightOrderEntryType[];
+  /** Characters array to derive isOfficial status (from Character.source) */
+  characters: Character[];
   scriptMeta?: ScriptMeta | null;
   /** Show drag handles for movable entries */
   enableDragDrop?: boolean;
@@ -44,6 +46,8 @@ interface NightSheetProps {
   background?: NightSheetBackground;
   /** Callback when "Edit Character" is selected from context menu */
   onEditCharacter?: (characterId: string) => void;
+  /** Callback when lock state is toggled for an entry */
+  onToggleLock?: (entryId: string) => void;
 }
 
 /**
@@ -62,12 +66,33 @@ function getNoiseTextureSvg(opacity: number): string {
 }
 
 export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function NightSheet(
-  { type, entries, scriptMeta, enableDragDrop = false, onMoveEntry, background, onEditCharacter },
+  { type, entries, characters, scriptMeta, enableDragDrop = false, onMoveEntry, background, onEditCharacter, onToggleLock },
   ref
 ) {
   const title = getSheetTitle(type);
   const scriptName = scriptMeta?.name || 'Untitled Script';
   const scriptLogo = scriptMeta?.logo;
+
+  // Create a lookup map for character source (case-insensitive)
+  const characterSourceMap = useMemo(() => {
+    const map = new Map<string, 'official' | 'custom'>();
+    for (const char of characters) {
+      map.set(char.id.toLowerCase(), char.source || 'custom');
+    }
+    return map;
+  }, [characters]);
+
+  // Helper to check if an entry is official
+  const isEntryOfficial = useCallback(
+    (entry: NightOrderEntryType): boolean => {
+      // Special entries are not "official" in the movable sense
+      if (entry.type === 'special') return false;
+      // Check character source
+      const source = characterSourceMap.get(entry.id.toLowerCase());
+      return source === 'official';
+    },
+    [characterSourceMap]
+  );
 
   // Calculate dynamic scaling to fit all entries on one page
   const scaleConfig = useMemo(() => calculateScaleConfig(entries), [entries]);
@@ -127,8 +152,8 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
   // Get IDs for sortable context
   const entryIds = entries.map((entry) => entry.id);
 
-  // Check if we have any draggable entries
-  const hasDraggableEntries = entries.some((e) => !e.isLocked);
+  // Check if we have any draggable entries (custom characters)
+  const hasDraggableEntries = entries.some((e) => !isEntryOfficial(e));
 
   // Render entries list
   const renderEntries = () => {
@@ -143,15 +168,20 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
 
     // If drag-drop is disabled or no draggable entries, render simple list
     if (!(enableDragDrop && hasDraggableEntries)) {
-      return entries.map((entry, index) => (
-        <NightOrderEntry
-          key={`${entry.id}-${index}`}
-          entry={entry}
-          showDragHandle={false}
-          showLockIcon={entry.isLocked}
-          onEditCharacter={onEditCharacter}
-        />
-      ));
+      return entries.map((entry, index) => {
+        const isOfficial = isEntryOfficial(entry);
+        return (
+          <NightOrderEntry
+            key={`${entry.id}-${index}`}
+            entry={entry}
+            isOfficial={isOfficial}
+            showDragHandle={false}
+            showLockIcon={isOfficial}
+            onEditCharacter={onEditCharacter}
+            onToggleLock={onToggleLock}
+          />
+        );
+      });
     }
 
     // Render with DndContext for drag-drop support
@@ -167,8 +197,10 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
             <SortableNightOrderEntry
               key={entry.id}
               entry={entry}
+              isOfficial={isEntryOfficial(entry)}
               enableDragDrop={enableDragDrop}
               onEditCharacter={onEditCharacter}
+              onToggleLock={onToggleLock}
             />
           ))}
         </SortableContext>

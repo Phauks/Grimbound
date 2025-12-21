@@ -54,8 +54,6 @@ export function characterToNightOrderEntry(
     image: getCharacterImageUrl(character),
     team: character.team,
     order: orderNumber,
-    isOfficial: character.source === 'official',
-    isLocked: character.source === 'official',
     nightType: hasNightOrderForBoth(character) ? 'both' : nightType,
     character,
   };
@@ -129,9 +127,6 @@ function buildOrderFromMetaArray(
     if (character) {
       const entry = characterToNightOrderEntry(character, nightType);
       if (entry) {
-        // Only lock official characters - custom characters can still be reordered
-        // The isLocked property is already set correctly by characterToNightOrderEntry
-        // based on character.source === 'official'
         entries.push(entry);
       }
     }
@@ -230,8 +225,9 @@ export function buildNightOrder(
 }
 
 /**
- * Insert a custom character into the night order at a specific position
- * Maintains the relative order of official/locked characters
+ * Move a character to a new position in the night order.
+ * The caller is responsible for checking if the character can be moved
+ * (i.e., checking Character.source !== 'official' before calling).
  *
  * @param entries - Current night order entries
  * @param entryId - ID of the entry to move
@@ -249,11 +245,6 @@ export function moveNightOrderEntry(
   }
 
   const entry = entries[currentIndex];
-
-  // Only allow moving unlocked entries
-  if (entry.isLocked) {
-    return entries;
-  }
 
   // Clamp newIndex to valid range (between dusk and dawn)
   const minIndex = 1; // After dusk
@@ -367,8 +358,6 @@ export interface NightOrderStats {
   totalEntries: number;
   characterCount: number;
   specialCount: number;
-  lockedCount: number;
-  movableCount: number;
 }
 
 export function getNightOrderStats(entries: NightOrderEntry[]): NightOrderStats {
@@ -379,8 +368,6 @@ export function getNightOrderStats(entries: NightOrderEntry[]): NightOrderStats 
     totalEntries: entries.length,
     characterCount: characterEntries.length,
     specialCount: specialEntries.length,
-    lockedCount: entries.filter((e) => e.isLocked).length,
-    movableCount: entries.filter((e) => !e.isLocked).length,
   };
 }
 

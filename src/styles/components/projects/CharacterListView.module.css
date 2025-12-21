@@ -313,3 +313,108 @@
     height: 40px;
   }
 }
+
+/* ========================================
+   Selection Mode Styles
+   ======================================== */
+
+.selectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selectionSummary {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.bulkActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bulkButton {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bulkButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.bulkButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Selectable Character Icon */
+.characterIconSelectable {
+  cursor: pointer;
+  position: relative;
+  border: 3px solid var(--team-color, var(--color-success, #2d7a2d));
+  transition: all 0.15s ease;
+}
+
+.characterIconSelectable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--team-color-glow, rgba(45, 122, 45, 0.3));
+}
+
+.characterIconSelectable:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--team-color-glow, rgba(45, 122, 45, 0.4));
+}
+
+/* Disabled character icon */
+.characterIconDisabled {
+  border-color: var(--border-color);
+  filter: grayscale(70%);
+}
+
+.characterIconDisabled:hover {
+  border-color: var(--color-primary);
+  filter: grayscale(50%);
+}
+
+/* Disabled overlay on icon */
+.disabledOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disabledIcon {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Disabled character row */
+.characterRowDisabled {
+  opacity: 0.6;
+}
+
+.characterRowDisabled .characterName {
+  color: var(--text-muted);
+}

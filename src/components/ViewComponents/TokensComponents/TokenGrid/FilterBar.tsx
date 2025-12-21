@@ -1,5 +1,5 @@
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useFilters } from '@/hooks/useFilters';
+import { useFilters } from '@/hooks';
 import styles from '@/styles/components/tokens/FilterBar.module.css';
 
 const TEAMS = [

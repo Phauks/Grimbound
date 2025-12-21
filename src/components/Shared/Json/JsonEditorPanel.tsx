@@ -1,110 +1,68 @@
-import { useCallback, useEffect, useRef } from 'react';
-import styles from '@/styles/components/shared/JsonEditorPanel.module.css';
-import { JsonHighlight } from '@/components/ViewComponents/JsonComponents/JsonHighlight';
+/**
+ * JsonEditorPanel Component
+ *
+ * Reusable JSON editor with syntax highlighting and debounced parsing.
+ * Powered by CodeMirror 6 for better theming and editor features.
+ *
+ * This is a controlled component - the parent manages the value state.
+ */
 
-interface JsonEditorPanelProps {
+import { CodeMirrorEditor, type EditorControls } from './CodeMirrorEditor';
+
+export interface JsonEditorPanelProps {
+  /** The JSON string value */
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  /** Called when the value changes with the new string value */
+  onChange: (value: string) => void;
+  /** Called when valid JSON is detected (debounced) */
   onValidJson?: (parsed: unknown) => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  /** Placeholder text shown when editor is empty */
   placeholder?: string;
+  /** Debounce delay for JSON validation in ms */
   debounceMs?: number;
+  /** Minimum height of the editor */
   minHeight?: string;
+  /** Additional CSS class for the container */
   className?: string;
+  /** Whether the editor is disabled/read-only */
   disabled?: boolean;
+  /** Whether to show inline error display (not used with CodeMirror - lint markers shown instead) */
   showError?: boolean;
+  /** Expose undo/redo functions to parent */
+  onEditorReady?: (controls: EditorControls) => void;
 }
 
 /**
- * Reusable JSON editor with syntax highlighting and debounced parsing
- * Used in ScriptInput and TokenEditor to avoid code duplication
+ * JSON editor with syntax highlighting and validation.
  *
- * Performance: Uses CSS Grid overlay with auto-sizing textarea.
- * The parent container scrolls both elements together - no JS scroll sync needed.
- *
- * This is a controlled component - the parent manages the value state
+ * Features:
+ * - JSON syntax highlighting with theme integration
+ * - Real-time JSON linting with error markers
+ * - Built-in undo/redo (Ctrl+Z / Ctrl+Y)
+ * - Controlled component pattern
  */
 export function JsonEditorPanel({
   value,
   onChange,
   onValidJson,
-  onKeyDown,
   placeholder = 'Enter JSON...',
   debounceMs = 300,
   minHeight = '200px',
   className,
   disabled = false,
-  showError = true,
+  onEditorReady,
 }: JsonEditorPanelProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const errorRef = useRef<string | null>(null);
-
-  // Auto-resize textarea to fit content (prevents internal scrolling)
-  const autoResizeTextarea = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
-
-  // Auto-resize on content change
-  useEffect(() => {
-    autoResizeTextarea();
-  }, [autoResizeTextarea]);
-
-  // Debounced parse and validation
-  useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      try {
-        const parsed = JSON.parse(value);
-        errorRef.current = null;
-        if (onValidJson) {
-          onValidJson(parsed);
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Invalid JSON';
-        errorRef.current = errorMessage;
-      }
-    }, debounceMs);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [value, debounceMs, onValidJson]);
-
   return (
-    <div className={`${styles.editorContainer} ${className || ''}`} style={{ minHeight }}>
-      {/* Syntax highlighting overlay */}
-      <div className={styles.highlightOverlay} aria-hidden="true">
-        <JsonHighlight json={value} />
-      </div>
-
-      {/* Editable textarea */}
-      <textarea
-        ref={textareaRef}
-        className={styles.textarea}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        placeholder={placeholder}
-        spellCheck={false}
-        disabled={disabled}
-      />
-
-      {/* Error display - only shown if parent wants to display errors inline */}
-      {showError && errorRef.current && (
-        <div className={styles.error}>
-          <span className={styles.errorIcon}>⚠</span>
-          {errorRef.current}
-        </div>
-      )}
-    </div>
+    <CodeMirrorEditor
+      value={value}
+      onChange={onChange}
+      onValidJson={onValidJson}
+      placeholder={placeholder}
+      debounceMs={debounceMs}
+      minHeight={minHeight}
+      className={className}
+      disabled={disabled}
+      onEditorReady={onEditorReady}
+    />
   );
 }

@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useStudioNavigation } from '@/hooks/useStudioNavigation';
-import { useTokenDeletion } from '@/hooks/useTokenDeletion';
-import { useTokenGrouping } from '@/hooks/useTokenGrouping';
+import { useStudioNavigation, useTokenDeletion, useTokenGrouping } from '@/hooks';
 import styles from '@/styles/components/tokens/TokenGrid.module.css';
 import { buildTokenMetadata, embedPngMetadata } from '@/ts/export/pngMetadata';
 import type { Token } from '@/ts/types/index.js';

@@ -105,12 +105,6 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
     [onOptionChange]
   );
 
-  const getSetupLabel = () => {
-    if (!isEnabled) return 'Disabled';
-    const setup = BUILT_IN_SETUP_OVERLAYS.find((f) => f.id === currentSetup);
-    return setup?.label || currentSetup.replace('setup_flower_', 'Setup ');
-  };
-
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
       <button

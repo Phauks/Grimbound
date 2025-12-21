@@ -2,6 +2,6 @@
  * ScriptInput Component Styles Index
  *
  * Note: ScriptInput.module.css is imported directly by the component
- * JsonHighlight uses global token classes (json-key, json-string, etc.) from styles.css
+ * JSON editing now uses CodeMirror 6 with theme-integrated syntax highlighting
  */
 

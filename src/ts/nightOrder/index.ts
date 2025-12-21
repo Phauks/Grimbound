@@ -94,3 +94,10 @@ export {
   MINION_INFO_ENTRY,
   SPECIAL_ENTRIES,
 } from './specialEntries.js';
+// Sync utilities
+export {
+  buildInitialNightOrderArray,
+  buildMetaNightOrderArrays,
+  syncNightOrderToJson,
+  updateCharacterNightNumbers,
+} from './nightOrderSync.js';

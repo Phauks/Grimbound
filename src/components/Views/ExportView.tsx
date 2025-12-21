@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
-import { useExport } from '@/hooks/useExport';
+import { useExpandablePanel, useExportDownloads } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
@@ -11,15 +10,19 @@ import exportStyles from '@/styles/components/views/ExportView.module.css';
 import type { CompressionLevel, ZipExportOptions } from '@/ts/types/index';
 import { BLEED_CONFIG, PDF_OFFSET_CONFIG } from '@/ts/utils/measurementUtils';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { CharacterListView } from '@/components/ViewComponents/ProjectsComponents/CharacterListView';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
-import { Button } from '@/components/Shared/UI/Button';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 import {
   SettingsSelectorBase,
   PreviewBox,
   InfoSection,
 } from '@/components/Shared/Selectors/SettingsSelectorBase';
+import {
+  FeaturedDownloads,
+  DownloadSection,
+} from '@/components/ViewComponents/ExportComponents';
 
 const DEFAULT_ZIP_SETTINGS: ZipExportOptions = {
   saveInTeamFolders: true,
@@ -52,25 +55,48 @@ interface PdfSettings {
 
 export function ExportView() {
   const {
-    tokens,
     generationOptions,
     updateGenerationOptions,
     characters,
-    scriptMeta: _scriptMeta,
+    characterMetadata,
+    setCharacterEnabled,
+    setAllCharactersEnabled,
+    characterSelectionSummary,
   } = useTokenContext();
   const {
-    downloadZip,
-    downloadPdf,
-    downloadJson,
-    downloadStyleFormat,
-    downloadAll,
-    cancelExport: _cancelExport,
-    isExporting: _isExporting,
-    exportProgress: _exportProgress,
-    exportStep: _exportStep,
-  } = useExport();
+    featuredDownloads,
+    jsonDownloads,
+    tokenDownloads,
+    scriptDownloads,
+    executingId,
+    executeDownload,
+  } = useExportDownloads();
   const { addToast } = useToast();
-  const [isExportingNightOrder, setIsExportingNightOrder] = useState(false);
+
+  // List view column visibility settings
+  const [listViewSettings, setListViewSettings] = useState({
+    showAbility: true,
+    showFirstNightReminder: false,
+    showOtherNightReminder: false,
+    showReminders: false,
+  });
+  const [showListSettings, setShowListSettings] = useState(false);
+
+  // Character toggle handlers
+  const handleCharacterToggle = useCallback(
+    (uuid: string, enabled: boolean) => {
+      setCharacterEnabled(uuid, enabled);
+    },
+    [setCharacterEnabled]
+  );
+
+  const handleToggleAllCharacters = useCallback(
+    (enabled: boolean) => {
+      setAllCharactersEnabled(enabled);
+      addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
+    },
+    [setAllCharactersEnabled, addToast]
+  );
 
   // Current settings from context
   const currentPngSettings: PngSettings = useMemo(
@@ -193,82 +219,6 @@ export function ExportView() {
     return `${quality}% quality`;
   };
 
-  // Download handlers
-  const handleDownloadZip = async () => {
-    try {
-      addToast('Preparing ZIP download...', 'info');
-      await downloadZip();
-      addToast('ZIP file downloaded successfully', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to create ZIP: ${message}`, 'error');
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    try {
-      addToast('Preparing PDF download...', 'info');
-      await downloadPdf();
-      addToast('PDF downloaded successfully', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to generate PDF: ${message}`, 'error');
-    }
-  };
-
-  const handleDownloadJson = () => {
-    try {
-      addToast('Preparing JSON download...', 'info');
-      downloadJson();
-      addToast('JSON downloaded successfully', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to download JSON: ${message}`, 'error');
-    }
-  };
-
-  const handleDownloadStyleFormat = () => {
-    try {
-      addToast('Preparing style format download...', 'info');
-      downloadStyleFormat();
-      addToast('Style format downloaded successfully', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to download style: ${message}`, 'error');
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    try {
-      addToast('Preparing complete package...', 'info');
-      await downloadAll();
-      addToast('All files downloaded successfully', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to download all: ${message}`, 'error');
-    }
-  };
-
-  const handleDownloadNightOrder = useCallback(async () => {
-    if (isExportingNightOrder) return;
-    if (characters.length === 0) {
-      addToast('No characters found. Load a script first.', 'warning');
-      return;
-    }
-
-    setIsExportingNightOrder(true);
-    try {
-      addToast('Preparing Night Order PDF...', 'info');
-      addToast('Please use the Script tab to generate Night Order PDFs', 'info');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      addToast(`Failed to generate Night Order: ${message}`, 'error');
-    } finally {
-      setIsExportingNightOrder(false);
-    }
-  }, [isExportingNightOrder, characters, addToast]);
-
-  const hasTokens = tokens.length > 0;
 
   // Render PNG Settings Panel
   const renderPngPanel = () => {
@@ -611,107 +561,168 @@ export function ExportView() {
         </div>
       </ViewLayout.Panel>
 
-      {/* Right Content - Download Actions & Summary */}
+      {/* Right Content - Downloads Hub */}
       <ViewLayout.Panel position="right" width="flex" scrollable>
         <div className={styles.exportActionsPanel}>
-          <h2 className={styles.exportTitle}>Download</h2>
+          {/* Featured Downloads */}
+          <FeaturedDownloads
+            items={featuredDownloads}
+            executingId={executingId}
+            onExecute={executeDownload}
+          />
 
-          {hasTokens ? (
-            <p className={styles.exportSummary}>
-              {tokens.length} token{tokens.length !== 1 ? 's' : ''} ready for export
-            </p>
-          ) : (
-            <div className={styles.noTokensMessage}>
-              <p>No tokens generated yet.</p>
-              <p className={styles.noTokensHint}>
-                Generate tokens in the Editor or Gallery tab first, then come back here to download
-                them.
-              </p>
-            </div>
-          )}
+          {/* JSON Section */}
+          <DownloadSection
+            title="JSON"
+            icon="📋"
+            items={jsonDownloads}
+            collapsible
+            defaultOpen
+            executingId={executingId}
+            onExecute={executeDownload}
+          />
 
-          <div className={styles.exportButtons}>
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={handleDownloadAll}
-              disabled={!hasTokens}
-              className={styles.btnExportAll}
-            >
-              <span className={styles.btnIcon}>📥</span>
-              <span className={styles.btnText}>Download All</span>
-            </Button>
+          {/* Tokens Section */}
+          <DownloadSection
+            title="Tokens"
+            icon="🎭"
+            items={tokenDownloads}
+            collapsible
+            defaultOpen
+            executingId={executingId}
+            onExecute={executeDownload}
+          />
 
-            <div className={styles.exportButtonsGrid}>
-              <Button
-                variant="secondary"
-                onClick={handleDownloadZip}
-                disabled={!hasTokens}
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>📦</span>
-                <span className={styles.btnText}>Download Token Images</span>
-              </Button>
+          {/* Scripts Section */}
+          <DownloadSection
+            title="Scripts"
+            icon="📜"
+            items={scriptDownloads}
+            collapsible
+            defaultOpen
+            executingId={executingId}
+            onExecute={executeDownload}
+          />
 
-              <Button
-                variant="secondary"
-                onClick={handleDownloadPdf}
-                disabled={!hasTokens}
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>🖨️</span>
-                <span className={styles.btnText}>Download Token Print Sheet</span>
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={handleDownloadJson}
-                disabled={!hasTokens}
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>📋</span>
-                <span className={styles.btnText}>Download JSON</span>
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={handleDownloadStyleFormat}
-                disabled={!hasTokens}
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>🎨</span>
-                <span className={styles.btnText}>Download Style Format</span>
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={handleDownloadNightOrder}
-                disabled={isExportingNightOrder || characters.length === 0}
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>🌙</span>
-                <span className={styles.btnText}>
-                  {isExportingNightOrder ? 'Generating...' : 'Generate Night Order'}
-                </span>
-              </Button>
-
-              <Button
-                variant="secondary"
-                disabled
-                title="Coming soon"
-                className={styles.btnExportSmall}
-              >
-                <span className={styles.btnIcon}>📜</span>
-                <span className={styles.btnText}>Download Script</span>
-                <span className={styles.btnBadge}>Soon</span>
-              </Button>
-            </div>
-
-            <p className={styles.btnDescription}>
-              Token Print Sheets are compatible with Avery 94500 (1.75" character tokens) and Avery
-              94509 (1" reminder tokens) label sheets.
-            </p>
-          </div>
+          {/* Character Selection Section */}
+          <DownloadSection
+            title="Character Selection"
+            icon="👤"
+            items={[]}
+            collapsible
+            defaultOpen={false}
+            executingId={executingId}
+            onExecute={executeDownload}
+          >
+            {characters.length > 0 ? (
+              <>
+                <div className={styles.characterSelectionSummary}>
+                  {characterSelectionSummary.enabled} of {characterSelectionSummary.total} included
+                  {characterSelectionSummary.disabled > 0 && (
+                    <span className={styles.characterSelectionBadge}>
+                      {characterSelectionSummary.disabled} excluded
+                    </span>
+                  )}
+                </div>
+                <div className={styles.characterSelectionHeaderRow}>
+                  <div className={styles.listSettingsContainer}>
+                    <button
+                      type="button"
+                      className={styles.listSettingsButton}
+                      onClick={() => setShowListSettings(!showListSettings)}
+                      title="Configure list columns"
+                      aria-expanded={showListSettings}
+                    >
+                      ⚙️
+                    </button>
+                    {showListSettings && (
+                      <div className={styles.listSettingsPopover}>
+                        <div className={styles.listSettingsHeader}>
+                          <span>Columns</span>
+                          <button
+                            type="button"
+                            className={styles.listSettingsClose}
+                            onClick={() => setShowListSettings(false)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <label className={styles.listSettingsOption}>
+                          <input
+                            type="checkbox"
+                            checked={listViewSettings.showAbility}
+                            onChange={(e) =>
+                              setListViewSettings((prev) => ({
+                                ...prev,
+                                showAbility: e.target.checked,
+                              }))
+                            }
+                          />
+                          <span>Ability Text</span>
+                        </label>
+                        <label className={styles.listSettingsOption}>
+                          <input
+                            type="checkbox"
+                            checked={listViewSettings.showFirstNightReminder}
+                            onChange={(e) =>
+                              setListViewSettings((prev) => ({
+                                ...prev,
+                                showFirstNightReminder: e.target.checked,
+                              }))
+                            }
+                          />
+                          <span>First Night Reminder</span>
+                        </label>
+                        <label className={styles.listSettingsOption}>
+                          <input
+                            type="checkbox"
+                            checked={listViewSettings.showOtherNightReminder}
+                            onChange={(e) =>
+                              setListViewSettings((prev) => ({
+                                ...prev,
+                                showOtherNightReminder: e.target.checked,
+                              }))
+                            }
+                          />
+                          <span>Other Night Reminder</span>
+                        </label>
+                        <label className={styles.listSettingsOption}>
+                          <input
+                            type="checkbox"
+                            checked={listViewSettings.showReminders}
+                            onChange={(e) =>
+                              setListViewSettings((prev) => ({
+                                ...prev,
+                                showReminders: e.target.checked,
+                              }))
+                            }
+                          />
+                          <span>Reminders</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.characterSelectionContent}>
+                  <CharacterListView
+                    characters={characters}
+                    showAbility={listViewSettings.showAbility}
+                    showFirstNightReminder={listViewSettings.showFirstNightReminder}
+                    showOtherNightReminder={listViewSettings.showOtherNightReminder}
+                    showReminders={listViewSettings.showReminders}
+                    showSelection={true}
+                    characterMetadata={characterMetadata}
+                    onToggleCharacter={handleCharacterToggle}
+                    onToggleAll={handleToggleAllCharacters}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className={styles.characterSelectionSummary}>
+                No characters loaded
+              </div>
+            )}
+          </DownloadSection>
         </div>
       </ViewLayout.Panel>
     </ViewLayout>

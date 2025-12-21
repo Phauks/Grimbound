@@ -7,10 +7,12 @@
  * @module components/Shared/Downloads/DownloadsDrawer
  */
 
-import { memo, useCallback, useEffect, useRef } from 'react';
+import JSZip from 'jszip';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import { type BundleData, type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import styles from '@/styles/components/shared/DownloadsDrawer.module.css';
+import { downloadFile } from '@/ts/utils/imageUtils';
 
 /**
  * Individual download item card
@@ -59,6 +61,53 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+
+  // All registered downloads are individual downloads
+  const individualDownloads = downloads;
+
+  // Check if any downloads are enabled
+  const enabledDownloads = individualDownloads.filter((d) => !d.disabled);
+  const hasEnabledDownloads = enabledDownloads.length > 0;
+  const hasMultipleDownloads = individualDownloads.length > 1;
+
+  // Download All handler - creates a combined ZIP of all enabled downloads
+  const handleDownloadAll = useCallback(async () => {
+    if (!hasEnabledDownloads || isDownloadingAll) return;
+
+    setIsDownloadingAll(true);
+    try {
+      // Check if all items support getBlob for bundling
+      const bundleableItems = enabledDownloads.filter((d) => d.getBlob);
+
+      if (bundleableItems.length === enabledDownloads.length && bundleableItems.length > 0) {
+        // All items support bundling - create a combined ZIP
+        const zip = new JSZip();
+
+        for (const item of bundleableItems) {
+          const result = await item.getBlob!();
+          if (result) {
+            // Handle both single and array results
+            const items: BundleData[] = Array.isArray(result) ? result : [result];
+            for (const { blob, filename } of items) {
+              zip.file(filename, blob);
+            }
+          }
+        }
+
+        // Generate and download the combined ZIP
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        downloadFile(zipBlob, 'downloads.zip');
+      } else {
+        // Fallback: execute each download action separately
+        for (const item of enabledDownloads) {
+          await item.action();
+        }
+      }
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  }, [enabledDownloads, hasEnabledDownloads, isDownloadingAll]);
 
   // Clear any pending close timeout
   const clearCloseTimeout = useCallback(() => {
@@ -108,7 +157,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
     [executeDownload]
   );
 
-  // Don't render if no downloads are registered
+  // Don't render if no downloads are registered (Projects, Studio, Export views)
   if (downloads.length === 0) return null;
 
   const drawerContent = (
@@ -163,7 +212,8 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
 
         {/* Download Items */}
         <div className={styles.content}>
-          {downloads.map((item) => (
+          {/* Individual Downloads */}
+          {individualDownloads.map((item) => (
             <DownloadItemCard
               key={item.id}
               item={item}
@@ -171,6 +221,31 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
               onExecute={() => handleExecute(item)}
             />
           ))}
+
+          {/* Download All - shown when there are multiple downloads */}
+          {hasMultipleDownloads && (
+            <button
+              type="button"
+              className={`${styles.downloadItem} ${styles.downloadAll} ${!hasEnabledDownloads ? styles.disabled : ''} ${isDownloadingAll ? styles.executing : ''}`}
+              onClick={handleDownloadAll}
+              disabled={!hasEnabledDownloads || isDownloadingAll}
+            >
+              <span className={styles.itemIcon}>📥</span>
+              <div className={styles.itemContent}>
+                <span className={styles.itemLabel}>Download All</span>
+                <span className={styles.itemDescription}>
+                  {enabledDownloads.length} item{enabledDownloads.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <span className={styles.itemAction}>
+                {isDownloadingAll ? (
+                  <span className={styles.spinner} />
+                ) : (
+                  <span className={styles.downloadIcon}>↓</span>
+                )}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </section>

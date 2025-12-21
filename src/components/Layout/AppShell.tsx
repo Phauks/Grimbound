@@ -6,9 +6,8 @@
  */
 
 import { useCallback, useState } from 'react';
-import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks';
 import styles from '@/styles/components/pages/Pages.module.css';
 import type { Token } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -33,8 +32,7 @@ export function AppShell() {
   const [lastSelectedCharacterUuid, setLastSelectedCharacterUuid] = useState<string | undefined>(
     undefined
   );
-  const { createProject, activateProject, currentProject } = useProjects();
-  const { addToast } = useToast();
+  const { currentProject } = useProjects();
   const { tokens, characters } = useTokenContext();
 
   const handleTokenClick = useCallback((token: Token) => {
@@ -57,16 +55,6 @@ export function AppShell() {
       setCreateNewCharacter(false);
     }
     setActiveTab(tab);
-  }, []);
-
-  const handleNavigateToCharacters = useCallback(() => {
-    setSelectedTokenForCustomize(undefined);
-    setCreateNewCharacter(true);
-    setActiveTab('characters');
-  }, []);
-
-  const handleNavigateToProjects = useCallback(() => {
-    setActiveTab('projects');
   }, []);
 
   // Handle "Edit Character" from night order context menu
@@ -103,38 +91,12 @@ export function AppShell() {
     setLastSelectedCharacterUuid(characterUuid);
   }, []);
 
-  const handleCreateProject = useCallback(async () => {
-    try {
-      const timestamp = new Date().toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-      const newProject = await createProject(`New Project - ${timestamp}`);
-      if (newProject) {
-        await activateProject(newProject.id);
-      }
-      addToast('New project created and activated!', 'success');
-      setActiveTab('projects');
-    } catch (err) {
-      logger.error('AppShell', 'Failed to create project', err);
-      addToast('Failed to create project', 'error');
-    }
-  }, [createProject, activateProject, addToast]);
-
   const renderActiveView = () => {
     switch (activeTab) {
       case 'projects':
         return <ProjectsView initialProjectId={currentProject?.id} />;
       case 'json':
-        return (
-          <JsonView
-            onNavigateToCharacters={handleNavigateToCharacters}
-            onNavigateToProjects={handleNavigateToProjects}
-            onCreateProject={handleCreateProject}
-          />
-        );
+        return <JsonView />;
       case 'tokens':
         return <TokensView onTokenClick={handleTokenClick} onTabChange={handleTabChange} />;
       case 'characters':
@@ -144,7 +106,6 @@ export function AppShell() {
             initialToken={selectedTokenForCustomize}
             selectedCharacterUuid={lastSelectedCharacterUuid}
             onCharacterSelect={handleCharacterSelect}
-            onGoToTokens={() => setActiveTab('tokens')}
             createNewCharacter={createNewCharacter}
           />
         );

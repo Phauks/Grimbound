@@ -442,12 +442,12 @@ Migration:
 
 | Change Type | Documents to Update |
 |-------------|---------------------|
-| New utility/hook | CLAUDE.md (utility tables) |
-| Architecture change | ARCHITECTURE.md |
+| New utility/hook | `.claude/rules/utility-reference.md` |
+| Architecture change | `.claude/rules/architecture.md` |
 | Feature complete | ROADMAP.md, CHANGELOG.md |
 | Bug fix | CHANGELOG.md |
 | API change | CLAUDE.md, JSDoc comments |
-| New pattern | CLAUDE.md (patterns section) |
+| New pattern | `.claude/rules/coding-patterns.md` |
 | New error class | CLAUDE.md (error hierarchy) |
 
 3. **Sync with Main**
@@ -510,8 +510,8 @@ Migration:
 
 ### Essential Reading
 
-- **[CLAUDE.md](./CLAUDE.md)**: Complete code generation guide (READ THIS FIRST!)
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)**: System design and technical decisions
+- **[CLAUDE.md](./CLAUDE.md)**: Essential coding rules (READ THIS FIRST!)
+- **[.claude/rules/](./.claude/rules/)**: Detailed reference (architecture, patterns, utilities, testing)
 - **[ROADMAP.md](./ROADMAP.md)**: Development plans and priorities
 - **[README.md](./README.md)**: Project overview and features
 - **[CHANGELOG.md](./CHANGELOG.md)**: Version history and changes

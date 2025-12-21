@@ -12,12 +12,15 @@ import { DownloadsDrawer } from './components/Shared/Downloads';
 import { StorageWarning } from './components/Shared/Feedback/StorageWarning';
 import { ToastContainer } from './components/Shared/UI/Toast';
 import { DownloadsProvider } from './contexts/DownloadsContext';
+import { NightOrderProvider } from './contexts/NightOrderContext';
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
-import { StudioProvider } from './contexts/StudioContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { TokenProvider, useTokenContext } from './contexts/TokenContext';
-import { useProjectAutoSave, useUnsavedChangesWarning } from './hooks/useProjectAutoSave';
-import { useStorageQuota } from './hooks/useStorageQuota';
+import {
+  useProjectAutoSave,
+  useStorageQuota,
+  useUnsavedChangesWarning,
+} from '@/hooks';
 import layoutStyles from './styles/components/layout/AppLayout.module.css';
 import { warmingPolicyManager } from './ts/cache/index.js';
 import { logger } from './ts/utils/logger.js';
@@ -151,11 +154,11 @@ export default function App() {
     <ToastProvider>
       <ProjectProvider>
         <TokenProvider>
-          <StudioProvider>
-            <DownloadsProvider>
+          <DownloadsProvider>
+            <NightOrderProvider>
               <AppContent />
-            </DownloadsProvider>
-          </StudioProvider>
+            </NightOrderProvider>
+          </DownloadsProvider>
         </TokenProvider>
       </ProjectProvider>
     </ToastProvider>

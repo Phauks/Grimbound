@@ -3,54 +3,15 @@
  * Preset Configurations
  */
 
-import CONFIG from '@/ts/config.js';
 import type { PresetConfig, PresetName } from '@/ts/types/index.js';
+import { DEFAULT_GENERATION_OPTIONS } from '@/ts/types/tokenOptions.js';
 
 export const PRESETS: Record<PresetName, PresetConfig> = {
   classic: {
-    name: 'Classic',
-    description: 'Standard settings for balanced token generation',
+    name: 'Default',
+    description: 'Application defaults - always reflects current default settings',
     icon: '⚙️',
-    settings: {
-      displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
-      tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
-      setupStyle: CONFIG.STYLE.SETUP_STYLE,
-      reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
-      characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
-      characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
-      characterNameColor: '#000000',
-      characterReminderFont: CONFIG.STYLE.CHARACTER_REMINDER_FONT,
-      abilityTextFont: 'TradeGothic',
-      abilityTextColor: '#000000',
-      reminderTextColor: '#000000',
-      maximumAccents: 0,
-      pandemoniumToken: true,
-      scriptNameToken: true,
-      almanacToken: true,
-      fontSpacing: {
-        characterName: 0,
-        abilityText: 0,
-        reminderText: 0,
-        metaText: 0,
-      },
-      textShadow: {
-        characterName: 4,
-        abilityText: 3,
-        reminderText: 4,
-        metaText: 4,
-      },
-      pngSettings: {
-        embedMetadata: false,
-        transparentBackground: false,
-      },
-      zipSettings: {
-        saveInTeamFolders: true,
-        saveRemindersSeparately: true,
-        metaTokenFolder: true,
-        includeScriptJson: false,
-        compressionLevel: 'normal',
-      },
-    },
+    settings: DEFAULT_GENERATION_OPTIONS,
   },
   fullbloom: {
     name: 'Full Bloom',

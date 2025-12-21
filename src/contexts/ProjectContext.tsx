@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useProjectCacheWarming } from '@/hooks/useProjectCacheWarming.js';
+import { useProjectCacheWarming } from '@/hooks';
 import type { AutoSaveStatus, Project } from '@/ts/types/project.js';
 
 // ============================================================================

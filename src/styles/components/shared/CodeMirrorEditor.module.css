@@ -1,0 +1,175 @@
+/**
+ * CodeMirrorEditor Component Styles
+ *
+ * Container and wrapper styles for CodeMirror 6 editor.
+ * The editor itself uses CSS variables from the theme system.
+ */
+
+/* Container for the entire editor */
+.editorContainer {
+  position: relative;
+  width: 100%;
+  border-radius: var(--border-radius-lg, var(--border-radius));
+  overflow: hidden;
+  background-color: var(--bg-input);
+  border: 2px solid var(--border-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Focus state - accent border with subtle glow */
+.editorContainer:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+}
+
+/* Disabled state */
+.editorContainer.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editorContainer.disabled .codeMirrorWrapper {
+  pointer-events: none;
+}
+
+/* Wrapper for the CodeMirror instance */
+.codeMirrorWrapper {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Ensure CodeMirror fills the container */
+.codeMirrorWrapper :global(.cm-editor) {
+  height: 100%;
+  min-height: inherit;
+}
+
+/* Override CodeMirror's default scroller behavior */
+.codeMirrorWrapper :global(.cm-scroller) {
+  min-height: inherit;
+}
+
+/* Ensure content area respects minimum height */
+.codeMirrorWrapper :global(.cm-content) {
+  min-height: inherit;
+}
+
+/* Drag over state */
+.editorContainer.dragging {
+  border-color: var(--color-accent);
+  border-style: dashed;
+}
+
+/* Focus ring for accessibility */
+.codeMirrorWrapper :global(.cm-editor.cm-focused) {
+  outline: none; /* We handle focus on the container */
+}
+
+/* ============================================
+   Info Indicator & Tooltip
+   ============================================ */
+
+.infoIndicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  background-color: var(--color-accent);
+  border: none;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 10;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.infoIndicator::before {
+  content: "⌨";
+  font-size: 0.875rem;
+}
+
+.infoIndicator:hover {
+  background-color: var(--color-accent-hover, var(--color-accent));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.infoTooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  padding: var(--spacing-sm);
+  z-index: 100;
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shortcutList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcutItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.shortcutKey {
+  display: inline-block;
+  padding: 2px 6px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.6875rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.tooltipFooter {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

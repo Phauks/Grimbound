@@ -2,56 +2,72 @@
  * Character Preset System
  *
  * Provides color presets for Blood on the Clocktower character alignments
- * and utilities for recoloring images to match character types
+ * and utilities for recoloring images to match character types.
+ *
+ * Uses centralized TEAM_COLORS from constants.ts as single source of truth.
  */
 
+import { TEAM_COLORS } from '@/ts/constants.js';
 import type { CharacterPreset } from '@/ts/types/index.js';
 
 /**
  * Character alignment color presets
+ * Built from centralized TEAM_COLORS for consistency
  */
 export const CHARACTER_PRESETS: CharacterPreset[] = [
   {
     id: 'good',
     name: 'good',
     displayName: 'Good',
-    colors: { primary: '#3B5998' }, // Blue
+    colors: { primary: TEAM_COLORS.townsfolk.hex },
   },
   {
     id: 'evil',
     name: 'evil',
     displayName: 'Evil',
-    colors: { primary: '#CC0000' }, // Red
+    colors: { primary: TEAM_COLORS.demon.hex },
+  },
+  {
+    id: 'townsfolk',
+    name: 'townsfolk',
+    displayName: 'Townsfolk',
+    colors: { primary: TEAM_COLORS.townsfolk.hex },
+  },
+  {
+    id: 'outsider',
+    name: 'outsider',
+    displayName: 'Outsider',
+    colors: { primary: TEAM_COLORS.outsider.hex },
+  },
+  {
+    id: 'minion',
+    name: 'minion',
+    displayName: 'Minion',
+    colors: { primary: TEAM_COLORS.minion.hex },
+  },
+  {
+    id: 'demon',
+    name: 'demon',
+    displayName: 'Demon',
+    colors: { primary: TEAM_COLORS.demon.hex },
   },
   {
     id: 'traveler',
     name: 'traveler',
     displayName: 'Traveler',
-    colors: { primary: '#3B5998', secondary: '#CC0000' }, // Blue + Red
+    colors: { primary: TEAM_COLORS.traveler.hex },
   },
   {
     id: 'fabled',
     name: 'fabled',
     displayName: 'Fabled',
-    colors: { primary: '#FFD700' }, // Gold
+    colors: { primary: TEAM_COLORS.fabled.hex },
   },
   {
     id: 'loric',
     name: 'loric',
     displayName: 'Loric',
-    colors: { primary: '#228B22' }, // Green
-  },
-  {
-    id: 'good-traveler',
-    name: 'good-traveler',
-    displayName: 'Good Traveler',
-    colors: { primary: '#3B5998', secondary: '#8B4513' }, // Blue + Brown
-  },
-  {
-    id: 'evil-traveler',
-    name: 'evil-traveler',
-    displayName: 'Evil Traveler',
-    colors: { primary: '#8B4513', secondary: '#CC0000' }, // Brown + Red
+    colors: { primary: TEAM_COLORS.loric.hex },
   },
 ];
 

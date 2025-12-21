@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import type {
   Character,
   CharacterMetadata,
@@ -7,7 +7,14 @@ import type {
   SyncStatus,
   Token,
 } from '@/ts/types/index.js';
+import { DEFAULT_GENERATION_OPTIONS } from '@/ts/types/tokenOptions.js';
 import { nameToId } from '@/ts/utils/nameGenerator';
+import {
+  filterEnabledCharacters,
+  getCharacterSelectionSummary,
+  getEnabledCharacterUuids,
+  isCharacterEnabled as isCharEnabled,
+} from '@/ts/utils/characterFiltering.js';
 import { useDataSync } from './DataSyncContext';
 
 interface TokenContextType {
@@ -31,6 +38,14 @@ interface TokenContextType {
   setMetadata: (uuid: string, metadata: Partial<CharacterMetadata>) => void;
   deleteMetadata: (uuid: string) => void;
   clearAllMetadata: () => void;
+
+  // Character enable/disable helpers
+  isCharacterEnabled: (uuid: string) => boolean;
+  setCharacterEnabled: (uuid: string, enabled: boolean) => void;
+  setAllCharactersEnabled: (enabled: boolean) => void;
+  getEnabledCharacters: () => Character[];
+  enabledCharacterUuids: Set<string>;
+  characterSelectionSummary: { enabled: number; disabled: number; total: number };
 
   // Script metadata
   scriptMeta: ScriptMeta | null;
@@ -80,6 +95,10 @@ interface TokenContextType {
   generationProgress: { current: number; total: number } | null;
   setGenerationProgress: (progress: { current: number; total: number } | null) => void;
 
+  // Token generation session tracking - prevents duplicate generation on navigation
+  lastGeneratedJsonHash: string | null;
+  setLastGeneratedJsonHash: (hash: string | null) => void;
+
   // Sync status (from DataSyncContext)
   syncStatus: SyncStatus;
   isSyncInitialized: boolean;
@@ -108,6 +127,9 @@ export function TokenProvider({ children }: TokenProviderProps) {
     current: number;
     total: number;
   } | null>(null);
+
+  // Token generation session tracking - prevents duplicate generation on navigation
+  const [lastGeneratedJsonHash, setLastGeneratedJsonHash] = useState<string | null>(null);
 
   // Get sync status from DataSyncContext
   const { status: syncStatus, isInitialized: isSyncInitialized } = useDataSync();
@@ -164,65 +186,59 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setCharacterMetadata(new Map());
   }, []);
 
-  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
-    displayAbilityText: false,
-    generateBootleggerRules: false,
-    tokenCount: false,
-    setupStyle: 'setup_flower_1',
-    reminderBackground: '#6C3BAA',
-    reminderBackgroundImage: 'character_background_1',
-    reminderBackgroundType: 'color',
-    characterBackground: 'character_background_1',
-    characterBackgroundColor: '#FFFFFF',
-    characterBackgroundType: 'image',
-    metaBackground: 'character_background_1',
-    metaBackgroundColor: '#FFFFFF',
-    metaBackgroundType: 'image',
-    characterNameFont: 'Dumbledor',
-    characterNameColor: '#000000',
-    characterReminderFont: 'TradeGothic',
-    abilityTextFont: 'TradeGothic',
-    abilityTextColor: '#000000',
-    reminderTextColor: '#FFFFFF',
-    accentGeneration: 'classic',
-    maximumAccents: 0,
-    accentPopulationProbability: 30,
-    accentArcSpan: 120,
-    accentSlots: 7,
-    dpi: 300,
-    fontSpacing: {
-      characterName: 0,
-      abilityText: 0,
-      reminderText: 0,
-      metaText: 0,
+  // Character enable/disable helpers
+  const isCharacterEnabled = useCallback(
+    (uuid: string): boolean => {
+      return isCharEnabled(uuid, characterMetadata);
     },
-    textShadow: {
-      characterName: 4,
-      abilityText: 3,
-      reminderText: 4,
-      metaText: 4,
+    [characterMetadata]
+  );
+
+  const setCharacterEnabled = useCallback(
+    (uuid: string, enabled: boolean) => {
+      setCharacterMetadata((prev) => {
+        const newMap = new Map(prev);
+        const existing = prev.get(uuid) || DEFAULT_CHARACTER_METADATA;
+        newMap.set(uuid, { ...existing, enabled });
+        return newMap;
+      });
     },
-    pandemoniumToken: true,
-    scriptNameToken: true,
-    almanacToken: true,
-    pngSettings: {
-      embedMetadata: false,
-      transparentBackground: false,
+    []
+  );
+
+  const setAllCharactersEnabled = useCallback(
+    (enabled: boolean) => {
+      setCharacterMetadata((prev) => {
+        const newMap = new Map(prev);
+        for (const char of characters) {
+          const uuid = char.uuid || char.id;
+          const existing = prev.get(uuid) || DEFAULT_CHARACTER_METADATA;
+          newMap.set(uuid, { ...existing, enabled });
+        }
+        return newMap;
+      });
     },
-    zipSettings: {
-      saveInTeamFolders: true,
-      saveRemindersSeparately: true,
-      metaTokenFolder: true,
-      includeScriptJson: false,
-      compressionLevel: 'normal',
-    },
-    iconSettings: {
-      character: { scale: 1.0, offsetX: 0, offsetY: 0 },
-      reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
-      meta: { scale: 1.0, offsetX: 0, offsetY: 0 },
-    },
-    measurementUnit: 'inches',
-  });
+    [characters]
+  );
+
+  const getEnabledCharacters = useCallback((): Character[] => {
+    return filterEnabledCharacters(characters, characterMetadata);
+  }, [characters, characterMetadata]);
+
+  // Memoized derived values for performance
+  const enabledCharacterUuids = useMemo(
+    () => getEnabledCharacterUuids(characters, characterMetadata),
+    [characters, characterMetadata]
+  );
+
+  const characterSelectionSummary = useMemo(
+    () => getCharacterSelectionSummary(characters, characterMetadata),
+    [characters, characterMetadata]
+  );
+
+  // Use centralized defaults - ensures consistency with presets
+  const [generationOptions, setGenerationOptions] =
+    useState<GenerationOptions>(DEFAULT_GENERATION_OPTIONS);
 
   const [filters, setFilters] = useState({
     teams: [] as string[],
@@ -285,6 +301,12 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setMetadata: setMetadataForChar,
     deleteMetadata,
     clearAllMetadata,
+    isCharacterEnabled,
+    setCharacterEnabled,
+    setAllCharactersEnabled,
+    getEnabledCharacters,
+    enabledCharacterUuids,
+    characterSelectionSummary,
     scriptMeta,
     setScriptMeta,
     generationOptions,
@@ -307,6 +329,8 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setWarnings,
     generationProgress,
     setGenerationProgress,
+    lastGeneratedJsonHash,
+    setLastGeneratedJsonHash,
     syncStatus,
     isSyncInitialized,
   };

@@ -19,7 +19,7 @@
 
 import { memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import styles from '@/styles/components/shared/FontSettingsSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import panelStyles from '@/styles/components/shared/SimplePanelSelector.module.css';

@@ -124,20 +124,64 @@ export type Team =
   | 'meta';
 
 // Decorative overrides for per-character styling
+// These override global GenerationOptions when set
 export interface DecorativeOverrides {
+  // Master toggle - when false, uses global defaults for everything
+  useCustomSettings?: boolean;
+
+  // Background settings (from AppearancePanel > Character)
+  backgroundStyle?: BackgroundStyle;
+
+  // Font settings (from AppearancePanel > Character)
+  nameFont?: string;
+  nameColor?: string;
+  nameFontSpacing?: number;
+  nameTextShadow?: number;
+
+  // Icon settings (from AppearancePanel > Character)
+  iconScale?: number;
+  iconOffsetX?: number;
+  iconOffsetY?: number;
+
+  // Ability text settings (from AdditionalOptionsPanel)
+  displayAbilityText?: boolean;
+  abilityTextFont?: string;
+  abilityTextColor?: string;
+  abilityTextFontSpacing?: number;
+  abilityTextShadow?: number;
+
+  // Setup overlay settings (from AdditionalOptionsPanel)
+  hideSetupOverlay?: boolean;
+  setupStyle?: string;
+
+  // Accent settings (from AdditionalOptionsPanel)
+  // Legacy fields (kept for backwards compatibility)
   useCustomAccents?: boolean;
   accentStyle?: string;
   accentCount?: number;
   accentProbability?: number;
-  hideSetupOverlay?: boolean;
-  setupStyle?: string;
+  // New accent settings matching GenerationOptions
+  accentEnabled?: boolean;
+  accentGeneration?: string;
+  maximumAccents?: number;
+  accentPopulationProbability?: number;
+  accentArcSpan?: number;
+  accentSlots?: number;
+  enableLeftAccent?: boolean;
+  enableRightAccent?: boolean;
+  sideAccentProbability?: number;
 }
 
 // Internal metadata stored separately from character JSON
 // This keeps the exported JSON clean while preserving generator state
 export interface CharacterMetadata {
-  idLinkedToName: boolean; // Whether ID auto-updates with name (default: true)
+  idLinkedToName?: boolean; // Whether ID auto-updates with name (default: true)
   decoratives?: DecorativeOverrides;
+  enabled?: boolean; // Whether character is included in generation (undefined/true = enabled, false = disabled)
+  customIcon?: {
+    enabled: boolean;
+    filename?: string; // Filename in ZIP or IndexedDB
+  };
 }
 
 // Character data from BotC API
@@ -188,6 +232,9 @@ export interface ScriptMeta {
   gameplay?: string;
   difficulty?: string;
   storytellerTips?: string;
+  // Night order arrays (character IDs in order of wake-up)
+  firstNight?: string[];
+  otherNight?: string[];
 }
 
 // Script entry can be a string, meta object, or character reference

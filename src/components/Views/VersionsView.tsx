@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useProjectService } from '@/contexts/ServiceContext';
 import { useToast } from '@/contexts/ToastContext';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks';
 import styles from '@/styles/components/views/VersionsView.module.css';
 import { projectDb } from '@/ts/db/projectDb';
 import type { CreateProjectOptions, Project, ProjectVersion } from '@/ts/types/project';

@@ -111,14 +111,15 @@ export const CONFIG: Config = {
   // Batch Generation Settings
   GENERATION: {
     // Adaptive batch size based on CPU cores
-    // Formula: min(8, max(2, cores - 1))
-    // 2-core: 2 parallel, 4-core: 3, 8-core: 7, 16-core: 8 (capped)
+    // Formula: min(15, max(4, cores))
+    // 2-core: 4 parallel, 4-core: 4, 8-core: 8, 16-core: 15 (capped)
+    // Higher parallelism improves throughput on modern browsers
     BATCH_SIZE: Math.min(
-      8,
-      Math.max(2, (typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 4) - 1)
+      15,
+      Math.max(4, typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 4)
     ),
-    MIN_BATCH_SIZE: 2,
-    MAX_BATCH_SIZE: 8,
+    MIN_BATCH_SIZE: 4,
+    MAX_BATCH_SIZE: 15,
   },
 
   // Data Synchronization Settings

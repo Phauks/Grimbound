@@ -9,7 +9,7 @@
 
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
@@ -98,11 +98,6 @@ export const BootleggerSettingsSelector = memo(function BootleggerSettingsSelect
   });
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
-
-  const getSummary = () => {
-    if (!displaySettings.enabled) return 'Disabled';
-    return displaySettings.iconType === 'script' ? 'Script icon' : 'Bootlegger icon';
-  };
 
   const defaultSettings: PendingBootleggerSettings = {
     enabled: true,

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useContextMenu } from '@/hooks/useContextMenu';
+import { useContextMenu } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/projects/ProjectNavigation.module.css';
 import contextMenuStyles from '@/styles/components/shared/ContextMenu.module.css';

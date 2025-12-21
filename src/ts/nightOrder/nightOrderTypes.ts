@@ -49,16 +49,6 @@ export interface NightOrderEntry {
    */
   order: number;
 
-  /** Whether this is an official character (from official data) */
-  isOfficial: boolean;
-
-  /**
-   * Whether this entry can be moved by drag-and-drop
-   * - true: Entry is locked in place (official chars, special entries)
-   * - false: Entry can be freely repositioned (custom chars)
-   */
-  isLocked: boolean;
-
   /** Which night(s) this entry appears on */
   nightType: NightType;
 
@@ -117,7 +107,7 @@ export interface NightOrderContextActions {
   /** Initialize night order from script data */
   initializeFromScript: (script: (string | Character | ScriptMeta | { id: string })[]) => void;
 
-  /** Move a custom character to a new position */
+  /** Move a character to a new position (only works for custom characters) */
   moveEntry: (nightType: 'first' | 'other', entryId: string, newIndex: number) => void;
 
   /** Reset to default ordering */
@@ -128,6 +118,9 @@ export interface NightOrderContextActions {
 
   /** Clear all data */
   clear: () => void;
+
+  /** Invalidate caches and trigger rebuild on next access */
+  invalidateCache: () => void;
 }
 
 /**

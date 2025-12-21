@@ -12,13 +12,63 @@
   display: flex;
   align-items: center; /* Center icon vertically with name+ability */
   gap: calc(0.4rem * var(--scale-factor, 1)); /* Reduced gap */
-  padding: calc(0.15rem * var(--scale-factor, 1)) 0; /* Minimal vertical padding, no horizontal */
+  padding: calc(0.15rem * var(--scale-factor, 1)) calc(0.5rem * var(--scale-factor, 1)); /* Minimal vertical padding, slight horizontal for hover effect */
+  margin: 0 calc(-0.5rem * var(--scale-factor, 1)); /* Negative margin to offset padding */
+  border-radius: 6px;
+  position: relative;
   /* Removed border-bottom - no lines between characters */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+/* Use pseudo-element for hover background so it layers properly */
+.entry::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background-color: transparent;
   transition: background-color 0.15s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.entry:hover::before {
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 .entry:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure content sits above the pseudo-element */
+.entry > * {
+  position: relative;
+  z-index: 1;
+}
+
+.entry:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.entry:active::before {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Special entries shouldn't look interactive */
+.entry.special {
+  cursor: default;
+}
+
+.entry.special:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.entry.special:hover::before {
+  background-color: transparent;
 }
 
 .entry.dragging {
@@ -31,6 +81,16 @@
 .sorting {
   position: relative;
   z-index: 100;
+}
+
+/* Draggable wrapper - allows grabbing from entire row */
+.draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.draggable:active {
+  cursor: grabbing;
 }
 
 /* Drag area with handle or lock */
@@ -134,18 +194,6 @@
   display: inline-block;
 }
 
-/* Reminder indicator dot */
-.reminderIndicator {
-  width: 16px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.5rem;
-  color: #333;
-  opacity: 0.6;
-}
-
 /* Special entry styling */
 .entry[data-type="special"] .name {
   color: #4a4a4a;
@@ -212,7 +260,12 @@
     display: none;
   }
 
+  .entry::before {
+    display: none;
+  }
+
   .entry:hover {
-    background-color: transparent;
+    transform: none;
+    box-shadow: none;
   }
 }

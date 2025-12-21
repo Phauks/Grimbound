@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { createPortal } from 'react-dom';
-import type { ContextMenuPosition } from '@/hooks/useContextMenu';
+import type { ContextMenuPosition } from '@/hooks/ui/useContextMenu';
 import styles from '@/styles/components/shared/ContextMenu.module.css';
 
 export interface ContextMenuItem {

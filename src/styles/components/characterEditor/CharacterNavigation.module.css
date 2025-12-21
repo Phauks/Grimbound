@@ -3,7 +3,6 @@
 .nav {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
   overflow: hidden;
   flex-shrink: 0;
   height: 100%; /* Fill parent ViewLayout.Panel */

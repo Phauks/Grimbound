@@ -14,11 +14,12 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/AccentSettingsSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import type { GenerationOptions } from '@/ts/types/index';
+import CONFIG from '@/ts/config.js';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
@@ -293,7 +294,8 @@ const AccentPreview = memo(function AccentPreview({
 }) {
   const getAccentPreviewSrc = () => {
     if (!accentGeneration || accentGeneration === 'none') return null;
-    return `/assets/images/accents/${accentGeneration}/accent_1.webp`;
+    // Use CONFIG.ASSETS.ACCENTS for correct base URL on GitHub Pages
+    return `${CONFIG.ASSETS.ACCENTS}leaves/${accentGeneration}/leaf_1.webp`;
   };
 
   const previewSrc = getAccentPreviewSrc();
@@ -606,11 +608,6 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
   // Max arc accents is limited by the number of arc slots (side accents are separate)
   const currentMaxAccentsLimit = displaySettings.accentSlots;
 
-  const getSummary = () => {
-    if (!isEnabled) return 'Disabled';
-    return `${displaySettings.maximumAccents} max · ${displaySettings.accentPopulationProbability}%`;
-  };
-
   const defaultSettings: PendingAccentSettings = {
     maximumAccents: 5,
     accentPopulationProbability: 30,
@@ -674,7 +671,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
                   title={style.label}
                 >
                   <img
-                    src={`/assets/images/accents/${style.id}/accent_1.webp`}
+                    src={`${CONFIG.ASSETS.ACCENTS}leaves/${style.id}/leaf_1.webp`}
                     alt={style.label}
                     className={styles.imageOptionImg}
                     onError={(e) => {

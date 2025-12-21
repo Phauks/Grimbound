@@ -7,7 +7,7 @@
  * @module types/project
  */
 
-import type { Character, GenerationOptions, ScriptMeta, Token } from './index.js';
+import type { Character, CharacterMetadata, GenerationOptions, ScriptMeta, Token } from './index.js';
 
 // ============================================================================
 // Project Entity
@@ -84,18 +84,9 @@ export interface ProjectState {
   schemaVersion: number; // Current: 1
 }
 
-/**
- * Character-specific metadata overrides
- */
-export interface CharacterMetadata {
-  idLinkedToName?: boolean; // Whether ID should update with name
-  customIcon?: {
-    enabled: boolean;
-    filename?: string; // Filename in ZIP or IndexedDB
-  };
-}
-
-// Note: GenerationOptions is imported from the main types file to avoid duplication
+// Note: CharacterMetadata and GenerationOptions are imported from the main types file to avoid duplication
+// Re-export CharacterMetadata for backward compatibility
+export type { CharacterMetadata };
 
 /**
  * UI filter state

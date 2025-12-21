@@ -462,8 +462,8 @@ The project uses GitHub Actions for:
 
 For contributors and developers, see these guides:
 
-- **[CLAUDE.md](./CLAUDE.md)** - Code generation guide with patterns and utilities
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design and technical decisions
+- **[CLAUDE.md](./CLAUDE.md)** - Essential coding rules for development
+- **[.claude/rules/](./.claude/rules/)** - Detailed reference docs (architecture, patterns, utilities, testing)
 - **[ROADMAP.md](./ROADMAP.md)** - Development plans and feature priorities
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines and workflow
 - **[CHANGELOG.md](./CHANGELOG.md)** - Version history and changes

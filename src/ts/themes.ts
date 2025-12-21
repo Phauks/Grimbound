@@ -60,6 +60,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#404040',
       '--border-color-light': '#555555',
+
+      // CodeMirror JSON Syntax Colors
+      '--cm-json-key': '#9cdcfe',
+      '--cm-json-string': '#ce9178',
+      '--cm-json-number': '#b5cea8',
+      '--cm-json-boolean': '#569cd6',
+      '--cm-json-null': '#569cd6',
     },
   },
 
@@ -99,6 +106,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#4a4a7a',
       '--border-color-light': '#5a5a8a',
+
+      // CodeMirror JSON Syntax Colors (purple-tinted)
+      '--cm-json-key': '#c084fc',
+      '--cm-json-string': '#e879f9',
+      '--cm-json-number': '#a5b4fc',
+      '--cm-json-boolean': '#818cf8',
+      '--cm-json-null': '#8b5cf6',
     },
   },
 
@@ -138,6 +152,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#385577',
       '--border-color-light': '#486688',
+
+      // CodeMirror JSON Syntax Colors (blue-tinted)
+      '--cm-json-key': '#7dd3fc',
+      '--cm-json-string': '#38bdf8',
+      '--cm-json-number': '#67e8f9',
+      '--cm-json-boolean': '#60a5fa',
+      '--cm-json-null': '#93c5fd',
     },
   },
 
@@ -177,6 +198,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#2e2e2e',
       '--border-color-light': '#3e3e3e',
+
+      // CodeMirror JSON Syntax Colors (muted grayscale)
+      '--cm-json-key': '#a0a0a0',
+      '--cm-json-string': '#c0c0c0',
+      '--cm-json-number': '#b0b0b0',
+      '--cm-json-boolean': '#909090',
+      '--cm-json-null': '#808080',
     },
   },
 
@@ -216,6 +244,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#553030',
       '--border-color-light': '#654040',
+
+      // CodeMirror JSON Syntax Colors (warm red/orange tinted)
+      '--cm-json-key': '#fca5a5',
+      '--cm-json-string': '#f87171',
+      '--cm-json-number': '#fdba74',
+      '--cm-json-boolean': '#fb923c',
+      '--cm-json-null': '#ef4444',
     },
   },
 
@@ -255,6 +290,13 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       // Border Colors
       '--border-color': '#5a5228',
       '--border-color-light': '#6a6238',
+
+      // CodeMirror JSON Syntax Colors (warm yellow/gold tinted)
+      '--cm-json-key': '#fde047',
+      '--cm-json-string': '#facc15',
+      '--cm-json-number': '#fcd34d',
+      '--cm-json-boolean': '#fbbf24',
+      '--cm-json-null': '#f59e0b',
     },
   },
 };

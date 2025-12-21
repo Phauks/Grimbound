@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import { useTokenContext } from '@/contexts/TokenContext.js';
-import { useAssetManager } from '@/hooks/useAssetManager.js';
+import { useAssetManager } from '@/hooks';
 import styles from '@/styles/components/modals/AssetManagerModal.module.css';
 import { getBuiltInAssets } from '@/ts/constants/builtInAssets.js';
 import { getBestPreviewCharacter } from '@/ts/data/characterUtils.js';

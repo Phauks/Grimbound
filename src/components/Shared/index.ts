@@ -29,8 +29,7 @@ export {
   type TextareaProps,
 } from './Form';
 // JSON Components (from Json/ subdirectory)
-export { JsonEditorPanel } from './Json/JsonEditorPanel';
-export { VirtualizedJsonHighlight } from './Json/VirtualizedJsonHighlight';
+export { JsonEditorPanel, CodeMirrorEditor, type EditorControls } from './Json';
 // Modal System (from ModalBase/ subdirectory)
 export {
   ConfirmDialog,
@@ -41,6 +40,7 @@ export {
 } from './ModalBase';
 // Options Panel Components (from Options/ subdirectory)
 export { AdditionalOptionsPanel } from './Options/AdditionalOptionsPanel';
+export { AdditionalTokensPanel } from './Options/AdditionalTokensPanel';
 export { AppearancePanel } from './Options/AppearancePanel';
 export { CharacterTab } from './Options/CharacterTab';
 export { OptionsPanel } from './Options/OptionsPanel';

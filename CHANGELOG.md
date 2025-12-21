@@ -18,7 +18,48 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 
 ## [Unreleased]
 
+### Changed
+- **Studio Simplification**: Replaced complex multi-layer editor with a focused asset editor
+  - Removed 20+ files (~3000+ lines) of over-engineered functionality
+  - New simple UI using standard ViewLayout 2-panel pattern (matching TokensView)
+  - Left sidebar: collapsible sections for Load Image, Team Color, Actions, Save
+  - Right panel: image preview with empty state and drag-drop support
+  - Core feature: team color application (converts to grayscale then applies color overlay)
+  - Team color presets: Good, Evil, Traveler, Fabled, Loric, Good Traveler, Evil Traveler
+  - Custom color picker: choose any color via native color input
+  - Invert button: invert all colors while preserving transparency
+  - Fixed: colors now always apply from original image (no stacking issue)
+  - New `useAssetEditor` hook for simple state management
+  - Added Asset Manager integration: "From Assets" button opens AssetManagerModal in selection mode
+  - Removed: layers, drawing tools, logo wizard, studio presets, filters, memory manager, background removal
+  - Removed `StudioContext` - no longer needed with simplified architecture
+  - "Edit in Studio" from TokenGrid still works via navigation helpers
+- **Documentation Restructuring**: Slimmed down CLAUDE.md from 1129 lines to 161 lines
+  - Moved detailed patterns to `.claude/rules/coding-patterns.md`
+  - Moved utility reference tables to `.claude/rules/utility-reference.md`
+  - Moved testing standards to `.claude/rules/testing-standards.md`
+  - Moved ARCHITECTURE.md to `.claude/rules/architecture.md`
+  - CLAUDE.md now contains only essential rules loaded every session
+  - Rule files are loaded by Claude Code contextually when relevant
+
 ### Added
+- **Per-Character Decoratives Panel**: Comprehensive per-character styling overrides in the Decoratives tab
+  - Master toggle to enable/disable custom settings (vs global defaults)
+  - Background style selector (same component as global Options panel)
+  - Font settings for character name (font family, color, spacing, shadow)
+  - Icon settings (scale, X/Y offset)
+  - Ability text settings (enable/disable, font, color, spacing, shadow)
+  - Setup overlay settings (hide toggle, style selector)
+  - Accent settings (full accent configuration matching global settings)
+  - Extended `DecorativeOverrides` type with all character-specific styling options
+  - New `CharacterDecorativesPanel` component that reuses existing option components
+- **CodeMirror 6 JSON Editor**: Replaced custom JSON syntax highlighting with CodeMirror 6
+  - Full-featured JSON editor with syntax highlighting, linting, and error markers
+  - Theme integration with all 6 application themes via CSS variables
+  - Built-in undo/redo with keyboard shortcuts (Ctrl+Z/Y)
+  - JSON validation with inline lint markers
+  - New files: `codemirrorTheme.ts`, `useCodeMirrorEditor.ts`, `CodeMirrorEditor.tsx`
+  - Added CodeMirror CSS variables (`--cm-json-key`, `--cm-json-string`, etc.) to each theme
 - **Enhanced Version Comparison**: Complete field-by-field character comparison with inline diff highlighting
   - Word-level diff for text fields (ability, flavor, overview, tips, night reminders, etc.)
   - Added/removed indicator lists for reminders and global reminders
@@ -44,9 +85,22 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - **Script hover pre-render context type**: Added `'script-hover'` to `PreRenderContextType`
 
 ### Changed
+- **TokensView sidebar reorganization**: Improved UI organization for token generation options
+  - Renamed "Additional Options" to "Advanced Options" (ability text, reminder count, setup, accents)
+  - Created new "Additional Tokens" section with Variants, Meta Tokens, Bootlegger, and QR Tokens
+  - New `AdditionalTokensPanel` component for additional token types
 - **TabNavigation**: Refactored to use unified `tabPreRenderService` instead of separate pre-render functions
 - **NightOrderContext**: Updated to use `tabPreRenderService.getCachedNightOrder()` for cache lookup
 - **Cache module exports**: Added TabPreRenderService and hashUtils exports to barrel file
+- **JsonEditorPanel**: Now wraps CodeMirror 6 instead of custom CSS overlay pattern
+- **JsonView**: Uses CodeMirror's built-in undo/redo instead of custom useUndoStack hook
+- **onChange signature**: JsonEditorPanel now receives string directly instead of ChangeEvent
+
+### Removed
+- `src/ts/ui/jsonHighlighter.ts` - Replaced by CodeMirror 6 language support
+- `src/components/ViewComponents/JsonComponents/JsonHighlight.tsx` - Replaced by CodeMirror
+- `src/components/Shared/Json/VirtualizedJsonHighlight.tsx` - CodeMirror handles large files natively
+- `src/styles/utilities/json-highlighting.css` - Colors now integrated via CSS variables in themes
 
 ### Fixed
 - **Script tab flash**: Fixed visual flash when navigating to Script tab by ensuring cache keys match between pre-render trigger and lookup

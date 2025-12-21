@@ -523,7 +523,7 @@ export async function generateAllTokens(
 
   if (preloadTasks.length > 0) {
     await preResolveAssetsWithPriority(preloadTasks, {
-      concurrency: 5,
+      concurrency: 15, // Higher concurrency for faster image loading
       onProgress: (_loaded, _total) => {
         // Optional: could emit progress event here
         // logger.debug('BatchGenerator', `Preloaded ${loaded}/${total} assets`);

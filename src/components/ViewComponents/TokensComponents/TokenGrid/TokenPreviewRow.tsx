@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useTokenGenerator } from '@/hooks/useTokenGenerator';
+import { useTokenGenerator } from '@/hooks';
 import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
 import { CONFIG } from '@/ts/config.js';
 import { calculateTokenCounts, getBestPreviewCharacter } from '@/ts/data/characterUtils';
 import { TokenGenerator } from '@/ts/generation/index.js';
-import type { Character, Token } from '@/ts/types/index.js';
+import type { Character, GenerationOptions, ScriptMeta, Token } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 
@@ -21,19 +21,54 @@ const SAMPLE_CHARACTER: Character = {
   setup: false,
 };
 
-export function TokenPreviewRow() {
-  const {
-    characters,
-    tokens,
-    generationOptions,
-    isLoading,
-    scriptMeta,
-    exampleCharacterToken,
-    setExampleCharacterToken,
-    exampleMetaToken,
-    setExampleToken: _setExampleToken,
-  } = useTokenContext();
+/**
+ * Props for TokenPreviewRow component.
+ * All props are optional - when not provided, values are sourced from TokenContext.
+ */
+export interface TokenPreviewRowProps {
+  /** Characters array - if provided, uses this instead of context */
+  characters?: Character[];
+  /** Tokens array - if provided, uses this instead of context */
+  tokens?: Token[];
+  /** Generation options - if provided, uses this instead of context */
+  generationOptions?: GenerationOptions;
+  /** Script metadata - if provided, uses this instead of context */
+  scriptMeta?: ScriptMeta | null;
+  /** External loading state - if provided, uses this instead of context */
+  isLoading?: boolean;
+  /** Whether to show the Generate button (default: true) */
+  showGenerateButton?: boolean;
+  /** Whether to show the auto-regenerate toggle (default: true) */
+  showAutoRegenerate?: boolean;
+  /** Custom generate handler - if provided, uses this instead of generateTokens() */
+  onGenerate?: () => void;
+}
+
+export function TokenPreviewRow({
+  characters: propCharacters,
+  tokens: propTokens,
+  generationOptions: propGenerationOptions,
+  scriptMeta: propScriptMeta,
+  isLoading: propIsLoading,
+  showGenerateButton = true,
+  showAutoRegenerate = true,
+  onGenerate,
+}: TokenPreviewRowProps = {}) {
+  // Get context values (used as fallbacks when props not provided)
+  const context = useTokenContext();
   const { generateTokens } = useTokenGenerator();
+
+  // Use props if provided, otherwise fall back to context
+  const characters = propCharacters ?? context.characters;
+  const tokens = propTokens ?? context.tokens;
+  const generationOptions = propGenerationOptions ?? context.generationOptions;
+  const scriptMeta = propScriptMeta ?? context.scriptMeta;
+  const isLoading = propIsLoading ?? context.isLoading;
+
+  // These are only used when in context mode (no props provided)
+  const exampleCharacterToken = propCharacters ? null : context.exampleCharacterToken;
+  const setExampleCharacterToken = propCharacters ? () => {} : context.setExampleCharacterToken;
+  const exampleMetaToken = propCharacters ? null : context.exampleMetaToken;
 
   const [previewCharCanvas, setPreviewCharCanvas] = useState<HTMLCanvasElement | null>(null);
   const [previewReminderCanvas, setPreviewReminderCanvas] = useState<HTMLCanvasElement | null>(
@@ -200,7 +235,12 @@ export function TokenPreviewRow() {
   // Handle apply to all tokens
   const handleApplyToAll = () => {
     if (characters.length > 0) {
-      generateTokens();
+      // Use custom handler if provided, otherwise use generateTokens from hook
+      if (onGenerate) {
+        onGenerate();
+      } else {
+        generateTokens();
+      }
     }
   };
 
@@ -291,27 +331,33 @@ export function TokenPreviewRow() {
             </div>
           </div>
 
-          <div className={styles.actionsRow}>
-            <div className={styles.generateGroup}>
-              <button
-                type="button"
-                className={styles.generateBtn}
-                onClick={handleApplyToAll}
-                disabled={isLoading || characters.length === 0}
-                title="Generate all tokens with current options"
-              >
-                {isLoading ? 'Generating...' : 'Generate'}
-              </button>
-              <button
-                type="button"
-                className={`${styles.autoBtn} ${autoRegenerate ? styles.autoBtnActive : ''}`}
-                onClick={() => setAutoRegenerate(!autoRegenerate)}
-                title={autoRegenerate ? 'Auto-regenerate enabled' : 'Enable auto-regenerate'}
-              >
-                🔄
-              </button>
+          {(showGenerateButton || showAutoRegenerate) && (
+            <div className={styles.actionsRow}>
+              <div className={styles.generateGroup}>
+                {showGenerateButton && (
+                  <button
+                    type="button"
+                    className={styles.generateBtn}
+                    onClick={handleApplyToAll}
+                    disabled={isLoading || characters.length === 0}
+                    title="Generate all tokens with current options"
+                  >
+                    {isLoading ? 'Generating...' : 'Generate'}
+                  </button>
+                )}
+                {showAutoRegenerate && (
+                  <button
+                    type="button"
+                    className={`${styles.autoBtn} ${autoRegenerate ? styles.autoBtnActive : ''}`}
+                    onClick={() => setAutoRegenerate(!autoRegenerate)}
+                    title={autoRegenerate ? 'Auto-regenerate enabled' : 'Enable auto-regenerate'}
+                  >
+                    🔄
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className={styles.infoColumn}>

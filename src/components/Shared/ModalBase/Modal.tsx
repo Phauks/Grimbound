@@ -46,7 +46,7 @@
  */
 
 import { type ReactNode, useId } from 'react';
-import { useModalBehavior } from '@/hooks/useModalBehavior';
+import { useModalBehavior } from '@/hooks';
 import { cn } from '@/ts/utils';
 import styles from './Modal.module.css';
 

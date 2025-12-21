@@ -1,0 +1,345 @@
+/**
+ * ExportDownloads Component Styles
+ *
+ * Styles for download cards, sections, and featured downloads
+ * in the ExportView right panel.
+ */
+
+/* ============================================
+   Featured Downloads Section
+   ============================================ */
+
+.featuredSection {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.08) 0%,
+    rgba(201, 162, 39, 0.03) 100%
+  );
+  border: 1px solid var(--accent-primary, #c9a227);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.featuredHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.featuredIcon {
+  font-size: 1rem;
+}
+
+.featuredTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-primary, #c9a227);
+  margin: 0;
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+/* ============================================
+   Download Section (Collapsible)
+   ============================================ */
+
+.downloadSection {
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  background: var(--bg-card, rgba(255, 255, 255, 0.02));
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary, #ffffff);
+  transition: background-color 0.15s ease;
+}
+
+.sectionHeader:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.sectionArrow {
+  font-size: 0.625rem;
+  margin-right: 0.625rem;
+  color: var(--text-muted, #888);
+  transition: transform 0.2s ease;
+}
+
+.sectionArrowOpen {
+  transform: rotate(90deg);
+}
+
+.sectionIcon {
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
+.sectionTitle {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sectionCount {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #888);
+  background: var(--bg-badge, rgba(255, 255, 255, 0.08));
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
+  margin-left: auto;
+}
+
+.sectionContent {
+  padding: 0.75rem 1rem;
+  display: none;
+}
+
+.sectionContentOpen {
+  display: block;
+}
+
+.downloadGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.625rem;
+}
+
+/* ============================================
+   Download Card
+   ============================================ */
+
+.downloadCard {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.downloadCard:hover:not(.disabled) {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--accent-primary, #c9a227);
+}
+
+.downloadCard:active:not(.disabled) {
+  transform: scale(0.98);
+}
+
+.downloadCard.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.downloadCard.executing {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Featured card variant - slightly larger */
+.downloadCardFeatured {
+  padding: 0.75rem 1rem;
+  background: var(--bg-card, rgba(255, 255, 255, 0.04));
+}
+
+.downloadCardFeatured:hover:not(.disabled) {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+/* Card icon */
+.cardIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+/* Card content */
+.cardContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+}
+
+.cardLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardDescription {
+  font-size: 0.6875rem;
+  color: var(--text-secondary, #a0a0a0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card action indicator */
+.cardAction {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.downloadIcon {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: var(--accent-primary, #c9a227);
+  transition: transform 0.15s ease;
+}
+
+.downloadCard:hover:not(.disabled) .downloadIcon {
+  transform: translateY(2px);
+}
+
+/* Spinner for loading state */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent-primary, #c9a227);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Coming Soon Badge */
+.comingSoonBadge {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted, #888);
+  background: var(--bg-badge, rgba(255, 255, 255, 0.08));
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm, 4px);
+}
+
+/* ============================================
+   Download All Button (Special Styling)
+   ============================================ */
+
+.downloadAllCard {
+  margin-top: 0.5rem;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.15) 0%,
+    rgba(201, 162, 39, 0.08) 100%
+  );
+  border-color: var(--accent-primary, #c9a227);
+}
+
+.downloadAllCard:hover:not(.disabled) {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.25) 0%,
+    rgba(201, 162, 39, 0.12) 100%
+  );
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+/* Medium screens - 3 columns */
+@media (max-width: 900px) {
+  .featuredGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .downloadGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Small screens - 2 columns */
+@media (max-width: 600px) {
+  .featuredGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .downloadGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Extra small screens - 1 column */
+@media (max-width: 400px) {
+  .featuredGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .downloadGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   Light Theme Overrides
+   ============================================ */
+
+:global(.theme-light) .featuredSection {
+  background: linear-gradient(
+    135deg,
+    rgba(180, 140, 30, 0.1) 0%,
+    rgba(180, 140, 30, 0.04) 100%
+  );
+}
+
+:global(.theme-light) .downloadSection {
+  background: var(--bg-card, rgba(0, 0, 0, 0.02));
+}
+
+:global(.theme-light) .sectionHeader {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.03));
+}
+
+:global(.theme-light) .sectionHeader:hover {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+:global(.theme-light) .downloadCard {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.03));
+}
+
+:global(.theme-light) .downloadCard:hover:not(.disabled) {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+}

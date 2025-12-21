@@ -25,8 +25,6 @@ export const DUSK_ENTRY: NightOrderEntry = {
   image: `${SCRIPTS_PATH}dusk.webp`,
   team: 'special',
   order: -1000, // Very low to always sort first
-  isOfficial: true,
-  isLocked: true,
   nightType: 'both',
 };
 
@@ -41,8 +39,6 @@ export const DAWN_ENTRY: NightOrderEntry = {
   image: `${SCRIPTS_PATH}dawn.webp`,
   team: 'special',
   order: 1000, // Very high to always sort last
-  isOfficial: true,
-  isLocked: true,
   nightType: 'both',
 };
 
@@ -59,8 +55,6 @@ export const MINION_INFO_ENTRY: NightOrderEntry = {
   image: `${SCRIPTS_PATH}minioninfo.webp`,
   team: 'special',
   order: 92.5, // Near end of first night, before Demon Info
-  isOfficial: true,
-  isLocked: true,
   nightType: 'first',
 };
 
@@ -77,8 +71,6 @@ export const DEMON_INFO_ENTRY: NightOrderEntry = {
   image: `${SCRIPTS_PATH}demoninfo.webp`,
   team: 'special',
   order: 95.5, // After Minion Info, near end of first night
-  isOfficial: true,
-  isLocked: true,
   nightType: 'first',
 };
 

@@ -14,7 +14,7 @@
 
 import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/QRCodeSettingsSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
@@ -459,15 +459,6 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
   });
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
-
-  // Format summary text
-  const getSummary = () => {
-    if (!isEnabled) return 'Disabled';
-    const dotLabel =
-      DOT_TYPES.find((d) => d.value === displaySettings.dotType)?.label ?? 'Extra Round';
-    const gradientText = displaySettings.dotsUseGradient ? 'gradient' : 'solid';
-    return `${dotLabel} · ${gradientText}`;
-  };
 
   // Enable toggle component
   const EnableToggle = (

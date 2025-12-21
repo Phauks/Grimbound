@@ -14,9 +14,9 @@ export {
   updateCharacterInJson,
 } from './detailViewUtils.js';
 
-// JSON Highlighting utilities
+// CodeMirror theme utilities
 export {
-  type HighlightToken,
-  TOKEN_CLASS_MAP,
-  tokenizeJSON,
-} from './jsonHighlighter.js';
+  createCodeMirrorTheme,
+  createBaseTheme,
+  createSyntaxHighlighting,
+} from './codemirrorTheme.js';

@@ -9,7 +9,7 @@
 
 import { useCallback } from 'react';
 import { useFileValidationService } from '@/contexts/ServiceContext';
-import { useFileUpload } from '@/hooks/useFileUpload.js';
+import { useFileUpload } from '@/hooks';
 import styles from '@/styles/components/shared/FileDropzone.module.css';
 import { ASSET_TYPE_LABELS, type AssetType } from '@/ts/services/upload/index.js';
 

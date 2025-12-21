@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCharacterImageResolver } from '@/hooks/useCharacterImageResolver';
-import { useContextMenu } from '@/hooks/useContextMenu';
+import { useCharacterImageResolver, useContextMenu } from '@/hooks';
 import styles from '@/styles/components/characterEditor/CharacterNavigation.module.css';
 import type { Character, Team, Token } from '@/ts/types/index.js';
 import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
@@ -13,6 +12,7 @@ interface CharacterNavigationProps {
   isMetaSelected?: boolean;
   onSelectCharacter: (characterUuid: string) => void;
   onAddCharacter: () => void;
+  onAddOfficialCharacter?: () => void;
   onDeleteCharacter: (characterId: string) => void;
   onDuplicateCharacter: (characterId: string) => void;
   onSelectMetaToken?: (token: Token) => void;
@@ -63,6 +63,7 @@ export function CharacterNavigation({
   selectedCharacterUuid,
   onSelectCharacter,
   onAddCharacter,
+  onAddOfficialCharacter,
   onDeleteCharacter,
   onDuplicateCharacter,
   onSelectMetaToken,
@@ -300,6 +301,16 @@ export function CharacterNavigation({
             >
               {allCollapsed ? '▼' : '▲'}
             </button>
+            {onAddOfficialCharacter && (
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={onAddOfficialCharacter}
+                title="Add Official Characters"
+              >
+                &#x1F4DA;
+              </button>
+            )}
             <button
               type="button"
               className={styles.addBtn}

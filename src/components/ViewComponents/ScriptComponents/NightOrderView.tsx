@@ -7,25 +7,25 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import {
+  EnableToggle,
+  InfoSection,
+  PreviewBox,
+  SettingsSelectorBase,
+} from '@/components/Shared/Selectors/SettingsSelectorBase';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useNightOrder } from '@/contexts/NightOrderContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/script/NightOrderView.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
-import {
-  downloadNightOrderPdf,
-  type ExportPhase,
-} from '@/ts/nightOrder/nightOrderPdfLib.js';
+import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfLib.js';
+import { syncNightOrderToJson, updateCharacterNightNumbers } from '@/ts/nightOrder/nightOrderSync.js';
 import { logger } from '@/ts/utils/logger.js';
-import { ViewLayout } from '@/components/Layout/ViewLayout';
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-  EnableToggle,
-} from '@/components/Shared/Selectors/SettingsSelectorBase';
+// TODO: Re-enable when Script PDF export is fixed
+// import { getOfficialScriptToolUrl } from '@/ts/utils/scriptEncoder.js';
 import { NightSheet } from './NightSheet';
 import type { ScriptSubTab } from './ScriptTabNavigation';
 
@@ -69,7 +69,7 @@ interface NightOrderViewProps {
 }
 
 export function NightOrderView({ enableDragDrop = true, onEditCharacter }: NightOrderViewProps) {
-  const { characters, scriptMeta } = useTokenContext();
+  const { characters, scriptMeta, jsonInput, setJsonInput, setCharacters } = useTokenContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
   const {
     firstNight,
@@ -77,6 +77,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     scriptMeta: nightOrderMeta,
     isLoading,
     error,
+    isDirty,
     initializeFromScript,
     moveEntry,
   } = useNightOrder();
@@ -102,6 +103,55 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   // Use night order's script meta if available
   const displayMeta = nightOrderMeta || scriptMeta;
 
+  // Track if we've initialized to avoid syncing on first load
+  const hasInitializedRef = useRef(false);
+
+  // Auto-sync night order to JSON when entries change
+  // Skip initial render to avoid syncing the loaded state back
+  useEffect(() => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      return;
+    }
+
+    if (!jsonInput.trim() || !isDirty) return;
+
+    // Sync to JSON meta arrays
+    const updatedJson = syncNightOrderToJson(jsonInput, firstNight, otherNight);
+    if (updatedJson !== jsonInput) {
+      setJsonInput(updatedJson);
+      logger.info('NightOrderView', 'Auto-synced night order to JSON');
+    }
+
+    // Update per-character night order numbers as fallback
+    const updatedCharacters = updateCharacterNightNumbers(
+      characters,
+      firstNight.entries,
+      otherNight.entries
+    );
+
+    // Only update if there are actual changes
+    const hasChanges = updatedCharacters.some((char, i) => {
+      const original = characters[i];
+      return char.firstNight !== original.firstNight || char.otherNight !== original.otherNight;
+    });
+
+    if (hasChanges) {
+      setCharacters(updatedCharacters);
+      logger.debug('NightOrderView', 'Updated character night order numbers');
+    }
+  }, [
+    firstNight.entries,
+    otherNight.entries,
+    jsonInput,
+    isDirty,
+    firstNight,
+    otherNight,
+    characters,
+    setJsonInput,
+    setCharacters,
+  ]);
+
   // Move handlers
   const handleMoveFirstNight = useCallback(
     (entryId: string, newIndex: number) => {
@@ -115,6 +165,24 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       moveEntry('other', entryId, newIndex);
     },
     [moveEntry]
+  );
+
+  /**
+   * Convert a character from official to custom.
+   * Updates the character's source in TokenContext, which is the single source of truth.
+   * The UI will automatically reflect this change via the characters array.
+   */
+  const handleConvertToCustom = useCallback(
+    (characterId: string) => {
+      const updatedCharacters = characters.map((char) =>
+        char.id.toLowerCase() === characterId.toLowerCase()
+          ? { ...char, source: 'custom' as const }
+          : char
+      );
+      setCharacters(updatedCharacters);
+      logger.info('NightOrderView', `Converted character ${characterId} to custom`);
+    },
+    [characters, setCharacters]
   );
 
   // PDF export state
@@ -187,14 +255,35 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     }
   }, [displayMeta, isExporting, firstNight, otherNight]);
 
+  // TODO: Re-enable when Script PDF export is fixed
+  // Handler to open script in official BOTC Script Tool
+  // const handleOpenInOfficialTool = useCallback(() => {
+  //   if (characters.length === 0) {
+  //     logger.warn('NightOrderView', 'No characters to export');
+  //     return;
+  //   }
+  //
+  //   const scriptData = scriptMeta ? [scriptMeta, ...characters] : characters;
+  //   const url = getOfficialScriptToolUrl(scriptData);
+  //
+  //   logger.info('NightOrderView', 'Opening official BOTC Script Tool', {
+  //     characterCount: characters.length,
+  //     hasMeta: !!scriptMeta,
+  //   });
+  //
+  //   window.open(url, '_blank');
+  // }, [characters, scriptMeta]);
+
   // Register downloads for this view
   useEffect(() => {
     const hasNoData = firstNight.entries.length === 0 && otherNight.entries.length === 0;
 
     const downloads: DownloadItem[] = [
+      // TODO: Script PDF export - disabled pending investigation of URL encoding format
+      // Re-enable when getOfficialScriptToolUrl encoding is verified to work
       {
         id: 'night-order-pdf',
-        icon: '📄',
+        icon: '🌙',
         label: 'Night Order PDF',
         description: displayMeta?.name
           ? `${displayMeta.name} night sheets`
@@ -206,6 +295,8 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
           : hasNoData
             ? 'Load a script first'
             : 'Enable night order generation',
+        category: 'script',
+        sourceView: 'script',
       },
     ];
 
@@ -237,9 +328,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   });
 
   // Get display settings (pending when editing, current otherwise)
-  const displayBackground = backgroundPanel.isExpanded
-    ? backgroundPanel.pendingValue
-    : background;
+  const displayBackground = backgroundPanel.isExpanded ? backgroundPanel.pendingValue : background;
 
   // Loading state
   if (isLoading) {
@@ -348,7 +437,9 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
               <input
                 type="checkbox"
                 checked={backgroundPanel.pendingValue.showTexture}
-                onChange={(e) => backgroundPanel.updatePendingField('showTexture', e.target.checked)}
+                onChange={(e) =>
+                  backgroundPanel.updatePendingField('showTexture', e.target.checked)
+                }
                 className={styles.checkbox}
               />
               Show paper texture
@@ -419,12 +510,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
                 <span style={{ fontSize: '1.5rem' }}>📜</span>
               </PreviewBox>
             }
-            info={
-              <InfoSection
-                label="Player Script"
-                summary="Coming Soon"
-              />
-            }
+            info={<InfoSection label="Player Script" summary="Coming Soon" />}
             disabled
             ariaLabel="Player script generation settings (coming soon)"
           />
@@ -452,7 +538,11 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
             info={
               <InfoSection
                 label="Night Order"
-                summary={generateNightOrder ? `${displayBackground.baseColor}${displayBackground.showTexture ? ', Texture' : ''}` : 'Disabled'}
+                summary={
+                  generateNightOrder
+                    ? `${displayBackground.baseColor}${displayBackground.showTexture ? ', Texture' : ''}`
+                    : 'Disabled'
+                }
               />
             }
             headerSlot={
@@ -495,9 +585,11 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
                   ref={firstNightRef}
                   type="first"
                   entries={firstNight.entries}
+                  characters={characters}
                   scriptMeta={displayMeta}
                   enableDragDrop={enableDragDrop}
                   onMoveEntry={handleMoveFirstNight}
+                  onToggleLock={handleConvertToCustom}
                   background={displayBackground}
                   onEditCharacter={onEditCharacter}
                 />
@@ -511,9 +603,11 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
                   ref={otherNightRef}
                   type="other"
                   entries={otherNight.entries}
+                  characters={characters}
                   scriptMeta={displayMeta}
                   enableDragDrop={enableDragDrop}
                   onMoveEntry={handleMoveOtherNight}
+                  onToggleLock={handleConvertToCustom}
                   background={displayBackground}
                   onEditCharacter={onEditCharacter}
                 />

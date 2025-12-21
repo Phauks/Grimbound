@@ -1,4 +1,4 @@
-import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { usePWAInstall } from '@/hooks';
 import styles from '@/styles/components/layout/Header.module.css';
 import { SaveAsNewProjectButton } from '@/components/Shared/Assets/SaveAsNewProjectButton';
 import { AutoSaveIndicator } from '@/components/Shared/Feedback/AutoSaveIndicator';

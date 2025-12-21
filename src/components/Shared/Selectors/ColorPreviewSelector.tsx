@@ -19,7 +19,7 @@
 
 import { memo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks/useExpandablePanel';
+import { useExpandablePanel } from '@/hooks';
 import styles from '@/styles/components/shared/ColorPreviewSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';

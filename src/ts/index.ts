@@ -125,18 +125,18 @@ export type {
 // UI Module
 // ============================================================================
 export {
+  // Detail view utilities
   downloadCharacterTokenOnly,
   downloadCharacterTokensAsZip,
   downloadReminderTokensOnly,
   getCharacterChanges,
-  type HighlightToken,
   regenerateCharacterAndReminders,
-  // Detail view utilities
   regenerateSingleToken,
-  TOKEN_CLASS_MAP,
-  // JSON highlighting
-  tokenizeJSON,
   updateCharacterInJson,
+  // CodeMirror theme utilities
+  createCodeMirrorTheme,
+  createBaseTheme,
+  createSyntaxHighlighting,
 } from './ui/index.js';
 // ============================================================================
 // Utilities

@@ -160,10 +160,10 @@ export const ACCENT_LAYOUT = {
   },
   /** Asset configuration */
   ASSETS: {
-    /** Base path for accents folder */
-    ACCENTS_PATH: 'accents/',
-    /** Filename prefix for accent variants (accent_1.png, accent_2.png, etc.) */
-    ACCENT_FILENAME: 'accent',
+    /** Base path for accent/leaves folder (relative to CONFIG.ASSETS.ACCENTS) */
+    ACCENTS_PATH: 'leaves/',
+    /** Filename prefix for accent variants (leaf_1.webp, leaf_2.webp, etc.) */
+    ACCENT_FILENAME: 'leaf',
     /** Number of accent variants available */
     DEFAULT_VARIANTS: 1,
     MIN_VARIANTS: 1,
@@ -175,6 +175,85 @@ export const ACCENT_LAYOUT = {
     PROBABILITY: 30,
   },
 } as const;
+
+// ============================================================================
+// TEAM COLORS - Centralized color definitions for all character alignments
+// ============================================================================
+
+/**
+ * Team color definitions - Single Source of Truth
+ *
+ * Each team has:
+ * - hex: Primary color as hex string
+ * - hue: HSL hue value (0-360) for selective recoloring
+ * - saturationBoost: Multiplier for saturation when recoloring (1.0 = no change)
+ * - split: Optional split color config (left/right sides have different colors)
+ *
+ * These values are used by:
+ * - Studio icon color replacer (HSL-based selective recoloring)
+ * - Character preset system (grayscale + overlay)
+ * - Token generation backgrounds
+ */
+export const TEAM_COLORS = {
+  /** Townsfolk - Blue (good aligned) */
+  townsfolk: {
+    hex: '#3B5998',
+    hue: 220,
+    saturationBoost: 1.0,
+  },
+  /** Outsider - Cyan/Teal (good aligned, but potentially harmful) */
+  outsider: {
+    hex: '#20B2AA',
+    hue: 177,
+    saturationBoost: 0.95,
+  },
+  /** Minion - Purple (evil aligned) */
+  minion: {
+    hex: '#9400D3',
+    hue: 280,
+    saturationBoost: 1.1,
+  },
+  /** Demon - Red (evil aligned) */
+  demon: {
+    hex: '#CC0000',
+    hue: 0,
+    saturationBoost: 1.15,
+  },
+  /** Traveler - Split color (left blue, right red) representing dual allegiance */
+  traveler: {
+    hex: '#808080', // Gray for preview (actual color is split)
+    hue: 0, // Not used for split colors
+    saturationBoost: 1.0,
+    split: {
+      left: { hex: '#3B5998', hue: 220 },  // Blue (Good/Townsfolk)
+      right: { hex: '#CC0000', hue: 0 },    // Red (Evil/Demon)
+    },
+  },
+  /** Fabled - Gold (storyteller characters) */
+  fabled: {
+    hex: '#FFD700',
+    hue: 51,
+    saturationBoost: 1.2,
+  },
+  /** Loric - Forest Green (custom homebrew alignment) */
+  loric: {
+    hex: '#228B22',
+    hue: 120,
+    saturationBoost: 1.0,
+  },
+} as const;
+
+/**
+ * Type for team keys
+ */
+export type TeamColorKey = keyof typeof TEAM_COLORS;
+
+/**
+ * Get team color by key
+ */
+export function getTeamColor(team: TeamColorKey) {
+  return TEAM_COLORS[team];
+}
 
 // ============================================================================
 // COLORS - Default colors used throughout token generation
@@ -293,6 +372,7 @@ export default {
   LINE_HEIGHTS,
   TOKEN_COUNT_BADGE,
   ACCENT_LAYOUT,
+  TEAM_COLORS,
   DEFAULT_COLORS,
   QR_COLORS,
   TEXT_SHADOW,

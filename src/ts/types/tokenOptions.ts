@@ -5,7 +5,7 @@
 
 import type { Point } from '@/ts/canvas/index.js';
 import CONFIG from '@/ts/config.js';
-import type { ReminderCountStyle } from './index.js';
+import type { DPIOption, GenerationOptions, MeasurementUnit, ReminderCountStyle } from './index.js';
 
 // ============================================================================
 // TOKEN GENERATOR OPTIONS
@@ -147,7 +147,13 @@ export interface QRCodeOptions {
   errorCorrectionLevel: QRErrorCorrectionLevel;
 }
 
-import type { BackgroundStyle } from './backgroundEffects.js';
+import {
+  DEFAULT_EFFECTS_CONFIG,
+  DEFAULT_GRADIENT_CONFIG,
+  DEFAULT_LIGHT_CONFIG,
+  DEFAULT_TEXTURE_CONFIG,
+  type BackgroundStyle,
+} from './backgroundEffects.js';
 import type { BootleggerIconType } from './index.js';
 
 export interface TokenGeneratorOptions {
@@ -299,6 +305,143 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
     // QR options
     errorCorrectionLevel: 'H',
   },
+};
+
+// ============================================================================
+// DEFAULT GENERATION OPTIONS (for UI/presets)
+// ============================================================================
+
+/**
+ * Default generation options - the single source of truth for application defaults.
+ * Used by:
+ * - TokenContext for initial state
+ * - "Classic" preset to always reflect current defaults
+ * - Any code that needs to know the default values
+ *
+ * IMPORTANT: Update these values to change application defaults.
+ * The "Classic" preset will automatically reflect any changes made here.
+ */
+export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
+  // Display options
+  displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
+  generateBootleggerRules: false,
+  tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
+
+  // Setup overlay
+  setupStyle: CONFIG.STYLE.SETUP_STYLE,
+
+  // Reminder token background
+  reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
+  reminderBackgroundImage: CONFIG.STYLE.CHARACTER_BACKGROUND,
+  reminderBackgroundType: 'color',
+
+  // Character token background
+  characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
+  characterBackgroundColor: '#FFFFFF',
+  characterBackgroundType: 'image',
+
+  // Meta token background
+  metaBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
+  metaBackgroundColor: '#FFFFFF',
+  metaBackgroundType: 'image',
+
+  // Background styles (new format) - matches legacy defaults above
+  characterBackgroundStyle: {
+    sourceType: 'image',
+    imageUrl: CONFIG.STYLE.CHARACTER_BACKGROUND,
+    mode: 'solid',
+    solidColor: '#FFFFFF',
+    gradient: DEFAULT_GRADIENT_CONFIG,
+    texture: DEFAULT_TEXTURE_CONFIG,
+    effects: DEFAULT_EFFECTS_CONFIG,
+    light: DEFAULT_LIGHT_CONFIG,
+  },
+  reminderBackgroundStyle: {
+    sourceType: 'styled',
+    imageUrl: undefined,
+    mode: 'solid',
+    solidColor: CONFIG.STYLE.REMINDER_BACKGROUND,
+    gradient: DEFAULT_GRADIENT_CONFIG,
+    texture: DEFAULT_TEXTURE_CONFIG,
+    effects: DEFAULT_EFFECTS_CONFIG,
+    light: DEFAULT_LIGHT_CONFIG,
+  },
+  metaBackgroundStyle: {
+    sourceType: 'image',
+    imageUrl: CONFIG.STYLE.CHARACTER_BACKGROUND,
+    mode: 'solid',
+    solidColor: '#FFFFFF',
+    gradient: DEFAULT_GRADIENT_CONFIG,
+    texture: DEFAULT_TEXTURE_CONFIG,
+    effects: DEFAULT_EFFECTS_CONFIG,
+    light: DEFAULT_LIGHT_CONFIG,
+  },
+
+  // Fonts and colors
+  characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
+  characterNameColor: CONFIG.STYLE.CHARACTER_NAME_COLOR,
+  metaNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
+  metaNameColor: CONFIG.STYLE.CHARACTER_NAME_COLOR,
+  characterReminderFont: CONFIG.STYLE.CHARACTER_REMINDER_FONT,
+  abilityTextFont: CONFIG.STYLE.ABILITY_TEXT_FONT,
+  abilityTextColor: CONFIG.STYLE.ABILITY_TEXT_COLOR,
+  reminderTextColor: CONFIG.STYLE.REMINDER_TEXT_COLOR,
+
+  // Accent settings
+  accentGeneration: CONFIG.STYLE.ACCENT_GENERATION,
+  maximumAccents: 0, // Off by default for cleaner tokens
+  accentPopulationProbability: CONFIG.STYLE.ACCENT_POPULATION_PROBABILITY,
+  accentArcSpan: CONFIG.STYLE.ACCENT_ARC_SPAN,
+  accentSlots: CONFIG.STYLE.ACCENT_SLOTS,
+
+  // DPI
+  dpi: CONFIG.PDF.DPI as DPIOption,
+
+  // Font spacing (0 = normal spacing)
+  fontSpacing: {
+    characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
+    abilityText: CONFIG.FONT_SPACING.ABILITY_TEXT,
+    reminderText: CONFIG.FONT_SPACING.REMINDER_TEXT,
+    metaText: CONFIG.FONT_SPACING.META_TEXT,
+  },
+
+  // Text shadows (subtle by default)
+  textShadow: {
+    characterName: 4,
+    abilityText: 3,
+    reminderText: 4,
+    metaText: 4,
+  },
+
+  // Meta tokens
+  pandemoniumToken: true,
+  scriptNameToken: true,
+  almanacToken: true,
+
+  // PNG export settings
+  pngSettings: {
+    embedMetadata: false,
+    transparentBackground: false,
+  },
+
+  // ZIP export settings
+  zipSettings: {
+    saveInTeamFolders: CONFIG.ZIP.SAVE_IN_TEAM_FOLDERS,
+    saveRemindersSeparately: CONFIG.ZIP.SAVE_REMINDERS_SEPARATELY,
+    metaTokenFolder: true,
+    includeScriptJson: false,
+    compressionLevel: 'normal',
+  },
+
+  // Icon positioning
+  iconSettings: {
+    character: { scale: 1.0, offsetX: 0, offsetY: 0 },
+    reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
+    meta: { scale: 1.0, offsetX: 0, offsetY: 0 },
+  },
+
+  // Measurement unit for UI display
+  measurementUnit: 'inches' as MeasurementUnit,
 };
 
 // ============================================================================

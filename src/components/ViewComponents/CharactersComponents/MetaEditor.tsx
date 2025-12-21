@@ -152,8 +152,7 @@ export function MetaEditor({
     };
   }, []);
 
-  const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
+  const handleJsonChange = (newText: string) => {
     setJsonText(newText);
     isEditingJsonRef.current = true;
 

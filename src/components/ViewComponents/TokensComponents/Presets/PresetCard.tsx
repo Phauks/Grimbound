@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef } from 'react';
-import { useContextMenu } from '@/hooks/useContextMenu';
+import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/presets/PresetCard.module.css';
 import { cn } from '@/ts/utils';
 import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';

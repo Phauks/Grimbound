@@ -14,12 +14,10 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAssetStorageService } from '@/contexts/ServiceContext';
+import { useBackgroundImageUrl } from '@/hooks';
 import drawerStyles from '@/styles/components/shared/BackgroundDrawer.module.css';
 import styles from '@/styles/components/shared/BackgroundStyleSelector.module.css';
 import { createBackgroundGradient } from '@/ts/canvas/gradientUtils';
-import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets';
-import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver';
 import type { TextureBlendMode } from '@/ts/types/backgroundEffects';
 import {
   BLEND_MODE_OPTIONS,
@@ -78,40 +76,43 @@ export interface BackgroundStyleSelectorProps {
 
 /**
  * Compact preview showing the combined background style
- * Uses image caching to prevent flashing on re-renders
+ * Self-contained: resolves image URLs internally via useBackgroundImageUrl hook
  */
 const BackgroundPreview = memo(function BackgroundPreview({
   style,
-  resolvedImageUrl,
   size = 52,
 }: {
   style: BackgroundStyle;
-  resolvedImageUrl?: string | null;
   size?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Cache the loaded image to prevent reloading on every render
   const loadedImageRef = useRef<HTMLImageElement | null>(null);
   const loadedImageUrlRef = useRef<string | null>(null);
-  // State to trigger re-render when image loads
-  const [_imageLoaded, setImageLoaded] = useState(false);
+  // State to trigger re-draw when image loads
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Load image when URL changes (separate from canvas drawing)
+  // Resolve image URL internally (only when sourceType is 'image')
+  const { resolvedUrl } = useBackgroundImageUrl({
+    imageUrl: style.sourceType === 'image' ? style.imageUrl : undefined,
+  });
+
+  // Load image when resolved URL changes (separate from canvas drawing)
   useEffect(() => {
     // If URL hasn't changed and we already have a loaded image, skip
-    if (resolvedImageUrl === loadedImageUrlRef.current && loadedImageRef.current) {
+    if (resolvedUrl === loadedImageUrlRef.current && loadedImageRef.current) {
       return;
     }
 
     // Clear previous image if URL changed
-    if (resolvedImageUrl !== loadedImageUrlRef.current) {
+    if (resolvedUrl !== loadedImageUrlRef.current) {
       loadedImageRef.current = null;
       loadedImageUrlRef.current = null;
       setImageLoaded(false);
     }
 
     // If no URL or not image mode, nothing to load
-    if (!resolvedImageUrl || style.sourceType !== 'image') {
+    if (!resolvedUrl || style.sourceType !== 'image') {
       return;
     }
 
@@ -121,18 +122,18 @@ const BackgroundPreview = memo(function BackgroundPreview({
 
     img.onload = () => {
       loadedImageRef.current = img;
-      loadedImageUrlRef.current = resolvedImageUrl;
+      loadedImageUrlRef.current = resolvedUrl;
       setImageLoaded(true);
     };
 
     img.onerror = () => {
       loadedImageRef.current = null;
-      loadedImageUrlRef.current = resolvedImageUrl; // Mark as attempted
+      loadedImageUrlRef.current = resolvedUrl; // Mark as attempted
       setImageLoaded(true); // Still trigger draw (will use fallback)
     };
 
-    img.src = resolvedImageUrl;
-  }, [resolvedImageUrl, style.sourceType]);
+    img.src = resolvedUrl;
+  }, [resolvedUrl, style.sourceType]);
 
   // Draw to canvas (runs when image loads or style changes)
   useEffect(() => {
@@ -234,7 +235,7 @@ const BackgroundPreview = memo(function BackgroundPreview({
     }
 
     ctx.restore();
-  }, [style.sourceType, style.mode, style.solidColor, style.gradient, style.effects, size]);
+  }, [style.sourceType, style.mode, style.solidColor, style.gradient, style.effects, size, imageLoaded]);
 
   return (
     <div className={styles.previewContainer}>
@@ -253,6 +254,29 @@ const BackgroundPreview = memo(function BackgroundPreview({
 });
 
 // ============================================================================
+// Drawer Image Thumbnail Component
+// ============================================================================
+
+/**
+ * Self-contained thumbnail for image selection in the drawer
+ * Resolves image URLs internally via useBackgroundImageUrl hook
+ */
+const DrawerImageThumbnail = memo(function DrawerImageThumbnail({
+  imageUrl,
+}: {
+  imageUrl: string | undefined;
+}) {
+  const { resolvedUrl } = useBackgroundImageUrl({ imageUrl });
+
+  return (
+    <div
+      className={drawerStyles.imageThumbnail}
+      style={resolvedUrl ? { backgroundImage: `url(${resolvedUrl})` } : undefined}
+    />
+  );
+});
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -267,14 +291,8 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   projectId,
   generationOptions,
 }: BackgroundStyleSelectorProps) {
-  // Get service from DI context
-  const assetStorageService = useAssetStorageService();
-
   // State for image selection modal
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
-  // Separate state for pending image URL (updates immediately when user selects image)
-  const [pendingResolvedImageUrl, setPendingResolvedImageUrl] = useState<string | null>(null);
 
   // Ensure value has all required fields with defaults
   const currentStyle: BackgroundStyle = useMemo(
@@ -292,51 +310,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   // Get token type display name for accessibility labels
   const tokenLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
-  // Resolve image URL when imageUrl changes (for left panel preview)
-  useEffect(() => {
-    let cancelled = false;
-
-    async function resolveImage() {
-      const imageUrl = currentStyle.imageUrl;
-      if (!imageUrl) {
-        setResolvedImageUrl(null);
-        return;
-      }
-
-      // If it's an asset reference (asset:uuid format), resolve it
-      if (isAssetReference(imageUrl)) {
-        const assetId = extractAssetId(imageUrl);
-        if (assetId) {
-          try {
-            const asset = await assetStorageService.getByIdWithUrl(assetId);
-            if (!cancelled && asset) {
-              setResolvedImageUrl(asset.url ?? null);
-            }
-          } catch {
-            if (!cancelled) {
-              setResolvedImageUrl(null);
-            }
-          }
-        }
-      } else if (isBuiltInAsset(imageUrl, 'token-background')) {
-        // Built-in asset ID (like character_background_1)
-        const path = getBuiltInAssetPath(imageUrl, 'token-background');
-        if (!cancelled) {
-          setResolvedImageUrl(path);
-        }
-      } else {
-        // Direct URL or data URL
-        setResolvedImageUrl(imageUrl);
-      }
-    }
-
-    resolveImage();
-    return () => {
-      cancelled = true;
-    };
-  }, [assetStorageService, currentStyle.imageUrl]);
-
-  // Drawer state management (replacing useExpandablePanel)
+  // Drawer state management
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingValue, setPendingValue] = useState<BackgroundStyle>(currentStyle);
 
@@ -346,50 +320,6 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
       setPendingValue(currentStyle);
     }
   }, [isDrawerOpen, currentStyle]);
-
-  // Resolve pending image URL when pendingValue.imageUrl changes (for drawer thumbnail preview)
-  useEffect(() => {
-    let cancelled = false;
-
-    async function resolvePendingImage() {
-      const imageUrl = pendingValue?.imageUrl;
-      if (!imageUrl) {
-        setPendingResolvedImageUrl(null);
-        return;
-      }
-
-      // If it's an asset reference (asset:uuid format), resolve it
-      if (isAssetReference(imageUrl)) {
-        const assetId = extractAssetId(imageUrl);
-        if (assetId) {
-          try {
-            const asset = await assetStorageService.getByIdWithUrl(assetId);
-            if (!cancelled && asset) {
-              setPendingResolvedImageUrl(asset.url ?? null);
-            }
-          } catch {
-            if (!cancelled) {
-              setPendingResolvedImageUrl(null);
-            }
-          }
-        }
-      } else if (isBuiltInAsset(imageUrl, 'token-background')) {
-        // Built-in asset ID (like character_background_1)
-        const path = getBuiltInAssetPath(imageUrl, 'token-background');
-        if (!cancelled) {
-          setPendingResolvedImageUrl(path);
-        }
-      } else {
-        // Direct URL or data URL
-        setPendingResolvedImageUrl(imageUrl);
-      }
-    }
-
-    resolvePendingImage();
-    return () => {
-      cancelled = true;
-    };
-  }, [assetStorageService, pendingValue?.imageUrl]);
 
   // Update pending value and trigger preview
   const updatePending = useCallback(
@@ -666,14 +596,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         {/* Image selection */}
         {pendingValue.sourceType === 'image' && (
           <div className={drawerStyles.imageSelectRow}>
-            <div
-              className={drawerStyles.imageThumbnail}
-              style={
-                pendingResolvedImageUrl
-                  ? { backgroundImage: `url(${pendingResolvedImageUrl})` }
-                  : undefined
-              }
-            />
+            <DrawerImageThumbnail imageUrl={pendingValue.imageUrl} />
             <button
               type="button"
               className={drawerStyles.selectImageButton}
@@ -934,7 +857,6 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           <PreviewBox shape="circle" size={size}>
             <BackgroundPreview
               style={currentStyle}
-              resolvedImageUrl={resolvedImageUrl}
               size={size === 'small' ? 40 : size === 'large' ? 64 : 52}
             />
           </PreviewBox>

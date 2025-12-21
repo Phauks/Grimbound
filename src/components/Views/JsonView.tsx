@@ -1,33 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+/**
+ * JsonView Component
+ *
+ * Main view for JSON script input, validation, and transformation.
+ * Allows users to paste, upload, or load example scripts for token generation.
+ *
+ * @module components/Views/JsonView
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useScriptData } from '@/hooks/useScriptData';
-import { useTokenGenerator } from '@/hooks/useTokenGenerator';
-import { useUndoStack } from '@/hooks/useUndoStack';
+import { useScriptData, useScriptTransformations, useTokenGenerator } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
-import scriptStyles from '@/styles/components/scriptInput/ScriptInput.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import CONFIG from '@/ts/config.js';
-import {
-  analyzeReminderText,
-  condenseScript,
-  hasCondensableReferences,
-  isScriptJsonSortedBySAO,
-  logger,
-  normalizeReminderText,
-  sortScriptJsonBySAO,
-} from '@/ts/utils/index.js';
+import { logger } from '@/ts/utils/logger.js';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { InfoMessage } from '@/components/Shared/Feedback/InfoMessage';
+import { CodeMirrorEditor, type EditorControls } from '@/components/Shared/Json/CodeMirrorEditor';
 import { Button } from '@/components/Shared/UI/Button';
-import { JsonHighlight } from '@/components/ViewComponents/JsonComponents/JsonHighlight';
+import { ScriptMessagesBar } from '@/components/ViewComponents/JsonComponents';
 
 interface JsonViewProps {
   onGenerate?: () => void;
-  onNavigateToCharacters?: () => void;
-  onNavigateToProjects?: () => void;
-  onCreateProject?: () => void;
 }
 
 export function JsonView({ onGenerate }: JsonViewProps) {
@@ -41,7 +36,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     warnings,
     setWarnings,
     scriptMeta,
-    officialData,
   } = useTokenContext();
   const { currentProject } = useProjectContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
@@ -54,107 +48,39 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     updateScript,
   } = useScriptData();
   const { generateTokens } = useTokenGenerator();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [autoGenerate, _setAutoGenerate] = useState(true);
+
+  // Local state
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedExample, setSelectedExample] = useState<string>('');
-  const [showAllMessages, setShowAllMessages] = useState(false);
+  const [selectedExample, setSelectedExample] = useState('');
   const [forceRegenerate, setForceRegenerate] = useState(0);
+
+  // Refs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorControlsRef = useRef<EditorControls | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const parseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const previousJsonRef = useRef<string>('');
+  const previousJsonRef = useRef('');
   const previousProjectIdRef = useRef<string | null>(null);
-  const isUndoRedoRef = useRef(false);
   const isExternalChangeRef = useRef(false);
 
-  const VISIBLE_MESSAGES_COUNT = 3;
+  // Script transformations hook
+  const {
+    isScriptSorted,
+    needsFormatting,
+    hasCondensableRefs,
+    formatIssuesSummary,
+    handleFormat,
+    handleSort,
+    handleCondenseScript,
+    handleFixFormats,
+  } = useScriptTransformations({
+    onForceRegenerate: () => setForceRegenerate((prev) => prev + 1),
+  });
 
   // Get example scripts from config, strip .json extension for display
   const exampleScripts = CONFIG.EXAMPLE_SCRIPTS.map((filename: string) =>
     filename.replace(/\.json$/, '')
   );
-
-  // Check if script is sorted by SAO (memoized to avoid recalculating on every render)
-  const isScriptSorted = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0) return true;
-    return isScriptJsonSortedBySAO(jsonInput, { officialData }) ?? true;
-  }, [jsonInput, characters.length, officialData]);
-
-  // Check if JSON could be formatted (minified or not properly indented)
-  const needsFormatting = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0) return false;
-    try {
-      const parsed = JSON.parse(jsonInput);
-      const formatted = JSON.stringify(parsed, null, 2);
-      // Compare normalized versions - if they differ significantly, suggest formatting
-      return formatted !== jsonInput && jsonInput.length > 50;
-    } catch {
-      return false; // Invalid JSON, can't format
-    }
-  }, [jsonInput, characters.length]);
-
-  // Check if script has condensable character references (memoized to avoid recalculating on every render)
-  const hasCondensableRefs = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0 || !officialData.length) return false;
-    return hasCondensableReferences(jsonInput, officialData);
-  }, [jsonInput, characters.length, officialData]);
-
-  // Check for non-standard format issues in night reminder fields
-  const formatIssuesSummary = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0) return null;
-
-    const issuesFound: {
-      characterName: string;
-      field: 'firstNightReminder' | 'otherNightReminder';
-      issues: ReturnType<typeof analyzeReminderText>;
-    }[] = [];
-
-    for (const char of characters) {
-      if (char.firstNightReminder) {
-        const issues = analyzeReminderText(char.firstNightReminder);
-        if (issues.length > 0) {
-          issuesFound.push({ characterName: char.name, field: 'firstNightReminder', issues });
-        }
-      }
-      if (char.otherNightReminder) {
-        const issues = analyzeReminderText(char.otherNightReminder);
-        if (issues.length > 0) {
-          issuesFound.push({ characterName: char.name, field: 'otherNightReminder', issues });
-        }
-      }
-    }
-
-    if (issuesFound.length === 0) return null;
-
-    // Get unique issue types across all characters
-    const uniqueIssueTypes = [
-      ...new Set(issuesFound.flatMap((f) => f.issues.map((i) => i.description))),
-    ];
-    const totalCharactersAffected = new Set(issuesFound.map((f) => f.characterName)).size;
-
-    return {
-      issuesFound,
-      uniqueIssueTypes,
-      totalCharactersAffected,
-      totalIssues: issuesFound.length,
-    };
-  }, [jsonInput, characters]);
-
-  // Undo/redo stack for JSON input
-  const undoStack = useUndoStack(jsonInput);
-
-  // Sync undo stack with context when jsonInput changes externally
-  useEffect(() => {
-    if (!isUndoRedoRef.current && jsonInput !== undoStack.current) {
-      undoStack.set(jsonInput);
-    }
-  }, [jsonInput, undoStack]);
-
-  // Reset "show all messages" when warnings/error change
-  useEffect(() => {
-    setShowAllMessages(false);
-  }, []);
 
   // Debounced parsing of JSON input when user edits manually
   useEffect(() => {
@@ -180,28 +106,49 @@ export function JsonView({ onGenerate }: JsonViewProps) {
 
   // Auto-generate tokens after debounce
   useEffect(() => {
-    if (!autoGenerate || isLoading || !characters.length) {
+    logger.warn('JsonView', 'Auto-generate effect triggered', {
+      isLoading,
+      charactersLength: characters.length,
+      jsonInputLength: jsonInput.length,
+      prevJsonLength: previousJsonRef.current.length,
+      jsonChanged: previousJsonRef.current !== jsonInput,
+      forceRegenerate,
+    });
+
+    if (isLoading || !characters.length) {
+      logger.debug('JsonView', 'Skipping - loading or no characters');
       return;
     }
 
+    // Normalize project ID to avoid null vs undefined comparison issues
+    const currentProjectId = currentProject?.id ?? null;
+
     // Force regenerate if project changed (handles project activation)
-    const projectChanged = previousProjectIdRef.current !== currentProject?.id;
+    const projectChanged = previousProjectIdRef.current !== currentProjectId;
 
     // Skip if JSON hasn't changed AND project hasn't changed AND not force regenerating
     if (!projectChanged && previousJsonRef.current === jsonInput && forceRegenerate === 0) {
+      logger.debug('JsonView', 'Skipping - no changes detected');
       return;
     }
 
+    logger.warn('JsonView', 'Scheduling token generation', {
+      projectChanged,
+      jsonChanged: previousJsonRef.current !== jsonInput,
+      forceRegenerate,
+    });
+
     previousJsonRef.current = jsonInput;
-    previousProjectIdRef.current = currentProject?.id ?? null;
+    previousProjectIdRef.current = currentProjectId;
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(async () => {
+      logger.warn('JsonView', 'Debounce timer fired - calling generateTokens');
       await generateTokens();
-      if (onGenerate) onGenerate();
+      onGenerate?.();
     }, 300);
 
     return () => {
@@ -212,7 +159,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
   }, [
     jsonInput,
     characters.length,
-    autoGenerate,
     isLoading,
     generateTokens,
     onGenerate,
@@ -220,15 +166,14 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     currentProject?.id,
   ]);
 
+  // Handlers
   const handleTextareaChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
+    (newValue: string) => {
       setJsonInput(newValue);
-      undoStack.push(newValue);
       setError(null);
       setWarnings([]);
     },
-    [setJsonInput, undoStack, setError, setWarnings]
+    [setJsonInput, setError, setWarnings]
   );
 
   const handleFileUpload = useCallback(
@@ -240,141 +185,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     },
     [updateScript]
   );
-
-  const handleClear = useCallback(async () => {
-    // Push current value to undo stack before clearing
-    if (jsonInput.trim()) {
-      undoStack.push(jsonInput);
-    }
-    await updateScript('', 'clear');
-    setSelectedExample('');
-    previousJsonRef.current = '';
-  }, [jsonInput, updateScript, undoStack]);
-
-  const handleFormat = useCallback(async () => {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      const formatted = JSON.stringify(parsed, null, 2);
-      undoStack.push(formatted);
-      await updateScript(formatted, 'format');
-    } catch {
-      setError('Cannot format: Invalid JSON');
-    }
-  }, [jsonInput, updateScript, undoStack, setError]);
-
-  const handleSort = useCallback(async () => {
-    try {
-      const sorted = sortScriptJsonBySAO(jsonInput, { officialData });
-      undoStack.push(sorted);
-      await updateScript(sorted, 'sort');
-      // Trigger force regeneration after React updates state
-      setForceRegenerate((prev) => prev + 1);
-    } catch {
-      setError('Cannot sort: Invalid JSON');
-    }
-  }, [jsonInput, updateScript, undoStack, setError, officialData]);
-
-  const handleCondenseScript = useCallback(async () => {
-    try {
-      const condensed = condenseScript(jsonInput, officialData);
-      undoStack.push(condensed);
-      await updateScript(condensed, 'condense');
-      // Trigger force regeneration after React updates state
-      setForceRegenerate((prev) => prev + 1);
-    } catch {
-      setError('Cannot condense: Invalid JSON');
-    }
-  }, [jsonInput, updateScript, undoStack, setError, officialData]);
-
-  // Fix all non-standard format issues in night reminder fields
-  const handleFixFormats = useCallback(async () => {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      if (!Array.isArray(parsed)) {
-        setError('Cannot fix formats: JSON must be an array');
-        return;
-      }
-
-      let modified = false;
-      const updated = parsed.map((entry: Record<string, unknown>) => {
-        if (typeof entry !== 'object' || entry === null) return entry;
-        if ((entry as { id?: string }).id === '_meta') return entry;
-
-        const newEntry = { ...entry };
-
-        if (
-          typeof newEntry.firstNightReminder === 'string' &&
-          analyzeReminderText(newEntry.firstNightReminder).length > 0
-        ) {
-          newEntry.firstNightReminder = normalizeReminderText(newEntry.firstNightReminder);
-          modified = true;
-        }
-
-        if (
-          typeof newEntry.otherNightReminder === 'string' &&
-          analyzeReminderText(newEntry.otherNightReminder).length > 0
-        ) {
-          newEntry.otherNightReminder = normalizeReminderText(newEntry.otherNightReminder);
-          modified = true;
-        }
-
-        return newEntry;
-      });
-
-      if (modified) {
-        const fixedJson = JSON.stringify(updated, null, 2);
-        undoStack.push(fixedJson);
-        await updateScript(fixedJson, 'fix-formats');
-        setForceRegenerate((prev) => prev + 1);
-      }
-    } catch {
-      setError('Cannot fix formats: Invalid JSON');
-    }
-  }, [jsonInput, updateScript, undoStack, setError]);
-
-  const handleUndo = useCallback(async () => {
-    if (undoStack.canUndo) {
-      isUndoRedoRef.current = true;
-      const previous = undoStack.undo();
-      if (previous !== undefined) {
-        await updateScript(previous, 'undo');
-        previousJsonRef.current = previous;
-      }
-      setTimeout(() => {
-        isUndoRedoRef.current = false;
-      }, 0);
-    }
-  }, [undoStack, updateScript]);
-
-  const handleRedo = useCallback(async () => {
-    if (undoStack.canRedo) {
-      isUndoRedoRef.current = true;
-      const next = undoStack.redo();
-      if (next !== undefined) {
-        await updateScript(next, 'redo');
-        previousJsonRef.current = next;
-      }
-      setTimeout(() => {
-        isUndoRedoRef.current = false;
-      }, 0);
-    }
-  }, [undoStack, updateScript]);
-
-  // Auto-resize textarea to fit content - this prevents internal scrolling
-  // so the parent container handles all scrolling (no JS scroll sync needed)
-  const autoResizeTextarea = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    // Reset height to measure scrollHeight accurately
-    textarea.style.height = 'auto';
-    // Set height to scrollHeight so no internal scrolling occurs
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
-
-  // Auto-resize on content change
-  useEffect(() => {
-    autoResizeTextarea();
-  }, [autoResizeTextarea]);
 
   // Drag and drop handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -398,22 +208,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     },
     [handleFileUpload]
   );
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        handleRedo();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleUndo, handleRedo]);
 
   // Download JSON handler
   const handleDownloadJson = useCallback(() => {
@@ -447,6 +241,8 @@ export function JsonView({ onGenerate }: JsonViewProps) {
         action: handleDownloadJson,
         disabled: !jsonInput.trim(),
         disabledReason: 'No script data to download',
+        category: 'json',
+        sourceView: 'json',
       },
     ];
 
@@ -513,69 +309,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
       {/* Right Panel - JSON Editor */}
       <ViewLayout.Panel position="right" width="flex" scrollable>
         <div className={styles.editorContainer}>
-          {/* JSON Editor Toolbar with Grouped Buttons */}
-          <div className={styles.jsonToolbar}>
-            {/* Edit Group */}
-            <div className={styles.toolbarGroup}>
-              <button
-                type="button"
-                className={styles.toolbarButton}
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(jsonInput)
-                    .then(() => {
-                      logger.debug('JsonView', 'JSON copied to clipboard');
-                    })
-                    .catch((err) => {
-                      logger.error('JsonView', 'Failed to copy JSON', err);
-                      setError('Failed to copy to clipboard');
-                    });
-                }}
-                title="Copy JSON to clipboard"
-              >
-                Copy
-              </button>
-            </div>
-
-            <div className={styles.toolbarSeparator} />
-
-            {/* History Group */}
-            <div className={styles.toolbarGroup}>
-              <button
-                type="button"
-                className={styles.toolbarButton}
-                onClick={handleUndo}
-                disabled={!undoStack.canUndo}
-                title="Undo (Ctrl+Z)"
-              >
-                Undo
-              </button>
-              <button
-                type="button"
-                className={styles.toolbarButton}
-                onClick={handleRedo}
-                disabled={!undoStack.canRedo}
-                title="Redo (Ctrl+Y)"
-              >
-                Redo
-              </button>
-            </div>
-
-            <div className={styles.toolbarSeparator} />
-
-            {/* Danger Group */}
-            <div className={styles.toolbarGroup}>
-              <button
-                type="button"
-                className={`${styles.toolbarButton} ${styles.toolbarButtonDanger}`}
-                onClick={handleClear}
-                title="Clear editor"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-
           {/* Editor Area */}
           <section
             className={`${styles.editorWrapper} ${isDragging ? styles.dragging : ''}`}
@@ -584,16 +317,14 @@ export function JsonView({ onGenerate }: JsonViewProps) {
             onDrop={handleDrop}
             aria-label="JSON editor drop area"
           >
-            <div className={scriptStyles.jsonHighlight}>
-              <JsonHighlight json={jsonInput} />
-            </div>
-            <textarea
-              ref={textareaRef}
-              className={scriptStyles.jsonEditor}
+            <CodeMirrorEditor
               value={jsonInput}
               onChange={handleTextareaChange}
               placeholder="Paste your Blood on the Clocktower script JSON here, or drag and drop a .json file..."
-              spellCheck={false}
+              minHeight="100%"
+              onEditorReady={(controls) => {
+                editorControlsRef.current = controls;
+              }}
             />
             {isDragging && (
               <div className={styles.dropOverlay}>
@@ -602,134 +333,24 @@ export function JsonView({ onGenerate }: JsonViewProps) {
             )}
           </section>
 
-          {/* Messages indicator (errors/warnings) - below editor */}
-          {(error ||
-            warnings.length > 0 ||
-            (characters.length > 0 && !scriptMeta) ||
-            hasSeparatorsInIds() ||
-            (characters.length > 0 && !isScriptSorted) ||
-            hasCondensableRefs ||
-            formatIssuesSummary ||
-            needsFormatting) && (
-            <div className={styles.messagesBar}>
-              {/* JSON formatting recommendation */}
-              {needsFormatting && !error && (
-                <InfoMessage
-                  message="JSON can be formatted for better readability."
-                  buttonLabel="Format"
-                  onClick={handleFormat}
-                  buttonTitle="Format JSON with proper indentation"
-                />
-              )}
-              {/* Missing _meta recommendation */}
-              {characters.length > 0 && !scriptMeta && !error && (
-                <InfoMessage
-                  message={
-                    <>
-                      This script doesn't have a <code>_meta</code> entry. Adding one enables script
-                      name tokens and better organization.
-                    </>
-                  }
-                  buttonLabel="Add _meta"
-                  onClick={() => addMetaToScript()}
-                  buttonTitle="Add _meta entry to script"
-                />
-              )}
-              {/* Separators in IDs recommendation */}
-              {hasSeparatorsInIds() && !error && (
-                <InfoMessage
-                  message={
-                    <>
-                      Some character IDs contain underscores or hyphens. Official IDs don't use
-                      separators (e.g., <code>fortune_teller</code> or <code>fortune-teller</code> →{' '}
-                      <code>fortuneteller</code>).
-                    </>
-                  }
-                  buttonLabel="Remove separators"
-                  onClick={removeSeparatorsFromIds}
-                  buttonTitle="Remove underscores and hyphens from character IDs"
-                />
-              )}
-              {/* Script not sorted recommendation */}
-              {characters.length > 0 && !isScriptSorted && !error && (
-                <InfoMessage
-                  message="Script not sorted in Standard Order."
-                  buttonLabel="Sort"
-                  onClick={handleSort}
-                  buttonTitle="Sort characters by Standard Amy Order"
-                />
-              )}
-              {/* Condensable character references recommendation */}
-              {hasCondensableRefs && !error && (
-                <InfoMessage
-                  message="Some official characters use object format. They can be simplified to string format for cleaner JSON."
-                  buttonLabel="Condense Script"
-                  onClick={handleCondenseScript}
-                  buttonTitle='Convert object references like { "id": "clockmaker" } to string format "clockmaker"'
-                />
-              )}
-              {/* Non-standard format issues in night reminders */}
-              {formatIssuesSummary && !error && (
-                <InfoMessage
-                  message={
-                    <>
-                      Some night reminders use non-standard formats (e.g.,{' '}
-                      <code>&lt;i class="reminder-token"&gt;</code> instead of{' '}
-                      <code>:reminder:</code>, or <code>**text**</code> instead of{' '}
-                      <code>*text*</code>).
-                    </>
-                  }
-                  buttonLabel="Fix Formats"
-                  onClick={handleFixFormats}
-                  buttonTitle="Normalize HTML tags and legacy formats to :reminder: and *text*"
-                />
-              )}
-              {/* Build combined messages list */}
-              {(error || warnings.length > 0) &&
-                (() => {
-                  const allMessages = [
-                    ...(error ? [{ type: 'error', text: error }] : []),
-                    ...warnings.map((w) => ({ type: 'warning', text: w })),
-                  ];
-                  const visibleMessages = allMessages.slice(0, VISIBLE_MESSAGES_COUNT);
-                  const hiddenMessages = allMessages.slice(VISIBLE_MESSAGES_COUNT);
-                  const hasMore = hiddenMessages.length > 0;
-
-                  return (
-                    <>
-                      <div className={styles.messagesDropdownUp}>
-                        {visibleMessages.map((msg, i) => (
-                          <div
-                            key={`msg-${msg.type}-${msg.text}-${i}`}
-                            className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}
-                          >
-                            {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
-                          </div>
-                        ))}
-                        {showAllMessages &&
-                          hiddenMessages.map((msg, i) => (
-                            <div
-                              key={`hidden-msg-${msg.type}-${msg.text}-${i}`}
-                              className={`${styles.messageItem} ${msg.type === 'error' ? styles.errorItem : styles.warningItem}`}
-                            >
-                              {msg.type === 'error' ? '⚠️' : 'ℹ️'} {msg.text}
-                            </div>
-                          ))}
-                      </div>
-                      {hasMore && (
-                        <button
-                          type="button"
-                          className={styles.showMoreBtn}
-                          onClick={() => setShowAllMessages(!showAllMessages)}
-                        >
-                          {showAllMessages ? '▲ Show less' : `▼ Show ${hiddenMessages.length} more`}
-                        </button>
-                      )}
-                    </>
-                  );
-                })()}
-            </div>
-          )}
+          {/* Messages Bar - errors, warnings, and recommendations */}
+          <ScriptMessagesBar
+            error={error}
+            warnings={warnings}
+            characterCount={characters.length}
+            hasScriptMeta={!!scriptMeta}
+            hasSeparatorsInIds={hasSeparatorsInIds()}
+            isScriptSorted={isScriptSorted}
+            needsFormatting={needsFormatting}
+            hasCondensableRefs={hasCondensableRefs}
+            formatIssuesSummary={formatIssuesSummary}
+            onFormat={handleFormat}
+            onSort={handleSort}
+            onCondense={handleCondenseScript}
+            onFixFormats={handleFixFormats}
+            onAddMeta={() => addMetaToScript()}
+            onRemoveSeparators={removeSeparatorsFromIds}
+          />
         </div>
       </ViewLayout.Panel>
     </ViewLayout>

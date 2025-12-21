@@ -13,19 +13,25 @@ import { NightOrderEntry } from './NightOrderEntry';
 
 interface SortableNightOrderEntryProps {
   entry: NightOrderEntryType;
+  /** Whether this entry represents an official character (derived from Character.source) */
+  isOfficial: boolean;
   /** Whether drag-drop is enabled for this sheet */
   enableDragDrop: boolean;
   /** Callback when "Edit Character" is selected from context menu */
   onEditCharacter?: (characterId: string) => void;
+  /** Callback when lock state is toggled for an entry */
+  onToggleLock?: (entryId: string) => void;
 }
 
 export function SortableNightOrderEntry({
   entry,
+  isOfficial,
   enableDragDrop,
   onEditCharacter,
+  onToggleLock,
 }: SortableNightOrderEntryProps) {
-  // For locked entries, we don't enable sorting
-  const canDrag = enableDragDrop && !entry.isLocked;
+  // Official characters can't be dragged until converted to custom
+  const canDrag = enableDragDrop && !isOfficial;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
@@ -39,26 +45,33 @@ export function SortableNightOrderEntry({
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 'auto',
+    // Apply grab cursor to entire row when draggable
+    cursor: canDrag ? (isDragging ? 'grabbing' : 'grab') : undefined,
   };
 
-  // Build drag handle props for the entry
-  const dragHandleProps = canDrag
+  // Apply drag listeners to the whole row wrapper instead of just the handle
+  const rowProps = canDrag
     ? {
         ...attributes,
         ...listeners,
-        style: { cursor: 'grab' } as React.CSSProperties,
       }
     : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} className={isDragging ? styles.sorting : ''}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${isDragging ? styles.sorting : ''} ${canDrag ? styles.draggable : ''}`}
+      {...rowProps}
+    >
       <NightOrderEntry
         entry={entry}
-        showDragHandle={canDrag}
-        showLockIcon={entry.isLocked}
-        dragHandleProps={dragHandleProps}
+        isOfficial={isOfficial}
+        showDragHandle={false}
+        showLockIcon={isOfficial}
         isDragging={isDragging}
         onEditCharacter={onEditCharacter}
+        onToggleLock={onToggleLock}
       />
     </div>
   );

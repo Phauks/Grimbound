@@ -6,7 +6,9 @@
       "mcp__plugin_episodic-memory_episodic-memory__search",
       "Bash(npx vite:*)",
       "Bash(npm ls:*)",
-      "Bash(powershell -Command \"@\\(''jspdf'',''html2canvas'',''jszip'',''pdf-lib'',''react'',''react-dom''\\) | ForEach-Object { if \\(Test-Path $_ { $s=\\(Get-ChildItem -Recurse $_-ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum; Write-Host \\(''{0}: {1:N2} MB'' -f $_ \\($s/1MB\\)\\) }}\")"
+      "Bash(powershell -Command \"@\\(''jspdf'',''html2canvas'',''jszip'',''pdf-lib'',''react'',''react-dom''\\) | ForEach-Object { if \\(Test-Path $_ { $s=\\(Get-ChildItem -Recurse $_-ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum; Write-Host \\(''{0}: {1:N2} MB'' -f $_ \\($s/1MB\\)\\) }}\")",
+      "Bash(powershell -Command \"Get-ChildItem -Filter ''use*.ts'' -File | Remove-Item -Force -Verbose\")",
+      "Bash(npx biome lint:*)"
     ]
   }
 }

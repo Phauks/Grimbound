@@ -5,7 +5,17 @@
  * Tracks first night and other night order, including user customizations.
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useTokenContext } from '@/contexts/TokenContext';
 import { tabPreRenderService } from '@/ts/cache/index.js';
 import { extractScriptMeta } from '@/ts/data/scriptParser.js';
 import type {
@@ -13,7 +23,11 @@ import type {
   NightOrderState,
   ScriptMetaWithNightOrder,
 } from '@/ts/nightOrder/nightOrderTypes.js';
-import { buildNightOrder, moveNightOrderEntry } from '@/ts/nightOrder/nightOrderUtils.js';
+import {
+  buildNightOrder,
+  clearNightOrderCache,
+  moveNightOrderEntry,
+} from '@/ts/nightOrder/nightOrderUtils.js';
 import type { ScriptEntry, ScriptMeta } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -83,8 +97,14 @@ function getInitialState(scriptData?: ScriptEntry[]): {
 
 /**
  * Night Order Provider Component
+ *
+ * Can be used at app root level (auto-initializes from TokenContext)
+ * or locally with initialScriptData prop.
  */
 export function NightOrderProvider({ children, initialScriptData }: NightOrderProviderProps) {
+  // Get characters from TokenContext for auto-initialization
+  const { characters, scriptMeta: tokenScriptMeta } = useTokenContext();
+
   // Initialize state - use cache if available for instant display
   const initial = useMemo(() => getInitialState(initialScriptData), [initialScriptData]);
 
@@ -95,6 +115,10 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Track if we've initialized to avoid re-initialization
+  const hasInitializedRef = useRef(false);
+  const lastCharacterCountRef = useRef(0);
 
   /**
    * Initialize night order from script data.
@@ -112,8 +136,8 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       const cached = tabPreRenderService.getCachedNightOrder(scriptData);
 
       if (cached) {
-        // Use cached results - no loading state needed
         logger.debug('NightOrderContext', 'Using TabPreRenderService cached night order');
+
         setFirstNight({
           entries: cached.firstNight.entries,
           source: cached.firstNight.source,
@@ -156,6 +180,52 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       setIsLoading(false);
     }
   }, []);
+
+  /**
+   * Auto-initialize from TokenContext when characters change.
+   * This enables app-root level usage without explicit initialization.
+   */
+  useEffect(() => {
+    // Skip if using explicit initialScriptData
+    if (initialScriptData && initialScriptData.length > 0) {
+      return;
+    }
+
+    // Skip if no characters yet
+    if (characters.length === 0) {
+      // Reset when characters are cleared
+      if (hasInitializedRef.current && lastCharacterCountRef.current > 0) {
+        logger.debug('NightOrderContext', 'Characters cleared, resetting night order');
+        setFirstNight(createEmptyNightOrderState());
+        setOtherNight(createEmptyNightOrderState());
+        setScriptMeta(null);
+        hasInitializedRef.current = false;
+      }
+      lastCharacterCountRef.current = 0;
+      return;
+    }
+
+    // Initialize when characters first become available, or when count changes significantly
+    const shouldInitialize =
+      !hasInitializedRef.current ||
+      Math.abs(characters.length - lastCharacterCountRef.current) > 0;
+
+    if (shouldInitialize) {
+      logger.debug('NightOrderContext', 'Auto-initializing from TokenContext', {
+        characterCount: characters.length,
+        hasScriptMeta: !!tokenScriptMeta,
+      });
+
+      // Build script data from TokenContext
+      const scriptData: ScriptEntry[] = tokenScriptMeta
+        ? [tokenScriptMeta as ScriptEntry, ...characters]
+        : characters;
+
+      initializeFromScript(scriptData);
+      hasInitializedRef.current = true;
+      lastCharacterCountRef.current = characters.length;
+    }
+  }, [characters, tokenScriptMeta, initialScriptData, initializeFromScript]);
 
   /**
    * Move an entry to a new position
@@ -238,6 +308,18 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
   }, []);
 
   /**
+   * Invalidate night order caches
+   * Call when script data changes significantly
+   */
+  const invalidateCache = useCallback(() => {
+    // Clear module-level cache in nightOrderUtils
+    clearNightOrderCache();
+    // Clear TabPreRenderService cache for script tab
+    tabPreRenderService.clearCache('script');
+    logger.debug('NightOrderContext', 'Caches invalidated');
+  }, []);
+
+  /**
    * Clear all data
    */
   const clear = useCallback(() => {
@@ -265,6 +347,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       resetOrder,
       resetAll,
       clear,
+      invalidateCache,
     }),
     [
       firstNight,
@@ -278,6 +361,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       resetOrder,
       resetAll,
       clear,
+      invalidateCache,
     ]
   );
 

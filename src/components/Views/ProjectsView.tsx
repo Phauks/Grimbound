@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks';
 import { generateScriptNameTokenOnly } from '@/ts/generation/batchGenerator.js';
 import type { Token } from '@/ts/types/index.js';
 import type { CustomIconMetadata, Project } from '@/ts/types/project.js';
@@ -267,7 +267,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
         <ViewLayout.Panel position="right" width="flex" scrollable>
           <ProjectEditor
             project={selectedProject}
-            scriptNameTokenCache={scriptNameTokenCache.current}
             onExport={handleExportProject}
             onDelete={handleDeleteProject}
             onDuplicate={handleDuplicateProject}

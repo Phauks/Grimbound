@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useContextMenu } from '@/hooks/useContextMenu';
+import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/script/NightOrderEntry.module.css';
 import { tabPreRenderService } from '@/ts/cache/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
@@ -20,6 +20,8 @@ import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/Contex
 
 interface NightOrderEntryProps {
   entry: NightOrderEntryType;
+  /** Whether this entry represents an official character (derived from Character.source) */
+  isOfficial: boolean;
   /** Whether to show the drag handle (only for movable entries) */
   showDragHandle?: boolean;
   /** Whether to show the lock icon (only for locked entries) */
@@ -30,6 +32,8 @@ interface NightOrderEntryProps {
   isDragging?: boolean;
   /** Callback when "Edit Character" is selected from context menu */
   onEditCharacter?: (characterId: string) => void;
+  /** Callback when lock state is toggled for an entry */
+  onToggleLock?: (entryId: string) => void;
 }
 
 /**
@@ -74,11 +78,13 @@ function AbilityText({ text }: { text: string }) {
 
 export function NightOrderEntry({
   entry,
+  isOfficial,
   showDragHandle = false,
   showLockIcon = true,
   dragHandleProps,
   isDragging = false,
   onEditCharacter,
+  onToggleLock,
 }: NightOrderEntryProps) {
   const teamColor = getTeamColor(entry.team);
 
@@ -138,20 +144,35 @@ export function NightOrderEntry({
   );
 
   // Build context menu items
-  const menuItems = useMemo(
-    (): ContextMenuItem[] => [
-      {
-        icon: '✏️',
-        label: 'Edit Character',
+  const menuItems = useMemo((): ContextMenuItem[] => {
+    const items: ContextMenuItem[] = [];
+
+    // Convert to Custom option - only for official character entries
+    // Converting to custom allows reordering
+    if (entry.type === 'character' && isOfficial && onToggleLock && contextMenu.data) {
+      items.push({
+        icon: '🔓',
+        label: 'Convert to Custom',
+        description: 'Treat as custom character to enable reordering',
         onClick: () => {
-          if (onEditCharacter && contextMenu.data) {
-            onEditCharacter(contextMenu.data);
-          }
+          onToggleLock(contextMenu.data as string);
         },
+      });
+    }
+
+    // Edit character option
+    items.push({
+      icon: '✏️',
+      label: 'Edit Character',
+      onClick: () => {
+        if (onEditCharacter && contextMenu.data) {
+          onEditCharacter(contextMenu.data);
+        }
       },
-    ],
-    [onEditCharacter, contextMenu.data]
-  );
+    });
+
+    return items;
+  }, [entry.type, isOfficial, onEditCharacter, onToggleLock, contextMenu.data]);
 
   return (
     <button
@@ -189,7 +210,7 @@ export function NightOrderEntry({
     >
       {/* Drag handle or lock icon */}
       <div className={styles.dragArea}>
-        {entry.isLocked && showLockIcon ? (
+        {isOfficial && showLockIcon ? (
           <span className={styles.lockIcon} title="This entry cannot be moved">
             🔒
           </span>
@@ -225,13 +246,6 @@ export function NightOrderEntry({
           <AbilityText text={entry.ability} />
         </div>
       </div>
-
-      {/* Reminder indicator dot (if ability mentions reminder tokens) */}
-      {entry.ability.includes('*') && (
-        <div className={styles.reminderIndicator} title="Uses reminder tokens">
-          ●
-        </div>
-      )}
 
       {/* Context menu */}
       <ContextMenu
