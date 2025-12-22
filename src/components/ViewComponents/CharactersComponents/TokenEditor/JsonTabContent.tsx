@@ -109,27 +109,27 @@ export const JsonTabContent = memo(function JsonTabContent({
             <div className={styles.jsonButtons}>
               <button
                 type="button"
-                className={styles.btnSecondary}
+                className={styles.btnIcon}
                 onClick={characterJson.format}
                 title="Format JSON"
               >
-                Format
+                ✨
               </button>
               <button
                 type="button"
-                className={styles.btnSecondary}
+                className={styles.btnIcon}
                 onClick={() => characterJson.copy()}
                 title="Copy to clipboard"
               >
-                Copy
+                📋
               </button>
               <button
                 type="button"
-                className={styles.btnSecondary}
+                className={styles.btnIcon}
                 onClick={() => characterJson.download(`${character.id || 'character'}.json`)}
                 title="Download as file"
               >
-                Download
+                ⬇️
               </button>
             </div>
           </div>
@@ -158,11 +158,11 @@ export const JsonTabContent = memo(function JsonTabContent({
             <div className={styles.jsonButtons}>
               <button
                 type="button"
-                className={styles.btnSecondary}
+                className={styles.btnIcon}
                 onClick={handleCopyMetadata}
                 title="Copy metadata"
               >
-                Copy
+                📋
               </button>
             </div>
           </div>

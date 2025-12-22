@@ -173,6 +173,24 @@ export interface BackgroundStyle {
   effects: EffectsConfig;
   /** Light and color adjustment configuration */
   light: LightConfig;
+
+  // Image-specific options (only apply when sourceType is 'image')
+  /** Image rotation in degrees (0-360), only applies to image backgrounds */
+  imageRotation?: number;
+  /** When true, randomize rotation for each token */
+  randomizeRotation?: boolean;
+  /** Enable random crop position for image backgrounds */
+  randomCrop?: boolean;
+  /** Fixed crop offset X (0-1, 0.5 = centered), used when randomCrop is false */
+  cropOffsetX?: number;
+  /** Fixed crop offset Y (0-1, 0.5 = centered), used when randomCrop is false */
+  cropOffsetY?: number;
+  /** Image zoom level (1.0 = cover fit, >1 = zoom in, <1 = zoom out) */
+  imageZoom?: number;
+  /** Image X offset as percentage of token size (-1 to 1, 0 = centered) */
+  imageOffsetX?: number;
+  /** Image Y offset as percentage of token size (-1 to 1, 0 = centered) */
+  imageOffsetY?: number;
 }
 
 // ============================================================================

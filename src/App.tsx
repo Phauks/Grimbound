@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useProjectAutoSave, useStorageQuota, useUnsavedChangesWarning } from '@/hooks';
+import versionData from '../version.json';
 import { AppFooter } from './components/Layout/AppFooter';
 import { AppHeader } from './components/Layout/AppHeader';
 import { AppShell } from './components/Layout/AppShell';
@@ -68,6 +69,7 @@ function AppContent() {
         onSyncDetailsClick={() => setShowSyncDetails(true)}
         onAssetManagerClick={() => setShowAssetManager(true)}
         currentProjectName={currentProject?.name}
+        version={versionData.version}
       />
 
       {/* Storage Warning Banner */}

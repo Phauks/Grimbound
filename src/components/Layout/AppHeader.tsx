@@ -1,6 +1,5 @@
 import { SaveAsNewProjectButton } from '@/components/Shared/Assets/SaveAsNewProjectButton';
 import { AutoSaveIndicator } from '@/components/Shared/Feedback/AutoSaveIndicator';
-import { usePWAInstall } from '@/hooks';
 import styles from '@/styles/components/layout/Header.module.css';
 
 interface AppHeaderProps {
@@ -18,11 +17,9 @@ export function AppHeader({
   onInfoClick,
   onAnnouncementsClick,
   onAssetManagerClick,
-  version = '0.3.0',
+  version = '0.4.0',
   currentProjectName,
 }: AppHeaderProps) {
-  const { canInstall, isInstalled, isPrompting, promptInstall } = usePWAInstall();
-
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
@@ -54,21 +51,6 @@ export function AppHeader({
         </div>
       </div>
       <div className={styles.headerRight}>
-        {/* PWA Install Button - only shown when app is installable */}
-        {canInstall && !isInstalled && (
-          <button
-            type="button"
-            className={`${styles.iconButton} ${styles.installButton}`}
-            onClick={() => promptInstall()}
-            disabled={isPrompting}
-            aria-label="Install app"
-            title="Install this app for offline use"
-          >
-            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-              <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-            </svg>
-          </button>
-        )}
         <button
           type="button"
           className={styles.iconButton}

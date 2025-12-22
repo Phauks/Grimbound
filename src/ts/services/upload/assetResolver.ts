@@ -83,6 +83,10 @@ export function clearResolvedUrlCache(): void {
 /**
  * Resolve a single URL, handling asset references
  *
+ * Note: We don't cache blob URLs here because they're ephemeral and become
+ * invalid after page refresh. AssetStorageService.getByIdWithUrl() handles
+ * its own caching with proper blob URL lifecycle management.
+ *
  * @param url - URL that may be an asset reference or regular URL
  * @returns Resolved URL (blob URL if asset reference, original otherwise)
  */
@@ -95,18 +99,10 @@ export async function resolveAssetUrl(url: string): Promise<string> {
   const assetId = extractAssetId(url);
   if (!assetId) return url;
 
-  // Check cache first
-  const cached = resolvedUrlCache.get(assetId);
-  if (cached) {
-    return cached;
-  }
-
-  // Resolve from storage
+  // Resolve from storage (AssetStorageService handles caching internally)
   try {
     const asset = await assetStorageService.getByIdWithUrl(assetId);
     if (asset) {
-      resolvedUrlCache.set(assetId, asset.url);
-
       // Track asset usage (fire-and-forget, don't block resolution)
       assetStorageService.trackAssetUsage(assetId).catch((err) => {
         logger.warn('AssetResolver', `Failed to track asset usage for ${assetId}`, err);
@@ -158,8 +154,13 @@ export async function resolveCharacterImage(
  * Synchronously get a resolved URL from cache (for preview rendering)
  * Returns the original URL if not cached
  *
+ * Note: Since blob URLs are not cached here anymore (they're ephemeral),
+ * this will return the original URL for asset references. Use resolveAssetUrl()
+ * for proper async resolution.
+ *
  * @param url - URL that may be an asset reference
  * @returns Cached blob URL or original URL
+ * @deprecated Prefer using resolveAssetUrl() instead for reliable resolution
  */
 export function getResolvedUrlSync(url: string): string {
   if (!isAssetReference(url)) return url;
@@ -167,12 +168,16 @@ export function getResolvedUrlSync(url: string): string {
   const assetId = extractAssetId(url);
   if (!assetId) return url;
 
+  // Note: resolvedUrlCache is no longer populated, so this will return the original URL
   return resolvedUrlCache.get(assetId) ?? url;
 }
 
 /**
- * Pre-resolve and cache asset URLs for a batch of characters
- * Useful for batch token generation
+ * Pre-resolve asset URLs for a batch of characters
+ * Useful for batch token generation - warms up the AssetStorageService cache
+ *
+ * Note: We don't cache blob URLs here because they're ephemeral.
+ * AssetStorageService.getByIdWithUrl() handles caching internally.
  *
  * @param imageFields - Array of image field values (URLs or AssetReferences)
  */
@@ -188,21 +193,18 @@ export async function preResolveAssets(
     for (const url of urls) {
       if (isAssetReference(url)) {
         const id = extractAssetId(url);
-        if (id && !resolvedUrlCache.has(id)) {
+        if (id) {
           assetIds.add(id);
         }
       }
     }
   }
 
-  // Batch resolve all uncached assets
+  // Batch resolve all assets (warms up AssetStorageService's internal cache)
   await Promise.all(
     Array.from(assetIds).map(async (id) => {
       try {
-        const asset = await assetStorageService.getByIdWithUrl(id);
-        if (asset) {
-          resolvedUrlCache.set(id, asset.url);
-        }
+        await assetStorageService.getByIdWithUrl(id);
       } catch (error) {
         logger.warn('AssetResolver', `Failed to pre-resolve asset: ${id}`, error);
       }
@@ -257,16 +259,13 @@ export async function preResolveAssetsWithPriority(
 ): Promise<void> {
   const { concurrency = 5, onProgress } = options;
 
-  // Filter out already cached assets
-  const uncachedTasks = tasks.filter((task) => !resolvedUrlCache.has(task.assetId));
-
-  if (uncachedTasks.length === 0) {
+  if (tasks.length === 0) {
     onProgress?.(0, 0);
     return;
   }
 
   // Sort by priority (high -> normal -> low), then by index
-  const sortedTasks = [...uncachedTasks].sort((a, b) => {
+  const sortedTasks = [...tasks].sort((a, b) => {
     const priorityOrder = { high: 0, normal: 1, low: 2 };
     const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
 
@@ -291,10 +290,9 @@ export async function preResolveAssetsWithPriority(
 
       const promise = (async () => {
         try {
+          // Warm up AssetStorageService's internal cache (don't cache blob URLs here)
           const asset = await assetStorageService.getByIdWithUrl(task.assetId);
           if (asset) {
-            resolvedUrlCache.set(task.assetId, asset.url);
-
             // Track asset usage (fire-and-forget)
             assetStorageService.trackAssetUsage(task.assetId).catch((err) => {
               logger.warn('AssetResolver', `Failed to track asset usage for ${task.assetId}`, err);

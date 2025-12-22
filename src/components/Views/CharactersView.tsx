@@ -117,6 +117,9 @@ export function CharactersView({
     onCacheInvalidate: (uuid) => invalidateCache(uuid),
   });
 
+  // Get current character's decoratives for live preview
+  const currentDecorative = getMetadata(selectedCharacterUuid).decoratives;
+
   // Token preview cache hook
   const {
     previewCharacterToken,
@@ -129,6 +132,7 @@ export function CharactersView({
   } = useTokenPreviewCache({
     editedCharacter,
     generationOptions,
+    decoratives: currentDecorative,
     initialToken,
     tokens,
     characters,

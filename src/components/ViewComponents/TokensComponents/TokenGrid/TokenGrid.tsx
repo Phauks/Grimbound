@@ -38,6 +38,7 @@ export function TokenGrid({
     setExampleToken,
     updateGenerationOptions,
     generationOptions,
+    setMetadata,
   } = useTokenContext();
   const { addToast } = useToast();
 
@@ -73,6 +74,24 @@ export function TokenGrid({
       }
     },
     [generationOptions.pngSettings, addToast]
+  );
+
+  // Clear decorative overrides for a token's character
+  const handleClearOverrides = useCallback(
+    (token: Token) => {
+      if (!token.parentUuid) {
+        addToast('Cannot clear overrides: no character associated', 'error');
+        return;
+      }
+
+      // Clear the decoratives by setting useCustomSettings to false
+      setMetadata(token.parentUuid, {
+        decoratives: { useCustomSettings: false },
+      });
+
+      addToast(`Cleared overrides for ${token.name}. Regenerate tokens to see changes.`, 'success');
+    },
+    [setMetadata, addToast]
   );
 
   // Use custom hooks for token management
@@ -133,6 +152,7 @@ export function TokenGrid({
                     onDelete={readOnly ? undefined : deletion.handleDeleteRequest}
                     onEditInStudio={readOnly ? undefined : studioNav.editInStudio}
                     onDownload={readOnly ? undefined : handleDownloadToken}
+                    onClearOverrides={readOnly ? undefined : handleClearOverrides}
                   />
                 ))}
               </div>
@@ -155,6 +175,7 @@ export function TokenGrid({
                     onSetAsExample={readOnly ? undefined : handleSetAsExample}
                     onDelete={readOnly ? undefined : deletion.handleDeleteRequest}
                     onDownload={readOnly ? undefined : handleDownloadToken}
+                    onClearOverrides={readOnly ? undefined : handleClearOverrides}
                   />
                 ))}
               </div>

@@ -17,12 +17,14 @@ import {
 } from '@/ts/services/upload/assetResolver.js';
 import type {
   Character,
+  CharacterMetadata,
   GenerationOptions,
   ProgressCallback,
   ScriptMeta,
   Token,
   TokenCallback,
 } from '@/ts/types/index.js';
+import { createEffectiveOptions } from '@/ts/utils/decorativeUtils.js';
 import type { ProgressState } from '@/ts/utils/index.js';
 import {
   createProgressState,
@@ -48,6 +50,7 @@ interface BatchContext {
   progress: ProgressState;
   options: Partial<GenerationOptions>;
   scriptMeta: ScriptMeta | null;
+  characterMetadata?: Map<string, CharacterMetadata>;
   signal?: AbortSignal;
 }
 
@@ -345,7 +348,30 @@ async function generateCharacterVariant(
   order: number
 ): Promise<Token | null> {
   try {
-    const canvas = await ctx.generator.generateCharacterToken(character, variant.imageUrl);
+    // Check if character has decorative overrides
+    const metadata = ctx.characterMetadata?.get(character.uuid || '');
+    const decoratives = metadata?.decoratives;
+    const hasDecorativeOverrides = decoratives?.useCustomSettings ?? false;
+
+    let canvas: HTMLCanvasElement;
+
+    if (hasDecorativeOverrides && decoratives) {
+      // Create merged options with character-specific decoratives
+      const effectiveOptions = createEffectiveOptions(
+        ctx.options as GenerationOptions,
+        decoratives
+      );
+      // Create a temporary generator with the merged options
+      const tempGenerator = new TokenGenerator({
+        ...effectiveOptions,
+        transparentBackground: effectiveOptions.pngSettings?.transparentBackground ?? false,
+      });
+      canvas = await tempGenerator.generateCharacterToken(character, variant.imageUrl);
+    } else {
+      // Use the shared generator with global options
+      canvas = await ctx.generator.generateCharacterToken(character, variant.imageUrl);
+    }
+
     updateProgress(ctx.progress);
 
     const token = ctx.factory.createCharacterToken({
@@ -358,6 +384,7 @@ async function generateCharacterVariant(
         variant.totalVariants > 1
           ? { variantIndex: variant.variantIndex, totalVariants: variant.totalVariants }
           : undefined,
+      hasDecorativeOverrides,
     });
 
     return ctx.factory.emit(token);
@@ -383,6 +410,21 @@ async function generateReminderTokens(
     return tokens;
   }
 
+  // Check if character has decorative overrides
+  const metadata = ctx.characterMetadata?.get(character.uuid || '');
+  const decoratives = metadata?.decoratives;
+  const hasDecorativeOverrides = decoratives?.useCustomSettings ?? false;
+
+  // Create a generator for this character (temp if has overrides, shared otherwise)
+  let generator = ctx.generator;
+  if (hasDecorativeOverrides && decoratives) {
+    const effectiveOptions = createEffectiveOptions(ctx.options as GenerationOptions, decoratives);
+    generator = new TokenGenerator({
+      ...effectiveOptions,
+      transparentBackground: effectiveOptions.pngSettings?.transparentBackground ?? false,
+    });
+  }
+
   const reminderNameCount = new Map<string, number>();
   const imageUrls = generateVariants ? getAllCharacterImageUrls(character.image) : [undefined];
   const hasVariants = imageUrls.length > 1 && generateVariants;
@@ -395,7 +437,7 @@ async function generateReminderTokens(
       const imageUrl = imageUrls[variantIndex];
 
       try {
-        const canvas = await ctx.generator.generateReminderToken(character, reminder, imageUrl);
+        const canvas = await generator.generateReminderToken(character, reminder, imageUrl);
         const variantSuffix = hasVariants ? `_v${variantIndex + 1}` : '';
         const reminderBaseName = sanitizeFilename(`${character.name}_${reminder}${variantSuffix}`);
         const filename = generateUniqueFilename(reminderNameCount, reminderBaseName);
@@ -407,6 +449,7 @@ async function generateReminderTokens(
           filename,
           order,
           variantInfo: hasVariants ? { variantIndex, totalVariants: imageUrls.length } : undefined,
+          hasDecorativeOverrides,
         });
 
         ctx.factory.emitAndPush(token, tokens);
@@ -530,6 +573,7 @@ async function prewarmCaches(generator: TokenGenerator, characters: Character[])
  * @param scriptMeta - Optional script metadata for meta tokens
  * @param tokenCallback - Optional callback for incremental token updates
  * @param signal - Optional AbortSignal for cancellation
+ * @param characterMetadata - Optional map of character UUID to metadata (for decorative overrides)
  * @returns Promise resolving to array of generated tokens
  */
 export async function generateAllTokens(
@@ -538,7 +582,8 @@ export async function generateAllTokens(
   progressCallback: ProgressCallback | null = null,
   scriptMeta: ScriptMeta | null = null,
   tokenCallback: TokenCallback | null = null,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  characterMetadata?: Map<string, CharacterMetadata>
 ): Promise<Token[]> {
   checkAbort(signal);
 
@@ -562,6 +607,7 @@ export async function generateAllTokens(
     progress,
     options,
     scriptMeta,
+    characterMetadata,
     signal,
   };
 

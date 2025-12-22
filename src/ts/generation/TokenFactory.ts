@@ -30,6 +30,7 @@ export interface CharacterTokenOptions {
   order: number;
   imageUrl?: string;
   variantInfo?: VariantInfo;
+  hasDecorativeOverrides?: boolean;
 }
 
 /** Options for creating a reminder token */
@@ -40,6 +41,7 @@ export interface ReminderTokenOptions {
   filename: string;
   order: number;
   variantInfo?: VariantInfo;
+  hasDecorativeOverrides?: boolean;
 }
 
 /** Options for creating a meta token */
@@ -95,7 +97,8 @@ export class TokenFactory {
    * Create a character token from a rendered canvas
    */
   createCharacterToken(options: CharacterTokenOptions): Token {
-    const { canvas, character, filename, order, imageUrl, variantInfo } = options;
+    const { canvas, character, filename, order, imageUrl, variantInfo, hasDecorativeOverrides } =
+      options;
 
     const token: Token = {
       type: 'character',
@@ -119,6 +122,11 @@ export class TokenFactory {
       token.totalVariants = variantInfo.totalVariants;
     }
 
+    // Mark if generated with decorative overrides
+    if (hasDecorativeOverrides) {
+      token.hasDecorativeOverrides = true;
+    }
+
     return token;
   }
 
@@ -130,7 +138,15 @@ export class TokenFactory {
    * Create a reminder token from a rendered canvas
    */
   createReminderToken(options: ReminderTokenOptions): Token {
-    const { canvas, character, reminderText, filename, order, variantInfo } = options;
+    const {
+      canvas,
+      character,
+      reminderText,
+      filename,
+      order,
+      variantInfo,
+      hasDecorativeOverrides,
+    } = options;
 
     const token: Token = {
       type: 'reminder',
@@ -150,6 +166,11 @@ export class TokenFactory {
     if (variantInfo && variantInfo.totalVariants > 1) {
       token.variantIndex = variantInfo.variantIndex;
       token.totalVariants = variantInfo.totalVariants;
+    }
+
+    // Mark if generated with decorative overrides
+    if (hasDecorativeOverrides) {
+      token.hasDecorativeOverrides = true;
     }
 
     return token;

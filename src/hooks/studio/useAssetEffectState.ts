@@ -30,12 +30,11 @@ export interface EffectState {
   inverted: boolean;
 }
 
-export interface UseAssetEffectStateOptions {
-  /** Whether an image is loaded (required for applying effects) */
-  hasImage: boolean;
-  /** Callback when an error occurs */
-  onError?: (message: string) => void;
-}
+/**
+ * Options for useAssetEffectState hook.
+ * Note: All image validation is done by the orchestrator (useAssetEditor).
+ */
+export type UseAssetEffectStateOptions = Record<string, never>;
 
 export interface UseAssetEffectStateResult {
   /** Current effect state */
@@ -85,10 +84,9 @@ export const DEFAULT_EFFECTS: EffectState = {
 // Hook Implementation
 // ============================================================================
 
-export function useAssetEffectState({
-  hasImage,
-  onError,
-}: UseAssetEffectStateOptions): UseAssetEffectStateResult {
+export function useAssetEffectState(
+  _options: UseAssetEffectStateOptions = {}
+): UseAssetEffectStateResult {
   // Effect state (non-destructive - applied during render)
   const [effects, setEffects] = useState<EffectState>(DEFAULT_EFFECTS);
 
@@ -104,23 +102,13 @@ export function useAssetEffectState({
     setPreviousEffects({ ...effects });
   }, [effects]);
 
-  /** Validate that an image is loaded before applying effects */
-  const requireImage = useCallback((): boolean => {
-    if (!hasImage) {
-      onError?.('No image loaded');
-      return false;
-    }
-    return true;
-  }, [hasImage, onError]);
-
   // ============================================================================
   // Actions
   // ============================================================================
 
   const applyTeamColor = useCallback(
     (preset: TeamColorPreset | null) => {
-      if (!requireImage()) return;
-
+      // Note: Image validation is done by the orchestrator (useAssetEditor)
       saveForUndo();
       setEffects((prev) => ({
         ...prev,
@@ -134,13 +122,12 @@ export function useAssetEffectState({
         logger.info('AssetEffectState', 'Removed team color');
       }
     },
-    [requireImage, saveForUndo]
+    [saveForUndo]
   );
 
   const applyCustomColor = useCallback(
     (hexColor: string) => {
-      if (!requireImage()) return;
-
+      // Note: Image validation is done by the orchestrator (useAssetEditor)
       saveForUndo();
       setEffects((prev) => ({
         ...prev,
@@ -150,13 +137,12 @@ export function useAssetEffectState({
 
       logger.info('AssetEffectState', `Applied custom color: ${hexColor}`);
     },
-    [requireImage, saveForUndo]
+    [saveForUndo]
   );
 
   const applyBorder = useCallback(
     (options: Partial<BorderOptions>, skipUndo: boolean = false) => {
-      if (!requireImage()) return;
-
+      // Note: Image validation is done by the orchestrator (useAssetEditor)
       if (!skipUndo) {
         saveForUndo();
       }
@@ -176,7 +162,7 @@ export function useAssetEffectState({
         );
       }
     },
-    [requireImage, saveForUndo]
+    [saveForUndo]
   );
 
   const removeBorder = useCallback(() => {
@@ -189,8 +175,7 @@ export function useAssetEffectState({
   }, [saveForUndo]);
 
   const invertColors = useCallback(() => {
-    if (!requireImage()) return;
-
+    // Note: Image validation is done by the orchestrator (useAssetEditor)
     saveForUndo();
     setEffects((prev) => ({
       ...prev,
@@ -198,7 +183,7 @@ export function useAssetEffectState({
     }));
 
     logger.info('AssetEffectState', 'Toggled color inversion');
-  }, [requireImage, saveForUndo]);
+  }, [saveForUndo]);
 
   const undo = useCallback(() => {
     if (previousEffects) {
@@ -208,11 +193,10 @@ export function useAssetEffectState({
   }, [previousEffects]);
 
   const reset = useCallback(() => {
-    if (hasImage) {
-      saveForUndo();
-      setEffects(DEFAULT_EFFECTS);
-    }
-  }, [hasImage, saveForUndo]);
+    // Note: Image validation is done by the orchestrator (useAssetEditor)
+    saveForUndo();
+    setEffects(DEFAULT_EFFECTS);
+  }, [saveForUndo]);
 
   const clear = useCallback(() => {
     setEffects(DEFAULT_EFFECTS);

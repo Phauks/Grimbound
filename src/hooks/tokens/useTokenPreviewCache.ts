@@ -13,11 +13,12 @@
  * @module hooks/tokens/useTokenPreviewCache
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getPreRenderedTokens, hashOptions } from '@/ts/cache/index.js';
 import { HOVER_DELAY_MS } from '@/ts/data/characterUtils.js';
-import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
+import type { Character, DecorativeOverrides, GenerationOptions, Token } from '@/ts/types/index.js';
 import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
+import { createEffectiveOptions } from '@/ts/utils/decorativeUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 
 /** Cached token entry */
@@ -31,6 +32,8 @@ export interface UseTokenPreviewCacheOptions {
   editedCharacter: Character | null;
   /** Current generation options */
   generationOptions: GenerationOptions;
+  /** Per-character decorative overrides for live preview */
+  decoratives?: DecorativeOverrides;
   /** Initial token from gallery click */
   initialToken?: Token;
   /** All tokens for looking up reminders */
@@ -91,6 +94,7 @@ function isMetaToken(token?: Token): boolean {
 export function useTokenPreviewCache({
   editedCharacter,
   generationOptions,
+  decoratives,
   initialToken,
   tokens,
   characters,
@@ -100,13 +104,19 @@ export function useTokenPreviewCache({
   const effectiveCharacter =
     editedCharacter ?? characters.find((c) => c.uuid === selectedCharacterUuid) ?? null;
 
+  // Compute effective options by merging global options with per-character decoratives
+  const effectiveOptions = useMemo(
+    () => createEffectiveOptions(generationOptions, decoratives),
+    [generationOptions, decoratives]
+  );
+
   // Initialize preview state from initial token or shared pre-render cache
   const getInitialPreviewToken = (): Token | null => {
     if (initialToken?.type === 'character') return initialToken;
 
     // Check shared pre-render cache
     if (selectedCharacterUuid && !isMetaToken(initialToken)) {
-      const cached = getPreRenderedTokens(selectedCharacterUuid, generationOptions);
+      const cached = getPreRenderedTokens(selectedCharacterUuid, effectiveOptions);
       if (cached) return cached.characterToken;
     }
     return null;
@@ -128,7 +138,7 @@ export function useTokenPreviewCache({
 
     // Check shared pre-render cache
     if (selectedCharacterUuid && !isMetaToken(initialToken)) {
-      const cached = getPreRenderedTokens(selectedCharacterUuid, generationOptions);
+      const cached = getPreRenderedTokens(selectedCharacterUuid, effectiveOptions);
       if (cached) return cached.reminderTokens;
     }
     return [];
@@ -145,11 +155,11 @@ export function useTokenPreviewCache({
   const preRenderCacheRef = useRef<Map<string, CachedTokens>>(new Map());
   const preRenderingRef = useRef<Set<string>>(new Set());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentOptionsHashRef = useRef<string>(hashOptions(generationOptions));
+  const currentOptionsHashRef = useRef<string>(hashOptions(effectiveOptions));
   const skipRegenerateForUuidRef = useRef<string | null>(
     (() => {
       if (initialToken?.type === 'character') return selectedCharacterUuid;
-      if (selectedCharacterUuid && getPreRenderedTokens(selectedCharacterUuid, generationOptions)) {
+      if (selectedCharacterUuid && getPreRenderedTokens(selectedCharacterUuid, effectiveOptions)) {
         return selectedCharacterUuid;
       }
       return null;
@@ -158,14 +168,14 @@ export function useTokenPreviewCache({
 
   // Clear pre-render cache when options change since cached tokens would be stale
   useEffect(() => {
-    const newHash = hashOptions(generationOptions);
+    const newHash = hashOptions(effectiveOptions);
     if (currentOptionsHashRef.current !== newHash) {
       currentOptionsHashRef.current = newHash;
       preRenderCacheRef.current.clear();
     }
-  }, [generationOptions]);
+  }, [effectiveOptions]);
 
-  // Regenerate preview when character or options change
+  // Regenerate preview when character or options change (including decoratives)
   useEffect(() => {
     if (!effectiveCharacter) {
       setPreviewCharacterToken(null);
@@ -181,7 +191,7 @@ export function useTokenPreviewCache({
 
     let cancelled = false;
 
-    regenerateCharacterAndReminders(effectiveCharacter, generationOptions)
+    regenerateCharacterAndReminders(effectiveCharacter, effectiveOptions)
       .then(({ characterToken, reminderTokens }) => {
         if (!cancelled) {
           setPreviewCharacterToken(characterToken);
@@ -197,9 +207,10 @@ export function useTokenPreviewCache({
     return () => {
       cancelled = true;
     };
-  }, [effectiveCharacter, generationOptions]);
+  }, [effectiveCharacter, effectiveOptions]);
 
   // Hover handler - pre-render character token on hover
+  // Note: Hover pre-rendering uses global options since we don't have decoratives for other characters
   const handleHoverCharacter = useCallback(
     (characterUuid: string) => {
       // Clear any pending hover timeout
@@ -225,6 +236,7 @@ export function useTokenPreviewCache({
 
         preRenderingRef.current.add(cacheKey);
 
+        // Use global options for hover pre-render (other characters' decoratives not available here)
         regenerateCharacterAndReminders(char, generationOptions)
           .then(({ characterToken, reminderTokens }) => {
             preRenderCacheRef.current.set(cacheKey, { characterToken, reminderTokens });
@@ -267,14 +279,14 @@ export function useTokenPreviewCache({
     try {
       const { characterToken, reminderTokens } = await regenerateCharacterAndReminders(
         effectiveCharacter,
-        generationOptions
+        effectiveOptions
       );
       setPreviewCharacterToken(characterToken);
       setPreviewReminderTokens(reminderTokens);
     } catch (error) {
       logger.error('useTokenPreviewCache', 'Failed to regenerate preview', error);
     }
-  }, [effectiveCharacter, generationOptions]);
+  }, [effectiveCharacter, effectiveOptions]);
 
   // Preview a specific variant image
   const handlePreviewVariant = useCallback(
@@ -284,7 +296,7 @@ export function useTokenPreviewCache({
       try {
         const { characterToken, reminderTokens } = await regenerateCharacterAndReminders(
           effectiveCharacter,
-          generationOptions,
+          effectiveOptions,
           imageUrl
         );
         setPreviewCharacterToken(characterToken);
@@ -293,7 +305,7 @@ export function useTokenPreviewCache({
         logger.error('useTokenPreviewCache', 'Failed to preview variant', error);
       }
     },
-    [effectiveCharacter, generationOptions]
+    [effectiveCharacter, effectiveOptions]
   );
 
   // Invalidate cache for a character

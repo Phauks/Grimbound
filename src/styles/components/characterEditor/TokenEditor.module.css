@@ -875,12 +875,18 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* JSON tab */
+/* JSON tab - matches .tabContent styling */
 .jsonTabContent {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0; /* Allow flex shrinking for proper scroll containment */
   gap: var(--spacing-md);
+  overflow: hidden; /* Contain scroll within this area */
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  margin: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
 }
 
 /* JSON Sub-tabs (pills) */
@@ -891,6 +897,7 @@
   background: var(--bg-hover);
   border-radius: var(--border-radius);
   width: fit-content;
+  flex-shrink: 0; /* Prevent sub-tabs from shrinking */
 }
 
 .jsonSubTab {
@@ -920,6 +927,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  flex: 1;
+  min-height: 0; /* Allow flex shrinking */
+  overflow-y: auto; /* Enable scrolling when content overflows */
 }
 
 .metadataContent {
@@ -973,6 +983,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--spacing-md);
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .jsonDescription {
@@ -990,11 +1001,10 @@
 .jsonEditorWrapper {
   position: relative;
   flex: 1;
-  min-height: 300px;
-  background: var(--color-background);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  overflow: hidden;
+  min-height: 0; /* Allow proper flex shrinking */
+  /* No background/border - CodeMirrorEditor provides its own styling */
+  display: flex;
+  flex-direction: column;
 }
 
 .jsonHighlight {

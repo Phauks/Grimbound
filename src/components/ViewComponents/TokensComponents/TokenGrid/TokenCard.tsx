@@ -106,6 +106,7 @@ interface TokenCardProps {
   onDelete?: (token: Token) => void;
   onEditInStudio?: (token: Token) => void; // Navigate to Studio with token image
   onDownload?: (token: Token) => void; // Download single token as PNG
+  onClearOverrides?: (token: Token) => void; // Clear decorative overrides for this token's character
 }
 
 // Map team names to CSS Module class names
@@ -135,7 +136,8 @@ function arePropsEqual(prevProps: TokenCardProps, nextProps: TokenCardProps): bo
     prevProps.onSetAsExample === nextProps.onSetAsExample &&
     prevProps.onDelete === nextProps.onDelete &&
     prevProps.onEditInStudio === nextProps.onEditInStudio &&
-    prevProps.onDownload === nextProps.onDownload
+    prevProps.onDownload === nextProps.onDownload &&
+    prevProps.onClearOverrides === nextProps.onClearOverrides
   );
 }
 
@@ -148,6 +150,7 @@ function TokenCardComponent({
   onDelete,
   onEditInStudio,
   onDownload,
+  onClearOverrides,
 }: TokenCardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasRendered, setHasRendered] = useState(false);
@@ -229,7 +232,7 @@ function TokenCardComponent({
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (onSetAsExample || onDelete || onEditInStudio || onDownload) {
+    if (onSetAsExample || onDelete || onEditInStudio || onDownload || onClearOverrides) {
       contextMenu.onContextMenu(e);
     }
   };
@@ -271,8 +274,18 @@ function TokenCardComponent({
         onClick: () => onDelete(displayToken),
       });
     }
+
+    // Clear decorative overrides (only show if token has overrides)
+    if (onClearOverrides && displayToken.hasDecorativeOverrides) {
+      items.push({
+        icon: '🔄',
+        label: 'Clear Overrides',
+        onClick: () => onClearOverrides(displayToken),
+      });
+    }
+
     return items;
-  }, [onSetAsExample, onDelete, onEditInStudio, onDownload, displayToken]);
+  }, [onSetAsExample, onDelete, onEditInStudio, onDownload, onClearOverrides, displayToken]);
 
   // Get team display name for character, reminder, and meta tokens
   const getTeamDisplay = () => {
@@ -350,6 +363,11 @@ function TokenCardComponent({
             <div className={styles.metadata}>
               {teamDisplay && <span className={`${styles.team} ${teamClass}`}>{teamDisplay}</span>}
               {displayToken.isOfficial && <span className={styles.official}>Official</span>}
+              {displayToken.hasDecorativeOverrides && (
+                <span className={styles.customized} title="Has custom decorative settings">
+                  Customized
+                </span>
+              )}
             </div>
           </div>
         </div>

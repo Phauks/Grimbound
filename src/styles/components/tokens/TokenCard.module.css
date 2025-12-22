@@ -184,6 +184,18 @@
   color: white;
 }
 
+/* ---- Customized Badge ---- */
+.customized {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-bold);
+  background-color: #9b59b6;
+  color: white;
+}
+
 /* ---- Actions ---- */
 .actions {
   display: flex;

@@ -26,14 +26,21 @@
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 99, 102, 241), 0.15);
 }
 
-/* Disabled state */
-.editorContainer.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* Disabled state - grey overlay matching other disabled sections */
+.editorContainer.disabled::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(128, 128, 128, 0.3);
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
 }
 
-.editorContainer.disabled .codeMirrorWrapper {
+/* Block editing but allow scrolling in disabled mode */
+.editorContainer.disabled .codeMirrorWrapper :global(.cm-content) {
   pointer-events: none;
+  cursor: not-allowed;
 }
 
 /* Wrapper for the CodeMirror instance */

@@ -20,6 +20,7 @@ export function useTokenGenerator() {
     setGenerationProgress,
     setLastGeneratedJsonHash,
     getEnabledCharacters,
+    characterMetadata,
   } = useTokenContext();
 
   // Use a ref to accumulate tokens incrementally during generation
@@ -115,7 +116,8 @@ export function useTokenGenerator() {
           progressCallback,
           scriptMeta || undefined,
           tokenCallback,
-          signal
+          signal,
+          characterMetadata
         );
 
         // Final update to ensure all tokens are shown
@@ -155,6 +157,7 @@ export function useTokenGenerator() {
       setError,
       setGenerationProgress,
       setLastGeneratedJsonHash,
+      characterMetadata,
     ]
   );
 

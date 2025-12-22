@@ -33,7 +33,7 @@ export interface BuiltInAsset {
 // Built-in Token Backgrounds
 // ============================================================================
 
-export const BUILT_IN_BACKGROUNDS: BuiltInAsset[] = Array.from({ length: 7 }, (_, i) => ({
+export const BUILT_IN_BACKGROUNDS: BuiltInAsset[] = Array.from({ length: 9 }, (_, i) => ({
   id: `character_background_${i + 1}`,
   label: `Background ${i + 1}`,
   src: `${CONFIG.ASSETS.CHARACTER_BACKGROUNDS}character_background_${i + 1}.webp`,

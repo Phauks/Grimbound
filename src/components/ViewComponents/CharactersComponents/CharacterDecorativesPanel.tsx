@@ -42,6 +42,10 @@ import type {
   DecorativeOverrides,
   GenerationOptions,
 } from '@/ts/types/index';
+import {
+  createEffectiveOptions,
+  mapAccentOptionsToDecorative,
+} from '@/ts/utils/decorativeUtils.js';
 
 // ============================================================================
 // Constants
@@ -81,115 +85,6 @@ interface CharacterDecorativesPanelProps {
   generationOptions: GenerationOptions;
   onDecorativesChange: (updates: Partial<DecorativeOverrides>) => void;
   projectId?: string;
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/** Keys that map from DecorativeOverrides to GenerationOptions for accent settings */
-const ACCENT_KEYS = [
-  'accentEnabled',
-  'accentGeneration',
-  'maximumAccents',
-  'accentPopulationProbability',
-  'accentArcSpan',
-  'accentSlots',
-  'enableLeftAccent',
-  'enableRightAccent',
-  'sideAccentProbability',
-] as const;
-
-/**
- * Creates an effective GenerationOptions object by merging global options
- * with character-specific decorative overrides.
- *
- * When custom settings are disabled, returns global options unchanged.
- * When enabled, decorative values take precedence over global values.
- */
-function createEffectiveOptions(
-  globalOptions: GenerationOptions,
-  decoratives: DecorativeOverrides
-): GenerationOptions {
-  if (!decoratives.useCustomSettings) {
-    return globalOptions;
-  }
-
-  const d = decoratives;
-  const g = globalOptions;
-
-  return {
-    ...globalOptions,
-    // Background
-    characterBackgroundStyle: d.backgroundStyle ?? g.characterBackgroundStyle,
-    // Font
-    characterNameFont: d.nameFont ?? g.characterNameFont,
-    characterNameColor: d.nameColor ?? g.characterNameColor,
-    fontSpacing: {
-      characterName: d.nameFontSpacing ?? g.fontSpacing?.characterName ?? DEFAULTS.FONT_SPACING,
-      abilityText: d.abilityTextFontSpacing ?? g.fontSpacing?.abilityText ?? DEFAULTS.FONT_SPACING,
-      reminderText: g.fontSpacing?.reminderText ?? DEFAULTS.FONT_SPACING,
-      metaText: g.fontSpacing?.metaText ?? DEFAULTS.FONT_SPACING,
-    },
-    textShadow: {
-      characterName: d.nameTextShadow ?? g.textShadow?.characterName ?? DEFAULTS.NAME_SHADOW_BLUR,
-      abilityText: d.abilityTextShadow ?? g.textShadow?.abilityText ?? DEFAULTS.ABILITY_SHADOW_BLUR,
-      reminderText: g.textShadow?.reminderText ?? DEFAULTS.NAME_SHADOW_BLUR,
-      metaText: g.textShadow?.metaText ?? DEFAULTS.NAME_SHADOW_BLUR,
-    },
-    // Icon
-    iconSettings: {
-      character: {
-        scale: d.iconScale ?? g.iconSettings?.character?.scale ?? DEFAULTS.ICON_SCALE,
-        offsetX: d.iconOffsetX ?? g.iconSettings?.character?.offsetX ?? DEFAULTS.ICON_OFFSET,
-        offsetY: d.iconOffsetY ?? g.iconSettings?.character?.offsetY ?? DEFAULTS.ICON_OFFSET,
-      },
-      reminder: g.iconSettings?.reminder ?? {
-        scale: DEFAULTS.ICON_SCALE,
-        offsetX: DEFAULTS.ICON_OFFSET,
-        offsetY: DEFAULTS.ICON_OFFSET,
-      },
-      meta: g.iconSettings?.meta ?? {
-        scale: DEFAULTS.ICON_SCALE,
-        offsetX: DEFAULTS.ICON_OFFSET,
-        offsetY: DEFAULTS.ICON_OFFSET,
-      },
-    },
-    // Ability text
-    displayAbilityText: d.displayAbilityText ?? g.displayAbilityText,
-    abilityTextFont: d.abilityTextFont ?? g.abilityTextFont,
-    abilityTextColor: d.abilityTextColor ?? g.abilityTextColor,
-    // Setup
-    setupStyle: d.setupStyle ?? g.setupStyle,
-    // Accents - apply all accent keys
-    accentEnabled: d.accentEnabled ?? g.accentEnabled,
-    accentGeneration: d.accentGeneration ?? g.accentGeneration,
-    maximumAccents: d.maximumAccents ?? g.maximumAccents,
-    accentPopulationProbability: d.accentPopulationProbability ?? g.accentPopulationProbability,
-    accentArcSpan: d.accentArcSpan ?? g.accentArcSpan,
-    accentSlots: d.accentSlots ?? g.accentSlots,
-    enableLeftAccent: d.enableLeftAccent ?? g.enableLeftAccent,
-    enableRightAccent: d.enableRightAccent ?? g.enableRightAccent,
-    sideAccentProbability: d.sideAccentProbability ?? g.sideAccentProbability,
-  };
-}
-
-/**
- * Maps GenerationOptions changes to DecorativeOverrides updates for accent settings.
- * Only includes keys that are present in the options object.
- */
-function mapAccentOptionsToDecorative(
-  options: Partial<GenerationOptions>
-): Partial<DecorativeOverrides> {
-  const updates: Partial<DecorativeOverrides> = {};
-
-  for (const key of ACCENT_KEYS) {
-    if (key in options) {
-      (updates as Record<string, unknown>)[key] = (options as Record<string, unknown>)[key];
-    }
-  }
-
-  return updates;
 }
 
 // ============================================================================

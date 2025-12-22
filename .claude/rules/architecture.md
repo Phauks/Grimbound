@@ -5,7 +5,7 @@
 > **Location**: This file lives in `.claude/rules/` and is loaded by Claude Code when architectural context is needed.
 
 **Last Updated**: 2025-12-20
-**Version**: v0.3.6
+**Version**: v0.4.0
 
 ---
 

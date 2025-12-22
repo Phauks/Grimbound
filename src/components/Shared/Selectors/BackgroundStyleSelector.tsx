@@ -42,7 +42,9 @@ import type {
   GradientType,
   LightConfig,
   TextureConfig,
+  TextureType,
 } from '@/ts/types/index';
+import { randomHexColor } from '@/ts/utils/colorUtils.js';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -86,54 +88,49 @@ const BackgroundPreview = memo(function BackgroundPreview({
   size?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Cache the loaded image to prevent reloading on every render
-  const loadedImageRef = useRef<HTMLImageElement | null>(null);
-  const loadedImageUrlRef = useRef<string | null>(null);
-  // State to trigger re-draw when image loads
-  const [_imageLoaded, setImageLoaded] = useState(false);
+  // State to hold the loaded image (using state instead of ref for proper reactivity)
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
+  // Track which URL the loaded image corresponds to
+  const loadedUrlRef = useRef<string | null>(null);
 
   // Resolve image URL internally (only when sourceType is 'image')
   const { resolvedUrl } = useBackgroundImageUrl({
     imageUrl: style.sourceType === 'image' ? style.imageUrl : undefined,
   });
 
-  // Load image when resolved URL changes (separate from canvas drawing)
+  // Load image when resolved URL changes
   useEffect(() => {
-    // If URL hasn't changed and we already have a loaded image, skip
-    if (resolvedUrl === loadedImageUrlRef.current && loadedImageRef.current) {
-      return;
-    }
-
-    // Clear previous image if URL changed
-    if (resolvedUrl !== loadedImageUrlRef.current) {
-      loadedImageRef.current = null;
-      loadedImageUrlRef.current = null;
-      setImageLoaded(false);
-    }
-
-    // If no URL or not image mode, nothing to load
+    // If no URL or not image mode, clear image
     if (!resolvedUrl || style.sourceType !== 'image') {
+      setLoadedImage(null);
+      loadedUrlRef.current = null;
       return;
     }
 
-    // Load the new image
+    // If URL hasn't changed and we already have a loaded image, skip
+    if (resolvedUrl === loadedUrlRef.current && loadedImage) {
+      return;
+    }
+
+    // Clear previous image and load new one
+    setLoadedImage(null);
+    loadedUrlRef.current = null;
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     img.onload = () => {
-      loadedImageRef.current = img;
-      loadedImageUrlRef.current = resolvedUrl;
-      setImageLoaded(true);
+      setLoadedImage(img);
+      loadedUrlRef.current = resolvedUrl;
     };
 
     img.onerror = () => {
-      loadedImageRef.current = null;
-      loadedImageUrlRef.current = resolvedUrl; // Mark as attempted
-      setImageLoaded(true); // Still trigger draw (will use fallback)
+      setLoadedImage(null);
+      loadedUrlRef.current = resolvedUrl; // Mark as attempted
     };
 
     img.src = resolvedUrl;
-  }, [resolvedUrl, style.sourceType]);
+  }, [resolvedUrl, style.sourceType, loadedImage]);
 
   // Draw to canvas (runs when image loads or style changes)
   useEffect(() => {
@@ -158,10 +155,20 @@ const BackgroundPreview = memo(function BackgroundPreview({
 
     // Draw base depending on source type
     if (style.sourceType === 'image') {
-      const img = loadedImageRef.current;
-      if (img?.complete && img.naturalWidth > 0) {
-        // Draw cached image
-        const imgAspect = img.width / img.height;
+      // Draw checkerboard background to indicate "paper" areas
+      const checkerSize = Math.max(4, Math.floor(diameter / 20));
+      const checkerColors = ['#E0E0E0', '#F5F5F5'];
+      for (let y = 0; y < diameter; y += checkerSize) {
+        for (let x = 0; x < diameter; x += checkerSize) {
+          const colorIndex = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2;
+          ctx.fillStyle = checkerColors[colorIndex];
+          ctx.fillRect(x, y, checkerSize, checkerSize);
+        }
+      }
+
+      if (loadedImage?.complete && loadedImage.naturalWidth > 0) {
+        // Draw loaded image
+        const imgAspect = loadedImage.width / loadedImage.height;
         let drawWidth = diameter;
         let drawHeight = diameter;
         let offsetX = 0;
@@ -175,7 +182,35 @@ const BackgroundPreview = memo(function BackgroundPreview({
           offsetY = (diameter - drawHeight) / 2;
         }
 
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        // Apply zoom (1.0 = cover fit, >1 = zoom in, <1 = zoom out)
+        const zoom = style.imageZoom ?? 1;
+        if (zoom !== 1) {
+          const prevWidth = drawWidth;
+          const prevHeight = drawHeight;
+          drawWidth *= zoom;
+          drawHeight *= zoom;
+          offsetX -= (drawWidth - prevWidth) / 2;
+          offsetY -= (drawHeight - prevHeight) / 2;
+        }
+
+        // Apply manual offset (Y is inverted so positive = up)
+        offsetX += (style.imageOffsetX ?? 0) * diameter;
+        offsetY -= (style.imageOffsetY ?? 0) * diameter;
+
+        // Apply rotation if set (for preview, show fixed rotation value)
+        const rotation = style.imageRotation ?? 0;
+        if (rotation !== 0) {
+          ctx.save();
+          ctx.translate(diameter / 2, diameter / 2);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.translate(-diameter / 2, -diameter / 2);
+        }
+
+        ctx.drawImage(loadedImage, offsetX, offsetY, drawWidth, drawHeight);
+
+        if (rotation !== 0) {
+          ctx.restore();
+        }
       } else {
         // Fallback: show placeholder or solid color while loading
         ctx.fillStyle = style.solidColor || '#333333';
@@ -235,7 +270,19 @@ const BackgroundPreview = memo(function BackgroundPreview({
     }
 
     ctx.restore();
-  }, [style.sourceType, style.mode, style.solidColor, style.gradient, style.effects, size]);
+  }, [
+    style.sourceType,
+    style.mode,
+    style.solidColor,
+    style.gradient,
+    style.effects,
+    style.imageRotation,
+    style.imageZoom,
+    style.imageOffsetX,
+    style.imageOffsetY,
+    size,
+    loadedImage,
+  ]);
 
   return (
     <div className={styles.previewContainer}>
@@ -294,6 +341,9 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   // State for image selection modal
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
+  // Track last selected texture for re-enabling
+  const lastTextureRef = useRef<TextureType>('marble');
+
   // Ensure value has all required fields with defaults
   const currentStyle: BackgroundStyle = useMemo(
     () => ({
@@ -330,15 +380,6 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   const _handleModeChange = useCallback(
     (mode: BackgroundBaseMode) => {
       drawer.updatePending({ ...drawer.pendingValue, mode });
-    },
-    [drawer]
-  );
-
-  // Combined handler for switching to styled mode (solid/gradient)
-  // This avoids stale closure issues when both sourceType and mode need to change
-  const handleStyledModeChange = useCallback(
-    (mode: BackgroundBaseMode) => {
-      drawer.updatePending({ ...drawer.pendingValue, sourceType: 'styled', mode });
     },
     [drawer]
   );
@@ -411,25 +452,18 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
       tokenType={tokenType}
       title="Background Settings"
     >
-      {/* Column 1: Background (Solid/Gradient/Image) */}
+      {/* Column 1: Background (Color/Image) */}
       <div className={drawerStyles.column}>
         <div className={drawerStyles.sectionHeader}>Background</div>
 
-        {/* Mode tabs */}
+        {/* Mode tabs: Color | Image */}
         <div className={drawerStyles.modeTabs}>
           <button
             type="button"
-            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'solid' ? drawerStyles.modeTabActive : ''}`}
-            onClick={() => handleStyledModeChange('solid')}
+            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType !== 'image' ? drawerStyles.modeTabActive : ''}`}
+            onClick={() => handleSourceTypeChange('styled')}
           >
-            Solid
-          </button>
-          <button
-            type="button"
-            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'gradient' ? drawerStyles.modeTabActive : ''}`}
-            onClick={() => handleStyledModeChange('gradient')}
-          >
-            Gradient
+            Color
           </button>
           <button
             type="button"
@@ -440,144 +474,264 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           </button>
         </div>
 
-        {/* Solid color */}
-        {drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'solid' && (
-          <div className={drawerStyles.colorRow}>
-            <span className={drawerStyles.controlLabel}>Color</span>
-            <input
-              type="color"
-              value={drawer.pendingValue.solidColor}
-              onChange={(e) => handleSolidColorChange(e.target.value)}
-              className={drawerStyles.colorInput}
-            />
-            <button
-              type="button"
-              className={drawerStyles.randomizeButton}
-              onClick={() =>
-                handleSolidColorChange(
-                  `#${Math.floor(Math.random() * 16777215)
-                    .toString(16)
-                    .padStart(6, '0')}`
-                )
-              }
-              title="Randomize color"
-            >
-              🎲
-            </button>
-          </div>
-        )}
-
-        {/* Gradient controls */}
-        {drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'gradient' && (
+        {/* Color tab content */}
+        {drawer.pendingValue.sourceType !== 'image' && (
           <>
+            {/* Gradient toggle */}
+            <div className={drawerStyles.controlRow}>
+              <label className={drawerStyles.effectCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={drawer.pendingValue.mode === 'gradient'}
+                  onChange={(e) =>
+                    drawer.updatePending({
+                      ...drawer.pendingValue,
+                      mode: e.target.checked ? 'gradient' : 'solid',
+                    })
+                  }
+                />
+                Gradient
+              </label>
+            </div>
+
+            {/* Primary color picker (solid color / gradient start) */}
             <div className={drawerStyles.colorRow}>
               <span className={drawerStyles.controlLabel}>Color</span>
               <input
                 type="color"
-                value={drawer.pendingValue.gradient.colorStart}
-                onChange={(e) =>
-                  handleGradientChange({
-                    ...drawer.pendingValue.gradient,
-                    colorStart: e.target.value,
-                  })
+                value={
+                  drawer.pendingValue.mode === 'gradient'
+                    ? drawer.pendingValue.gradient.colorStart
+                    : drawer.pendingValue.solidColor
                 }
+                onChange={(e) => {
+                  if (drawer.pendingValue.mode === 'gradient') {
+                    handleGradientChange({
+                      ...drawer.pendingValue.gradient,
+                      colorStart: e.target.value,
+                    });
+                  } else {
+                    handleSolidColorChange(e.target.value);
+                  }
+                }}
                 className={drawerStyles.colorInput}
-                title="Start color"
+                title={drawer.pendingValue.mode === 'gradient' ? 'Start color' : 'Background color'}
               />
               <button
                 type="button"
                 className={drawerStyles.randomizeButton}
-                onClick={() =>
-                  handleGradientChange({
-                    ...drawer.pendingValue.gradient,
-                    colorStart: `#${Math.floor(Math.random() * 16777215)
-                      .toString(16)
-                      .padStart(6, '0')}`,
-                  })
-                }
-                title="Randomize start color"
-              >
-                🎲
-              </button>
-              <span className={drawerStyles.colorArrow}>→</span>
-              <input
-                type="color"
-                value={drawer.pendingValue.gradient.colorEnd}
-                onChange={(e) =>
-                  handleGradientChange({
-                    ...drawer.pendingValue.gradient,
-                    colorEnd: e.target.value,
-                  })
-                }
-                className={drawerStyles.colorInput}
-                title="End color"
-              />
-              <button
-                type="button"
-                className={drawerStyles.randomizeButton}
-                onClick={() =>
-                  handleGradientChange({
-                    ...drawer.pendingValue.gradient,
-                    colorEnd: `#${Math.floor(Math.random() * 16777215)
-                      .toString(16)
-                      .padStart(6, '0')}`,
-                  })
-                }
-                title="Randomize end color"
+                onClick={() => {
+                  if (drawer.pendingValue.mode === 'gradient') {
+                    handleGradientChange({
+                      ...drawer.pendingValue.gradient,
+                      colorStart: randomHexColor(),
+                    });
+                  } else {
+                    handleSolidColorChange(randomHexColor());
+                  }
+                }}
+                title="Randomize color"
               >
                 🎲
               </button>
             </div>
-            <div className={drawerStyles.controlRow}>
-              <span className={drawerStyles.controlLabel}>Type</span>
-              <select
-                value={drawer.pendingValue.gradient.type}
-                onChange={(e) =>
-                  handleGradientChange({
-                    ...drawer.pendingValue.gradient,
-                    type: e.target.value as GradientType,
-                  })
-                }
-                className={drawerStyles.typeSelect}
-              >
-                {GRADIENT_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {(drawer.pendingValue.gradient.type === 'linear' ||
-              drawer.pendingValue.gradient.type === 'conic') && (
-              <EditableSlider
-                label="Angle"
-                value={drawer.pendingValue.gradient.rotation}
-                onChange={(v) =>
-                  handleGradientChange({ ...drawer.pendingValue.gradient, rotation: v })
-                }
-                min={0}
-                max={360}
-                step={15}
-                suffix="°"
-                defaultValue={DEFAULT_GRADIENT_CONFIG.rotation}
-                ariaLabel="Gradient angle"
-              />
+
+            {/* Gradient-specific controls (when gradient is enabled) */}
+            {drawer.pendingValue.mode === 'gradient' && (
+              <>
+                {/* End color picker */}
+                <div className={drawerStyles.colorRow}>
+                  <span className={drawerStyles.controlLabel}>End</span>
+                  <input
+                    type="color"
+                    value={drawer.pendingValue.gradient.colorEnd}
+                    onChange={(e) =>
+                      handleGradientChange({
+                        ...drawer.pendingValue.gradient,
+                        colorEnd: e.target.value,
+                      })
+                    }
+                    className={drawerStyles.colorInput}
+                    title="End color"
+                  />
+                  <button
+                    type="button"
+                    className={drawerStyles.randomizeButton}
+                    onClick={() =>
+                      handleGradientChange({
+                        ...drawer.pendingValue.gradient,
+                        colorEnd: randomHexColor(),
+                      })
+                    }
+                    title="Randomize end color"
+                  >
+                    🎲
+                  </button>
+                </div>
+
+                {/* Gradient type */}
+                <div className={drawerStyles.controlRow}>
+                  <span className={drawerStyles.controlLabel}>Type</span>
+                  <select
+                    value={drawer.pendingValue.gradient.type}
+                    onChange={(e) =>
+                      handleGradientChange({
+                        ...drawer.pendingValue.gradient,
+                        type: e.target.value as GradientType,
+                      })
+                    }
+                    className={drawerStyles.typeSelect}
+                  >
+                    {GRADIENT_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Gradient angle (for linear/conic) */}
+                {(drawer.pendingValue.gradient.type === 'linear' ||
+                  drawer.pendingValue.gradient.type === 'conic') && (
+                  <EditableSlider
+                    label="Angle"
+                    value={drawer.pendingValue.gradient.rotation}
+                    onChange={(v) =>
+                      handleGradientChange({ ...drawer.pendingValue.gradient, rotation: v })
+                    }
+                    min={0}
+                    max={360}
+                    step={15}
+                    suffix="°"
+                    defaultValue={DEFAULT_GRADIENT_CONFIG.rotation}
+                    ariaLabel="Gradient angle"
+                  />
+                )}
+              </>
             )}
           </>
         )}
 
-        {/* Image selection */}
+        {/* Image tab content */}
         {drawer.pendingValue.sourceType === 'image' && (
-          <div className={drawerStyles.imageSelectRow}>
-            <DrawerImageThumbnail imageUrl={drawer.pendingValue.imageUrl} />
-            <button
-              type="button"
-              className={drawerStyles.selectImageButton}
-              onClick={handleOpenImageModal}
-            >
-              Choose...
-            </button>
-          </div>
+          <>
+            <div className={drawerStyles.imageSelectRow}>
+              <DrawerImageThumbnail imageUrl={drawer.pendingValue.imageUrl} />
+              <button
+                type="button"
+                className={drawerStyles.selectImageButton}
+                onClick={handleOpenImageModal}
+              >
+                Choose...
+              </button>
+            </div>
+
+            {/* Rotation slider */}
+            <EditableSlider
+              label="Rotation"
+              value={drawer.pendingValue.imageRotation ?? 0}
+              onChange={(v) =>
+                drawer.updatePending({
+                  ...drawer.pendingValue,
+                  imageRotation: v,
+                })
+              }
+              min={0}
+              max={360}
+              step={15}
+              suffix="°"
+              defaultValue={0}
+              ariaLabel="Image rotation"
+            />
+
+            {/* Random rotation checkbox */}
+            <div className={drawerStyles.controlRow}>
+              <label className={drawerStyles.effectCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={drawer.pendingValue.randomizeRotation ?? false}
+                  onChange={(e) =>
+                    drawer.updatePending({
+                      ...drawer.pendingValue,
+                      randomizeRotation: e.target.checked,
+                    })
+                  }
+                />
+                Random rotation
+              </label>
+            </div>
+
+            {/* Random crop checkbox */}
+            <div className={drawerStyles.controlRow}>
+              <label className={drawerStyles.effectCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={drawer.pendingValue.randomCrop ?? false}
+                  onChange={(e) =>
+                    drawer.updatePending({
+                      ...drawer.pendingValue,
+                      randomCrop: e.target.checked,
+                    })
+                  }
+                />
+                Random crop
+              </label>
+            </div>
+
+            {/* Zoom slider */}
+            <EditableSlider
+              label="Zoom"
+              value={(drawer.pendingValue.imageZoom ?? 1) * 100}
+              onChange={(v) =>
+                drawer.updatePending({
+                  ...drawer.pendingValue,
+                  imageZoom: v / 100,
+                })
+              }
+              min={50}
+              max={200}
+              step={5}
+              suffix="%"
+              defaultValue={100}
+              ariaLabel="Image zoom"
+            />
+
+            {/* X offset slider */}
+            <EditableSlider
+              label="X Offset"
+              value={(drawer.pendingValue.imageOffsetX ?? 0) * 100}
+              onChange={(v) =>
+                drawer.updatePending({
+                  ...drawer.pendingValue,
+                  imageOffsetX: v / 100,
+                })
+              }
+              min={-100}
+              max={100}
+              step={5}
+              suffix="%"
+              defaultValue={0}
+              ariaLabel="Image X offset"
+            />
+
+            {/* Y offset slider */}
+            <EditableSlider
+              label="Y Offset"
+              value={(drawer.pendingValue.imageOffsetY ?? 0) * 100}
+              onChange={(v) =>
+                drawer.updatePending({
+                  ...drawer.pendingValue,
+                  imageOffsetY: v / 100,
+                })
+              }
+              min={-100}
+              max={100}
+              step={5}
+              suffix="%"
+              defaultValue={0}
+              ariaLabel="Image Y offset"
+            />
+          </>
         )}
       </div>
 
@@ -675,9 +829,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             onClick={() =>
               handleEffectsChange({
                 ...drawer.pendingValue.effects,
-                vignetteColor: `#${Math.floor(Math.random() * 16777215)
-                  .toString(16)
-                  .padStart(6, '0')}`,
+                vignetteColor: randomHexColor(),
               })
             }
             disabled={!drawer.pendingValue.effects.vignetteEnabled}
@@ -732,9 +884,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             onClick={() =>
               handleEffectsChange({
                 ...drawer.pendingValue.effects,
-                innerGlowColor: `#${Math.floor(Math.random() * 16777215)
-                  .toString(16)
-                  .padStart(6, '0')}`,
+                innerGlowColor: randomHexColor(),
               })
             }
             disabled={!drawer.pendingValue.effects.innerGlowEnabled}
@@ -775,20 +925,49 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
       {/* Column 4: Texture */}
       <div className={drawerStyles.column}>
         <div className={drawerStyles.sectionHeader}>Texture</div>
-        <div className={drawerStyles.textureGrid}>
-          {TEXTURE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`${drawerStyles.textureOption} ${drawer.pendingValue.texture.type === option.value ? drawerStyles.textureOptionActive : ''}`}
-              onClick={() =>
-                handleTextureChange({ ...drawer.pendingValue.texture, type: option.value })
-              }
-              title={option.description}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className={drawerStyles.controlRow}>
+          <label className={drawerStyles.effectCheckbox}>
+            <input
+              type="checkbox"
+              checked={drawer.pendingValue.texture.type !== 'none'}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  // Re-enable with last selected texture
+                  handleTextureChange({
+                    ...drawer.pendingValue.texture,
+                    type: lastTextureRef.current,
+                  });
+                } else {
+                  // Store current texture before disabling
+                  if (drawer.pendingValue.texture.type !== 'none') {
+                    lastTextureRef.current = drawer.pendingValue.texture.type;
+                  }
+                  handleTextureChange({ ...drawer.pendingValue.texture, type: 'none' });
+                }
+              }}
+            />
+            Enabled
+          </label>
+          <select
+            value={
+              drawer.pendingValue.texture.type === 'none'
+                ? lastTextureRef.current
+                : drawer.pendingValue.texture.type
+            }
+            onChange={(e) => {
+              const newType = e.target.value as TextureType;
+              lastTextureRef.current = newType;
+              handleTextureChange({ ...drawer.pendingValue.texture, type: newType });
+            }}
+            className={drawerStyles.typeSelect}
+            disabled={drawer.pendingValue.texture.type === 'none'}
+          >
+            {TEXTURE_OPTIONS.filter((opt) => opt.value !== 'none').map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
         <EditableSlider
           label="Intensity"

@@ -78,11 +78,9 @@ export function useAssetEditor(): UseAssetEditorResult {
   // UI state management
   const uiState = useAssetUIState();
 
-  // Effect state management (needs to know if image is loaded)
-  const effectState = useAssetEffectState({
-    hasImage: false, // Will be updated via canvas operations
-    onError: uiState.setError,
-  });
+  // Effect state management
+  // Note: All image validation is done by the wrapper functions below
+  const effectState = useAssetEffectState();
 
   // Canvas operations (needs effects for rendering)
   const canvasOps = useAssetCanvasOperations({

@@ -182,4 +182,4 @@ Detailed documentation is in `.claude/rules/`:
 ---
 
 *Last updated: 2025-12-21*
-*Version: v0.3.6*
+*Version: v0.4.0*

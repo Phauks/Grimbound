@@ -67,6 +67,7 @@ export {
   hslToRgb,
   interpolateColors,
   parseHexColor,
+  randomHexColor,
   rgbToHsl,
 } from './colorUtils.js';
 // Compression utilities
@@ -79,6 +80,12 @@ export {
   getCompressionStats,
   isCompressionSupported,
 } from './compressionUtils.js';
+// Decorative utilities (for merging per-character overrides with global options)
+export {
+  ACCENT_DECORATIVE_KEYS,
+  createEffectiveOptions,
+  mapAccentOptionsToDecorative,
+} from './decorativeUtils.js';
 export type {
   AsyncOperationOptions,
   ErrorHandlingOptions,

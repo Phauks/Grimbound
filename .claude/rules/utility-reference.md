@@ -16,6 +16,7 @@
 | `characterImageResolver.ts` | **SSOT** for images | `resolveCharacterImageUrl()`, `resolveCharacterImages()` |
 | `jsonUtils.ts` | JSON operations | `formatJson()`, `validateJson()`, `deepClone()`, `charactersToJson()` |
 | `colorUtils.ts` | Color manipulation | `hexToRgb()`, `parseHexColor()`, `rgbToHsl()`, `hslToRgb()`, `interpolateColors()` |
+| `decorativeUtils.ts` | Decorative merging | `createEffectiveOptions()`, `mapAccentOptionsToDecorative()` |
 | `classNames.ts` | CSS classes | `cn()` (classnames utility) |
 | `progressUtils.ts` | Progress tracking | `createProgressState()`, `updateProgress()` |
 | `tokenGrouping.ts` | Token organization | `groupTokensByTeam()`, `sortTokens()` |
@@ -185,7 +186,7 @@
 | `useCharacterCRUD` | Sub-hook: Add, delete, duplicate operations |
 | `useCharacterMetadata` | Sub-hook: Team changes, metadata updates |
 | `useCharacterDownloads` | Character download operations, DownloadsContext registration |
-| `useTokenPreviewCache` | Preview generation, hover pre-rendering, cache management |
+| `useTokenPreviewCache` | Preview generation, hover pre-rendering, cache management, live decorative updates |
 
 ### Data & Scripts
 

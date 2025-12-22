@@ -147,6 +147,26 @@ export function renderTexturePreview(
 // ============================================================================
 
 /**
+ * Draw a light gray checkerboard pattern to indicate empty/paper areas
+ * Used as background for image mode to show areas not covered by the image
+ *
+ * @param ctx - Canvas context
+ * @param diameter - Token diameter
+ */
+function drawCheckerboardBackground(ctx: CanvasRenderingContext2D, diameter: number): void {
+  const checkerSize = Math.max(6, Math.floor(diameter / 20));
+  const colors = ['#E0E0E0', '#F5F5F5'];
+
+  for (let y = 0; y < diameter; y += checkerSize) {
+    for (let x = 0; x < diameter; x += checkerSize) {
+      const colorIndex = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2;
+      ctx.fillStyle = colors[colorIndex];
+      ctx.fillRect(x, y, checkerSize, checkerSize);
+    }
+  }
+}
+
+/**
  * Map texture blend mode to canvas composite operation
  */
 function getCompositeOperation(blendMode: string): GlobalCompositeOperation {
@@ -235,7 +255,10 @@ export async function renderBackground(
 
   // 2. Draw base depending on sourceType
   if (style.sourceType === 'image' && style.imageUrl) {
-    // Image mode: load and draw the image
+    // Image mode: draw checkerboard background first, then the image
+    // Checkerboard indicates "paper" areas visible when zoomed out or offset
+    drawCheckerboardBackground(ctx, diameter);
+
     try {
       const img = await loadBackgroundImage(style.imageUrl);
       // Draw image to cover the circular area (center and crop)
@@ -255,14 +278,73 @@ export async function renderBackground(
         offsetY = (diameter - drawHeight) / 2;
       }
 
+      // Apply zoom (1.0 = cover fit, >1 = zoom in, <1 = zoom out)
+      const zoom = style.imageZoom ?? 1;
+      if (zoom !== 1) {
+        const prevWidth = drawWidth;
+        const prevHeight = drawHeight;
+        drawWidth *= zoom;
+        drawHeight *= zoom;
+        // Re-center after scaling
+        offsetX -= (drawWidth - prevWidth) / 2;
+        offsetY -= (drawHeight - prevHeight) / 2;
+      }
+
+      // Apply manual offset (-1 to 1 range, as percentage of diameter)
+      // Y is inverted so positive = up (matches user expectations)
+      const manualOffsetX = (style.imageOffsetX ?? 0) * diameter;
+      const manualOffsetY = (style.imageOffsetY ?? 0) * diameter;
+      offsetX += manualOffsetX;
+      offsetY -= manualOffsetY;
+
+      // Apply random crop offset if enabled
+      if (style.randomCrop) {
+        const maxOffsetX = Math.abs(drawWidth - diameter) / 2;
+        const maxOffsetY = Math.abs(drawHeight - diameter) / 2;
+        offsetX += (Math.random() - 0.5) * 2 * maxOffsetX;
+        offsetY += (Math.random() - 0.5) * 2 * maxOffsetY;
+      } else if (style.cropOffsetX !== undefined || style.cropOffsetY !== undefined) {
+        // Use fixed crop offset (0-1 range, 0.5 = centered)
+        const maxOffsetX = Math.abs(drawWidth - diameter) / 2;
+        const maxOffsetY = Math.abs(drawHeight - diameter) / 2;
+        offsetX += ((style.cropOffsetX ?? 0.5) - 0.5) * 2 * maxOffsetX;
+        offsetY += ((style.cropOffsetY ?? 0.5) - 0.5) * 2 * maxOffsetY;
+      }
+
+      // Determine rotation angle
+      let rotation = style.imageRotation ?? 0;
+      if (style.randomizeRotation) {
+        rotation = Math.random() * 360;
+      }
+
+      // Apply rotation if needed
+      if (rotation !== 0) {
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-center, -center);
+      }
+
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+      if (rotation !== 0) {
+        ctx.restore();
+      }
     } catch (error) {
-      // Fallback to solid color if image fails to load
+      // Fallback to error pattern if image fails to load
       // Using console.warn here is intentional for debugging failed loads
       // eslint-disable-next-line no-console
       console.warn('Failed to load background image, using fallback color:', error);
-      ctx.fillStyle = style.solidColor || '#FFFFFF';
-      ctx.fill();
+      // Draw red/yellow checkerboard pattern to indicate error
+      const checkerSize = Math.max(8, Math.floor(diameter / 16));
+      const colors = ['#FF0000', '#FFFF00'];
+      for (let y = 0; y < diameter; y += checkerSize) {
+        for (let x = 0; x < diameter; x += checkerSize) {
+          const colorIndex = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2;
+          ctx.fillStyle = colors[colorIndex];
+          ctx.fillRect(x, y, checkerSize, checkerSize);
+        }
+      }
     }
   } else if (style.mode === 'solid') {
     // Solid color mode

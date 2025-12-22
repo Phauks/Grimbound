@@ -421,6 +421,7 @@ export interface Token {
   // Character data tracking (for accessing original icon)
   characterData?: Character; // Original character data (for icon editing)
   imageUrl?: string; // URL of the icon used for this specific token variant
+  hasDecorativeOverrides?: boolean; // Whether this token was generated with per-character decorative overrides
 }
 
 // Avery label template type

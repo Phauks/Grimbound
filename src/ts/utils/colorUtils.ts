@@ -157,3 +157,14 @@ export function interpolateColors(color1: string, color2: string, t: number): st
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
+
+/**
+ * Generate a random hex color
+ *
+ * @returns Random hex color string (e.g., '#A3F2C1')
+ */
+export function randomHexColor(): string {
+  return `#${Math.floor(Math.random() * 16777215)
+    .toString(16)
+    .padStart(6, '0')}`;
+}
