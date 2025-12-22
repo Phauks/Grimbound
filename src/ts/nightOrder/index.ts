@@ -48,6 +48,13 @@ export {
   generateNightOrderPdf,
   getNightOrderPdfBlob,
 } from './nightOrderPdfLib.js';
+// Sync utilities
+export {
+  buildInitialNightOrderArray,
+  buildMetaNightOrderArrays,
+  syncNightOrderToJson,
+  updateCharacterNightNumbers,
+} from './nightOrderSync.js';
 // Types
 export type {
   NightOrderContextActions,
@@ -94,10 +101,3 @@ export {
   MINION_INFO_ENTRY,
   SPECIAL_ENTRIES,
 } from './specialEntries.js';
-// Sync utilities
-export {
-  buildInitialNightOrderArray,
-  buildMetaNightOrderArrays,
-  syncNightOrderToJson,
-  updateCharacterNightNumbers,
-} from './nightOrderSync.js';

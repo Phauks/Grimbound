@@ -13,27 +13,37 @@
  * @module components/CharactersComponents/TokenEditor/GameplayTabContent
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { useGroupedReminders, useDraggableList } from '@/hooks/index.js';
-import { dataSyncService } from '@/ts/sync/index.js';
-import { logger } from '@/ts/utils/logger.js';
-import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
 import {
-  analyzeReminderText,
-  type FormatIssue,
-  normalizeReminderText,
-} from '@/ts/utils/textFormatAnalyzer';
-import type { Character } from '@/ts/types/index.js';
-import { TEAM_SELECT_CLASS_MAP } from './types';
-import { SortableImageUrlRow } from './SortableImageUrlRow';
-import { SortableReminderRow } from './SortableReminderRow';
-import { FormatWarning } from './FormatWarning';
-import { SpecialItemsEditor } from './SpecialItemsEditor';
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useDraggableList, useGroupedReminders } from '@/hooks/index.js';
+import { useResolvedImageUrls } from '@/hooks/sync/useResolvedImageUrls';
+import { useAutoResizeTextarea } from '@/hooks/ui/useAutoResizeTextarea';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
+import type { Character } from '@/ts/types/index.js';
+import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
+import { NightOrderField } from './NightOrderField';
+import { SortableImageUrlRow } from './SortableImageUrlRow';
+import { SortableReminderRow } from './SortableReminderRow';
+import { SpecialItemsEditor } from './SpecialItemsEditor';
+import { TEAM_SELECT_CLASS_MAP } from './types';
+
+// ============================================
+// Types
+// ============================================
 
 interface GameplayTabContentProps {
   character: Character;
@@ -47,6 +57,17 @@ interface GameplayTabContentProps {
   onIdLinkChange: (linked: boolean) => void;
 }
 
+// ============================================
+// Constants
+// ============================================
+
+const DEBOUNCE_MS = 500;
+const IMAGE_DEBOUNCE_MS = 800;
+
+// ============================================
+// Main Component
+// ============================================
+
 export const GameplayTabContent = memo(function GameplayTabContent({
   character,
   isOfficial,
@@ -54,7 +75,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   onReplaceCharacter,
   onRefreshPreview,
   onPreviewVariant,
-  charUuid,
+  charUuid: _charUuid,
   isIdLinked,
   onIdLinkChange,
 }: GameplayTabContentProps) {
@@ -64,7 +85,10 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Local state for text inputs
+  // ============================================
+  // Local State
+  // ============================================
+
   const [localName, setLocalName] = useState(character.name || '');
   const [localId, setLocalId] = useState(character.id || '');
   const [localAbility, setLocalAbility] = useState(character.ability || '');
@@ -81,43 +105,23 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   const [localOtherNight, setLocalOtherNight] = useState(character.otherNight ?? 0);
   const [previewVariantIndex, setPreviewVariantIndex] = useState<number | null>(null);
 
-  // Resolved image URLs for preview
-  const [resolvedImageUrls, setResolvedImageUrls] = useState<(string | null)[]>([]);
+  // Auto-resize for ability textarea
+  const abilityTextareaRef = useAutoResizeTextarea({
+    value: localAbility,
+    enabled: !isOfficial,
+    minRows: 3,
+  });
 
-  // Format issue tracking
-  const [firstNightFormatIssues, setFirstNightFormatIssues] = useState<FormatIssue[]>([]);
-  const [otherNightFormatIssues, setOtherNightFormatIssues] = useState<FormatIssue[]>([]);
+  // Resolved image URLs
+  const { resolvedUrls: resolvedImageUrls } = useResolvedImageUrls({
+    imageUrls: localImages,
+    enabled: true,
+  });
 
-  // Debounce timer ref
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ============================================
+  // Sync Local State from Character Prop
+  // ============================================
 
-  // Auto-resize textareas
-  const textareaRefs = useRef<Set<HTMLTextAreaElement>>(new Set());
-
-  const resizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
-
-  const registerTextareaRef: RefCallback<HTMLTextAreaElement> = useCallback(
-    (element) => {
-      if (element) {
-        textareaRefs.current.add(element);
-        requestAnimationFrame(() => resizeTextarea(element));
-      }
-    },
-    [resizeTextarea]
-  );
-
-  const handleTextareaInput = useCallback(
-    (e: React.FormEvent<HTMLTextAreaElement>) => {
-      resizeTextarea(e.currentTarget);
-    },
-    [resizeTextarea]
-  );
-
-  // Sync local state when character changes
   useEffect(() => {
     setLocalName(character.name || '');
     setLocalId(character.id || '');
@@ -137,24 +141,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     character.otherNightReminder,
     character.firstNight,
     character.otherNight,
-    character.uuid,
   ]);
-
-  // Resize textareas when character changes
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      textareaRefs.current.forEach(resizeTextarea);
-    });
-  }, [resizeTextarea]);
-
-  // Analyze format issues
-  useEffect(() => {
-    setFirstNightFormatIssues(analyzeReminderText(localFirstNightReminder));
-  }, [localFirstNightReminder]);
-
-  useEffect(() => {
-    setOtherNightFormatIssues(analyzeReminderText(localOtherNightReminder));
-  }, [localOtherNightReminder]);
 
   // Auto-detect setup text
   useEffect(() => {
@@ -165,87 +152,34 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     }
   }, [localAbility, character.setup, isOfficial, onEditChange]);
 
-  // Resolve image URLs
-  useEffect(() => {
-    let isMounted = true;
-    const objectUrls: string[] = [];
+  // ============================================
+  // Debounced Update Helper
+  // ============================================
 
-    const resolveImages = async () => {
-      const resolved = await Promise.all(
-        localImages.map(async (url) => {
-          if (!url?.trim()) return null;
-          if (url.startsWith('http://') || url.startsWith('https://')) return url;
-          if (url.startsWith('asset:')) return url;
-
-          const extractCharacterId = (path: string): string | null => {
-            const segments = path.split('/');
-            const filename = segments[segments.length - 1];
-            const match = filename.match(/^(?:Icon_)?([a-z_]+)(?:\.(?:webp|png|jpg|jpeg|gif))?$/i);
-            return match ? match[1].toLowerCase() : null;
-          };
-
-          const characterId = extractCharacterId(url);
-          if (characterId) {
-            try {
-              const blob = await dataSyncService.getCharacterImage(characterId);
-              if (blob) {
-                const objectUrl = URL.createObjectURL(blob);
-                objectUrls.push(objectUrl);
-                return objectUrl;
-              }
-            } catch (error) {
-              logger.warn('GameplayTabContent', `Failed to resolve image: ${characterId}`, error);
-            }
-          }
-          return url;
-        })
-      );
-
-      if (isMounted) {
-        setResolvedImageUrls(resolved);
-      }
-    };
-
-    resolveImages();
-
-    return () => {
-      isMounted = false;
-      for (const url of objectUrls) {
-        URL.revokeObjectURL(url);
-      }
-    };
-  }, [localImages]);
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Debounced update helper
   const debouncedUpdate = useCallback(
-    (field: keyof Character, value: Character[keyof Character], delay = 500) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
+    (field: keyof Character, value: Character[keyof Character], delay = DEBOUNCE_MS) => {
+      const timer = setTimeout(() => {
         onEditChange(field, value);
       }, delay);
+      return () => clearTimeout(timer);
     },
     [onEditChange]
   );
 
-  // Reminders management
+  // ============================================
+  // Reminders Management
+  // ============================================
+
   const reminders = useGroupedReminders({
     reminders: character.reminders || [],
     onChange: (newReminders) => onEditChange('reminders', newReminders),
     disabled: isOfficial,
   });
 
-  // Image drag-and-drop
+  // ============================================
+  // Drag-and-Drop Handlers
+  // ============================================
+
   const imageDnd = useDraggableList({
     items: localImages,
     getItemId: (_, index) => `image-${index}`,
@@ -256,7 +190,6 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     disabled: isOfficial || localImages.length <= 1,
   });
 
-  // Reminder drag-and-drop
   const reminderDnd = useDraggableList({
     items: reminders.grouped,
     getItemId: (item, index) => `reminder-${item.text}-${index}`,
@@ -264,7 +197,10 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     disabled: isOfficial || reminders.grouped.length <= 1,
   });
 
-  // Handlers
+  // ============================================
+  // Event Handlers
+  // ============================================
+
   const handleToggleIdLink = useCallback(() => {
     if (isOfficial) return;
     onIdLinkChange(!isIdLinked);
@@ -286,20 +222,9 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       if (isOfficial) return;
       const newName = e.target.value;
       setLocalName(newName);
-
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      debounceTimerRef.current = setTimeout(() => {
-        if (isIdLinked && onReplaceCharacter) {
-          onReplaceCharacter({ ...character, name: newName, id: nameToId(newName) });
-        } else {
-          onEditChange('name', newName);
-        }
-      }, 500);
+      debouncedUpdate('name', newName);
     },
-    [isOfficial, isIdLinked, onReplaceCharacter, character, onEditChange]
+    [isOfficial, debouncedUpdate]
   );
 
   const handleNameBlur = useCallback(() => {
@@ -317,17 +242,21 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       setLocalImages((prev) => {
         const newImages = [...prev];
         newImages[index] = value;
-        debouncedUpdate('image', newImages.length === 1 ? newImages[0] : newImages, 800);
         return newImages;
       });
+      // Debounce image updates
+      debouncedUpdate(
+        'image',
+        localImages.length === 1 ? value : localImages.map((img, i) => (i === index ? value : img)),
+        IMAGE_DEBOUNCE_MS
+      );
     },
-    [isOfficial, debouncedUpdate]
+    [isOfficial, localImages, debouncedUpdate]
   );
 
   const handleImageBlur = useCallback(() => {
     if (isOfficial) return;
-    const images = localImages.length === 1 ? localImages[0] : localImages;
-    onEditChange('image', images);
+    onEditChange('image', localImages.length === 1 ? localImages[0] : localImages);
   }, [isOfficial, localImages, onEditChange]);
 
   const handleImagePreview = useCallback(
@@ -364,31 +293,126 @@ export const GameplayTabContent = memo(function GameplayTabContent({
 
   const handleRefreshImages = useCallback(() => {
     if (isOfficial) return;
-    const images = localImages.length === 1 ? localImages[0] : localImages;
-    onEditChange('image', images);
+    onEditChange('image', localImages.length === 1 ? localImages[0] : localImages);
     if (onRefreshPreview) {
       setTimeout(() => onRefreshPreview(), 50);
     }
   }, [isOfficial, localImages, onEditChange, onRefreshPreview]);
 
-  const handleFixFirstNightFormat = useCallback(() => {
-    if (isOfficial) return;
-    const normalized = normalizeReminderText(localFirstNightReminder);
-    setLocalFirstNightReminder(normalized);
-    onEditChange('firstNightReminder', normalized);
-  }, [isOfficial, localFirstNightReminder, onEditChange]);
+  const handleAbilityChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (isOfficial) return;
+      setLocalAbility(e.target.value);
+      debouncedUpdate('ability', e.target.value);
+    },
+    [isOfficial, debouncedUpdate]
+  );
 
-  const handleFixOtherNightFormat = useCallback(() => {
-    if (isOfficial) return;
-    const normalized = normalizeReminderText(localOtherNightReminder);
-    setLocalOtherNightReminder(normalized);
-    onEditChange('otherNightReminder', normalized);
-  }, [isOfficial, localOtherNightReminder, onEditChange]);
+  const handleAbilityKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (isOfficial) return;
+      if (e.key === '[') {
+        e.preventDefault();
+        const textarea = e.currentTarget;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = localAbility.slice(0, start);
+        const after = localAbility.slice(end);
+        const newValue = `${before}[]${after}`;
+        setLocalAbility(newValue);
+        debouncedUpdate('ability', newValue);
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1;
+        });
+      }
+    },
+    [isOfficial, localAbility, debouncedUpdate]
+  );
 
-  // Team class
-  const teamClass = TEAM_SELECT_CLASS_MAP[character.team]
-    ? styles[TEAM_SELECT_CLASS_MAP[character.team]]
-    : '';
+  const handleSetupChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isOfficial) return;
+      const newSetupValue = e.target.checked;
+      onEditChange('setup', newSetupValue);
+
+      if (newSetupValue && !/\[.*?\]/.test(localAbility)) {
+        const newAbility = `${localAbility.trim()} []`;
+        setLocalAbility(newAbility);
+        onEditChange('ability', newAbility);
+      } else if (!newSetupValue && /\[.*?\]/.test(localAbility)) {
+        const newAbility = localAbility
+          .replace(/\[([^\]]*)\]/g, '$1')
+          .replace(/\s+/g, ' ')
+          .trim();
+        setLocalAbility(newAbility);
+        onEditChange('ability', newAbility);
+      }
+    },
+    [isOfficial, localAbility, onEditChange]
+  );
+
+  // Night order handlers
+  const handleFirstNightReminderChange = useCallback(
+    (value: string) => {
+      setLocalFirstNightReminder(value);
+      debouncedUpdate('firstNightReminder', value);
+    },
+    [debouncedUpdate]
+  );
+
+  const handleFirstNightReminderBlur = useCallback(
+    (value: string) => {
+      onEditChange('firstNightReminder', value);
+    },
+    [onEditChange]
+  );
+
+  const handleFirstNightOrderChange = useCallback((value: number) => {
+    setLocalFirstNight(value);
+  }, []);
+
+  const handleFirstNightOrderBlur = useCallback(
+    (value: number) => {
+      onEditChange('firstNight', value);
+    },
+    [onEditChange]
+  );
+
+  const handleOtherNightReminderChange = useCallback(
+    (value: string) => {
+      setLocalOtherNightReminder(value);
+      debouncedUpdate('otherNightReminder', value);
+    },
+    [debouncedUpdate]
+  );
+
+  const handleOtherNightReminderBlur = useCallback(
+    (value: string) => {
+      onEditChange('otherNightReminder', value);
+    },
+    [onEditChange]
+  );
+
+  const handleOtherNightOrderChange = useCallback((value: number) => {
+    setLocalOtherNight(value);
+  }, []);
+
+  const handleOtherNightOrderBlur = useCallback(
+    (value: number) => {
+      onEditChange('otherNight', value);
+    },
+    [onEditChange]
+  );
+
+  // Team styling
+  const teamClass = useMemo(() => {
+    const classKey = TEAM_SELECT_CLASS_MAP[character.team];
+    return classKey ? styles[classKey] : '';
+  }, [character.team]);
+
+  // ============================================
+  // Render
+  // ============================================
 
   return (
     <div className={`${styles.tabContent} ${isOfficial ? styles.disabled : ''}`}>
@@ -483,7 +507,9 @@ export const GameplayTabContent = memo(function GameplayTabContent({
 
       {/* Images */}
       <div className={styles.formGroup}>
-        <span className={styles.label} id="image-urls-label">Image</span>
+        <span className={styles.label} id="image-urls-label">
+          Image
+        </span>
         <p className={styles.fieldHint}>Add one or more image URLs. Drag to reorder.</p>
 
         <DndContext
@@ -495,7 +521,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           onDragCancel={imageDnd.onDragCancel}
         >
           <SortableContext items={imageDnd.itemIds} strategy={verticalListSortingStrategy}>
-            <div className={styles.imageUrlsList} role="list" aria-labelledby="image-urls-label">
+            <ul className={styles.imageUrlsList} aria-labelledby="image-urls-label">
               {localImages.map((url, index) => (
                 <SortableImageUrlRow
                   key={imageDnd.itemIds[index]}
@@ -515,7 +541,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
                   isLastItem={localImages.length <= 1}
                 />
               ))}
-            </div>
+            </ul>
           </SortableContext>
         </DndContext>
 
@@ -548,34 +574,13 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       <div className={styles.formGroup}>
         <label htmlFor="edit-ability">Ability Text</label>
         <textarea
-          ref={registerTextareaRef}
+          ref={abilityTextareaRef}
           id="edit-ability"
           className={styles.autoExpand}
           value={localAbility}
           disabled={isOfficial}
-          onChange={(e) => {
-            if (isOfficial) return;
-            setLocalAbility(e.target.value);
-            debouncedUpdate('ability', e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (isOfficial) return;
-            if (e.key === '[') {
-              e.preventDefault();
-              const textarea = e.currentTarget;
-              const start = textarea.selectionStart;
-              const end = textarea.selectionEnd;
-              const before = localAbility.slice(0, start);
-              const after = localAbility.slice(end);
-              const newValue = `${before}[]${after}`;
-              setLocalAbility(newValue);
-              debouncedUpdate('ability', newValue);
-              requestAnimationFrame(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + 1;
-              });
-            }
-          }}
-          onInput={handleTextareaInput}
+          onChange={handleAbilityChange}
+          onKeyDown={handleAbilityKeyDown}
           onBlur={() => {
             if (!isOfficial) onEditChange('ability', localAbility);
           }}
@@ -593,35 +598,22 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           className={viewStyles.toggleSwitch}
           checked={character.setup}
           disabled={isOfficial}
-          onChange={(e) => {
-            if (isOfficial) return;
-            const newSetupValue = e.target.checked;
-            onEditChange('setup', newSetupValue);
-
-            if (newSetupValue && !/\[.*?\]/.test(localAbility)) {
-              const newAbility = `${localAbility.trim()} []`;
-              setLocalAbility(newAbility);
-              onEditChange('ability', newAbility);
-            } else if (!newSetupValue && /\[.*?\]/.test(localAbility)) {
-              const newAbility = localAbility
-                .replace(/\[([^\]]*)\]/g, '$1')
-                .replace(/\s+/g, ' ')
-                .trim();
-              setLocalAbility(newAbility);
-              onEditChange('ability', newAbility);
-            }
-          }}
+          onChange={handleSetupChange}
         />
         <p className={styles.fieldHint}>
-          Setup text [in brackets] enables this automatically. Enabling adds [], disabling removes brackets.
+          Setup text [in brackets] enables this automatically. Enabling adds [], disabling removes
+          brackets.
         </p>
       </div>
 
       {/* Reminders */}
       <div className={styles.formGroup}>
-        <span className={styles.label} id="reminders-label">Reminders</span>
+        <span className={styles.label} id="reminders-label">
+          Reminders
+        </span>
         <p className={styles.fieldHint}>
-          Add reminder text that appears on reminder tokens. Use count to create multiple copies. Drag to reorder.
+          Add reminder text that appears on reminder tokens. Use count to create multiple copies.
+          Drag to reorder.
         </p>
 
         <DndContext
@@ -633,7 +625,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           onDragCancel={reminderDnd.onDragCancel}
         >
           <SortableContext items={reminderDnd.itemIds} strategy={verticalListSortingStrategy}>
-            <div className={styles.remindersUrlsList} role="list" aria-labelledby="reminders-label">
+            <ul className={styles.remindersUrlsList} aria-labelledby="reminders-label">
               {reminders.grouped.map((reminder, index) => (
                 <SortableReminderRow
                   key={reminderDnd.itemIds[index]}
@@ -647,7 +639,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
                   onRemove={reminders.remove}
                 />
               ))}
-            </div>
+            </ul>
           </SortableContext>
         </DndContext>
 
@@ -662,133 +654,35 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       </div>
 
       {/* First Night Reminder */}
-      <div className={styles.formGroup}>
-        <div className={styles.labelWithAction}>
-          <label htmlFor="edit-firstnight">First Night Reminder</label>
-          <span className={styles.nightOrderLabel}>
-            Night Order
-            <input
-              type="number"
-              className={styles.nightOrderInput}
-              value={localFirstNight === 0 ? '' : localFirstNight}
-              disabled={isOfficial}
-              min={0}
-              placeholder="0"
-              onChange={(e) => {
-                if (isOfficial) return;
-                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                setLocalFirstNight(val);
-              }}
-              onBlur={() => {
-                if (isOfficial) return;
-                let normalizedValue = localFirstNight || 0;
-                if (localFirstNightReminder.trim() && normalizedValue === 0) {
-                  normalizedValue = 1;
-                }
-                setLocalFirstNight(normalizedValue);
-                onEditChange('firstNight', normalizedValue);
-              }}
-            />
-          </span>
-        </div>
-        <textarea
-          ref={registerTextareaRef}
-          id="edit-firstnight"
-          className={styles.autoExpand}
-          value={localFirstNightReminder}
-          disabled={isOfficial}
-          onChange={(e) => {
-            if (isOfficial) return;
-            const newValue = e.target.value;
-            setLocalFirstNightReminder(newValue);
-            debouncedUpdate('firstNightReminder', newValue);
-            if (newValue.trim() && localFirstNight === 0) {
-              setLocalFirstNight(1);
-              onEditChange('firstNight', 1);
-            }
-          }}
-          onInput={handleTextareaInput}
-          onBlur={() => {
-            if (!isOfficial) onEditChange('firstNightReminder', localFirstNightReminder);
-          }}
-          placeholder="Reminder text for the first night"
-          rows={2}
-        />
-        <p className={styles.fieldHint}>Use *TEXT* for bold, :reminder: for reminder circle.</p>
-        <FormatWarning
-          issues={firstNightFormatIssues}
-          disabled={isOfficial}
-          onFix={handleFixFirstNightFormat}
-        />
-      </div>
+      <NightOrderField
+        label="First Night Reminder"
+        idPrefix="edit-firstnight"
+        reminderValue={localFirstNightReminder}
+        nightOrderValue={localFirstNight}
+        disabled={isOfficial}
+        onReminderChange={handleFirstNightReminderChange}
+        onReminderBlur={handleFirstNightReminderBlur}
+        onNightOrderChange={handleFirstNightOrderChange}
+        onNightOrderBlur={handleFirstNightOrderBlur}
+        placeholder="Reminder text for the first night"
+      />
 
       {/* Other Night Reminder */}
-      <div className={styles.formGroup}>
-        <div className={styles.labelWithAction}>
-          <label htmlFor="edit-othernight">Other Night Reminder</label>
-          <span className={styles.nightOrderLabel}>
-            Night Order
-            <input
-              type="number"
-              className={styles.nightOrderInput}
-              value={localOtherNight === 0 ? '' : localOtherNight}
-              disabled={isOfficial}
-              min={0}
-              placeholder="0"
-              onChange={(e) => {
-                if (isOfficial) return;
-                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                setLocalOtherNight(val);
-              }}
-              onBlur={() => {
-                if (isOfficial) return;
-                let normalizedValue = localOtherNight || 0;
-                if (localOtherNightReminder.trim() && normalizedValue === 0) {
-                  normalizedValue = 1;
-                }
-                setLocalOtherNight(normalizedValue);
-                onEditChange('otherNight', normalizedValue);
-              }}
-            />
-          </span>
-        </div>
-        <textarea
-          ref={registerTextareaRef}
-          id="edit-othernight"
-          className={styles.autoExpand}
-          value={localOtherNightReminder}
-          disabled={isOfficial}
-          onChange={(e) => {
-            if (isOfficial) return;
-            const newValue = e.target.value;
-            setLocalOtherNightReminder(newValue);
-            debouncedUpdate('otherNightReminder', newValue);
-            if (newValue.trim() && localOtherNight === 0) {
-              setLocalOtherNight(1);
-              onEditChange('otherNight', 1);
-            }
-          }}
-          onInput={handleTextareaInput}
-          onBlur={() => {
-            if (!isOfficial) onEditChange('otherNightReminder', localOtherNightReminder);
-          }}
-          placeholder="Reminder text for other nights"
-          rows={2}
-        />
-        <p className={styles.fieldHint}>Use *TEXT* for bold, :reminder: for reminder circle.</p>
-        <FormatWarning
-          issues={otherNightFormatIssues}
-          disabled={isOfficial}
-          onFix={handleFixOtherNightFormat}
-        />
-      </div>
+      <NightOrderField
+        label="Other Night Reminder"
+        idPrefix="edit-othernight"
+        reminderValue={localOtherNightReminder}
+        nightOrderValue={localOtherNight}
+        disabled={isOfficial}
+        onReminderChange={handleOtherNightReminderChange}
+        onReminderBlur={handleOtherNightReminderBlur}
+        onNightOrderChange={handleOtherNightOrderChange}
+        onNightOrderBlur={handleOtherNightOrderBlur}
+        placeholder="Reminder text for other nights"
+      />
 
       {/* Special Items */}
-      <SpecialItemsEditor
-        character={character}
-        disabled={isOfficial}
-        onEditChange={onEditChange}
-      />
+      <SpecialItemsEditor character={character} disabled={isOfficial} onEditChange={onEditChange} />
     </div>
   );
 });

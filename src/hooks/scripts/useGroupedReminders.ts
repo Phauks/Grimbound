@@ -53,15 +53,16 @@ function groupReminders(reminders: string[]): GroupedReminder[] {
   const order: string[] = [];
 
   for (const reminder of reminders) {
-    if (!groups.has(reminder)) {
+    const current = groups.get(reminder);
+    if (current === undefined) {
       order.push(reminder);
       groups.set(reminder, 1);
     } else {
-      groups.set(reminder, groups.get(reminder)! + 1);
+      groups.set(reminder, current + 1);
     }
   }
 
-  return order.map((text) => ({ text, count: groups.get(text)! }));
+  return order.map((text) => ({ text, count: groups.get(text) ?? 0 }));
 }
 
 /**

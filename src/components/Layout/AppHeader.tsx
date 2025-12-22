@@ -1,7 +1,7 @@
-import { usePWAInstall } from '@/hooks';
-import styles from '@/styles/components/layout/Header.module.css';
 import { SaveAsNewProjectButton } from '@/components/Shared/Assets/SaveAsNewProjectButton';
 import { AutoSaveIndicator } from '@/components/Shared/Feedback/AutoSaveIndicator';
+import { usePWAInstall } from '@/hooks';
+import styles from '@/styles/components/layout/Header.module.css';
 
 interface AppHeaderProps {
   onSettingsClick: () => void;
@@ -130,7 +130,6 @@ export function AppHeader({
           target="_blank"
           rel="noopener noreferrer"
           className={styles.iconButton}
-          aria-label="Open Script Tool"
           title="Open the official Script Tool"
         >
           <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
@@ -139,6 +138,7 @@ export function AppHeader({
               d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
             />
           </svg>
+          <span className={styles.srOnly}>Open Script Tool</span>
         </a>
         <a
           href="https://github.com/Phauks/Clocktower_Token_Generator"

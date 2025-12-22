@@ -6,27 +6,35 @@
  * @module hooks/characters
  */
 
-// Character editing
+export { useBackgroundImageUrl } from './useBackgroundImageUrl.js';
+// Character CRUD - Sub-hooks (for direct use or testing)
 export {
-  useCharacterEditor,
-  type UseCharacterEditorOptions,
-  type UseCharacterEditorResult,
-} from './useCharacterEditor.js';
-
-// Character CRUD operations
-export {
-  useCharacterOperations,
-  type UseCharacterOperationsOptions,
-  type UseCharacterOperationsResult,
-} from './useCharacterOperations.js';
-
+  type UseCharacterCRUDOptions,
+  type UseCharacterCRUDResult,
+  useCharacterCRUD,
+} from './useCharacterCRUD.js';
 // Character downloads
 export {
-  useCharacterDownloads,
   type UseCharacterDownloadsOptions,
   type UseCharacterDownloadsResult,
+  useCharacterDownloads,
 } from './useCharacterDownloads.js';
-
+// Character editing
+export {
+  type UseCharacterEditorOptions,
+  type UseCharacterEditorResult,
+  useCharacterEditor,
+} from './useCharacterEditor.js';
 // Image resolution
 export { useCharacterImageResolver } from './useCharacterImageResolver.js';
-export { useBackgroundImageUrl } from './useBackgroundImageUrl.js';
+export {
+  type UseCharacterMetadataOptions,
+  type UseCharacterMetadataResult,
+  useCharacterMetadata,
+} from './useCharacterMetadata.js';
+// Character CRUD operations - Orchestrator
+export {
+  type UseCharacterOperationsOptions,
+  type UseCharacterOperationsResult,
+  useCharacterOperations,
+} from './useCharacterOperations.js';

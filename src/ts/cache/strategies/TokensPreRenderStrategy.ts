@@ -3,9 +3,6 @@
  * Pre-renders first N tokens as data URLs for instant tokens view display.
  */
 
-import { globalImageCache } from '@/ts/utils/imageCache.js';
-import { logger } from '@/ts/utils/logger.js';
-import type { EncodeCanvasTask } from '@/ts/workers/prerender-worker.js';
 import type {
   ICacheStrategy,
   IPreRenderStrategy,
@@ -13,6 +10,9 @@ import type {
   PreRenderResult,
 } from '@/ts/cache/core/index.js';
 import { WorkerPool } from '@/ts/cache/utils/WorkerPool.js';
+import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { logger } from '@/ts/utils/logger.js';
+import type { EncodeCanvasTask } from '@/ts/workers/prerender-worker.js';
 
 /**
  * Configuration options for tokens pre-rendering.
@@ -92,7 +92,10 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
         // Encode batch concurrently using Promise.all
         const results = await Promise.allSettled(
           batch.map(async (token) => {
-            const dataUrl = await this.encodeCanvas(token.canvas!);
+            if (!token.canvas) {
+              throw new Error(`Token ${token.filename} is missing canvas`);
+            }
+            const dataUrl = await this.encodeCanvas(token.canvas);
             await this.cache.set(token.filename, dataUrl);
             return token.filename;
           })
@@ -162,7 +165,7 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
           quality: this.options.encodingQuality,
         };
 
-        const response = await this.workerPool!.execute<{ dataUrl: string }>({
+        const response = await this.workerPool?.execute<{ dataUrl: string }>({
           type: 'ENCODE_CANVAS',
           data: task,
         });

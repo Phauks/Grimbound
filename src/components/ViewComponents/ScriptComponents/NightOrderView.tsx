@@ -22,7 +22,10 @@ import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/script/NightOrderView.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfLib.js';
-import { syncNightOrderToJson, updateCharacterNightNumbers } from '@/ts/nightOrder/nightOrderSync.js';
+import {
+  syncNightOrderToJson,
+  updateCharacterNightNumbers,
+} from '@/ts/nightOrder/nightOrderSync.js';
 import { logger } from '@/ts/utils/logger.js';
 // TODO: Re-enable when Script PDF export is fixed
 // import { getOfficialScriptToolUrl } from '@/ts/utils/scriptEncoder.js';
@@ -114,7 +117,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       return;
     }
 
-    if (!jsonInput.trim() || !isDirty) return;
+    if (!(jsonInput.trim() && isDirty)) return;
 
     // Sync to JSON meta arrays
     const updatedJson = syncNightOrderToJson(jsonInput, firstNight, otherNight);

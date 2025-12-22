@@ -10,33 +10,37 @@ export {
   getCachedFont,
   getFontCacheStats,
 } from '@/ts/cache/instances/fontCache.js';
-
+// Accent drawing utilities
+export {
+  type AccentDrawingOptions,
+  drawAccents,
+} from './accentDrawing.js';
 // Background effects module (textures, effects, noise)
 export {
-  // Main renderer
-  renderBackground,
-  renderTexturePreview,
   // Effects
   applyEffects,
   applyVibrance,
+  // Textures
+  BaseTextureStrategy,
   type EffectContext,
   type EffectResult,
   type EffectStrategy,
+  // Noise utilities
+  fbm,
   InnerGlowEffect,
+  initPermutation,
   isVibranceEnabled,
-  VignetteEffect,
-  // Textures
-  BaseTextureStrategy,
+  perlin2D,
+  // Main renderer
+  renderBackground,
+  renderTexturePreview,
+  ridgedNoise,
   type TextureContext,
   TextureFactory,
   type TextureResult,
   type TextureStrategy,
-  // Noise utilities
-  fbm,
-  initPermutation,
-  perlin2D,
-  ridgedNoise,
   turbulence,
+  VignetteEffect,
 } from './backgroundEffects/index.js';
 // Canvas optimization utilities
 export {
@@ -77,11 +81,6 @@ export {
   getCSSGradient,
   interpolateColors,
 } from './gradientUtils.js';
-// Accent drawing utilities
-export {
-  drawAccents,
-  type AccentDrawingOptions,
-} from './accentDrawing.js';
 // QR code generation
 export {
   generateStyledQRCode,

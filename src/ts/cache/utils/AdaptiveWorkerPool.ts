@@ -255,14 +255,14 @@ export class AdaptiveWorkerPool extends WorkerPool {
     };
     type PerformanceWithMemory = Performance & { memory?: PerformanceMemory };
 
-    if ('memory' in performance && (performance as PerformanceWithMemory).memory) {
-      const memory = (performance as PerformanceWithMemory).memory!;
-      const pressure = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
+    const memoryInfo = (performance as PerformanceWithMemory).memory;
+    if (memoryInfo) {
+      const pressure = memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit;
 
       return {
-        totalJSHeapSize: memory.totalJSHeapSize,
-        usedJSHeapSize: memory.usedJSHeapSize,
-        jsHeapSizeLimit: memory.jsHeapSizeLimit,
+        totalJSHeapSize: memoryInfo.totalJSHeapSize,
+        usedJSHeapSize: memoryInfo.usedJSHeapSize,
+        jsHeapSizeLimit: memoryInfo.jsHeapSizeLimit,
         pressure,
       };
     }

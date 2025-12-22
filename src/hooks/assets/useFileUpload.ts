@@ -33,7 +33,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFileUploadService } from '@/contexts/ServiceContext';
-import type { UploadError, UploadOutcome, UseFileUploadConfig } from '@/ts/services/upload/index.js';
+import type {
+  UploadError,
+  UploadOutcome,
+  UseFileUploadConfig,
+} from '@/ts/services/upload/index.js';
 
 // ============================================================================
 // Types

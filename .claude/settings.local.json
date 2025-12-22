@@ -8,7 +8,12 @@
       "Bash(npm ls:*)",
       "Bash(powershell -Command \"@\\(''jspdf'',''html2canvas'',''jszip'',''pdf-lib'',''react'',''react-dom''\\) | ForEach-Object { if \\(Test-Path $_ { $s=\\(Get-ChildItem -Recurse $_-ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum; Write-Host \\(''{0}: {1:N2} MB'' -f $_ \\($s/1MB\\)\\) }}\")",
       "Bash(powershell -Command \"Get-ChildItem -Filter ''use*.ts'' -File | Remove-Item -Force -Verbose\")",
-      "Bash(npx biome lint:*)"
+      "Bash(npx biome lint:*)",
+      "Bash(npx biome:*)",
+      "Skill(superpowers:root-cause-tracing)",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''assets/images/setup_flower'' -Name\")",
+      "Bash(powershell -Command \"Rename-Item -Path ''assets/images/setup_flower'' -NewName ''setup_overlays''\")",
+      "Bash(powershell -Command \"Remove-Item ''C:\\\\Users\\\\Trevo\\\\OneDrive\\\\Desktop\\\\Board Games\\\\Blood on the Clocktower\\\\Github - Token Generator\\\\Clocktower_Token_Generator\\\\src\\\\hooks\\\\cache\\\\useProjectCacheWarming.ts''\")"
     ]
   }
 }

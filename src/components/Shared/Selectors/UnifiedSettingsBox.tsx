@@ -355,11 +355,10 @@ function UnifiedSettingsBoxInner<T>({
   };
 
   return (
-    <div
+    <section
       ref={containerRef}
       className={containerClasses}
       onKeyDown={handleKeyDown}
-      role="group"
       aria-label={ariaLabel ?? `${label} settings`}
     >
       {/* Preview Box with optional toggle */}
@@ -410,7 +409,7 @@ function UnifiedSettingsBoxInner<T>({
 
       {/* Portal Panel */}
       {renderPortalPanel()}
-    </div>
+    </section>
   );
 }
 

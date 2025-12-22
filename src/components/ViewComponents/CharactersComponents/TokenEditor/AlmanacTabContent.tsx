@@ -11,9 +11,9 @@
  * @module components/CharactersComponents/TokenEditor/AlmanacTabContent
  */
 
-import { memo, useCallback, useEffect, useRef, useState, type RefCallback } from 'react';
-import type { Character } from '@/ts/types/index.js';
+import { memo, type RefCallback, useCallback, useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
+import type { Character } from '@/ts/types/index.js';
 
 interface AlmanacTabContentProps {
   character: Character;
@@ -163,7 +163,6 @@ export const AlmanacTabContent = memo(function AlmanacTabContent({
     character.examples,
     character.howToRun,
     character.tips,
-    character.uuid,
   ]);
 
   // Resize textareas when character changes

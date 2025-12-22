@@ -1,23 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type BundleData, type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TabType } from '@/components/Layout/TabNavigation';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { AdditionalOptionsPanel } from '@/components/Shared/Options/AdditionalOptionsPanel';
+import { AdditionalTokensPanel } from '@/components/Shared/Options/AdditionalTokensPanel';
+import { AppearancePanel } from '@/components/Shared/Options/AppearancePanel';
+import { PresetSection } from '@/components/ViewComponents/TokensComponents/Presets/PresetSection';
+import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
+import { TokenPreviewRow } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenPreviewRow';
+import {
+  type BundleData,
+  type DownloadItem,
+  useDownloadsContext,
+} from '@/contexts/DownloadsContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useExport, useMissingTokenGenerator, usePresets, type CustomPreset } from '@/hooks';
+import { type CustomPreset, useExport, useMissingTokenGenerator, usePresets } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import { createTokensZip, isMetaToken } from '@/ts/export/zipExporter';
 import type { Token } from '@/ts/types/index';
 import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils';
 import { logger } from '@/ts/utils/logger';
-import type { TabType } from '@/components/Layout/TabNavigation';
-import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { AdditionalOptionsPanel } from '@/components/Shared/Options/AdditionalOptionsPanel';
-import { AdditionalTokensPanel } from '@/components/Shared/Options/AdditionalTokensPanel';
-
-import { AppearancePanel } from '@/components/Shared/Options/AppearancePanel';
-import { PresetSection } from '@/components/ViewComponents/TokensComponents/Presets/PresetSection';
-import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
-import { TokenPreviewRow } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenPreviewRow';
 
 /**
  * Convert tokens to bundle data (blobs with filenames)
@@ -49,7 +53,6 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
     updateGenerationOptions,
     generationProgress,
     isLoading,
-    jsonInput,
     characterSelectionSummary,
   } = useTokenContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
@@ -60,11 +63,16 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
   // Initialize with presets directly to avoid flash of empty state
   const [customPresets, setCustomPresets] = useState<CustomPreset[]>(() => getCustomPresets());
 
+  // Ref to ensure missing token check only runs once per mount
+  const hasCheckedMissingRef = useRef(false);
+
   // Generate missing tokens on mount (if any characters don't have tokens)
-  // The hash check in useMissingTokenGenerator prevents duplicate generation
-  // when navigating between views - hasMissingTokens() returns false if
-  // tokens were already generated for the current JSON content
+  // The ref guard prevents re-triggering when function references change due to token updates
+  // The hash check in useMissingTokenGenerator provides additional protection
   useEffect(() => {
+    if (hasCheckedMissingRef.current) return;
+    hasCheckedMissingRef.current = true;
+
     if (hasMissingTokens()) {
       generateMissingTokens();
     }
@@ -151,31 +159,6 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
     }
   }, [metaTokens, generationOptions.pngSettings, addToast]);
 
-  const handleDownloadAllTokens = useCallback(async () => {
-    if (!tokens.length) return;
-
-    try {
-      const blob = await createTokensZip(
-        tokens,
-        null,
-        {
-          saveInTeamFolders: true,
-          saveRemindersSeparately: true,
-          metaTokenFolder: true,
-          includeScriptJson: true,
-          compressionLevel: 'normal',
-        },
-        jsonInput,
-        generationOptions.pngSettings
-      );
-      downloadFile(blob, 'all_tokens.zip');
-      addToast(`Downloaded ${tokens.length} tokens`, 'success');
-    } catch (error) {
-      logger.error('TokensView', 'Failed to download all tokens', error);
-      addToast('Failed to download all tokens', 'error');
-    }
-  }, [tokens, jsonInput, generationOptions.pngSettings, addToast]);
-
   // Register downloads for this view - always register with proper disabled states
   useEffect(() => {
     const hasTokens = tokens.length > 0;
@@ -185,9 +168,10 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
         id: 'character-tokens',
         icon: '🎭',
         label: 'Character Tokens',
-        description: characterTokens.length > 0
-          ? `${characterTokens.length} tokens (ZIP)`
-          : 'Generate tokens first',
+        description:
+          characterTokens.length > 0
+            ? `${characterTokens.length} tokens (ZIP)`
+            : 'Generate tokens first',
         action: handleDownloadCharacterTokens,
         getBlob: () => tokensToBundleData(characterTokens),
         disabled: characterTokens.length === 0,
@@ -199,9 +183,10 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
         id: 'reminder-tokens',
         icon: '🔔',
         label: 'Reminder Tokens',
-        description: reminderTokens.length > 0
-          ? `${reminderTokens.length} tokens (ZIP)`
-          : 'Generate tokens first',
+        description:
+          reminderTokens.length > 0
+            ? `${reminderTokens.length} tokens (ZIP)`
+            : 'Generate tokens first',
         action: handleDownloadReminderTokens,
         getBlob: () => tokensToBundleData(reminderTokens),
         disabled: reminderTokens.length === 0,
@@ -213,9 +198,7 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
         id: 'meta-tokens',
         icon: '📜',
         label: 'Meta Tokens',
-        description: metaTokens.length > 0
-          ? `${metaTokens.length} tokens (ZIP)`
-          : 'No meta tokens',
+        description: metaTokens.length > 0 ? `${metaTokens.length} tokens (ZIP)` : 'No meta tokens',
         action: handleDownloadMetaTokens,
         getBlob: () => tokensToBundleData(metaTokens),
         disabled: metaTokens.length === 0,
@@ -227,9 +210,7 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
         id: 'token-print-sheet',
         icon: '🖨️',
         label: 'Token Print Sheet',
-        description: hasTokens
-          ? `${tokens.length} tokens (PDF)`
-          : 'Generate tokens first',
+        description: hasTokens ? `${tokens.length} tokens (PDF)` : 'Generate tokens first',
         action: downloadPdf,
         disabled: !hasTokens || isExporting,
         disabledReason: !hasTokens ? 'Generate tokens first' : 'Export in progress',
@@ -248,7 +229,6 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
     handleDownloadCharacterTokens,
     handleDownloadReminderTokens,
     handleDownloadMetaTokens,
-    handleDownloadAllTokens,
     downloadPdf,
     isExporting,
     setDownloads,
@@ -256,75 +236,81 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
   ]);
 
   return (
-    <ViewLayout variant="2-panel">
-      {/* Left Sidebar - Presets and Options */}
-      <ViewLayout.Panel position="left" width="left" scrollable>
-        <div className={layoutStyles.panelContent}>
-          <details className={layoutStyles.sidebarCard}>
-            <summary className={layoutStyles.sectionHeader}>Presets</summary>
-            <div className={layoutStyles.optionSection}>
-              <PresetSection
-                customPresets={customPresets}
-                onCustomPresetsChange={setCustomPresets}
-                onShowSaveModal={() => {}}
-              />
-            </div>
-          </details>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Tokens" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      <ViewLayout variant="2-panel">
+        {/* Left Sidebar - Presets and Options */}
+        <ViewLayout.Panel position="left" width="left" scrollable>
+          <div className={layoutStyles.panelContent}>
+            <details className={layoutStyles.sidebarCard}>
+              <summary className={layoutStyles.sectionHeader}>Presets</summary>
+              <div className={layoutStyles.optionSection}>
+                <PresetSection
+                  customPresets={customPresets}
+                  onCustomPresetsChange={setCustomPresets}
+                  onShowSaveModal={() => {}}
+                />
+              </div>
+            </details>
 
-          <details className={layoutStyles.sidebarCard} open>
-            <summary className={layoutStyles.sectionHeader}>Options</summary>
-            <div className={layoutStyles.optionSection}>
-              <AppearancePanel
-                generationOptions={generationOptions}
-                onOptionChange={updateGenerationOptions}
-              />
-            </div>
-          </details>
+            <details className={layoutStyles.sidebarCard} open>
+              <summary className={layoutStyles.sectionHeader}>Options</summary>
+              <div className={layoutStyles.optionSection}>
+                <AppearancePanel
+                  generationOptions={generationOptions}
+                  onOptionChange={updateGenerationOptions}
+                />
+              </div>
+            </details>
 
-          <details className={layoutStyles.sidebarCard} open>
-            <summary className={layoutStyles.sectionHeader}>Advanced Options</summary>
-            <div className={layoutStyles.optionSection}>
-              <AdditionalOptionsPanel
-                generationOptions={generationOptions}
-                onOptionChange={updateGenerationOptions}
-              />
-            </div>
-          </details>
+            <details className={layoutStyles.sidebarCard} open>
+              <summary className={layoutStyles.sectionHeader}>Advanced Options</summary>
+              <div className={layoutStyles.optionSection}>
+                <AdditionalOptionsPanel
+                  generationOptions={generationOptions}
+                  onOptionChange={updateGenerationOptions}
+                />
+              </div>
+            </details>
 
-          <details className={layoutStyles.sidebarCard} open>
-            <summary className={layoutStyles.sectionHeader}>Additional Tokens</summary>
-            <div className={layoutStyles.optionSection}>
-              <AdditionalTokensPanel
-                generationOptions={generationOptions}
-                onOptionChange={updateGenerationOptions}
-              />
-            </div>
-          </details>
-        </div>
-      </ViewLayout.Panel>
-
-      {/* Right Content - Token Grid */}
-      <ViewLayout.Panel position="right" width="flex" scrollable>
-        <TokenPreviewRow />
-        {/* Show notification when characters are excluded */}
-        {characterSelectionSummary.disabled > 0 && !isLoading && (
-          <div className={styles.exclusionNotice}>
-            <span className={styles.exclusionIcon}>⚠</span>
-            <span className={styles.exclusionText}>
-              {characterSelectionSummary.disabled} character
-              {characterSelectionSummary.disabled !== 1 ? 's' : ''} excluded
-            </span>
+            <details className={layoutStyles.sidebarCard} open>
+              <summary className={layoutStyles.sectionHeader}>Additional Tokens</summary>
+              <div className={layoutStyles.optionSection}>
+                <AdditionalTokensPanel
+                  generationOptions={generationOptions}
+                  onOptionChange={updateGenerationOptions}
+                />
+              </div>
+            </details>
           </div>
-        )}
-        {isLoading && generationProgress && (
-          <div className={styles.galleryHeader}>
-            <div className={styles.generationProgress}>
-              Generating {generationProgress.current}/{generationProgress.total}...
+        </ViewLayout.Panel>
+
+        {/* Right Content - Token Grid */}
+        <ViewLayout.Panel position="right" width="flex" scrollable>
+          <TokenPreviewRow />
+          {/* Show notification when characters are excluded */}
+          {characterSelectionSummary.disabled > 0 && !isLoading && (
+            <div className={styles.exclusionNotice}>
+              <span className={styles.exclusionIcon}>⚠</span>
+              <span className={styles.exclusionText}>
+                {characterSelectionSummary.disabled} character
+                {characterSelectionSummary.disabled !== 1 ? 's' : ''} excluded
+              </span>
             </div>
-          </div>
-        )}
-        <TokenGrid onTokenClick={onTokenClick} onTabChange={onTabChange} />
-      </ViewLayout.Panel>
-    </ViewLayout>
+          )}
+          {isLoading && generationProgress && (
+            <div className={styles.galleryHeader}>
+              <div className={styles.generationProgress}>
+                Generating {generationProgress.current}/{generationProgress.total}...
+              </div>
+            </div>
+          )}
+          <TokenGrid onTokenClick={onTokenClick} onTabChange={onTabChange} />
+        </ViewLayout.Panel>
+      </ViewLayout>
+    </ErrorBoundary>
   );
 }

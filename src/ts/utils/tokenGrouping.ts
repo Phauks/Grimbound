@@ -62,10 +62,10 @@ export function groupTokensByIdentity(tokens: Token[]): GroupedToken[] {
   for (const token of tokens) {
     const key = getTokenIdentityKey(token);
 
-    if (duplicateGroups.has(key)) {
-      const group = duplicateGroups.get(key)!;
-      group.count++;
-      group.allTokens.push(token);
+    const existingGroup = duplicateGroups.get(key);
+    if (existingGroup) {
+      existingGroup.count++;
+      existingGroup.allTokens.push(token);
     } else {
       duplicateGroups.set(key, {
         token,
@@ -86,7 +86,7 @@ export function groupTokensByIdentity(tokens: Token[]): GroupedToken[] {
     if (!variantGroups.has(variantKey)) {
       variantGroups.set(variantKey, []);
     }
-    variantGroups.get(variantKey)!.push(group);
+    variantGroups.get(variantKey)?.push(group);
   }
 
   // Build final result: for each variant group, set the variants array

@@ -8,16 +8,16 @@
  */
 
 import { memo, useCallback } from 'react';
+import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character } from '@/ts/types/index.js';
 import {
   type CharacterWithSpecial,
-  type SpecialItem,
-  SPECIAL_TYPES,
+  SPECIAL_GLOBALS,
   SPECIAL_NAMES,
   SPECIAL_TIMES,
-  SPECIAL_GLOBALS,
+  SPECIAL_TYPES,
+  type SpecialItem,
 } from './types';
-import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 
 interface SpecialItemsEditorProps {
   /** The character being edited */
@@ -90,10 +90,11 @@ const SpecialItemCard = memo(function SpecialItemCard({
 
       <div className={styles.specialItemFields}>
         <div className={styles.specialField}>
-          <label>
+          <label htmlFor={`special-type-${index}`}>
             Type <span className={styles.required}>*</span>
           </label>
           <select
+            id={`special-type-${index}`}
             value={itemType}
             disabled={disabled}
             onChange={(e) => onUpdate({ type: e.target.value })}
@@ -107,10 +108,11 @@ const SpecialItemCard = memo(function SpecialItemCard({
         </div>
 
         <div className={styles.specialField}>
-          <label>
+          <label htmlFor={`special-name-${index}`}>
             Name <span className={styles.required}>*</span>
           </label>
           <select
+            id={`special-name-${index}`}
             value={itemName}
             disabled={disabled}
             onChange={(e) => onUpdate({ name: e.target.value })}
@@ -144,8 +146,9 @@ const SpecialItemCard = memo(function SpecialItemCard({
         </div>
 
         <div className={styles.specialField}>
-          <label>Time</label>
+          <label htmlFor={`special-time-${index}`}>Time</label>
           <select
+            id={`special-time-${index}`}
             value={itemTime}
             disabled={disabled}
             onChange={(e) => onUpdate({ time: e.target.value })}
@@ -160,8 +163,9 @@ const SpecialItemCard = memo(function SpecialItemCard({
         </div>
 
         <div className={styles.specialField}>
-          <label>Global</label>
+          <label htmlFor={`special-global-${index}`}>Global</label>
           <select
+            id={`special-global-${index}`}
             value={itemGlobal}
             disabled={disabled}
             onChange={(e) => onUpdate({ global: e.target.value })}
@@ -231,10 +235,8 @@ export const SpecialItemsEditor = memo(function SpecialItemsEditor({
 
   return (
     <div className={styles.formGroup}>
-      <label>Special</label>
-      <p className={styles.fieldHint}>
-        Add special app integration features for this character.
-      </p>
+      <span className={styles.label}>Special</span>
+      <p className={styles.fieldHint}>Add special app integration features for this character.</p>
 
       <div className={styles.specialItemsList}>
         {specialArray.map((rawItem, index) => {

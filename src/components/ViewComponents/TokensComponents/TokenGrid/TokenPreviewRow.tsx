@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useTokenGenerator } from '@/hooks';
 import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
@@ -79,10 +79,13 @@ export function TokenPreviewRow({
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
   const optionsRef = useRef(generationOptions);
+  // Guard to prevent duplicate preview generation (React StrictMode double-mounts)
+  const isGeneratingRef = useRef(false);
 
   // Get sample character from exampleCharacterToken
   // Character/Reminder tokens are in sync - reminders find their parent character
-  const { sampleCharacter, wasAutoSelected, selectedReminderText } = (() => {
+  // Memoized to prevent callback recreation on every render
+  const { sampleCharacter, wasAutoSelected, selectedReminderText } = useMemo(() => {
     if (characters.length === 0) {
       return {
         sampleCharacter: SAMPLE_CHARACTER,
@@ -118,10 +121,16 @@ export function TokenPreviewRow({
       wasAutoSelected: true,
       selectedReminderText: null,
     };
-  })();
+  }, [characters, exampleCharacterToken]);
 
   // Generate preview tokens - always regenerate fresh to ensure all settings changes are reflected
   const generatePreview = useCallback(async () => {
+    // Prevent duplicate generation (React StrictMode double-mounts)
+    if (isGeneratingRef.current) {
+      return;
+    }
+    isGeneratingRef.current = true;
+
     setIsGeneratingPreview(true);
     try {
       // Pass scriptMeta logo to generator options
@@ -205,6 +214,7 @@ export function TokenPreviewRow({
       logger.error('TokenPreviewRow', 'Failed to generate preview', error);
     } finally {
       setIsGeneratingPreview(false);
+      isGeneratingRef.current = false;
     }
   }, [
     generationOptions,

@@ -3,7 +3,6 @@
  * Implements ICacheStrategy with automatic eviction based on LRU policy.
  */
 
-import { logger } from '@/ts/utils/logger.js';
 import type {
   CacheEntry,
   CacheOptions,
@@ -12,6 +11,7 @@ import type {
   IEvictionPolicy,
 } from '@/ts/cache/core/index.js';
 import { estimateSize } from '@/ts/cache/utils/memoryEstimator.js';
+import { logger } from '@/ts/utils/logger.js';
 
 /**
  * Eviction event data
@@ -269,7 +269,7 @@ export class LRUCacheAdapter<K = string, V = unknown> implements ICacheStrategy<
       if (!this.tagIndex.has(tag)) {
         this.tagIndex.set(tag, new Set());
       }
-      this.tagIndex.get(tag)!.add(key);
+      this.tagIndex.get(tag)?.add(key);
     }
   }
 

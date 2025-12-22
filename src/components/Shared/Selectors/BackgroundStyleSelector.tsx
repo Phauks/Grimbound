@@ -14,7 +14,10 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useBackgroundImageUrl } from '@/hooks';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { BackgroundDrawer } from '@/components/Shared/Drawer';
+import { useBackgroundImageUrl, useDrawerState } from '@/hooks';
 import drawerStyles from '@/styles/components/shared/BackgroundDrawer.module.css';
 import styles from '@/styles/components/shared/BackgroundStyleSelector.module.css';
 import { createBackgroundGradient } from '@/ts/canvas/gradientUtils';
@@ -40,9 +43,6 @@ import type {
   LightConfig,
   TextureConfig,
 } from '@/ts/types/index';
-import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
-import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
-import { BackgroundDrawer } from '@/components/Shared/Drawer';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -90,7 +90,7 @@ const BackgroundPreview = memo(function BackgroundPreview({
   const loadedImageRef = useRef<HTMLImageElement | null>(null);
   const loadedImageUrlRef = useRef<string | null>(null);
   // State to trigger re-draw when image loads
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [_imageLoaded, setImageLoaded] = useState(false);
 
   // Resolve image URL internally (only when sourceType is 'image')
   const { resolvedUrl } = useBackgroundImageUrl({
@@ -235,7 +235,7 @@ const BackgroundPreview = memo(function BackgroundPreview({
     }
 
     ctx.restore();
-  }, [style.sourceType, style.mode, style.solidColor, style.gradient, style.effects, size, imageLoaded]);
+  }, [style.sourceType, style.mode, style.solidColor, style.gradient, style.effects, size]);
 
   return (
     <div className={styles.previewContainer}>
@@ -310,113 +310,79 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   // Get token type display name for accessibility labels
   const tokenLabel = tokenType.charAt(0).toUpperCase() + tokenType.slice(1);
 
-  // Drawer state management
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [pendingValue, setPendingValue] = useState<BackgroundStyle>(currentStyle);
-
-  // Sync pendingValue when drawer opens
-  useEffect(() => {
-    if (isDrawerOpen) {
-      setPendingValue(currentStyle);
-    }
-  }, [isDrawerOpen, currentStyle]);
-
-  // Update pending value and trigger preview
-  const updatePending = useCallback(
-    (newValue: BackgroundStyle) => {
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [onPreviewChange]
-  );
-
-  // Apply changes
-  const handleApply = useCallback(() => {
-    onChange(pendingValue);
-    setIsDrawerOpen(false);
-  }, [onChange, pendingValue]);
-
-  // Cancel changes (revert to original)
-  const handleCancel = useCallback(() => {
-    // Revert preview to original value
-    onPreviewChange?.(currentStyle);
-    setIsDrawerOpen(false);
-  }, [currentStyle, onPreviewChange]);
-
-  // Toggle drawer
-  const handleToggle = useCallback(() => {
-    if (disabled) return;
-    setIsDrawerOpen((prev) => !prev);
-  }, [disabled]);
+  // Use drawer state hook for centralized state management
+  const drawer = useDrawerState<BackgroundStyle>({
+    value: currentStyle,
+    onChange,
+    onPreviewChange,
+    disabled,
+    defaultValue: DEFAULT_BACKGROUND_STYLE,
+  });
 
   // Update handlers that modify pending value
   const handleSourceTypeChange = useCallback(
     (sourceType: BackgroundSourceType) => {
-      updatePending({ ...pendingValue, sourceType });
+      drawer.updatePending({ ...drawer.pendingValue, sourceType });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const _handleModeChange = useCallback(
     (mode: BackgroundBaseMode) => {
-      updatePending({ ...pendingValue, mode });
+      drawer.updatePending({ ...drawer.pendingValue, mode });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   // Combined handler for switching to styled mode (solid/gradient)
   // This avoids stale closure issues when both sourceType and mode need to change
   const handleStyledModeChange = useCallback(
     (mode: BackgroundBaseMode) => {
-      updatePending({ ...pendingValue, sourceType: 'styled', mode });
+      drawer.updatePending({ ...drawer.pendingValue, sourceType: 'styled', mode });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const handleSolidColorChange = useCallback(
     (solidColor: string) => {
-      updatePending({ ...pendingValue, solidColor });
+      drawer.updatePending({ ...drawer.pendingValue, solidColor });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const handleGradientChange = useCallback(
     (gradient: GradientConfig) => {
-      updatePending({ ...pendingValue, gradient });
+      drawer.updatePending({ ...drawer.pendingValue, gradient });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const handleTextureChange = useCallback(
     (texture: TextureConfig) => {
-      updatePending({ ...pendingValue, texture });
+      drawer.updatePending({ ...drawer.pendingValue, texture });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const handleEffectsChange = useCallback(
     (effects: EffectsConfig) => {
-      updatePending({ ...pendingValue, effects });
+      drawer.updatePending({ ...drawer.pendingValue, effects });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
 
   const handleLightChange = useCallback(
     (light: LightConfig) => {
-      updatePending({ ...pendingValue, light });
+      drawer.updatePending({ ...drawer.pendingValue, light });
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
-
-  const handleReset = useCallback(() => {
-    updatePending(DEFAULT_BACKGROUND_STYLE);
-  }, [updatePending]);
 
   const _handlePresetSelect = useCallback(
     (style: BackgroundStyle) => {
-      updatePending(style);
+      drawer.updatePending(style);
     },
-    [updatePending]
+    [drawer]
   );
 
   // Handle opening image selection modal
@@ -429,20 +395,19 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
     (assetId: string) => {
       // Store the asset reference (asset:uuid format) as imageUrl
       // Also set sourceType to 'image' so the Image tab becomes active
-      updatePending({ ...pendingValue, sourceType: 'image', imageUrl: assetId });
+      drawer.updatePending({ ...drawer.pendingValue, sourceType: 'image', imageUrl: assetId });
       setIsImageModalOpen(false);
     },
-    [updatePending, pendingValue]
+    [drawer]
   );
-
 
   // Render the drawer with all settings in 3-column layout (no scrolling)
   const renderDrawer = () => (
     <BackgroundDrawer
-      isOpen={isDrawerOpen}
-      onClose={handleCancel}
-      onApply={handleApply}
-      onReset={handleReset}
+      isOpen={drawer.isOpen}
+      onClose={drawer.cancel}
+      onApply={drawer.apply}
+      onReset={drawer.reset}
       tokenType={tokenType}
       title="Background Settings"
     >
@@ -454,21 +419,21 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         <div className={drawerStyles.modeTabs}>
           <button
             type="button"
-            className={`${drawerStyles.modeTab} ${pendingValue.sourceType !== 'image' && pendingValue.mode === 'solid' ? drawerStyles.modeTabActive : ''}`}
+            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'solid' ? drawerStyles.modeTabActive : ''}`}
             onClick={() => handleStyledModeChange('solid')}
           >
             Solid
           </button>
           <button
             type="button"
-            className={`${drawerStyles.modeTab} ${pendingValue.sourceType !== 'image' && pendingValue.mode === 'gradient' ? drawerStyles.modeTabActive : ''}`}
+            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'gradient' ? drawerStyles.modeTabActive : ''}`}
             onClick={() => handleStyledModeChange('gradient')}
           >
             Gradient
           </button>
           <button
             type="button"
-            className={`${drawerStyles.modeTab} ${pendingValue.sourceType === 'image' ? drawerStyles.modeTabActive : ''}`}
+            className={`${drawerStyles.modeTab} ${drawer.pendingValue.sourceType === 'image' ? drawerStyles.modeTabActive : ''}`}
             onClick={() => handleSourceTypeChange('image')}
           >
             Image
@@ -476,12 +441,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         </div>
 
         {/* Solid color */}
-        {pendingValue.sourceType !== 'image' && pendingValue.mode === 'solid' && (
+        {drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'solid' && (
           <div className={drawerStyles.colorRow}>
             <span className={drawerStyles.controlLabel}>Color</span>
             <input
               type="color"
-              value={pendingValue.solidColor}
+              value={drawer.pendingValue.solidColor}
               onChange={(e) => handleSolidColorChange(e.target.value)}
               className={drawerStyles.colorInput}
             />
@@ -503,15 +468,18 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         )}
 
         {/* Gradient controls */}
-        {pendingValue.sourceType !== 'image' && pendingValue.mode === 'gradient' && (
+        {drawer.pendingValue.sourceType !== 'image' && drawer.pendingValue.mode === 'gradient' && (
           <>
             <div className={drawerStyles.colorRow}>
               <span className={drawerStyles.controlLabel}>Color</span>
               <input
                 type="color"
-                value={pendingValue.gradient.colorStart}
+                value={drawer.pendingValue.gradient.colorStart}
                 onChange={(e) =>
-                  handleGradientChange({ ...pendingValue.gradient, colorStart: e.target.value })
+                  handleGradientChange({
+                    ...drawer.pendingValue.gradient,
+                    colorStart: e.target.value,
+                  })
                 }
                 className={drawerStyles.colorInput}
                 title="Start color"
@@ -521,7 +489,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
                 className={drawerStyles.randomizeButton}
                 onClick={() =>
                   handleGradientChange({
-                    ...pendingValue.gradient,
+                    ...drawer.pendingValue.gradient,
                     colorStart: `#${Math.floor(Math.random() * 16777215)
                       .toString(16)
                       .padStart(6, '0')}`,
@@ -534,9 +502,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
               <span className={drawerStyles.colorArrow}>→</span>
               <input
                 type="color"
-                value={pendingValue.gradient.colorEnd}
+                value={drawer.pendingValue.gradient.colorEnd}
                 onChange={(e) =>
-                  handleGradientChange({ ...pendingValue.gradient, colorEnd: e.target.value })
+                  handleGradientChange({
+                    ...drawer.pendingValue.gradient,
+                    colorEnd: e.target.value,
+                  })
                 }
                 className={drawerStyles.colorInput}
                 title="End color"
@@ -546,7 +517,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
                 className={drawerStyles.randomizeButton}
                 onClick={() =>
                   handleGradientChange({
-                    ...pendingValue.gradient,
+                    ...drawer.pendingValue.gradient,
                     colorEnd: `#${Math.floor(Math.random() * 16777215)
                       .toString(16)
                       .padStart(6, '0')}`,
@@ -560,10 +531,10 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             <div className={drawerStyles.controlRow}>
               <span className={drawerStyles.controlLabel}>Type</span>
               <select
-                value={pendingValue.gradient.type}
+                value={drawer.pendingValue.gradient.type}
                 onChange={(e) =>
                   handleGradientChange({
-                    ...pendingValue.gradient,
+                    ...drawer.pendingValue.gradient,
                     type: e.target.value as GradientType,
                   })
                 }
@@ -576,12 +547,14 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
                 ))}
               </select>
             </div>
-            {(pendingValue.gradient.type === 'linear' ||
-              pendingValue.gradient.type === 'conic') && (
+            {(drawer.pendingValue.gradient.type === 'linear' ||
+              drawer.pendingValue.gradient.type === 'conic') && (
               <EditableSlider
                 label="Angle"
-                value={pendingValue.gradient.rotation}
-                onChange={(v) => handleGradientChange({ ...pendingValue.gradient, rotation: v })}
+                value={drawer.pendingValue.gradient.rotation}
+                onChange={(v) =>
+                  handleGradientChange({ ...drawer.pendingValue.gradient, rotation: v })
+                }
                 min={0}
                 max={360}
                 step={15}
@@ -594,9 +567,9 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         )}
 
         {/* Image selection */}
-        {pendingValue.sourceType === 'image' && (
+        {drawer.pendingValue.sourceType === 'image' && (
           <div className={drawerStyles.imageSelectRow}>
-            <DrawerImageThumbnail imageUrl={pendingValue.imageUrl} />
+            <DrawerImageThumbnail imageUrl={drawer.pendingValue.imageUrl} />
             <button
               type="button"
               className={drawerStyles.selectImageButton}
@@ -613,9 +586,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         <div className={drawerStyles.sectionHeader}>Light & Color</div>
         <EditableSlider
           label="Bright"
-          value={pendingValue.light?.brightness ?? 100}
+          value={drawer.pendingValue.light?.brightness ?? 100}
           onChange={(v) =>
-            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), brightness: v })
+            handleLightChange({
+              ...(drawer.pendingValue.light || DEFAULT_LIGHT_CONFIG),
+              brightness: v,
+            })
           }
           min={0}
           max={200}
@@ -624,9 +600,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         />
         <EditableSlider
           label="Contrast"
-          value={pendingValue.light?.contrast ?? 100}
+          value={drawer.pendingValue.light?.contrast ?? 100}
           onChange={(v) =>
-            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), contrast: v })
+            handleLightChange({
+              ...(drawer.pendingValue.light || DEFAULT_LIGHT_CONFIG),
+              contrast: v,
+            })
           }
           min={0}
           max={200}
@@ -635,9 +614,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         />
         <EditableSlider
           label="Satur."
-          value={pendingValue.light?.saturation ?? 100}
+          value={drawer.pendingValue.light?.saturation ?? 100}
           onChange={(v) =>
-            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), saturation: v })
+            handleLightChange({
+              ...(drawer.pendingValue.light || DEFAULT_LIGHT_CONFIG),
+              saturation: v,
+            })
           }
           min={0}
           max={200}
@@ -646,9 +628,12 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         />
         <EditableSlider
           label="Vibrance"
-          value={pendingValue.light?.vibrance ?? 100}
+          value={drawer.pendingValue.light?.vibrance ?? 100}
           onChange={(v) =>
-            handleLightChange({ ...(pendingValue.light || DEFAULT_LIGHT_CONFIG), vibrance: v })
+            handleLightChange({
+              ...(drawer.pendingValue.light || DEFAULT_LIGHT_CONFIG),
+              vibrance: v,
+            })
           }
           min={0}
           max={200}
@@ -664,32 +649,37 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           <label className={drawerStyles.effectCheckbox}>
             <input
               type="checkbox"
-              checked={pendingValue.effects.vignetteEnabled}
+              checked={drawer.pendingValue.effects.vignetteEnabled}
               onChange={(e) =>
-                handleEffectsChange({ ...pendingValue.effects, vignetteEnabled: e.target.checked })
+                handleEffectsChange({
+                  ...drawer.pendingValue.effects,
+                  vignetteEnabled: e.target.checked,
+                })
               }
             />
             Vignette
           </label>
           <input
             type="color"
-            value={pendingValue.effects.vignetteColor || '#000000'}
+            value={drawer.pendingValue.effects.vignetteColor || '#000000'}
             onChange={(e) =>
-              handleEffectsChange({ ...pendingValue.effects, vignetteColor: e.target.value })
+              handleEffectsChange({ ...drawer.pendingValue.effects, vignetteColor: e.target.value })
             }
             className={drawerStyles.colorInput}
-            disabled={!pendingValue.effects.vignetteEnabled}
+            disabled={!drawer.pendingValue.effects.vignetteEnabled}
             title="Vignette color"
           />
         </div>
         <EditableSlider
           label="Intensity"
-          value={pendingValue.effects.vignetteIntensity}
-          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, vignetteIntensity: v })}
+          value={drawer.pendingValue.effects.vignetteIntensity}
+          onChange={(v) =>
+            handleEffectsChange({ ...drawer.pendingValue.effects, vignetteIntensity: v })
+          }
           min={0}
           max={100}
           defaultValue={DEFAULT_EFFECTS_CONFIG.vignetteIntensity}
-          disabled={!pendingValue.effects.vignetteEnabled}
+          disabled={!drawer.pendingValue.effects.vignetteEnabled}
           className={drawerStyles.subOptionIndent}
           ariaLabel="Vignette intensity"
         />
@@ -697,44 +687,54 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           <label className={drawerStyles.effectCheckbox}>
             <input
               type="checkbox"
-              checked={pendingValue.effects.innerGlowEnabled}
+              checked={drawer.pendingValue.effects.innerGlowEnabled}
               onChange={(e) =>
-                handleEffectsChange({ ...pendingValue.effects, innerGlowEnabled: e.target.checked })
+                handleEffectsChange({
+                  ...drawer.pendingValue.effects,
+                  innerGlowEnabled: e.target.checked,
+                })
               }
             />
             Glow
           </label>
           <input
             type="color"
-            value={pendingValue.effects.innerGlowColor}
+            value={drawer.pendingValue.effects.innerGlowColor}
             onChange={(e) =>
-              handleEffectsChange({ ...pendingValue.effects, innerGlowColor: e.target.value })
+              handleEffectsChange({
+                ...drawer.pendingValue.effects,
+                innerGlowColor: e.target.value,
+              })
             }
             className={drawerStyles.colorInput}
-            disabled={!pendingValue.effects.innerGlowEnabled}
+            disabled={!drawer.pendingValue.effects.innerGlowEnabled}
             title="Glow color"
           />
         </div>
         <EditableSlider
           label="Radius"
-          value={pendingValue.effects.innerGlowRadius}
-          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, innerGlowRadius: v })}
+          value={drawer.pendingValue.effects.innerGlowRadius}
+          onChange={(v) =>
+            handleEffectsChange({ ...drawer.pendingValue.effects, innerGlowRadius: v })
+          }
           min={0}
           max={50}
           suffix=""
           defaultValue={DEFAULT_EFFECTS_CONFIG.innerGlowRadius}
-          disabled={!pendingValue.effects.innerGlowEnabled}
+          disabled={!drawer.pendingValue.effects.innerGlowEnabled}
           className={drawerStyles.subOptionIndent}
           ariaLabel="Glow radius"
         />
         <EditableSlider
           label="Intensity"
-          value={pendingValue.effects.innerGlowIntensity}
-          onChange={(v) => handleEffectsChange({ ...pendingValue.effects, innerGlowIntensity: v })}
+          value={drawer.pendingValue.effects.innerGlowIntensity}
+          onChange={(v) =>
+            handleEffectsChange({ ...drawer.pendingValue.effects, innerGlowIntensity: v })
+          }
           min={0}
           max={100}
           defaultValue={DEFAULT_EFFECTS_CONFIG.innerGlowIntensity}
-          disabled={!pendingValue.effects.innerGlowEnabled}
+          disabled={!drawer.pendingValue.effects.innerGlowEnabled}
           className={drawerStyles.subOptionIndent}
           ariaLabel="Glow intensity"
         />
@@ -748,8 +748,10 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             <button
               key={option.value}
               type="button"
-              className={`${drawerStyles.textureOption} ${pendingValue.texture.type === option.value ? drawerStyles.textureOptionActive : ''}`}
-              onClick={() => handleTextureChange({ ...pendingValue.texture, type: option.value })}
+              className={`${drawerStyles.textureOption} ${drawer.pendingValue.texture.type === option.value ? drawerStyles.textureOptionActive : ''}`}
+              onClick={() =>
+                handleTextureChange({ ...drawer.pendingValue.texture, type: option.value })
+              }
               title={option.description}
             >
               {option.label}
@@ -758,38 +760,38 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         </div>
         <EditableSlider
           label="Intensity"
-          value={pendingValue.texture.intensity}
-          onChange={(v) => handleTextureChange({ ...pendingValue.texture, intensity: v })}
+          value={drawer.pendingValue.texture.intensity}
+          onChange={(v) => handleTextureChange({ ...drawer.pendingValue.texture, intensity: v })}
           min={0}
           max={100}
           defaultValue={DEFAULT_TEXTURE_CONFIG.intensity}
-          disabled={pendingValue.texture.type === 'none'}
+          disabled={drawer.pendingValue.texture.type === 'none'}
           ariaLabel="Texture intensity"
         />
         <EditableSlider
           label="Scale"
-          value={pendingValue.texture.scale}
-          onChange={(v) => handleTextureChange({ ...pendingValue.texture, scale: v })}
+          value={drawer.pendingValue.texture.scale}
+          onChange={(v) => handleTextureChange({ ...drawer.pendingValue.texture, scale: v })}
           min={0.5}
           max={2}
           step={0.1}
           suffix="x"
           defaultValue={DEFAULT_TEXTURE_CONFIG.scale}
-          disabled={pendingValue.texture.type === 'none'}
+          disabled={drawer.pendingValue.texture.type === 'none'}
           ariaLabel="Texture scale"
         />
         <div className={drawerStyles.controlRow}>
           <span className={drawerStyles.controlLabel}>Blend</span>
           <select
-            value={pendingValue.texture.blendMode ?? 'overlay'}
+            value={drawer.pendingValue.texture.blendMode ?? 'overlay'}
             onChange={(e) =>
               handleTextureChange({
-                ...pendingValue.texture,
+                ...drawer.pendingValue.texture,
                 blendMode: e.target.value as TextureBlendMode,
               })
             }
             className={drawerStyles.typeSelect}
-            disabled={pendingValue.texture.type === 'none'}
+            disabled={drawer.pendingValue.texture.type === 'none'}
           >
             {BLEND_MODE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -804,13 +806,14 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             type="number"
             min="0"
             max="99999"
-            value={pendingValue.texture.seed ?? 12345}
+            value={drawer.pendingValue.texture.seed ?? 12345}
             onChange={(e) =>
-              handleTextureChange({ ...pendingValue.texture, seed: Number(e.target.value) })
+              handleTextureChange({ ...drawer.pendingValue.texture, seed: Number(e.target.value) })
             }
             className={drawerStyles.seedInput}
             disabled={
-              pendingValue.texture.type === 'none' || pendingValue.texture.randomizeSeedPerToken
+              drawer.pendingValue.texture.type === 'none' ||
+              drawer.pendingValue.texture.randomizeSeedPerToken
             }
           />
           <button
@@ -818,12 +821,13 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
             className={drawerStyles.randomizeButton}
             onClick={() =>
               handleTextureChange({
-                ...pendingValue.texture,
+                ...drawer.pendingValue.texture,
                 seed: Math.floor(Math.random() * 100000),
               })
             }
             disabled={
-              pendingValue.texture.type === 'none' || pendingValue.texture.randomizeSeedPerToken
+              drawer.pendingValue.texture.type === 'none' ||
+              drawer.pendingValue.texture.randomizeSeedPerToken
             }
           >
             🎲
@@ -834,14 +838,14 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           >
             <input
               type="checkbox"
-              checked={pendingValue.texture.randomizeSeedPerToken ?? false}
+              checked={drawer.pendingValue.texture.randomizeSeedPerToken ?? false}
               onChange={(e) =>
                 handleTextureChange({
-                  ...pendingValue.texture,
+                  ...drawer.pendingValue.texture,
                   randomizeSeedPerToken: e.target.checked,
                 })
               }
-              disabled={pendingValue.texture.type === 'none'}
+              disabled={drawer.pendingValue.texture.type === 'none'}
             />
             Unique
           </label>
@@ -862,9 +866,9 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
           </PreviewBox>
         }
         info={<InfoSection label="Background" />}
-        onAction={handleToggle}
-        actionLabel={isDrawerOpen ? 'Close' : 'Customize'}
-        isExpanded={isDrawerOpen}
+        onAction={drawer.toggle}
+        actionLabel={drawer.isOpen ? 'Close' : 'Customize'}
+        isExpanded={drawer.isOpen}
         disabled={disabled}
         size={size}
         ariaLabel={ariaLabel || `${tokenLabel} background style`}
@@ -873,19 +877,21 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
       {/* Drawer with all background settings */}
       {renderDrawer()}
 
-      {/* Asset Manager Modal for image selection */}
-      <AssetManagerModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        projectId={projectId}
-        initialAssetType="token-background"
-        selectionMode={true}
-        onSelectAsset={handleImageSelect}
-        includeBuiltIn={true}
-        showNoneOption={false}
-        generationOptions={generationOptions}
-        previewTokenType={tokenType}
-      />
+      {/* Asset Manager Modal for image selection - only mount when open */}
+      {isImageModalOpen && (
+        <AssetManagerModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          projectId={projectId}
+          initialAssetType="token-background"
+          selectionMode={true}
+          onSelectAsset={handleImageSelect}
+          includeBuiltIn={true}
+          showNoneOption={false}
+          generationOptions={generationOptions}
+          previewTokenType={tokenType}
+        />
+      )}
     </>
   );
 });

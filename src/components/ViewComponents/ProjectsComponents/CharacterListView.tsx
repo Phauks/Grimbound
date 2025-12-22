@@ -225,9 +225,10 @@ const CharacterIcon = memo(function CharacterIcon({
   selection,
   isEnabled,
 }: CharacterIconProps) {
-  const handleClick = selection.enabled && selection.onToggle
-    ? () => selection.onToggle!(character.uuid, !isEnabled)
-    : undefined;
+  const handleClick =
+    selection.enabled && selection.onToggle
+      ? () => selection.onToggle?.(character.uuid, !isEnabled)
+      : undefined;
 
   const buttonStyle = selection.enabled
     ? ({

@@ -10,11 +10,11 @@
  */
 
 import { memo, useCallback, useMemo, useState } from 'react';
-import type { Character, DecorativeOverrides } from '@/ts/types/index.js';
-import { useJsonEditor } from '@/hooks';
 import { CodeMirrorEditor } from '@/components/Shared/Json/CodeMirrorEditor';
-import { type JsonSubTab } from './types';
+import { useJsonEditor } from '@/hooks';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
+import type { Character, DecorativeOverrides } from '@/ts/types/index.js';
+import type { JsonSubTab } from './types';
 
 interface JsonTabContentProps {
   character: Character;
@@ -31,11 +31,10 @@ interface JsonTabContentProps {
  * Strips internal-only fields from character for display.
  */
 function getDisplayCharacter(character: Character): Partial<Character> {
-  const {
-    uuid,
-    source,
-    ...displayable
-  } = character as Character & { uuid?: string; source?: string };
+  const { uuid, source, ...displayable } = character as Character & {
+    uuid?: string;
+    source?: string;
+  };
   return displayable;
 }
 
@@ -127,9 +126,7 @@ export const JsonTabContent = memo(function JsonTabContent({
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={() =>
-                  characterJson.download(`${character.id || 'character'}.json`)
-                }
+                onClick={() => characterJson.download(`${character.id || 'character'}.json`)}
                 title="Download as file"
               >
                 Download
@@ -146,9 +143,7 @@ export const JsonTabContent = memo(function JsonTabContent({
             />
           </div>
 
-          {characterJson.error && (
-            <div className={styles.jsonError}>{characterJson.error}</div>
-          )}
+          {characterJson.error && <div className={styles.jsonError}>{characterJson.error}</div>}
         </>
       )}
 
@@ -157,7 +152,8 @@ export const JsonTabContent = memo(function JsonTabContent({
         <div className={styles.metadataView}>
           <div className={styles.jsonHeader}>
             <p className={styles.jsonDescription}>
-              Internal metadata for this character. UUID and linked settings are managed by the editor.
+              Internal metadata for this character. UUID and linked settings are managed by the
+              editor.
             </p>
             <div className={styles.jsonButtons}>
               <button
@@ -173,16 +169,16 @@ export const JsonTabContent = memo(function JsonTabContent({
 
           <div className={styles.metadataContent}>
             <div className={styles.metadataField}>
-              <label>UUID</label>
+              <span className={styles.metadataLabel}>UUID</span>
               <code>{charUuid}</code>
             </div>
             <div className={styles.metadataField}>
-              <label>ID Linked to Name</label>
+              <span className={styles.metadataLabel}>ID Linked to Name</span>
               <code>{metadata.idLinkedToName ? 'true' : 'false'}</code>
             </div>
             {metadata.decoratives && Object.keys(metadata.decoratives).length > 0 && (
               <div className={styles.metadataField}>
-                <label>Decorative Overrides</label>
+                <span className={styles.metadataLabel}>Decorative Overrides</span>
                 <pre className={styles.metadataJson}>
                   {JSON.stringify(metadata.decoratives, null, 2)}
                 </pre>

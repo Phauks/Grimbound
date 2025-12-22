@@ -1,6 +1,11 @@
 /**
  * Blood on the Clocktower Token Generator
  * Batch Token Generation - Orchestrates bulk token creation with parallel processing
+ *
+ * Architecture:
+ * - Uses TokenGenerator for canvas rendering (low-level)
+ * - Uses TokenFactory for Token object creation (metadata assembly)
+ * - Orchestrates batching, progress, and abort handling (high-level)
  */
 
 import type { TextLayoutResult } from '@/ts/canvas/index.js';
@@ -15,7 +20,6 @@ import type {
   GenerationOptions,
   ProgressCallback,
   ScriptMeta,
-  Team,
   Token,
   TokenCallback,
 } from '@/ts/types/index.js';
@@ -27,7 +31,57 @@ import {
   sanitizeFilename,
   updateProgress,
 } from '@/ts/utils/index.js';
+import { TokenFactory } from './TokenFactory.js';
 import { TokenGenerator } from './TokenGenerator.js';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+/**
+ * Context object passed to generation functions.
+ * Reduces parameter count and groups related dependencies.
+ */
+interface BatchContext {
+  generator: TokenGenerator;
+  factory: TokenFactory;
+  progress: ProgressState;
+  options: Partial<GenerationOptions>;
+  scriptMeta: ScriptMeta | null;
+  signal?: AbortSignal;
+}
+
+/**
+ * Variant information for characters with multiple images
+ */
+interface CharacterVariant {
+  filename: string;
+  imageUrl: string | undefined;
+  variantIndex: number;
+  totalVariants: number;
+}
+
+/**
+ * Pre-computed batch info for a character
+ */
+interface CharacterBatchInfo {
+  variants: CharacterVariant[];
+  isOfficial: boolean;
+}
+
+// ============================================================================
+// UTILITY HELPERS
+// ============================================================================
+
+/**
+ * Check if generation has been aborted and throw if so.
+ * @throws DOMException with 'AbortError' name if aborted
+ */
+function checkAbort(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Token generation aborted', 'AbortError');
+  }
+}
 
 // ============================================================================
 // TOKEN COUNT CALCULATION
@@ -45,13 +99,11 @@ function calculateTotalTokenCount(
   if (options.pandemoniumToken) metaTokenCount++;
   if (options.scriptNameToken && scriptMeta?.name) metaTokenCount++;
   if (options.almanacToken && scriptMeta?.almanac) metaTokenCount++;
-  // Add bootlegger token count
   if (options.generateBootleggerRules && scriptMeta?.bootlegger?.length) {
     metaTokenCount += scriptMeta.bootlegger.length;
   }
 
   const characterTokenCount = characters.reduce((sum, char) => {
-    // If generating variants, count all image variants for each character
     const imageCount = options.generateImageVariants
       ? getAllCharacterImageUrls(char.image).length || 1
       : 1;
@@ -62,261 +114,302 @@ function calculateTotalTokenCount(
 }
 
 // ============================================================================
-// META TOKEN GENERATION
+// META TOKEN GENERATION - Individual Token Functions
 // ============================================================================
 
 /**
- * Generate meta tokens (Pandemonium, Script Name, Almanac QR)
+ * Generate Pandemonium token if enabled
  */
-async function generateMetaTokens(
+async function generatePandemoniumIfEnabled(ctx: BatchContext): Promise<Token | null> {
+  if (!ctx.options.pandemoniumToken) return null;
+
+  checkAbort(ctx.signal);
+
+  try {
+    const canvas = await ctx.generator.generatePandemoniumToken();
+    const token = ctx.factory.createMetaToken({
+      canvas,
+      type: 'pandemonium',
+      name: 'Pandemonium Institute',
+      filename: '_pandemonium_institute',
+    });
+    return ctx.factory.emit(token);
+  } catch (error) {
+    logger.error('BatchGenerator', 'Failed to generate pandemonium token', error);
+    return null;
+  } finally {
+    updateProgress(ctx.progress);
+  }
+}
+
+/**
+ * Generate Script Name token if enabled
+ */
+async function generateScriptNameIfEnabled(ctx: BatchContext): Promise<Token | null> {
+  if (!(ctx.options.scriptNameToken && ctx.scriptMeta?.name)) return null;
+
+  checkAbort(ctx.signal);
+
+  try {
+    const hideAuthor = ctx.options.hideScriptNameAuthor ?? false;
+    const canvas = await ctx.generator.generateScriptNameToken(
+      ctx.scriptMeta.name,
+      ctx.scriptMeta.author,
+      hideAuthor
+    );
+    const token = ctx.factory.createMetaToken({
+      canvas,
+      type: 'script-name',
+      name: ctx.scriptMeta.name,
+      filename: '_script_name',
+    });
+    return ctx.factory.emit(token);
+  } catch (error) {
+    logger.error('BatchGenerator', 'Failed to generate script name token', error);
+    return null;
+  } finally {
+    updateProgress(ctx.progress);
+  }
+}
+
+/**
+ * Generate Almanac QR token if enabled
+ */
+async function generateAlmanacIfEnabled(ctx: BatchContext): Promise<Token | null> {
+  if (!(ctx.options.almanacToken && ctx.scriptMeta?.almanac && ctx.scriptMeta?.name)) return null;
+
+  checkAbort(ctx.signal);
+
+  try {
+    const canvas = await ctx.generator.generateAlmanacQRToken(
+      ctx.scriptMeta.almanac,
+      ctx.scriptMeta.name,
+      ctx.scriptMeta.logo
+    );
+    const token = ctx.factory.createMetaToken({
+      canvas,
+      type: 'almanac',
+      name: `${ctx.scriptMeta.name} Almanac`,
+      filename: '_almanac_qr',
+    });
+    return ctx.factory.emit(token);
+  } catch (error) {
+    logger.error('BatchGenerator', 'Failed to generate almanac QR token', error);
+    return null;
+  } finally {
+    updateProgress(ctx.progress);
+  }
+}
+
+/**
+ * Calculate normalized layout for bootlegger tokens (for consistent icon sizing)
+ */
+function calculateNormalizedBootleggerLayout(
   generator: TokenGenerator,
-  options: Partial<GenerationOptions>,
-  scriptMeta: ScriptMeta | null,
-  progress: ProgressState,
-  dpi: number,
-  tokenCallback: TokenCallback | null = null,
-  signal?: AbortSignal
-): Promise<Token[]> {
+  entries: string[],
+  normalize: boolean
+): TextLayoutResult | undefined {
+  if (!normalize || entries.length <= 1) return undefined;
+
+  let maxTextHeight = 0;
+  let normalizedLayout: TextLayoutResult | undefined;
+
+  for (const text of entries) {
+    const layout = generator.calculateBootleggerLayout(text);
+    if (layout && layout.totalHeight > maxTextHeight) {
+      maxTextHeight = layout.totalHeight;
+      normalizedLayout = layout;
+    }
+  }
+
+  return normalizedLayout;
+}
+
+/**
+ * Generate all Bootlegger tokens if enabled
+ */
+async function generateBootleggerTokens(ctx: BatchContext): Promise<Token[]> {
   const tokens: Token[] = [];
 
-  if (options.pandemoniumToken) {
-    // Check for cancellation
-    if (signal?.aborted) {
-      throw new DOMException('Token generation aborted', 'AbortError');
+  if (!(ctx.options.generateBootleggerRules && ctx.scriptMeta?.bootlegger?.length)) {
+    return tokens;
+  }
+
+  const bootleggerEntries = ctx.scriptMeta.bootlegger.filter((text) => text?.trim());
+  const normalizedLayout = calculateNormalizedBootleggerLayout(
+    ctx.generator,
+    bootleggerEntries,
+    ctx.options.bootleggerNormalizeIcons ?? false
+  );
+
+  for (let i = 0; i < ctx.scriptMeta.bootlegger.length; i++) {
+    const abilityText = ctx.scriptMeta.bootlegger[i];
+
+    checkAbort(ctx.signal);
+
+    // Skip empty entries but still update progress
+    if (!abilityText?.trim()) {
+      updateProgress(ctx.progress);
+      continue;
     }
 
     try {
-      const canvas = await generator.generatePandemoniumToken();
-      const token: Token = {
-        type: 'pandemonium',
-        name: 'Pandemonium Institute',
-        filename: '_pandemonium_institute',
-        team: 'meta',
+      const canvas = await ctx.generator.generateBootleggerToken(abilityText, normalizedLayout);
+      const token = ctx.factory.createMetaToken({
         canvas,
-        diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-      };
-      if (tokenCallback) tokenCallback(token);
-      tokens.push(token);
+        type: 'bootlegger',
+        name: `Bootlegger ${i + 1}`,
+        filename: `_bootlegger_${i + 1}`,
+        order: i,
+      });
+      ctx.factory.emitAndPush(token, tokens);
     } catch (error) {
-      logger.error('BatchGenerator', 'Failed to generate pandemonium token', error);
+      logger.error('BatchGenerator', `Failed to generate bootlegger token ${i + 1}`, error);
     }
-    updateProgress(progress);
-  }
-
-  if (options.scriptNameToken && scriptMeta?.name) {
-    // Check for cancellation
-    if (signal?.aborted) {
-      throw new DOMException('Token generation aborted', 'AbortError');
-    }
-
-    try {
-      const hideAuthor = options.hideScriptNameAuthor ?? false;
-      const canvas = await generator.generateScriptNameToken(
-        scriptMeta.name,
-        scriptMeta.author,
-        hideAuthor
-      );
-      const token: Token = {
-        type: 'script-name',
-        name: scriptMeta.name,
-        filename: '_script_name',
-        team: 'meta',
-        canvas,
-        diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-      };
-      if (tokenCallback) tokenCallback(token);
-      tokens.push(token);
-    } catch (error) {
-      logger.error('BatchGenerator', 'Failed to generate script name token', error);
-    }
-    updateProgress(progress);
-  }
-
-  if (options.almanacToken && scriptMeta?.almanac && scriptMeta?.name) {
-    // Check for cancellation
-    if (signal?.aborted) {
-      throw new DOMException('Token generation aborted', 'AbortError');
-    }
-
-    try {
-      const canvas = await generator.generateAlmanacQRToken(
-        scriptMeta.almanac,
-        scriptMeta.name,
-        scriptMeta.logo
-      );
-      const token: Token = {
-        type: 'almanac',
-        name: `${scriptMeta.name} Almanac`,
-        filename: '_almanac_qr',
-        team: 'meta',
-        canvas,
-        diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-      };
-      if (tokenCallback) tokenCallback(token);
-      tokens.push(token);
-    } catch (error) {
-      logger.error('BatchGenerator', 'Failed to generate almanac QR token', error);
-    }
-    updateProgress(progress);
-  }
-
-  // Generate Bootlegger tokens
-  if (options.generateBootleggerRules && scriptMeta?.bootlegger?.length) {
-    const bootleggerEntries = scriptMeta.bootlegger.filter((text) => text?.trim());
-
-    // Calculate normalized layout if option is enabled and there are multiple entries
-    let normalizedLayout: TextLayoutResult | undefined;
-    if (options.bootleggerNormalizeIcons && bootleggerEntries.length > 1) {
-      // Pre-calculate all layouts to find the one with largest text height
-      let maxTextHeight = 0;
-      for (const text of bootleggerEntries) {
-        const layout = generator.calculateBootleggerLayout(text);
-        if (layout && layout.totalHeight > maxTextHeight) {
-          maxTextHeight = layout.totalHeight;
-          normalizedLayout = layout;
-        }
-      }
-    }
-
-    for (let i = 0; i < scriptMeta.bootlegger.length; i++) {
-      const abilityText = scriptMeta.bootlegger[i];
-
-      // Check for cancellation
-      if (signal?.aborted) {
-        throw new DOMException('Token generation aborted', 'AbortError');
-      }
-
-      // Skip empty entries
-      if (!abilityText?.trim()) {
-        updateProgress(progress);
-        continue;
-      }
-
-      try {
-        const canvas = await generator.generateBootleggerToken(abilityText, normalizedLayout);
-        const token: Token = {
-          type: 'bootlegger',
-          name: `Bootlegger ${i + 1}`,
-          filename: `_bootlegger_${i + 1}`,
-          team: 'meta',
-          canvas,
-          diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-          order: i, // Preserve order from script meta
-        };
-        if (tokenCallback) tokenCallback(token);
-        tokens.push(token);
-      } catch (error) {
-        logger.error('BatchGenerator', `Failed to generate bootlegger token ${i + 1}`, error);
-      }
-      updateProgress(progress);
-    }
+    updateProgress(ctx.progress);
   }
 
   return tokens;
 }
 
+/**
+ * Generate all meta tokens (Pandemonium, Script Name, Almanac QR, Bootlegger)
+ */
+async function generateMetaTokens(ctx: BatchContext): Promise<Token[]> {
+  const tokens: Token[] = [];
+
+  // Generate each meta token type
+  const pandemonium = await generatePandemoniumIfEnabled(ctx);
+  if (pandemonium) tokens.push(pandemonium);
+
+  const scriptName = await generateScriptNameIfEnabled(ctx);
+  if (scriptName) tokens.push(scriptName);
+
+  const almanac = await generateAlmanacIfEnabled(ctx);
+  if (almanac) tokens.push(almanac);
+
+  const bootleggers = await generateBootleggerTokens(ctx);
+  tokens.push(...bootleggers);
+
+  return tokens;
+}
+
 // ============================================================================
-// CHARACTER TOKEN GENERATION
+// CHARACTER & REMINDER TOKEN GENERATION
 // ============================================================================
 
 /**
- * Generate a single character token with unique filename
+ * Pre-compute batch info for a character (filenames, variant info, official status)
  */
-async function _generateSingleCharacterToken(
-  generator: TokenGenerator,
+function computeCharacterBatchInfo(
   character: Character,
-  nameCount: Map<string, number>,
-  dpi: number
+  generateImageVariants: boolean,
+  nameCount: Map<string, number>
+): CharacterBatchInfo {
+  if (!character.name) {
+    return { variants: [], isOfficial: false };
+  }
+
+  const isOfficial = character.source === 'official';
+
+  // Check for multiple image variants
+  if (generateImageVariants) {
+    const imageUrls = getAllCharacterImageUrls(character.image);
+    if (imageUrls.length > 1) {
+      const totalVariants = imageUrls.length;
+      const variants = imageUrls.map((imageUrl, variantIndex) => {
+        const baseName = sanitizeFilename(`${character.name}_v${variantIndex + 1}`);
+        const filename = generateUniqueFilename(nameCount, baseName);
+        return { filename, imageUrl, variantIndex, totalVariants };
+      });
+      return { variants, isOfficial };
+    }
+  }
+
+  // Single image or variants disabled
+  const baseName = sanitizeFilename(character.name);
+  const filename = generateUniqueFilename(nameCount, baseName);
+  return {
+    variants: [{ filename, imageUrl: undefined, variantIndex: 0, totalVariants: 1 }],
+    isOfficial,
+  };
+}
+
+/**
+ * Generate a single character token variant
+ */
+async function generateCharacterVariant(
+  ctx: BatchContext,
+  character: Character,
+  variant: CharacterVariant,
+  order: number
 ): Promise<Token | null> {
-  if (!character.name) return null;
-
   try {
-    const canvas = await generator.generateCharacterToken(character);
-    const baseName = sanitizeFilename(character.name);
-    const filename = generateUniqueFilename(nameCount, baseName);
+    const canvas = await ctx.generator.generateCharacterToken(character, variant.imageUrl);
+    updateProgress(ctx.progress);
 
-    // Check if character is official based on source field
-    const isOfficial = character.source === 'official';
-
-    return {
-      type: 'character',
-      name: character.name,
-      filename,
-      team: (character.team || 'townsfolk') as Team,
+    const token = ctx.factory.createCharacterToken({
       canvas,
-      diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-      hasReminders: (character.reminders?.length ?? 0) > 0,
-      reminderCount: character.reminders?.length ?? 0,
-      parentUuid: character.uuid,
-      isOfficial,
-    };
+      character,
+      filename: variant.filename,
+      order,
+      imageUrl: variant.imageUrl,
+      variantInfo:
+        variant.totalVariants > 1
+          ? { variantIndex: variant.variantIndex, totalVariants: variant.totalVariants }
+          : undefined,
+    });
+
+    return ctx.factory.emit(token);
   } catch (error) {
     logger.error('BatchGenerator', `Failed to generate token for ${character.name}`, error);
+    updateProgress(ctx.progress);
     return null;
   }
 }
 
-// ============================================================================
-// REMINDER TOKEN GENERATION
-// ============================================================================
-
 /**
  * Generate reminder tokens for a character
  */
-async function generateReminderTokensForCharacter(
-  generator: TokenGenerator,
+async function generateReminderTokens(
+  ctx: BatchContext,
   character: Character,
-  progress: ProgressState,
-  dpi: number,
-  isCharacterOfficial: boolean,
-  characterOrder: number,
-  generateVariants: boolean = false,
-  tokenCallback: TokenCallback | null = null,
-  signal?: AbortSignal
+  order: number,
+  generateVariants: boolean
 ): Promise<Token[]> {
   const tokens: Token[] = [];
-  if (!(character.reminders && Array.isArray(character.reminders))) return tokens;
+
+  if (!(character.reminders && Array.isArray(character.reminders))) {
+    return tokens;
+  }
 
   const reminderNameCount = new Map<string, number>();
-
-  // Get image URLs for variants
   const imageUrls = generateVariants ? getAllCharacterImageUrls(character.image) : [undefined];
   const hasVariants = imageUrls.length > 1 && generateVariants;
 
   for (const reminder of character.reminders) {
-    // Check for cancellation
-    if (signal?.aborted) {
-      throw new DOMException('Token generation aborted', 'AbortError');
-    }
+    checkAbort(ctx.signal);
 
     // Generate reminder for each image variant (or just once if no variants)
     for (let variantIndex = 0; variantIndex < imageUrls.length; variantIndex++) {
       const imageUrl = imageUrls[variantIndex];
 
       try {
-        const canvas = await generator.generateReminderToken(character, reminder, imageUrl);
+        const canvas = await ctx.generator.generateReminderToken(character, reminder, imageUrl);
         const variantSuffix = hasVariants ? `_v${variantIndex + 1}` : '';
         const reminderBaseName = sanitizeFilename(`${character.name}_${reminder}${variantSuffix}`);
         const filename = generateUniqueFilename(reminderNameCount, reminderBaseName);
 
-        const token: Token = {
-          type: 'reminder',
-          name: `${character.name} - ${reminder}`,
-          filename,
-          team: (character.team || 'townsfolk') as Team,
+        const token = ctx.factory.createReminderToken({
           canvas,
-          diameter: CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * dpi,
-          parentCharacter: character.name,
-          parentUuid: character.uuid,
+          character,
           reminderText: reminder,
-          isOfficial: isCharacterOfficial,
-          order: characterOrder,
-          // Only set variant properties if there are multiple variants
-          ...(hasVariants && { variantIndex, totalVariants: imageUrls.length }),
-        };
-        // Emit token immediately if callback provided
-        if (tokenCallback) tokenCallback(token);
-        tokens.push(token);
+          filename,
+          order,
+          variantInfo: hasVariants ? { variantIndex, totalVariants: imageUrls.length } : undefined,
+        });
+
+        ctx.factory.emitAndPush(token, tokens);
       } catch (error) {
         logger.error(
           'BatchGenerator',
@@ -324,7 +417,7 @@ async function generateReminderTokensForCharacter(
           error
         );
       }
-      updateProgress(progress);
+      updateProgress(ctx.progress);
     }
   }
 
@@ -335,114 +428,36 @@ async function generateReminderTokensForCharacter(
  * Generate character and reminder tokens for all characters using parallel batching
  */
 async function generateCharacterAndReminderTokens(
-  generator: TokenGenerator,
+  ctx: BatchContext,
   characters: Character[],
-  progress: ProgressState,
-  dpi: number,
-  generateImageVariants: boolean = false,
-  generateReminderVariants: boolean = false,
-  tokenCallback: TokenCallback | null = null,
-  signal?: AbortSignal
+  generateImageVariants: boolean,
+  generateReminderVariants: boolean
 ): Promise<Token[]> {
   const tokens: Token[] = [];
   const nameCount = new Map<string, number>();
   const batchSize = CONFIG.GENERATION.BATCH_SIZE;
 
-  // Process characters in parallel batches
   for (let i = 0; i < characters.length; i += batchSize) {
-    // Check for cancellation before each batch
-    if (signal?.aborted) {
-      throw new DOMException('Token generation aborted', 'AbortError');
-    }
+    checkAbort(ctx.signal);
 
     const batch = characters.slice(i, i + batchSize);
 
     // Pre-compute filenames and official status for this batch
-    // When generating variants, each image needs a unique filename
-    const batchInfo = batch.map((character) => {
-      if (!character.name)
-        return {
-          variants: [] as Array<{
-            filename: string;
-            imageUrl: string | undefined;
-            variantIndex: number;
-            totalVariants: number;
-          }>,
-          isOfficial: false,
-        };
-      // Check if character is official based on source field
-      const isOfficial = character.source === 'official';
-
-      if (generateImageVariants) {
-        const imageUrls = getAllCharacterImageUrls(character.image);
-        if (imageUrls.length > 1) {
-          // Multiple images - generate variant filenames
-          const totalVariants = imageUrls.length;
-          const variants = imageUrls.map((imageUrl, variantIndex) => {
-            const baseName = sanitizeFilename(`${character.name}_v${variantIndex + 1}`);
-            const filename = generateUniqueFilename(nameCount, baseName);
-            return { filename, imageUrl, variantIndex, totalVariants };
-          });
-          return { variants, isOfficial };
-        }
-      }
-
-      // Single image or variants disabled
-      const baseName = sanitizeFilename(character.name);
-      const filename = generateUniqueFilename(nameCount, baseName);
-      return {
-        variants: [{ filename, imageUrl: undefined, variantIndex: 0, totalVariants: 1 }],
-        isOfficial,
-      };
-    });
+    const batchInfo = batch.map((character) =>
+      computeCharacterBatchInfo(character, generateImageVariants, nameCount)
+    );
 
     // Generate character tokens in parallel (including variants)
     const charTokenPromises: Promise<Token | null>[] = [];
 
     batch.forEach((character, idx) => {
-      const { variants, isOfficial } = batchInfo[idx];
+      const { variants } = batchInfo[idx];
       if (!character.name || variants.length === 0) return;
 
-      // Calculate the absolute index in the original characters array
       const absoluteIndex = i + idx;
 
-      for (const { filename, imageUrl, variantIndex, totalVariants } of variants) {
-        charTokenPromises.push(
-          (async () => {
-            try {
-              const canvas = await generator.generateCharacterToken(character, imageUrl);
-              updateProgress(progress);
-              const token: Token = {
-                type: 'character' as const,
-                name: character.name,
-                filename,
-                team: (character.team || 'townsfolk') as Team,
-                canvas,
-                diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-                hasReminders: (character.reminders?.length ?? 0) > 0,
-                reminderCount: character.reminders?.length ?? 0,
-                isOfficial,
-                order: absoluteIndex,
-                // Only set variant properties if there are multiple variants
-                ...(totalVariants > 1 && { variantIndex, totalVariants }),
-                // Store character data and image URL for later access (e.g., Studio editing)
-                characterData: character,
-                imageUrl,
-              };
-              // Emit token immediately if callback provided
-              if (tokenCallback) tokenCallback(token);
-              return token;
-            } catch (error) {
-              logger.error(
-                'BatchGenerator',
-                `Failed to generate token for ${character.name}`,
-                error
-              );
-              updateProgress(progress);
-              return null;
-            }
-          })()
-        );
+      for (const variant of variants) {
+        charTokenPromises.push(generateCharacterVariant(ctx, character, variant, absoluteIndex));
       }
     });
 
@@ -451,21 +466,12 @@ async function generateCharacterAndReminderTokens(
       if (token !== null) tokens.push(token);
     }
 
-    // Generate reminder tokens in parallel for this batch (only once per character, not per variant)
+    // Generate reminder tokens in parallel for this batch
     const reminderPromises = batch.map((character, idx) => {
       const absoluteIndex = i + idx;
-      return generateReminderTokensForCharacter(
-        generator,
-        character,
-        progress,
-        dpi,
-        batchInfo[idx].isOfficial,
-        absoluteIndex,
-        generateReminderVariants,
-        tokenCallback,
-        signal
-      );
+      return generateReminderTokens(ctx, character, absoluteIndex, generateReminderVariants);
     });
+
     const reminderResults = await Promise.all(reminderPromises);
     for (const reminders of reminderResults) {
       tokens.push(...reminders);
@@ -480,12 +486,49 @@ async function generateCharacterAndReminderTokens(
 // ============================================================================
 
 /**
+ * Build TokenGenerator options from GenerationOptions and ScriptMeta
+ */
+function buildGeneratorOptions(options: Partial<GenerationOptions>, scriptMeta: ScriptMeta | null) {
+  return {
+    ...options,
+    transparentBackground: options.pngSettings?.transparentBackground ?? false,
+    bootleggerRules: options.generateBootleggerRules ? scriptMeta?.bootlegger : undefined,
+    bootleggerIconType: options.bootleggerIconType,
+    bootleggerNormalizeIcons: options.bootleggerNormalizeIcons,
+    bootleggerHideName: options.bootleggerHideName,
+    logoUrl: scriptMeta?.logo,
+  };
+}
+
+/**
+ * Pre-warm caches for better performance
+ */
+async function prewarmCaches(generator: TokenGenerator, characters: Character[]): Promise<void> {
+  // Pre-warm image cache
+  await generator.prewarmImageCache(characters);
+
+  // Pre-resolve asset references with priority-based loading
+  const imageFields = characters.map((c) => c.image);
+  const preloadTasks = createPreloadTasks(imageFields, 10); // First 10 get high priority
+
+  if (preloadTasks.length > 0) {
+    await preResolveAssetsWithPriority(preloadTasks, {
+      concurrency: 15,
+      onProgress: (_loaded, _total) => {
+        // Optional: could emit progress event here
+      },
+    });
+  }
+}
+
+/**
  * Generate all tokens for a list of characters
+ *
  * @param characters - Array of character data (must have source field set)
  * @param options - Generation options
  * @param progressCallback - Optional callback for progress updates
  * @param scriptMeta - Optional script metadata for meta tokens
- * @param tokenCallback - Optional callback for incremental token updates (called as each token is generated)
+ * @param tokenCallback - Optional callback for incremental token updates
  * @param signal - Optional AbortSignal for cancellation
  * @returns Promise resolving to array of generated tokens
  */
@@ -497,118 +540,44 @@ export async function generateAllTokens(
   tokenCallback: TokenCallback | null = null,
   signal?: AbortSignal
 ): Promise<Token[]> {
-  // Check for cancellation before starting
-  if (signal?.aborted) {
-    throw new DOMException('Token generation aborted', 'AbortError');
-  }
+  checkAbort(signal);
 
-  const generatorOptions = {
-    ...options,
-    transparentBackground: options.pngSettings?.transparentBackground ?? false,
-    bootleggerRules: options.generateBootleggerRules ? scriptMeta?.bootlegger : undefined,
-    bootleggerIconType: options.bootleggerIconType,
-    bootleggerNormalizeIcons: options.bootleggerNormalizeIcons,
-    bootleggerHideName: options.bootleggerHideName,
-    logoUrl: scriptMeta?.logo,
-  };
+  // Create generator and factory
+  const generatorOptions = buildGeneratorOptions(options, scriptMeta);
   const generator = new TokenGenerator(generatorOptions);
+  const dpi = options.dpi ?? CONFIG.PDF.DPI;
+  const factory = new TokenFactory(dpi, tokenCallback);
 
-  // Pre-warm image cache for better performance
-  await generator.prewarmImageCache(characters);
+  // Pre-warm caches
+  await prewarmCaches(generator, characters);
 
-  // Pre-resolve asset references with priority-based loading
-  // First 10 characters get high priority (visible in viewport)
-  const imageFields = characters.map((c) => c.image);
-  const preloadTasks = createPreloadTasks(imageFields, 10);
-
-  if (preloadTasks.length > 0) {
-    await preResolveAssetsWithPriority(preloadTasks, {
-      concurrency: 15, // Higher concurrency for faster image loading
-      onProgress: (_loaded, _total) => {
-        // Optional: could emit progress event here
-        // logger.debug('BatchGenerator', `Preloaded ${loaded}/${total} assets`);
-      },
-    });
-  }
-
+  // Create progress tracker
   const total = calculateTotalTokenCount(characters, options, scriptMeta);
   const progress = createProgressState(total, progressCallback);
 
-  const dpi = options.dpi ?? CONFIG.PDF.DPI;
-
-  // Generate meta tokens first (so they appear quickly)
-  const metaTokens = await generateMetaTokens(
+  // Build batch context
+  const ctx: BatchContext = {
     generator,
+    factory,
+    progress,
     options,
     scriptMeta,
-    progress,
-    dpi,
-    tokenCallback,
-    signal
-  );
+    signal,
+  };
 
-  // Check for cancellation between meta and character tokens
-  if (signal?.aborted) {
-    throw new DOMException('Token generation aborted', 'AbortError');
-  }
+  // Generate meta tokens first (so they appear quickly)
+  const metaTokens = await generateMetaTokens(ctx);
 
+  checkAbort(signal);
+
+  // Generate character and reminder tokens
   const characterTokens = await generateCharacterAndReminderTokens(
-    generator,
+    ctx,
     characters,
-    progress,
-    dpi,
     options.generateImageVariants ?? false,
-    options.generateReminderVariants ?? false,
-    tokenCallback,
-    signal
+    options.generateReminderVariants ?? false
   );
 
   // Return character tokens first, meta tokens last (for display ordering)
   return [...characterTokens, ...metaTokens];
-}
-
-/**
- * Generate only the script-name token for a project (for hover pre-rendering)
- */
-export async function generateScriptNameTokenOnly(
-  options: Partial<GenerationOptions>,
-  scriptMeta: ScriptMeta | null,
-  signal?: AbortSignal
-): Promise<Token | null> {
-  if (!(scriptMeta?.name && options.scriptNameToken)) {
-    return null;
-  }
-
-  if (signal?.aborted) {
-    throw new DOMException('Token generation aborted', 'AbortError');
-  }
-
-  const generatorOptions = {
-    ...options,
-    transparentBackground: options.pngSettings?.transparentBackground ?? false,
-    logoUrl: scriptMeta?.logo,
-  };
-  const generator = new TokenGenerator(generatorOptions);
-  const dpi = options.dpi ?? CONFIG.PDF.DPI;
-
-  try {
-    const hideAuthor = options.hideScriptNameAuthor ?? false;
-    const canvas = await generator.generateScriptNameToken(
-      scriptMeta.name,
-      scriptMeta.author,
-      hideAuthor
-    );
-    const token: Token = {
-      type: 'script-name',
-      name: scriptMeta.name,
-      filename: '_script_name',
-      team: 'meta',
-      canvas,
-      diameter: CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi,
-    };
-    return token;
-  } catch (error) {
-    logger.error('BatchGenerator', 'Failed to generate script name token', error);
-    return null;
-  }
 }

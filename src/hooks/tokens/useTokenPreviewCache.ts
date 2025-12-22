@@ -14,8 +14,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { HOVER_DELAY_MS } from '@/ts/data/characterUtils.js';
 import { getPreRenderedTokens, hashOptions } from '@/ts/cache/index.js';
+import { HOVER_DELAY_MS } from '@/ts/data/characterUtils.js';
 import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
 import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -96,6 +96,10 @@ export function useTokenPreviewCache({
   characters,
   selectedCharacterUuid,
 }: UseTokenPreviewCacheOptions): UseTokenPreviewCacheResult {
+  // Effective character: editedCharacter OR fallback to finding by UUID
+  const effectiveCharacter =
+    editedCharacter ?? characters.find((c) => c.uuid === selectedCharacterUuid) ?? null;
+
   // Initialize preview state from initial token or shared pre-render cache
   const getInitialPreviewToken = (): Token | null => {
     if (initialToken?.type === 'character') return initialToken;
@@ -134,9 +138,8 @@ export function useTokenPreviewCache({
   const [previewCharacterToken, setPreviewCharacterToken] = useState<Token | null>(
     getInitialPreviewToken
   );
-  const [previewReminderTokens, setPreviewReminderTokens] = useState<Token[]>(
-    getInitialReminderTokens
-  );
+  const [previewReminderTokens, setPreviewReminderTokens] =
+    useState<Token[]>(getInitialReminderTokens);
 
   // Pre-render cache for hover optimization - keyed by UUID+optionsHash
   const preRenderCacheRef = useRef<Map<string, CachedTokens>>(new Map());
@@ -162,23 +165,23 @@ export function useTokenPreviewCache({
     }
   }, [generationOptions]);
 
-  // Regenerate preview when editedCharacter or options change
+  // Regenerate preview when character or options change
   useEffect(() => {
-    if (!editedCharacter) {
+    if (!effectiveCharacter) {
       setPreviewCharacterToken(null);
       setPreviewReminderTokens([]);
       return;
     }
 
     // Skip if we just applied cached tokens for this character
-    if (skipRegenerateForUuidRef.current === editedCharacter.uuid) {
+    if (skipRegenerateForUuidRef.current === effectiveCharacter.uuid) {
       skipRegenerateForUuidRef.current = null;
       return;
     }
 
     let cancelled = false;
 
-    regenerateCharacterAndReminders(editedCharacter, generationOptions)
+    regenerateCharacterAndReminders(effectiveCharacter, generationOptions)
       .then(({ characterToken, reminderTokens }) => {
         if (!cancelled) {
           setPreviewCharacterToken(characterToken);
@@ -194,7 +197,7 @@ export function useTokenPreviewCache({
     return () => {
       cancelled = true;
     };
-  }, [editedCharacter, generationOptions]);
+  }, [effectiveCharacter, generationOptions]);
 
   // Hover handler - pre-render character token on hover
   const handleHoverCharacter = useCallback(
@@ -259,11 +262,11 @@ export function useTokenPreviewCache({
 
   // Regenerate preview for current character
   const regeneratePreview = useCallback(async () => {
-    if (!editedCharacter) return;
+    if (!effectiveCharacter) return;
 
     try {
       const { characterToken, reminderTokens } = await regenerateCharacterAndReminders(
-        editedCharacter,
+        effectiveCharacter,
         generationOptions
       );
       setPreviewCharacterToken(characterToken);
@@ -271,16 +274,16 @@ export function useTokenPreviewCache({
     } catch (error) {
       logger.error('useTokenPreviewCache', 'Failed to regenerate preview', error);
     }
-  }, [editedCharacter, generationOptions]);
+  }, [effectiveCharacter, generationOptions]);
 
   // Preview a specific variant image
   const handlePreviewVariant = useCallback(
     async (imageUrl: string | undefined) => {
-      if (!editedCharacter) return;
+      if (!effectiveCharacter) return;
 
       try {
         const { characterToken, reminderTokens } = await regenerateCharacterAndReminders(
-          editedCharacter,
+          effectiveCharacter,
           generationOptions,
           imageUrl
         );
@@ -290,7 +293,7 @@ export function useTokenPreviewCache({
         logger.error('useTokenPreviewCache', 'Failed to preview variant', error);
       }
     },
-    [editedCharacter, generationOptions]
+    [effectiveCharacter, generationOptions]
   );
 
   // Invalidate cache for a character

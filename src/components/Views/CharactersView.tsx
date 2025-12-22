@@ -8,6 +8,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { OfficialCharacterDrawer } from '@/components/Shared/Drawer';
+import { Button } from '@/components/Shared/UI/Button';
+import { CharacterNavigation } from '@/components/ViewComponents/CharactersComponents/CharacterNavigation';
+import { MetaEditor } from '@/components/ViewComponents/CharactersComponents/MetaEditor';
+import { TokenEditor } from '@/components/ViewComponents/CharactersComponents/TokenEditor';
+import { TokenPreview } from '@/components/ViewComponents/CharactersComponents/TokenPreview';
 import { useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -21,15 +29,8 @@ import previewStyles from '@/styles/components/characterEditor/TokenPreview.modu
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import type { Token } from '@/ts/types/index.js';
-import { logger } from '@/ts/utils/logger.js';
 import { updateMetaInJson } from '@/ts/ui/detailViewUtils.js';
-import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { OfficialCharacterDrawer } from '@/components/Shared/Drawer';
-import { Button } from '@/components/Shared/UI/Button';
-import { CharacterNavigation } from '@/components/ViewComponents/CharactersComponents/CharacterNavigation';
-import { MetaEditor } from '@/components/ViewComponents/CharactersComponents/MetaEditor';
-import { TokenEditor } from '@/components/ViewComponents/CharactersComponents/TokenEditor';
-import { TokenPreview } from '@/components/ViewComponents/CharactersComponents/TokenPreview';
+import { logger } from '@/ts/utils/logger.js';
 
 interface CharactersViewProps {
   initialToken?: Token;
@@ -106,11 +107,7 @@ export function CharactersView({
   const originalCharacterUuidRef = useRef<string>(selectedCharacterUuid);
 
   // Character editor hook
-  const {
-    editedCharacter,
-    handleEditChange,
-    handleReplaceCharacter,
-  } = useCharacterEditor({
+  const { editedCharacter, handleEditChange, handleReplaceCharacter } = useCharacterEditor({
     selectedCharacterUuid,
     characters,
     jsonInput,
@@ -139,34 +136,30 @@ export function CharactersView({
   });
 
   // Character operations hook
-  const {
-    handleAddCharacter,
-    handleDeleteCharacter,
-    handleDuplicateCharacter,
-    handleChangeTeam,
-  } = useCharacterOperations({
-    characters,
-    tokens,
-    jsonInput,
-    generationOptions,
-    setCharacters,
-    setTokens,
-    setJsonInput,
-    setMetadata,
-    deleteMetadata,
-    getMetadata,
-    addToast,
-    selectedCharacterUuid,
-    setSelectedCharacterUuid,
-    setEditedCharacter: (char) => {
-      if (char) handleReplaceCharacter(char);
-      // When null, the editor resets via selection change
-    },
-    onCharacterCreated: (uuid) => {
-      originalCharacterUuidRef.current = uuid;
-    },
-    createNewCharacter,
-  });
+  const { handleAddCharacter, handleDeleteCharacter, handleDuplicateCharacter, handleChangeTeam } =
+    useCharacterOperations({
+      characters,
+      tokens,
+      jsonInput,
+      generationOptions,
+      setCharacters,
+      setTokens,
+      setJsonInput,
+      setMetadata,
+      deleteMetadata,
+      getMetadata,
+      addToast,
+      selectedCharacterUuid,
+      setSelectedCharacterUuid,
+      setEditedCharacter: (char) => {
+        if (char) handleReplaceCharacter(char);
+        // When null, the editor resets via selection change
+      },
+      onCharacterCreated: (uuid) => {
+        originalCharacterUuidRef.current = uuid;
+      },
+      createNewCharacter,
+    });
 
   // Character downloads hook
   useCharacterDownloads({
@@ -174,7 +167,10 @@ export function CharactersView({
     displayReminderTokens: previewReminderTokens,
     editedCharacter,
     selectedCharacter: characters.find((c) => c.uuid === selectedCharacterUuid),
-    pngSettings: generationOptions.pngSettings ?? { embedMetadata: true, transparentBackground: false },
+    pngSettings: generationOptions.pngSettings ?? {
+      embedMetadata: true,
+      transparentBackground: false,
+    },
     isMetaSelected,
     addToast,
     setDownloads,
@@ -237,156 +233,162 @@ export function CharactersView({
   }, []);
 
   return (
-    <ViewLayout variant="3-panel">
-      {/* Left Panel - Character Navigation */}
-      <ViewLayout.Panel position="left" width="left" scrollable>
-        <CharacterNavigation
-          characters={characters}
-          tokens={tokens}
-          selectedCharacterUuid={selectedCharacterUuid}
-          isMetaSelected={isMetaSelected}
-          onSelectCharacter={handleSelectCharacter}
-          onAddCharacter={handleAddCharacter}
-          onAddOfficialCharacter={() => setIsOfficialDrawerOpen(true)}
-          onDeleteCharacter={handleDeleteCharacter}
-          onDuplicateCharacter={handleDuplicateCharacter}
-          onSelectMetaToken={handleSelectMetaToken}
-          onSelectMeta={handleSelectMeta}
-          onChangeTeam={handleChangeTeam}
-          onHoverCharacter={handleHoverCharacter}
-        />
-      </ViewLayout.Panel>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Characters" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      <ViewLayout variant="3-panel">
+        {/* Left Panel - Character Navigation */}
+        <ViewLayout.Panel position="left" width="left" scrollable>
+          <CharacterNavigation
+            characters={characters}
+            tokens={tokens}
+            selectedCharacterUuid={selectedCharacterUuid}
+            isMetaSelected={isMetaSelected}
+            onSelectCharacter={handleSelectCharacter}
+            onAddCharacter={handleAddCharacter}
+            onAddOfficialCharacter={() => setIsOfficialDrawerOpen(true)}
+            onDeleteCharacter={handleDeleteCharacter}
+            onDuplicateCharacter={handleDuplicateCharacter}
+            onSelectMetaToken={handleSelectMetaToken}
+            onSelectMeta={handleSelectMeta}
+            onChangeTeam={handleChangeTeam}
+            onHoverCharacter={handleHoverCharacter}
+          />
+        </ViewLayout.Panel>
 
-      {/* Center Panel - Preview */}
-      <ViewLayout.Panel position="center" width="flex" scrollable>
-        {isMetaSelected ? (
-          // Meta preview
-          <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
-            {selectedMetaToken ? (
-              <div className={styles.metaTokenPreview}>
-                <img
-                  src={selectedMetaToken.canvas.toDataURL('image/png')}
-                  alt={selectedMetaToken.name}
-                  className={styles.metaTokenImage}
+        {/* Center Panel - Preview */}
+        <ViewLayout.Panel position="center" width="flex" scrollable>
+          {isMetaSelected ? (
+            // Meta preview
+            <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
+              {selectedMetaToken ? (
+                <div className={styles.metaTokenPreview}>
+                  <img
+                    src={selectedMetaToken.canvas.toDataURL('image/png')}
+                    alt={selectedMetaToken.name}
+                    className={styles.metaTokenImage}
+                  />
+                </div>
+              ) : (
+                <div className={styles.tokenPreviewPlaceholder}>
+                  <span className={styles.metaPlaceholderIcon}>📜</span>
+                  <p>Script Metadata</p>
+                  <p className={styles.placeholderHint}>
+                    Edit your script's meta information on the right.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : selectedCharacter ? (
+            // Character preview
+            <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
+              {previewCharacterToken ? (
+                <TokenPreview
+                  characterToken={previewCharacterToken}
+                  reminderTokens={previewReminderTokens}
+                  onReminderClick={(reminder) => {
+                    const parentCharName = reminder.parentCharacter;
+                    if (parentCharName) {
+                      const char = characters.find((c) => c.name === parentCharName);
+                      if (char?.uuid) setSelectedCharacterUuid(char.uuid);
+                    }
+                  }}
                 />
-              </div>
-            ) : (
-              <div className={styles.tokenPreviewPlaceholder}>
-                <span className={styles.metaPlaceholderIcon}>📜</span>
-                <p>Script Metadata</p>
-                <p className={styles.placeholderHint}>
-                  Edit your script's meta information on the right.
-                </p>
-              </div>
-            )}
-          </div>
-        ) : selectedCharacter ? (
-          // Character preview
-          <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
-            {previewCharacterToken ? (
-              <TokenPreview
-                characterToken={previewCharacterToken}
-                reminderTokens={previewReminderTokens}
-                onReminderClick={(reminder) => {
-                  const parentCharName = reminder.parentCharacter;
-                  if (parentCharName) {
-                    const char = characters.find((c) => c.name === parentCharName);
-                    if (char?.uuid) setSelectedCharacterUuid(char.uuid);
-                  }
-                }}
-              />
-            ) : (
-              <div className={previewStyles.previewArea}>
-                <div className={previewStyles.preview}>
-                  <div className={styles.tokenPreviewPlaceholder}>
-                    <p>Token preview will appear here after generating.</p>
-                    <p className={styles.placeholderHint}>
-                      Fill in character details on the right, then generate tokens.
-                    </p>
-                  </div>
-                </div>
-                <div className={previewStyles.reminders}>
-                  <h4>Reminder Tokens</h4>
-                  <div className={previewStyles.galleryContainer}>
-                    <button
-                      type="button"
-                      className={previewStyles.galleryArrow}
-                      disabled
-                      aria-label="Show previous reminder"
-                    >
-                      ‹
-                    </button>
-                    <div className={previewStyles.gallery}>
-                      <div className={previewStyles.empty}>
-                        <span className={previewStyles.emptyText}>No reminder tokens</span>
-                      </div>
+              ) : (
+                <div className={previewStyles.previewArea}>
+                  <div className={previewStyles.preview}>
+                    <div className={styles.tokenPreviewPlaceholder}>
+                      <p>Token preview will appear here after generating.</p>
+                      <p className={styles.placeholderHint}>
+                        Fill in character details on the right, then generate tokens.
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      className={previewStyles.galleryArrow}
-                      disabled
-                      aria-label="Show next reminder"
-                    >
-                      ›
-                    </button>
+                  </div>
+                  <div className={previewStyles.reminders}>
+                    <h4>Reminder Tokens</h4>
+                    <div className={previewStyles.galleryContainer}>
+                      <button
+                        type="button"
+                        className={previewStyles.galleryArrow}
+                        disabled
+                        aria-label="Show previous reminder"
+                      >
+                        ‹
+                      </button>
+                      <div className={previewStyles.gallery}>
+                        <div className={previewStyles.empty}>
+                          <span className={previewStyles.emptyText}>No reminder tokens</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={previewStyles.galleryArrow}
+                        disabled
+                        aria-label="Show next reminder"
+                      >
+                        ›
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          // Empty state
-          <div className={`${layoutStyles.contentPanel} ${styles.customizeEmptyState}`}>
-            <div className={styles.emptyStateContent}>
-              <h3>No Character Selected</h3>
-              <p>Create a new character or load a script to get started.</p>
-              <div className={styles.emptyStateButtons}>
-                <Button variant="primary" onClick={handleAddCharacter}>
-                  ✨ Create New Character
-                </Button>
-                <Button variant="secondary" onClick={() => setIsOfficialDrawerOpen(true)}>
-                  📚 Add Official Character
-                </Button>
+              )}
+            </div>
+          ) : (
+            // Empty state
+            <div className={`${layoutStyles.contentPanel} ${styles.customizeEmptyState}`}>
+              <div className={styles.emptyStateContent}>
+                <h3>No Character Selected</h3>
+                <p>Create a new character or load a script to get started.</p>
+                <div className={styles.emptyStateButtons}>
+                  <Button variant="primary" onClick={handleAddCharacter}>
+                    ✨ Create New Character
+                  </Button>
+                  <Button variant="secondary" onClick={() => setIsOfficialDrawerOpen(true)}>
+                    📚 Add Official Character
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </ViewLayout.Panel>
+          )}
+        </ViewLayout.Panel>
 
-      {/* Right Panel - Editor */}
-      <ViewLayout.Panel position="right" width="right" scrollable>
-        {isMetaSelected ? (
-          <MetaEditor
-            scriptMeta={scriptMeta}
-            onMetaChange={(updatedMeta) => {
-              setScriptMeta(updatedMeta);
-              try {
-                if (jsonInput.trim()) {
-                  const updatedJson = updateMetaInJson(jsonInput, updatedMeta);
-                  setJsonInput(updatedJson);
+        {/* Right Panel - Editor */}
+        <ViewLayout.Panel position="right" width="right" scrollable>
+          {isMetaSelected ? (
+            <MetaEditor
+              scriptMeta={scriptMeta}
+              onMetaChange={(updatedMeta) => {
+                setScriptMeta(updatedMeta);
+                try {
+                  if (jsonInput.trim()) {
+                    const updatedJson = updateMetaInJson(jsonInput, updatedMeta);
+                    setJsonInput(updatedJson);
+                  }
+                } catch (e) {
+                  logger.error('CharactersView', 'Failed to update meta in JSON', e);
                 }
-              } catch (e) {
-                logger.error('CharactersView', 'Failed to update meta in JSON', e);
-              }
-            }}
-          />
-        ) : selectedCharacter ? (
-          <TokenEditor
-            character={selectedCharacter}
-            onEditChange={handleEditChange}
-            onReplaceCharacter={handleReplaceCharacter}
-            onRefreshPreview={regeneratePreview}
-            onPreviewVariant={handlePreviewVariant}
-            isOfficial={isSelectedCharacterOfficial}
-          />
-        ) : null}
-      </ViewLayout.Panel>
+              }}
+            />
+          ) : selectedCharacter ? (
+            <TokenEditor
+              character={selectedCharacter}
+              onEditChange={handleEditChange}
+              onReplaceCharacter={handleReplaceCharacter}
+              onRefreshPreview={regeneratePreview}
+              onPreviewVariant={handlePreviewVariant}
+              isOfficial={isSelectedCharacterOfficial}
+            />
+          ) : null}
+        </ViewLayout.Panel>
 
-      {/* Official Character Drawer */}
-      <OfficialCharacterDrawer
-        isOpen={isOfficialDrawerOpen}
-        onClose={() => setIsOfficialDrawerOpen(false)}
-      />
-    </ViewLayout>
+        {/* Official Character Drawer */}
+        <OfficialCharacterDrawer
+          isOpen={isOfficialDrawerOpen}
+          onClose={() => setIsOfficialDrawerOpen(false)}
+        />
+      </ViewLayout>
+    </ErrorBoundary>
   );
 }

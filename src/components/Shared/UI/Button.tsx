@@ -164,9 +164,5 @@ interface ButtonGroupProps {
 
 export function ButtonGroup({ children, className }: ButtonGroupProps) {
   const classes = cn(styles.group, className);
-  return (
-    <span className={classes} role="group">
-      {children}
-    </span>
-  );
+  return <span className={classes}>{children}</span>;
 }

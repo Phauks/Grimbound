@@ -7,13 +7,13 @@
  * @module canvas/backgroundEffects/BackgroundRenderer
  */
 
+import { createBackgroundGradient } from '@/ts/canvas/gradientUtils.js';
 import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
 import type { BackgroundStyle, TextureConfig } from '@/ts/types/backgroundEffects.js';
 import { DEFAULT_LIGHT_CONFIG } from '@/ts/types/backgroundEffects.js';
-import { createBackgroundGradient } from '@/ts/canvas/gradientUtils.js';
 import { applyEffects, applyVibrance } from './effects/index.js';
-import { TextureFactory, type TextureContext } from './textures/index.js';
+import { type TextureContext, TextureFactory } from './textures/index.js';
 
 // ============================================================================
 // IMAGE LOADING
@@ -96,7 +96,10 @@ function applyTexture(
   const textureCanvas = document.createElement('canvas');
   textureCanvas.width = diameter;
   textureCanvas.height = diameter;
-  const textureCtx = textureCanvas.getContext('2d')!;
+  const textureCtx = textureCanvas.getContext('2d');
+  if (!textureCtx) {
+    throw new Error('Failed to get 2d context for texture canvas');
+  }
 
   // Build texture context
   const textureContext: TextureContext = {

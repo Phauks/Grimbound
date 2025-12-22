@@ -41,6 +41,7 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
     jsonInput,
     lastGeneratedJsonHash,
     setTokens,
+    setLastGeneratedJsonHash,
     isLoading,
     setIsLoading,
     setError,
@@ -167,6 +168,9 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
       const newTokens = newTokensRef.current;
       setError(null);
 
+      // Mark the JSON as processed to prevent duplicate generation
+      setLastGeneratedJsonHash(simpleHash(jsonInput));
+
       logger.info('useMissingTokenGenerator', `Generated ${newTokens.length} new tokens`);
       return newTokens.length;
     } catch (err) {
@@ -188,8 +192,10 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
     getMissingCharacters,
     tokens,
     generationOptions,
+    jsonInput,
     isLoading,
     setTokens,
+    setLastGeneratedJsonHash,
     setIsLoading,
     setError,
     setGenerationProgress,

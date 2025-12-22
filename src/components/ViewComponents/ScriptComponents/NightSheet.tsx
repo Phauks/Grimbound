@@ -66,7 +66,17 @@ function getNoiseTextureSvg(opacity: number): string {
 }
 
 export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function NightSheet(
-  { type, entries, characters, scriptMeta, enableDragDrop = false, onMoveEntry, background, onEditCharacter, onToggleLock },
+  {
+    type,
+    entries,
+    characters,
+    scriptMeta,
+    enableDragDrop = false,
+    onMoveEntry,
+    background,
+    onEditCharacter,
+    onToggleLock,
+  },
   ref
 ) {
   const title = getSheetTitle(type);

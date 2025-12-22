@@ -4,6 +4,7 @@
  */
 
 import type { GradientConfig } from '@/ts/types/backgroundEffects.js';
+
 // Re-export interpolateColors from colorUtils for backwards compatibility
 export { interpolateColors } from '@/ts/utils/colorUtils.js';
 
@@ -175,4 +176,3 @@ export function getCSSGradient(config: GradientConfig): string {
       return `linear-gradient(${config.rotation}deg, ${config.colorStart}, ${config.colorEnd})`;
   }
 }
-

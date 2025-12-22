@@ -7,7 +7,7 @@ import CONFIG from '@/ts/config.js';
 import { createTokensZip } from '@/ts/export/index.js';
 import { TokenGenerator } from '@/ts/generation/index.js';
 import type { Character, GenerationOptions, Team, Token } from '@/ts/types/index.js';
-import { downloadFile, sanitizeFilename, logger } from '@/ts/utils/index.js';
+import { downloadFile, logger, sanitizeFilename } from '@/ts/utils/index.js';
 
 // Create child logger for detail view operations
 const detailLogger = logger.child('DetailView');
@@ -139,7 +139,12 @@ export function updateCharacterInJson(
     if (Array.isArray(parsed)) {
       const index = parsed.findIndex((item: unknown) => {
         if (typeof item === 'string') return item === characterId;
-        if (typeof item === 'object' && item !== null && (item as { id?: string }).id === characterId) return true;
+        if (
+          typeof item === 'object' &&
+          item !== null &&
+          (item as { id?: string }).id === characterId
+        )
+          return true;
         return false;
       });
 
@@ -177,7 +182,9 @@ export function updateMetaInJson(
     // Handle array-based scripts
     if (Array.isArray(parsed)) {
       const index = parsed.findIndex((item: unknown) => {
-        return typeof item === 'object' && item !== null && (item as { id?: string }).id === '_meta';
+        return (
+          typeof item === 'object' && item !== null && (item as { id?: string }).id === '_meta'
+        );
       });
 
       if (index !== -1) {

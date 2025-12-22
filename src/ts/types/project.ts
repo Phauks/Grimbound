@@ -7,7 +7,13 @@
  * @module types/project
  */
 
-import type { Character, CharacterMetadata, GenerationOptions, ScriptMeta, Token } from './index.js';
+import type {
+  Character,
+  CharacterMetadata,
+  GenerationOptions,
+  ScriptMeta,
+  Token,
+} from './index.js';
 
 // ============================================================================
 // Project Entity

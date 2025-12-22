@@ -6,8 +6,8 @@
 import JSZip from 'jszip';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PackageValidationError } from '@/ts/errors.js';
-import type { Character, PackageManifest } from '@/ts/types/index.js';
 import { PackageExtractor } from '@/ts/sync/packageExtractor.js';
+import type { Character, PackageManifest, Team } from '@/ts/types/index.js';
 
 // Mock data
 const mockManifest: PackageManifest = {
@@ -184,7 +184,7 @@ describe('PackageExtractor', () => {
         {
           id: 'test',
           name: 'Test',
-          team: 'invalid-team' as any,
+          team: 'invalid-team' as unknown as Team,
           image: 'test.webp',
         },
       ];

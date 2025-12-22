@@ -40,8 +40,6 @@ export class PDFGenerator {
   private marginPx: number;
   private usableWidth: number;
   private usableHeight: number;
-  private xOffsetPx: number;
-  private yOffsetPx: number;
 
   /**
    * Convert inches to pixels at given DPI
@@ -69,10 +67,6 @@ export class PDFGenerator {
     this.pageHeightPx = this.options.pageHeight * this.options.dpi;
     this.marginPx = this.options.margin * this.options.dpi;
 
-    // Convert offsets from inches to pixels
-    this.xOffsetPx = PDFGenerator.inchesToPixels(this.options.xOffset, this.options.dpi);
-    this.yOffsetPx = PDFGenerator.inchesToPixels(this.options.yOffset, this.options.dpi);
-
     // Usable area
     this.usableWidth = this.pageWidthPx - 2 * this.marginPx;
     this.usableHeight = this.pageHeightPx - 2 * this.marginPx;
@@ -89,8 +83,6 @@ export class PDFGenerator {
     this.pageWidthPx = this.options.pageWidth * this.options.dpi;
     this.pageHeightPx = this.options.pageHeight * this.options.dpi;
     this.marginPx = this.options.margin * this.options.dpi;
-    this.xOffsetPx = PDFGenerator.inchesToPixels(this.options.xOffset, this.options.dpi);
-    this.yOffsetPx = PDFGenerator.inchesToPixels(this.options.yOffset, this.options.dpi);
     this.usableWidth = this.pageWidthPx - 2 * this.marginPx;
     this.usableHeight = this.pageHeightPx - 2 * this.marginPx;
   }

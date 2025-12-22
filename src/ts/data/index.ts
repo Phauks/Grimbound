@@ -6,6 +6,7 @@
 // Character lookup service
 export {
   CharacterLookupService,
+  type CharacterLookupServiceDeps,
   characterLookup,
 } from './characterLookup.js';
 // Character utilities
@@ -22,6 +23,7 @@ export {
   loadExampleScript,
   loadJsonFile,
 } from './dataLoader.js';
+export type { ICharacterLookupService } from './ICharacterLookup.js';
 // Script parsing
 export {
   extractScriptMeta,

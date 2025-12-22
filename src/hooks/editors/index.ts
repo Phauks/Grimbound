@@ -6,20 +6,18 @@
  * @module hooks/editors
  */
 
-// JSON Editor Hook
-export { useJsonEditor } from './useJsonEditor';
-export type {
-  UseJsonEditorOptions,
-  UseJsonEditorResult,
-} from './useJsonEditor';
-
-// CodeMirror Editor Hook
-export { useCodeMirrorEditor } from './useCodeMirrorEditor';
 export type {
   UseCodeMirrorEditorOptions,
   UseCodeMirrorEditorResult,
 } from './useCodeMirrorEditor';
-
+// CodeMirror Editor Hook
+export { useCodeMirrorEditor } from './useCodeMirrorEditor';
+export type {
+  UseJsonEditorOptions,
+  UseJsonEditorResult,
+} from './useJsonEditor';
+// JSON Editor Hook
+export { useJsonEditor } from './useJsonEditor';
+export type { CustomPreset } from './usePresets';
 // Presets Hook
 export { usePresets } from './usePresets';
-export type { CustomPreset } from './usePresets';

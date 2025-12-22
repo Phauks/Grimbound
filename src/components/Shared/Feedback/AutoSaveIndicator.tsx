@@ -10,10 +10,10 @@
  */
 
 import { useCallback, useState } from 'react';
+import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import styles from '@/styles/components/shared/AutoSaveIndicator.module.css';
 import type { AutoSaveStatus } from '@/ts/types/project.js';
-import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
 
 export function AutoSaveIndicator() {
   const { currentProject, autoSaveStatus, lastSavedAt } = useProjectContext();

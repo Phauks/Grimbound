@@ -10,7 +10,11 @@
 import JSZip from 'jszip';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { type BundleData, type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
+import {
+  type BundleData,
+  type DownloadItem,
+  useDownloadsContext,
+} from '@/contexts/DownloadsContext';
 import styles from '@/styles/components/shared/DownloadsDrawer.module.css';
 import { downloadFile } from '@/ts/utils/imageUtils';
 
@@ -85,7 +89,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
         const zip = new JSZip();
 
         for (const item of bundleableItems) {
-          const result = await item.getBlob!();
+          const result = await item.getBlob?.();
           if (result) {
             // Handle both single and array results
             const items: BundleData[] = Array.isArray(result) ? result : [result];

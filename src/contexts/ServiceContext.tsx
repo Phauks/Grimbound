@@ -7,7 +7,7 @@
  * @module contexts/ServiceContext
  */
 
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
 
 // Import service interfaces
 import type {
@@ -16,24 +16,22 @@ import type {
   IProjectImporter,
   IProjectService,
 } from '@/ts/services/project/IProjectService.js';
+// Import default implementations (singletons)
+import { projectDatabaseService } from '@/ts/services/project/ProjectDatabaseService.js';
+// Import classes for factory hooks
+import { ProjectExporter } from '@/ts/services/project/ProjectExporter.js';
+import { ProjectImporter } from '@/ts/services/project/ProjectImporter.js';
+import { projectService } from '@/ts/services/project/ProjectService.js';
+import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
+import { fileUploadService } from '@/ts/services/upload/FileUploadService.js';
+import { fileValidationService } from '@/ts/services/upload/FileValidationService.js';
 import type {
   IAssetStorageService,
   IFileUploadService,
   IFileValidationService,
 } from '@/ts/services/upload/IUploadServices.js';
-import type { IDataSyncService } from '@/ts/sync/ISyncServices.js';
-
-// Import classes for factory hooks
-import { ProjectExporter } from '@/ts/services/project/ProjectExporter.js';
-import { ProjectImporter } from '@/ts/services/project/ProjectImporter.js';
-
-// Import default implementations (singletons)
-import { projectDatabaseService } from '@/ts/services/project/ProjectDatabaseService.js';
-import { projectService } from '@/ts/services/project/ProjectService.js';
-import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
-import { fileUploadService } from '@/ts/services/upload/FileUploadService.js';
-import { fileValidationService } from '@/ts/services/upload/FileValidationService.js';
 import { dataSyncService } from '@/ts/sync/dataSyncService.js';
+import type { IDataSyncService } from '@/ts/sync/ISyncServices.js';
 
 // ============================================================================
 // Service Registry Type

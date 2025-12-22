@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/MarbleTexture
  */
 
-import { MARBLE_TEXTURE } from '../constants.js';
 import { initPermutation, turbulence } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { MARBLE_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**
@@ -32,7 +32,9 @@ export class MarbleTextureStrategy extends BaseTextureStrategy {
       const turb = turbulence(nx, ny, MARBLE_TEXTURE.TURBULENCE_OCTAVES);
 
       // Sine wave distortion for flowing veins
-      let value = Math.sin(nx * MARBLE_TEXTURE.VEIN_FREQUENCY + turb * MARBLE_TEXTURE.TURBULENCE_INFLUENCE);
+      let value = Math.sin(
+        nx * MARBLE_TEXTURE.VEIN_FREQUENCY + turb * MARBLE_TEXTURE.TURBULENCE_INFLUENCE
+      );
       value = (value + 1) * 0.5; // Normalize to 0-1
 
       this.setGrayscalePixel(data, index, value);

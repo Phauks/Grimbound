@@ -69,7 +69,11 @@
     linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
     linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
   background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0px;
   display: flex;
   align-items: center;
   justify-content: center;

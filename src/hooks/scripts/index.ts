@@ -6,24 +6,22 @@
  * @module hooks/scripts
  */
 
+// Grouped reminders management
+export {
+  type GroupedReminder,
+  type UseGroupedRemindersOptions,
+  type UseGroupedRemindersResult,
+  useGroupedReminders,
+} from './useGroupedReminders.js';
 // Script data management
 export { useScriptData } from './useScriptData.js';
-
 // Script transformations (format, sort, condense)
 export {
-  useScriptTransformations,
   type FormatIssue,
   type FormatIssuesSummary,
   type ScriptAnalysis,
   type ScriptTransformationHandlers,
   type UseScriptTransformationsOptions,
   type UseScriptTransformationsResult,
+  useScriptTransformations,
 } from './useScriptTransformations.js';
-
-// Grouped reminders management
-export {
-  useGroupedReminders,
-  type GroupedReminder,
-  type UseGroupedRemindersOptions,
-  type UseGroupedRemindersResult,
-} from './useGroupedReminders.js';

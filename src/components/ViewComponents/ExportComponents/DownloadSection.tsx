@@ -7,7 +7,7 @@
  * @module components/ViewComponents/ExportComponents/DownloadSection
  */
 
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { DownloadItem } from '@/contexts/DownloadsContext';
 import styles from '@/styles/components/views/ExportDownloads.module.css';
 import { DownloadCard } from './DownloadCard';

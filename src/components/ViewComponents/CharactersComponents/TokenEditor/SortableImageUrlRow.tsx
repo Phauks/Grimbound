@@ -7,9 +7,9 @@
  * @module components/CharactersComponents/TokenEditor/SortableImageUrlRow
  */
 
-import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 
 interface SortableImageUrlRowProps {
@@ -65,13 +65,14 @@ export const SortableImageUrlRow = memo(function SortableImageUrlRow({
     zIndex: isDragging ? 1000 : 'auto',
   };
 
-  const dragHandleProps = canDrag && !disabled
-    ? {
-        ...attributes,
-        ...listeners,
-        style: { cursor: 'grab' } as React.CSSProperties,
-      }
-    : undefined;
+  const dragHandleProps =
+    canDrag && !disabled
+      ? {
+          ...attributes,
+          ...listeners,
+          style: { cursor: 'grab' } as React.CSSProperties,
+        }
+      : undefined;
 
   return (
     <div
@@ -120,11 +121,7 @@ export const SortableImageUrlRow = memo(function SortableImageUrlRow({
         onClick={() => onRemove(index)}
         disabled={disabled}
         title={
-          disabled
-            ? 'Official character - cannot edit'
-            : isLastItem
-              ? 'Clear URL'
-              : 'Remove URL'
+          disabled ? 'Official character - cannot edit' : isLastItem ? 'Clear URL' : 'Remove URL'
         }
       >
         ✕

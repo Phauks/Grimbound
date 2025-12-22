@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
-import { usePresets, type CustomPreset } from '@/hooks/editors/usePresets';
+import { type CustomPreset, usePresets } from '@/hooks/editors/usePresets';
 import styles from '@/styles/components/presets/PresetSection.module.css';
 import { getPreset } from '@/ts/generation/presets';
 import type { PresetName } from '@/ts/types/index';
-import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { EditPresetModal } from './EditPresetModal';
 import { PresetCard } from './PresetCard';
 import { SavePresetModal } from './SavePresetModal';

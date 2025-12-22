@@ -6,7 +6,6 @@
  *
  * Files:
  * - css-modules.d.ts: Enables CSS Module imports (*.module.css)
- * - html2pdf.d.ts: Types for html2pdf.js library
  */
 
 // Declaration files are automatically included by TypeScript

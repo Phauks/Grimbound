@@ -13,14 +13,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import styles from '@/styles/components/modals/SyncDetailsModal.module.css';
 import CONFIG from '@/ts/config.js';
 import { storageManager } from '@/ts/sync/index.js';
 import { logger } from '@/ts/utils/logger.js';
-import { Modal } from '@/components/Shared/ModalBase/Modal';
-import { Alert } from '@/components/Shared/UI/Alert';
-import { Button } from '@/components/Shared/UI/Button';
 
 // Create child logger for sync details modal
 const syncLogger = logger.child('SyncDetailsModal');

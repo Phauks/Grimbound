@@ -1,10 +1,10 @@
 import { memo, useEffect, useMemo, useState } from 'react';
+import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
+import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu, useIntersectionObserver } from '@/hooks';
 import styles from '@/styles/components/tokens/TokenCard.module.css';
 import { TEAM_LABELS } from '@/ts/config.js';
 import type { Team, Token } from '@/ts/types/index.js';
-import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
-import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 
 /** Type for requestIdleCallback (non-standard but widely supported) */
 interface IdleDeadline {
@@ -37,9 +37,7 @@ function supportsWebP(): boolean {
 function encodeCanvas(canvas: HTMLCanvasElement): string {
   // WebP is ~3-4x faster and produces smaller files
   // Fall back to PNG for browsers without WebP support
-  return supportsWebP()
-    ? canvas.toDataURL('image/webp', 0.92)
-    : canvas.toDataURL('image/png');
+  return supportsWebP() ? canvas.toDataURL('image/webp', 0.92) : canvas.toDataURL('image/png');
 }
 
 // Clear cache when tokens are regenerated (called from outside)
@@ -169,7 +167,7 @@ function TokenCardComponent({
   // Lazy rendering: only render when token scrolls into view
   // Uses 200px rootMargin to pre-render tokens before they're visible
   // triggerOnce: true keeps the image rendered after scrolling away
-  const { ref: containerRef, isVisible } = useIntersectionObserver<HTMLDivElement>({
+  const { ref: containerRef, isVisible } = useIntersectionObserver<HTMLButtonElement>({
     rootMargin: '200px',
     threshold: 0.1,
     triggerOnce: true,
@@ -316,18 +314,12 @@ function TokenCardComponent({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         ref={containerRef}
         className={styles.card}
         onClick={handleCardClick}
         onContextMenu={handleContextMenu}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleCardClick();
-          }
-        }}
         title={`Click to view details: ${displayToken.name}${count > 1 ? ` (×${count})` : ''}${hasVariants ? ` (variant ${activeVariantIndex + 1}/${variants.length})` : ''}`}
       >
         {count > 1 && (
@@ -337,7 +329,7 @@ function TokenCardComponent({
         )}
         <div className={styles.canvasContainer}>
           {/* Show skeleton until image is fully loaded for smooth transition */}
-          {(!isVisible || !isImageLoaded) && <div className={styles.skeleton} />}
+          {!(isVisible && isImageLoaded) && <div className={styles.skeleton} />}
           {isVisible && isLoading && !imageDataUrl && (
             <div className={styles.loading}>Loading...</div>
           )}
@@ -388,7 +380,7 @@ function TokenCardComponent({
             </button>
           </div>
         )}
-      </div>
+      </button>
 
       {/* Context menu */}
       <ContextMenu

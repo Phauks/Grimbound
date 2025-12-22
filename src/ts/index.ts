@@ -19,6 +19,7 @@
 // Canvas Module
 // ============================================================================
 export {
+  type AccentDrawingOptions,
   applyAbilityTextShadow,
   applyConfigurableShadow,
   applyTextShadow,
@@ -31,20 +32,19 @@ export {
   createCanvas,
   createCircularClipPath,
   drawAbilityText,
+  // Accent drawing
+  drawAccents,
   drawCenteredText,
   drawCenteredWrappedText,
   // Text drawing
   drawCurvedText,
   drawImageCover,
-  // Accent drawing
-  drawAccents,
   drawMultiLineText,
   drawQROverlayText,
   drawTwoLineCenteredText,
   fillCircle,
   // QR generation
   generateStyledQRCode,
-  type AccentDrawingOptions,
   measureCharacterWidths,
   type Point,
   QR_DEFAULTS,
@@ -125,6 +125,10 @@ export type {
 // UI Module
 // ============================================================================
 export {
+  createBaseTheme,
+  // CodeMirror theme utilities
+  createCodeMirrorTheme,
+  createSyntaxHighlighting,
   // Detail view utilities
   downloadCharacterTokenOnly,
   downloadCharacterTokensAsZip,
@@ -133,10 +137,6 @@ export {
   regenerateCharacterAndReminders,
   regenerateSingleToken,
   updateCharacterInJson,
-  // CodeMirror theme utilities
-  createCodeMirrorTheme,
-  createBaseTheme,
-  createSyntaxHighlighting,
 } from './ui/index.js';
 // ============================================================================
 // Utilities

@@ -89,6 +89,17 @@ const embeddedFontsCache = new WeakMap<PDFDocument, Map<string, PDFFont>>();
  */
 const fontkitRegistered = new WeakSet<PDFDocument>();
 
+/**
+ * Safely get a font from the embedded map, throwing if missing
+ */
+function getRequiredFont(map: Map<string, PDFFont>, key: keyof FontSet): PDFFont {
+  const font = map.get(key);
+  if (!font) {
+    throw new Error(`Required font '${key}' not found in embedded fonts map`);
+  }
+  return font;
+}
+
 // ============================================================================
 // Font Loading Functions
 // ============================================================================
@@ -153,10 +164,10 @@ export async function loadFonts(pdfDoc: PDFDocument): Promise<FontSet> {
   if (embeddedMap?.size === FONT_CONFIGS.length) {
     logger.debug('FontLoader', 'Using cached embedded fonts');
     return {
-      title: embeddedMap.get('title')!,
-      name: embeddedMap.get('name')!,
-      ability: embeddedMap.get('ability')!,
-      abilityBold: embeddedMap.get('abilityBold')!,
+      title: getRequiredFont(embeddedMap, 'title'),
+      name: getRequiredFont(embeddedMap, 'name'),
+      ability: getRequiredFont(embeddedMap, 'ability'),
+      abilityBold: getRequiredFont(embeddedMap, 'abilityBold'),
     };
   }
 
@@ -198,10 +209,10 @@ export async function loadFonts(pdfDoc: PDFDocument): Promise<FontSet> {
   logger.info('FontLoader', `Loaded ${FONT_CONFIGS.length} fonts in ${elapsed.toFixed(0)}ms`);
 
   return {
-    title: embeddedMap.get('title')!,
-    name: embeddedMap.get('name')!,
-    ability: embeddedMap.get('ability')!,
-    abilityBold: embeddedMap.get('abilityBold')!,
+    title: getRequiredFont(embeddedMap, 'title'),
+    name: getRequiredFont(embeddedMap, 'name'),
+    ability: getRequiredFont(embeddedMap, 'ability'),
+    abilityBold: getRequiredFont(embeddedMap, 'abilityBold'),
   };
 }
 

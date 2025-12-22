@@ -225,8 +225,8 @@ export const TEAM_COLORS = {
     hue: 0, // Not used for split colors
     saturationBoost: 1.0,
     split: {
-      left: { hex: '#3B5998', hue: 220 },  // Blue (Good/Townsfolk)
-      right: { hex: '#CC0000', hue: 0 },    // Red (Evil/Demon)
+      left: { hex: '#3B5998', hue: 220 }, // Blue (Good/Townsfolk)
+      right: { hex: '#CC0000', hue: 0 }, // Red (Evil/Demon)
     },
   },
   /** Fabled - Gold (storyteller characters) */
@@ -360,6 +360,16 @@ export const TOKEN_PREVIEW = {
 } as const;
 
 // ============================================================================
+// FALLBACK CHARACTER - Used for preview when no characters are loaded
+// ============================================================================
+
+/**
+ * ID of the official character to use for fallback previews.
+ * This character is fetched from synced data when available.
+ */
+export const FALLBACK_PREVIEW_CHARACTER_ID = 'washerwoman';
+
+// ============================================================================
 // EXPORT DEFAULT - For convenience imports
 // ============================================================================
 
@@ -380,4 +390,5 @@ export default {
   TIMING,
   UI_SIZE,
   TOKEN_PREVIEW,
+  FALLBACK_PREVIEW_CHARACTER_ID,
 };

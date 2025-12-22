@@ -1,11 +1,11 @@
 import { memo, useState } from 'react';
-import styles from '@/styles/components/options/OptionsTab.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 import { SegmentedControl } from '@/components/Shared/UI/SegmentedControl';
+import styles from '@/styles/components/options/OptionsTab.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
 
 interface CharacterTabProps {
   generationOptions: GenerationOptions;

@@ -22,7 +22,13 @@ export interface BundleData {
 /**
  * Download categories for grouping in ExportView
  */
-export type DownloadCategory = 'featured' | 'json' | 'tokens' | 'script' | 'token-sets' | 'character';
+export type DownloadCategory =
+  | 'featured'
+  | 'json'
+  | 'tokens'
+  | 'script'
+  | 'token-sets'
+  | 'character';
 
 /**
  * Represents a single downloadable item

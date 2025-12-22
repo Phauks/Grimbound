@@ -303,20 +303,36 @@ await caches.open('character-icons').put(url, response);
 ```
 src/ts/generation/
 ├── index.ts                    # Barrel export
-├── TokenGenerator.ts           # Main class (1077 lines)
-│   ├── generateCharacterToken()
-│   ├── generateReminderToken()
-│   ├── generateMetaToken()
-│   ├── generateScriptNameToken()
-│   ├── generatePandemoniumToken()
-│   ├── generateAlmanacQRToken()
-│   └── generateBootleggerToken()
+├── TokenGenerator.ts           # Canvas rendering (~640 lines)
+│   ├── generateCharacterToken() → HTMLCanvasElement
+│   ├── generateReminderToken() → HTMLCanvasElement
+│   ├── generateScriptNameToken() → HTMLCanvasElement
+│   ├── generatePandemoniumToken() → HTMLCanvasElement
+│   ├── generateAlmanacQRToken() → HTMLCanvasElement
+│   └── generateBootleggerToken() → HTMLCanvasElement
+├── TokenFactory.ts             # Token object creation (~200 lines)
+│   ├── createCharacterToken()  # Character Token from canvas
+│   ├── createReminderToken()   # Reminder Token from canvas
+│   ├── createMetaToken()       # Meta Token from canvas
+│   ├── emit()                  # Call callback and return token
+│   └── emitAndPush()           # Emit and push to array
+├── batchGenerator.ts           # Batch orchestration (~630 lines)
+│   ├── generateAllTokens()     # Main entry point
+│   ├── generateScriptNameTokenOnly()
+│   ├── BatchContext            # Context object for reduced params
+│   ├── generateMetaTokens()    # Meta token orchestration
+│   └── generateCharacterAndReminderTokens()
+├── TokenImageRenderer.ts       # Image rendering
 ├── TokenTextRenderer.ts        # Text rendering
-├── batchGenerator.ts           # Batch operations
 ├── presets.ts                  # Preset configurations
 ├── ImageCacheAdapter.ts        # DI adapter
 └── iconLayoutStrategies.ts     # Strategy pattern
 ```
+
+**Separation of Concerns:**
+- `TokenGenerator`: Pure canvas rendering (low-level) - "how to draw a token"
+- `TokenFactory`: Token object creation (metadata assembly) - "how to package a canvas"
+- `batchGenerator`: Orchestration (high-level) - "which tokens to generate, in what order"
 
 ### Sync Module
 
@@ -390,8 +406,7 @@ src/ts/cache/
 ├── manager/
 │   └── PreRenderCacheManager.ts
 ├── policies/
-│   ├── LRUEvictionPolicy.ts    # LRU eviction
-│   └── WarmingPolicy.ts        # Pre-warming rules
+│   └── LRUEvictionPolicy.ts    # LRU eviction
 ├── strategies/
 │   ├── CharactersPreRenderStrategy.ts
 │   ├── TokensPreRenderStrategy.ts

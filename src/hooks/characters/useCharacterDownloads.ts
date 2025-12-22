@@ -199,9 +199,7 @@ export function useCharacterDownloads({
         id: 'character-token',
         icon: '🎴',
         label: 'Character Token',
-        description: hasCharacter && charData?.name
-          ? `${charData.name} PNG`
-          : 'Select a character',
+        description: hasCharacter && charData?.name ? `${charData.name} PNG` : 'Select a character',
         action: handleDownloadCharacter,
         getBlob: async (): Promise<BundleData | null> => {
           if (!displayCharacterToken) return null;
@@ -209,7 +207,7 @@ export function useCharacterDownloads({
           if (!blob) return null;
           return { blob, filename: displayCharacterToken.filename };
         },
-        disabled: !hasCharacter || !hasCharacterToken,
+        disabled: !(hasCharacter && hasCharacterToken),
         disabledReason: !hasCharacter ? 'Select a character' : 'Generate token first',
         category: 'character',
         sourceView: 'characters',
@@ -218,9 +216,12 @@ export function useCharacterDownloads({
         id: 'reminder-tokens',
         icon: '🔔',
         label: 'Reminder Tokens',
-        description: hasCharacter && hasReminderTokens
-          ? `${displayReminderTokens.length} reminders (ZIP)`
-          : hasCharacter ? 'No reminders' : 'Select a character',
+        description:
+          hasCharacter && hasReminderTokens
+            ? `${displayReminderTokens.length} reminders (ZIP)`
+            : hasCharacter
+              ? 'No reminders'
+              : 'Select a character',
         action: handleDownloadReminders,
         getBlob: async (): Promise<BundleData[]> => {
           const results: BundleData[] = [];
@@ -236,7 +237,7 @@ export function useCharacterDownloads({
           }
           return results;
         },
-        disabled: !hasCharacter || !hasReminderTokens,
+        disabled: !(hasCharacter && hasReminderTokens),
         disabledReason: !hasCharacter ? 'Select a character' : 'No reminder tokens',
         category: 'character',
         sourceView: 'characters',
@@ -245,9 +246,8 @@ export function useCharacterDownloads({
         id: 'character-json',
         icon: '📄',
         label: 'Character JSON',
-        description: hasCharacter && charData?.name
-          ? `${charData.name}.json`
-          : 'Select a character',
+        description:
+          hasCharacter && charData?.name ? `${charData.name}.json` : 'Select a character',
         action: handleDownloadJson,
         getBlob: async (): Promise<BundleData | null> => {
           if (!charData) return null;

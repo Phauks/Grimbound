@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/Shared/UI/Button';
 import { useContextMenu } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/projects/ProjectNavigation.module.css';
@@ -13,14 +14,12 @@ import contextMenuStyles from '@/styles/components/shared/ContextMenu.module.css
 import { projectDb } from '@/ts/db/projectDb';
 import type { Project, ProjectVersion } from '@/ts/types/project.js';
 import { logger } from '@/ts/utils/logger.js';
-import { Button } from '@/components/Shared/UI/Button';
 
 interface ProjectNavigationProps {
   projects: Project[];
   selectedProjectId: string | null;
   currentProjectId: string | null;
   onSelectProject: (projectId: string) => void;
-  onHoverProject?: (projectId: string) => void;
   onCreateProject: () => void;
   onImportProject: () => void;
   onIconManagement: () => void;
@@ -32,7 +31,6 @@ export function ProjectNavigation({
   selectedProjectId,
   currentProjectId,
   onSelectProject,
-  onHoverProject,
   onCreateProject,
   onImportProject,
   onIconManagement: _onIconManagement,
@@ -40,7 +38,7 @@ export function ProjectNavigation({
 }: ProjectNavigationProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical'>('recent');
-  const selectedRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLButtonElement>(null);
 
   // Latest version for each project
   const [latestVersions, setLatestVersions] = useState<Map<string, ProjectVersion>>(new Map());
@@ -61,7 +59,11 @@ export function ProjectNavigation({
           }
         } catch (error) {
           // Silently skip errors - version badges are optional
-          logger.debug('ProjectNavigation', `Failed to load version for project ${project.id}`, error);
+          logger.debug(
+            'ProjectNavigation',
+            `Failed to load version for project ${project.id}`,
+            error
+          );
         }
       }
 
@@ -124,20 +126,13 @@ export function ProjectNavigation({
     const latestVersion = latestVersions.get(project.id);
 
     return (
-      <div
+      <button
+        type="button"
         key={project.id}
         ref={isSelected ? selectedRef : null}
         className={`${styles.item} ${isSelected ? styles.selected : ''} ${isActive ? styles.active : ''}`}
         onClick={() => onSelectProject(project.id)}
-        onMouseEnter={() => onHoverProject?.(project.id)}
         onContextMenu={(e) => contextMenu.onContextMenu(e, project)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            onSelectProject(project.id);
-          }
-        }}
       >
         <div className={styles.info}>
           <div className={styles.nameRow}>
@@ -155,7 +150,7 @@ export function ProjectNavigation({
             {project.stats.characterCount} chars • {formatRelativeTime(project.lastModifiedAt)}
           </div>
         </div>
-      </div>
+      </button>
     );
   };
 

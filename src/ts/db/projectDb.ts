@@ -157,15 +157,14 @@ export class ProjectDatabase extends Dexie {
         const assets = tx.table('assets');
 
         // Update 'setup-flower' → 'setup-overlay'
-        await assets
-          .where('type')
-          .equals('setup-flower')
-          .modify({ type: 'setup-overlay' });
+        await assets.where('type').equals('setup-flower').modify({ type: 'setup-overlay' });
 
         // Update 'leaf' → 'accent'
         await assets.where('type').equals('leaf').modify({ type: 'accent' });
 
-        console.log('[DB Migration v7] Asset types migrated: setup-flower → setup-overlay, leaf → accent');
+        console.log(
+          '[DB Migration v7] Asset types migrated: setup-flower → setup-overlay, leaf → accent'
+        );
       });
   }
 

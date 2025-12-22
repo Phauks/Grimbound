@@ -5,32 +5,51 @@
  * Consolidates previously scattered pre-render logic into a single,
  * consistent API with proper caching and invalidation.
  *
- * Architecture: Application Service (Facade Pattern)
+ * Architecture: Application Service (Facade Pattern) with Strategy Pattern
  *
  * @module ts/cache/TabPreRenderService
  */
 
-import type { Character, GenerationOptions, ScriptEntry, ScriptMeta, Token } from '@/ts/types/index.js';
+import { isCharacter } from '@/ts/data/scriptParser.js';
 import type { NightOrderResult } from '@/ts/nightOrder/nightOrderUtils.js';
 import { buildNightOrder } from '@/ts/nightOrder/nightOrderUtils.js';
-import { isCharacter } from '@/ts/data/scriptParser.js';
+import type {
+  Character,
+  GenerationOptions,
+  ScriptEntry,
+  ScriptMeta,
+  Token,
+} from '@/ts/types/index.js';
+import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
 import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
 import { cacheManager } from './CacheManager.js';
-import { hashArray } from './utils/hashUtils.js';
 import { CacheLogger } from './utils/CacheLogger.js';
+import { hashArray, hashGenerationOptions } from './utils/hashUtils.js';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Maximum tokens to pre-render per batch */
+const MAX_TOKENS_PER_BATCH = 20;
+
+/** Timeout for token encoding idle callback (ms) */
+const TOKEN_ENCODE_TIMEOUT_MS = 100;
+
+/** Timeout for image preload idle callback (ms) */
+const IMAGE_PRELOAD_TIMEOUT_MS = 200;
+
+/** Minimum time remaining (ms) to start encoding another token */
+const MIN_IDLE_TIME_MS = 10;
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * Supported tab types for pre-rendering
- */
+/** Supported tab types for pre-rendering */
 export type PreRenderableTab = 'characters' | 'tokens' | 'script';
 
-/**
- * Context for tab pre-rendering
- */
+/** Context for tab pre-rendering */
 export interface TabPreRenderContext {
   /** Characters from the current script */
   characters: Character[];
@@ -44,9 +63,7 @@ export interface TabPreRenderContext {
   lastSelectedCharacterUuid?: string;
 }
 
-/**
- * Result of a tab pre-render operation
- */
+/** Result of a tab pre-render operation */
 export interface TabPreRenderResult {
   /** Whether the pre-render was successful */
   success: boolean;
@@ -60,9 +77,7 @@ export interface TabPreRenderResult {
   error?: string;
 }
 
-/**
- * Cached night order data
- */
+/** Cached night order data */
 interface NightOrderCacheEntry {
   hash: string;
   firstNight: NightOrderResult;
@@ -70,22 +85,88 @@ interface NightOrderCacheEntry {
   timestamp: number;
 }
 
-/**
- * Cached gallery token data URLs
- */
+/** Cached gallery token data URLs */
 interface GalleryCacheEntry {
   dataUrls: Map<string, string>;
   tokenCount: number;
   timestamp: number;
 }
 
-/**
- * Cached resolved character image URLs for night order
- * Key: characterId, Value: resolved URL
- */
+/** Cached resolved character image URLs for night order */
 interface CharacterImageCacheEntry {
   resolvedUrls: Map<string, string>;
   timestamp: number;
+}
+
+/** Cached pre-rendered character tokens for instant display */
+interface CharacterTokenCacheEntry {
+  characterToken: Token;
+  reminderTokens: Token[];
+  characterUuid: string;
+  optionsHash: string;
+}
+
+/** Dependencies that can be injected for testing */
+export interface TabPreRenderServiceDeps {
+  cacheManager: typeof cacheManager;
+  resolveImageUrl: typeof resolveCharacterImageUrl;
+  buildNightOrder: typeof buildNightOrder;
+  regenerateTokens: typeof regenerateCharacterAndReminders;
+}
+
+// ============================================================================
+// Utility Functions (Pure, Testable)
+// ============================================================================
+
+/**
+ * Extract a usable image URL from a character's image field.
+ * Handles arrays, AssetReference objects, and plain strings.
+ */
+function extractImageUrl(image: Character['image']): string | null {
+  if (Array.isArray(image)) {
+    return typeof image[0] === 'string' ? image[0] : null;
+  }
+  if (typeof image === 'object' && image !== null) {
+    return (image as { url?: string }).url || null;
+  }
+  return typeof image === 'string' ? image : null;
+}
+
+/** Idle deadline interface for requestIdleCallback */
+interface IdleDeadline {
+  readonly didTimeout: boolean;
+  timeRemaining(): number;
+}
+
+/** Type for window with requestIdleCallback */
+type WindowWithIdle = Window & {
+  requestIdleCallback: (
+    cb: (deadline: IdleDeadline) => void,
+    opts?: { timeout?: number }
+  ) => number;
+};
+
+/**
+ * Schedule work during browser idle time.
+ * Falls back to setTimeout if requestIdleCallback unavailable.
+ */
+function scheduleIdleWork(
+  callback: (deadline: IdleDeadline | null) => void,
+  timeoutMs: number
+): void {
+  if ('requestIdleCallback' in window) {
+    (window as WindowWithIdle).requestIdleCallback(callback, { timeout: timeoutMs });
+  } else {
+    // Fallback: pass null deadline (no time remaining info)
+    setTimeout(() => callback(null), 0);
+  }
+}
+
+/**
+ * Create an empty result for early returns.
+ */
+function emptyResult(tab: PreRenderableTab): TabPreRenderResult {
+  return { success: true, tab, fromCache: true, itemCount: 0 };
 }
 
 // ============================================================================
@@ -101,23 +182,16 @@ interface CharacterImageCacheEntry {
  * @example
  * ```typescript
  * // In TabNavigation component
- * const handleTabHover = (tabId: EditorTab) => {
- *   tabPreRenderService.preRenderTab(tabId, {
- *     characters,
- *     tokens,
- *     scriptMeta,
- *     generationOptions,
- *   });
- * };
+ * tabPreRenderService.preRenderTab('script', { characters, tokens, scriptMeta });
  *
  * // In target view component
  * const cached = tabPreRenderService.getCachedNightOrder(scriptData);
- * if (cached) {
- *   // Use cached data immediately
- * }
  * ```
  */
 export class TabPreRenderService {
+  // Dependencies (injectable for testing)
+  private readonly deps: TabPreRenderServiceDeps;
+
   // Night order cache (lightweight data computation)
   private nightOrderCache: NightOrderCacheEntry | null = null;
 
@@ -134,11 +208,24 @@ export class TabPreRenderService {
     timestamp: 0,
   };
 
-  // Prevent concurrent gallery pre-rendering
-  private isPreRenderingGallery = false;
+  // Character token cache (for instant display on view mount)
+  // Keyed by `${characterUuid}:${optionsHash}`
+  private characterTokenCache: Map<string, CharacterTokenCacheEntry> = new Map();
+  private static readonly MAX_CHARACTER_TOKEN_CACHE_SIZE = 10;
 
-  // Prevent concurrent character image pre-rendering
+  // Concurrency guards
+  private isPreRenderingGallery = false;
   private isPreRenderingCharacterImages = false;
+  private isPreRenderingCharacterTokens = false;
+
+  constructor(deps: Partial<TabPreRenderServiceDeps> = {}) {
+    this.deps = {
+      cacheManager: deps.cacheManager ?? cacheManager,
+      resolveImageUrl: deps.resolveImageUrl ?? resolveCharacterImageUrl,
+      buildNightOrder: deps.buildNightOrder ?? buildNightOrder,
+      regenerateTokens: deps.regenerateTokens ?? regenerateCharacterAndReminders,
+    };
+  }
 
   // ============================================================================
   // Public API
@@ -239,6 +326,36 @@ export class TabPreRenderService {
   }
 
   /**
+   * Get cached pre-rendered character tokens.
+   * Used by CharactersView for instant display on mount.
+   *
+   * @param characterUuid - Character UUID
+   * @param options - Generation options
+   * @returns Cached entry or null if not available
+   */
+  getCachedCharacterTokens(
+    characterUuid: string,
+    options: GenerationOptions
+  ): CharacterTokenCacheEntry | null {
+    const optionsHash = hashGenerationOptions(options);
+    const key = `${characterUuid}:${optionsHash}`;
+    return this.characterTokenCache.get(key) ?? null;
+  }
+
+  /**
+   * Check if character tokens are cached.
+   *
+   * @param characterUuid - Character UUID
+   * @param options - Generation options
+   * @returns True if cached
+   */
+  hasCharacterTokens(characterUuid: string, options: GenerationOptions): boolean {
+    const optionsHash = hashGenerationOptions(options);
+    const key = `${characterUuid}:${optionsHash}`;
+    return this.characterTokenCache.has(key);
+  }
+
+  /**
    * Clear all tab pre-render caches.
    */
   clearAll(): void {
@@ -246,13 +363,12 @@ export class TabPreRenderService {
     this.galleryCache.dataUrls.clear();
     this.galleryCache.tokenCount = 0;
     this.characterImageCache.resolvedUrls.clear();
+    this.characterTokenCache.clear();
     CacheLogger.info('All tab pre-render caches cleared');
   }
 
   /**
    * Clear cache for a specific tab.
-   *
-   * @param tab - Tab to clear cache for
    */
   clearCache(tab: PreRenderableTab): void {
     switch (tab) {
@@ -265,8 +381,7 @@ export class TabPreRenderService {
         this.galleryCache.tokenCount = 0;
         break;
       case 'characters':
-        // Characters cache is managed by CacheManager
-        cacheManager.clearCache('characters').catch(() => {});
+        this.characterTokenCache.clear();
         break;
     }
     CacheLogger.debug(`Cache cleared for tab: ${tab}`);
@@ -278,47 +393,72 @@ export class TabPreRenderService {
 
   /**
    * Pre-render for Characters tab.
-   * Delegates to CacheManager strategy system.
+   * Generates character token and stores in sync cache for instant display.
    */
   private preRenderCharacters(context: TabPreRenderContext): TabPreRenderResult {
     const { characters, generationOptions, lastSelectedCharacterUuid } = context;
 
     if (characters.length === 0 || !generationOptions) {
-      return {
-        success: true,
-        tab: 'characters',
-        fromCache: true,
-        itemCount: 0,
-      };
+      return emptyResult('characters');
     }
 
-    // Find character to pre-render (last selected or first)
-    let characterToPreRender = characters[0];
-    if (lastSelectedCharacterUuid) {
-      const lastSelected = characters.find((c) => c.uuid === lastSelectedCharacterUuid);
-      if (lastSelected) {
-        characterToPreRender = lastSelected;
-      }
+    const character = this.findCharacterToPreRender(characters, lastSelectedCharacterUuid);
+    const characterUuid = character.uuid ?? character.id;
+    const optionsHash = hashGenerationOptions(generationOptions);
+    const key = `${characterUuid}:${optionsHash}`;
+
+    // Check if already cached
+    if (this.characterTokenCache.has(key)) {
+      return { success: true, tab: 'characters', fromCache: true, itemCount: 1 };
     }
 
-    // Delegate to CacheManager (async, fire-and-forget)
-    cacheManager
-      .preRender({
-        type: 'characters-hover',
-        tokens: [],
-        characters: [characterToPreRender],
-        generationOptions,
+    // Prevent concurrent pre-rendering
+    if (this.isPreRenderingCharacterTokens) {
+      return { success: true, tab: 'characters', fromCache: false, itemCount: 0 };
+    }
+
+    this.isPreRenderingCharacterTokens = true;
+
+    // Generate tokens (async, fire-and-forget)
+    this.deps
+      .regenerateTokens(character, generationOptions)
+      .then(({ characterToken, reminderTokens }) => {
+        // LRU eviction if cache is full
+        if (
+          this.characterTokenCache.size >= TabPreRenderService.MAX_CHARACTER_TOKEN_CACHE_SIZE &&
+          !this.characterTokenCache.has(key)
+        ) {
+          const firstKey = this.characterTokenCache.keys().next().value as string | undefined;
+          if (firstKey) this.characterTokenCache.delete(firstKey);
+        }
+
+        // Store in cache
+        this.characterTokenCache.set(key, {
+          characterToken,
+          reminderTokens,
+          characterUuid,
+          optionsHash,
+        });
+
+        CacheLogger.debug(`Pre-rendered character: ${character.name}`);
       })
       .catch((err) => {
         CacheLogger.warn('Characters pre-render failed', { error: err });
+      })
+      .finally(() => {
+        this.isPreRenderingCharacterTokens = false;
       });
 
-    return {
-      success: true,
-      tab: 'characters',
-      fromCache: false,
-      itemCount: 1,
-    };
+    return { success: true, tab: 'characters', fromCache: false, itemCount: 1 };
+  }
+
+  /** Find character to pre-render: last selected or first in list */
+  private findCharacterToPreRender(characters: Character[], lastSelectedUuid?: string): Character {
+    if (lastSelectedUuid) {
+      const found = characters.find((c) => c.uuid === lastSelectedUuid);
+      if (found) return found;
+    }
+    return characters[0];
   }
 
   /**
@@ -327,15 +467,9 @@ export class TabPreRenderService {
    */
   private preRenderTokens(context: TabPreRenderContext): TabPreRenderResult {
     const { tokens } = context;
-    const maxTokens = 20;
 
     if (tokens.length === 0) {
-      return {
-        success: true,
-        tab: 'tokens',
-        fromCache: true,
-        itemCount: 0,
-      };
+      return emptyResult('tokens');
     }
 
     // Prevent concurrent pre-rendering
@@ -350,37 +484,65 @@ export class TabPreRenderService {
 
     this.isPreRenderingGallery = true;
 
-    // Use requestIdleCallback for non-blocking encoding
-    const encode = () => {
-      let count = 0;
-      for (const token of tokens) {
-        if (count >= maxTokens) break;
-        if (!token.canvas) continue;
-        if (this.galleryCache.dataUrls.has(token.filename)) continue;
-
-        // Encode and cache
-        this.galleryCache.dataUrls.set(token.filename, token.canvas.toDataURL('image/png'));
-        count++;
-      }
-      this.galleryCache.tokenCount = tokens.length;
-      this.galleryCache.timestamp = Date.now();
-      this.isPreRenderingGallery = false;
-    };
-
-    // Use requestIdleCallback if available
-    if ('requestIdleCallback' in window) {
-      (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout?: number }) => number })
-        .requestIdleCallback(encode, { timeout: 100 });
-    } else {
-      setTimeout(encode, 0);
-    }
+    scheduleIdleWork(
+      (deadline) => this.encodeTokenBatch(tokens, 0, deadline),
+      TOKEN_ENCODE_TIMEOUT_MS
+    );
 
     return {
       success: true,
       tab: 'tokens',
       fromCache: false,
-      itemCount: Math.min(tokens.length, maxTokens),
+      itemCount: Math.min(tokens.length, MAX_TOKENS_PER_BATCH),
     };
+  }
+
+  /**
+   * Encode a batch of tokens to data URLs, yielding to browser when idle time runs out.
+   * @param tokens - All tokens to process
+   * @param startIndex - Index to resume from
+   * @param deadline - Idle deadline (null if using setTimeout fallback)
+   */
+  private encodeTokenBatch(
+    tokens: Token[],
+    startIndex: number,
+    deadline: IdleDeadline | null
+  ): void {
+    let count = 0;
+    let i = startIndex;
+
+    for (; i < tokens.length && count < MAX_TOKENS_PER_BATCH; i++) {
+      // Check if we should yield (only if we have deadline info)
+      if (deadline && deadline.timeRemaining() < MIN_IDLE_TIME_MS) {
+        // Reschedule remaining work
+        scheduleIdleWork(
+          (nextDeadline) => this.encodeTokenBatch(tokens, i, nextDeadline),
+          TOKEN_ENCODE_TIMEOUT_MS
+        );
+        return;
+      }
+
+      const token = tokens[i];
+      if (!token.canvas || this.galleryCache.dataUrls.has(token.filename)) continue;
+
+      this.galleryCache.dataUrls.set(token.filename, token.canvas.toDataURL('image/png'));
+      count++;
+    }
+
+    // Check if we processed all tokens or hit MAX_TOKENS_PER_BATCH
+    if (i < tokens.length && count >= MAX_TOKENS_PER_BATCH) {
+      // More tokens remain, reschedule
+      scheduleIdleWork(
+        (nextDeadline) => this.encodeTokenBatch(tokens, i, nextDeadline),
+        TOKEN_ENCODE_TIMEOUT_MS
+      );
+      return;
+    }
+
+    // All done
+    this.galleryCache.tokenCount = tokens.length;
+    this.galleryCache.timestamp = Date.now();
+    this.isPreRenderingGallery = false;
   }
 
   /**
@@ -391,21 +553,14 @@ export class TabPreRenderService {
     const { characters, scriptMeta } = context;
 
     if (characters.length === 0) {
-      return {
-        success: true,
-        tab: 'script',
-        fromCache: true,
-        itemCount: 0,
-      };
+      return emptyResult('script');
     }
 
-    // Build script data array (matching ScriptView's format)
     const scriptData = scriptMeta ? [scriptMeta, ...characters] : characters;
     const hash = this.hashScriptData(scriptData);
 
-    // Check cache
-    if (this.nightOrderCache && this.nightOrderCache.hash === hash) {
-      // Even if night order is cached, still preload images if needed
+    // Check cache hit
+    if (this.nightOrderCache?.hash === hash) {
       this.preloadCharacterImages(characters);
       return {
         success: true,
@@ -415,88 +570,54 @@ export class TabPreRenderService {
       };
     }
 
-    // Build and cache
-    const firstNight = buildNightOrder(scriptData, 'first');
-    const otherNight = buildNightOrder(scriptData, 'other');
+    // Build and cache night order
+    const firstNight = this.deps.buildNightOrder(scriptData, 'first');
+    const otherNight = this.deps.buildNightOrder(scriptData, 'other');
 
-    this.nightOrderCache = {
-      hash,
-      firstNight,
-      otherNight,
-      timestamp: Date.now(),
-    };
-
-    // Preload character images for instant display
+    this.nightOrderCache = { hash, firstNight, otherNight, timestamp: Date.now() };
     this.preloadCharacterImages(characters);
 
-    return {
-      success: true,
-      tab: 'script',
-      fromCache: false,
-      itemCount: firstNight.entries.length,
-    };
+    return { success: true, tab: 'script', fromCache: false, itemCount: firstNight.entries.length };
   }
 
   /**
    * Preload character images for night order display.
-   * Resolves image URLs and caches them for instant access.
    */
   private preloadCharacterImages(characters: Character[]): void {
-    // Prevent concurrent preloading
     if (this.isPreRenderingCharacterImages) return;
-    this.isPreRenderingCharacterImages = true;
 
-    // Filter characters that need image resolution
     const toResolve = characters.filter((c) => !this.characterImageCache.resolvedUrls.has(c.id));
+    if (toResolve.length === 0) return;
 
-    if (toResolve.length === 0) {
-      this.isPreRenderingCharacterImages = false;
-      return;
-    }
-
+    this.isPreRenderingCharacterImages = true;
     CacheLogger.debug(`Preloading ${toResolve.length} character images for night order`);
 
-    // Resolve images asynchronously (fire-and-forget)
-    const resolveAll = async () => {
-      for (const character of toResolve) {
-        try {
-          // Normalize image to string (handle arrays and AssetReference)
-          const imageUrl = Array.isArray(character.image)
-            ? character.image[0]
-            : typeof character.image === 'object' && character.image !== null
-              ? (character.image as { url?: string }).url || ''
-              : character.image;
+    // Async image resolution - callback returns immediately, so deadline not needed
+    scheduleIdleWork(() => {
+      this.resolveCharacterImages(toResolve);
+    }, IMAGE_PRELOAD_TIMEOUT_MS);
+  }
 
-          if (!imageUrl || typeof imageUrl !== 'string') continue;
+  /** Resolve character images asynchronously */
+  private async resolveCharacterImages(characters: Character[]): Promise<void> {
+    for (const character of characters) {
+      const imageUrl = extractImageUrl(character.image);
+      if (!imageUrl) continue;
 
-          const result = await resolveCharacterImageUrl(imageUrl, character.id, {
-            logContext: 'TabPreRenderService',
-          });
-          this.characterImageCache.resolvedUrls.set(character.id, result.url);
-        } catch {
-          // Fallback to original image URL on error (extract first valid URL)
-          const fallbackUrl = Array.isArray(character.image)
-            ? character.image[0]
-            : typeof character.image === 'string'
-              ? character.image
-              : '';
-          if (fallbackUrl && typeof fallbackUrl === 'string') {
-            this.characterImageCache.resolvedUrls.set(character.id, fallbackUrl);
-          }
-        }
+      try {
+        const result = await this.deps.resolveImageUrl(imageUrl, character.id, {
+          logContext: 'TabPreRenderService',
+        });
+        this.characterImageCache.resolvedUrls.set(character.id, result.url);
+      } catch {
+        // Use original URL as fallback
+        this.characterImageCache.resolvedUrls.set(character.id, imageUrl);
       }
-      this.characterImageCache.timestamp = Date.now();
-      this.isPreRenderingCharacterImages = false;
-      CacheLogger.debug(`Finished preloading ${toResolve.length} character images`);
-    };
-
-    // Use requestIdleCallback for non-blocking resolution
-    if ('requestIdleCallback' in window) {
-      (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout?: number }) => number })
-        .requestIdleCallback(() => { resolveAll(); }, { timeout: 200 });
-    } else {
-      setTimeout(resolveAll, 0);
     }
+
+    this.characterImageCache.timestamp = Date.now();
+    this.isPreRenderingCharacterImages = false;
+    CacheLogger.debug(`Finished preloading ${characters.length} character images`);
   }
 
   // ============================================================================

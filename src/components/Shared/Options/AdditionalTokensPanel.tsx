@@ -14,12 +14,12 @@
  */
 
 import { memo } from 'react';
-import styles from '@/styles/components/options/OptionsPanel.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
 import { BootleggerSettingsSelector } from '@/components/Shared/Selectors/BootleggerSettingsSelector';
 import { GenerateVariantsSelector } from '@/components/Shared/Selectors/GenerateVariantsSelector';
 import { MetaTokensSelector } from '@/components/Shared/Selectors/MetaTokensSelector';
 import { QRCodeSettingsSelector } from '@/components/Shared/Selectors/QRCodeSettingsSelector';
+import styles from '@/styles/components/options/OptionsPanel.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
 
 interface AdditionalTokensPanelProps {
   generationOptions: GenerationOptions;

@@ -4,7 +4,12 @@
  */
 
 import type { Point } from '@/ts/canvas/index.js';
-import { CHARACTER_LAYOUT, REMINDER_LAYOUT, TokenType, type TokenTypeValue } from '@/ts/constants.js';
+import {
+  CHARACTER_LAYOUT,
+  REMINDER_LAYOUT,
+  TokenType,
+  type TokenTypeValue,
+} from '@/ts/constants.js';
 
 // ============================================================================
 // LAYOUT RESULT TYPES

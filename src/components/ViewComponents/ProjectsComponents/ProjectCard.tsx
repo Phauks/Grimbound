@@ -37,7 +37,8 @@ export function ProjectCard({
 
   if (layout === 'list') {
     return (
-      <div
+      <button
+        type="button"
         style={{
           display: 'flex',
           gap: '16px',
@@ -47,16 +48,10 @@ export function ProjectCard({
           borderRadius: 'var(--border-radius)',
           cursor: 'pointer',
           transition: 'all 0.2s',
+          width: '100%',
+          textAlign: 'left',
         }}
         onClick={() => onOpen?.(project)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onOpen?.(project);
-          }
-        }}
-        role="button"
-        tabIndex={0}
       >
         {/* Thumbnail */}
         <div
@@ -151,13 +146,14 @@ export function ProjectCard({
             Delete
           </button>
         </div>
-      </div>
+      </button>
     );
   }
 
   // Grid layout
   return (
-    <div
+    <button
+      type="button"
       style={{
         padding: '16px',
         background: 'var(--bg-primary)',
@@ -165,16 +161,10 @@ export function ProjectCard({
         borderRadius: 'var(--border-radius)',
         cursor: 'pointer',
         transition: 'all 0.2s',
+        width: '100%',
+        textAlign: 'left',
       }}
       onClick={() => onOpen?.(project)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onOpen?.(project);
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
       {/* Thumbnail */}
       <div
@@ -270,6 +260,6 @@ export function ProjectCard({
           Delete
         </button>
       </div>
-    </div>
+    </button>
   );
 }

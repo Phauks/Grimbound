@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SAVE_DEBOUNCE_MS, isIdLinkedToName } from '@/ts/data/characterUtils.js';
+import { isIdLinkedToName, SAVE_DEBOUNCE_MS } from '@/ts/data/characterUtils.js';
 import type { Character, CharacterMetadata } from '@/ts/types/index.js';
 import { updateCharacterInJson } from '@/ts/ui/detailViewUtils.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -243,17 +243,14 @@ export function useCharacterEditor({
   );
 
   // Reset editor to a new character (for external selection changes)
-  const resetToCharacter = useCallback(
-    (uuid: string) => {
-      const char = charactersRef.current.find((c) => c.uuid === uuid);
-      if (char) {
-        setEditedCharacter(JSON.parse(JSON.stringify(char)));
-        setIsDirty(false);
-        originalCharacterUuidRef.current = uuid;
-      }
-    },
-    []
-  );
+  const resetToCharacter = useCallback((uuid: string) => {
+    const char = charactersRef.current.find((c) => c.uuid === uuid);
+    if (char) {
+      setEditedCharacter(JSON.parse(JSON.stringify(char)));
+      setIsDirty(false);
+      originalCharacterUuidRef.current = uuid;
+    }
+  }, []);
 
   return {
     editedCharacter,

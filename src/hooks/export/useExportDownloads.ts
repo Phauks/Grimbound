@@ -70,19 +70,10 @@ async function tokensToBundleData(tokens: Token[]): Promise<BundleData[]> {
  * ```
  */
 export function useExportDownloads(): UseExportDownloadsResult {
-  const {
-    tokens,
-    generationOptions,
-    scriptMeta,
-    jsonInput,
-    getEnabledCharacters,
-  } = useTokenContext();
+  const { tokens, generationOptions, scriptMeta, jsonInput, getEnabledCharacters } =
+    useTokenContext();
 
-  const {
-    downloadPdf,
-    downloadJson,
-    isExporting,
-  } = useExport();
+  const { downloadPdf, downloadJson, isExporting } = useExport();
 
   const { firstNight, otherNight } = useNightOrder();
 
@@ -117,13 +108,20 @@ export function useExportDownloads(): UseExportDownloadsResult {
   }, [tokens, enabledCharacterUuids]);
 
   // Filter tokens by type (using enabled tokens)
-  const characterTokens = useMemo(() => enabledTokens.filter((t) => t.type === 'character'), [enabledTokens]);
-  const reminderTokens = useMemo(() => enabledTokens.filter((t) => t.type === 'reminder'), [enabledTokens]);
+  const characterTokens = useMemo(
+    () => enabledTokens.filter((t) => t.type === 'character'),
+    [enabledTokens]
+  );
+  const reminderTokens = useMemo(
+    () => enabledTokens.filter((t) => t.type === 'reminder'),
+    [enabledTokens]
+  );
   const metaTokens = useMemo(() => enabledTokens.filter((t) => isMetaToken(t)), [enabledTokens]);
 
   const hasTokens = enabledTokens.length > 0;
   const hasCharacters = enabledCharacters.length > 0;
-  const hasNightOrder = (firstNight?.entries.length ?? 0) > 0 || (otherNight?.entries.length ?? 0) > 0;
+  const hasNightOrder =
+    (firstNight?.entries.length ?? 0) > 0 || (otherNight?.entries.length ?? 0) > 0;
 
   // Download handlers for token sets
   const handleDownloadCharacterTokens = useCallback(async () => {
@@ -194,7 +192,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
 
   // Night Order PDF handler
   const handleDownloadNightOrder = useCallback(async () => {
-    if (!hasNightOrder || !firstNight || !otherNight) return;
+    if (!(hasNightOrder && firstNight && otherNight)) return;
     try {
       const filename = scriptMeta?.name
         ? `${scriptMeta.name.replace(/[^a-zA-Z0-9]/g, '_')}_night_order.pdf`
@@ -294,9 +292,10 @@ export function useExportDownloads(): UseExportDownloadsResult {
       id: 'character-tokens',
       icon: '🎭',
       label: 'Character Tokens',
-      description: characterTokens.length > 0
-        ? `${characterTokens.length} tokens (ZIP)`
-        : 'No character tokens',
+      description:
+        characterTokens.length > 0
+          ? `${characterTokens.length} tokens (ZIP)`
+          : 'No character tokens',
       action: handleDownloadCharacterTokens,
       getBlob: () => tokensToBundleData(characterTokens),
       disabled: characterTokens.length === 0,
@@ -310,9 +309,8 @@ export function useExportDownloads(): UseExportDownloadsResult {
       id: 'reminder-tokens',
       icon: '🔔',
       label: 'Reminder Tokens',
-      description: reminderTokens.length > 0
-        ? `${reminderTokens.length} tokens (ZIP)`
-        : 'No reminder tokens',
+      description:
+        reminderTokens.length > 0 ? `${reminderTokens.length} tokens (ZIP)` : 'No reminder tokens',
       action: handleDownloadReminderTokens,
       getBlob: () => tokensToBundleData(reminderTokens),
       disabled: reminderTokens.length === 0,
@@ -326,9 +324,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
       id: 'meta-tokens',
       icon: '🔖',
       label: 'Meta Tokens',
-      description: metaTokens.length > 0
-        ? `${metaTokens.length} tokens (ZIP)`
-        : 'No meta tokens',
+      description: metaTokens.length > 0 ? `${metaTokens.length} tokens (ZIP)` : 'No meta tokens',
       action: handleDownloadMetaTokens,
       getBlob: () => tokensToBundleData(metaTokens),
       disabled: metaTokens.length === 0,
@@ -369,7 +365,6 @@ export function useExportDownloads(): UseExportDownloadsResult {
 
     return items;
   }, [
-    enabledTokens,
     hasTokens,
     hasCharacters,
     hasNightOrder,
@@ -387,18 +382,13 @@ export function useExportDownloads(): UseExportDownloadsResult {
     handleDownloadMetaTokens,
     handleDownloadNightOrder,
     handleOpenScriptInOfficialTool,
+    tokens.length,
   ]);
 
   // Filter downloads by category
-  const featuredDownloads = useMemo(
-    () => downloads.filter((d) => d.featured),
-    [downloads]
-  );
+  const featuredDownloads = useMemo(() => downloads.filter((d) => d.featured), [downloads]);
 
-  const jsonDownloads = useMemo(
-    () => downloads.filter((d) => d.category === 'json'),
-    [downloads]
-  );
+  const jsonDownloads = useMemo(() => downloads.filter((d) => d.category === 'json'), [downloads]);
 
   const tokenDownloads = useMemo(
     () => downloads.filter((d) => d.category === 'tokens' && !d.featured),

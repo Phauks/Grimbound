@@ -10,7 +10,12 @@ import type { TextLayoutResult } from '@/ts/canvas/canvasOptimizations.js';
 import { drawImageCover } from '@/ts/canvas/index.js';
 import CONFIG from '@/ts/config.js';
 import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
-import { CHARACTER_LAYOUT, META_TOKEN_LAYOUT, TokenType, type TokenTypeValue } from '@/ts/constants.js';
+import {
+  CHARACTER_LAYOUT,
+  META_TOKEN_LAYOUT,
+  TokenType,
+  type TokenTypeValue,
+} from '@/ts/constants.js';
 import { getCharacterImageUrl } from '@/ts/data/index.js';
 import { TokenCreationError } from '@/ts/errors.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
@@ -381,7 +386,10 @@ export class TokenImageRenderer {
     }
 
     if (!imageUrl) {
-      logger.warn('TokenImageRenderer', 'No Bootlegger image available, token will be missing icon');
+      logger.warn(
+        'TokenImageRenderer',
+        'No Bootlegger image available, token will be missing icon'
+      );
       return;
     }
 

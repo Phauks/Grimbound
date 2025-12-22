@@ -16,19 +16,17 @@
  * @module components/Shared/Drawer/OfficialCharacterDrawer
  */
 
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import { useTokenContext } from '@/contexts/TokenContext';
+import { useOfficialCharacterImages } from '@/hooks/sync/useOfficialCharacterImages';
+import { useCharacterFiltering } from '@/hooks/ui/useCharacterFiltering';
+import { useDrawerAnimation } from '@/hooks/ui/useDrawerAnimation';
+import { useModalBehavior } from '@/hooks/ui/useModalBehavior';
 import styles from '@/styles/components/shared/OfficialCharacterDrawer.module.css';
-import type { Character, ScriptMeta, Team } from '@/ts/types/index.js';
+import type { Character, Team } from '@/ts/types/index.js';
+import { charactersToJson } from '@/ts/utils/jsonUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { generateStableUuid } from '@/ts/utils/nameGenerator';
 
@@ -42,9 +40,6 @@ export interface OfficialCharacterDrawerProps {
   /** Called when the drawer should close */
   onClose: () => void;
 }
-
-type EditionFilter = 'all' | 'base3' | 'experimental';
-type TeamFilter = Team | 'all';
 
 // ============================================
 // Constants
@@ -71,32 +66,9 @@ const TEAM_DISPLAY_NAMES: Record<Team, string> = {
   meta: 'Meta',
 };
 
-const BASE_3_EDITIONS = ['tb', 'snv', 'bmr'];
-
 // ============================================
 // Helper Functions
 // ============================================
-
-function filterByEdition(char: Character, filter: EditionFilter): boolean {
-  if (filter === 'all') return true;
-  const isBase3 = BASE_3_EDITIONS.includes(char.edition || '');
-  return filter === 'base3' ? isBase3 : !isBase3;
-}
-
-function filterByTeam(char: Character, filter: TeamFilter): boolean {
-  if (filter === 'all') return true;
-  return char.team === filter;
-}
-
-function filterBySearch(char: Character, query: string): boolean {
-  if (!query.trim()) return true;
-  const q = query.toLowerCase();
-  return (
-    char.name.toLowerCase().includes(q) ||
-    (char.ability?.toLowerCase().includes(q) ?? false) ||
-    char.id.toLowerCase().includes(q)
-  );
-}
 
 function groupByTeam(chars: Character[]): Record<Team, Character[]> {
   return TEAM_ORDER.reduce(
@@ -144,9 +116,7 @@ const CharacterRow = memo(function CharacterRow({
       />
       <div className={styles.characterInfo}>
         <h4 className={styles.characterName}>{character.name}</h4>
-        {character.ability && (
-          <p className={styles.abilityText}>{character.ability}</p>
-        )}
+        {character.ability && <p className={styles.abilityText}>{character.ability}</p>}
       </div>
     </button>
   );
@@ -182,14 +152,8 @@ const TeamSection = memo(function TeamSection({
 
   return (
     <div className={`${styles.teamSection} ${teamClassName}`}>
-      <button
-        type="button"
-        className={styles.teamHeader}
-        onClick={onToggleExpand}
-      >
-        <span
-          className={`${styles.teamChevron} ${isExpanded ? styles.teamChevronExpanded : ''}`}
-        >
+      <button type="button" className={styles.teamHeader} onClick={onToggleExpand}>
+        <span className={`${styles.teamChevron} ${isExpanded ? styles.teamChevronExpanded : ''}`}>
           &#9654;
         </span>
         <span className={styles.teamName}>{TEAM_DISPLAY_NAMES[team]}</span>
@@ -215,51 +179,6 @@ const TeamSection = memo(function TeamSection({
 });
 
 // ============================================
-// Helper: Convert characters array to JSON
-// ============================================
-
-function charactersToJson(characters: Character[], scriptMeta: ScriptMeta | null): string {
-  // Build the JSON array
-  const jsonArray: unknown[] = [];
-
-  // Add meta first if present
-  if (scriptMeta) {
-    const metaEntry: Record<string, unknown> = { id: '_meta' };
-    if (scriptMeta.name) metaEntry.name = scriptMeta.name;
-    if (scriptMeta.author) metaEntry.author = scriptMeta.author;
-    if (scriptMeta.logo) metaEntry.logo = scriptMeta.logo;
-    jsonArray.push(metaEntry);
-  }
-
-  // Add characters
-  for (const char of characters) {
-    if (char.source === 'official') {
-      // Official characters: just use the ID string
-      jsonArray.push(char.id);
-    } else {
-      // Custom characters: include full definition
-      const charEntry: Record<string, unknown> = {
-        id: char.id,
-        name: char.name,
-      };
-      if (char.team && char.team !== 'townsfolk') charEntry.team = char.team;
-      if (char.ability) charEntry.ability = char.ability;
-      if (char.image) charEntry.image = char.image;
-      if (char.reminders?.length) charEntry.reminders = char.reminders;
-      if (char.remindersGlobal?.length) charEntry.remindersGlobal = char.remindersGlobal;
-      if (char.setup !== undefined) charEntry.setup = char.setup;
-      if (char.firstNight !== undefined) charEntry.firstNight = char.firstNight;
-      if (char.firstNightReminder) charEntry.firstNightReminder = char.firstNightReminder;
-      if (char.otherNight !== undefined) charEntry.otherNight = char.otherNight;
-      if (char.otherNightReminder) charEntry.otherNightReminder = char.otherNightReminder;
-      jsonArray.push(charEntry);
-    }
-  }
-
-  return JSON.stringify(jsonArray, null, 2);
-}
-
-// ============================================
 // Main Component
 // ============================================
 
@@ -271,34 +190,54 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   const { getCharacters, getCharacterImage, isInitialized } = useDataSync();
   const { characters, setCharacters, setJsonInput, scriptMeta } = useTokenContext();
 
+  // Drawer animation lifecycle
+  const { shouldRender } = useDrawerAnimation({ isOpen });
+
+  // Modal behavior (escape key, body scroll lock)
+  const { handleBackdropClick } = useModalBehavior({
+    isOpen,
+    onClose,
+    closeOnEscape: true,
+    closeOnBackdrop: true,
+  });
+
   // State
   const [officialCharacters, setOfficialCharacters] = useState<Character[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editionFilter, setEditionFilter] = useState<EditionFilter>('all');
-  const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
-  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [imageUrls, setImageUrls] = useState<Map<string, string | null>>(new Map());
   const [expandedTeams, setExpandedTeams] = useState<Set<Team>>(new Set());
 
-  // Track blob URLs for cleanup
-  const blobUrlsRef = useRef<string[]>([]);
+  // Compute which official characters are on script
+  const onScriptIds = useMemo(() => {
+    return new Set(characters.filter((c) => c.source === 'official').map((c) => c.id));
+  }, [characters]);
 
-  // For animation - keep in DOM during close
-  const [shouldRender, setShouldRender] = useState(isOpen);
+  // Character filtering
+  const {
+    searchQuery,
+    setSearchQuery,
+    editionFilter,
+    setEditionFilter,
+    teamFilter,
+    setTeamFilter,
+    showSelectedOnly,
+    toggleShowSelectedOnly,
+    clearSearch,
+    filteredCharacters,
+  } = useCharacterFiltering({
+    characters: officialCharacters,
+    onScriptIds,
+  });
 
-  useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-    } else {
-      const timer = setTimeout(() => setShouldRender(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+  // Image loading
+  const { imageUrls, isLoading: imagesLoading } = useOfficialCharacterImages({
+    characters: officialCharacters,
+    isActive: isOpen && isInitialized,
+    getCharacterImage,
+  });
 
   // Load official characters when drawer opens
   useEffect(() => {
-    if (!isOpen || !isInitialized) return;
+    if (!(isOpen && isInitialized)) return;
 
     let isMounted = true;
 
@@ -307,44 +246,8 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
       try {
         const chars = await getCharacters();
         if (!isMounted) return;
-
         setOfficialCharacters(chars);
-
-        // Load images from IndexedDB cache and convert to blob URLs
-        const urlMap = new Map<string, string | null>();
-        const newBlobUrls: string[] = [];
-
-        // Load images in batches to avoid overwhelming the browser
-        const BATCH_SIZE = 20;
-        for (let i = 0; i < chars.length; i += BATCH_SIZE) {
-          const batch = chars.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (char) => {
-              try {
-                const blob = await getCharacterImage(char.id);
-                if (blob && isMounted) {
-                  const blobUrl = URL.createObjectURL(blob);
-                  urlMap.set(char.id, blobUrl);
-                  newBlobUrls.push(blobUrl);
-                } else {
-                  urlMap.set(char.id, null);
-                }
-              } catch {
-                urlMap.set(char.id, null);
-              }
-            })
-          );
-
-          // Update state progressively for smoother UX
-          if (isMounted) {
-            setImageUrls(new Map(urlMap));
-          }
-        }
-
-        // Store blob URLs for cleanup
-        blobUrlsRef.current = newBlobUrls;
-
-        logger.debug('OfficialCharacterDrawer', `Loaded ${chars.length} characters, ${newBlobUrls.length} images`);
+        logger.debug('OfficialCharacterDrawer', `Loaded ${chars.length} characters`);
       } catch (error) {
         logger.error('OfficialCharacterDrawer', 'Failed to load official characters', error);
       } finally {
@@ -356,58 +259,10 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
 
     loadCharacters();
 
-    // Cleanup blob URLs when drawer closes or unmounts
     return () => {
       isMounted = false;
-      blobUrlsRef.current.forEach((url) => {
-        URL.revokeObjectURL(url);
-      });
-      blobUrlsRef.current = [];
     };
-  }, [isOpen, isInitialized, getCharacters, getCharacterImage]);
-
-  // Handle escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen]);
-
-  // Compute which official characters are on script
-  const onScriptIds = useMemo(() => {
-    return new Set(
-      characters
-        .filter((c) => c.source === 'official')
-        .map((c) => c.id)
-    );
-  }, [characters]);
-
-  // Filter characters
-  const filteredCharacters = useMemo(() => {
-    return officialCharacters
-      .filter((c) => filterByEdition(c, editionFilter))
-      .filter((c) => filterByTeam(c, teamFilter))
-      .filter((c) => filterBySearch(c, searchQuery))
-      .filter((c) => !showSelectedOnly || onScriptIds.has(c.id));
-  }, [officialCharacters, editionFilter, teamFilter, searchQuery, showSelectedOnly, onScriptIds]);
+  }, [isOpen, isInitialized, getCharacters]);
 
   // Group by team
   const charactersByTeam = useMemo(() => {
@@ -444,21 +299,6 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
     [characters, onScriptIds, setCharacters, setJsonInput, scriptMeta]
   );
 
-  // Handle overlay click
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
-
-  // Clear filters
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery('');
-  }, []);
-
   // Toggle individual team expansion
   const toggleTeamExpand = useCallback((team: Team) => {
     setExpandedTeams((prev) => {
@@ -474,27 +314,28 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
 
   // Check if all teams with characters are expanded
   const teamsWithCharacters = TEAM_ORDER.filter((team) => charactersByTeam[team].length > 0);
-  const allExpanded = teamsWithCharacters.length > 0 && teamsWithCharacters.every((team) => expandedTeams.has(team));
+  const allExpanded =
+    teamsWithCharacters.length > 0 && teamsWithCharacters.every((team) => expandedTeams.has(team));
 
   // Toggle all teams
   const toggleAllTeams = useCallback(() => {
     if (allExpanded) {
-      // Collapse all
       setExpandedTeams(new Set());
     } else {
-      // Expand all teams that have characters
       setExpandedTeams(new Set(teamsWithCharacters));
     }
   }, [allExpanded, teamsWithCharacters]);
 
   if (!shouldRender) return null;
 
+  const showLoadingState = isLoading || imagesLoading;
+
   const drawerContent = (
     <>
-      {/* Overlay */}
+      {/* Overlay for backdrop click handling */}
       <div
         className={`${styles.overlay} ${isOpen ? styles.overlayVisible : ''}`}
-        onClick={handleOverlayClick}
+        onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
@@ -539,14 +380,9 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
               placeholder="Search by name or ability..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus={isOpen}
             />
             {searchQuery && (
-              <button
-                type="button"
-                className={styles.clearButton}
-                onClick={handleClearSearch}
-              >
+              <button type="button" className={styles.clearButton} onClick={clearSearch}>
                 Clear
               </button>
             )}
@@ -557,7 +393,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
             <select
               className={styles.filterSelect}
               value={editionFilter}
-              onChange={(e) => setEditionFilter(e.target.value as EditionFilter)}
+              onChange={(e) => setEditionFilter(e.target.value as typeof editionFilter)}
             >
               <option value="all">All Editions</option>
               <option value="base3">Base 3 (TB, SV, BMR)</option>
@@ -567,7 +403,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
             <select
               className={styles.filterSelect}
               value={teamFilter}
-              onChange={(e) => setTeamFilter(e.target.value as TeamFilter)}
+              onChange={(e) => setTeamFilter(e.target.value as typeof teamFilter)}
             >
               <option value="all">All Teams</option>
               {TEAM_ORDER.map((team) => (
@@ -587,7 +423,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
             <button
               type="button"
               className={`${styles.selectedToggle} ${showSelectedOnly ? styles.selectedToggleActive : ''}`}
-              onClick={() => setShowSelectedOnly(!showSelectedOnly)}
+              onClick={toggleShowSelectedOnly}
               title={showSelectedOnly ? 'Show all characters' : 'Show only selected characters'}
             >
               {showSelectedOnly ? '✓ Selected Only' : 'Selected Only'}
@@ -597,7 +433,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
 
         {/* Character List */}
         <div className={styles.characterList}>
-          {isLoading ? (
+          {showLoadingState ? (
             <div className={styles.loadingState}>Loading characters...</div>
           ) : filteredCharacters.length === 0 ? (
             <div className={styles.emptyState}>

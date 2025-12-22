@@ -148,11 +148,11 @@ export interface QRCodeOptions {
 }
 
 import {
+  type BackgroundStyle,
   DEFAULT_EFFECTS_CONFIG,
   DEFAULT_GRADIENT_CONFIG,
   DEFAULT_LIGHT_CONFIG,
   DEFAULT_TEXTURE_CONFIG,
-  type BackgroundStyle,
 } from './backgroundEffects.js';
 import type { BootleggerIconType } from './index.js';
 

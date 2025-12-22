@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import type { TabType } from '@/components/Layout/TabNavigation';
+import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useStudioNavigation, useTokenDeletion, useTokenGrouping } from '@/hooks';
@@ -7,8 +9,6 @@ import { buildTokenMetadata, embedPngMetadata } from '@/ts/export/pngMetadata';
 import type { Token } from '@/ts/types/index.js';
 import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils';
 import { logger } from '@/ts/utils/logger';
-import type { TabType } from '@/components/Layout/TabNavigation';
-import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { TokenCard } from './TokenCard';
 
 interface TokenGridProps {

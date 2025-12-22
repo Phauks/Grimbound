@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useProjectAutoSave, useStorageQuota, useUnsavedChangesWarning } from '@/hooks';
 import { AppFooter } from './components/Layout/AppFooter';
 import { AppHeader } from './components/Layout/AppHeader';
 import { AppShell } from './components/Layout/AppShell';
@@ -16,14 +17,7 @@ import { NightOrderProvider } from './contexts/NightOrderContext';
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { TokenProvider, useTokenContext } from './contexts/TokenContext';
-import {
-  useProjectAutoSave,
-  useStorageQuota,
-  useUnsavedChangesWarning,
-} from '@/hooks';
 import layoutStyles from './styles/components/layout/AppLayout.module.css';
-import { warmingPolicyManager } from './ts/cache/index.js';
-import { logger } from './ts/utils/logger.js';
 
 function AppContent() {
   const { currentProject, setSaveNow } = useProjectContext();
@@ -46,39 +40,6 @@ function AppContent() {
     warningThreshold: 80, // Warn at 80%
     criticalThreshold: 90, // Critical at 90%
   });
-
-  // Warm caches on app start (runs once)
-  useEffect(() => {
-    const warmAppStartCaches = async () => {
-      try {
-        logger.debug('App', 'Warming caches on app start');
-
-        await warmingPolicyManager.warm({ route: '/' }, (policy, loaded, total, message) => {
-          logger.debug('App', `Warming progress - ${policy}:`, {
-            loaded,
-            total,
-            message,
-          });
-        });
-
-        logger.debug('App', 'App start cache warming complete');
-      } catch (error) {
-        logger.warn('App', 'App start cache warming failed:', error);
-      }
-    };
-
-    // Run warming during idle time to avoid blocking initial render
-    if ('requestIdleCallback' in window) {
-      (
-        window as Window & {
-          requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number;
-        }
-      ).requestIdleCallback(warmAppStartCaches, { timeout: 3000 });
-    } else {
-      // Fallback for browsers without requestIdleCallback
-      setTimeout(warmAppStartCaches, 500);
-    }
-  }, []); // Empty deps = run only once on mount
 
   // Modal states
   const [showSettings, setShowSettings] = useState(false);
@@ -133,12 +94,14 @@ function AppContent() {
       {/* Tab Conflict Modal (from auto-save hook) */}
       <TabConflictModal {...conflictModalProps} />
       <SyncDetailsModal isOpen={showSyncDetails} onClose={() => setShowSyncDetails(false)} />
-      <AssetManagerModal
-        isOpen={showAssetManager}
-        onClose={() => setShowAssetManager(false)}
-        projectId={currentProject?.id}
-        generationOptions={generationOptions}
-      />
+      {showAssetManager && (
+        <AssetManagerModal
+          isOpen={showAssetManager}
+          onClose={() => setShowAssetManager(false)}
+          projectId={currentProject?.id}
+          generationOptions={generationOptions}
+        />
+      )}
 
       {/* Toast Notifications */}
       <ToastContainer />

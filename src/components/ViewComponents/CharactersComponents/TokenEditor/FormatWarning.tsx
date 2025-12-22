@@ -7,8 +7,8 @@
  */
 
 import { memo } from 'react';
-import type { FormatIssue } from '@/ts/utils/textFormatAnalyzer';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
+import type { FormatIssue } from '@/ts/utils/textFormatAnalyzer';
 
 interface FormatWarningProps {
   /** List of format issues detected */
@@ -44,12 +44,7 @@ export const FormatWarning = memo(function FormatWarning({
           ))}
         </ul>
       </div>
-      <button
-        type="button"
-        onClick={onFix}
-        className={styles.fixButton}
-        disabled={disabled}
-      >
+      <button type="button" onClick={onFix} className={styles.fixButton} disabled={disabled}>
         Fix Format
       </button>
     </div>

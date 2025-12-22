@@ -16,7 +16,7 @@ import {
 } from '@/ts/canvas/index.js';
 import { generateStyledQRCode } from '@/ts/canvas/qrGeneration.js';
 import CONFIG from '@/ts/config.js';
-import { CHARACTER_LAYOUT, DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT } from '@/ts/constants.js';
+import { DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT } from '@/ts/constants.js';
 import { countReminders, getCharacterImageUrl } from '@/ts/data/index.js';
 import { ValidationError } from '@/ts/errors.js';
 import type { Character } from '@/ts/types/index.js';
@@ -29,9 +29,6 @@ import { logger } from '@/ts/utils/logger.js';
 import { defaultImageCache } from './ImageCacheAdapter.js';
 import { type IImageCache, TokenImageRenderer } from './TokenImageRenderer.js';
 import { TokenTextRenderer } from './TokenTextRenderer.js';
-
-// Re-export for backward compatibility
-export { generateAllTokens } from './batchGenerator.js';
 
 /**
  * TokenGenerator class handles all canvas operations for creating tokens
@@ -173,15 +170,17 @@ export class TokenGenerator {
     }
 
     // Determine ability text
-    const abilityTextToDisplay = this.options.displayAbilityText ? character.ability : undefined;
-    const hasAbilityText = Boolean(abilityTextToDisplay?.trim());
+    const abilityTextToDisplay = this.options.displayAbilityText
+      ? character.ability?.trim()
+      : undefined;
+    const hasAbilityText = Boolean(abilityTextToDisplay);
 
     // Calculate text layout if needed
     let abilityTextLayout: ReturnType<TokenTextRenderer['calculateAbilityTextLayout']> | undefined;
-    if (hasAbilityText) {
+    if (abilityTextToDisplay) {
       abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(
         ctx,
-        abilityTextToDisplay!,
+        abilityTextToDisplay,
         diameter
       );
     }
@@ -210,8 +209,8 @@ export class TokenGenerator {
     }
 
     // Draw ability text
-    if (hasAbilityText) {
-      this.textRenderer.drawAbilityText(ctx, abilityTextToDisplay!, diameter);
+    if (abilityTextToDisplay) {
+      this.textRenderer.drawAbilityText(ctx, abilityTextToDisplay, diameter);
     }
 
     // Draw character name
@@ -637,5 +636,3 @@ export class TokenGenerator {
     return this.textRenderer.calculateAbilityTextLayout(ctx, abilityText, diameter);
   }
 }
-
-export default { TokenGenerator };

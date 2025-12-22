@@ -9,7 +9,7 @@
  * @module hooks/projects/useProjects
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useProjectService } from '@/contexts/ServiceContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -17,7 +17,14 @@ import type { CreateProjectOptions, ListProjectsOptions, Project } from '@/ts/ty
 import { handleAsyncOperation, logger } from '@/ts/utils/index.js';
 
 export function useProjects() {
-  const { currentProject, setCurrentProject, projects, setProjects } = useProjectContext();
+  const {
+    currentProject,
+    setCurrentProject,
+    projects,
+    setProjects,
+    projectsLoaded,
+    projectsLoading,
+  } = useProjectContext();
   const projectService = useProjectService();
   const {
     characters,
@@ -49,14 +56,15 @@ export function useProjects() {
         setIsLoading,
         setError,
         {
-          successMessage: `Loaded ${projects.length} projects`,
           onSuccess: (loadedProjects) => {
-            setProjects(loadedProjects as Project[]);
+            const loaded = loadedProjects as Project[];
+            setProjects(loaded);
+            logger.info('Load projects', `Loaded ${loaded.length} projects`);
           },
         }
       );
     },
-    [projectService, setProjects, projects.length]
+    [projectService, setProjects]
   );
 
   /**
@@ -341,19 +349,15 @@ export function useProjects() {
     [projectService, loadProjects]
   );
 
-  // Auto-load projects on mount
-  useEffect(() => {
-    logger.info('useProjects', 'Hook mounted, loading projects');
-    loadProjects().catch((err) =>
-      logger.error('useProjects', 'Failed to load projects on mount', err)
-    );
-  }, [loadProjects]);
+  // NOTE: Initial project load is handled by ProjectContext (single source of truth)
+  // The loadProjects function is still available for manual refresh
 
   return {
     // State
     projects,
     currentProject,
-    isLoading,
+    isLoading: isLoading || projectsLoading, // Combine local and context loading states
+    projectsLoaded,
     error,
 
     // Operations

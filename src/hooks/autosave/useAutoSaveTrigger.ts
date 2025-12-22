@@ -16,8 +16,8 @@ import type { DebouncedFunction } from '@/ts/utils/asyncUtils.js';
 import { retryOperation } from '@/ts/utils/errorUtils.js';
 import { debounce, logger } from '@/ts/utils/index.js';
 import { generateUuid } from '@/ts/utils/nameGenerator.js';
-import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
 import { useTabSynchronization } from '../sync/useTabSynchronization.js';
+import { useAutoSaveTelemetry } from './useAutoSaveTelemetry.js';
 
 const AUTO_SAVE_DEBOUNCE_MS = 2000;
 const MAX_SNAPSHOTS = 10; // Keep last 10 snapshots

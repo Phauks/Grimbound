@@ -15,11 +15,11 @@
  */
 
 import { memo } from 'react';
-import styles from '@/styles/components/options/OptionsPanel.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
 import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
 import { ReminderCountSelector } from '@/components/Shared/Selectors/ReminderCountSelector';
 import { SetupSettingsSelector } from '@/components/Shared/Selectors/SetupSettingsSelector';
+import styles from '@/styles/components/options/OptionsPanel.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
 import { AbilityTextSection } from './AppearancePanel';
 
 interface AdditionalOptionsPanelProps {

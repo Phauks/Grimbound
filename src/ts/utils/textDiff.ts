@@ -210,8 +210,7 @@ export function diffArrays<T>(
   const current = newArr ?? [];
 
   // Convert to sets for O(1) lookup (using JSON.stringify for complex objects)
-  const serialize = (item: T): string =>
-    typeof item === 'string' ? item : JSON.stringify(item);
+  const serialize = (item: T): string => (typeof item === 'string' ? item : JSON.stringify(item));
 
   const oldSet = new Map(old.map((item) => [serialize(item), item]));
   const newSet = new Map(current.map((item) => [serialize(item), item]));

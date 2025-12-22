@@ -25,28 +25,83 @@ import { logger } from './logger.js';
 // ============================================================================
 
 /**
+ * Maximum number of blob URLs to keep cached.
+ * Beyond this limit, oldest entries are evicted and their blob URLs revoked.
+ * This prevents unbounded memory growth from blob URL accumulation.
+ *
+ * Set to 250 to accommodate all official characters (~175) plus headroom
+ * for custom characters and browsing multiple scripts.
+ */
+const MAX_CACHED_BLOB_URLS = 250;
+
+/**
  * Cache for resolved character icon URLs
  *
  * Key: character ID (lowercase)
  * Value: resolved URL string (blob URL or external URL)
  *
- * Blob URLs are persisted here and NOT revoked - they stay valid for the session.
- * This dramatically improves performance for list views that re-render frequently.
+ * Uses Map's insertion order for LRU-like eviction. Entries accessed via
+ * getCachedIconUrl are "touched" (re-inserted) to prevent eviction.
+ *
+ * When cache exceeds MAX_CACHED_BLOB_URLS, oldest entries are evicted
+ * and their blob URLs are properly revoked.
  */
 const characterIconUrlCache = new Map<string, string>();
 
 /**
  * Get a cached URL for a character icon
+ *
+ * This also "touches" the entry by re-inserting it to update its position
+ * in the Map's insertion order (for LRU-like behavior).
  */
 export function getCachedIconUrl(characterId: string): string | undefined {
-  return characterIconUrlCache.get(characterId.toLowerCase());
+  const key = characterId.toLowerCase();
+  const url = characterIconUrlCache.get(key);
+
+  // "Touch" the entry by re-inserting to update LRU order
+  if (url !== undefined) {
+    characterIconUrlCache.delete(key);
+    characterIconUrlCache.set(key, url);
+  }
+
+  return url;
+}
+
+/**
+ * Evict oldest entries from the cache when it exceeds the maximum size.
+ * Properly revokes blob URLs to prevent memory leaks.
+ */
+function evictOldestBlobUrls(): void {
+  if (characterIconUrlCache.size <= MAX_CACHED_BLOB_URLS) {
+    return;
+  }
+
+  const entries = [...characterIconUrlCache.entries()];
+  const entriesToEvict = entries.slice(0, entries.length - MAX_CACHED_BLOB_URLS);
+
+  for (const [key, url] of entriesToEvict) {
+    if (url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+    characterIconUrlCache.delete(key);
+  }
+
+  if (entriesToEvict.length > 0) {
+    logger.debug(
+      'CharacterImageResolver',
+      `Evicted ${entriesToEvict.length} entries from icon URL cache (limit: ${MAX_CACHED_BLOB_URLS})`
+    );
+  }
 }
 
 /**
  * Set a cached URL for a character icon
+ *
+ * Automatically evicts oldest entries when cache exceeds MAX_CACHED_BLOB_URLS.
  */
 export function setCachedIconUrl(characterId: string, url: string): void {
   characterIconUrlCache.set(characterId.toLowerCase(), url);
+  evictOldestBlobUrls();
 }
 
 /**
@@ -348,12 +403,12 @@ export async function resolveCharacterImages(
         }
       }
 
-      if (!imageUrl) return null;
+      if (!imageUrl || !char.uuid) return null;
 
       const result = await resolveCharacterImageUrl(imageUrl, char.id);
 
       return {
-        uuid: char.uuid!,
+        uuid: char.uuid,
         url: result.url,
         blobUrl: result.blobUrl,
       };
@@ -364,7 +419,7 @@ export async function resolveCharacterImages(
 
   // Collect results
   for (const result of results) {
-    if (result && result.url) {
+    if (result?.url) {
       urls.set(result.uuid, result.url);
       if (result.blobUrl) {
         blobUrls.push(result.blobUrl);

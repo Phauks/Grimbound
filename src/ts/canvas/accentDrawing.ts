@@ -5,7 +5,7 @@
 
 import CONFIG from '@/ts/config.js';
 import { ACCENT_LAYOUT } from '@/ts/constants.js';
-import { globalImageCache, shuffleArray, logger } from '@/ts/utils/index.js';
+import { globalImageCache, logger, shuffleArray } from '@/ts/utils/index.js';
 
 /**
  * Accent position configuration
@@ -189,7 +189,12 @@ export async function drawAccents(
   }
 
   // Build and shuffle positions (respecting side accent settings)
-  const positions = buildAccentPositions(accentArcSpan, accentSlots, enableLeftAccent, enableRightAccent);
+  const positions = buildAccentPositions(
+    accentArcSpan,
+    accentSlots,
+    enableLeftAccent,
+    enableRightAccent
+  );
   const shuffledPositions = shuffleArray(positions);
 
   let accentsDrawn = 0;

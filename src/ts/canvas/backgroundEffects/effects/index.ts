@@ -66,7 +66,6 @@ export type { EffectContext, EffectResult, EffectStrategy } from './EffectStrate
 
 // Individual effects
 export { InnerGlowEffect } from './InnerGlowEffect.js';
-export { VignetteEffect } from './VignetteEffect.js';
-
 // Vibrance (post-processing)
 export { applyVibrance, isVibranceEnabled } from './VibranceEffect.js';
+export { VignetteEffect } from './VignetteEffect.js';

@@ -7,9 +7,10 @@
  * @module services/upload/IUploadServices
  */
 
+import type { CreateAssetData } from './AssetStorageService.js';
+import type { ProcessingOptions } from './ImageProcessingService.js';
 import type {
   AssetFilter,
-  AssetMetadata,
   AssetType,
   AssetTypeConfig,
   AssetWithUrl,
@@ -20,8 +21,6 @@ import type {
   UploadOutcome,
   ValidationResult,
 } from './types.js';
-import type { CreateAssetData } from './AssetStorageService.js';
-import type { ProcessingOptions } from './ImageProcessingService.js';
 
 // ============================================================================
 // File Validation Service Interface

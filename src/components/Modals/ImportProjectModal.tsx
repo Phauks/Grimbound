@@ -7,13 +7,13 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Alert } from '@/components/Shared/UI/Alert';
+import { Button } from '@/components/Shared/UI/Button';
 import { useProjectImporter } from '@/contexts/ServiceContext';
 import styles from '@/styles/components/modals/ImportProjectModal.module.css';
 import type { ProjectPreview } from '@/ts/types/project.js';
 import { logger } from '@/ts/utils/index.js';
-import { Modal } from '@/components/Shared/ModalBase/Modal';
-import { Alert } from '@/components/Shared/UI/Alert';
-import { Button } from '@/components/Shared/UI/Button';
 
 interface ImportProjectModalProps {
   /** Whether modal is open */
@@ -38,39 +38,42 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Process and validate file
-  const processFile = useCallback(async (file: File) => {
-    setSelectedFile(file);
-    setError(null);
-    setIsValidating(true);
-    setPreview(null);
+  const processFile = useCallback(
+    async (file: File) => {
+      setSelectedFile(file);
+      setError(null);
+      setIsValidating(true);
+      setPreview(null);
 
-    try {
-      const importer = createImporter();
+      try {
+        const importer = createImporter();
 
-      // Validate ZIP
-      const validation = await importer.validateZip(file);
+        // Validate ZIP
+        const validation = await importer.validateZip(file);
 
-      if (!validation.valid) {
-        setError(validation.errors.join(', '));
+        if (!validation.valid) {
+          setError(validation.errors.join(', '));
+          setIsValidating(false);
+          return;
+        }
+
+        // Show warnings if any
+        if (validation.warnings && validation.warnings.length > 0) {
+          logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });
+        }
+
+        // Generate preview
+        const previewData = await importer.previewZip(file);
+        setPreview(previewData);
         setIsValidating(false);
-        return;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to validate file';
+        setError(errorMessage);
+        setIsValidating(false);
       }
-
-      // Show warnings if any
-      if (validation.warnings && validation.warnings.length > 0) {
-        logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });
-      }
-
-      // Generate preview
-      const previewData = await importer.previewZip(file);
-      setPreview(previewData);
-      setIsValidating(false);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to validate file';
-      setError(errorMessage);
-      setIsValidating(false);
-    }
-  }, [createImporter]);
+    },
+    [createImporter]
+  );
 
   // Handle file drop
   const handleDrop = useCallback(
@@ -247,6 +250,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden="true"
             >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />

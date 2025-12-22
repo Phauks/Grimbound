@@ -5,67 +5,63 @@
  * Exports icon processing, character presets, and basic canvas operations.
  */
 
-// Icon color replacement (HSL-based selective recoloring)
+export type { CharacterPreset } from '@/ts/types/index.js';
+// Canvas operations (basic utilities)
 export {
-  replaceIconColor,
-  replaceIconColorWithHex,
-  replaceIconColorSplit,
-  applyTeamColorPreset,
-  detectOptimalThreshold,
-  getTeamPresetById,
-  hueToPreviewColor,
-  TEAM_COLOR_PRESETS,
-  DEFAULT_COLOR_OPTIONS,
-} from './iconColorReplacer.js';
-export type {
-  ColorReplacementOptions,
-  TeamColorPreset,
-  SplitColorConfig,
-} from './iconColorReplacer.js';
-
-// Icon border rendering
-export {
-  addIconBorder,
-  addCircularBorder,
-  shrinkIconContent,
-  DEFAULT_BORDER_OPTIONS,
-} from './iconBorderRenderer.js';
-export type { BorderOptions } from './iconBorderRenderer.js';
-
+  canvasToDataURL,
+  clearCanvas,
+  cloneCanvas,
+  createBlankCanvas,
+  createStudioCanvas,
+  fillCanvas,
+  getCanvasPoolStats,
+  getImageData,
+  loadImageFromUrl,
+  loadImageToCanvas,
+  pasteFromClipboard,
+  putImageData,
+  releaseStudioCanvas,
+  resizeCanvas,
+} from './canvasOperations.js';
 // Legacy character presets (for backwards compatibility)
 export {
-  CHARACTER_PRESETS,
   applyCharacterPreset,
+  CHARACTER_PRESETS,
   getPresetById,
   getPresetByName,
 } from './characterPresets.js';
-export type { CharacterPreset } from '@/ts/types/index.js';
-
-// Canvas operations (basic utilities)
+export type { BorderOptions } from './iconBorderRenderer.js';
+// Icon border rendering
 export {
-  createStudioCanvas,
-  releaseStudioCanvas,
-  getCanvasPoolStats,
-  loadImageToCanvas,
-  loadImageFromUrl,
-  pasteFromClipboard,
-  createBlankCanvas,
-  cloneCanvas,
-  resizeCanvas,
-  getImageData,
-  putImageData,
-  clearCanvas,
-  fillCanvas,
-  canvasToDataURL,
-} from './canvasOperations.js';
-
+  addCircularBorder,
+  addIconBorder,
+  DEFAULT_BORDER_OPTIONS,
+  shrinkIconContent,
+} from './iconBorderRenderer.js';
+export type {
+  ColorReplacementOptions,
+  SplitColorConfig,
+  TeamColorPreset,
+} from './iconColorReplacer.js';
+// Icon color replacement (HSL-based selective recoloring)
+export {
+  applyTeamColorPreset,
+  DEFAULT_COLOR_OPTIONS,
+  detectOptimalThreshold,
+  getTeamPresetById,
+  hueToPreviewColor,
+  replaceIconColor,
+  replaceIconColorSplit,
+  replaceIconColorWithHex,
+  TEAM_COLOR_PRESETS,
+} from './iconColorReplacer.js';
+export type { StudioEditMode } from './navigationHelpers.js';
 // Navigation helpers (for "Edit in Studio" functionality)
 export {
-  navigateToStudioWithUrl,
-  navigateToStudioWithBlob,
-  navigateToStudioWithAsset,
+  clearPendingStudioOperation,
   consumePendingStudioOperation,
   hasPendingStudioOperation,
-  clearPendingStudioOperation,
+  navigateToStudioWithAsset,
+  navigateToStudioWithBlob,
+  navigateToStudioWithUrl,
 } from './navigationHelpers.js';
-export type { StudioEditMode } from './navigationHelpers.js';

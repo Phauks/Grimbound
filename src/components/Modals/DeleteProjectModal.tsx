@@ -6,12 +6,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useToast } from '@/contexts/ToastContext';
-import { useProjects } from '@/hooks';
-import type { Project } from '@/ts/types/project.js';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
+import { useToast } from '@/contexts/ToastContext';
+import { useProjects } from '@/hooks';
+import type { Project } from '@/ts/types/project.js';
 
 interface DeleteProjectModalProps {
   isOpen: boolean;

@@ -8,7 +8,7 @@
  */
 
 import { TEAM_COLORS, type TeamColorKey } from '@/ts/constants.js';
-import { rgbToHsl, hslToRgb, hexToRgb } from '@/ts/utils/colorUtils.js';
+import { hexToRgb, hslToRgb, rgbToHsl } from '@/ts/utils/colorUtils.js';
 
 // ============================================================================
 // Types
@@ -66,12 +66,13 @@ function buildTeamColorPresets(): TeamColorPreset[] {
     const displayName = key.charAt(0).toUpperCase() + key.slice(1);
 
     // Check if this team has split colors (like Traveler)
-    const splitConfig = 'split' in color && color.split
-      ? {
-          left: { hue: color.split.left.hue, hex: color.split.left.hex },
-          right: { hue: color.split.right.hue, hex: color.split.right.hex },
-        }
-      : undefined;
+    const splitConfig =
+      'split' in color && color.split
+        ? {
+            left: { hue: color.split.left.hue, hex: color.split.left.hex },
+            right: { hue: color.split.right.hue, hex: color.split.right.hex },
+          }
+        : undefined;
 
     return {
       id: key,
@@ -135,7 +136,7 @@ export function replaceIconColor(
     if (a < 10) continue;
 
     // Convert to HSL
-    const [h, s, l] = rgbToHsl(r, g, b);
+    const [_h, s, l] = rgbToHsl(r, g, b);
 
     // Only modify pixels above saturation threshold
     if (s > opts.saturationThreshold) {
@@ -184,11 +185,7 @@ export function replaceIconColorSplit(
   const { width, height } = imageData;
   const centerX = width / 2;
 
-  const output = new ImageData(
-    new Uint8ClampedArray(imageData.data),
-    width,
-    height
-  );
+  const output = new ImageData(new Uint8ClampedArray(imageData.data), width, height);
 
   const data = output.data;
 
@@ -205,7 +202,7 @@ export function replaceIconColorSplit(
       if (a < 10) continue;
 
       // Convert to HSL
-      const [h, s, l] = rgbToHsl(r, g, b);
+      const [_h, s, l] = rgbToHsl(r, g, b);
 
       // Only modify pixels above saturation threshold
       if (s > opts.saturationThreshold) {
@@ -250,11 +247,7 @@ export function replaceIconColorWithHex(
   const rgb = hexToRgb(hexColor);
   if (!rgb) {
     // Return unchanged if invalid color
-    return new ImageData(
-      new Uint8ClampedArray(imageData.data),
-      imageData.width,
-      imageData.height
-    );
+    return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
   }
 
   // Extract hue from the target color
@@ -288,11 +281,7 @@ export function applyTeamColorPreset(
   const preset = TEAM_COLOR_PRESETS.find((p) => p.id === presetId);
   if (!preset) {
     // Return unchanged if preset not found
-    return new ImageData(
-      new Uint8ClampedArray(imageData.data),
-      imageData.width,
-      imageData.height
-    );
+    return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
   }
 
   // Use split color function if preset has split configuration

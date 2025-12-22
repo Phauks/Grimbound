@@ -6,6 +6,8 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Button } from '@/components/Shared/UI/Button';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -14,8 +16,6 @@ import { storageManager } from '@/ts/sync/index.js';
 import { getThemeIds, UI_THEMES } from '@/ts/themes';
 import type { DPIOption, MeasurementUnit } from '@/ts/types/index';
 import { logger } from '@/ts/utils/logger.js';
-import { Modal } from '@/components/Shared/ModalBase/Modal';
-import { Button } from '@/components/Shared/UI/Button';
 import styles from './SettingsModal.module.css';
 
 interface SettingsModalProps {

@@ -6,11 +6,6 @@
  */
 
 import { useCallback, useState } from 'react';
-import { useTokenContext } from '@/contexts/TokenContext';
-import { useProjects } from '@/hooks';
-import styles from '@/styles/components/pages/Pages.module.css';
-import type { Token } from '@/ts/types/index.js';
-import { logger } from '@/ts/utils/logger.js';
 import { CharactersView } from '@/components/Views/CharactersView';
 import { ExportView } from '@/components/Views/ExportView';
 import { JsonView } from '@/components/Views/JsonView';
@@ -19,6 +14,11 @@ import { ScriptView } from '@/components/Views/ScriptView';
 import { StudioView } from '@/components/Views/StudioView';
 import { TokensView } from '@/components/Views/TokensView';
 import { TownSquareView } from '@/components/Views/TownSquareView';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useProjects } from '@/hooks';
+import styles from '@/styles/components/pages/Pages.module.css';
+import type { Token } from '@/ts/types/index.js';
+import { logger } from '@/ts/utils/logger.js';
 import type { TabType } from './TabNavigation';
 import { TabNavigation } from './TabNavigation';
 

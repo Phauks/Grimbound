@@ -3,7 +3,7 @@
  * JSON Utility Functions
  */
 
-import type { Character, ScriptEntry, ValidationResult } from '@/ts/types/index.js';
+import type { Character, ScriptEntry, ScriptMeta, ValidationResult } from '@/ts/types/index.js';
 
 /**
  * Format JSON with pretty printing
@@ -171,4 +171,53 @@ export function condenseScript(jsonString: string, officialData: Character[]): s
   } catch {
     return jsonString;
   }
+}
+
+/**
+ * Convert a characters array to JSON string format for script export.
+ * Official characters are represented as string IDs, custom characters
+ * include full definition, and meta is placed first if present.
+ *
+ * @param characters - Array of characters to convert
+ * @param scriptMeta - Optional script metadata (name, author, logo)
+ * @returns JSON string representation of the script
+ */
+export function charactersToJson(characters: Character[], scriptMeta: ScriptMeta | null): string {
+  const jsonArray: unknown[] = [];
+
+  // Add meta first if present
+  if (scriptMeta) {
+    const metaEntry: Record<string, unknown> = { id: '_meta' };
+    if (scriptMeta.name) metaEntry.name = scriptMeta.name;
+    if (scriptMeta.author) metaEntry.author = scriptMeta.author;
+    if (scriptMeta.logo) metaEntry.logo = scriptMeta.logo;
+    jsonArray.push(metaEntry);
+  }
+
+  // Add characters
+  for (const char of characters) {
+    if (char.source === 'official') {
+      // Official characters: just use the ID string
+      jsonArray.push(char.id);
+    } else {
+      // Custom characters: include full definition
+      const charEntry: Record<string, unknown> = {
+        id: char.id,
+        name: char.name,
+      };
+      if (char.team && char.team !== 'townsfolk') charEntry.team = char.team;
+      if (char.ability) charEntry.ability = char.ability;
+      if (char.image) charEntry.image = char.image;
+      if (char.reminders?.length) charEntry.reminders = char.reminders;
+      if (char.remindersGlobal?.length) charEntry.remindersGlobal = char.remindersGlobal;
+      if (char.setup !== undefined) charEntry.setup = char.setup;
+      if (char.firstNight !== undefined) charEntry.firstNight = char.firstNight;
+      if (char.firstNightReminder) charEntry.firstNightReminder = char.firstNightReminder;
+      if (char.otherNight !== undefined) charEntry.otherNight = char.otherNight;
+      if (char.otherNightReminder) charEntry.otherNightReminder = char.otherNightReminder;
+      jsonArray.push(charEntry);
+    }
+  }
+
+  return JSON.stringify(jsonArray, null, 2);
 }

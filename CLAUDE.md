@@ -21,6 +21,23 @@
 
 ---
 
+## Biome Validation (MANDATORY)
+
+**All code changes MUST pass biome check before being considered complete.**
+
+```bash
+npx biome check src/
+```
+
+- Run `biome check` after ANY code modifications (runs lint + format + organize imports)
+- Fix ALL errors and warnings before finishing
+- No exceptions - failing biome check = incomplete work
+- Use `--write` flag for auto-fixable issues: `npx biome check src/ --write`
+
+**Work is NOT complete until `biome check` passes with zero errors.**
+
+---
+
 ## Pre-Implementation Checklist
 
 **Before writing ANY new code:**
@@ -107,10 +124,17 @@ import styles from '@/styles/components/Button.module.css';
 
 ---
 
+## UI Decision Communication
+
+**When proposing UI changes, generate ASCII art to visualize the layout for user approval before implementing.**
+
+---
+
 ## Code Review Checklist
 
 Before committing, verify:
 
+- [ ] **Biome check passes** - `npx biome check src/` shows zero errors
 - [ ] **Use `@/` path aliases** - no `../../../` imports
 - [ ] NO `console.log/error/warn` - use `logger`
 - [ ] NO magic numbers - use constants
@@ -157,5 +181,5 @@ Detailed documentation is in `.claude/rules/`:
 
 ---
 
-*Last updated: 2025-12-20*
+*Last updated: 2025-12-21*
 *Version: v0.3.6*

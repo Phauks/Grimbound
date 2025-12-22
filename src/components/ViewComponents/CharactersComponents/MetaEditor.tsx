@@ -1,7 +1,7 @@
 import { type RefCallback, useCallback, useEffect, useRef, useState } from 'react';
+import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
 import styles from '@/styles/components/characterEditor/MetaEditor.module.css';
 import type { ScriptMeta } from '@/ts/types/index.js';
-import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
 
 interface MetaEditorProps {
   scriptMeta: ScriptMeta | null;
@@ -364,76 +364,78 @@ export function MetaEditor({
             {/* Bootlegger Section */}
             <div className={styles.formGroup}>
               <span className={styles.label}>Bootlegger</span>
-              <div className={styles.bootleggerList} role="list" aria-label="Bootlegger entries">
+              <ul className={styles.bootleggerList} aria-label="Bootlegger entries">
                 {localBootlegger.map((entry, index) => {
                   // Generate stable key: count occurrences of same entry before this index
-                  const occurrenceIndex = localBootlegger.slice(0, index).filter(e => e === entry).length;
+                  const occurrenceIndex = localBootlegger
+                    .slice(0, index)
+                    .filter((e) => e === entry).length;
                   return (
-                  <div
-                    key={`bootlegger-${entry}-occurrence-${occurrenceIndex}`}
-                    className={`${styles.bootleggerRow} ${draggedBootleggerIndex === index ? styles.dragging : ''} ${dragOverBootleggerIndex === index ? styles.dragOver : ''}`}
-                    draggable={localBootlegger.length > 1}
-                    onDragStart={(e) => {
-                      setDraggedBootleggerIndex(index);
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onDragEnd={() => {
-                      setDraggedBootleggerIndex(null);
-                      setDragOverBootleggerIndex(null);
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      if (draggedBootleggerIndex !== null && draggedBootleggerIndex !== index) {
-                        setDragOverBootleggerIndex(index);
-                      }
-                    }}
-                    onDragLeave={() => setDragOverBootleggerIndex(null)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (draggedBootleggerIndex !== null && draggedBootleggerIndex !== index) {
-                        const newEntries = [...localBootlegger];
-                        const [removed] = newEntries.splice(draggedBootleggerIndex, 1);
-                        newEntries.splice(index, 0, removed);
-                        setLocalBootlegger(newEntries);
-                        onMetaChange({ ...meta, bootlegger: newEntries });
-                      }
-                      setDraggedBootleggerIndex(null);
-                      setDragOverBootleggerIndex(null);
-                    }}
-                  >
-                    <span className={styles.dragHandle} title="Drag to reorder">
-                      ⋮⋮
-                    </span>
-                    <textarea
-                      ref={registerTextareaRef}
-                      value={entry}
-                      onChange={(e) => {
-                        const newEntries = [...localBootlegger];
-                        newEntries[index] = e.target.value;
-                        setLocalBootlegger(newEntries);
-                        debouncedUpdate('bootlegger', newEntries);
+                    <li
+                      key={`bootlegger-${entry}-occurrence-${occurrenceIndex}`}
+                      className={`${styles.bootleggerRow} ${draggedBootleggerIndex === index ? styles.dragging : ''} ${dragOverBootleggerIndex === index ? styles.dragOver : ''}`}
+                      draggable={localBootlegger.length > 1}
+                      onDragStart={(e) => {
+                        setDraggedBootleggerIndex(index);
+                        e.dataTransfer.effectAllowed = 'move';
                       }}
-                      onInput={handleTextareaInput}
-                      placeholder="Enter ability text..."
-                      rows={1}
-                      className={styles.bootleggerTextarea}
-                    />
-                    <button
-                      type="button"
-                      className={`${styles.btnIcon} ${styles.btnDanger}`}
-                      onClick={() => {
-                        const newEntries = localBootlegger.filter((_, i) => i !== index);
-                        setLocalBootlegger(newEntries);
-                        onMetaChange({ ...meta, bootlegger: newEntries });
+                      onDragEnd={() => {
+                        setDraggedBootleggerIndex(null);
+                        setDragOverBootleggerIndex(null);
                       }}
-                      title="Remove entry"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (draggedBootleggerIndex !== null && draggedBootleggerIndex !== index) {
+                          setDragOverBootleggerIndex(index);
+                        }
+                      }}
+                      onDragLeave={() => setDragOverBootleggerIndex(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedBootleggerIndex !== null && draggedBootleggerIndex !== index) {
+                          const newEntries = [...localBootlegger];
+                          const [removed] = newEntries.splice(draggedBootleggerIndex, 1);
+                          newEntries.splice(index, 0, removed);
+                          setLocalBootlegger(newEntries);
+                          onMetaChange({ ...meta, bootlegger: newEntries });
+                        }
+                        setDraggedBootleggerIndex(null);
+                        setDragOverBootleggerIndex(null);
+                      }}
                     >
-                      ✕
-                    </button>
-                  </div>
+                      <span className={styles.dragHandle} title="Drag to reorder">
+                        ⋮⋮
+                      </span>
+                      <textarea
+                        ref={registerTextareaRef}
+                        value={entry}
+                        onChange={(e) => {
+                          const newEntries = [...localBootlegger];
+                          newEntries[index] = e.target.value;
+                          setLocalBootlegger(newEntries);
+                          debouncedUpdate('bootlegger', newEntries);
+                        }}
+                        onInput={handleTextareaInput}
+                        placeholder="Enter ability text..."
+                        rows={1}
+                        className={styles.bootleggerTextarea}
+                      />
+                      <button
+                        type="button"
+                        className={`${styles.btnIcon} ${styles.btnDanger}`}
+                        onClick={() => {
+                          const newEntries = localBootlegger.filter((_, i) => i !== index);
+                          setLocalBootlegger(newEntries);
+                          onMetaChange({ ...meta, bootlegger: newEntries });
+                        }}
+                        title="Remove entry"
+                      >
+                        ✕
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
               <button
                 type="button"
                 className={`${styles.btnSecondary} ${styles.btnSm}`}

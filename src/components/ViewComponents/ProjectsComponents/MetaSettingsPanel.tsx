@@ -102,7 +102,9 @@ export function MetaSettingsPanel({
       <div className={styles.form}>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label htmlFor="meta-script-id" className={styles.label}>Script ID</label>
+            <label htmlFor="meta-script-id" className={styles.label}>
+              Script ID
+            </label>
             <input
               id="meta-script-id"
               type="text"
@@ -113,7 +115,9 @@ export function MetaSettingsPanel({
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="meta-script-name" className={styles.label}>Script Name</label>
+            <label htmlFor="meta-script-name" className={styles.label}>
+              Script Name
+            </label>
             <input
               id="meta-script-name"
               type="text"
@@ -127,7 +131,9 @@ export function MetaSettingsPanel({
 
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label htmlFor="meta-version" className={styles.label}>Version</label>
+            <label htmlFor="meta-version" className={styles.label}>
+              Version
+            </label>
             <input
               id="meta-version"
               type="text"
@@ -138,7 +144,9 @@ export function MetaSettingsPanel({
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="meta-author" className={styles.label}>Author</label>
+            <label htmlFor="meta-author" className={styles.label}>
+              Author
+            </label>
             <input
               id="meta-author"
               type="text"
@@ -151,7 +159,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-logo" className={styles.label}>Logo URL</label>
+          <label htmlFor="meta-logo" className={styles.label}>
+            Logo URL
+          </label>
           <input
             id="meta-logo"
             type="text"
@@ -163,7 +173,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-almanac" className={styles.label}>Almanac URL (for QR code)</label>
+          <label htmlFor="meta-almanac" className={styles.label}>
+            Almanac URL (for QR code)
+          </label>
           <input
             id="meta-almanac"
             type="text"
@@ -175,7 +187,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-background" className={styles.label}>Background</label>
+          <label htmlFor="meta-background" className={styles.label}>
+            Background
+          </label>
           <input
             id="meta-background"
             type="text"
@@ -187,7 +201,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-synopsis" className={styles.label}>Synopsis</label>
+          <label htmlFor="meta-synopsis" className={styles.label}>
+            Synopsis
+          </label>
           <textarea
             id="meta-synopsis"
             value={localMeta.synopsis || ''}
@@ -199,7 +215,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-overview" className={styles.label}>Overview</label>
+          <label htmlFor="meta-overview" className={styles.label}>
+            Overview
+          </label>
           <textarea
             id="meta-overview"
             value={localMeta.overview || ''}
@@ -211,7 +229,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-changelog" className={styles.label}>Changelog</label>
+          <label htmlFor="meta-changelog" className={styles.label}>
+            Changelog
+          </label>
           <textarea
             id="meta-changelog"
             value={localMeta.changelog || ''}
@@ -223,7 +243,9 @@ export function MetaSettingsPanel({
         </div>
 
         <div className={styles.formGroup}>
-          <label htmlFor="meta-bootlegger" className={styles.label}>Bootlegger</label>
+          <label htmlFor="meta-bootlegger" className={styles.label}>
+            Bootlegger
+          </label>
           <input
             id="meta-bootlegger"
             type="text"

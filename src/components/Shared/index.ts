@@ -11,9 +11,18 @@ export { MeasurementSlider } from './Controls/MeasurementSlider';
 // Feedback Components (from Feedback/ subdirectory)
 export { AutoSaveIndicator } from './Feedback/AutoSaveIndicator';
 export { AutoSaveToggle } from './Feedback/AutoSaveToggle';
+export {
+  ErrorBoundary,
+  type ErrorBoundaryProps,
+  type FallbackRenderProps,
+} from './Feedback/ErrorBoundary';
 export { StorageWarning } from './Feedback/StorageWarning';
 export { SyncProgressBar } from './Feedback/SyncProgressBar';
 export { SyncStatusIndicator } from './Feedback/SyncStatusIndicator';
+export {
+  ViewErrorFallback,
+  type ViewErrorFallbackProps,
+} from './Feedback/ViewErrorFallback';
 // Form Components
 export {
   Checkbox,
@@ -29,7 +38,7 @@ export {
   type TextareaProps,
 } from './Form';
 // JSON Components (from Json/ subdirectory)
-export { JsonEditorPanel, CodeMirrorEditor, type EditorControls } from './Json';
+export { CodeMirrorEditor, type EditorControls, JsonEditorPanel } from './Json';
 // Modal System (from ModalBase/ subdirectory)
 export {
   ConfirmDialog,

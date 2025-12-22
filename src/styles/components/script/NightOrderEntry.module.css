@@ -17,13 +17,15 @@
   border-radius: 6px;
   position: relative;
   /* Removed border-bottom - no lines between characters */
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
   cursor: pointer;
 }
 
 /* Use pseudo-element for hover background so it layers properly */
 .entry::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 6px;

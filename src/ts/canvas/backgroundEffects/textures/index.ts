@@ -107,14 +107,6 @@ export const TextureFactory = {
 // EXPORTS
 // ============================================================================
 
-// Strategy interface and base class
-export {
-  BaseTextureStrategy,
-  type TextureContext,
-  type TextureResult,
-  type TextureStrategy,
-} from './TextureStrategy.js';
-
 // Individual strategies (for direct use or testing)
 export { BrushedMetalTextureStrategy } from './BrushedMetalTexture.js';
 export { CloudsTextureStrategy } from './CloudsTexture.js';
@@ -125,5 +117,12 @@ export { ParchmentTextureStrategy } from './ParchmentTexture.js';
 export { PerlinTextureStrategy } from './PerlinTexture.js';
 export { RadialFadeTextureStrategy } from './RadialFadeTexture.js';
 export { SilkFlowTextureStrategy } from './SilkFlowTexture.js';
+// Strategy interface and base class
+export {
+  BaseTextureStrategy,
+  type TextureContext,
+  type TextureResult,
+  type TextureStrategy,
+} from './TextureStrategy.js';
 export { WatercolorTextureStrategy } from './WatercolorTexture.js';
 export { WoodGrainTextureStrategy } from './WoodGrainTexture.js';

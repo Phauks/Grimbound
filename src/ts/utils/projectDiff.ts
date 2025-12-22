@@ -8,11 +8,11 @@
 import type { Character } from '@/ts/types/index';
 import type { ProjectState } from '@/ts/types/project';
 import {
-  diffText,
-  diffArrays,
-  valuesAreDifferent,
-  type TextDiffResult,
   type ArrayDiffResult,
+  diffArrays,
+  diffText,
+  type TextDiffResult,
+  valuesAreDifferent,
 } from './textDiff.js';
 
 // ==========================================================================
@@ -636,4 +636,4 @@ export function calculateProjectDiffDetailed(
 }
 
 // Re-export types from textDiff for convenience
-export type { TextDiffResult, ArrayDiffResult } from './textDiff.js';
+export type { ArrayDiffResult, TextDiffResult } from './textDiff.js';

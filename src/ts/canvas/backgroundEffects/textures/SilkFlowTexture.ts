@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/SilkFlowTexture
  */
 
-import { SILK_FLOW_TEXTURE } from '../constants.js';
 import { fbm, initPermutation, perlin2D } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { SILK_FLOW_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**
@@ -29,7 +29,13 @@ export class SilkFlowTextureStrategy extends BaseTextureStrategy {
       const ny = (y / diameter) * scale;
 
       // Flow field using noise for direction
-      const angle = perlin2D(nx * SILK_FLOW_TEXTURE.ANGLE_NOISE_SCALE, ny * SILK_FLOW_TEXTURE.ANGLE_NOISE_SCALE) * Math.PI * 2;
+      const angle =
+        perlin2D(
+          nx * SILK_FLOW_TEXTURE.ANGLE_NOISE_SCALE,
+          ny * SILK_FLOW_TEXTURE.ANGLE_NOISE_SCALE
+        ) *
+        Math.PI *
+        2;
 
       // Sample along the flow direction
       const flowX = nx + Math.cos(angle) * SILK_FLOW_TEXTURE.FLOW_DISPLACEMENT;

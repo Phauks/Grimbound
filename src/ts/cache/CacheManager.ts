@@ -10,11 +10,17 @@
  * This facade follows the Facade pattern to hide complexity and provide
  * a clean, unified interface for components and services.
  *
+ * Uses constructor injection pattern for testability.
+ *
  * Architecture: Application Service (Facade Pattern)
+ *
+ * @module cache/CacheManager
  */
 
 import type { Token } from '@/ts/types/index.js';
+import type { ImageCache } from '@/ts/utils/imageCache.js';
 import { globalImageCache } from '@/ts/utils/imageCache.js';
+import { LRUCacheAdapter } from './adapters/LRUCacheAdapter.js';
 import type { InvalidationScope } from './CacheInvalidationService.js';
 import { cacheInvalidationService } from './CacheInvalidationService.js';
 import type {
@@ -24,43 +30,35 @@ import type {
   PreRenderContext,
   PreRenderResult,
 } from './core/index.js';
+import type { CombinedCacheStats, ICacheManager } from './ICacheManager.js';
 import { fontCache, getFontCacheStats } from './instances/fontCache.js';
 import { PreRenderCacheManager } from './manager/PreRenderCacheManager.js';
+import { LRUEvictionPolicy } from './policies/LRUEvictionPolicy.js';
+import {
+  type CharactersPreRenderEntry,
+  CharactersPreRenderStrategy,
+} from './strategies/CharactersPreRenderStrategy.js';
 
 // ============================================================================
-// Types
+// Dependency Injection Types
 // ============================================================================
 
 /**
- * Combined statistics from all cache layers
+ * Dependencies for CacheManager
  */
-export interface CombinedCacheStats {
-  /** Pre-render cache statistics by strategy name */
-  preRender: Record<string, CacheStats>;
-  /** Image cache statistics */
-  image: {
-    entries: number;
-    sizeMB: number;
-    maxSizeMB: number;
-  };
-  /** Font cache statistics */
-  font: {
-    size: number;
-    memoryUsage: number;
-    maxSize: number;
-    maxMemory: number;
-    hitCount: number;
-    missCount: number;
-    evictionCount: number;
-    hitRate: number;
-  };
-  /** Total cache summary */
-  total: {
-    layers: number;
-    totalEntries: number;
-    totalSizeMB: number;
-  };
+export interface CacheManagerDeps {
+  /** Pre-render cache manager instance */
+  preRenderManager: PreRenderCacheManager;
+  /** Image cache instance */
+  imageCache: ImageCache;
+  /** Font cache instance */
+  fontCache: typeof fontCache;
+  /** Cache invalidation service */
+  invalidationService: typeof cacheInvalidationService;
 }
+
+// Re-export types from interface file
+export type { CombinedCacheStats } from './ICacheManager.js';
 
 /**
  * Options for cache warming
@@ -84,8 +82,18 @@ export interface CacheWarmingOptions {
  * Simplifies cache access by providing a single API instead of requiring
  * direct interaction with multiple cache layers.
  *
+ * Uses constructor injection for testability. Dependencies have defaults
+ * for convenient usage, but can be overridden for testing.
+ *
  * @example
  * ```typescript
+ * // Production usage (uses defaults)
+ * const manager = new CacheManager();
+ *
+ * // Testing with mocks
+ * const mockImageCache = { get: vi.fn(), clear: vi.fn() };
+ * const manager = new CacheManager({ imageCache: mockImageCache });
+ *
  * // Get character image (checks cache, loads if needed)
  * const image = await cacheManager.getCharacterImage('washerwoman')
  *
@@ -100,17 +108,22 @@ export interface CacheWarmingOptions {
  * console.log(`Total cache size: ${stats.total.totalSizeMB} MB`)
  * ```
  */
-export class CacheManager {
-  private preRenderManager: PreRenderCacheManager;
-  private imageCache: typeof globalImageCache;
-  private fontCacheInstance: typeof fontCache;
-  private invalidationService: typeof cacheInvalidationService;
+export class CacheManager implements ICacheManager {
+  private readonly preRenderManager: PreRenderCacheManager;
+  private readonly imageCache: ImageCache;
+  private readonly fontCacheInstance: typeof fontCache;
+  private readonly invalidationService: typeof cacheInvalidationService;
 
-  constructor() {
-    this.preRenderManager = new PreRenderCacheManager();
-    this.imageCache = globalImageCache;
-    this.fontCacheInstance = fontCache;
-    this.invalidationService = cacheInvalidationService;
+  /**
+   * Create a new CacheManager instance
+   *
+   * @param deps - Optional dependencies for injection (defaults to singleton instances)
+   */
+  constructor(deps: Partial<CacheManagerDeps> = {}) {
+    this.preRenderManager = deps.preRenderManager ?? new PreRenderCacheManager();
+    this.imageCache = deps.imageCache ?? globalImageCache;
+    this.fontCacheInstance = deps.fontCache ?? fontCache;
+    this.invalidationService = deps.invalidationService ?? cacheInvalidationService;
   }
 
   // ==========================================================================
@@ -505,5 +518,12 @@ export class CacheManager {
  * ```
  */
 export const cacheManager = new CacheManager();
+
+// Register default strategies with their caches
+const charactersCache = new LRUCacheAdapter<string, CharactersPreRenderEntry>({
+  maxSize: 50, // Cache up to 50 pre-rendered characters
+  evictionPolicy: new LRUEvictionPolicy({ maxSize: 50 }),
+});
+cacheManager.registerStrategy(new CharactersPreRenderStrategy(charactersCache));
 
 export default cacheManager;

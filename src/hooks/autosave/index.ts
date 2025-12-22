@@ -6,17 +6,16 @@
  * @module hooks/autosave
  */
 
-// Main orchestrator hook
-export { useProjectAutoSave, useUnsavedChangesWarning } from './useProjectAutoSave.js';
-
 // Component hooks
 export { useAutoSaveDetector } from './useAutoSaveDetector.js';
-export { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
 export { useAutoSavePreference } from './useAutoSavePreference.js';
 export {
-  useAutoSaveTelemetry,
-  computeTelemetryStats,
   type AutoSaveTelemetry,
   type AutoSaveTelemetryStats,
+  computeTelemetryStats,
   type UseAutoSaveTelemetryReturn,
+  useAutoSaveTelemetry,
 } from './useAutoSaveTelemetry.js';
+export { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
+// Main orchestrator hook
+export { useProjectAutoSave, useUnsavedChangesWarning } from './useProjectAutoSave.js';

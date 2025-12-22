@@ -33,7 +33,7 @@ export function sanitizeFilename(filename: string): string {
 
   let sanitized = filename
     .trim()
-    // Remove control characters (ASCII 0-31)
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentionally matching control chars to remove them
     .replace(/[\x00-\x1F]/g, '')
     // Remove characters invalid on Windows/macOS/Linux
     .replace(/[<>:"/\\|?*]/g, '')

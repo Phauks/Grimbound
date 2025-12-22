@@ -202,7 +202,8 @@ export const ErrorHandler = {
   getUserMessage(error: unknown): string {
     // Check specific error types in order of specificity
     if (error instanceof ValidationError) {
-      const details = error.validationErrors.length > 0 ? `: ${error.validationErrors.join(', ')}` : '';
+      const details =
+        error.validationErrors.length > 0 ? `: ${error.validationErrors.join(', ')}` : '';
       return `${error.message}${details}`;
     }
 

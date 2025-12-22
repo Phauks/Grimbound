@@ -216,7 +216,11 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
             return next;
           });
         } catch (error) {
-          logger.error('CharacterGridView', `Failed to generate data URL for token: ${token.name}`, error);
+          logger.error(
+            'CharacterGridView',
+            `Failed to generate data URL for token: ${token.name}`,
+            error
+          );
         }
       }
     };
@@ -314,7 +318,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
             <button
               type="button"
               className={styles.variantButton}
-              onClick={(e) => handlePrevVariant(char.uuid!, variants.length, e)}
+              onClick={(e) => handlePrevVariant(char.uuid, variants.length, e)}
               aria-label="Previous variant"
               title="Previous variant"
             >
@@ -326,7 +330,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
             <button
               type="button"
               className={styles.variantButton}
-              onClick={(e) => handleNextVariant(char.uuid!, variants.length, e)}
+              onClick={(e) => handleNextVariant(char.uuid, variants.length, e)}
               aria-label="Next variant"
               title="Next variant"
             >

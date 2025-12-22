@@ -383,7 +383,11 @@
     linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
     linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
   background-size: 12px 12px;
-  background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+  background-position:
+    0 0,
+    0 6px,
+    6px -6px,
+    -6px 0px;
 }
 
 .builtInLabel {
@@ -492,7 +496,11 @@
     linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
     linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
 }
 
 .listInfo {
@@ -832,7 +840,11 @@
     linear-gradient(45deg, transparent 75%, #c0c0c0 75%),
     linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
   background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;

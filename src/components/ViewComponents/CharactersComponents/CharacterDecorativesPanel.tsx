@@ -20,16 +20,8 @@
  */
 
 import { memo, useCallback, useMemo } from 'react';
-import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
-import viewStyles from '@/styles/components/views/Views.module.css';
-import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
-import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
-import type {
-  BackgroundStyle,
-  Character,
-  DecorativeOverrides,
-  GenerationOptions,
-} from '@/ts/types/index';
+import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
+import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
 import { BackgroundStyleSelector } from '@/components/Shared/Selectors/BackgroundStyleSelector';
 import {
   type FontOption,
@@ -40,8 +32,48 @@ import {
   type IconSettings,
   IconSettingsSelector,
 } from '@/components/Shared/Selectors/IconSettingsSelector';
-import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
-import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
+import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
+import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
+import viewStyles from '@/styles/components/views/Views.module.css';
+import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
+import type {
+  BackgroundStyle,
+  Character,
+  DecorativeOverrides,
+  GenerationOptions,
+} from '@/ts/types/index';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Default values used when neither decoratives nor global options provide a value */
+const DEFAULTS = {
+  FONT_SPACING: 0,
+  NAME_SHADOW_BLUR: 4,
+  ABILITY_SHADOW_BLUR: 3,
+  ICON_SCALE: 1.0,
+  ICON_OFFSET: 0,
+  TEXT_COLOR: '#FFFFFF',
+  SETUP_STYLE: 'setup_flower_1',
+} as const;
+
+/** Font options for character name */
+const CHARACTER_NAME_FONT_OPTIONS: FontOption[] = [
+  { value: 'Dumbledor', label: 'Dumbledor', category: 'Display' },
+  { value: 'DumbledorThin', label: 'Dumbledor Thin', category: 'Display' },
+  { value: 'DumbledorWide', label: 'Dumbledor Wide', category: 'Display' },
+];
+
+/** Font options for ability text */
+const ABILITY_TEXT_FONT_OPTIONS: FontOption[] = [
+  { value: 'TradeGothic', label: 'Trade Gothic', category: 'Sans Serif' },
+  { value: 'TradeGothicBold', label: 'Trade Gothic Bold', category: 'Sans Serif' },
+];
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface CharacterDecorativesPanelProps {
   character: Character;
@@ -51,22 +83,29 @@ interface CharacterDecorativesPanelProps {
   projectId?: string;
 }
 
-// Font options for character name
-const CHARACTER_NAME_FONT_OPTIONS: FontOption[] = [
-  { value: 'Dumbledor', label: 'Dumbledor', category: 'Display' },
-  { value: 'DumbledorThin', label: 'Dumbledor Thin', category: 'Display' },
-  { value: 'DumbledorWide', label: 'Dumbledor Wide', category: 'Display' },
-];
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
-// Font options for ability text
-const ABILITY_TEXT_FONT_OPTIONS: FontOption[] = [
-  { value: 'TradeGothic', label: 'Trade Gothic', category: 'Sans Serif' },
-  { value: 'TradeGothicBold', label: 'Trade Gothic Bold', category: 'Sans Serif' },
-];
+/** Keys that map from DecorativeOverrides to GenerationOptions for accent settings */
+const ACCENT_KEYS = [
+  'accentEnabled',
+  'accentGeneration',
+  'maximumAccents',
+  'accentPopulationProbability',
+  'accentArcSpan',
+  'accentSlots',
+  'enableLeftAccent',
+  'enableRightAccent',
+  'sideAccentProbability',
+] as const;
 
 /**
  * Creates an effective GenerationOptions object by merging global options
  * with character-specific decorative overrides.
+ *
+ * When custom settings are disabled, returns global options unchanged.
+ * When enabled, decorative values take precedence over global values.
  */
 function createEffectiveOptions(
   globalOptions: GenerationOptions,
@@ -76,56 +115,120 @@ function createEffectiveOptions(
     return globalOptions;
   }
 
+  const d = decoratives;
+  const g = globalOptions;
+
   return {
     ...globalOptions,
     // Background
-    characterBackgroundStyle: decoratives.backgroundStyle ?? globalOptions.characterBackgroundStyle,
+    characterBackgroundStyle: d.backgroundStyle ?? g.characterBackgroundStyle,
     // Font
-    characterNameFont: decoratives.nameFont ?? globalOptions.characterNameFont,
-    characterNameColor: decoratives.nameColor ?? globalOptions.characterNameColor,
+    characterNameFont: d.nameFont ?? g.characterNameFont,
+    characterNameColor: d.nameColor ?? g.characterNameColor,
     fontSpacing: {
-      characterName: decoratives.nameFontSpacing ?? globalOptions.fontSpacing?.characterName ?? 0,
-      abilityText:
-        decoratives.abilityTextFontSpacing ?? globalOptions.fontSpacing?.abilityText ?? 0,
-      reminderText: globalOptions.fontSpacing?.reminderText ?? 0,
-      metaText: globalOptions.fontSpacing?.metaText ?? 0,
+      characterName: d.nameFontSpacing ?? g.fontSpacing?.characterName ?? DEFAULTS.FONT_SPACING,
+      abilityText: d.abilityTextFontSpacing ?? g.fontSpacing?.abilityText ?? DEFAULTS.FONT_SPACING,
+      reminderText: g.fontSpacing?.reminderText ?? DEFAULTS.FONT_SPACING,
+      metaText: g.fontSpacing?.metaText ?? DEFAULTS.FONT_SPACING,
     },
     textShadow: {
-      characterName: decoratives.nameTextShadow ?? globalOptions.textShadow?.characterName ?? 4,
-      abilityText: decoratives.abilityTextShadow ?? globalOptions.textShadow?.abilityText ?? 3,
-      reminderText: globalOptions.textShadow?.reminderText ?? 4,
-      metaText: globalOptions.textShadow?.metaText ?? 4,
+      characterName: d.nameTextShadow ?? g.textShadow?.characterName ?? DEFAULTS.NAME_SHADOW_BLUR,
+      abilityText: d.abilityTextShadow ?? g.textShadow?.abilityText ?? DEFAULTS.ABILITY_SHADOW_BLUR,
+      reminderText: g.textShadow?.reminderText ?? DEFAULTS.NAME_SHADOW_BLUR,
+      metaText: g.textShadow?.metaText ?? DEFAULTS.NAME_SHADOW_BLUR,
     },
     // Icon
     iconSettings: {
       character: {
-        scale: decoratives.iconScale ?? globalOptions.iconSettings?.character?.scale ?? 1.0,
-        offsetX: decoratives.iconOffsetX ?? globalOptions.iconSettings?.character?.offsetX ?? 0,
-        offsetY: decoratives.iconOffsetY ?? globalOptions.iconSettings?.character?.offsetY ?? 0,
+        scale: d.iconScale ?? g.iconSettings?.character?.scale ?? DEFAULTS.ICON_SCALE,
+        offsetX: d.iconOffsetX ?? g.iconSettings?.character?.offsetX ?? DEFAULTS.ICON_OFFSET,
+        offsetY: d.iconOffsetY ?? g.iconSettings?.character?.offsetY ?? DEFAULTS.ICON_OFFSET,
       },
-      reminder: globalOptions.iconSettings?.reminder ?? { scale: 1.0, offsetX: 0, offsetY: 0 },
-      meta: globalOptions.iconSettings?.meta ?? { scale: 1.0, offsetX: 0, offsetY: 0 },
+      reminder: g.iconSettings?.reminder ?? {
+        scale: DEFAULTS.ICON_SCALE,
+        offsetX: DEFAULTS.ICON_OFFSET,
+        offsetY: DEFAULTS.ICON_OFFSET,
+      },
+      meta: g.iconSettings?.meta ?? {
+        scale: DEFAULTS.ICON_SCALE,
+        offsetX: DEFAULTS.ICON_OFFSET,
+        offsetY: DEFAULTS.ICON_OFFSET,
+      },
     },
     // Ability text
-    displayAbilityText: decoratives.displayAbilityText ?? globalOptions.displayAbilityText,
-    abilityTextFont: decoratives.abilityTextFont ?? globalOptions.abilityTextFont,
-    abilityTextColor: decoratives.abilityTextColor ?? globalOptions.abilityTextColor,
+    displayAbilityText: d.displayAbilityText ?? g.displayAbilityText,
+    abilityTextFont: d.abilityTextFont ?? g.abilityTextFont,
+    abilityTextColor: d.abilityTextColor ?? g.abilityTextColor,
     // Setup
-    setupStyle: decoratives.setupStyle ?? globalOptions.setupStyle,
-    // Accents
-    accentEnabled: decoratives.accentEnabled ?? globalOptions.accentEnabled,
-    accentGeneration: decoratives.accentGeneration ?? globalOptions.accentGeneration,
-    maximumAccents: decoratives.maximumAccents ?? globalOptions.maximumAccents,
-    accentPopulationProbability:
-      decoratives.accentPopulationProbability ?? globalOptions.accentPopulationProbability,
-    accentArcSpan: decoratives.accentArcSpan ?? globalOptions.accentArcSpan,
-    accentSlots: decoratives.accentSlots ?? globalOptions.accentSlots,
-    enableLeftAccent: decoratives.enableLeftAccent ?? globalOptions.enableLeftAccent,
-    enableRightAccent: decoratives.enableRightAccent ?? globalOptions.enableRightAccent,
-    sideAccentProbability:
-      decoratives.sideAccentProbability ?? globalOptions.sideAccentProbability,
+    setupStyle: d.setupStyle ?? g.setupStyle,
+    // Accents - apply all accent keys
+    accentEnabled: d.accentEnabled ?? g.accentEnabled,
+    accentGeneration: d.accentGeneration ?? g.accentGeneration,
+    maximumAccents: d.maximumAccents ?? g.maximumAccents,
+    accentPopulationProbability: d.accentPopulationProbability ?? g.accentPopulationProbability,
+    accentArcSpan: d.accentArcSpan ?? g.accentArcSpan,
+    accentSlots: d.accentSlots ?? g.accentSlots,
+    enableLeftAccent: d.enableLeftAccent ?? g.enableLeftAccent,
+    enableRightAccent: d.enableRightAccent ?? g.enableRightAccent,
+    sideAccentProbability: d.sideAccentProbability ?? g.sideAccentProbability,
   };
 }
+
+/**
+ * Maps GenerationOptions changes to DecorativeOverrides updates for accent settings.
+ * Only includes keys that are present in the options object.
+ */
+function mapAccentOptionsToDecorative(
+  options: Partial<GenerationOptions>
+): Partial<DecorativeOverrides> {
+  const updates: Partial<DecorativeOverrides> = {};
+
+  for (const key of ACCENT_KEYS) {
+    if (key in options) {
+      (updates as Record<string, unknown>)[key] = (options as Record<string, unknown>)[key];
+    }
+  }
+
+  return updates;
+}
+
+// ============================================================================
+// Sub-Components
+// ============================================================================
+
+interface ToggleButtonGroupProps {
+  enabled: boolean;
+  onToggle: (enabled: boolean) => void;
+}
+
+/** Inline On/Off toggle button group for ability text */
+const ToggleButtonGroup = memo(function ToggleButtonGroup({
+  enabled,
+  onToggle,
+}: ToggleButtonGroupProps) {
+  return (
+    <div className={optionStyles.inboxToggle}>
+      <button
+        type="button"
+        className={`${optionStyles.inboxToggleButton} ${!enabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        onClick={() => onToggle(false)}
+      >
+        Off
+      </button>
+      <button
+        type="button"
+        className={`${optionStyles.inboxToggleButton} ${enabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        onClick={() => onToggle(true)}
+      >
+        On
+      </button>
+    </div>
+  );
+});
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel({
   character,
@@ -223,19 +326,7 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
   // Accent settings change handler - adapts GenerationOptions changes to DecorativeOverrides
   const handleAccentOptionChange = useCallback(
     (options: Partial<GenerationOptions>) => {
-      const updates: Partial<DecorativeOverrides> = {};
-      if ('accentEnabled' in options) updates.accentEnabled = options.accentEnabled;
-      if ('accentGeneration' in options) updates.accentGeneration = options.accentGeneration;
-      if ('maximumAccents' in options) updates.maximumAccents = options.maximumAccents;
-      if ('accentPopulationProbability' in options)
-        updates.accentPopulationProbability = options.accentPopulationProbability;
-      if ('accentArcSpan' in options) updates.accentArcSpan = options.accentArcSpan;
-      if ('accentSlots' in options) updates.accentSlots = options.accentSlots;
-      if ('enableLeftAccent' in options) updates.enableLeftAccent = options.enableLeftAccent;
-      if ('enableRightAccent' in options) updates.enableRightAccent = options.enableRightAccent;
-      if ('sideAccentProbability' in options)
-        updates.sideAccentProbability = options.sideAccentProbability;
-      onDecorativesChange(updates);
+      onDecorativesChange(mapAccentOptionsToDecorative(options));
     },
     [onDecorativesChange]
   );
@@ -246,10 +337,15 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
       decoratives.nameFont ??
       effectiveOptions.characterNameFont ??
       CHARACTER_NAME_FONT_OPTIONS[0].value,
-    color: decoratives.nameColor ?? effectiveOptions.characterNameColor ?? '#FFFFFF',
+    color: decoratives.nameColor ?? effectiveOptions.characterNameColor ?? DEFAULTS.TEXT_COLOR,
     letterSpacing:
-      decoratives.nameFontSpacing ?? effectiveOptions.fontSpacing?.characterName ?? 0,
-    shadowBlur: decoratives.nameTextShadow ?? effectiveOptions.textShadow?.characterName ?? 4,
+      decoratives.nameFontSpacing ??
+      effectiveOptions.fontSpacing?.characterName ??
+      DEFAULTS.FONT_SPACING,
+    shadowBlur:
+      decoratives.nameTextShadow ??
+      effectiveOptions.textShadow?.characterName ??
+      DEFAULTS.NAME_SHADOW_BLUR,
   };
 
   // Current font settings for ability text
@@ -258,41 +354,40 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
       decoratives.abilityTextFont ??
       effectiveOptions.abilityTextFont ??
       ABILITY_TEXT_FONT_OPTIONS[0].value,
-    color: decoratives.abilityTextColor ?? effectiveOptions.abilityTextColor ?? '#FFFFFF',
+    color: decoratives.abilityTextColor ?? effectiveOptions.abilityTextColor ?? DEFAULTS.TEXT_COLOR,
     letterSpacing:
-      decoratives.abilityTextFontSpacing ?? effectiveOptions.fontSpacing?.abilityText ?? 0,
-    shadowBlur: decoratives.abilityTextShadow ?? effectiveOptions.textShadow?.abilityText ?? 3,
+      decoratives.abilityTextFontSpacing ??
+      effectiveOptions.fontSpacing?.abilityText ??
+      DEFAULTS.FONT_SPACING,
+    shadowBlur:
+      decoratives.abilityTextShadow ??
+      effectiveOptions.textShadow?.abilityText ??
+      DEFAULTS.ABILITY_SHADOW_BLUR,
   };
 
   // Current icon settings
   const currentIconSettings: IconSettings = {
-    scale: decoratives.iconScale ?? effectiveOptions.iconSettings?.character?.scale ?? 1.0,
-    offsetX: decoratives.iconOffsetX ?? effectiveOptions.iconSettings?.character?.offsetX ?? 0,
-    offsetY: decoratives.iconOffsetY ?? effectiveOptions.iconSettings?.character?.offsetY ?? 0,
+    scale:
+      decoratives.iconScale ??
+      effectiveOptions.iconSettings?.character?.scale ??
+      DEFAULTS.ICON_SCALE,
+    offsetX:
+      decoratives.iconOffsetX ??
+      effectiveOptions.iconSettings?.character?.offsetX ??
+      DEFAULTS.ICON_OFFSET,
+    offsetY:
+      decoratives.iconOffsetY ??
+      effectiveOptions.iconSettings?.character?.offsetY ??
+      DEFAULTS.ICON_OFFSET,
   };
 
   // Ability text enabled state
   const abilityTextEnabled =
     decoratives.displayAbilityText ?? effectiveOptions.displayAbilityText !== false;
 
-  // Ability text toggle component
+  // Ability text toggle component - uses extracted ToggleButtonGroup
   const AbilityTextToggle = (
-    <div className={optionStyles.inboxToggle}>
-      <button
-        type="button"
-        className={`${optionStyles.inboxToggleButton} ${!abilityTextEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
-        onClick={() => handleAbilityTextToggle(false)}
-      >
-        Off
-      </button>
-      <button
-        type="button"
-        className={`${optionStyles.inboxToggleButton} ${abilityTextEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
-        onClick={() => handleAbilityTextToggle(true)}
-      >
-        On
-      </button>
-    </div>
+    <ToggleButtonGroup enabled={abilityTextEnabled} onToggle={handleAbilityTextToggle} />
   );
 
   return (
@@ -311,7 +406,7 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
         <p className={styles.decorativesDescription}>
           {isEnabled
             ? 'Custom settings are enabled. Changes here override global options for this character only.'
-            : 'Using global settings. Enable to customize this character\'s appearance.'}
+            : "Using global settings. Enable to customize this character's appearance."}
         </p>
       </div>
 
@@ -330,8 +425,7 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
           <div className={optionStyles.settingsGroup}>
             <BackgroundStyleSelector
               value={
-                (decoratives.backgroundStyle ??
-                  effectiveOptions.characterBackgroundStyle) ||
+                (decoratives.backgroundStyle ?? effectiveOptions.characterBackgroundStyle) ||
                 DEFAULT_BACKGROUND_STYLE
               }
               onChange={handleBackgroundStyleChange}
@@ -352,7 +446,10 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
               fontOptions={CHARACTER_NAME_FONT_OPTIONS}
               previewText="Character Name"
               title="Font"
-              defaults={{ letterSpacing: 0, shadowBlur: 4 }}
+              defaults={{
+                letterSpacing: DEFAULTS.FONT_SPACING,
+                shadowBlur: DEFAULTS.NAME_SHADOW_BLUR,
+              }}
               ariaLabel="Character name font settings"
             />
           </div>
@@ -386,7 +483,10 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
               fontOptions={ABILITY_TEXT_FONT_OPTIONS}
               previewText="Ability Text"
               title="Ability Text"
-              defaults={{ letterSpacing: 0, shadowBlur: 3 }}
+              defaults={{
+                letterSpacing: DEFAULTS.FONT_SPACING,
+                shadowBlur: DEFAULTS.ABILITY_SHADOW_BLUR,
+              }}
               visuallyDisabled={!abilityTextEnabled}
               headerSlot={AbilityTextToggle}
               ariaLabel="Ability text font settings"
@@ -411,7 +511,9 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
                 </div>
                 {!decoratives.hideSetupOverlay && (
                   <AssetPreviewSelector
-                    value={decoratives.setupStyle ?? effectiveOptions.setupStyle ?? 'setup_flower_1'}
+                    value={
+                      decoratives.setupStyle ?? effectiveOptions.setupStyle ?? DEFAULTS.SETUP_STYLE
+                    }
                     onChange={handleSetupStyleChange}
                     assetType="setup-overlay"
                     shape="square"

@@ -207,8 +207,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
 
     // Initialize when characters first become available, or when count changes significantly
     const shouldInitialize =
-      !hasInitializedRef.current ||
-      Math.abs(characters.length - lastCharacterCountRef.current) > 0;
+      !hasInitializedRef.current || Math.abs(characters.length - lastCharacterCountRef.current) > 0;
 
     if (shouldInitialize) {
       logger.debug('NightOrderContext', 'Auto-initializing from TokenContext', {

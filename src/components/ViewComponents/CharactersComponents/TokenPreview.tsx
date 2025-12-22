@@ -110,19 +110,13 @@ export function TokenPreview({
                 const globalIndex = startIndex + i;
                 const reminderImageUrl = canvasToDataUrl(reminder.canvas);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={globalIndex}
                     className={`${styles.reminderItem} ${selectedIndex === globalIndex ? styles.selected : ''}`}
                     onClick={() =>
                       setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex)
                     }
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setSelectedIndex(selectedIndex === globalIndex ? null : globalIndex);
-                      }
-                    }}
                     title={reminder.reminderText || reminder.filename}
                   >
                     <div className={styles.reminderCanvasContainer}>
@@ -140,7 +134,7 @@ export function TokenPreview({
                     <span className={styles.reminderText}>
                       {reminder.reminderText || reminder.filename}
                     </span>
-                  </div>
+                  </button>
                 );
               })
             ) : (

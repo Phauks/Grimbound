@@ -86,11 +86,10 @@ export const SettingsSelectorBase = memo(
 
     return (
       <>
-        <div
+        <section
           ref={ref}
           className={containerClasses}
           onKeyDown={onKeyDown}
-          role="group"
           aria-label={ariaLabel}
           aria-disabled={disabled || visuallyDisabled}
         >
@@ -115,7 +114,7 @@ export const SettingsSelectorBase = memo(
               {isExpanded ? 'Done' : actionLabel}
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Children (portal panels, etc.) */}
         {children}

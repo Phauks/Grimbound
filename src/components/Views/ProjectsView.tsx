@@ -5,21 +5,20 @@
  * and right panel (ProjectEditor). Follows CharactersView pattern.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToast } from '@/contexts/ToastContext';
-import { useTokenContext } from '@/contexts/TokenContext';
-import { useProjects } from '@/hooks';
-import { generateScriptNameTokenOnly } from '@/ts/generation/batchGenerator.js';
-import type { Token } from '@/ts/types/index.js';
-import type { CustomIconMetadata, Project } from '@/ts/types/project.js';
-import { logger } from '@/ts/utils/logger.js';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
 import { DeleteProjectModal } from '@/components/Modals/DeleteProjectModal';
 import { ExportProjectModal } from '@/components/Modals/ExportProjectModal';
 import { IconManagementModal } from '@/components/Modals/IconManagementModal';
 import { ImportProjectModal } from '@/components/Modals/ImportProjectModal';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
 import { ProjectEditor } from '@/components/ViewComponents/ProjectsComponents/ProjectEditor';
 import { ProjectNavigation } from '@/components/ViewComponents/ProjectsComponents/ProjectNavigation';
+import { useToast } from '@/contexts/ToastContext';
+import { useTokenContext } from '@/contexts/TokenContext';
+import { useProjects } from '@/hooks';
+import type { CustomIconMetadata, Project } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
 
 interface ProjectsViewProps {
   initialProjectId?: string;
@@ -40,10 +39,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
   // Selected project for editing - initialize to current/active project if available
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
-
-  // Cache for pre-rendered script name tokens by project ID
-  const scriptNameTokenCache = useRef<Map<string, Token>>(new Map());
-  const hoverAbortControllers = useRef<Map<string, AbortController>>(new Map());
 
   // Initialize selectedProject to the active project on mount
   useEffect(() => {
@@ -84,49 +79,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
     (projectId: string) => {
       const project = projects.find((p) => p.id === projectId);
       setSelectedProject(project || null);
-    },
-    [projects]
-  );
-
-  // Pre-render script name token on hover
-  const handleHoverProject = useCallback(
-    (projectId: string) => {
-      // Skip if already in cache
-      if (scriptNameTokenCache.current.has(projectId)) {
-        return;
-      }
-
-      // Skip if already generating for this project
-      if (hoverAbortControllers.current.has(projectId)) {
-        return;
-      }
-
-      const project = projects.find((p) => p.id === projectId);
-      if (!project?.state?.scriptMeta?.name) {
-        return;
-      }
-
-      const abortController = new AbortController();
-      hoverAbortControllers.current.set(projectId, abortController);
-
-      // Generate script name token in background
-      generateScriptNameTokenOnly(
-        project.state.generationOptions,
-        project.state.scriptMeta,
-        abortController.signal
-      )
-        .then((token) => {
-          if (token) {
-            scriptNameTokenCache.current.set(projectId, token);
-          }
-          hoverAbortControllers.current.delete(projectId);
-        })
-        .catch((err) => {
-          if (err?.name !== 'AbortError') {
-            logger.error('ProjectsView', 'Failed to pre-render script name token', err);
-          }
-          hoverAbortControllers.current.delete(projectId);
-        });
     },
     [projects]
   );
@@ -245,7 +197,11 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
   }, [lastProject, activateProject, addToast]);
 
   return (
-    <>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Projects" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
       {/* Main unified layout: Left sidebar + Right panel */}
       <ViewLayout variant="2-panel">
         {/* Left Sidebar - Project Navigation */}
@@ -255,7 +211,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
             selectedProjectId={selectedProject?.id || null}
             currentProjectId={currentProject?.id || null}
             onSelectProject={handleSelectProject}
-            onHoverProject={handleHoverProject}
             onCreateProject={handleCreateProject}
             onImportProject={handleImportProject}
             onIconManagement={handleIconManagement}
@@ -310,6 +265,6 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
           onUpdateIcons={handleUpdateIcons}
         />
       )}
-    </>
+    </ErrorBoundary>
   );
 }

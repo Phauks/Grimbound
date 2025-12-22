@@ -159,10 +159,17 @@ export class DataSyncService {
         logger.info('DataSyncService', `Using cached data: ${cachedVersion}`);
         this.emitEvent('initialized', this.currentStatus);
 
-        // Check for updates in background (non-blocking)
-        this.checkForUpdates().catch((error) => {
-          logger.warn('DataSyncService', 'Background update check failed:', error);
-        });
+        // Check for updates in background and auto-install if available
+        this.checkForUpdates()
+          .then((updateAvailable) => {
+            if (updateAvailable) {
+              logger.info('DataSyncService', 'Update available, auto-installing...');
+              return this.downloadAndInstall();
+            }
+          })
+          .catch((error) => {
+            logger.warn('DataSyncService', 'Background update check/install failed:', error);
+          });
       } else {
         // No cached data - need to download
         logger.info('DataSyncService', 'No cached data, downloading from GitHub...');

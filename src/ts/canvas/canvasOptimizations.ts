@@ -105,23 +105,28 @@ export function createCircularWidthCalculator(
     // Round to nearest pixel for cache key
     const key = Math.round(y);
 
-    if (!cache.has(key)) {
-      const distanceFromCenter = Math.abs(key - centerY);
-
-      // If outside the circle, return 0
-      if (distanceFromCenter > radius) {
-        cache.set(key, 0);
-      } else {
-        // Calculate chord width at this height using Pythagorean theorem
-        const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
-        const fullWidth = 2 * halfWidth;
-
-        // Apply max width ratio to add some padding from edges
-        cache.set(key, fullWidth * maxWidthRatio);
-      }
+    const cached = cache.get(key);
+    if (cached !== undefined) {
+      return cached;
     }
 
-    return cache.get(key)!;
+    const distanceFromCenter = Math.abs(key - centerY);
+    let width: number;
+
+    // If outside the circle, return 0
+    if (distanceFromCenter > radius) {
+      width = 0;
+    } else {
+      // Calculate chord width at this height using Pythagorean theorem
+      const halfWidth = Math.sqrt(radius * radius - distanceFromCenter * distanceFromCenter);
+      const fullWidth = 2 * halfWidth;
+
+      // Apply max width ratio to add some padding from edges
+      width = fullWidth * maxWidthRatio;
+    }
+
+    cache.set(key, width);
+    return width;
   };
 }
 

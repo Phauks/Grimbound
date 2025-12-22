@@ -16,8 +16,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useProjectCacheWarming } from '@/hooks';
+import { useProjectService } from '@/contexts/ServiceContext';
 import type { AutoSaveStatus, Project } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/index.js';
+
+// Module-level guard to prevent StrictMode double-load
+let projectsLoadStarted = false;
 
 // ============================================================================
 // Context Type Definition
@@ -31,6 +35,10 @@ interface ProjectContextType {
   // Project list (cached for quick access)
   projects: Project[];
   setProjects: (projects: Project[]) => void;
+
+  // Projects loading state (prevents multiple loads from different hook instances)
+  projectsLoaded: boolean;
+  projectsLoading: boolean;
 
   // Auto-save status
   autoSaveStatus: AutoSaveStatus;
@@ -79,11 +87,17 @@ interface ProjectProviderProps {
 // ============================================================================
 
 export function ProjectProvider({ children }: ProjectProviderProps) {
+  const projectService = useProjectService();
+
   // Current active project
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
   // Cached project list
   const [projects, setProjects] = useState<Project[]>([]);
+
+  // Projects loading state - single source of truth for initial load
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  const [projectsLoading, setProjectsLoading] = useState(false);
 
   // Auto-save status
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>({
@@ -128,8 +142,30 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }
   }, [currentProject?.lastModifiedAt]);
 
-  // Warm caches when project changes
-  useProjectCacheWarming(currentProject);
+  // Initial project load - happens ONCE in the context, not in each hook instance
+  useEffect(() => {
+    // Skip if already loaded, currently loading, or load already started (StrictMode guard)
+    if (projectsLoaded || projectsLoading || projectsLoadStarted) return;
+
+    projectsLoadStarted = true;
+    setProjectsLoading(true);
+    logger.info('ProjectContext', 'Initial project load');
+
+    projectService
+      .listProjects()
+      .then((loadedProjects) => {
+        setProjects(loadedProjects);
+        setProjectsLoaded(true);
+        logger.info('ProjectContext', `Loaded ${loadedProjects.length} projects`);
+      })
+      .catch((err) => {
+        logger.error('ProjectContext', 'Failed to load projects', err);
+        setProjectsLoaded(true); // Mark as loaded even on error to prevent retry loops
+      })
+      .finally(() => {
+        setProjectsLoading(false);
+      });
+  }, [projectService, projectsLoaded, projectsLoading]);
 
   // Context value
   const value: ProjectContextType = {
@@ -137,6 +173,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     setCurrentProject,
     projects,
     setProjects,
+    projectsLoaded,
+    projectsLoading,
     autoSaveStatus,
     setAutoSaveStatus: updateAutoSaveStatus,
     isDirty,

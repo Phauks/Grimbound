@@ -138,7 +138,7 @@
 }
 
 .searchInput:focus {
-  border-color: var(--color-accent, #8b5cf6);
+  border-color: var(--color-accent, #c9a227);
 }
 
 .clearButton {
@@ -175,7 +175,7 @@
 }
 
 .filterSelect:focus {
-  border-color: var(--color-accent, #8b5cf6);
+  border-color: var(--color-accent, #c9a227);
 }
 
 .statsRow {
@@ -186,7 +186,7 @@
 }
 
 .statHighlight {
-  color: var(--color-accent, #8b5cf6);
+  color: var(--color-accent, #c9a227);
   font-weight: 600;
 }
 
@@ -208,13 +208,13 @@
 }
 
 .selectedToggleActive {
-  color: var(--color-accent, #8b5cf6);
-  background: rgba(139, 92, 246, 0.1);
-  border-color: var(--color-accent, #8b5cf6);
+  color: var(--color-accent, #c9a227);
+  background: rgba(201, 162, 39, 0.1);
+  border-color: var(--color-accent, #c9a227);
 }
 
 .selectedToggleActive:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(201, 162, 39, 0.2);
 }
 
 /* ========== CHARACTER LIST ========== */
@@ -285,13 +285,27 @@
 }
 
 /* Team colors */
-.teamTownsfolk .teamName { color: #4a90d9; }
-.teamOutsider .teamName { color: #4a90d9; }
-.teamMinion .teamName { color: #d63031; }
-.teamDemon .teamName { color: #d63031; }
-.teamTraveller .teamName { color: #9b59b6; }
-.teamFabled .teamName { color: #f1c40f; }
-.teamLoric .teamName { color: #27ae60; }
+.teamTownsfolk .teamName {
+  color: #4a90d9;
+}
+.teamOutsider .teamName {
+  color: #4a90d9;
+}
+.teamMinion .teamName {
+  color: #d63031;
+}
+.teamDemon .teamName {
+  color: #d63031;
+}
+.teamTraveller .teamName {
+  color: #9b59b6;
+}
+.teamFabled .teamName {
+  color: #f1c40f;
+}
+.teamLoric .teamName {
+  color: #27ae60;
+}
 
 .teamCount {
   font-size: 0.6875rem;
@@ -337,19 +351,19 @@
 }
 
 .characterRowSelected {
-  background: rgba(139, 92, 246, 0.08);
-  border-left: 3px solid var(--color-accent, #8b5cf6);
+  background: rgba(201, 162, 39, 0.08);
+  border-left: 3px solid var(--color-accent, #c9a227);
   padding-left: calc(1.25rem - 3px);
 }
 
 .characterRowSelected:hover {
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(201, 162, 39, 0.12);
 }
 
 .checkbox {
   width: 18px;
   height: 18px;
-  accent-color: var(--color-accent, #8b5cf6);
+  accent-color: var(--color-accent, #c9a227);
   cursor: pointer;
 }
 
@@ -364,7 +378,7 @@
 }
 
 .characterIconSelected {
-  box-shadow: 0 0 0 2px var(--color-accent, #8b5cf6);
+  box-shadow: 0 0 0 2px var(--color-accent, #c9a227);
 }
 
 .characterInfo {
@@ -406,7 +420,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  background: var(--color-accent, #8b5cf6);
+  background: var(--color-primary, #8b0000);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -414,7 +428,7 @@
 }
 
 .doneButton:hover {
-  background: var(--color-accent-hover, #7c3aed);
+  background: var(--color-primary-light, #b30000);
 }
 
 /* ========== LOADING STATE ========== */

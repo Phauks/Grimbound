@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import styles from '@/styles/components/layout/TabNavigation.module.css';
-import { tabPreRenderService, type PreRenderableTab } from '@/ts/cache/index.js';
+import { type PreRenderableTab, tabPreRenderService } from '@/ts/cache/index.js';
 
 export type EditorTab =
   | 'projects'

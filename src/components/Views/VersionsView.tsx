@@ -13,6 +13,11 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { CreateVersionModal } from '@/components/Modals/CreateVersionModal';
+import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { Button } from '@/components/Shared/UI/Button';
+import { VersionCard } from '@/components/ViewComponents/ProjectsComponents/VersionCard';
 import { useProjectService } from '@/contexts/ServiceContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useProjects } from '@/hooks';
@@ -20,10 +25,6 @@ import styles from '@/styles/components/views/VersionsView.module.css';
 import { projectDb } from '@/ts/db/projectDb';
 import type { CreateProjectOptions, Project, ProjectVersion } from '@/ts/types/project';
 import { logger } from '@/ts/utils/logger';
-import { CreateVersionModal } from '@/components/Modals/CreateVersionModal';
-import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
-import { Button } from '@/components/Shared/UI/Button';
-import { VersionCard } from '@/components/ViewComponents/ProjectsComponents/VersionCard';
 
 interface VersionsViewProps {
   project: Project;
@@ -144,90 +145,103 @@ export function VersionsView({ project }: VersionsViewProps) {
     [project.id, updateProject, loadVersions, addToast]
   );
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loading}>
-          <div className={styles.spinner}>⟳</div>
-          <p>Loading versions...</p>
+  // Render content based on state
+  const renderContent = () => {
+    // Loading state
+    if (isLoading) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.loading}>
+            <div className={styles.spinner}>⟳</div>
+            <p>Loading versions...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Empty state
-  if (versions.length === 0) {
+    // Empty state
+    if (versions.length === 0) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>📦</div>
+            <h2>No Versions Yet</h2>
+            <p>Create your first version to mark a milestone in your project's development.</p>
+            <p className={styles.emptyHint}>
+              Versions help you track major changes and prepare scripts for publishing.
+            </p>
+            <Button variant="primary" onClick={handleCreateVersion}>
+              🏷️ Create Version
+            </Button>
+          </div>
+
+          <CreateVersionModal
+            isOpen={createModalOpen}
+            onClose={() => setCreateModalOpen(false)}
+            project={project}
+            onVersionCreated={handleVersionCreated}
+          />
+        </div>
+      );
+    }
+
+    // Timeline view with versions
     return (
       <div className={styles.container}>
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>📦</div>
-          <h2>No Versions Yet</h2>
-          <p>Create your first version to mark a milestone in your project's development.</p>
-          <p className={styles.emptyHint}>
-            Versions help you track major changes and prepare scripts for publishing.
-          </p>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.headerInfo}>
+            <h2>Versions</h2>
+            <p className={styles.versionCount}>
+              {versions.length} version{versions.length !== 1 ? 's' : ''} created
+            </p>
+          </div>
+
           <Button variant="primary" onClick={handleCreateVersion}>
             🏷️ Create Version
           </Button>
         </div>
 
+        {/* Version Timeline */}
+        <div className={styles.timeline}>
+          {versions.map((version) => (
+            <VersionCard
+              key={version.id}
+              version={version}
+              project={project}
+              onSelect={() => setHistoryModalOpen(true)}
+              onDelete={() => handleDeleteVersion(version.id)}
+              onDuplicate={() => handleDuplicateVersion(version)}
+              onRestore={() => handleRestoreVersion(version)}
+            />
+          ))}
+        </div>
+
+        {/* Modals */}
         <CreateVersionModal
           isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
           project={project}
           onVersionCreated={handleVersionCreated}
         />
+
+        {/* Project History Modal - Shows unified timeline with versions + snapshots and diff viewing */}
+        <ProjectHistoryModal
+          isOpen={historyModalOpen}
+          onClose={() => setHistoryModalOpen(false)}
+          project={project}
+        />
       </div>
     );
-  }
+  };
 
-  // Timeline view with versions
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerInfo}>
-          <h2>Versions</h2>
-          <p className={styles.versionCount}>
-            {versions.length} version{versions.length !== 1 ? 's' : ''} created
-          </p>
-        </div>
-
-        <Button variant="primary" onClick={handleCreateVersion}>
-          🏷️ Create Version
-        </Button>
-      </div>
-
-      {/* Version Timeline */}
-      <div className={styles.timeline}>
-        {versions.map((version) => (
-          <VersionCard
-            key={version.id}
-            version={version}
-            project={project}
-            onSelect={() => setHistoryModalOpen(true)}
-            onDelete={() => handleDeleteVersion(version.id)}
-            onDuplicate={() => handleDuplicateVersion(version)}
-            onRestore={() => handleRestoreVersion(version)}
-          />
-        ))}
-      </div>
-
-      {/* Modals */}
-      <CreateVersionModal
-        isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        project={project}
-        onVersionCreated={handleVersionCreated}
-      />
-
-      {/* Project History Modal - Shows unified timeline with versions + snapshots and diff viewing */}
-      <ProjectHistoryModal
-        isOpen={historyModalOpen}
-        onClose={() => setHistoryModalOpen(false)}
-        project={project}
-      />
-    </div>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Versions" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      {renderContent()}
+    </ErrorBoundary>
   );
 }

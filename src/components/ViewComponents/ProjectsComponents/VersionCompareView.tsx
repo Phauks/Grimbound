@@ -9,18 +9,17 @@
  * differences including inline word-level diffs for text fields.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styles from '@/styles/components/projects/VersionCompareView.module.css';
 import { TEAM_COLORS, TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team } from '@/ts/types/index';
 import type { ProjectState, ProjectVersion } from '@/ts/types/project';
 import {
-  calculateProjectDiffDetailed,
-  getDiffSummary,
   calculateProjectDiff,
-  type ModifiedCharacterDetailed,
+  calculateProjectDiffDetailed,
   type FieldChange,
-  type ArrayDiffResult,
+  getDiffSummary,
+  type ModifiedCharacterDetailed,
 } from '@/ts/utils/projectDiff';
 import { formatValueForDisplay } from '@/ts/utils/textDiff.js';
 
@@ -388,7 +387,9 @@ function ExpandableCharacterRow({
       </button>
 
       {/* Expanded detail panel */}
-      {isExpanded && <CharacterDiffDetail modification={modification} versionLabel={versionLabel} />}
+      {isExpanded && (
+        <CharacterDiffDetail modification={modification} versionLabel={versionLabel} />
+      )}
     </div>
   );
 }
@@ -493,13 +494,13 @@ function ArrayFieldDiff({ change }: ArrayFieldDiffProps) {
     <div className={styles.fieldDiff}>
       <span className={styles.fieldLabel}>{displayName}:</span>
       <div className={styles.arrayDiff}>
-        {arrayDiff.removed.map((item, idx) => (
-          <span key={`removed-${idx}`} className={styles.arrayItemRemoved}>
+        {arrayDiff.removed.map((item) => (
+          <span key={`removed-${item}`} className={styles.arrayItemRemoved}>
             {item}
           </span>
         ))}
-        {arrayDiff.added.map((item, idx) => (
-          <span key={`added-${idx}`} className={styles.arrayItemAdded}>
+        {arrayDiff.added.map((item) => (
+          <span key={`added-${item}`} className={styles.arrayItemAdded}>
             {item}
           </span>
         ))}

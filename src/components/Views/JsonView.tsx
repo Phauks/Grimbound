@@ -8,6 +8,11 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { CodeMirrorEditor, type EditorControls } from '@/components/Shared/Json/CodeMirrorEditor';
+import { Button } from '@/components/Shared/UI/Button';
+import { ScriptMessagesBar } from '@/components/ViewComponents/JsonComponents';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -16,10 +21,6 @@ import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import CONFIG from '@/ts/config.js';
 import { logger } from '@/ts/utils/logger.js';
-import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { CodeMirrorEditor, type EditorControls } from '@/components/Shared/Json/CodeMirrorEditor';
-import { Button } from '@/components/Shared/UI/Button';
-import { ScriptMessagesBar } from '@/components/ViewComponents/JsonComponents';
 
 interface JsonViewProps {
   onGenerate?: () => void;
@@ -106,17 +107,8 @@ export function JsonView({ onGenerate }: JsonViewProps) {
 
   // Auto-generate tokens after debounce
   useEffect(() => {
-    logger.warn('JsonView', 'Auto-generate effect triggered', {
-      isLoading,
-      charactersLength: characters.length,
-      jsonInputLength: jsonInput.length,
-      prevJsonLength: previousJsonRef.current.length,
-      jsonChanged: previousJsonRef.current !== jsonInput,
-      forceRegenerate,
-    });
-
+    // Skip early if not ready (no logging needed for expected skip path)
     if (isLoading || !characters.length) {
-      logger.debug('JsonView', 'Skipping - loading or no characters');
       return;
     }
 
@@ -128,25 +120,31 @@ export function JsonView({ onGenerate }: JsonViewProps) {
 
     // Skip if JSON hasn't changed AND project hasn't changed AND not force regenerating
     if (!projectChanged && previousJsonRef.current === jsonInput && forceRegenerate === 0) {
-      logger.debug('JsonView', 'Skipping - no changes detected');
       return;
     }
 
-    logger.warn('JsonView', 'Scheduling token generation', {
+    // Only log when we're actually going to do something
+    logger.debug('JsonView', 'Scheduling token generation', {
       projectChanged,
       jsonChanged: previousJsonRef.current !== jsonInput,
       forceRegenerate,
+      characterCount: characters.length,
     });
 
     previousJsonRef.current = jsonInput;
     previousProjectIdRef.current = currentProjectId;
+
+    // Reset forceRegenerate to prevent retriggering
+    if (forceRegenerate > 0) {
+      setForceRegenerate(0);
+    }
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(async () => {
-      logger.warn('JsonView', 'Debounce timer fired - calling generateTokens');
+      logger.debug('JsonView', 'Debounce timer fired - calling generateTokens');
       await generateTokens();
       onGenerate?.();
     }, 300);
@@ -251,108 +249,116 @@ export function JsonView({ onGenerate }: JsonViewProps) {
   }, [jsonInput, scriptMeta, handleDownloadJson, setDownloads, clearDownloads]);
 
   return (
-    <ViewLayout variant="2-panel">
-      {/* Left Sidebar - Load Scripts */}
-      <ViewLayout.Panel position="left" width="left" scrollable>
-        <div className={layoutStyles.panelContent}>
-          {/* Upload Script */}
-          <details className={layoutStyles.sidebarCard} open>
-            <summary className={layoutStyles.sectionHeader}>Upload Script</summary>
-            <div className={layoutStyles.optionSection}>
-              <p className={styles.leftPanelDesc}>Import a script JSON file from your computer.</p>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".json"
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-                style={{ display: 'none' }}
-              />
-              <Button variant="secondary" fullWidth onClick={() => fileInputRef.current?.click()}>
-                📁 Upload JSON File
-              </Button>
-            </div>
-          </details>
-
-          {/* Load Example Script */}
-          <details className={layoutStyles.sidebarCard} open>
-            <summary className={layoutStyles.sectionHeader}>Example Scripts</summary>
-            <div className={layoutStyles.optionSection}>
-              <p className={styles.leftPanelDesc}>
-                Try an example script to explore the generator.
-              </p>
-              <select
-                className={styles.leftPanelSelect}
-                value={selectedExample}
-                onChange={(e) => setSelectedExample(e.target.value)}
-              >
-                <option value="">Select an example...</option>
-                {exampleScripts.map((name: string) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => selectedExample && loadExampleScriptByName(selectedExample)}
-                disabled={!selectedExample}
-                style={{ marginTop: '0.5rem' }}
-              >
-                Load Example
-              </Button>
-            </div>
-          </details>
-        </div>
-      </ViewLayout.Panel>
-
-      {/* Right Panel - JSON Editor */}
-      <ViewLayout.Panel position="right" width="flex" scrollable>
-        <div className={styles.editorContainer}>
-          {/* Editor Area */}
-          <section
-            className={`${styles.editorWrapper} ${isDragging ? styles.dragging : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            aria-label="JSON editor drop area"
-          >
-            <CodeMirrorEditor
-              value={jsonInput}
-              onChange={handleTextareaChange}
-              placeholder="Paste your Blood on the Clocktower script JSON here, or drag and drop a .json file..."
-              minHeight="100%"
-              onEditorReady={(controls) => {
-                editorControlsRef.current = controls;
-              }}
-            />
-            {isDragging && (
-              <div className={styles.dropOverlay}>
-                <span>Drop JSON file here</span>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="JSON" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      <ViewLayout variant="2-panel">
+        {/* Left Sidebar - Load Scripts */}
+        <ViewLayout.Panel position="left" width="left" scrollable>
+          <div className={layoutStyles.panelContent}>
+            {/* Upload Script */}
+            <details className={layoutStyles.sidebarCard} open>
+              <summary className={layoutStyles.sectionHeader}>Upload Script</summary>
+              <div className={layoutStyles.optionSection}>
+                <p className={styles.leftPanelDesc}>
+                  Import a script JSON file from your computer.
+                </p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".json"
+                  onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                  style={{ display: 'none' }}
+                />
+                <Button variant="secondary" fullWidth onClick={() => fileInputRef.current?.click()}>
+                  📁 Upload JSON File
+                </Button>
               </div>
-            )}
-          </section>
+            </details>
 
-          {/* Messages Bar - errors, warnings, and recommendations */}
-          <ScriptMessagesBar
-            error={error}
-            warnings={warnings}
-            characterCount={characters.length}
-            hasScriptMeta={!!scriptMeta}
-            hasSeparatorsInIds={hasSeparatorsInIds()}
-            isScriptSorted={isScriptSorted}
-            needsFormatting={needsFormatting}
-            hasCondensableRefs={hasCondensableRefs}
-            formatIssuesSummary={formatIssuesSummary}
-            onFormat={handleFormat}
-            onSort={handleSort}
-            onCondense={handleCondenseScript}
-            onFixFormats={handleFixFormats}
-            onAddMeta={() => addMetaToScript()}
-            onRemoveSeparators={removeSeparatorsFromIds}
-          />
-        </div>
-      </ViewLayout.Panel>
-    </ViewLayout>
+            {/* Load Example Script */}
+            <details className={layoutStyles.sidebarCard} open>
+              <summary className={layoutStyles.sectionHeader}>Example Scripts</summary>
+              <div className={layoutStyles.optionSection}>
+                <p className={styles.leftPanelDesc}>
+                  Try an example script to explore the generator.
+                </p>
+                <select
+                  className={styles.leftPanelSelect}
+                  value={selectedExample}
+                  onChange={(e) => setSelectedExample(e.target.value)}
+                >
+                  <option value="">Select an example...</option>
+                  {exampleScripts.map((name: string) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => selectedExample && loadExampleScriptByName(selectedExample)}
+                  disabled={!selectedExample}
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  Load Example
+                </Button>
+              </div>
+            </details>
+          </div>
+        </ViewLayout.Panel>
+
+        {/* Right Panel - JSON Editor */}
+        <ViewLayout.Panel position="right" width="flex" scrollable>
+          <div className={styles.editorContainer}>
+            {/* Editor Area */}
+            <section
+              className={`${styles.editorWrapper} ${isDragging ? styles.dragging : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              aria-label="JSON editor drop area"
+            >
+              <CodeMirrorEditor
+                value={jsonInput}
+                onChange={handleTextareaChange}
+                placeholder="Paste your Blood on the Clocktower script JSON here, or drag and drop a .json file..."
+                minHeight="100%"
+                onEditorReady={(controls) => {
+                  editorControlsRef.current = controls;
+                }}
+              />
+              {isDragging && (
+                <div className={styles.dropOverlay}>
+                  <span>Drop JSON file here</span>
+                </div>
+              )}
+            </section>
+
+            {/* Messages Bar - errors, warnings, and recommendations */}
+            <ScriptMessagesBar
+              error={error}
+              warnings={warnings}
+              characterCount={characters.length}
+              hasScriptMeta={!!scriptMeta}
+              hasSeparatorsInIds={hasSeparatorsInIds()}
+              isScriptSorted={isScriptSorted}
+              needsFormatting={needsFormatting}
+              hasCondensableRefs={hasCondensableRefs}
+              formatIssuesSummary={formatIssuesSummary}
+              onFormat={handleFormat}
+              onSort={handleSort}
+              onCondense={handleCondenseScript}
+              onFixFormats={handleFixFormats}
+              onAddMeta={() => addMetaToScript()}
+              onRemoveSeparators={removeSeparatorsFromIds}
+            />
+          </div>
+        </ViewLayout.Panel>
+      </ViewLayout>
+    </ErrorBoundary>
   );
 }

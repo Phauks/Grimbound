@@ -1,9 +1,9 @@
 import { memo, useState } from 'react';
-import styles from '@/styles/components/options/OptionsTab.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 import { SegmentedControl } from '@/components/Shared/UI/SegmentedControl';
+import styles from '@/styles/components/options/OptionsTab.module.css';
+import type { GenerationOptions } from '@/ts/types/index';
 
 interface ReminderTabProps {
   generationOptions: GenerationOptions;

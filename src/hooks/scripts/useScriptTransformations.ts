@@ -14,17 +14,16 @@
 
 import { useCallback, useMemo } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useScriptData } from './useScriptData.js';
+import type { Character } from '@/ts/types/index.js';
 import {
   analyzeReminderText,
   condenseScript,
   hasCondensableReferences,
   isScriptJsonSortedBySAO,
-  logger,
   normalizeReminderText,
   sortScriptJsonBySAO,
 } from '@/ts/utils/index.js';
-import type { Character } from '@/ts/types/index.js';
+import { useScriptData } from './useScriptData.js';
 
 export interface FormatIssue {
   characterName: string;
@@ -61,7 +60,9 @@ export interface ScriptTransformationHandlers {
   handleFixFormats: () => Promise<void>;
 }
 
-export interface UseScriptTransformationsResult extends ScriptAnalysis, ScriptTransformationHandlers {
+export interface UseScriptTransformationsResult
+  extends ScriptAnalysis,
+    ScriptTransformationHandlers {
   /** Trigger force regeneration after transformations */
   triggerRegenerate: () => void;
 }

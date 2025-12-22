@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/BrushedMetalTexture
  */
 
-import { BRUSHED_METAL_TEXTURE } from '../constants.js';
 import { initPermutation, perlin2D } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { BRUSHED_METAL_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**
@@ -30,12 +30,21 @@ export class BrushedMetalTextureStrategy extends BaseTextureStrategy {
 
       // Add variation along x for realistic streaks
       const nx = (x / diameter) * 20;
-      const variation = perlin2D(nx + seed * BRUSHED_METAL_TEXTURE.SEED_INFLUENCE, y * BRUSHED_METAL_TEXTURE.Y_COMPRESSION) * BRUSHED_METAL_TEXTURE.VARIATION_AMPLITUDE;
+      const variation =
+        perlin2D(
+          nx + seed * BRUSHED_METAL_TEXTURE.SEED_INFLUENCE,
+          y * BRUSHED_METAL_TEXTURE.Y_COMPRESSION
+        ) * BRUSHED_METAL_TEXTURE.VARIATION_AMPLITUDE;
 
       // Subtle reflective gradient
-      const reflect = Math.abs(Math.sin((y / diameter) * Math.PI)) * BRUSHED_METAL_TEXTURE.REFLECT_INTENSITY;
+      const reflect =
+        Math.abs(Math.sin((y / diameter) * Math.PI)) * BRUSHED_METAL_TEXTURE.REFLECT_INTENSITY;
 
-      let value = streak * BRUSHED_METAL_TEXTURE.STREAK_MULTIPLIER + variation + BRUSHED_METAL_TEXTURE.BASE_BRIGHTNESS + reflect;
+      let value =
+        streak * BRUSHED_METAL_TEXTURE.STREAK_MULTIPLIER +
+        variation +
+        BRUSHED_METAL_TEXTURE.BASE_BRIGHTNESS +
+        reflect;
       value = Math.max(0, Math.min(1, value));
 
       this.setGrayscalePixel(data, index, value);

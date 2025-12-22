@@ -138,20 +138,21 @@ export function CodeMirrorEditor({
       style={{ minHeight }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      role="application"
+      aria-label="JSON editor with drag and drop support"
     >
       <div ref={containerRef} className={styles.codeMirrorWrapper} />
 
       {/* Info indicator with keyboard shortcuts tooltip */}
       {showInfoIndicator && (
-        <div
+        <button
+          type="button"
           className={styles.infoIndicator}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           onClick={() => setShowTooltip(!showTooltip)}
-          role="button"
-          tabIndex={0}
           aria-label="Editor keyboard shortcuts"
-          onKeyDown={(e) => e.key === 'Enter' && setShowTooltip(!showTooltip)}
+          aria-expanded={showTooltip}
         >
           Shortcuts
           {showTooltip && (
@@ -187,12 +188,10 @@ export function CodeMirrorEditor({
                   <span>Unfold block</span>
                 </div>
               </div>
-              <div className={styles.tooltipFooter}>
-                Click line numbers to select lines
-              </div>
+              <div className={styles.tooltipFooter}>Click line numbers to select lines</div>
             </div>
           )}
-        </div>
+        </button>
       )}
     </div>
   );

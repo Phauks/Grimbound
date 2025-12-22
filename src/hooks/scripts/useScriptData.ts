@@ -2,7 +2,7 @@
  * @module hooks/scripts/useScriptData
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { characterLookup } from '@/ts/data/characterLookup.js';
@@ -12,6 +12,9 @@ import { buildInitialNightOrderArray } from '@/ts/nightOrder/index.js';
 import type { SyncEvent } from '@/ts/sync/index.js';
 import type { ScriptMeta } from '@/ts/types/index.js';
 import { logger, validateJson } from '@/ts/utils/index.js';
+
+// Module-level flag to prevent multiple hook instances from loading official data
+let hasLoadedOfficialData = false;
 
 export function useScriptData() {
   const {
@@ -33,19 +36,11 @@ export function useScriptData() {
 
   const { getCharacters, isInitialized, subscribeToEvents } = useDataSync();
 
-  // Track if we've loaded official data to avoid double-loading
-  const hasLoadedRef = useRef(false);
-
   // Update character lookup service when official data changes
+  // (characterLookup.updateCharacters is idempotent - skips if data unchanged)
   useEffect(() => {
     if (officialData.length > 0) {
       characterLookup.updateCharacters(officialData);
-      logger.debug(
-        'useScriptData',
-        'Updated character lookup with',
-        officialData.length,
-        'characters'
-      );
     }
   }, [officialData]);
 
@@ -125,10 +120,10 @@ export function useScriptData() {
     }
   }, [isInitialized, getCharacters, setOfficialData]);
 
-  // Auto-load official data when sync service is initialized
+  // Auto-load official data when sync service is initialized (once globally)
   useEffect(() => {
-    if (isInitialized && !hasLoadedRef.current) {
-      hasLoadedRef.current = true;
+    if (isInitialized && !hasLoadedOfficialData) {
+      hasLoadedOfficialData = true;
       logger.debug('useScriptData', 'Sync service initialized, loading official data...');
       loadOfficialData();
     }
@@ -317,8 +312,8 @@ export function useScriptData() {
 
         logger.debug('useScriptData', 'Building night order from characters', {
           characterCount: characters.length,
-          withFirstNight: characters.filter(c => c.firstNight && c.firstNight > 0).length,
-          withOtherNight: characters.filter(c => c.otherNight && c.otherNight > 0).length,
+          withFirstNight: characters.filter((c) => c.firstNight && c.firstNight > 0).length,
+          withOtherNight: characters.filter((c) => c.otherNight && c.otherNight > 0).length,
         });
 
         // Create new _meta entry with provided values or defaults, including night order

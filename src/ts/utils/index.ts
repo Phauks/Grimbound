@@ -26,6 +26,14 @@ export {
   debounce,
   shuffleArray,
 } from './asyncUtils.js';
+// Character filtering utilities (for enable/disable feature)
+export {
+  countDisabledCharacters,
+  filterEnabledCharacters,
+  getCharacterSelectionSummary,
+  getEnabledCharacterUuids,
+  isCharacterEnabled,
+} from './characterFiltering.js';
 export type {
   BatchResolveResult,
   ResolvedImage,
@@ -47,14 +55,6 @@ export {
   resolveLocalAssetPath,
   setCachedIconUrl,
 } from './characterImageResolver.js';
-// Character filtering utilities (for enable/disable feature)
-export {
-  countDisabledCharacters,
-  filterEnabledCharacters,
-  getCharacterSelectionSummary,
-  getEnabledCharacterUuids,
-  isCharacterEnabled,
-} from './characterFiltering.js';
 // Class name utilities
 export {
   cn,
@@ -158,6 +158,13 @@ export {
   resetProgress,
   updateProgress,
 } from './progressUtils.js';
+// Script encoder utilities (for official BOTC Script Tool integration)
+export {
+  decodeScriptFromUrl,
+  encodeScriptForUrl,
+  getOfficialScriptToolUrl,
+  openInOfficialScriptTool,
+} from './scriptEncoder.js';
 export type { ScriptSortOptions, SortOrder } from './scriptSorting.js';
 // Script sorting utilities
 export {
@@ -184,18 +191,6 @@ export {
   sanitizeFilename,
 } from './stringUtils.js';
 export type {
-  FormatIssue,
-  FormatPattern,
-} from './textFormatAnalyzer.js';
-// Text format analyzer utilities
-export {
-  analyzeReminderText,
-  FORMAT_PATTERNS,
-  getIssueSummary,
-  hasFormatIssues,
-  normalizeReminderText,
-} from './textFormatAnalyzer.js';
-export type {
   ArrayDiffResult,
   DiffSegment,
   TextDiffResult,
@@ -207,10 +202,15 @@ export {
   formatValueForDisplay,
   valuesAreDifferent,
 } from './textDiff.js';
-// Script encoder utilities (for official BOTC Script Tool integration)
+export type {
+  FormatIssue,
+  FormatPattern,
+} from './textFormatAnalyzer.js';
+// Text format analyzer utilities
 export {
-  decodeScriptFromUrl,
-  encodeScriptForUrl,
-  getOfficialScriptToolUrl,
-  openInOfficialScriptTool,
-} from './scriptEncoder.js';
+  analyzeReminderText,
+  FORMAT_PATTERNS,
+  getIssueSummary,
+  hasFormatIssues,
+  normalizeReminderText,
+} from './textFormatAnalyzer.js';

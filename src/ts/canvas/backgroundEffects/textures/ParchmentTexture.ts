@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/ParchmentTexture
  */
 
-import { PARCHMENT_TEXTURE } from '../constants.js';
 import { fbm, initPermutation, perlin2D } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { PARCHMENT_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**

@@ -9,12 +9,11 @@
  */
 
 import { memo, useCallback, useState } from 'react';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
 import { CONFIG } from '@/ts/config';
-import { BUILT_IN_SETUP_OVERLAYS } from '@/ts/constants/builtInAssets';
 import type { GenerationOptions } from '@/ts/types/index';
-import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface SetupSettingsSelectorProps {

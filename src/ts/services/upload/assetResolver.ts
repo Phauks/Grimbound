@@ -286,7 +286,8 @@ export async function preResolveAssetsWithPriority(
   while (queue.length > 0 || inProgress.size > 0) {
     // Fill up to concurrency limit
     while (queue.length > 0 && inProgress.size < concurrency) {
-      const task = queue.shift()!;
+      const task = queue.shift();
+      if (!task) break;
 
       const promise = (async () => {
         try {

@@ -10,11 +10,7 @@
    ============================================ */
 
 .featuredSection {
-  background: linear-gradient(
-    135deg,
-    rgba(201, 162, 39, 0.08) 0%,
-    rgba(201, 162, 39, 0.03) 100%
-  );
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.08) 0%, rgba(201, 162, 39, 0.03) 100%);
   border: 1px solid var(--accent-primary, #c9a227);
   border-radius: var(--radius-lg, 12px);
   padding: 1rem;
@@ -259,20 +255,12 @@
 
 .downloadAllCard {
   margin-top: 0.5rem;
-  background: linear-gradient(
-    135deg,
-    rgba(201, 162, 39, 0.15) 0%,
-    rgba(201, 162, 39, 0.08) 100%
-  );
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.15) 0%, rgba(201, 162, 39, 0.08) 100%);
   border-color: var(--accent-primary, #c9a227);
 }
 
 .downloadAllCard:hover:not(.disabled) {
-  background: linear-gradient(
-    135deg,
-    rgba(201, 162, 39, 0.25) 0%,
-    rgba(201, 162, 39, 0.12) 100%
-  );
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.25) 0%, rgba(201, 162, 39, 0.12) 100%);
 }
 
 /* ============================================
@@ -317,11 +305,7 @@
    ============================================ */
 
 :global(.theme-light) .featuredSection {
-  background: linear-gradient(
-    135deg,
-    rgba(180, 140, 30, 0.1) 0%,
-    rgba(180, 140, 30, 0.04) 100%
-  );
+  background: linear-gradient(135deg, rgba(180, 140, 30, 0.1) 0%, rgba(180, 140, 30, 0.04) 100%);
 }
 
 :global(.theme-light) .downloadSection {

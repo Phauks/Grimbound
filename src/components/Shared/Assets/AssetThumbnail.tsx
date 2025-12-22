@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/shared/AssetThumbnail.module.css';
 import {
@@ -16,7 +17,6 @@ import {
   type AssetType,
   type AssetWithUrl,
 } from '@/ts/services/upload/index.js';
-import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 
 // Asset types for reclassify submenu
 const ASSET_TYPES: AssetType[] = [

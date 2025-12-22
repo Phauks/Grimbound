@@ -19,49 +19,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off",
-        "useSimplifiedLogicExpression": "warn",
-        "noStaticOnlyClass": "warn",
-        "noBannedTypes": "warn"
-      },
-      "correctness": {
-        "noUnusedImports": "warn",
-        "noUnusedVariables": "warn",
-        "noUnusedFunctionParameters": "warn",
-        "useExhaustiveDependencies": "warn",
-        "noInvalidUseBeforeDeclaration": "warn"
-      },
-      "style": {
-        "noNonNullAssertion": "off",
-        "useBlockStatements": "off",
-        "useImportType": "warn",
-        "useFilenamingConvention": "off"
-      },
-      "suspicious": {
-        "noExplicitAny": "warn",
-        "noConsole": "off",
-        "noArrayIndexKey": "warn",
-        "useIterableCallbackReturn": "warn",
-        "noImplicitAnyLet": "warn",
-        "noAssignInExpressions": "warn",
-        "noControlCharactersInRegex": "off"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "warn"
-      },
-      "a11y": {
-        "useKeyWithClickEvents": "warn",
-        "useButtonType": "warn",
-        "noLabelWithoutControl": "warn",
-        "noStaticElementInteractions": "warn",
-        "useSemanticElements": "warn",
-        "useAriaPropsSupportedByRole": "warn",
-        "useFocusableInteractive": "warn",
-        "useAnchorContent": "warn",
-        "noSvgWithoutTitle": "off"
-      }
+      "recommended": true
     }
   },
   "javascript": {
@@ -73,6 +31,9 @@
     }
   },
   "css": {
+    "parser": {
+      "cssModules": true
+    },
     "formatter": {
       "enabled": true,
       "indentStyle": "space",

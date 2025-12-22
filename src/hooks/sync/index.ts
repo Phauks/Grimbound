@@ -23,10 +23,21 @@ export { useHasUnsavedWork } from './useHasUnsavedWork';
 // ============================================================================
 
 export {
-  useStorageQuota,
   type StorageQuota,
-  type WarningLevel,
   type StorageWarningInfo,
   type UseStorageQuotaOptions,
+  useStorageQuota,
+  type WarningLevel,
 } from './useStorageQuota';
 
+// ============================================================================
+// Official Character Images
+// ============================================================================
+
+export { useOfficialCharacterImages } from './useOfficialCharacterImages';
+
+// ============================================================================
+// Image URL Resolution
+// ============================================================================
+
+export { useResolvedImageUrls } from './useResolvedImageUrls';

@@ -7,12 +7,12 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useProjectExporter } from '@/contexts/ServiceContext';
-import styles from '@/styles/components/modals/ExportProjectModal.module.css';
-import type { ExportOptions, Project } from '@/ts/types/project.js';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
+import { useProjectExporter } from '@/contexts/ServiceContext';
+import styles from '@/styles/components/modals/ExportProjectModal.module.css';
+import type { ExportOptions, Project } from '@/ts/types/project.js';
 
 interface ExportProjectModalProps {
   /** Whether modal is open */

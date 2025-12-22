@@ -1,9 +1,9 @@
 import { memo, useMemo, useRef } from 'react';
+import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
+import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/presets/PresetCard.module.css';
 import { cn } from '@/ts/utils';
-import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
-import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 
 interface MenuItemConfig {
   icon: string;
@@ -55,7 +55,7 @@ export const PresetCard = memo(
     onDrop,
     onDragEnd,
   }: PresetCardProps) => {
-    const cardRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLButtonElement>(null);
 
     // Use context menu hook in controlled mode (parent manages open state)
     const contextMenu = useContextMenu({
@@ -105,26 +105,19 @@ export const PresetCard = memo(
     }, [menuIsOpen]);
 
     return (
-      <div
+      <button
+        type="button"
         ref={cardRef}
         className={cardClasses}
         onClick={onApply}
         onContextMenu={handleContextMenu}
         title={title}
-        role="button"
-        tabIndex={0}
         draggable={draggable}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         onDragEnd={onDragEnd}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onApply();
-          }
-        }}
       >
         {defaultStar && <span className={styles.defaultStar}>⭐</span>}
         <span className={styles.icon}>{icon}</span>
@@ -138,7 +131,7 @@ export const PresetCard = memo(
           items={contextMenuItems}
           onClose={() => onMenuToggle()}
         />
-      </div>
+      </button>
     );
   }
 );

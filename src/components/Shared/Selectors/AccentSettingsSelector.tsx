@@ -14,14 +14,14 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/AccentSettingsSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
 import CONFIG from '@/ts/config.js';
-import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
-import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import type { GenerationOptions } from '@/ts/types/index';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface AccentSettingsSelectorProps {
@@ -109,7 +109,9 @@ const ArcSlotControl = memo(function ArcSlotControl({
           {maxAccents === 0 ? (
             <strong>disabled</strong>
           ) : (
-            <>max <strong>{maxAccents}</strong> of <strong>{slots}</strong></>
+            <>
+              max <strong>{maxAccents}</strong> of <strong>{slots}</strong>
+            </>
           )}
         </span>
       </div>
@@ -124,17 +126,19 @@ const ArcSlotControl = memo(function ArcSlotControl({
           −
         </button>
         <div className={styles.slotDotsContainer}>
-          {Array.from({ length: slots }, (_, i) => {
-            const isActive = i < maxAccents;
-            const isThreshold = i === maxAccents - 1;
+          {Array.from({ length: slots }, (_, slotIndex) => {
+            const isActive = slotIndex < maxAccents;
+            const isThreshold = slotIndex === maxAccents - 1;
+            // Using slots count in key ensures re-render when slots change
+            const stableKey = `slot-${slots}-${slotIndex}`;
             return (
               <button
-                key={i}
+                key={stableKey}
                 type="button"
                 className={`${styles.slotDot} ${isActive ? styles.slotDotActive : styles.slotDotInactive} ${isThreshold ? styles.slotDotThreshold : ''}`}
-                onClick={() => handleSlotClick(i)}
-                title={`Set max to ${i + 1}`}
-                aria-label={`Slot ${i + 1}${isActive ? ' (will fill)' : ' (won\'t fill)'}`}
+                onClick={() => handleSlotClick(slotIndex)}
+                title={`Set max to ${slotIndex + 1}`}
+                aria-label={`Slot ${slotIndex + 1}${isActive ? ' (will fill)' : " (won't fill)"}`}
               />
             );
           })}
@@ -413,18 +417,12 @@ const VisualPreview = memo(function VisualPreview({
   return (
     <div className={styles.visualPreview}>
       {/* Arc visualization */}
-      <div
+      <button
+        type="button"
         className={styles.arcContainer}
         onClick={resimulate}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            resimulate();
-          }
-        }}
-        role="button"
-        tabIndex={0}
         title="Click to resimulate"
+        aria-label="Resimulate accent placement"
       >
         <div className={styles.arcVisualization}>
           {/* Token circle */}
@@ -458,7 +456,7 @@ const VisualPreview = memo(function VisualPreview({
             />
           ))}
         </div>
-      </div>
+      </button>
 
       {/* Distribution bar - shows combined arc + side accent probabilities */}
       <div className={styles.distributionSection}>
@@ -757,7 +755,9 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
                   <input
                     type="checkbox"
                     checked={panel.pendingValue.enableRightAccent}
-                    onChange={(e) => panel.updatePendingField('enableRightAccent', e.target.checked)}
+                    onChange={(e) =>
+                      panel.updatePendingField('enableRightAccent', e.target.checked)
+                    }
                     className={styles.checkbox}
                   />
                   <span>Right Accent</span>

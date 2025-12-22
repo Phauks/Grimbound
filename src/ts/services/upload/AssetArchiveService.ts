@@ -314,17 +314,22 @@ export class AssetArchiveService {
             continue;
           }
 
+          if (!assetMeta.type || !assetMeta.metadata) {
+            errors.push(`Missing type or metadata for asset ${assetMeta.id}`);
+            continue;
+          }
+
           const assetBlob = await assetFile.async('blob');
           const thumbnailBlob = await thumbnailFile.async('blob');
 
           // Restore to database
           await assetStorageService.save({
             id: assetMeta.id,
-            type: assetMeta.type!,
+            type: assetMeta.type,
             projectId: options.projectId ?? assetMeta.projectId ?? null,
             blob: assetBlob,
             thumbnail: thumbnailBlob,
-            metadata: assetMeta.metadata!,
+            metadata: assetMeta.metadata,
             linkedTo: assetMeta.linkedTo || [],
             contentHash: assetMeta.contentHash,
             lastUsedAt: assetMeta.lastUsedAt,

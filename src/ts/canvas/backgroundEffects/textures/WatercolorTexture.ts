@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/WatercolorTexture
  */
 
-import { WATERCOLOR_TEXTURE } from '../constants.js';
 import { fbm, initPermutation } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { WATERCOLOR_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**
@@ -31,10 +31,14 @@ export class WatercolorTextureStrategy extends BaseTextureStrategy {
       // Multiple layers of soft noise with different frequencies
       const layer1 = fbm(nx, ny, 4) * WATERCOLOR_TEXTURE.LAYER1_AMPLITUDE + 0.5;
       const layer2 = fbm(nx * 2 + 100, ny * 2 + 100, 3) * WATERCOLOR_TEXTURE.LAYER2_AMPLITUDE + 0.5;
-      const layer3 = fbm(nx * 0.5 + 50, ny * 0.5 + 50, 5) * WATERCOLOR_TEXTURE.LAYER3_AMPLITUDE + 0.5;
+      const layer3 =
+        fbm(nx * 0.5 + 50, ny * 0.5 + 50, 5) * WATERCOLOR_TEXTURE.LAYER3_AMPLITUDE + 0.5;
 
       // Combine layers with soft blending
-      let value = layer1 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[0] + layer2 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[1] + layer3 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[2];
+      let value =
+        layer1 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[0] +
+        layer2 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[1] +
+        layer3 * WATERCOLOR_TEXTURE.LAYER_WEIGHTS[2];
 
       // Edge fade for watercolor effect
       const dx = x - center;
@@ -44,7 +48,9 @@ export class WatercolorTextureStrategy extends BaseTextureStrategy {
       value *= edgeFade;
 
       // Slight color tinting based on value
-      const gray = Math.floor(WATERCOLOR_TEXTURE.GRAYSCALE_CENTER + (value - 0.5) * WATERCOLOR_TEXTURE.GRAYSCALE_AMPLITUDE);
+      const gray = Math.floor(
+        WATERCOLOR_TEXTURE.GRAYSCALE_CENTER + (value - 0.5) * WATERCOLOR_TEXTURE.GRAYSCALE_AMPLITUDE
+      );
       const clampedGray = Math.min(255, Math.max(0, gray));
 
       data[index] = clampedGray;

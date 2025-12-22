@@ -1,7 +1,4 @@
 import { memo, useCallback, useState } from 'react';
-import styles from '@/styles/components/options/OptionsPanel.module.css';
-import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
-import type { BackgroundStyle, GenerationOptions, MeasurementUnit } from '@/ts/types/index';
 import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
 import { BackgroundStyleSelector } from '@/components/Shared/Selectors/BackgroundStyleSelector';
 import {
@@ -9,7 +6,13 @@ import {
   type FontSettings,
   FontSettingsSelector,
 } from '@/components/Shared/Selectors/FontSettingsSelector';
-import { type IconSettings, IconSettingsSelector } from '@/components/Shared/Selectors/IconSettingsSelector';
+import {
+  type IconSettings,
+  IconSettingsSelector,
+} from '@/components/Shared/Selectors/IconSettingsSelector';
+import styles from '@/styles/components/options/OptionsPanel.module.css';
+import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
+import type { BackgroundStyle, GenerationOptions, MeasurementUnit } from '@/ts/types/index';
 
 interface AppearancePanelProps {
   generationOptions: GenerationOptions;

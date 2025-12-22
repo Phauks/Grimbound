@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/LinenTexture
  */
 
-import { LINEN_TEXTURE } from '../constants.js';
 import { initPermutation, perlin2D } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { LINEN_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**
@@ -32,9 +32,17 @@ export class LinenTextureStrategy extends BaseTextureStrategy {
       // Combine with slight variation from noise
       const nx = (x / diameter) * 5;
       const ny = (y / diameter) * 5;
-      const variation = perlin2D(nx + seed * LINEN_TEXTURE.SEED_INFLUENCE, ny + seed * LINEN_TEXTURE.SEED_INFLUENCE) * LINEN_TEXTURE.VARIATION_AMPLITUDE;
+      const variation =
+        perlin2D(
+          nx + seed * LINEN_TEXTURE.SEED_INFLUENCE,
+          ny + seed * LINEN_TEXTURE.SEED_INFLUENCE
+        ) * LINEN_TEXTURE.VARIATION_AMPLITUDE;
 
-      const value = (horizontal * LINEN_TEXTURE.HORIZONTAL_WEIGHT + vertical * LINEN_TEXTURE.VERTICAL_WEIGHT) * LINEN_TEXTURE.PATTERN_MULTIPLIER + LINEN_TEXTURE.BASE_BRIGHTNESS + variation;
+      const value =
+        (horizontal * LINEN_TEXTURE.HORIZONTAL_WEIGHT + vertical * LINEN_TEXTURE.VERTICAL_WEIGHT) *
+          LINEN_TEXTURE.PATTERN_MULTIPLIER +
+        LINEN_TEXTURE.BASE_BRIGHTNESS +
+        variation;
 
       this.setGrayscalePixel(data, index, value);
     });

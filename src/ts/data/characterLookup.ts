@@ -7,26 +7,76 @@
  * - Fuzzy search by name or ID
  * - Caches results for performance
  * - Integrates with DataSync service
+ *
+ * Uses constructor injection pattern for testability.
+ *
+ * @module data/characterLookup
  */
 
 import type { Character } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
+import type { ICharacterLookupService } from './ICharacterLookup.js';
+
+// ============================================================================
+// Dependency Injection Types
+// ============================================================================
+
+/**
+ * Dependencies for CharacterLookupService
+ * Currently empty - service is self-contained, but pattern allows future DI
+ */
+export interface CharacterLookupServiceDeps {
+  /** Cache TTL in milliseconds (default: 5 minutes) */
+  cacheTtl?: number;
+}
+
+// ============================================================================
+// CharacterLookupService
+// ============================================================================
 
 /**
  * Character Lookup Service
  * Provides fast validation and search against official character data
+ *
+ * @example
+ * ```typescript
+ * // Production usage (uses defaults)
+ * const service = new CharacterLookupService();
+ *
+ * // Custom configuration
+ * const service = new CharacterLookupService({ cacheTtl: 10 * 60 * 1000 });
+ * ```
  */
-export class CharacterLookupService {
+export class CharacterLookupService implements ICharacterLookupService {
   private characters: Character[] = [];
   private characterMap: Map<string, Character> = new Map();
   private lastUpdate: number = 0;
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly cacheTtl: number;
+
+  /**
+   * Create a new CharacterLookupService instance
+   *
+   * @param deps - Optional dependencies for injection (defaults provided)
+   */
+  constructor(deps: Partial<CharacterLookupServiceDeps> = {}) {
+    this.cacheTtl = deps.cacheTtl ?? 5 * 60 * 1000; // 5 minutes default
+  }
 
   /**
    * Initialize or update the character data
+   * Skips update if data is identical (idempotent)
    * @param characters - Array of official characters
    */
   updateCharacters(characters: Character[]): void {
+    // Skip if already loaded with same data (idempotent)
+    if (
+      this.characters.length === characters.length &&
+      this.characters.length > 0 &&
+      this.characters[0]?.id === characters[0]?.id
+    ) {
+      return;
+    }
+
     this.characters = characters;
     this.characterMap.clear();
 
@@ -140,7 +190,7 @@ export class CharacterLookupService {
    */
   isStale(): boolean {
     if (this.characters.length === 0) return true;
-    return Date.now() - this.lastUpdate > this.CACHE_TTL;
+    return Date.now() - this.lastUpdate > this.cacheTtl;
   }
 
   /**

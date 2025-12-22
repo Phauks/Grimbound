@@ -12,7 +12,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { dataSyncService, type SyncEvent } from '@/ts/sync/index.js';
 import type { Character, SyncStatus } from '@/ts/types/index.js';
-import { prewarmIconCache } from '@/ts/utils/characterImageResolver.js';
+import { clearIconUrlCache, prewarmIconCache } from '@/ts/utils/characterImageResolver.js';
 import { logger } from '@/ts/utils/logger.js';
 
 interface DataSyncContextType {
@@ -69,6 +69,23 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
 
           if (event.type === 'initialized') {
             setIsInitialized(true);
+          }
+
+          // When an update is installed (success event with version data), re-prewarm the icon cache
+          if (event.type === 'success' && event.data?.version) {
+            logger.info(
+              'DataSyncContext',
+              `Update installed: ${event.data.version}, refreshing icon cache...`
+            );
+            // Clear old blob URLs and re-prewarm with new characters
+            clearIconUrlCache();
+            dataSyncService.getCharacters().then((characters) => {
+              if (!mounted || characters.length === 0) return;
+              const characterIds = characters.map((c) => c.id);
+              prewarmIconCache(characterIds).catch((err) => {
+                logger.warn('DataSyncContext', 'Icon cache re-warming failed:', err);
+              });
+            });
           }
         });
 

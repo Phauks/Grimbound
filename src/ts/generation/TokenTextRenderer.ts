@@ -199,7 +199,9 @@ export class TokenTextRenderer {
     // Adjust badge size for dots style (wider)
     const badgeRadius =
       style === 'dots'
-        ? fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS * (1 + count * TOKEN_COUNT_BADGE.SIZE_GROWTH_PER_ITEM)
+        ? fontSize *
+          TOKEN_COUNT_BADGE.BACKGROUND_RADIUS *
+          (1 + count * TOKEN_COUNT_BADGE.SIZE_GROWTH_PER_ITEM)
         : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
 
     // Draw background circle

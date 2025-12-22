@@ -19,14 +19,14 @@
 
 import { memo } from 'react';
 import { createPortal } from 'react-dom';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
 import { useExpandablePanel } from '@/hooks';
 import iconStyles from '@/styles/components/shared/IconSettingsSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
 import type { MeasurementUnit } from '@/ts/types/measurement';
 import { ICON_OFFSET_CONFIG } from '@/ts/utils/measurementUtils';
-import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
-import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -82,7 +82,7 @@ const TokenTypeIcon = ({ tokenType }: { tokenType: 'character' | 'reminder' | 'm
     case 'character':
       // Person/character silhouette - represents the main character icon
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <circle cx="12" cy="7" r="4" />
           <path d="M12 14c-6 0-8 3-8 5v2h16v-2c0-2-2-5-8-5z" />
         </svg>
@@ -90,7 +90,7 @@ const TokenTypeIcon = ({ tokenType }: { tokenType: 'character' | 'reminder' | 'm
     case 'reminder':
       // Small reminder token - thought bubble/note
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <circle cx="12" cy="12" r="8" opacity="0.9" />
           <text
             x="12"
@@ -107,13 +107,13 @@ const TokenTypeIcon = ({ tokenType }: { tokenType: 'character' | 'reminder' | 'm
     case 'meta':
       // Scroll/script icon for meta tokens
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
         </svg>
       );
     default:
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
         </svg>
       );

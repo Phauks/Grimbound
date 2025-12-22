@@ -6,11 +6,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CustomPreset } from '@/hooks/editors/usePresets';
-import styles from '@/styles/components/presets/PresetModal.module.css';
 import { FormGroup, Input } from '@/components/Shared/Form';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
+import type { CustomPreset } from '@/hooks/editors/usePresets';
+import styles from '@/styles/components/presets/PresetModal.module.css';
 
 interface EditPresetModalProps {
   isOpen: boolean;

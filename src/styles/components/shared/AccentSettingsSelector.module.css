@@ -261,7 +261,9 @@
 
 /* Threshold dot (last active) gets a subtle indicator */
 .slotDotThreshold {
-  box-shadow: 0 0 0 2px var(--bg-tertiary), 0 0 0 4px var(--color-accent);
+  box-shadow:
+    0 0 0 2px var(--bg-tertiary),
+    0 0 0 4px var(--color-accent);
 }
 
 .arcSlotHint {

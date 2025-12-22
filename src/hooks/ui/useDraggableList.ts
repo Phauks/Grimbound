@@ -7,9 +7,9 @@
  * @module hooks/ui/useDraggableList
  */
 
-import { useCallback, useState } from 'react';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { useCallback, useState } from 'react';
 
 export interface UseDraggableListOptions<T> {
   /** The list of items to manage */

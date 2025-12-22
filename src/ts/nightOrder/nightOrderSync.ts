@@ -10,26 +10,42 @@ import { logger } from '@/ts/utils/logger.js';
 import type { NightOrderEntry, NightOrderState } from './nightOrderTypes.js';
 import { isSpecialEntry } from './specialEntries.js';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Boundary values for night order positioning.
+ * Used when calculating custom character order numbers.
+ */
+const ORDER_BOUNDS = {
+  /** Start of night (before any characters) */
+  START: 0,
+  /** End of night (dawn position) */
+  END: 1000,
+  /** Official order position for Minion Info special entry */
+  MINION_INFO: 92.5,
+  /** Official order position for Demon Info special entry */
+  DEMON_INFO: 95.5,
+} as const;
+
+// ============================================================================
+// ID Extraction
+// ============================================================================
+
 /**
  * Extract character IDs from night order entries.
  * Includes special entries (dusk, dawn, minioninfo, demoninfo) and character entries.
- * Only includes characters that have night actions (order > 0).
  */
 function extractIdsFromEntries(entries: NightOrderEntry[]): string[] {
   return entries
-    .filter((entry) => {
-      // Include special entries
-      if (isSpecialEntry(entry.id)) {
-        return true;
-      }
-      // Include character entries (type === 'character')
-      if (entry.type === 'character') {
-        return true;
-      }
-      return false;
-    })
+    .filter((entry) => isSpecialEntry(entry.id) || entry.type === 'character')
     .map((entry) => entry.id);
 }
+
+// ============================================================================
+// Meta Array Building
+// ============================================================================
 
 /**
  * Build _meta night order arrays from NightOrderEntry arrays.
@@ -44,6 +60,10 @@ export function buildMetaNightOrderArrays(
     otherNight: extractIdsFromEntries(otherNightEntries),
   };
 }
+
+// ============================================================================
+// JSON Synchronization
+// ============================================================================
 
 /**
  * Sync night order state to JSON string.
@@ -104,6 +124,23 @@ export function syncNightOrderToJson(
   }
 }
 
+// ============================================================================
+// Order Number Calculation
+// ============================================================================
+
+/**
+ * Represents a "gap" between two official characters where custom characters
+ * can be placed. Used for efficient order number calculation.
+ */
+interface OrderGap {
+  /** Order number of the previous official character (or START if none) */
+  prevOrder: number;
+  /** Order number of the next official character (or END if none) */
+  nextOrder: number;
+  /** IDs of custom characters that fall within this gap, in display order */
+  customIds: string[];
+}
+
 /**
  * Helper to check if an entry represents an official character.
  * Uses the character reference stored on the entry.
@@ -117,85 +154,77 @@ function isEntryOfficial(entry: NightOrderEntry): boolean {
  * relative to official characters. Official characters keep their fixed numbers,
  * while custom characters get numbers that fit between surrounding officials.
  *
+ * Algorithm: O(n) single pass to build gap structure, then O(n) to assign numbers.
+ * This replaces the previous O(n³) triple-nested loop approach.
+ *
  * @param entries - Night order entries in display order
  * @returns Map of character ID (lowercase) to calculated order number
  */
 function calculateCustomCharacterNumbers(entries: NightOrderEntry[]): Map<string, number> {
   const result = new Map<string, number>();
-
-  // Extract only character entries (skip special entries like dusk/dawn)
   const characterEntries = entries.filter((e) => e.type === 'character');
 
-  for (let i = 0; i < characterEntries.length; i++) {
-    const entry = characterEntries[i];
+  if (characterEntries.length === 0) {
+    return result;
+  }
 
-    // Official characters keep their existing order number
+  // Single pass: build gap structure and collect official positions
+  const gaps: OrderGap[] = [];
+  let currentGap: OrderGap = {
+    prevOrder: ORDER_BOUNDS.START,
+    nextOrder: ORDER_BOUNDS.END,
+    customIds: [],
+  };
+
+  for (const entry of characterEntries) {
+    const lowerId = entry.id.toLowerCase();
+
     if (isEntryOfficial(entry)) {
-      result.set(entry.id.toLowerCase(), entry.order);
-      continue;
-    }
+      // Official character: finalize current gap and start a new one
+      currentGap.nextOrder = entry.order;
 
-    // For custom characters, find surrounding official characters
-    let prevOfficialOrder = 0; // Start of night
-    let nextOfficialOrder = 1000; // End of night (dawn)
-
-    // Look backwards for previous official character
-    for (let j = i - 1; j >= 0; j--) {
-      if (isEntryOfficial(characterEntries[j])) {
-        prevOfficialOrder = characterEntries[j].order;
-        break;
+      if (currentGap.customIds.length > 0) {
+        gaps.push(currentGap);
       }
+
+      // Record official character's order
+      result.set(lowerId, entry.order);
+
+      // Start new gap after this official
+      currentGap = {
+        prevOrder: entry.order,
+        nextOrder: ORDER_BOUNDS.END,
+        customIds: [],
+      };
+    } else {
+      // Custom character: add to current gap
+      currentGap.customIds.push(lowerId);
     }
+  }
 
-    // Look forwards for next official character
-    for (let j = i + 1; j < characterEntries.length; j++) {
-      if (isEntryOfficial(characterEntries[j])) {
-        nextOfficialOrder = characterEntries[j].order;
-        break;
-      }
-    }
+  // Don't forget trailing customs after the last official
+  if (currentGap.customIds.length > 0) {
+    gaps.push(currentGap);
+  }
 
-    // Count how many custom characters are between these two officials
-    let customsBetween = 0;
-    let customIndex = 0;
-    for (let j = 0; j < characterEntries.length; j++) {
-      const e = characterEntries[j];
-      if (!isEntryOfficial(e)) {
-        // Check if this custom is between the same officials
-        let thisPrevOfficial = 0;
-        let thisNextOfficial = 1000;
-        for (let k = j - 1; k >= 0; k--) {
-          if (isEntryOfficial(characterEntries[k])) {
-            thisPrevOfficial = characterEntries[k].order;
-            break;
-          }
-        }
-        for (let k = j + 1; k < characterEntries.length; k++) {
-          if (isEntryOfficial(characterEntries[k])) {
-            thisNextOfficial = characterEntries[k].order;
-            break;
-          }
-        }
-        if (thisPrevOfficial === prevOfficialOrder && thisNextOfficial === nextOfficialOrder) {
-          if (j === i) {
-            customIndex = customsBetween;
-          }
-          customsBetween++;
-        }
-      }
-    }
+  // Distribute custom characters within each gap
+  for (const gap of gaps) {
+    const totalCustoms = gap.customIds.length;
+    const step = (gap.nextOrder - gap.prevOrder) / (totalCustoms + 1);
 
-    // Calculate order number: evenly distribute between prev and next
-    const gap = nextOfficialOrder - prevOfficialOrder;
-    const step = gap / (customsBetween + 1);
-    const newOrder = prevOfficialOrder + step * (customIndex + 1);
-
-    // Round to 1 decimal place for cleaner numbers
-    result.set(entry.id.toLowerCase(), Math.round(newOrder * 10) / 10);
+    gap.customIds.forEach((id, index) => {
+      const order = gap.prevOrder + step * (index + 1);
+      // Round to 1 decimal place for cleaner numbers
+      result.set(id, Math.round(order * 10) / 10);
+    });
   }
 
   return result;
 }
+
+// ============================================================================
+// Character Update
+// ============================================================================
 
 /**
  * Update per-character night order numbers based on their position in the entries.
@@ -242,6 +271,10 @@ export function updateCharacterNightNumbers(
   });
 }
 
+// ============================================================================
+// Initial Array Building
+// ============================================================================
+
 /**
  * Build initial night order arrays from characters when creating new _meta.
  * Sorts characters by their existing night order numbers.
@@ -279,14 +312,14 @@ export function buildInitialNightOrderArray(
     for (const char of orderedChars) {
       const order = char[orderKey] ?? 0;
 
-      // Insert minioninfo before characters with order > 92.5
-      if (!insertedMinionInfo && order > 92.5) {
+      // Insert minioninfo before characters with order > MINION_INFO threshold
+      if (!insertedMinionInfo && order > ORDER_BOUNDS.MINION_INFO) {
         result.push('minioninfo');
         insertedMinionInfo = true;
       }
 
-      // Insert demoninfo before characters with order > 95.5
-      if (!insertedDemonInfo && order > 95.5) {
+      // Insert demoninfo before characters with order > DEMON_INFO threshold
+      if (!insertedDemonInfo && order > ORDER_BOUNDS.DEMON_INFO) {
         result.push('demoninfo');
         insertedDemonInfo = true;
       }

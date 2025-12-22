@@ -85,7 +85,7 @@ async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
 /**
  * LRU Image Cache with size-based eviction
  */
-class ImageCache {
+export class ImageCache {
   private cache: Map<string, CacheEntry> = new Map();
   private maxSizeBytes: number;
   private maxEntries: number;

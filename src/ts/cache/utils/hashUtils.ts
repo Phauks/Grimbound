@@ -7,6 +7,8 @@
  * @module ts/cache/utils/hashUtils
  */
 
+import type { GenerationOptions } from '@/ts/types/index.js';
+
 /**
  * Generate a simple string hash using djb2 algorithm.
  * Fast and produces good distribution for cache keys.
@@ -44,10 +46,7 @@ export function simpleHash(input: string): string {
  * // Only hashes { a: 1, b: 2 }
  * ```
  */
-export function hashObject<T extends Record<string, unknown>>(
-  obj: T,
-  keys?: (keyof T)[]
-): string {
+export function hashObject<T extends Record<string, unknown>>(obj: T, keys?: (keyof T)[]): string {
   const subset = keys
     ? keys.reduce(
         (acc, key) => {
@@ -94,4 +93,32 @@ export function hashArray<T>(items: T[], keyExtractor: (item: T) => string): str
  */
 export function combineHashes(hashes: string[]): string {
   return simpleHash(hashes.join(':'));
+}
+
+/**
+ * Hash generation options into a cache key component.
+ * Used to detect when options change and cached tokens are stale.
+ *
+ * Only hashes the options that affect visual token appearance.
+ *
+ * @param options - Generation options object
+ * @returns Hash as base-36 string
+ */
+export function hashGenerationOptions(options: GenerationOptions): string {
+  // Only hash options that affect visual appearance
+  const key = JSON.stringify({
+    displayAbilityText: options.displayAbilityText,
+    generateBootleggerRules: options.generateBootleggerRules,
+    tokenCount: options.tokenCount,
+    setupStyle: options.setupStyle,
+    characterBackground: options.characterBackground,
+    characterBackgroundType: options.characterBackgroundType,
+    reminderBackground: options.reminderBackground,
+    reminderBackgroundType: options.reminderBackgroundType,
+    characterNameFont: options.characterNameFont,
+    characterReminderFont: options.characterReminderFont,
+    dpi: options.dpi,
+    accentGeneration: options.accentGeneration,
+  });
+  return simpleHash(key);
 }

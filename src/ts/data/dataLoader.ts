@@ -3,9 +3,9 @@
  * Data Loader - I/O operations for loading script and character data
  */
 
+import { getExampleScriptUrl } from '@/ts/data/exampleScripts.js';
 import type { ScriptEntry } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
-import { getExampleScriptUrl } from '@/ts/data/exampleScripts.js';
 
 // ============================================================================
 // Data Fetching

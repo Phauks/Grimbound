@@ -7,9 +7,9 @@
  * @module components/CharactersComponents/TokenEditor/SortableReminderRow
  */
 
-import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 import type { GroupedReminder } from '@/hooks';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 
@@ -35,7 +35,7 @@ interface SortableReminderRowProps {
 export const SortableReminderRow = memo(function SortableReminderRow({
   id,
   reminder,
-  index,
+  index: _index,
   disabled,
   canDrag,
   onTextChange,
@@ -56,13 +56,14 @@ export const SortableReminderRow = memo(function SortableReminderRow({
     zIndex: isDragging ? 1000 : 'auto',
   };
 
-  const dragHandleProps = canDrag && !disabled
-    ? {
-        ...attributes,
-        ...listeners,
-        style: { cursor: 'grab' } as React.CSSProperties,
-      }
-    : undefined;
+  const dragHandleProps =
+    canDrag && !disabled
+      ? {
+          ...attributes,
+          ...listeners,
+          style: { cursor: 'grab' } as React.CSSProperties,
+        }
+      : undefined;
 
   return (
     <div
@@ -105,11 +106,7 @@ export const SortableReminderRow = memo(function SortableReminderRow({
         min={1}
         max={20}
         className={styles.reminderCountInput}
-        title={
-          disabled
-            ? 'Official character - cannot edit'
-            : 'Number of this reminder token'
-        }
+        title={disabled ? 'Official character - cannot edit' : 'Number of this reminder token'}
       />
 
       <button
@@ -117,11 +114,7 @@ export const SortableReminderRow = memo(function SortableReminderRow({
         className={`${styles.btnIcon} ${styles.btnDanger}`}
         onClick={() => onRemove(text)}
         disabled={disabled}
-        title={
-          disabled
-            ? 'Official character - cannot edit'
-            : 'Remove all copies of this reminder'
-        }
+        title={disabled ? 'Official character - cannot edit' : 'Remove all copies of this reminder'}
       >
         ✕
       </button>

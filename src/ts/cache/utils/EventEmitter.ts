@@ -51,7 +51,7 @@ export class EventEmitter<TEventMap extends EventMap = DefaultEventMap> {
     if (!this.events.has(event)) {
       this.events.set(event, new Set());
     }
-    this.events.get(event)!.add(listener as EventListener);
+    this.events.get(event)?.add(listener as EventListener);
     return this;
   }
 

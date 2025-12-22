@@ -132,10 +132,13 @@ export function VersionSelector({
 
   return (
     <div ref={containerRef} className={`${styles.container} ${disabled ? styles.disabled : ''}`}>
-      <label className={styles.label}>Version:</label>
+      <label htmlFor="version-selector" className={styles.label}>
+        Version:
+      </label>
 
       <button
         type="button"
+        id="version-selector"
         className={`${styles.selector} ${isOpen ? styles.selectorOpen : ''}`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}

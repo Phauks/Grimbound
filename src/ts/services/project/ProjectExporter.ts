@@ -20,6 +20,9 @@
 
 import JSZip from 'jszip';
 import { CONFIG } from '@/ts/config.js';
+import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
+import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
+import type { DBAsset } from '@/ts/services/upload/types.js';
 import type {
   CustomIconMetadata,
   ExportOptions,
@@ -29,9 +32,6 @@ import type {
 import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
-import { assetStorageService } from '@/ts/services/upload/AssetStorageService.js';
-import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
-import type { DBAsset } from '@/ts/services/upload/types.js';
 import type { IProjectExporter } from './IProjectService.js';
 
 // Create child logger for project export operations
@@ -366,10 +366,7 @@ export class ProjectExporter implements IProjectExporter {
     }
 
     // Stream assets one at a time
-    for await (const asset of this.assetStorage.streamExportableAssets(
-      projectId,
-      includeUnused
-    )) {
+    for await (const asset of this.assetStorage.streamExportableAssets(projectId, includeUnused)) {
       try {
         assetsFolder.file(asset.filename, asset.blob);
       } catch (error) {

@@ -65,7 +65,10 @@ export class OrganicCellsTextureStrategy extends BaseTextureStrategy {
       random = (random * ORGANIC_CELLS_TEXTURE.RNG_MULTIPLIER) % ORGANIC_CELLS_TEXTURE.RNG_MODULUS;
       const angle = (random / ORGANIC_CELLS_TEXTURE.RNG_MODULUS) * Math.PI * 2;
       random = (random * ORGANIC_CELLS_TEXTURE.RNG_MULTIPLIER) % ORGANIC_CELLS_TEXTURE.RNG_MODULUS;
-      const dist = (random / ORGANIC_CELLS_TEXTURE.RNG_MODULUS) * center * ORGANIC_CELLS_TEXTURE.CELL_RADIUS_RATIO;
+      const dist =
+        (random / ORGANIC_CELLS_TEXTURE.RNG_MODULUS) *
+        center *
+        ORGANIC_CELLS_TEXTURE.CELL_RADIUS_RATIO;
 
       cells.push({
         x: center + Math.cos(angle) * dist,

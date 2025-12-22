@@ -11,6 +11,7 @@
  */
 
 import { useState } from 'react';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
 import { NightOrderView } from '@/components/ViewComponents/ScriptComponents/NightOrderView';
 import type { ScriptSubTab } from '@/components/ViewComponents/ScriptComponents/ScriptTabNavigation';
 
@@ -22,16 +23,19 @@ interface ScriptViewProps {
 export function ScriptView({ onEditCharacter }: ScriptViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<ScriptSubTab>('night-order');
 
-  if (activeSubTab === 'night-order') {
-    return (
-      <NightOrderView
-        activeTab={activeSubTab}
-        onTabChange={setActiveSubTab}
-        onEditCharacter={onEditCharacter}
-      />
-    );
-  }
-
-  // Player script placeholder - not yet implemented
-  return null;
+  return (
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Script" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      {activeSubTab === 'night-order' ? (
+        <NightOrderView
+          activeTab={activeSubTab}
+          onTabChange={setActiveSubTab}
+          onEditCharacter={onEditCharacter}
+        />
+      ) : null}
+    </ErrorBoundary>
+  );
 }

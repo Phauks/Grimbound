@@ -11,6 +11,22 @@ import { ASSET_TYPE_CONFIGS, MAGIC_BYTES, MB, WEBP_SIGNATURE } from './constants
 import type { AssetType, AssetTypeConfig, ValidationResult } from './types.js';
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/** Number of bytes to read for magic number detection */
+const MAGIC_BYTE_SAMPLE_SIZE = 16;
+
+/** Number of bytes to read when detecting SVG */
+const SVG_SAMPLE_SIZE = 1024;
+
+/** Maximum canvas dimension for transparency sampling (performance optimization) */
+const TRANSPARENCY_SAMPLE_SIZE = 100;
+
+/** Tolerance for "nearly square" images (5%) */
+const SQUARE_TOLERANCE = 0.05;
+
+// ============================================================================
 // FileValidationService
 // ============================================================================
 
@@ -34,64 +50,21 @@ export class FileValidationService {
     const detectedMimeType = await this.detectMimeType(file);
 
     // 2. Validate MIME type
-    if (!config.allowedMimeTypes.includes(detectedMimeType)) {
-      errors.push(
-        `Invalid file type: ${detectedMimeType || 'unknown'}. ` +
-          `Allowed: ${config.allowedExtensions.join(', ')}`
-      );
-    }
+    this.validateMimeType(detectedMimeType, config, errors);
 
     // 3. Validate file size
-    if (file.size > config.maxSize) {
-      const maxMB = (config.maxSize / MB).toFixed(1);
-      const actualMB = (file.size / MB).toFixed(1);
-      errors.push(`File too large: ${actualMB}MB. Maximum: ${maxMB}MB`);
-    }
+    this.validateFileSize(file.size, config, errors);
 
     // 4. If image, validate dimensions
     let dimensions: { width: number; height: number } | undefined;
-    if (detectedMimeType.startsWith('image/') && detectedMimeType !== 'image/svg+xml') {
+    if (this.isRasterImage(detectedMimeType)) {
       try {
         dimensions = await this.getImageDimensions(file);
-
-        // Check minimum dimensions
-        if (config.minWidth && dimensions.width < config.minWidth) {
-          errors.push(`Image too narrow: ${dimensions.width}px. Minimum: ${config.minWidth}px`);
-        }
-        if (config.minHeight && dimensions.height < config.minHeight) {
-          errors.push(`Image too short: ${dimensions.height}px. Minimum: ${config.minHeight}px`);
-        }
-
-        // Check maximum dimensions
-        if (config.maxWidth && dimensions.width > config.maxWidth) {
-          warnings.push(`Image will be resized: ${dimensions.width}px → ${config.maxWidth}px`);
-        }
-        if (config.maxHeight && dimensions.height > config.maxHeight) {
-          warnings.push(`Image will be resized: ${dimensions.height}px → ${config.maxHeight}px`);
-        }
-
-        // Check square requirement
-        if (config.requireSquare && dimensions.width !== dimensions.height) {
-          const diff = Math.abs(dimensions.width - dimensions.height);
-          const avgSize = (dimensions.width + dimensions.height) / 2;
-          const tolerance = avgSize * 0.05; // 5% tolerance
-
-          if (diff > tolerance) {
-            warnings.push(
-              `Image is not square (${dimensions.width}×${dimensions.height}). ` +
-                `It will be cropped to fit.`
-            );
-          }
-        }
+        this.validateDimensions(dimensions, config, errors, warnings);
 
         // Check transparency requirement
         if (config.requireTransparency) {
-          const hasAlpha = await this.checkTransparency(file, detectedMimeType);
-          if (!hasAlpha) {
-            warnings.push(
-              `Image may not have transparency. Token backgrounds work best with transparent PNGs.`
-            );
-          }
+          await this.validateTransparency(file, detectedMimeType, warnings);
         }
       } catch (error) {
         errors.push(`Could not read image dimensions: ${(error as Error).message}`);
@@ -115,37 +88,16 @@ export class FileValidationService {
    */
   async detectMimeType(file: File): Promise<string> {
     try {
-      // Read first 16 bytes for magic number detection
-      const buffer = await file.slice(0, 16).arrayBuffer();
+      const buffer = await file.slice(0, MAGIC_BYTE_SAMPLE_SIZE).arrayBuffer();
       const bytes = new Uint8Array(buffer);
 
-      // Check PNG (8 bytes)
-      if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/png'])) {
-        return 'image/png';
-      }
+      // Check known formats in order of specificity
+      const detected = this.detectFromMagicBytes(bytes);
+      if (detected) return detected;
 
-      // Check JPEG (3 bytes)
-      if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/jpeg'])) {
-        return 'image/jpeg';
-      }
-
-      // Check WebP (RIFF + WEBP at offset 8)
-      if (
-        this.matchesMagicBytes(bytes, MAGIC_BYTES['image/webp']) &&
-        this.matchesMagicBytes(bytes.slice(8), WEBP_SIGNATURE)
-      ) {
-        return 'image/webp';
-      }
-
-      // Check GIF
-      if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/gif'])) {
-        return 'image/gif';
-      }
-
-      // Check SVG (starts with '<' or '<?xml')
+      // Check SVG (text-based, needs larger sample)
       if (bytes[0] === 0x3c) {
-        // Could be SVG or XML, check for svg tag in first 1KB
-        const text = await file.slice(0, 1024).text();
+        const text = await file.slice(0, SVG_SAMPLE_SIZE).text();
         if (text.includes('<svg') || text.includes('<!DOCTYPE svg')) {
           return 'image/svg+xml';
         }
@@ -154,7 +106,6 @@ export class FileValidationService {
       // Fallback to browser-reported type
       return file.type || 'application/octet-stream';
     } catch {
-      // If we can't read the file, trust the browser
       return file.type || 'application/octet-stream';
     }
   }
@@ -166,22 +117,8 @@ export class FileValidationService {
    * @returns Width and height in pixels
    */
   async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Failed to load image'));
-      };
-
-      img.src = url;
-    });
+    const img = await this.loadImage(file);
+    return { width: img.naturalWidth, height: img.naturalHeight };
   }
 
   /**
@@ -193,44 +130,17 @@ export class FileValidationService {
    */
   async checkTransparency(file: File, mimeType: string): Promise<boolean> {
     // JPEG never has transparency
-    if (mimeType === 'image/jpeg') {
-      return false;
-    }
+    if (mimeType === 'image/jpeg') return false;
 
-    // PNG and WebP can have transparency, check a sample of pixels
+    // SVG and GIF can have transparency, assume they do
+    if (mimeType === 'image/svg+xml' || mimeType === 'image/gif') return true;
+
+    // PNG and WebP require pixel sampling
     if (mimeType === 'image/png' || mimeType === 'image/webp') {
-      try {
-        const url = URL.createObjectURL(file);
-        const img = await this.loadImage(url);
-        URL.revokeObjectURL(url);
-
-        // Create small canvas to sample pixels
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return true; // Assume transparency if can't check
-
-        canvas.width = Math.min(img.width, 100);
-        canvas.height = Math.min(img.height, 100);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // Check corners and center for transparency
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // Sample pixels (check alpha channel - every 4th byte starting at index 3)
-        for (let i = 3; i < data.length; i += 4) {
-          if (data[i] < 255) {
-            return true; // Found a transparent pixel
-          }
-        }
-
-        return false; // No transparent pixels found
-      } catch {
-        return true; // Assume transparency on error
-      }
+      return this.sampleTransparency(file);
     }
 
-    // SVG and others - assume they might have transparency
+    // Unknown formats - assume they might have transparency
     return true;
   }
 
@@ -258,8 +168,127 @@ export class FileValidationService {
   }
 
   // ==========================================================================
-  // Private Helpers
+  // Private Validation Helpers
   // ==========================================================================
+
+  /**
+   * Validate MIME type against config
+   */
+  private validateMimeType(mimeType: string, config: AssetTypeConfig, errors: string[]): void {
+    if (!config.allowedMimeTypes.includes(mimeType)) {
+      errors.push(
+        `Invalid file type: ${mimeType || 'unknown'}. ` +
+          `Allowed: ${config.allowedExtensions.join(', ')}`
+      );
+    }
+  }
+
+  /**
+   * Validate file size against config
+   */
+  private validateFileSize(size: number, config: AssetTypeConfig, errors: string[]): void {
+    if (size > config.maxSize) {
+      const maxMB = (config.maxSize / MB).toFixed(1);
+      const actualMB = (size / MB).toFixed(1);
+      errors.push(`File too large: ${actualMB}MB. Maximum: ${maxMB}MB`);
+    }
+  }
+
+  /**
+   * Validate image dimensions against config
+   */
+  private validateDimensions(
+    dimensions: { width: number; height: number },
+    config: AssetTypeConfig,
+    errors: string[],
+    warnings: string[]
+  ): void {
+    const { width, height } = dimensions;
+
+    // Minimum dimensions
+    if (config.minWidth && width < config.minWidth) {
+      errors.push(`Image too narrow: ${width}px. Minimum: ${config.minWidth}px`);
+    }
+    if (config.minHeight && height < config.minHeight) {
+      errors.push(`Image too short: ${height}px. Minimum: ${config.minHeight}px`);
+    }
+
+    // Maximum dimensions (warning only - will be resized)
+    if (config.maxWidth && width > config.maxWidth) {
+      warnings.push(`Image will be resized: ${width}px → ${config.maxWidth}px`);
+    }
+    if (config.maxHeight && height > config.maxHeight) {
+      warnings.push(`Image will be resized: ${height}px → ${config.maxHeight}px`);
+    }
+
+    // Square requirement
+    if (config.requireSquare && width !== height) {
+      const diff = Math.abs(width - height);
+      const avgSize = (width + height) / 2;
+      const tolerance = avgSize * SQUARE_TOLERANCE;
+
+      if (diff > tolerance) {
+        warnings.push(`Image is not square (${width}×${height}). It will be cropped to fit.`);
+      }
+    }
+  }
+
+  /**
+   * Validate transparency requirement
+   */
+  private async validateTransparency(
+    file: File,
+    mimeType: string,
+    warnings: string[]
+  ): Promise<void> {
+    const hasAlpha = await this.checkTransparency(file, mimeType);
+    if (!hasAlpha) {
+      warnings.push(
+        `Image may not have transparency. Token backgrounds work best with transparent PNGs.`
+      );
+    }
+  }
+
+  // ==========================================================================
+  // Private Detection Helpers
+  // ==========================================================================
+
+  /**
+   * Check if MIME type is a raster image (not SVG)
+   */
+  private isRasterImage(mimeType: string): boolean {
+    return mimeType.startsWith('image/') && mimeType !== 'image/svg+xml';
+  }
+
+  /**
+   * Detect MIME type from magic bytes
+   */
+  private detectFromMagicBytes(bytes: Uint8Array): string | null {
+    // PNG (8 bytes)
+    if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/png'])) {
+      return 'image/png';
+    }
+
+    // JPEG (3 bytes)
+    if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/jpeg'])) {
+      return 'image/jpeg';
+    }
+
+    // WebP (RIFF + WEBP at offset 8)
+    if (
+      this.matchesMagicBytes(bytes, MAGIC_BYTES['image/webp']) &&
+      this.matchesMagicBytes(bytes.slice(8), WEBP_SIGNATURE)
+    ) {
+      return 'image/webp';
+    }
+
+    // GIF
+    if (this.matchesMagicBytes(bytes, MAGIC_BYTES['image/gif'])) {
+      return 'image/gif';
+    }
+
+    return null;
+  }
 
   /**
    * Check if bytes match a magic byte pattern
@@ -272,16 +301,58 @@ export class FileValidationService {
     return true;
   }
 
+  // ==========================================================================
+  // Private Image Helpers
+  // ==========================================================================
+
   /**
-   * Load an image from URL
+   * Load an image from a File
    */
-  private loadImage(url: string): Promise<HTMLImageElement> {
+  private loadImage(file: File): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Failed to load image'));
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(img);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load image'));
+      };
+
       img.src = url;
     });
+  }
+
+  /**
+   * Sample pixels to detect transparency
+   */
+  private async sampleTransparency(file: File): Promise<boolean> {
+    try {
+      const img = await this.loadImage(file);
+
+      // Create small canvas to sample pixels efficiently
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return true; // Assume transparency if can't check
+
+      canvas.width = Math.min(img.width, TRANSPARENCY_SAMPLE_SIZE);
+      canvas.height = Math.min(img.height, TRANSPARENCY_SAMPLE_SIZE);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Check alpha channel (every 4th byte starting at index 3)
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 255) return true; // Found transparent pixel
+      }
+
+      return false;
+    } catch {
+      return true; // Assume transparency on error
+    }
   }
 }
 

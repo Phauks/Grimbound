@@ -16,32 +16,32 @@
  * @module hooks/editors/useCodeMirrorEditor
  */
 
-import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { EditorState, Extension, Compartment } from '@codemirror/state';
-import {
-  EditorView,
-  placeholder as placeholderExtension,
-  keymap,
-  lineNumbers,
-  highlightActiveLine,
-  highlightActiveLineGutter,
-  drawSelection,
-  dropCursor,
-  rectangularSelection,
-  crosshairCursor,
-} from '@codemirror/view';
-import { json, jsonParseLinter } from '@codemirror/lang-json';
-import { linter, lintGutter } from '@codemirror/lint';
 import {
   defaultKeymap,
   history,
   historyKeymap,
-  undo,
-  redo,
   indentWithTab,
+  redo,
+  undo,
 } from '@codemirror/commands';
+import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { bracketMatching, foldGutter, foldKeymap } from '@codemirror/language';
-import { searchKeymap, highlightSelectionMatches, search } from '@codemirror/search';
+import { linter, lintGutter } from '@codemirror/lint';
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
+import {
+  crosshairCursor,
+  drawSelection,
+  dropCursor,
+  EditorView,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+  placeholder as placeholderExtension,
+  rectangularSelection,
+} from '@codemirror/view';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { createCodeMirrorTheme } from '@/ts/ui/codemirrorTheme.js';
 
@@ -159,16 +159,21 @@ export function useCodeMirrorEditor(
 
   // Create a custom JSON linter that doesn't show errors for empty content
   const customJsonLinter = useMemo(() => {
-    return linter((view) => {
-      const content = view.state.doc.toString().trim();
-      // Don't lint empty content - no annoying errors when editor is empty
-      if (!content) return [];
-      // Use the built-in JSON parser for non-empty content
-      return jsonParseLinter()(view);
-    }, { delay: debounceMs });
+    return linter(
+      (view) => {
+        const content = view.state.doc.toString().trim();
+        // Don't lint empty content - no annoying errors when editor is empty
+        if (!content) return [];
+        // Use the built-in JSON parser for non-empty content
+        return jsonParseLinter()(view);
+      },
+      { delay: debounceMs }
+    );
   }, [debounceMs]);
 
-  // Create the editor
+  // Create the editor - intentionally runs only on mount
+  // Updates to value, theme, disabled, and placeholder are handled via compartments in separate useEffects
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentional mount-only effect - compartments handle dynamic updates
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -190,9 +195,7 @@ export function useCodeMirrorEditor(
       ]),
 
       // Placeholder
-      placeholderCompartment.current.of(
-        placeholder ? placeholderExtension(placeholder) : []
-      ),
+      placeholderCompartment.current.of(placeholder ? placeholderExtension(placeholder) : []),
 
       // History for undo/redo
       history(),
@@ -237,10 +240,12 @@ export function useCodeMirrorEditor(
 
     // Add fold gutter if enabled
     if (showFoldGutter) {
-      extensions.push(foldGutter({
-        openText: '▼',
-        closedText: '▶',
-      }));
+      extensions.push(
+        foldGutter({
+          openText: '▼',
+          closedText: '▶',
+        })
+      );
     }
 
     // Add lint gutter if enabled
@@ -270,8 +275,6 @@ export function useCodeMirrorEditor(
       view.destroy();
       viewRef.current = null;
     };
-    // Only run on mount - we handle updates separately
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync external value changes to editor
@@ -290,6 +293,7 @@ export function useCodeMirrorEditor(
   }, [value]);
 
   // Update theme when it changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: currentThemeId triggers the effect, theme computed inside
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;

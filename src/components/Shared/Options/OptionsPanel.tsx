@@ -1,8 +1,8 @@
 import { memo, useState } from 'react';
+import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 import styles from '@/styles/components/options/OptionsPanel.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
 import type { GenerationOptions } from '@/ts/types/index';
-import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 
 interface OptionsPanelProps {
   generationOptions: GenerationOptions;

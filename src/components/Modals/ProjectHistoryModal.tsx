@@ -12,6 +12,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Modal } from '@/components/Shared/ModalBase/Modal';
+import { Button } from '@/components/Shared/UI/Button';
 import { useToast } from '@/contexts/ToastContext';
 import { useProjects } from '@/hooks';
 import styles from '@/styles/components/modals/ProjectHistoryModal.module.css';
@@ -19,8 +21,6 @@ import { projectDb } from '@/ts/db/projectDb';
 import type { AutoSaveSnapshot, Project, ProjectVersion } from '@/ts/types/project';
 import { logger } from '@/ts/utils/logger';
 import { calculateProjectDiff, getDiffSummary } from '@/ts/utils/projectDiff';
-import { Modal } from '@/components/Shared/ModalBase/Modal';
-import { Button } from '@/components/Shared/UI/Button';
 
 interface ProjectHistoryModalProps {
   isOpen: boolean;

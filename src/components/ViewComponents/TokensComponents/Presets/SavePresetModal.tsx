@@ -7,12 +7,12 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import styles from '@/styles/components/presets/PresetModal.module.css';
-import { logger } from '@/ts/utils/logger.js';
 import { FormGroup, Input } from '@/components/Shared/Form';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
+import styles from '@/styles/components/presets/PresetModal.module.css';
+import { logger } from '@/ts/utils/logger.js';
 
 interface SavePresetModalProps {
   isOpen: boolean;
@@ -153,7 +153,8 @@ export function SavePresetModal({
         </>
       }
     >
-      <div
+      <section
+        aria-label="Preset configuration"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -209,7 +210,7 @@ export function SavePresetModal({
             </div>
           </FormGroup>
         </form>
-      </div>
+      </section>
     </Modal>
   );
 }

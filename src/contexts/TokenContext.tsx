@@ -8,13 +8,13 @@ import type {
   Token,
 } from '@/ts/types/index.js';
 import { DEFAULT_GENERATION_OPTIONS } from '@/ts/types/tokenOptions.js';
-import { nameToId } from '@/ts/utils/nameGenerator';
 import {
   filterEnabledCharacters,
   getCharacterSelectionSummary,
   getEnabledCharacterUuids,
   isCharacterEnabled as isCharEnabled,
 } from '@/ts/utils/characterFiltering.js';
+import { nameToId } from '@/ts/utils/nameGenerator';
 import { useDataSync } from './DataSyncContext';
 
 interface TokenContextType {
@@ -194,17 +194,14 @@ export function TokenProvider({ children }: TokenProviderProps) {
     [characterMetadata]
   );
 
-  const setCharacterEnabled = useCallback(
-    (uuid: string, enabled: boolean) => {
-      setCharacterMetadata((prev) => {
-        const newMap = new Map(prev);
-        const existing = prev.get(uuid) || DEFAULT_CHARACTER_METADATA;
-        newMap.set(uuid, { ...existing, enabled });
-        return newMap;
-      });
-    },
-    []
-  );
+  const setCharacterEnabled = useCallback((uuid: string, enabled: boolean) => {
+    setCharacterMetadata((prev) => {
+      const newMap = new Map(prev);
+      const existing = prev.get(uuid) || DEFAULT_CHARACTER_METADATA;
+      newMap.set(uuid, { ...existing, enabled });
+      return newMap;
+    });
+  }, []);
 
   const setAllCharactersEnabled = useCallback(
     (enabled: boolean) => {
@@ -237,8 +234,9 @@ export function TokenProvider({ children }: TokenProviderProps) {
   );
 
   // Use centralized defaults - ensures consistency with presets
-  const [generationOptions, setGenerationOptions] =
-    useState<GenerationOptions>(DEFAULT_GENERATION_OPTIONS);
+  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>(
+    DEFAULT_GENERATION_OPTIONS
+  );
 
   const [filters, setFilters] = useState({
     teams: [] as string[],

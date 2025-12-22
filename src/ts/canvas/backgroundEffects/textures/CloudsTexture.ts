@@ -7,8 +7,8 @@
  * @module canvas/backgroundEffects/textures/CloudsTexture
  */
 
-import { CLOUDS_TEXTURE } from '../constants.js';
 import { fbm, initPermutation } from '@/ts/canvas/backgroundEffects/noise/index.js';
+import { CLOUDS_TEXTURE } from '../constants.js';
 import { BaseTextureStrategy, type TextureContext, type TextureResult } from './TextureStrategy.js';
 
 /**

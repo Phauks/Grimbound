@@ -1,28 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
+import {
+  InfoSection,
+  PreviewBox,
+  SettingsSelectorBase,
+} from '@/components/Shared/Selectors/SettingsSelectorBase';
+import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
+import { DownloadSection, FeaturedDownloads } from '@/components/ViewComponents/ExportComponents';
+import { CharacterListView } from '@/components/ViewComponents/ProjectsComponents/CharacterListView';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useExpandablePanel, useExportDownloads } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
-import styles from '@/styles/components/views/Views.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import exportStyles from '@/styles/components/views/ExportView.module.css';
+import styles from '@/styles/components/views/Views.module.css';
 import type { CompressionLevel, ZipExportOptions } from '@/ts/types/index';
 import { BLEED_CONFIG, PDF_OFFSET_CONFIG } from '@/ts/utils/measurementUtils';
-import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { CharacterListView } from '@/components/ViewComponents/ProjectsComponents/CharacterListView';
-import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
-import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
-import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
-import {
-  SettingsSelectorBase,
-  PreviewBox,
-  InfoSection,
-} from '@/components/Shared/Selectors/SettingsSelectorBase';
-import {
-  FeaturedDownloads,
-  DownloadSection,
-} from '@/components/ViewComponents/ExportComponents';
 
 const DEFAULT_ZIP_SETTINGS: ZipExportOptions = {
   saveInTeamFolders: true,
@@ -219,7 +217,6 @@ export function ExportView() {
     return `${quality}% quality`;
   };
 
-
   // Render PNG Settings Panel
   const renderPngPanel = () => {
     if (!(pngPanel.isExpanded && pngPanel.panelPosition)) return null;
@@ -273,9 +270,7 @@ export function ExportView() {
           <button
             type="button"
             className={baseStyles.resetLink}
-            onClick={() =>
-              pngPanel.reset({ embedMetadata: false, transparentBackground: false })
-            }
+            onClick={() => pngPanel.reset({ embedMetadata: false, transparentBackground: false })}
           >
             Reset
           </button>
@@ -322,9 +317,7 @@ export function ExportView() {
               <input
                 type="checkbox"
                 checked={zipPanel.pendingValue.saveInTeamFolders}
-                onChange={(e) =>
-                  zipPanel.updatePendingField('saveInTeamFolders', e.target.checked)
-                }
+                onChange={(e) => zipPanel.updatePendingField('saveInTeamFolders', e.target.checked)}
               />
               <span className={exportStyles.checkboxLabel}>Team Folders</span>
             </label>
@@ -350,9 +343,7 @@ export function ExportView() {
               <input
                 type="checkbox"
                 checked={zipPanel.pendingValue.includeScriptJson}
-                onChange={(e) =>
-                  zipPanel.updatePendingField('includeScriptJson', e.target.checked)
-                }
+                onChange={(e) => zipPanel.updatePendingField('includeScriptJson', e.target.checked)}
               />
               <span className={exportStyles.checkboxLabel}>Include Script JSON</span>
             </label>
@@ -362,12 +353,18 @@ export function ExportView() {
           <div className={exportStyles.rightPanel}>
             <div className={exportStyles.panelTitle}>Quality</div>
             <div className={exportStyles.selectRow}>
-              <label className={exportStyles.selectLabel}>Compression Level</label>
+              <label htmlFor="compression-level-select" className={exportStyles.selectLabel}>
+                Compression Level
+              </label>
               <select
+                id="compression-level-select"
                 className={exportStyles.selectInput}
                 value={zipPanel.pendingValue.compressionLevel}
                 onChange={(e) =>
-                  zipPanel.updatePendingField('compressionLevel', e.target.value as CompressionLevel)
+                  zipPanel.updatePendingField(
+                    'compressionLevel',
+                    e.target.value as CompressionLevel
+                  )
                 }
               >
                 <option value="fast">Fast (larger file)</option>
@@ -501,230 +498,235 @@ export function ExportView() {
   };
 
   return (
-    <ViewLayout variant="2-panel">
-      {/* Left Sidebar - Export Settings */}
-      <ViewLayout.Panel position="left" width="left" scrollable>
-        <div className={layoutStyles.panelContent}>
-          {/* PNG Settings */}
-          <SettingsSelectorBase
-            ref={pngPanel.containerRef}
-            preview={
-              <PreviewBox shape="square" size="medium">
-                <span style={{ fontSize: '1.5rem' }}>PNG</span>
-              </PreviewBox>
-            }
-            info={<InfoSection label="PNG Settings" summary={getPngSummary()} />}
-            actionLabel="Customize"
-            onAction={pngPanel.toggle}
-            isExpanded={pngPanel.isExpanded}
-            ariaLabel="PNG export settings"
-            onKeyDown={pngPanel.handleKeyDown}
-          >
-            {renderPngPanel()}
-          </SettingsSelectorBase>
+    <ErrorBoundary
+      fallbackRender={({ error, resetErrorBoundary }) => (
+        <ViewErrorFallback view="Export" error={error} onRetry={resetErrorBoundary} />
+      )}
+    >
+      <ViewLayout variant="2-panel">
+        {/* Left Sidebar - Export Settings */}
+        <ViewLayout.Panel position="left" width="left" scrollable>
+          <div className={layoutStyles.panelContent}>
+            {/* PNG Settings */}
+            <SettingsSelectorBase
+              ref={pngPanel.containerRef}
+              preview={
+                <PreviewBox shape="square" size="medium">
+                  <span style={{ fontSize: '1.5rem' }}>PNG</span>
+                </PreviewBox>
+              }
+              info={<InfoSection label="PNG Settings" summary={getPngSummary()} />}
+              actionLabel="Customize"
+              onAction={pngPanel.toggle}
+              isExpanded={pngPanel.isExpanded}
+              ariaLabel="PNG export settings"
+              onKeyDown={pngPanel.handleKeyDown}
+            >
+              {renderPngPanel()}
+            </SettingsSelectorBase>
 
-          {/* ZIP Settings */}
-          <SettingsSelectorBase
-            ref={zipPanel.containerRef}
-            preview={
-              <PreviewBox shape="square" size="medium">
-                <span style={{ fontSize: '1.5rem' }}>ZIP</span>
-              </PreviewBox>
-            }
-            info={<InfoSection label="ZIP Settings" summary={getZipSummary()} />}
-            actionLabel="Customize"
-            onAction={zipPanel.toggle}
-            isExpanded={zipPanel.isExpanded}
-            ariaLabel="ZIP export settings"
-            onKeyDown={zipPanel.handleKeyDown}
-          >
-            {renderZipPanel()}
-          </SettingsSelectorBase>
+            {/* ZIP Settings */}
+            <SettingsSelectorBase
+              ref={zipPanel.containerRef}
+              preview={
+                <PreviewBox shape="square" size="medium">
+                  <span style={{ fontSize: '1.5rem' }}>ZIP</span>
+                </PreviewBox>
+              }
+              info={<InfoSection label="ZIP Settings" summary={getZipSummary()} />}
+              actionLabel="Customize"
+              onAction={zipPanel.toggle}
+              isExpanded={zipPanel.isExpanded}
+              ariaLabel="ZIP export settings"
+              onKeyDown={zipPanel.handleKeyDown}
+            >
+              {renderZipPanel()}
+            </SettingsSelectorBase>
 
-          {/* PDF Settings */}
-          <SettingsSelectorBase
-            ref={pdfPanel.containerRef}
-            preview={
-              <PreviewBox shape="square" size="medium">
-                <span style={{ fontSize: '1.5rem' }}>PDF</span>
-              </PreviewBox>
-            }
-            info={<InfoSection label="PDF Settings" summary={getPdfSummary()} />}
-            actionLabel="Customize"
-            onAction={pdfPanel.toggle}
-            isExpanded={pdfPanel.isExpanded}
-            ariaLabel="PDF export settings"
-            onKeyDown={pdfPanel.handleKeyDown}
-          >
-            {renderPdfPanel()}
-          </SettingsSelectorBase>
-        </div>
-      </ViewLayout.Panel>
+            {/* PDF Settings */}
+            <SettingsSelectorBase
+              ref={pdfPanel.containerRef}
+              preview={
+                <PreviewBox shape="square" size="medium">
+                  <span style={{ fontSize: '1.5rem' }}>PDF</span>
+                </PreviewBox>
+              }
+              info={<InfoSection label="PDF Settings" summary={getPdfSummary()} />}
+              actionLabel="Customize"
+              onAction={pdfPanel.toggle}
+              isExpanded={pdfPanel.isExpanded}
+              ariaLabel="PDF export settings"
+              onKeyDown={pdfPanel.handleKeyDown}
+            >
+              {renderPdfPanel()}
+            </SettingsSelectorBase>
+          </div>
+        </ViewLayout.Panel>
 
-      {/* Right Content - Downloads Hub */}
-      <ViewLayout.Panel position="right" width="flex" scrollable>
-        <div className={styles.exportActionsPanel}>
-          {/* Featured Downloads */}
-          <FeaturedDownloads
-            items={featuredDownloads}
-            executingId={executingId}
-            onExecute={executeDownload}
-          />
+        {/* Right Content - Downloads Hub */}
+        <ViewLayout.Panel position="right" width="flex" scrollable>
+          <div className={styles.exportActionsPanel}>
+            {/* Featured Downloads */}
+            <FeaturedDownloads
+              items={featuredDownloads}
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
 
-          {/* JSON Section */}
-          <DownloadSection
-            title="JSON"
-            icon="📋"
-            items={jsonDownloads}
-            collapsible
-            defaultOpen
-            executingId={executingId}
-            onExecute={executeDownload}
-          />
+            {/* JSON Section */}
+            <DownloadSection
+              title="JSON"
+              icon="📋"
+              items={jsonDownloads}
+              collapsible
+              defaultOpen
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
 
-          {/* Tokens Section */}
-          <DownloadSection
-            title="Tokens"
-            icon="🎭"
-            items={tokenDownloads}
-            collapsible
-            defaultOpen
-            executingId={executingId}
-            onExecute={executeDownload}
-          />
+            {/* Tokens Section */}
+            <DownloadSection
+              title="Tokens"
+              icon="🎭"
+              items={tokenDownloads}
+              collapsible
+              defaultOpen
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
 
-          {/* Scripts Section */}
-          <DownloadSection
-            title="Scripts"
-            icon="📜"
-            items={scriptDownloads}
-            collapsible
-            defaultOpen
-            executingId={executingId}
-            onExecute={executeDownload}
-          />
+            {/* Scripts Section */}
+            <DownloadSection
+              title="Scripts"
+              icon="📜"
+              items={scriptDownloads}
+              collapsible
+              defaultOpen
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
 
-          {/* Character Selection Section */}
-          <DownloadSection
-            title="Character Selection"
-            icon="👤"
-            items={[]}
-            collapsible
-            defaultOpen={false}
-            executingId={executingId}
-            onExecute={executeDownload}
-          >
-            {characters.length > 0 ? (
-              <>
-                <div className={styles.characterSelectionSummary}>
-                  {characterSelectionSummary.enabled} of {characterSelectionSummary.total} included
-                  {characterSelectionSummary.disabled > 0 && (
-                    <span className={styles.characterSelectionBadge}>
-                      {characterSelectionSummary.disabled} excluded
-                    </span>
-                  )}
-                </div>
-                <div className={styles.characterSelectionHeaderRow}>
-                  <div className={styles.listSettingsContainer}>
-                    <button
-                      type="button"
-                      className={styles.listSettingsButton}
-                      onClick={() => setShowListSettings(!showListSettings)}
-                      title="Configure list columns"
-                      aria-expanded={showListSettings}
-                    >
-                      ⚙️
-                    </button>
-                    {showListSettings && (
-                      <div className={styles.listSettingsPopover}>
-                        <div className={styles.listSettingsHeader}>
-                          <span>Columns</span>
-                          <button
-                            type="button"
-                            className={styles.listSettingsClose}
-                            onClick={() => setShowListSettings(false)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                        <label className={styles.listSettingsOption}>
-                          <input
-                            type="checkbox"
-                            checked={listViewSettings.showAbility}
-                            onChange={(e) =>
-                              setListViewSettings((prev) => ({
-                                ...prev,
-                                showAbility: e.target.checked,
-                              }))
-                            }
-                          />
-                          <span>Ability Text</span>
-                        </label>
-                        <label className={styles.listSettingsOption}>
-                          <input
-                            type="checkbox"
-                            checked={listViewSettings.showFirstNightReminder}
-                            onChange={(e) =>
-                              setListViewSettings((prev) => ({
-                                ...prev,
-                                showFirstNightReminder: e.target.checked,
-                              }))
-                            }
-                          />
-                          <span>First Night Reminder</span>
-                        </label>
-                        <label className={styles.listSettingsOption}>
-                          <input
-                            type="checkbox"
-                            checked={listViewSettings.showOtherNightReminder}
-                            onChange={(e) =>
-                              setListViewSettings((prev) => ({
-                                ...prev,
-                                showOtherNightReminder: e.target.checked,
-                              }))
-                            }
-                          />
-                          <span>Other Night Reminder</span>
-                        </label>
-                        <label className={styles.listSettingsOption}>
-                          <input
-                            type="checkbox"
-                            checked={listViewSettings.showReminders}
-                            onChange={(e) =>
-                              setListViewSettings((prev) => ({
-                                ...prev,
-                                showReminders: e.target.checked,
-                              }))
-                            }
-                          />
-                          <span>Reminders</span>
-                        </label>
-                      </div>
+            {/* Character Selection Section */}
+            <DownloadSection
+              title="Character Selection"
+              icon="👤"
+              items={[]}
+              collapsible
+              defaultOpen={false}
+              executingId={executingId}
+              onExecute={executeDownload}
+            >
+              {characters.length > 0 ? (
+                <>
+                  <div className={styles.characterSelectionSummary}>
+                    {characterSelectionSummary.enabled} of {characterSelectionSummary.total}{' '}
+                    included
+                    {characterSelectionSummary.disabled > 0 && (
+                      <span className={styles.characterSelectionBadge}>
+                        {characterSelectionSummary.disabled} excluded
+                      </span>
                     )}
                   </div>
-                </div>
-                <div className={styles.characterSelectionContent}>
-                  <CharacterListView
-                    characters={characters}
-                    showAbility={listViewSettings.showAbility}
-                    showFirstNightReminder={listViewSettings.showFirstNightReminder}
-                    showOtherNightReminder={listViewSettings.showOtherNightReminder}
-                    showReminders={listViewSettings.showReminders}
-                    showSelection={true}
-                    characterMetadata={characterMetadata}
-                    onToggleCharacter={handleCharacterToggle}
-                    onToggleAll={handleToggleAllCharacters}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className={styles.characterSelectionSummary}>
-                No characters loaded
-              </div>
-            )}
-          </DownloadSection>
-        </div>
-      </ViewLayout.Panel>
-    </ViewLayout>
+                  <div className={styles.characterSelectionHeaderRow}>
+                    <div className={styles.listSettingsContainer}>
+                      <button
+                        type="button"
+                        className={styles.listSettingsButton}
+                        onClick={() => setShowListSettings(!showListSettings)}
+                        title="Configure list columns"
+                        aria-expanded={showListSettings}
+                      >
+                        ⚙️
+                      </button>
+                      {showListSettings && (
+                        <div className={styles.listSettingsPopover}>
+                          <div className={styles.listSettingsHeader}>
+                            <span>Columns</span>
+                            <button
+                              type="button"
+                              className={styles.listSettingsClose}
+                              onClick={() => setShowListSettings(false)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <label className={styles.listSettingsOption}>
+                            <input
+                              type="checkbox"
+                              checked={listViewSettings.showAbility}
+                              onChange={(e) =>
+                                setListViewSettings((prev) => ({
+                                  ...prev,
+                                  showAbility: e.target.checked,
+                                }))
+                              }
+                            />
+                            <span>Ability Text</span>
+                          </label>
+                          <label className={styles.listSettingsOption}>
+                            <input
+                              type="checkbox"
+                              checked={listViewSettings.showFirstNightReminder}
+                              onChange={(e) =>
+                                setListViewSettings((prev) => ({
+                                  ...prev,
+                                  showFirstNightReminder: e.target.checked,
+                                }))
+                              }
+                            />
+                            <span>First Night Reminder</span>
+                          </label>
+                          <label className={styles.listSettingsOption}>
+                            <input
+                              type="checkbox"
+                              checked={listViewSettings.showOtherNightReminder}
+                              onChange={(e) =>
+                                setListViewSettings((prev) => ({
+                                  ...prev,
+                                  showOtherNightReminder: e.target.checked,
+                                }))
+                              }
+                            />
+                            <span>Other Night Reminder</span>
+                          </label>
+                          <label className={styles.listSettingsOption}>
+                            <input
+                              type="checkbox"
+                              checked={listViewSettings.showReminders}
+                              onChange={(e) =>
+                                setListViewSettings((prev) => ({
+                                  ...prev,
+                                  showReminders: e.target.checked,
+                                }))
+                              }
+                            />
+                            <span>Reminders</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.characterSelectionContent}>
+                    <CharacterListView
+                      characters={characters}
+                      showAbility={listViewSettings.showAbility}
+                      showFirstNightReminder={listViewSettings.showFirstNightReminder}
+                      showOtherNightReminder={listViewSettings.showOtherNightReminder}
+                      showReminders={listViewSettings.showReminders}
+                      showSelection={true}
+                      characterMetadata={characterMetadata}
+                      onToggleCharacter={handleCharacterToggle}
+                      onToggleAll={handleToggleAllCharacters}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className={styles.characterSelectionSummary}>No characters loaded</div>
+              )}
+            </DownloadSection>
+          </div>
+        </ViewLayout.Panel>
+      </ViewLayout>
+    </ErrorBoundary>
   );
 }

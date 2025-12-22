@@ -4,8 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Character, GitHubRelease } from '@/ts/types/index.js';
 import { DataSyncService, type SyncEvent } from '@/ts/sync/dataSyncService.js';
+import type { CachedCharacter, GitHubRelease } from '@/ts/types/index.js';
 
 // Mock modules
 vi.mock('../storageManager.js', () => ({
@@ -158,16 +158,18 @@ describe('DataSyncService', () => {
     it('should return characters from storage', async () => {
       const { storageManager } = await import('../storageManager.js');
 
-      const mockCharacters: Character[] = [
+      const mockCharacters: CachedCharacter[] = [
         {
           id: 'washerwoman',
           name: 'Washerwoman',
           team: 'townsfolk',
           image: 'test.webp',
+          _storedAt: Date.now(),
+          _version: 'v2025.12.03-r6',
         },
       ];
 
-      vi.mocked(storageManager.getAllCharacters).mockResolvedValue(mockCharacters as any);
+      vi.mocked(storageManager.getAllCharacters).mockResolvedValue(mockCharacters);
       vi.mocked(storageManager.getMetadata).mockResolvedValue('v2025.12.03-r6');
 
       await service.initialize();
@@ -179,7 +181,7 @@ describe('DataSyncService', () => {
     it('should strip internal fields from characters', async () => {
       const { storageManager } = await import('../storageManager.js');
 
-      const mockCachedCharacter = {
+      const mockCachedCharacter: CachedCharacter = {
         id: 'washerwoman',
         name: 'Washerwoman',
         team: 'townsfolk',
@@ -188,7 +190,7 @@ describe('DataSyncService', () => {
         _version: 'v2025.12.03-r6',
       };
 
-      vi.mocked(storageManager.getAllCharacters).mockResolvedValue([mockCachedCharacter] as any);
+      vi.mocked(storageManager.getAllCharacters).mockResolvedValue([mockCachedCharacter]);
       vi.mocked(storageManager.getMetadata).mockResolvedValue('v2025.12.03-r6');
 
       await service.initialize();

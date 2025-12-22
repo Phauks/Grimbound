@@ -70,12 +70,16 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
   transition: all var(--transition-fast);
+  border: none;
   border-bottom: 1px solid var(--border-color);
   border-right: 3px solid transparent;
   background: var(--bg-primary);
+  text-align: left;
+  font-family: inherit;
 }
 
 .item:last-child {

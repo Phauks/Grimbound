@@ -21,13 +21,11 @@
  * ```
  */
 
-import { memo, useEffect, useRef, useState } from 'react';
-import styles from '@/styles/components/shared/AssetPreviewSelector.module.css';
-import { useAssetStorageService } from '@/contexts/ServiceContext';
-import { getBuiltInAsset, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
-import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
-import type { AssetType } from '@/ts/services/upload/types.js';
+import { memo, useCallback, useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { useAssetPreview } from '@/hooks/useAssetPreview';
+import styles from '@/styles/components/shared/AssetPreviewSelector.module.css';
+import type { AssetType } from '@/ts/services/upload/types.js';
 import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -72,6 +70,15 @@ export interface AssetPreviewSelectorProps {
 // Asset Preview Component
 // ============================================================================
 
+interface AssetPreviewProps {
+  previewUrl: string | null;
+  assetLabel: string;
+  shape: 'circle' | 'square';
+  size: 'small' | 'medium' | 'large';
+  isLoading: boolean;
+  isNone: boolean;
+}
+
 const AssetPreview = memo(function AssetPreview({
   previewUrl,
   assetLabel,
@@ -79,18 +86,14 @@ const AssetPreview = memo(function AssetPreview({
   size,
   isLoading,
   isNone,
-}: {
-  previewUrl: string | null;
-  assetLabel: string;
-  shape: 'circle' | 'square';
-  size: 'small' | 'medium' | 'large';
-  isLoading: boolean;
-  isNone: boolean;
-}) {
+}: AssetPreviewProps) {
+  const sizeClass = `preview${size.charAt(0).toUpperCase()}${size.slice(1)}`;
+  const shapeClass = shape === 'circle' ? styles.previewCircle : styles.previewSquare;
+
   const previewClasses = [
     styles.preview,
-    styles[`preview${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-    shape === 'circle' ? styles.previewCircle : styles.previewSquare,
+    styles[sizeClass],
+    shapeClass,
     isLoading && styles.previewLoading,
     isNone && styles.previewNone,
   ]
@@ -102,7 +105,7 @@ const AssetPreview = memo(function AssetPreview({
       {previewUrl ? (
         <img src={previewUrl} alt={assetLabel} className={styles.previewImage} loading="lazy" />
       ) : (
-        <span className={styles.noneIcon}>∅</span>
+        <span className={styles.noneIcon}>&#8709;</span>
       )}
     </div>
   );
@@ -128,111 +131,37 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
   previewTokenType = 'character',
   headerSlot,
 }: AssetPreviewSelectorProps) {
-  // Get service from DI context
-  const assetStorageService = useAssetStorageService();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [assetLabel, setAssetLabel] = useState<string>('');
-  const [source, setSource] = useState<'builtin' | 'user' | 'global' | 'none'>('none');
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Resolve the current value to a preview URL
-  useEffect(() => {
-    let cancelled = false;
+  // Use extracted hook for asset resolution
+  const {
+    previewUrl,
+    label: assetLabel,
+    source,
+    sourceLabel,
+    isLoading,
+  } = useAssetPreview({
+    value,
+    assetType,
+    noneLabel,
+    fallbackLabel: label,
+  });
 
-    async function resolvePreview() {
-      if (!value || value === 'none') {
-        setPreviewUrl(null);
-        setAssetLabel(noneLabel);
-        setSource('none');
-        return;
-      }
+  // Stable callbacks
+  const handleOpenModal = useCallback(() => setIsModalOpen(true), []);
+  const handleCloseModal = useCallback(() => setIsModalOpen(false), []);
 
-      setIsLoading(true);
-
-      // Check if it's a built-in asset
-      if (isBuiltInAsset(value, assetType)) {
-        const builtIn = getBuiltInAsset(value, assetType);
-        if (builtIn) {
-          setPreviewUrl(builtIn.thumbnail ?? builtIn.src);
-          setAssetLabel(builtIn.label);
-          setSource('builtin');
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Check if it's an asset reference
-      if (isAssetReference(value)) {
-        const assetId = extractAssetId(value);
-        if (assetId) {
-          try {
-            const asset = await assetStorageService.getByIdWithUrl(assetId);
-            if (!cancelled && asset) {
-              setPreviewUrl(asset.thumbnailUrl ?? asset.url ?? null);
-              setAssetLabel(asset.metadata?.filename ?? 'Custom Asset');
-              setSource(asset.projectId ? 'user' : 'global');
-            }
-          } catch {
-            if (!cancelled) {
-              setPreviewUrl(null);
-              setAssetLabel('Asset not found');
-              setSource('none');
-            }
-          }
-        }
-      } else {
-        // Try as a direct path (fallback)
-        setPreviewUrl(value);
-        setAssetLabel(label ?? 'Custom');
-        setSource('builtin');
-      }
-
-      if (!cancelled) {
-        setIsLoading(false);
-      }
-    }
-
-    resolvePreview();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [value, assetType, noneLabel, label, assetStorageService]);
-
-  // Handle asset selection from modal
-  const handleSelectAsset = (selectedId: string) => {
-    onChange(selectedId);
-    setIsModalOpen(false);
-  };
-
-  // Handle modal close
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-  };
-
-  // Format source display
-  const getSourceLabel = () => {
-    switch (source) {
-      case 'none':
-        return 'No selection';
-      case 'builtin':
-        return 'Built-in';
-      case 'user':
-        return 'My Upload';
-      case 'global':
-        return 'Global';
-      default:
-        return '';
-    }
-  };
+  const handleSelectAsset = useCallback(
+    (selectedId: string) => {
+      onChange(selectedId);
+      setIsModalOpen(false);
+    },
+    [onChange]
+  );
 
   return (
     <>
       <SettingsSelectorBase
-        ref={containerRef}
         preview={
           <AssetPreview
             previewUrl={previewUrl}
@@ -243,29 +172,30 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
             isNone={source === 'none'}
           />
         }
-        info={<InfoSection label={assetLabel} summary={getSourceLabel()} />}
+        info={<InfoSection label={assetLabel} summary={sourceLabel} />}
         headerSlot={headerSlot}
         actionLabel="Customize"
-        onAction={() => setIsModalOpen(true)}
+        onAction={handleOpenModal}
         disabled={disabled}
         size={size}
         ariaLabel={ariaLabel ?? `Select ${assetType}`}
       />
 
-      {/* Asset Manager Modal */}
-      <AssetManagerModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        projectId={projectId}
-        initialAssetType={assetType}
-        selectionMode={true}
-        onSelectAsset={handleSelectAsset}
-        includeBuiltIn={true}
-        showNoneOption={showNone}
-        noneLabel={noneLabel}
-        generationOptions={generationOptions}
-        previewTokenType={previewTokenType}
-      />
+      {isModalOpen && (
+        <AssetManagerModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          projectId={projectId}
+          initialAssetType={assetType}
+          selectionMode={true}
+          onSelectAsset={handleSelectAsset}
+          includeBuiltIn={true}
+          showNoneOption={showNone}
+          noneLabel={noneLabel}
+          generationOptions={generationOptions}
+          previewTokenType={previewTokenType}
+        />
+      )}
     </>
   );
 });

@@ -4,12 +4,7 @@ import { createCompletePackage } from '@/ts/export/completePackageExporter.js';
 import { PDFGenerator } from '@/ts/export/pdfGenerator.js';
 import { createTokensZip } from '@/ts/export/zipExporter.js';
 import type { ProgressCallback } from '@/ts/types/index.js';
-import {
-  downloadFile,
-  getCleanJsonForExport,
-  logger,
-  sanitizeFilename,
-} from '@/ts/utils/index.js';
+import { downloadFile, getCleanJsonForExport, logger, sanitizeFilename } from '@/ts/utils/index.js';
 
 export type ExportStep = 'zip' | 'pdf' | 'json' | 'style' | 'tokens' | null;
 
@@ -22,7 +17,8 @@ interface DownloadOptions {
 }
 
 export function useExport() {
-  const { tokens, generationOptions, scriptMeta, jsonInput, enabledCharacterUuids } = useTokenContext();
+  const { tokens, generationOptions, scriptMeta, jsonInput, enabledCharacterUuids } =
+    useTokenContext();
   const [isExporting, setIsExporting] = useState(false);
 
   // Filter tokens to only include those from enabled characters

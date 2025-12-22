@@ -6,6 +6,7 @@
 import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import {
   CacheLogger,
+  type CharactersPreRenderEntry,
   CharactersPreRenderStrategy,
   LRUCacheAdapter,
   LRUEvictionPolicy,
@@ -13,6 +14,7 @@ import {
   ProjectPreRenderStrategy,
   TokensPreRenderStrategy,
 } from '@/ts/cache/index.js';
+import type { Token } from '@/ts/types/index.js';
 
 /**
  * Context value type.
@@ -71,7 +73,7 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
     );
 
     // ===== Characters Cache =====
-    const charactersCache = new LRUCacheAdapter<string, unknown>({
+    const charactersCache = new LRUCacheAdapter<string, CharactersPreRenderEntry>({
       maxSize: 5, // 5 character sets
       maxMemory: 10_000_000, // 10MB
       evictionPolicy: new LRUEvictionPolicy({
@@ -91,15 +93,14 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
       },
     });
     mgr.registerCache('characters', charactersCache);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mgr.registerStrategy(
-      new CharactersPreRenderStrategy(charactersCache as any, {
+      new CharactersPreRenderStrategy(charactersCache, {
         includeReminders: true,
       })
     );
 
     // ===== Project Cache =====
-    const projectCache = new LRUCacheAdapter<string, unknown>({
+    const projectCache = new LRUCacheAdapter<string, Token>({
       maxSize: 20, // 20 projects
       maxMemory: 5_000_000, // 5MB
       evictionPolicy: new LRUEvictionPolicy({
@@ -119,9 +120,8 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
       },
     });
     mgr.registerCache('project', projectCache);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mgr.registerStrategy(
-      new ProjectPreRenderStrategy(projectCache as any, {
+      new ProjectPreRenderStrategy(projectCache, {
         abortOnUnhover: true,
       })
     );

@@ -7,6 +7,7 @@
  * @module services/project/ProjectService
  */
 
+import type { GenerationOptions } from '@/ts/types/index.js';
 import type {
   AutoSaveStatus,
   CreateProjectOptions,
@@ -17,9 +18,13 @@ import type {
   ProjectStats,
   ProjectThumbnail,
 } from '@/ts/types/project.js';
-import type { GenerationOptions } from '@/ts/types/index.js';
 import { generateUuid } from '@/ts/utils/nameGenerator.js';
-import type { IProjectDatabase, IProjectExporter, IProjectImporter, IProjectService } from './IProjectService.js';
+import type {
+  IProjectDatabase,
+  IProjectExporter,
+  IProjectImporter,
+  IProjectService,
+} from './IProjectService.js';
 import { projectDatabaseService } from './ProjectDatabaseService.js';
 import { projectExporter } from './ProjectExporter.js';
 import { projectImporter } from './ProjectImporter.js';

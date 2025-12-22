@@ -7,8 +7,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Character } from '@/ts/types/index.js';
 import { StorageManager } from '@/ts/sync/storageManager.js';
+import type { Character } from '@/ts/types/index.js';
 
 // Mock character data for testing
 const mockCharacter: Character = {
@@ -252,10 +252,14 @@ describe('StorageManager', () => {
           put: vi.fn(),
           delete: vi.fn(),
         };
-        (global as any).caches = {
-          open: vi.fn().mockResolvedValue(mockCache),
-          delete: vi.fn().mockResolvedValue(true),
-        };
+        Object.defineProperty(global, 'caches', {
+          value: {
+            open: vi.fn().mockResolvedValue(mockCache),
+            delete: vi.fn().mockResolvedValue(true),
+          },
+          writable: true,
+          configurable: true,
+        });
       }
     });
 
@@ -276,12 +280,16 @@ describe('StorageManager', () => {
     beforeEach(() => {
       // Mock navigator.storage if not available
       if (!navigator.storage?.estimate) {
-        (navigator as any).storage = {
-          estimate: vi.fn().mockResolvedValue({
-            usage: 1024 * 1024 * 5, // 5 MB
-            quota: 1024 * 1024 * 100, // 100 MB
-          }),
-        };
+        Object.defineProperty(navigator, 'storage', {
+          value: {
+            estimate: vi.fn().mockResolvedValue({
+              usage: 1024 * 1024 * 5, // 5 MB
+              quota: 1024 * 1024 * 100, // 100 MB
+            }),
+          },
+          writable: true,
+          configurable: true,
+        });
       }
     });
 

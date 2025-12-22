@@ -7,24 +7,48 @@
  * @module hooks/ui/useAutoResizeTextarea
  *
  * @example
- * const textareaRef = useAutoResizeTextarea(value, enabled);
+ * const textareaRef = useAutoResizeTextarea({ value, enabled: true, minRows: 3 });
  * <textarea ref={textareaRef} value={value} onChange={...} />
  */
 
 import { useCallback, useEffect, useRef } from 'react';
 
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface UseAutoResizeTextareaOptions {
+  /** The current value of the textarea (triggers resize on change) */
+  value: string | undefined;
+  /** Whether auto-resize is enabled (default: true) */
+  enabled?: boolean;
+  /** Minimum number of rows to show (default: 2) */
+  minRows?: number;
+}
+
+export interface UseAutoResizeTextareaResult {
+  /** React ref to attach to the textarea element */
+  ref: React.RefObject<HTMLTextAreaElement | null>;
+}
+
+// ============================================================================
+// Hook Implementation
+// ============================================================================
+
 /**
  * Hook to auto-resize a textarea based on its content
- * @param value - The current value of the textarea (triggers resize on change)
- * @param enabled - Whether auto-resize is enabled (default: true)
- * @param minRows - Minimum number of rows to show (default: 2)
- * @returns React ref to attach to the textarea element
+ *
+ * @example
+ * ```tsx
+ * const { ref } = useAutoResizeTextarea({ value: text, minRows: 3 });
+ * return <textarea ref={ref} value={text} onChange={handleChange} />;
+ * ```
  */
-export function useAutoResizeTextarea(
-  _value: string | undefined,
-  enabled: boolean = true,
-  minRows: number = 2
-): React.RefObject<HTMLTextAreaElement | null> {
+export function useAutoResizeTextarea({
+  value: _value,
+  enabled = true,
+  minRows = 2,
+}: UseAutoResizeTextareaOptions): React.RefObject<HTMLTextAreaElement | null> {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const resize = useCallback(() => {

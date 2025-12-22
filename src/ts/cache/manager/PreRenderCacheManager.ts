@@ -147,12 +147,13 @@ export class PreRenderCacheManager extends EventEmitter {
     const operationKey = this.getOperationKey(strategy.name, context);
 
     // Return existing promise if already rendering this exact operation (request deduplication)
-    if (this.inProgressOperations.has(operationKey)) {
+    const existingOperation = this.inProgressOperations.get(operationKey);
+    if (existingOperation) {
       CacheLogger.debug('Request deduplicated', {
         operation: operationKey,
         strategy: strategy.name,
       });
-      return this.inProgressOperations.get(operationKey)!;
+      return existingOperation;
     }
 
     // Create new render operation

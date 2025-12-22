@@ -10,13 +10,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/script/NightOrderEntry.module.css';
 import { tabPreRenderService } from '@/ts/cache/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import { getTeamColor, parseAbilityText } from '@/ts/nightOrder/nightOrderUtils.js';
 import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
-import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 
 interface NightOrderEntryProps {
   entry: NightOrderEntryType;
@@ -43,12 +43,12 @@ function AbilityText({ text }: { text: string }) {
   const segments = useMemo(() => parseAbilityText(text), [text]);
 
   // Pre-compute occurrence counts for stable keys
-  const getOccurrenceKey = (segment: typeof segments[0], idx: number): string => {
+  const getOccurrenceKey = (segment: (typeof segments)[0], idx: number): string => {
     const prefix = segment.isCircle ? 'circle' : segment.isBold ? 'bold' : 'text';
     const content = segment.isCircle ? 'dot' : segment.text;
-    const priorOccurrences = segments.slice(0, idx).filter(s =>
-      (s.isCircle === segment.isCircle) && (s.text === segment.text)
-    ).length;
+    const priorOccurrences = segments
+      .slice(0, idx)
+      .filter((s) => s.isCircle === segment.isCircle && s.text === segment.text).length;
     return `${prefix}-${content}-${priorOccurrences}`;
   };
 

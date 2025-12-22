@@ -34,7 +34,12 @@ export interface DownloadCardProps {
  * />
  * ```
  */
-export function DownloadCard({ item, isExecuting, onExecute, variant = 'default' }: DownloadCardProps) {
+export function DownloadCard({
+  item,
+  isExecuting,
+  onExecute,
+  variant = 'default',
+}: DownloadCardProps) {
   const isDisabled = item.disabled || isExecuting;
   const showComingSoon = item.disabled && item.disabledReason?.toLowerCase().includes('coming');
 
@@ -66,7 +71,7 @@ export function DownloadCard({ item, isExecuting, onExecute, variant = 'default'
       </div>
       <span className={styles.cardAction}>
         {isExecuting ? (
-          <span className={styles.spinner} aria-label="Downloading..." />
+          <span className={styles.spinner} aria-hidden="true" />
         ) : showComingSoon ? (
           <span className={styles.comingSoonBadge}>Soon</span>
         ) : (

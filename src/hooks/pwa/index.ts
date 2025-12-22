@@ -6,4 +6,4 @@
  * @module hooks/pwa
  */
 
-export { usePWAInstall, type PWAInstallState } from './usePWAInstall.js';
+export { type PWAInstallState, usePWAInstall } from './usePWAInstall.js';

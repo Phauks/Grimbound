@@ -14,7 +14,7 @@
 | `imageUtils.ts` | Image loading | `loadImage()`, `loadLocalImage()`, `canvasToBlob()`, `downloadFile()` |
 | `imageCache.ts` | Global image cache | `globalImageCache.get()`, `.clear()`, `.stats()` |
 | `characterImageResolver.ts` | **SSOT** for images | `resolveCharacterImageUrl()`, `resolveCharacterImages()` |
-| `jsonUtils.ts` | JSON operations | `formatJson()`, `validateJson()`, `deepClone()` |
+| `jsonUtils.ts` | JSON operations | `formatJson()`, `validateJson()`, `deepClone()`, `charactersToJson()` |
 | `colorUtils.ts` | Color manipulation | `hexToRgb()`, `parseHexColor()`, `rgbToHsl()`, `hslToRgb()`, `interpolateColors()` |
 | `classNames.ts` | CSS classes | `cn()` (classnames utility) |
 | `progressUtils.ts` | Progress tracking | `createProgressState()`, `updateProgress()` |
@@ -61,11 +61,10 @@
 | Module | Purpose | Key Exports |
 |--------|---------|-------------|
 | `CacheManager.ts` | Cache facade | `cacheManager.preRender()`, `.clearCache()`, `.getStats()` |
-| `TabPreRenderService.ts` | Unified tab pre-render | `tabPreRenderService.preRenderTab()`, `.getCachedNightOrder()`, `.getCachedTokenDataUrl()`, `.getCachedCharacterImageUrl()` |
+| `TabPreRenderService.ts` | Unified tab pre-render (DI-enabled) | `TabPreRenderService`, `tabPreRenderService.preRenderTab()`, `.getCachedNightOrder()`, `.getCachedTokenDataUrl()`, `.getCachedCharacterImageUrl()` |
 | `CacheInvalidationService.ts` | Cache lifecycle | `cacheInvalidationService.invalidate()`, `.subscribe()` |
 | `utils/hashUtils.ts` | Hash utilities | `simpleHash()`, `hashArray()`, `hashObject()`, `combineHashes()` |
 | `utils/EventEmitter.ts` | Typed events | `EventEmitter` class |
-| `policies/WarmingPolicy.ts` | Pre-warming | `WarmingPolicyManager`, `AppStartWarmingPolicy`, `ProjectOpenWarmingPolicy` |
 | `policies/LRUEvictionPolicy.ts` | LRU eviction | `LRUEvictionPolicy` |
 | `strategies/CharactersPreRenderStrategy.ts` | Character pre-render | `CharactersPreRenderStrategy` |
 | `strategies/TokensPreRenderStrategy.ts` | Token pre-render | `TokensPreRenderStrategy` |
@@ -77,13 +76,19 @@
 
 | Module | Purpose | Key Exports |
 |--------|---------|-------------|
-| `TokenGenerator.ts` | Main generator | `TokenGenerator`, token generation methods |
+| `TokenGenerator.ts` | Canvas rendering | `TokenGenerator` (generates `HTMLCanvasElement`) |
+| `TokenFactory.ts` | Token object creation | `TokenFactory`, `createCharacterToken()`, `createReminderToken()`, `createMetaToken()` |
+| `batchGenerator.ts` | Batch orchestration | `generateAllTokens()`, `generateScriptNameTokenOnly()`, `BatchContext` |
 | `TokenImageRenderer.ts` | Image rendering | `TokenImageRenderer`, `IImageCache` interface |
 | `TokenTextRenderer.ts` | Text rendering | `TokenTextRenderer` |
-| `batchGenerator.ts` | Batch operations | `generateAllTokens()`, `generateTokenBatch()` |
 | `presets.ts` | Preset configs | `PRESETS`, `getPreset()`, `applyPreset()` |
 | `iconLayoutStrategies.ts` | Strategy pattern | `IconLayoutStrategy`, `IconLayoutStrategyFactory` |
 | `ImageCacheAdapter.ts` | DI adapter | `ImageCacheAdapter` |
+
+**Architecture Notes:**
+- `TokenGenerator` handles pure canvas rendering (low-level)
+- `TokenFactory` creates Token objects from canvases (metadata assembly)
+- `batchGenerator` orchestrates both with progress tracking, abort handling, and parallel batching (high-level)
 
 ---
 
@@ -92,10 +97,16 @@
 | Module | Purpose | Key Exports |
 |--------|---------|-------------|
 | `dataLoader.ts` | I/O operations | `loadJson()`, `loadCharacters()` |
-| `scriptParser.ts` | JSON parsing | `parseScriptData()`, `validateScript()` |
+| `scriptParser.ts` | JSON parsing | `parseScriptData()`, `validateAndParseScript()`, `extractScriptMeta()`, `isScriptMeta()`, `isCharacter()`, `isIdReference()` |
 | `characterUtils.ts` | Character utilities | `getCharacterById()`, `mergeCharacters()` |
 | `characterLookup.ts` | O(1) validation | `characterLookupService.isValid()` |
 | `exampleScripts.ts` | Predefined scripts | `EXAMPLE_SCRIPTS` |
+
+**scriptParser.ts Architecture:**
+- Type guards: `isScriptMeta()`, `isCharacter()`, `isIdReference()`
+- Handler functions: Strategy-like pattern for each entry type
+- `ParsingContext`: Shared state across parsing operations
+- Two modes: Strict (`parseScriptData`) logs warnings, lenient (`validateAndParseScript`) collects them
 
 ---
 
@@ -141,7 +152,8 @@
 |------|---------|
 | `useProjects` | Project CRUD |
 | `useProjectAutoSave` | Auto-save functionality |
-| `useProjectCacheWarming` | Project-specific warming |
+| `useProjectTokens` | Token generation for project preview (active/non-active projects) |
+| `useOptionalFields` | Optional project field state management (privateNotes, difficulty, etc.) |
 
 ### Auto-Save System
 
@@ -161,6 +173,7 @@
 | `useCacheManager` | Cache lifecycle |
 | `useCacheStats` | Cache statistics |
 | `useStorageQuota` | Storage monitoring |
+| `useOfficialCharacterImages` | Load official character images with progressive batching |
 
 ### Character Management
 
@@ -168,7 +181,9 @@
 |------|---------|
 | `useCharacterImageResolver` | Image URL resolution |
 | `useCharacterEditor` | Edited character state, dirty tracking, debounced save |
-| `useCharacterOperations` | Add/delete/duplicate character, change team |
+| `useCharacterOperations` | **Orchestrator**: Add/delete/duplicate character, change team |
+| `useCharacterCRUD` | Sub-hook: Add, delete, duplicate operations |
+| `useCharacterMetadata` | Sub-hook: Team changes, metadata updates |
 | `useCharacterDownloads` | Character download operations, DownloadsContext registration |
 | `useTokenPreviewCache` | Preview generation, hover pre-rendering, cache management |
 
@@ -193,9 +208,12 @@
 |------|---------|
 | `useSelection` | Selection state |
 | `useUndoStack` | Undo/redo |
-| `useModalBehavior` | Modal interactions |
+| `useModalBehavior` | Modal interactions (escape key, body scroll, backdrop) |
+| `useDrawerAnimation` | Drawer open/close animation lifecycle |
+| `useDrawerState` | Drawer state management (pending value, apply/cancel/reset) |
+| `useCharacterFiltering` | Character search, edition, team, selected-only filters |
 | `useContextMenu` | Context menu state |
-| `useExpandablePanel` | Panel expansion |
+| `useExpandablePanel` | Expandable panel state and positioning |
 | `useIntersectionObserver` | Visibility detection |
 | `useAutoResizeTextarea` | Textarea sizing |
 
@@ -211,7 +229,12 @@
 | Hook | Purpose |
 |------|---------|
 | `useBuiltInAssets` | Asset loading |
-| `useAssetManager` | Asset CRUD |
+| `useAssetManager` | Asset CRUD, bulk operations, filtering |
+| `useAssetPreview` | Asset value resolution to preview URL/metadata |
+| `useAssetPreviewGenerator` | Live token preview generation for asset selection (debounced) |
+| `useAssetSelection` | Selection mode logic for Asset Manager (built-in, user, none) |
+| `useAssetOperations` | Asset CRUD: rename, download, duplicate, reclassify |
+| `useFileUpload` | File upload handling |
 | `usePWAInstall` | PWA installation |
 
 ### Editor
@@ -219,6 +242,15 @@
 | Hook | Purpose |
 |------|---------|
 | `useCodeMirrorEditor` | CodeMirror 6 editor lifecycle |
+
+### Studio
+
+| Hook | Purpose |
+|------|---------|
+| `useAssetEditor` | **Orchestrator**: Studio asset editing (compose sub-hooks below) |
+| `useAssetEffectState` | Sub-hook: Effect values, presets, undo stack |
+| `useAssetCanvasOperations` | Sub-hook: Canvas rendering, load, save operations |
+| `useAssetUIState` | Sub-hook: Loading, processing, error state management |
 
 ---
 
@@ -314,4 +346,4 @@ src/
 
 ---
 
-*Last updated: 2025-12-20*
+*Last updated: 2025-12-21*

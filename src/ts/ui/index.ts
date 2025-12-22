@@ -3,6 +3,12 @@
  * UI Module - Barrel export for UI utility functions
  */
 
+// CodeMirror theme utilities
+export {
+  createBaseTheme,
+  createCodeMirrorTheme,
+  createSyntaxHighlighting,
+} from './codemirrorTheme.js';
 // Token Detail View utilities
 export {
   downloadCharacterTokenOnly,
@@ -13,10 +19,3 @@ export {
   regenerateSingleToken,
   updateCharacterInJson,
 } from './detailViewUtils.js';
-
-// CodeMirror theme utilities
-export {
-  createCodeMirrorTheme,
-  createBaseTheme,
-  createSyntaxHighlighting,
-} from './codemirrorTheme.js';

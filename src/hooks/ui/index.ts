@@ -15,44 +15,45 @@
  * @module hooks/ui
  */
 
-// Selection hooks
-export { useSelection } from './useSelection';
-export type { UseSelectionOptions, UseSelectionReturn } from './useSelection';
-
-// Undo stack hooks
-export { useUndoStack } from './useUndoStack';
-export type { UseUndoStackReturn } from './useUndoStack';
-
-// Modal behavior hooks
-export { useModalBehavior } from './useModalBehavior';
-export type { default as UseModalBehaviorOptions } from './useModalBehavior';
-
-// Context menu hooks
-export { useContextMenu } from './useContextMenu';
+// Auto-resize textarea hooks
+export type { UseAutoResizeTextareaOptions } from './useAutoResizeTextarea';
+export { useAutoResizeTextarea } from './useAutoResizeTextarea';
+export type { EditionFilter, TeamFilter } from './useCharacterFiltering';
+// Character filtering hooks
+export { useCharacterFiltering } from './useCharacterFiltering';
 export type {
   ContextMenuPosition,
   UseContextMenuOptions,
   UseContextMenuReturn,
 } from './useContextMenu';
-
-// Expandable panel hooks
-export { useExpandablePanel } from './useExpandablePanel';
+// Context menu hooks
+export { useContextMenu } from './useContextMenu';
+export type { UseDraggableListOptions, UseDraggableListResult } from './useDraggableList';
+// Draggable list hooks
+export { useDraggableList } from './useDraggableList';
+// Drawer animation hooks
+export { useDrawerAnimation } from './useDrawerAnimation';
+export type { UseDrawerStateOptions, UseDrawerStateReturn } from './useDrawerState';
+// Drawer state hooks
+export { useDrawerState } from './useDrawerState';
 export type {
   PanelPosition,
   UseExpandablePanelOptions,
   UseExpandablePanelReturn,
 } from './useExpandablePanel';
-
-// Draggable list hooks
-export { useDraggableList } from './useDraggableList';
-export type { UseDraggableListOptions, UseDraggableListResult } from './useDraggableList';
-
+// Expandable panel hooks
+export { useExpandablePanel } from './useExpandablePanel';
 // Filter hooks
 export { useFilters } from './useFilters';
-
-// Auto-resize textarea hooks
-export { useAutoResizeTextarea } from './useAutoResizeTextarea';
-
+export type { default as UseIntersectionObserverOptions } from './useIntersectionObserver';
 // Intersection observer hooks
 export { useIntersectionObserver } from './useIntersectionObserver';
-export type { default as UseIntersectionObserverOptions } from './useIntersectionObserver';
+export type { default as UseModalBehaviorOptions } from './useModalBehavior';
+// Modal behavior hooks
+export { useModalBehavior } from './useModalBehavior';
+export type { UseSelectionOptions, UseSelectionReturn } from './useSelection';
+// Selection hooks
+export { useSelection } from './useSelection';
+export type { UseUndoStackReturn } from './useUndoStack';
+// Undo stack hooks
+export { useUndoStack } from './useUndoStack';
