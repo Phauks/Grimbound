@@ -9,7 +9,7 @@
 
 import { type ReactNode, useState } from 'react';
 import type { DownloadItem } from '@/contexts/DownloadsContext';
-import styles from '@/styles/components/views/ExportDownloads.module.css';
+import styles from '@/styles/components/export/DownloadComponents.module.css';
 import { DownloadCard } from './DownloadCard';
 
 export interface DownloadSectionProps {

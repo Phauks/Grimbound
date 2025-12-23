@@ -140,14 +140,12 @@ export const DisplayModeToggle = memo(function DisplayModeToggle({
 interface ListSettingsPopoverProps {
   settings: ListViewSettings;
   onSettingsChange: (settings: ListViewSettings) => void;
-  onClose: () => void;
 }
 
 /** Popover for configuring list view columns */
 export const ListSettingsPopover = memo(function ListSettingsPopover({
   settings,
   onSettingsChange,
-  onClose,
 }: ListSettingsPopoverProps) {
   const handleChange =
     (key: keyof ListViewSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,9 +156,6 @@ export const ListSettingsPopover = memo(function ListSettingsPopover({
     <div className={viewStyles.listSettingsPopover}>
       <div className={viewStyles.listSettingsHeader}>
         <span>Columns</span>
-        <button type="button" className={viewStyles.listSettingsClose} onClick={onClose}>
-          x
-        </button>
       </div>
       <label className={viewStyles.listSettingsOption}>
         <input
@@ -691,46 +686,24 @@ export const CharactersSection = memo(function CharactersSection({
 
       {displayMode === 'list' && (
         <div className={viewStyles.characterSelectionSection}>
-          <div className={viewStyles.characterSelectionHeaderRow}>
-            <button
-              type="button"
-              className={viewStyles.characterSelectionHeader}
-              onClick={() => setShowCharacterList(!showCharacterList)}
-            >
-              <span className={viewStyles.characterSelectionIcon}>
-                {showCharacterList ? '▼' : '▶'}
-              </span>
-              <span className={viewStyles.characterSelectionTitle}>Character Selection</span>
-              <span className={viewStyles.characterSelectionSummary}>
-                {selectionSummary.enabled} of {selectionSummary.total} included
-                {selectionSummary.disabled > 0 && (
-                  <span className={viewStyles.characterSelectionBadge}>
-                    {selectionSummary.disabled} excluded
-                  </span>
-                )}
-              </span>
-            </button>
-            {showCharacterList && (
-              <div className={viewStyles.listSettingsContainer}>
-                <button
-                  type="button"
-                  className={viewStyles.listSettingsButton}
-                  onClick={() => setShowListSettings(!showListSettings)}
-                  title="Configure list columns"
-                  aria-expanded={showListSettings}
-                >
-                  Settings
-                </button>
-                {showListSettings && (
-                  <ListSettingsPopover
-                    settings={listViewSettings}
-                    onSettingsChange={setListViewSettings}
-                    onClose={() => setShowListSettings(false)}
-                  />
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            className={viewStyles.characterSelectionHeader}
+            onClick={() => setShowCharacterList(!showCharacterList)}
+          >
+            <span className={viewStyles.characterSelectionIcon}>
+              {showCharacterList ? '▼' : '▶'}
+            </span>
+            <span className={viewStyles.characterSelectionTitle}>Character Selection</span>
+            <span className={viewStyles.characterSelectionSummary}>
+              {selectionSummary.enabled} of {selectionSummary.total} included
+              {selectionSummary.disabled > 0 && (
+                <span className={viewStyles.characterSelectionBadge}>
+                  {selectionSummary.disabled} excluded
+                </span>
+              )}
+            </span>
+          </button>
           {showCharacterList && (
             <div className={viewStyles.characterSelectionContent}>
               <CharacterListView
@@ -743,6 +716,28 @@ export const CharactersSection = memo(function CharactersSection({
                 characterMetadata={projectCharacterMetadata}
                 onToggleCharacter={onCharacterToggle}
                 onToggleAll={onToggleAllCharacters}
+                headerActions={
+                  <div className={viewStyles.listSettingsContainer}>
+                    <button
+                      type="button"
+                      className={`${viewStyles.listSettingsButton} ${showListSettings ? viewStyles.listSettingsButtonActive : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowListSettings(!showListSettings);
+                      }}
+                      title="Configure list columns"
+                      aria-expanded={showListSettings}
+                    >
+                      ⚙️
+                    </button>
+                    {showListSettings && (
+                      <ListSettingsPopover
+                        settings={listViewSettings}
+                        onSettingsChange={setListViewSettings}
+                      />
+                    )}
+                  </div>
+                }
               />
             </div>
           )}

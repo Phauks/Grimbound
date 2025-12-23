@@ -20,6 +20,7 @@ import { useScriptData, useScriptTransformations, useTokenGenerator } from '@/ho
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import CONFIG from '@/ts/config.js';
+import { TIMING } from '@/ts/constants.js';
 import { logger } from '@/ts/utils/logger.js';
 
 interface JsonViewProps {
@@ -96,7 +97,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
 
     parseTimerRef.current = setTimeout(() => {
       parseJson(jsonInput);
-    }, 300);
+    }, TIMING.JSON_VALIDATION_DEBOUNCE);
 
     return () => {
       if (parseTimerRef.current) {
@@ -147,7 +148,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
       logger.debug('JsonView', 'Debounce timer fired - calling generateTokens');
       await generateTokens();
       onGenerate?.();
-    }, 300);
+    }, TIMING.JSON_VALIDATION_DEBOUNCE);
 
     return () => {
       if (debounceTimerRef.current) {

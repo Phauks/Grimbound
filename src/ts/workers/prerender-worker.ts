@@ -40,13 +40,21 @@ export interface WorkerResponse {
 }
 
 /**
+ * Supported output formats for canvas encoding.
+ */
+export type OutputFormat = 'image/png' | 'image/webp' | 'image/jpeg';
+
+/**
  * Canvas encoding task data.
  */
 export interface EncodeCanvasTask {
-  imageData: ImageData; // Transferable
+  imageData: ImageData; // Transferable (via buffer)
   width: number;
   height: number;
+  /** Encoding quality 0.0-1.0 (only used for WebP and JPEG, ignored for PNG) */
   quality?: number;
+  /** Output format (default: 'image/webp' for better compression with quality support) */
+  format?: OutputFormat;
 }
 
 /**
@@ -66,14 +74,16 @@ const supportsOffscreenCanvas = typeof OffscreenCanvas !== 'undefined';
  * @param imageData - Image data to encode
  * @param width - Canvas width
  * @param height - Canvas height
- * @param quality - Encoding quality (0.0-1.0)
+ * @param quality - Encoding quality (0.0-1.0), only used for WebP and JPEG
+ * @param format - Output format (default: 'image/webp')
  * @returns Data URL string
  */
 async function encodeImageData(
   imageData: ImageData,
   width: number,
   height: number,
-  quality: number = 0.92
+  quality: number = 0.92,
+  format: OutputFormat = 'image/webp'
 ): Promise<string> {
   if (!supportsOffscreenCanvas) {
     throw new Error('OffscreenCanvas not supported in this browser');
@@ -90,11 +100,13 @@ async function encodeImageData(
   // Put image data on canvas
   ctx.putImageData(imageData, 0, 0);
 
-  // Convert to blob
-  const blob = await canvas.convertToBlob({
-    type: 'image/png',
-    quality,
-  });
+  // Convert to blob (quality is only used for WebP and JPEG, ignored for PNG)
+  const blobOptions: ImageEncodeOptions = { type: format };
+  if (format !== 'image/png') {
+    blobOptions.quality = quality;
+  }
+
+  const blob = await canvas.convertToBlob(blobOptions);
 
   // Convert blob to data URL
   const dataUrl = await blobToDataURL(blob);
@@ -124,7 +136,13 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
   try {
     if (type === 'ENCODE_CANVAS') {
       const task = data as EncodeCanvasTask;
-      const dataUrl = await encodeImageData(task.imageData, task.width, task.height, task.quality);
+      const dataUrl = await encodeImageData(
+        task.imageData,
+        task.width,
+        task.height,
+        task.quality,
+        task.format
+      );
 
       const response: WorkerResponse = {
         type: 'SUCCESS',
@@ -143,7 +161,8 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
           encoding.imageData,
           encoding.width,
           encoding.height,
-          encoding.quality
+          encoding.quality,
+          encoding.format
         );
         results.push(dataUrl);
       }

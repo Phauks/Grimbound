@@ -119,6 +119,10 @@ export const TOKEN_COUNT_BADGE = {
   STROKE_WIDTH: 2,
   /** Size growth per reminder item (for dots style) */
   SIZE_GROWTH_PER_ITEM: 0.15,
+  /** Gap between badge bottom and ability text top (ratio of diameter) */
+  TEXT_GAP: 0.02,
+  /** Reference reminder count used for uniform layout (ensures consistent spacing) */
+  UNIFORM_LAYOUT_REFERENCE_COUNT: 4,
 } as const;
 
 /**
@@ -193,6 +197,7 @@ export const ACCENT_LAYOUT = {
  * - Studio icon color replacer (HSL-based selective recoloring)
  * - Character preset system (grayscale + overlay)
  * - Token generation backgrounds
+ * - UI components like team headers, badges
  */
 export const TEAM_COLORS = {
   /** Townsfolk - Blue (good aligned) */
@@ -229,6 +234,16 @@ export const TEAM_COLORS = {
       right: { hex: '#CC0000', hue: 0 }, // Red (Evil/Demon)
     },
   },
+  /** Traveller - Alias for traveler (British spelling) */
+  traveller: {
+    hex: '#808080',
+    hue: 0,
+    saturationBoost: 1.0,
+    split: {
+      left: { hex: '#3B5998', hue: 220 },
+      right: { hex: '#CC0000', hue: 0 },
+    },
+  },
   /** Fabled - Gold (storyteller characters) */
   fabled: {
     hex: '#FFD700',
@@ -241,6 +256,12 @@ export const TEAM_COLORS = {
     hue: 120,
     saturationBoost: 1.0,
   },
+  /** Meta - Gray (meta tokens like script name) */
+  meta: {
+    hex: '#808080',
+    hue: 0,
+    saturationBoost: 0.0,
+  },
 } as const;
 
 /**
@@ -249,11 +270,35 @@ export const TEAM_COLORS = {
 export type TeamColorKey = keyof typeof TEAM_COLORS;
 
 /**
- * Get team color by key
+ * Get team color config by key
  */
 export function getTeamColor(team: TeamColorKey) {
   return TEAM_COLORS[team];
 }
+
+/**
+ * Get team hex color (convenience function)
+ */
+export function getTeamHexColor(team: TeamColorKey): string {
+  return TEAM_COLORS[team].hex;
+}
+
+/**
+ * Team labels for display - Single Source of Truth
+ */
+export const TEAM_LABELS = {
+  townsfolk: 'Townsfolk',
+  outsider: 'Outsider',
+  minion: 'Minion',
+  demon: 'Demon',
+  traveler: 'Traveler',
+  traveller: 'Traveller', // British spelling alias
+  fabled: 'Fabled',
+  loric: 'Loric',
+  meta: 'Meta',
+} as const;
+
+export type TeamLabelKey = keyof typeof TEAM_LABELS;
 
 // ============================================================================
 // COLORS - Default colors used throughout token generation
@@ -265,6 +310,8 @@ export function getTeamColor(team: TeamColorKey) {
 export const DEFAULT_COLORS = {
   /** Fallback background color when image fails to load */
   FALLBACK_BACKGROUND: '#1a1a1a',
+  /** Default white background color for tokens */
+  BACKGROUND_WHITE: '#FFFFFF',
   /** Default text color (white) */
   TEXT_PRIMARY: '#FFFFFF',
   /** Black text color for QR tokens */
@@ -322,15 +369,23 @@ export const ABILITY_TEXT_SHADOW = {
 // ============================================================================
 
 /**
- * Timing constants
+ * Timing constants - centralized debounce and delay values
  */
 export const TIMING = {
   /** Delay for QR code generation (ms) - allows library to render */
   QR_GENERATION_DELAY: 100,
+  /** UI animation duration (ms) */
+  UI_ANIMATION: 200,
   /** Debounce delay for JSON validation (ms) */
   JSON_VALIDATION_DEBOUNCE: 300,
   /** Debounce delay for option changes (ms) */
   OPTION_CHANGE_DEBOUNCE: 500,
+  /** Debounce delay for metadata editor (ms) */
+  METADATA_DEBOUNCE: 500,
+  /** Debounce delay for image loading (ms) */
+  IMAGE_LOAD_DEBOUNCE: 800,
+  /** Auto-save delay (ms) */
+  AUTO_SAVE_DELAY: 1000,
 } as const;
 
 // ============================================================================
@@ -352,11 +407,64 @@ export const UI_SIZE = {
 } as const;
 
 /**
+ * UI dimension constants for layout calculations
+ */
+export const UI_DIMENSIONS = {
+  /** Minimum panel width in pixels */
+  MIN_PANEL_WIDTH: 300,
+} as const;
+
+// ============================================================================
+// STUDIO DEFAULTS - Default values for Studio asset editing
+// ============================================================================
+
+/**
+ * Default values for Studio asset editing
+ */
+export const STUDIO_DEFAULTS = {
+  /** Default border width in pixels */
+  BORDER_WIDTH: 3,
+  /** Default border color (white) */
+  BORDER_COLOR: '#FFFFFF',
+} as const;
+
+/**
  * Token preview display settings
  */
 export const TOKEN_PREVIEW = {
   /** Display size for token cards in the grid */
   DISPLAY_SIZE: 180,
+} as const;
+
+// ============================================================================
+// PDF GENERATION CONSTANTS
+// ============================================================================
+
+/**
+ * PDF specification: 1 inch = 72 points
+ * This is a fixed constant per PDF spec, not related to image DPI (300).
+ * Used for coordinate conversion when working with pdf-lib.
+ */
+export const PDF_POINTS_PER_INCH = 72;
+
+/**
+ * Bleed algorithm constants for print-professional token bleeding
+ *
+ * The bleed algorithm extends edge colors outward to create print margins.
+ * Key insight: bleed ring must OVERLAP into the token's anti-aliased edge zone
+ * so that semi-transparent edge pixels blend with bleed colors instead of white.
+ */
+export const BLEED_ALGORITHM = {
+  /** Pixels inside token edge for safe color sampling (avoids anti-aliased zone) */
+  SAFE_SAMPLE_DISTANCE: 5,
+  /** Number of angular samples (1 per degree for smooth coverage) */
+  SAMPLE_COUNT: 360,
+  /** Pixels the bleed ring extends inward to overlap anti-aliased edge zone */
+  INNER_OVERLAP: 3,
+  /** Minimum alpha value (0-255) to consider a sampled pixel valid */
+  MIN_ALPHA_THRESHOLD: 128,
+  /** Minimum ratio of valid samples required (0.5 = 50%) */
+  MIN_VALID_SAMPLE_RATIO: 0.5,
 } as const;
 
 // ============================================================================
@@ -383,12 +491,17 @@ export default {
   TOKEN_COUNT_BADGE,
   ACCENT_LAYOUT,
   TEAM_COLORS,
+  TEAM_LABELS,
   DEFAULT_COLORS,
   QR_COLORS,
   TEXT_SHADOW,
   ABILITY_TEXT_SHADOW,
   TIMING,
   UI_SIZE,
+  UI_DIMENSIONS,
+  STUDIO_DEFAULTS,
   TOKEN_PREVIEW,
+  PDF_POINTS_PER_INCH,
+  BLEED_ALGORITHM,
   FALLBACK_PREVIEW_CHARACTER_ID,
 };

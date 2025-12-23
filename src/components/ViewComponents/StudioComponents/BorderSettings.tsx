@@ -17,6 +17,7 @@ import {
 import { type PanelPosition, useExpandablePanel } from '@/hooks/ui/useExpandablePanel';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import styles from '@/styles/components/studio/Studio.module.css';
+import { STUDIO_DEFAULTS } from '@/ts/constants.js';
 import { cn } from '@/ts/utils/classNames.js';
 
 export interface BorderSettingsProps {
@@ -135,8 +136,8 @@ export const BorderSettings = memo(function BorderSettings({
   const summaryText = enabled ? `${borderWidth}px` : 'None';
 
   const handleReset = useCallback(() => {
-    onWidthChange(3);
-    onColorChange('#FFFFFF');
+    onWidthChange(STUDIO_DEFAULTS.BORDER_WIDTH);
+    onColorChange(STUDIO_DEFAULTS.BORDER_COLOR);
   }, [onWidthChange, onColorChange]);
 
   const borderPreviewStyle: React.CSSProperties = enabled

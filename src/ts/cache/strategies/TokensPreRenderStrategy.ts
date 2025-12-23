@@ -9,7 +9,8 @@ import type {
   PreRenderContext,
   PreRenderResult,
 } from '@/ts/cache/core/index.js';
-import { WorkerPool } from '@/ts/cache/utils/WorkerPool.js';
+import { AdaptiveWorkerPool } from '@/ts/cache/utils/AdaptiveWorkerPool.js';
+import { TokenCreationError, TokenGeneratorError, ValidationError } from '@/ts/errors.js';
 import { globalImageCache } from '@/ts/utils/imageCache.js';
 import { logger } from '@/ts/utils/logger.js';
 import type { EncodeCanvasTask } from '@/ts/workers/prerender-worker.js';
@@ -33,11 +34,12 @@ export interface TokensStrategyOptions {
 /**
  * Domain Service: Tokens pre-rendering strategy.
  * Pre-renders first N tokens as data URLs for instant display in tokens view.
+ * Uses AdaptiveWorkerPool for memory-aware scaling of worker threads.
  */
 export class TokensPreRenderStrategy implements IPreRenderStrategy {
   readonly name = 'tokens';
   readonly priority = 1;
-  private workerPool?: WorkerPool;
+  private workerPool?: AdaptiveWorkerPool;
 
   constructor(
     private cache: ICacheStrategy<string, string>, // Key: filename, Value: dataURL
@@ -49,10 +51,13 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
       encodingQuality: 0.92,
     }
   ) {
-    // Initialize worker pool if workers are enabled
+    // Initialize adaptive worker pool if workers are enabled
     if (this.options.useWorkers && typeof OffscreenCanvas !== 'undefined') {
-      this.workerPool = new WorkerPool({
-        workerCount: this.options.maxConcurrent,
+      this.workerPool = new AdaptiveWorkerPool({
+        minWorkers: 1,
+        maxWorkers: this.options.maxConcurrent,
+        memoryPressureThreshold: 0.75, // Scale down when memory usage > 75%
+        scaleUpQueueThreshold: 5, // Scale up when queue > 5 tasks
       });
     }
   }
@@ -93,7 +98,9 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
         const results = await Promise.allSettled(
           batch.map(async (token) => {
             if (!token.canvas) {
-              throw new Error(`Token ${token.filename} is missing canvas`);
+              throw new ValidationError(`Token ${token.filename} is missing canvas`, [
+                `Token: ${token.filename}`,
+              ]);
             }
             const dataUrl = await this.encodeCanvas(token.canvas);
             await this.cache.set(token.filename, dataUrl);
@@ -128,6 +135,7 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
         useWorkers: this.options.useWorkers && !!this.workerPool,
         concurrency: this.options.maxConcurrent,
         cacheStats: this.cache.getStats(),
+        workerPoolStats: this.workerPool?.getAdaptiveStats(),
       },
     };
   }
@@ -135,6 +143,7 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
   /**
    * Encode tokens using Web Workers (off main thread).
    * Extracts ImageData and sends to workers for OffscreenCanvas encoding.
+   * Uses Transferable objects for zero-copy buffer transfer.
    *
    * @param tokens - Tokens to encode
    * @returns Number of successfully encoded tokens
@@ -152,7 +161,7 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
         // Extract ImageData from canvas (on main thread)
         const ctx = token.canvas.getContext('2d');
         if (!ctx) {
-          throw new Error('Failed to get 2d context');
+          throw new TokenCreationError('Failed to get 2d context', token.filename);
         }
 
         const imageData = ctx.getImageData(0, 0, token.canvas.width, token.canvas.height);
@@ -165,13 +174,17 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
           quality: this.options.encodingQuality,
         };
 
-        const response = await this.workerPool?.execute<{ dataUrl: string }>({
-          type: 'ENCODE_CANVAS',
-          data: task,
-        });
+        // Transfer the underlying ArrayBuffer for zero-copy (buffer becomes unusable after transfer)
+        const response = await this.workerPool?.execute<{ dataUrl: string }>(
+          {
+            type: 'ENCODE_CANVAS',
+            data: task,
+          },
+          { transfer: [imageData.data.buffer] }
+        );
 
         if (!response) {
-          throw new Error('Worker pool not available');
+          throw new TokenGeneratorError('Worker pool not available');
         }
 
         // Cache result

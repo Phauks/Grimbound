@@ -12,7 +12,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useCharacterImageResolver } from '@/hooks';
 import styles from '@/styles/components/projects/CharacterListView.module.css';
-import { TEAM_COLORS, TEAM_LABELS } from '@/ts/config.js';
+import { getTeamHexColor, TEAM_LABELS } from '@/ts/config.js';
 import type { Character, CharacterMetadata, Team, Token } from '@/ts/types/index.js';
 import { isCharacterEnabled } from '@/ts/utils/characterFiltering.js';
 
@@ -41,6 +41,8 @@ interface CharacterListViewProps {
   onToggleCharacter?: (uuid: string, enabled: boolean) => void;
   /** Callback to toggle all characters (optional) */
   onToggleAll?: (enabled: boolean) => void;
+  /** Additional actions to render in the selection header (next to bulk actions) */
+  headerActions?: React.ReactNode;
 }
 
 /** Visibility options for character info columns */
@@ -173,12 +175,14 @@ function calculateSelectionSummary(
 interface SelectionHeaderProps {
   summary: SelectionSummary;
   onToggleAll?: (enabled: boolean) => void;
+  headerActions?: React.ReactNode;
 }
 
 /** Header with selection summary and bulk action buttons */
 const SelectionHeader = memo(function SelectionHeader({
   summary,
   onToggleAll,
+  headerActions,
 }: SelectionHeaderProps) {
   return (
     <div className={styles.selectionHeader}>
@@ -203,6 +207,7 @@ const SelectionHeader = memo(function SelectionHeader({
           >
             Disable All
           </button>
+          {headerActions}
         </div>
       )}
     </div>
@@ -232,8 +237,8 @@ const CharacterIcon = memo(function CharacterIcon({
 
   const buttonStyle = selection.enabled
     ? ({
-        '--team-color': TEAM_COLORS[character.team],
-        '--team-color-glow': `${TEAM_COLORS[character.team]}40`,
+        '--team-color': getTeamHexColor(character.team),
+        '--team-color-glow': `${getTeamHexColor(character.team)}40`,
       } as React.CSSProperties)
     : undefined;
 
@@ -266,7 +271,7 @@ const CharacterIcon = memo(function CharacterIcon({
       ) : (
         <div
           className={styles.iconPlaceholder}
-          style={{ backgroundColor: TEAM_COLORS[character.team] }}
+          style={{ backgroundColor: getTeamHexColor(character.team) }}
         >
           {isLoading ? '...' : character.name.charAt(0)}
         </div>
@@ -416,7 +421,7 @@ const TeamSection = memo(function TeamSection({
       <button
         type="button"
         className={styles.teamHeader}
-        style={{ backgroundColor: TEAM_COLORS[team] }}
+        style={{ backgroundColor: getTeamHexColor(team) }}
         onClick={onToggleCollapse}
         aria-expanded={!isCollapsed}
       >
@@ -458,6 +463,7 @@ export function CharacterListView({
   characterMetadata,
   onToggleCharacter,
   onToggleAll,
+  headerActions,
 }: CharacterListViewProps) {
   // Track which team sections are collapsed
   const [collapsedTeams, setCollapsedTeams] = useState<Set<Team>>(new Set());
@@ -539,7 +545,13 @@ export function CharacterListView({
 
   return (
     <div className={styles.container}>
-      {showSelection && <SelectionHeader summary={selectionSummary} onToggleAll={onToggleAll} />}
+      {showSelection && (
+        <SelectionHeader
+          summary={selectionSummary}
+          onToggleAll={onToggleAll}
+          headerActions={headerActions}
+        />
+      )}
 
       {Array.from(groupedCharacters.entries()).map(([team, teamCharacters]) => (
         <TeamSection

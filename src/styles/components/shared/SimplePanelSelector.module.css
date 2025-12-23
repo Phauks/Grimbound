@@ -192,3 +192,86 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* ============================================
+   Dual Panel Layout (for Variants Selector)
+   ============================================ */
+
+.dualPanelContent {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  padding: 0;
+}
+
+.panelColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem;
+}
+
+.panelColumn:first-child {
+  border-right: 1px solid var(--border-color);
+}
+
+/* Team checkbox with color swatch */
+.teamCheckboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.125rem 0;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.teamCheckboxRow input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.teamCheckboxRow:hover {
+  color: var(--color-accent);
+}
+
+.teamColorSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.teamLabel {
+  flex: 1;
+}
+
+/* Section subtitle for team variants */
+.sectionSubtitle {
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  margin-bottom: 0.125rem;
+}
+
+/* Team list container */
+.teamList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin-left: 0.25rem;
+}
+
+/* Disabled state for team options when auto-gen is off */
+.teamListDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}

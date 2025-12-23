@@ -3,6 +3,8 @@
  * Enables debugging cache behavior and measuring performance improvements.
  */
 
+import { STORAGE_KEYS } from '@/ts/utils/storageKeys.js';
+
 /**
  * Log levels for cache operations.
  * Higher levels include all lower levels.
@@ -85,7 +87,7 @@ export namespace CacheLogger {
    */
   export function initialize(): void {
     // Check localStorage for persisted log level
-    const storedLevel = localStorage.getItem('cache:logLevel');
+    const storedLevel = localStorage.getItem(STORAGE_KEYS.CACHE_LOG_LEVEL);
     if (storedLevel && storedLevel in CacheLogLevel) {
       level = CacheLogLevel[storedLevel as keyof typeof CacheLogLevel];
     }
@@ -108,7 +110,7 @@ export namespace CacheLogger {
   export function setLevel(newLevel: CacheLogLevel): void {
     level = newLevel;
     // Persist to localStorage
-    localStorage.setItem('cache:logLevel', CacheLogLevel[newLevel]);
+    localStorage.setItem(STORAGE_KEYS.CACHE_LOG_LEVEL, CacheLogLevel[newLevel]);
     console.info(`[Cache:INFO] Log level set to ${CacheLogLevel[newLevel]}`);
   }
 

@@ -42,6 +42,15 @@ export {
   turbulence,
   VignetteEffect,
 } from './backgroundEffects/index.js';
+// Bleed utilities for print-professional token bleeding
+export {
+  type BleedConfig,
+  type EdgeSample,
+  generateBleedRing,
+  hasValidSamples,
+  interpolateSampleColor,
+  sampleEdgeColors,
+} from './bleedUtils.js';
 // Canvas optimization utilities
 export {
   type CharacterPosition,

@@ -27,6 +27,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '@/styles/components/shared/UnifiedSettingsBox.module.css';
+import { UI_DIMENSIONS } from '@/ts/constants.js';
 
 // ============================================================================
 // Types
@@ -142,7 +143,7 @@ function UnifiedSettingsBoxInner<T>({
   renderPanel,
   defaultValue,
   panelHeight = 320,
-  minPanelWidth = 300,
+  minPanelWidth = UI_DIMENSIONS.MIN_PANEL_WIDTH,
   size = 'medium',
   disabled = false,
   ariaLabel,

@@ -123,6 +123,19 @@ export type Team =
   | 'loric'
   | 'meta';
 
+// Teams available for auto-generation (excludes meta and aliases)
+export type AutoGenerateTeam =
+  | 'townsfolk'
+  | 'outsider'
+  | 'minion'
+  | 'demon'
+  | 'traveller'
+  | 'fabled'
+  | 'loric';
+
+// Default teams for auto-generation (Townsfolk/Good and Demon/Evil)
+export const DEFAULT_AUTO_GENERATE_TEAMS: AutoGenerateTeam[] = ['townsfolk', 'demon'];
+
 // Decorative overrides for per-character styling
 // These override global GenerationOptions when set
 export interface DecorativeOverrides {
@@ -347,8 +360,14 @@ export interface GenerationOptions {
   bootleggerHideName?: boolean;
   tokenCount: boolean;
   reminderCountStyle?: ReminderCountStyle;
+  /** When true, all tokens use uniform top spacing as if they all have a badge */
+  reminderCountUniformLayout?: boolean;
   generateImageVariants?: boolean;
   generateReminderVariants?: boolean;
+  // Auto-generation settings - automatically create team color variants
+  autoGenerateCharacterVariants?: boolean;
+  autoGenerateReminderVariants?: boolean;
+  autoGenerateTeams?: AutoGenerateTeam[]; // Which teams to generate variants for
   setupStyle: string;
   reminderBackground: string;
   reminderBackgroundImage?: string;
@@ -855,16 +874,9 @@ export interface PresetConfig {
   };
 }
 
-// Declare global jsPDF and JSZip
+// Declare global JSZip and QRCode
 declare global {
   interface Window {
-    jspdf: {
-      jsPDF: new (options?: {
-        orientation?: 'portrait' | 'landscape';
-        unit?: 'pt' | 'px' | 'in' | 'mm' | 'cm' | 'ex' | 'em' | 'pc';
-        format?: string | number[];
-      }) => jsPDFDocument;
-    };
     JSZip: new () => JSZipInstance;
     TokenGeneratorApp: unknown;
     QRCode: new (
@@ -885,21 +897,6 @@ declare global {
 export interface QRCodeInstance {
   clear(): void;
   makeCode(text: string): void;
-}
-
-// jsPDF document type
-export interface jsPDFDocument {
-  addPage(): void;
-  addImage(
-    imageData: string,
-    format: string,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ): void;
-  save(filename: string): void;
-  output(type: 'blob'): Blob;
 }
 
 // JSZip types

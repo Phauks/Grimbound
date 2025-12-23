@@ -1,8 +1,9 @@
 /**
  * GenerateVariantsSelector Component
  *
- * A simple one-panel settings selector for generating token variants.
- * Controls character and reminder token variant generation.
+ * A dual-panel settings selector for generating token variants.
+ * Left panel: Image variant controls (for characters with multiple images)
+ * Right panel: Auto-generation controls (apply team color filters)
  *
  * @module components/Shared/GenerateVariantsSelector
  */
@@ -13,7 +14,9 @@ import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
-import type { GenerationOptions } from '@/ts/types/index';
+import { TEAM_COLORS, TEAM_LABELS } from '@/ts/constants.js';
+import type { AutoGenerateTeam, GenerationOptions } from '@/ts/types/index';
+import { DEFAULT_AUTO_GENERATE_TEAMS } from '@/ts/types/index';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 export interface GenerateVariantsSelectorProps {
@@ -25,9 +28,54 @@ export interface GenerateVariantsSelectorProps {
 }
 
 interface PendingVariantSettings {
+  // Image variants (left panel)
   characterVariants: boolean;
   reminderVariants: boolean;
+  // Auto-generation (right panel)
+  autoGenerateCharacters: boolean;
+  autoGenerateReminders: boolean;
+  autoGenerateTeams: AutoGenerateTeam[];
 }
+
+// Team configuration for the auto-generation panel
+interface TeamOption {
+  id: AutoGenerateTeam;
+  label: string;
+  color: string;
+  /** Split colors for teams like Traveler (blue left, red right) */
+  split?: { left: { hue: number }; right: { hue: number } };
+}
+
+/**
+ * Get the background style for a team swatch.
+ * Returns a gradient for split-color teams (e.g., Traveler), solid color otherwise.
+ */
+function getTeamSwatchStyle(team: TeamOption): React.CSSProperties {
+  if (team.split) {
+    // Use gradient matching studio's TeamColorPreview
+    const { left, right } = team.split;
+    return {
+      background: `linear-gradient(90deg, hsl(${left.hue}, 60%, 45%) 50%, hsl(${right.hue}, 70%, 40%) 50%)`,
+    };
+  }
+  return { backgroundColor: team.color };
+}
+
+const TEAM_OPTIONS: TeamOption[] = [
+  { id: 'townsfolk', label: 'Townsfolk/Good', color: TEAM_COLORS.townsfolk.hex },
+  { id: 'outsider', label: TEAM_LABELS.outsider, color: TEAM_COLORS.outsider.hex },
+  { id: 'minion', label: TEAM_LABELS.minion, color: TEAM_COLORS.minion.hex },
+  { id: 'demon', label: 'Demon/Evil', color: TEAM_COLORS.demon.hex },
+  {
+    id: 'traveller',
+    label: TEAM_LABELS.traveler,
+    color: TEAM_COLORS.traveler.hex,
+    // Pull split colors from TEAM_COLORS constants (SSOT)
+    split: TEAM_COLORS.traveler.split,
+  },
+  { id: 'fabled', label: TEAM_LABELS.fabled, color: TEAM_COLORS.fabled.hex },
+  { id: 'loric', label: TEAM_LABELS.loric, color: TEAM_COLORS.loric.hex },
+];
 
 // ============================================================================
 // Preview Component
@@ -52,13 +100,28 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
   disabled = false,
   ariaLabel,
 }: GenerateVariantsSelectorProps) {
+  // Image variants state
   const characterVariantsEnabled = generationOptions.generateImageVariants ?? false;
   const reminderVariantsEnabled = generationOptions.generateReminderVariants ?? false;
-  const isEnabled = characterVariantsEnabled || reminderVariantsEnabled;
+
+  // Auto-generation state
+  const autoCharactersEnabled = generationOptions.autoGenerateCharacterVariants ?? false;
+  const autoRemindersEnabled = generationOptions.autoGenerateReminderVariants ?? false;
+  const autoTeams = generationOptions.autoGenerateTeams ?? DEFAULT_AUTO_GENERATE_TEAMS;
+
+  // Combined enabled state
+  const isEnabled =
+    characterVariantsEnabled ||
+    reminderVariantsEnabled ||
+    autoCharactersEnabled ||
+    autoRemindersEnabled;
 
   const currentSettings: PendingVariantSettings = {
     characterVariants: characterVariantsEnabled,
     reminderVariants: reminderVariantsEnabled,
+    autoGenerateCharacters: autoCharactersEnabled,
+    autoGenerateReminders: autoRemindersEnabled,
+    autoGenerateTeams: autoTeams,
   };
 
   const handleToggle = useCallback(
@@ -66,6 +129,8 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
       onOptionChange({
         generateImageVariants: enabled,
         generateReminderVariants: enabled,
+        autoGenerateCharacterVariants: enabled,
+        autoGenerateReminderVariants: enabled,
       });
     },
     [onOptionChange]
@@ -76,6 +141,9 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
       onOptionChange({
         generateImageVariants: settings.characterVariants,
         generateReminderVariants: settings.reminderVariants,
+        autoGenerateCharacterVariants: settings.autoGenerateCharacters,
+        autoGenerateReminderVariants: settings.autoGenerateReminders,
+        autoGenerateTeams: settings.autoGenerateTeams,
       });
     },
     [onOptionChange]
@@ -86,14 +154,31 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     onChange: handlePanelChange,
     onPreviewChange: handlePanelChange,
     disabled,
-    panelHeight: 150,
-    minPanelWidth: 220,
+    panelHeight: 280,
+    minPanelWidth: 400,
   });
 
   const defaultSettings: PendingVariantSettings = {
     characterVariants: false,
     reminderVariants: false,
+    autoGenerateCharacters: false,
+    autoGenerateReminders: false,
+    autoGenerateTeams: [...DEFAULT_AUTO_GENERATE_TEAMS],
   };
+
+  const handleTeamToggle = useCallback(
+    (teamId: AutoGenerateTeam, checked: boolean) => {
+      const currentTeams = panel.pendingValue.autoGenerateTeams;
+      const newTeams = checked
+        ? [...currentTeams, teamId]
+        : currentTeams.filter((t) => t !== teamId);
+      panel.updatePendingField('autoGenerateTeams', newTeams);
+    },
+    [panel]
+  );
+
+  const isAutoGenEnabled =
+    panel.pendingValue.autoGenerateCharacters || panel.pendingValue.autoGenerateReminders;
 
   const EnableToggle = (
     <div className={optionStyles.inboxToggle}>
@@ -134,28 +219,75 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
         className={`${baseStyles.panel} ${panel.panelPosition.openUpward ? baseStyles.panelUpward : ''}`}
         style={panelStyle}
       >
-        <div className={styles.panelContent}>
-          <div className={styles.panelTitle}>Variants</div>
+        <div className={styles.dualPanelContent}>
+          {/* Left Panel - Image Variants */}
+          <div className={styles.panelColumn}>
+            <div className={styles.panelTitle}>Image Variants</div>
 
-          {/* Character Variants */}
-          <label className={styles.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={panel.pendingValue.characterVariants}
-              onChange={(e) => panel.updatePendingField('characterVariants', e.target.checked)}
-            />
-            <span>Character Variants</span>
-          </label>
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={panel.pendingValue.characterVariants}
+                onChange={(e) => panel.updatePendingField('characterVariants', e.target.checked)}
+              />
+              <span>Character Variants</span>
+            </label>
 
-          {/* Reminder Variants */}
-          <label className={styles.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={panel.pendingValue.reminderVariants}
-              onChange={(e) => panel.updatePendingField('reminderVariants', e.target.checked)}
-            />
-            <span>Reminder Variants</span>
-          </label>
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={panel.pendingValue.reminderVariants}
+                onChange={(e) => panel.updatePendingField('reminderVariants', e.target.checked)}
+              />
+              <span>Reminder Variants</span>
+            </label>
+          </div>
+
+          {/* Right Panel - Auto-Generation */}
+          <div className={styles.panelColumn}>
+            <div className={styles.panelTitle}>Auto-Generation</div>
+
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={panel.pendingValue.autoGenerateCharacters}
+                onChange={(e) =>
+                  panel.updatePendingField('autoGenerateCharacters', e.target.checked)
+                }
+              />
+              <span>Auto-generate Characters</span>
+            </label>
+
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={panel.pendingValue.autoGenerateReminders}
+                onChange={(e) =>
+                  panel.updatePendingField('autoGenerateReminders', e.target.checked)
+                }
+              />
+              <span>Auto-generate Reminders</span>
+            </label>
+
+            <div className={styles.sectionSubtitle}>Team Variants</div>
+
+            <div
+              className={`${styles.teamList} ${!isAutoGenEnabled ? styles.teamListDisabled : ''}`}
+            >
+              {TEAM_OPTIONS.map((team) => (
+                <label key={team.id} className={styles.teamCheckboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={panel.pendingValue.autoGenerateTeams.includes(team.id)}
+                    onChange={(e) => handleTeamToggle(team.id, e.target.checked)}
+                    disabled={!isAutoGenEnabled}
+                  />
+                  <span className={styles.teamColorSwatch} style={getTeamSwatchStyle(team)} />
+                  <span className={styles.teamLabel}>{team.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className={baseStyles.panelFooter}>

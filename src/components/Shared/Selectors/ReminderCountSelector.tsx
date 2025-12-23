@@ -34,6 +34,7 @@ const NUMBER_STYLES: { value: ReminderCountStyle; label: string; preview: string
 
 interface PendingCountSettings {
   style: ReminderCountStyle;
+  uniformLayout: boolean;
 }
 
 // ============================================================================
@@ -74,8 +75,11 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     currentStyle = 'arabic';
   }
 
+  const uniformLayout = generationOptions.reminderCountUniformLayout ?? false;
+
   const currentSettings: PendingCountSettings = {
     style: currentStyle,
+    uniformLayout,
   };
 
   const handleToggle = useCallback(
@@ -87,7 +91,10 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
 
   const handlePanelChange = useCallback(
     (settings: PendingCountSettings) => {
-      onOptionChange({ reminderCountStyle: settings.style });
+      onOptionChange({
+        reminderCountStyle: settings.style,
+        reminderCountUniformLayout: settings.uniformLayout,
+      });
     },
     [onOptionChange]
   );
@@ -97,14 +104,15 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     onChange: handlePanelChange,
     onPreviewChange: handlePanelChange,
     disabled,
-    panelHeight: 140,
-    minPanelWidth: 200,
+    panelHeight: 200,
+    minPanelWidth: 240,
   });
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
 
   const defaultSettings: PendingCountSettings = {
     style: 'arabic',
+    uniformLayout: false,
   };
 
   const EnableToggle = (
@@ -166,6 +174,29 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
                   {styleOption.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Uniform Layout Toggle */}
+          <div className={styles.settingRow}>
+            <span className={styles.settingLabel}>Uniform Layout</span>
+            <div className={styles.toggleGroup}>
+              <button
+                type="button"
+                className={`${styles.toggleBtn} ${!panel.pendingValue.uniformLayout ? styles.toggleBtnActive : ''}`}
+                onClick={() => panel.updatePendingField('uniformLayout', false)}
+                disabled={!isEnabled}
+              >
+                Off
+              </button>
+              <button
+                type="button"
+                className={`${styles.toggleBtn} ${panel.pendingValue.uniformLayout ? styles.toggleBtnActive : ''}`}
+                onClick={() => panel.updatePendingField('uniformLayout', true)}
+                disabled={!isEnabled}
+              >
+                On
+              </button>
             </div>
           </div>
         </div>

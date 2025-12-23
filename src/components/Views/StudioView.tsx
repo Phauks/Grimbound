@@ -21,6 +21,7 @@ import { useTokenContext } from '@/contexts/TokenContext';
 import { useAssetEditor } from '@/hooks/studio/useAssetEditor';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/studio/Studio.module.css';
+import { STUDIO_DEFAULTS } from '@/ts/constants.js';
 import { consumePendingStudioOperation } from '@/ts/studio/navigationHelpers.js';
 import { extractAssetId, isAssetReference } from '@/ts/types/index.js';
 import { cn } from '@/ts/utils/classNames.js';
@@ -58,8 +59,8 @@ export function StudioView() {
     open: false,
     asNew: false,
   });
-  const [borderWidth, setBorderWidth] = useState(3);
-  const [borderColor, setBorderColor] = useState('#FFFFFF');
+  const [borderWidth, setBorderWidth] = useState<number>(STUDIO_DEFAULTS.BORDER_WIDTH);
+  const [borderColor, setBorderColor] = useState<string>(STUDIO_DEFAULTS.BORDER_COLOR);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

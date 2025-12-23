@@ -9,6 +9,7 @@
 
 import { createBackgroundGradient } from '@/ts/canvas/gradientUtils.js';
 import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
+import { ResourceNotFoundError, TokenCreationError } from '@/ts/errors.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
 import type { BackgroundStyle, TextureConfig } from '@/ts/types/backgroundEffects.js';
 import { DEFAULT_LIGHT_CONFIG } from '@/ts/types/backgroundEffects.js';
@@ -47,7 +48,7 @@ async function loadBackgroundImage(url: string): Promise<HTMLImageElement> {
   }
 
   if (!resolvedUrl) {
-    throw new Error(`Failed to resolve image URL: ${url}`);
+    throw new ResourceNotFoundError(`Failed to resolve image URL: ${url}`, 'image', url);
   }
 
   return new Promise((resolve, reject) => {
@@ -55,7 +56,10 @@ async function loadBackgroundImage(url: string): Promise<HTMLImageElement> {
     img.crossOrigin = 'anonymous';
 
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${resolvedUrl}`));
+    img.onerror = () =>
+      reject(
+        new ResourceNotFoundError(`Failed to load image: ${resolvedUrl}`, 'image', resolvedUrl)
+      );
 
     img.src = resolvedUrl;
   });
@@ -98,7 +102,7 @@ function applyTexture(
   textureCanvas.height = diameter;
   const textureCtx = textureCanvas.getContext('2d');
   if (!textureCtx) {
-    throw new Error('Failed to get 2d context for texture canvas');
+    throw new TokenCreationError('Failed to get 2d context for texture canvas', 'Texture');
   }
 
   // Build texture context

@@ -171,11 +171,12 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   };
 
   // Use the shared expandable panel hook
+  // Note: Allow panel access even when visuallyDisabled (only truly disabled blocks interaction)
   const panel = useExpandablePanel<FontSettings>({
     value,
     onChange,
     onPreviewChange,
-    disabled: disabled || visuallyDisabled,
+    disabled,
     panelHeight: 240,
     minPanelWidth: 380,
   });

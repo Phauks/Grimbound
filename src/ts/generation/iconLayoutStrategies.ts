@@ -114,8 +114,11 @@ export class CharacterWithAbilityTextLayout implements IconLayoutStrategy {
 
 /**
  * Layout strategy for character tokens without ability text
+ * Optionally accepts a top boundary override for badge-only cases
  */
 export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
+  constructor(private topBoundaryOverride?: number) {}
+
   calculate(context: LayoutContext): IconLayoutResult {
     const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
 
@@ -126,8 +129,11 @@ export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
     // Character name is at the bottom (curved text)
     const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
 
-    // Without ability text: dynamic sizing between top margin and character name
-    const topMargin = diameter * CHARACTER_LAYOUT.NO_ABILITY_TOP_MARGIN;
+    // Use override (badge bottom) if provided, otherwise use default top margin
+    const topMargin =
+      this.topBoundaryOverride !== undefined
+        ? this.topBoundaryOverride
+        : diameter * CHARACTER_LAYOUT.NO_ABILITY_TOP_MARGIN;
 
     // Calculate available vertical space for icon
     const availableHeight = characterNameY - topMargin;
@@ -236,16 +242,23 @@ export const IconLayoutStrategyFactory = {
    * @param hasAbilityText - Whether the character has ability text
    * @param abilityTextHeight - Height of ability text (if present)
    * @param abilityTextStartY - Starting Y position of ability text
+   * @param topBoundaryOverride - Optional top boundary for badge-only case (pixels)
    * @returns Appropriate layout strategy
    */
   createCharacterLayout(
     hasAbilityText: boolean,
     abilityTextHeight?: number,
-    abilityTextStartY?: number
+    abilityTextStartY?: number,
+    topBoundaryOverride?: number
   ): IconLayoutStrategy {
     if (hasAbilityText && abilityTextHeight !== undefined && abilityTextStartY !== undefined) {
+      // Has actual ability text - use ability text layout
       return new CharacterWithAbilityTextLayout(abilityTextHeight, abilityTextStartY);
+    } else if (topBoundaryOverride !== undefined) {
+      // No ability text but has badge/uniform layout - use no-ability layout with custom top boundary
+      return new CharacterWithoutAbilityTextLayout(topBoundaryOverride);
     } else {
+      // No ability text, no badge - use default no-ability layout
       return new CharacterWithoutAbilityTextLayout();
     }
   },
@@ -256,20 +269,23 @@ export const IconLayoutStrategyFactory = {
    * @param hasAbilityText - Whether character has ability text (only for character tokens)
    * @param abilityTextHeight - Height of ability text (only for character tokens with ability text)
    * @param abilityTextStartY - Starting Y position of ability text
+   * @param topBoundaryOverride - Optional top boundary for badge-only case (pixels)
    * @returns Appropriate layout strategy
    */
   create(
     tokenType: TokenTypeValue,
     hasAbilityText?: boolean,
     abilityTextHeight?: number,
-    abilityTextStartY?: number
+    abilityTextStartY?: number,
+    topBoundaryOverride?: number
   ): IconLayoutStrategy {
     switch (tokenType) {
       case TokenType.CHARACTER:
         return IconLayoutStrategyFactory.createCharacterLayout(
           hasAbilityText ?? false,
           abilityTextHeight,
-          abilityTextStartY
+          abilityTextStartY,
+          topBoundaryOverride
         );
       case TokenType.REMINDER:
         return new ReminderTokenLayout();

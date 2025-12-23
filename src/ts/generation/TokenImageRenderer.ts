@@ -145,6 +145,8 @@ export class TokenImageRenderer {
 
   /**
    * Draw character image on token
+   * @param abilityTextStartY - Actual Y position (in pixels) where ability text starts (may be adjusted for badge)
+   * @param topReservedY - Y position (in pixels) below which the icon can be placed (used when no ability text but badge present)
    */
   async drawCharacterImage(
     ctx: CanvasRenderingContext2D,
@@ -153,7 +155,9 @@ export class TokenImageRenderer {
     tokenType: TokenTypeValue,
     imageOverride?: string,
     hasAbilityText?: boolean,
-    abilityTextLayout?: TextLayoutResult
+    abilityTextLayout?: TextLayoutResult,
+    abilityTextStartY?: number,
+    topReservedY?: number
   ): Promise<void> {
     const imageUrl = imageOverride || getCharacterImageUrl(character.image);
     if (!imageUrl) {
@@ -173,7 +177,7 @@ export class TokenImageRenderer {
       // Create layout context (offsets are in inches, converted to pixels in strategy)
       const layoutContext: LayoutContext = {
         diameter,
-        dpi: this.options.dpi || 300,
+        dpi: this.options.dpi || CONFIG.PDF.DPI,
         iconScale: iconSettings.scale,
         iconOffsetX: iconSettings.offsetX,
         iconOffsetY: iconSettings.offsetY,
@@ -182,14 +186,20 @@ export class TokenImageRenderer {
       // Get appropriate layout strategy
       let strategy: IconLayoutStrategy;
       if (tokenType === TokenType.CHARACTER) {
-        const abilityTextStartY = abilityTextLayout
-          ? diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION
+        // Use passed abilityTextStartY, or calculate from constant if layout exists
+        const effectiveAbilityTextStartY = abilityTextLayout
+          ? (abilityTextStartY ?? diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION)
           : undefined;
+
+        // Determine if we have badge-only case (no ability text but has reserved space at top)
+        const hasBadgeOnly = !hasAbilityText && topReservedY !== undefined;
+
         strategy = IconLayoutStrategyFactory.create(
           tokenType,
-          hasAbilityText,
+          hasAbilityText, // Only true if there's actual ability text
           abilityTextLayout?.totalHeight,
-          abilityTextStartY
+          effectiveAbilityTextStartY,
+          hasBadgeOnly ? topReservedY : undefined // Pass as topBoundaryOverride for badge-only case
         );
       } else {
         strategy = IconLayoutStrategyFactory.create(tokenType);
@@ -403,7 +413,7 @@ export class TokenImageRenderer {
       // Create layout context
       const layoutContext: LayoutContext = {
         diameter,
-        dpi: this.options.dpi || 300,
+        dpi: this.options.dpi || CONFIG.PDF.DPI,
         iconScale: iconSettings.scale,
         iconOffsetX: iconSettings.offsetX,
         iconOffsetY: iconSettings.offsetY,

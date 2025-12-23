@@ -15,11 +15,14 @@ import { useCallback, useMemo, useState } from 'react';
 import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
 import {
   addIconBorder,
+  cloneCanvas,
+  loadImageToCanvas,
   replaceIconColor,
   replaceIconColorSplit,
   replaceIconColorWithHex,
 } from '@/ts/studio/index.js';
 import { logger } from '@/ts/utils/logger.js';
+import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 import type { EffectState } from './useAssetEffectState.js';
 
 // ============================================================================
@@ -74,19 +77,11 @@ export interface UseAssetCanvasOperationsResult {
 // Utilities
 // ============================================================================
 
-/** Clone a canvas element */
-function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = source.width;
-  canvas.height = source.height;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.drawImage(source, 0, 0);
-  }
-  return canvas;
-}
-
-/** Generate a thumbnail from a canvas */
+/**
+ * Generate a thumbnail from a canvas
+ * Note: This is a local utility because the ImageProcessingService version
+ * is a class method with different parameters. This version is canvas-specific.
+ */
 async function generateThumbnail(canvas: HTMLCanvasElement, size: number): Promise<Blob> {
   const scale = Math.min(size / canvas.width, size / canvas.height);
   const thumbCanvas = document.createElement('canvas');
@@ -107,41 +102,6 @@ async function generateThumbnail(canvas: HTMLCanvasElement, size: number): Promi
       'image/jpeg',
       0.8
     );
-  });
-}
-
-/** Sanitize a filename */
-function sanitizeFilename(name: string): string {
-  return name
-    .replace(/[^a-z0-9_-]/gi, '_')
-    .replace(/_+/g, '_')
-    .toLowerCase();
-}
-
-/** Load an image from a File/Blob into a canvas */
-function loadImageToCanvas(file: File | Blob): Promise<HTMLCanvasElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-      }
-      URL.revokeObjectURL(url);
-      resolve(canvas);
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-
-    img.src = url;
   });
 }
 

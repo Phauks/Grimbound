@@ -146,7 +146,7 @@ export function TokenPreviewRow({
       // If we auto-selected this character (no example was set), set it as the example character token
       // Don't set the sample Washerwoman as the example token - only script characters
       if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
-        const dpi = generationOptions.dpi || 300;
+        const dpi = generationOptions.dpi || CONFIG.PDF.DPI;
         const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi;
 
         const autoSelectedToken: Token = {

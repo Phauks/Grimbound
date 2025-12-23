@@ -10,15 +10,21 @@ import {
   SettingsSelectorBase,
 } from '@/components/Shared/Selectors/SettingsSelectorBase';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
-import { DownloadSection, FeaturedDownloads } from '@/components/ViewComponents/ExportComponents';
+import {
+  CharacterSelectionCard,
+  DownloadSection,
+  FeaturedDownloads,
+} from '@/components/ViewComponents/ExportComponents';
 import { CharacterListView } from '@/components/ViewComponents/ProjectsComponents/CharacterListView';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useExpandablePanel, useExportDownloads } from '@/hooks';
+import downloadStyles from '@/styles/components/export/DownloadComponents.module.css';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import exportStyles from '@/styles/components/views/ExportView.module.css';
 import styles from '@/styles/components/views/Views.module.css';
+import { UI_DIMENSIONS } from '@/ts/constants.js';
 import type { CompressionLevel, ZipExportOptions } from '@/ts/types/index';
 import { BLEED_CONFIG, PDF_OFFSET_CONFIG } from '@/ts/utils/measurementUtils';
 
@@ -168,7 +174,7 @@ export function ExportView() {
     onChange: handlePngChange,
     onPreviewChange: handlePngChange,
     panelHeight: 180,
-    minPanelWidth: 300,
+    minPanelWidth: UI_DIMENSIONS.MIN_PANEL_WIDTH,
   });
 
   const zipPanel = useExpandablePanel<ZipSettings>({
@@ -573,65 +579,29 @@ export function ExportView() {
               onExecute={executeDownload}
             />
 
-            {/* JSON Section */}
-            <DownloadSection
-              title="JSON"
-              icon="📋"
-              items={jsonDownloads}
-              collapsible
-              defaultOpen
-              executingId={executingId}
-              onExecute={executeDownload}
-            />
-
-            {/* Tokens Section */}
-            <DownloadSection
-              title="Tokens"
-              icon="🎭"
-              items={tokenDownloads}
-              collapsible
-              defaultOpen
-              executingId={executingId}
-              onExecute={executeDownload}
-            />
-
-            {/* Scripts Section */}
-            <DownloadSection
-              title="Scripts"
-              icon="📜"
-              items={scriptDownloads}
-              collapsible
-              defaultOpen
-              executingId={executingId}
-              onExecute={executeDownload}
-            />
-
-            {/* Character Selection Section */}
-            <DownloadSection
-              title="Character Selection"
-              icon="👤"
-              items={[]}
-              collapsible
+            {/* Character Selection Card (Purple) */}
+            <CharacterSelectionCard
+              enabledCount={characterSelectionSummary.enabled}
+              totalCount={characterSelectionSummary.total}
+              disabledCount={characterSelectionSummary.disabled}
               defaultOpen={false}
-              executingId={executingId}
-              onExecute={executeDownload}
             >
               {characters.length > 0 ? (
-                <>
-                  <div className={styles.characterSelectionSummary}>
-                    {characterSelectionSummary.enabled} of {characterSelectionSummary.total}{' '}
-                    included
-                    {characterSelectionSummary.disabled > 0 && (
-                      <span className={styles.characterSelectionBadge}>
-                        {characterSelectionSummary.disabled} excluded
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.characterSelectionHeaderRow}>
+                <CharacterListView
+                  characters={characters}
+                  showAbility={listViewSettings.showAbility}
+                  showFirstNightReminder={listViewSettings.showFirstNightReminder}
+                  showOtherNightReminder={listViewSettings.showOtherNightReminder}
+                  showReminders={listViewSettings.showReminders}
+                  showSelection={true}
+                  characterMetadata={characterMetadata}
+                  onToggleCharacter={handleCharacterToggle}
+                  onToggleAll={handleToggleAllCharacters}
+                  headerActions={
                     <div className={styles.listSettingsContainer}>
                       <button
                         type="button"
-                        className={styles.listSettingsButton}
+                        className={`${styles.listSettingsButton} ${showListSettings ? styles.listSettingsButtonActive : ''}`}
                         onClick={() => setShowListSettings(!showListSettings)}
                         title="Configure list columns"
                         aria-expanded={showListSettings}
@@ -642,13 +612,6 @@ export function ExportView() {
                         <div className={styles.listSettingsPopover}>
                           <div className={styles.listSettingsHeader}>
                             <span>Columns</span>
-                            <button
-                              type="button"
-                              className={styles.listSettingsClose}
-                              onClick={() => setShowListSettings(false)}
-                            >
-                              ✕
-                            </button>
                           </div>
                           <label className={styles.listSettingsOption}>
                             <input
@@ -705,25 +668,50 @@ export function ExportView() {
                         </div>
                       )}
                     </div>
-                  </div>
-                  <div className={styles.characterSelectionContent}>
-                    <CharacterListView
-                      characters={characters}
-                      showAbility={listViewSettings.showAbility}
-                      showFirstNightReminder={listViewSettings.showFirstNightReminder}
-                      showOtherNightReminder={listViewSettings.showOtherNightReminder}
-                      showReminders={listViewSettings.showReminders}
-                      showSelection={true}
-                      characterMetadata={characterMetadata}
-                      onToggleCharacter={handleCharacterToggle}
-                      onToggleAll={handleToggleAllCharacters}
-                    />
-                  </div>
-                </>
+                  }
+                />
               ) : (
-                <div className={styles.characterSelectionSummary}>No characters loaded</div>
+                <div className={styles.emptyCharacterMessage}>
+                  No characters loaded. Import a script to select characters.
+                </div>
               )}
-            </DownloadSection>
+            </CharacterSelectionCard>
+
+            {/* Divider between character selection and download sections */}
+            <div className={downloadStyles.sectionDivider} />
+
+            {/* JSON Section */}
+            <DownloadSection
+              title="JSON"
+              icon="📋"
+              items={jsonDownloads}
+              collapsible
+              defaultOpen={false}
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
+
+            {/* Tokens Section */}
+            <DownloadSection
+              title="Tokens"
+              icon="🎭"
+              items={tokenDownloads}
+              collapsible
+              defaultOpen={false}
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
+
+            {/* Scripts Section */}
+            <DownloadSection
+              title="Scripts"
+              icon="📜"
+              items={scriptDownloads}
+              collapsible
+              defaultOpen={false}
+              executingId={executingId}
+              onExecute={executeDownload}
+            />
           </div>
         </ViewLayout.Panel>
       </ViewLayout>

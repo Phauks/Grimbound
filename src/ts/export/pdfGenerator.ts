@@ -1,18 +1,20 @@
 /**
  * Blood on the Clocktower Token Generator
- * PDF Generator - PDF export functionality
+ * PDF Generator - PDF export functionality using pdf-lib
  */
 
-import { jsPDF } from 'jspdf';
+import { PDFDocument } from 'pdf-lib';
+import { generateBleedRing, hasValidSamples, sampleEdgeColors } from '@/ts/canvas/bleedUtils.js';
 import CONFIG, { AVERY_TEMPLATES } from '@/ts/config.js';
+import { BLEED_ALGORITHM, DEFAULT_COLORS, PDF_POINTS_PER_INCH } from '@/ts/constants.js';
 import type {
   AveryTemplate,
-  jsPDFDocument,
   PDFOptions,
   ProgressCallback,
   Token,
   TokenLayoutItem,
 } from '@/ts/types/index.js';
+import { canvasToArrayBuffer, downloadFile } from '@/ts/utils/imageUtils.js';
 
 export { downloadTokenPNG } from './pngExporter.js';
 // Re-export ZIP and PNG functions for backward compatibility
@@ -31,7 +33,22 @@ function _getTemplateForTokenType(tokenType: Token['type']): AveryTemplate {
 }
 
 /**
- * PDFGenerator class handles PDF creation and layout
+ * Convert inches to points (PDF coordinate system)
+ * PDF specification: 1 inch = 72 points
+ */
+function inchesToPoints(inches: number): number {
+  return inches * PDF_POINTS_PER_INCH;
+}
+
+/**
+ * Convert inches to pixels at given DPI
+ */
+function inchesToPixels(inches: number, dpi: number): number {
+  return inches * dpi;
+}
+
+/**
+ * PDFGenerator class handles PDF creation and layout using pdf-lib
  */
 export class PDFGenerator {
   private options: PDFOptions;
@@ -40,13 +57,6 @@ export class PDFGenerator {
   private marginPx: number;
   private usableWidth: number;
   private usableHeight: number;
-
-  /**
-   * Convert inches to pixels at given DPI
-   */
-  private static inchesToPixels(inches: number, dpi: number): number {
-    return inches * dpi;
-  }
 
   constructor(options: Partial<PDFOptions> = {}) {
     this.options = {
@@ -62,7 +72,7 @@ export class PDFGenerator {
       bleed: options.bleed ?? 0.125, // Default 1/8" bleed for cutting
     };
 
-    // Calculate usable area in pixels at 300 DPI
+    // Calculate usable area in pixels at configured DPI
     this.pageWidthPx = this.options.pageWidth * this.options.dpi;
     this.pageHeightPx = this.options.pageHeight * this.options.dpi;
     this.marginPx = this.options.margin * this.options.dpi;
@@ -150,10 +160,10 @@ export class PDFGenerator {
 
     // Convert template dimensions to pixels
     const dpi = this.options.dpi;
-    const _leftMarginPx = PDFGenerator.inchesToPixels(template.leftMargin, dpi);
-    const _topMarginPx = PDFGenerator.inchesToPixels(template.topMargin, dpi);
-    const gapPx = PDFGenerator.inchesToPixels(template.gap, dpi);
-    const labelDiameterPx = PDFGenerator.inchesToPixels(template.labelDiameter, dpi);
+    const _leftMarginPx = inchesToPixels(template.leftMargin, dpi);
+    const _topMarginPx = inchesToPixels(template.topMargin, dpi);
+    const gapPx = inchesToPixels(template.gap, dpi);
+    const labelDiameterPx = inchesToPixels(template.labelDiameter, dpi);
 
     let col = 0;
     let row = 0;
@@ -253,139 +263,185 @@ export class PDFGenerator {
   }
 
   /**
-   * Generate PDF from tokens
+   * Create bleed canvas with extended edge colors using pixel-perfect ring generation.
+   *
+   * This algorithm fixes the white circle artifact by:
+   * 1. Sampling colors from a safe zone INSIDE the token edge (avoids anti-aliased pixels)
+   * 2. Generating a bleed ring that extends INWARD to overlap with anti-aliased zone
+   * 3. Drawing the original token on top so anti-aliased edges blend with bleed colors
+   *
+   * @param tokenCanvas - Original token canvas
+   * @param bleedPx - Bleed size in pixels
+   * @returns Canvas with bleed area
+   */
+  private createBleedCanvas(tokenCanvas: HTMLCanvasElement, bleedPx: number): HTMLCanvasElement {
+    const originalSize = tokenCanvas.width;
+    const bleedSize = originalSize + bleedPx * 2;
+    const originalRadius = originalSize / 2;
+    const center = originalSize / 2;
+
+    const bleedCanvas = document.createElement('canvas');
+    bleedCanvas.width = bleedSize;
+    bleedCanvas.height = bleedSize;
+    const bleedCtx = bleedCanvas.getContext('2d');
+
+    if (!bleedCtx) {
+      return tokenCanvas; // Fallback to original if context fails
+    }
+
+    // No bleed requested? Just center the token on the larger canvas
+    if (bleedPx <= 0) {
+      // Fill with white background for consistency
+      bleedCtx.fillStyle = DEFAULT_COLORS.BACKGROUND_WHITE;
+      bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+      bleedCtx.drawImage(tokenCanvas, bleedPx, bleedPx);
+      return bleedCanvas;
+    }
+
+    // Get token image data for edge sampling
+    const tokenCtx = tokenCanvas.getContext('2d');
+    if (!tokenCtx) {
+      bleedCtx.fillStyle = DEFAULT_COLORS.BACKGROUND_WHITE;
+      bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+      bleedCtx.drawImage(tokenCanvas, bleedPx, bleedPx);
+      return bleedCanvas;
+    }
+
+    const imageData = tokenCtx.getImageData(0, 0, originalSize, originalSize);
+
+    // Sample colors from safe zone inside the token edge
+    const samples = sampleEdgeColors(
+      imageData,
+      center,
+      originalRadius,
+      BLEED_ALGORITHM.SAMPLE_COUNT,
+      BLEED_ALGORITHM.SAFE_SAMPLE_DISTANCE
+    );
+
+    // Validate that we have enough opaque samples for bleed generation
+    if (
+      !hasValidSamples(
+        samples,
+        BLEED_ALGORITHM.MIN_VALID_SAMPLE_RATIO,
+        BLEED_ALGORITHM.MIN_ALPHA_THRESHOLD
+      )
+    ) {
+      // Token may have transparent edges - fall back to white background
+      bleedCtx.fillStyle = DEFAULT_COLORS.BACKGROUND_WHITE;
+      bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+      bleedCtx.drawImage(tokenCanvas, bleedPx, bleedPx);
+      return bleedCanvas;
+    }
+
+    // Fill background with white first (for any corners outside the circular bleed)
+    bleedCtx.fillStyle = DEFAULT_COLORS.BACKGROUND_WHITE;
+    bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+
+    // Generate the bleed ring with inward overlap
+    // This ring extends inward by INNER_OVERLAP pixels to overlap with the token's
+    // anti-aliased edge zone, ensuring smooth color blending
+    generateBleedRing(
+      bleedCtx,
+      bleedSize,
+      originalRadius,
+      {
+        bleedPx,
+        innerOverlap: BLEED_ALGORITHM.INNER_OVERLAP,
+      },
+      samples,
+      BLEED_ALGORITHM.MIN_ALPHA_THRESHOLD
+    );
+
+    // Draw the original token on top
+    // The anti-aliased edge pixels will now blend with the bleed colors
+    // instead of the white background, eliminating the white circle artifact
+    bleedCtx.drawImage(tokenCanvas, bleedPx, bleedPx);
+
+    return bleedCanvas;
+  }
+
+  /**
+   * Generate PDF from tokens using pdf-lib
    * @param tokens - Array of token objects with canvas
    * @param progressCallback - Progress callback (current token, total tokens)
    * @param separatePages - Whether to separate character and reminder tokens onto different pages (default: true)
-   * @returns Generated PDF document
+   * @returns Generated PDF as Uint8Array
    */
   async generatePDF(
     tokens: Token[],
     progressCallback: ProgressCallback | null = null,
     separatePages: boolean = true
-  ): Promise<jsPDFDocument> {
-    // Create PDF document (dimensions in inches)
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'in',
-      format: [this.options.pageWidth, this.options.pageHeight],
-      compress: true, // Enable PDF stream compression
-    });
+  ): Promise<Uint8Array> {
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create();
 
     // Calculate layout
     const { pages, pageTemplates } = this.calculateGridLayout(tokens, separatePages);
 
     if (pages.length === 0) {
-      return pdf;
+      return pdfDoc.save();
     }
+
+    // Page dimensions in points
+    const pageWidthPt = inchesToPoints(this.options.pageWidth);
+    const pageHeightPt = inchesToPoints(this.options.pageHeight);
 
     // Track tokens processed for progress reporting
     let tokensProcessed = 0;
     const totalTokens = tokens.length;
 
+    // Calculate bleed in pixels and inches
+    const bleedInches = this.options.bleed ?? 0;
+    const bleedPx = Math.round(bleedInches * this.options.dpi);
+
     // Generate each page
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-      const page = pages[pageIndex];
+      const pageItems = pages[pageIndex];
       const template = pageTemplates[pageIndex];
 
-      if (pageIndex > 0) {
-        pdf.addPage();
-      }
+      // Add page with dimensions
+      const page = pdfDoc.addPage([pageWidthPt, pageHeightPt]);
 
       // Determine margins based on template or fallback to options
       const leftMarginInches = template ? template.leftMargin : this.options.margin;
       const topMarginInches = template ? template.topMargin : this.options.margin;
 
-      // Calculate bleed in pixels
-      const bleedInches = this.options.bleed ?? 0;
-      const bleedPx = Math.round(bleedInches * this.options.dpi);
-
       // Add tokens to page
-      for (const item of page) {
-        const originalSize = item.token.canvas.width;
-        const bleedSize = originalSize + bleedPx * 2;
+      for (const item of pageItems) {
+        // Create bleed canvas
+        const bleedCanvas = this.createBleedCanvas(item.token.canvas, bleedPx);
 
-        // Create a canvas with bleed area
-        const bleedCanvas = document.createElement('canvas');
-        bleedCanvas.width = bleedSize;
-        bleedCanvas.height = bleedSize;
-        const bleedCtx = bleedCanvas.getContext('2d');
+        // Convert canvas to ArrayBuffer (efficient, no base64)
+        const imageBuffer = await canvasToArrayBuffer(
+          bleedCanvas,
+          'image/jpeg',
+          this.options.imageQuality
+        );
 
-        if (bleedCtx) {
-          // Fill with white background
-          bleedCtx.fillStyle = '#FFFFFF';
-          bleedCtx.fillRect(0, 0, bleedSize, bleedSize);
+        // Embed image in PDF
+        const image = await pdfDoc.embedJpg(imageBuffer);
 
-          // If bleed is enabled, stretch edge colors outward
-          if (bleedPx > 0) {
-            const tokenCtx = item.token.canvas.getContext('2d');
-            if (tokenCtx) {
-              const imageData = tokenCtx.getImageData(0, 0, originalSize, originalSize);
-              const center = originalSize / 2;
-              const radius = originalSize / 2;
-
-              // Sample edge colors and draw radial lines outward
-              const steps = 720; // Sample every 0.5 degrees for smooth coverage
-              for (let i = 0; i < steps; i++) {
-                const angle = (i / steps) * Math.PI * 2;
-
-                // Sample 2 pixels inside the edge to avoid anti-aliased pixels
-                const sampleRadius = radius - 2;
-                const edgeX = Math.round(center + Math.cos(angle) * sampleRadius);
-                const edgeY = Math.round(center + Math.sin(angle) * sampleRadius);
-
-                // Clamp to valid range
-                const clampedX = Math.max(0, Math.min(originalSize - 1, edgeX));
-                const clampedY = Math.max(0, Math.min(originalSize - 1, edgeY));
-
-                // Sample pixel color at edge
-                const pixelIndex = (clampedY * originalSize + clampedX) * 4;
-                const r = imageData.data[pixelIndex];
-                const g = imageData.data[pixelIndex + 1];
-                const b = imageData.data[pixelIndex + 2];
-                const a = imageData.data[pixelIndex + 3];
-
-                // Only draw if pixel is not transparent
-                if (a > 128) {
-                  bleedCtx.strokeStyle = `rgb(${r},${g},${b})`;
-                  bleedCtx.lineWidth = 4; // Thick lines for good coverage
-                  bleedCtx.beginPath();
-                  // Start from edge of token (in bleed canvas coordinates)
-                  const startX = center + bleedPx + Math.cos(angle) * radius;
-                  const startY = center + bleedPx + Math.sin(angle) * radius;
-                  // End at outer edge of bleed zone
-                  const endX = center + bleedPx + Math.cos(angle) * (radius + bleedPx);
-                  const endY = center + bleedPx + Math.sin(angle) * (radius + bleedPx);
-                  bleedCtx.moveTo(startX, startY);
-                  bleedCtx.lineTo(endX, endY);
-                  bleedCtx.stroke();
-                }
-              }
-            }
-          }
-
-          // Draw the original token centered on bleed canvas
-          bleedCtx.drawImage(item.token.canvas, bleedPx, bleedPx);
-        }
-
-        // Convert composite canvas to base64 JPEG image with quality setting
-        const dataUrl = bleedCanvas.toDataURL('image/jpeg', this.options.imageQuality);
-
-        // Calculate position in inches
-        // item.x and item.y are in pixels, template margins are in inches
-        // xOffset and yOffset are already in inches
+        // Calculate position in points
+        // Note: PDF coordinate system has origin at bottom-left, Y increases upward
         const xOffsetInches = this.options.xOffset;
         const yOffsetInches = this.options.yOffset;
 
-        // Offset position by bleed so token CENTER stays in same place
+        // Position calculation (accounting for bleed offset)
         const xInches = leftMarginInches + xOffsetInches + item.x / this.options.dpi - bleedInches;
-        const yInches = topMarginInches + yOffsetInches + item.y / this.options.dpi - bleedInches;
-        // Include bleed in dimensions
-        const widthInches = (item.width + bleedPx * 2) / this.options.dpi;
+        // Convert from top-down (layout) to bottom-up (PDF) coordinates
+        const yFromTop = topMarginInches + yOffsetInches + item.y / this.options.dpi - bleedInches;
         const heightInches = (item.height + bleedPx * 2) / this.options.dpi;
+        const yInches = this.options.pageHeight - yFromTop - heightInches;
 
-        // Add image to PDF
-        pdf.addImage(dataUrl, 'JPEG', xInches, yInches, widthInches, heightInches);
+        const widthInches = (item.width + bleedPx * 2) / this.options.dpi;
+
+        // Draw image on page (convert inches to points)
+        page.drawImage(image, {
+          x: inchesToPoints(xInches),
+          y: inchesToPoints(yInches),
+          width: inchesToPoints(widthInches),
+          height: inchesToPoints(heightInches),
+        });
 
         // Report progress by token
         tokensProcessed++;
@@ -395,7 +451,7 @@ export class PDFGenerator {
       }
     }
 
-    return pdf;
+    return pdfDoc.save();
   }
 
   /**
@@ -411,8 +467,10 @@ export class PDFGenerator {
     progressCallback: ProgressCallback | null = null,
     separatePages: boolean = true
   ): Promise<void> {
-    const pdf = await this.generatePDF(tokens, progressCallback, separatePages);
-    pdf.save(filename);
+    const pdfBytes = await this.generatePDF(tokens, progressCallback, separatePages);
+    // Create fresh Uint8Array for Blob compatibility (pdf-lib types include SharedArrayBuffer)
+    const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
+    downloadFile(blob, filename);
   }
 
   /**
@@ -427,8 +485,9 @@ export class PDFGenerator {
     progressCallback: ProgressCallback | null = null,
     separatePages: boolean = true
   ): Promise<Blob> {
-    const pdf = await this.generatePDF(tokens, progressCallback, separatePages);
-    return pdf.output('blob');
+    const pdfBytes = await this.generatePDF(tokens, progressCallback, separatePages);
+    // Create fresh Uint8Array for Blob compatibility (pdf-lib types include SharedArrayBuffer)
+    return new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
   }
 }
 

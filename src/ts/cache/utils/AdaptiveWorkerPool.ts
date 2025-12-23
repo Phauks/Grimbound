@@ -185,13 +185,10 @@ export class AdaptiveWorkerPool extends WorkerPool {
     }
 
     try {
-      // Create new worker using parent's private method (via reflection workaround)
-      type WorkerPoolInternal = {
-        createWorker: () => Worker;
-        workers: Worker[];
-      };
-      const worker = (this as unknown as WorkerPoolInternal).createWorker();
-      (this as unknown as WorkerPoolInternal).workers.push(worker);
+      // Create new managed worker using parent's protected method
+      const managed = this.createManagedWorker();
+      this.managedWorkers.push(managed);
+      this.workers.push(managed.worker);
       this.currentWorkerCount++;
       this.lastScaleTime = Date.now();
 
@@ -209,28 +206,29 @@ export class AdaptiveWorkerPool extends WorkerPool {
       return;
     }
 
-    type WorkerPoolInternal = {
-      workers: Worker[];
-      activeWorkers: Set<Worker>;
-    };
-    const workers = (this as unknown as WorkerPoolInternal).workers;
-    const activeWorkers = (this as unknown as WorkerPoolInternal).activeWorkers;
-
-    // Find an idle worker to terminate
-    const idleWorker = workers.find((w) => !activeWorkers.has(w));
-    if (!idleWorker) {
+    // Find an idle managed worker to terminate
+    const idleManaged = this.managedWorkers.find(
+      (m) => m.isReady && !this.activeWorkers.has(m.worker)
+    );
+    if (!idleManaged) {
       // No idle workers available, skip scaling down
       return;
     }
 
     try {
       // Terminate the idle worker
-      idleWorker.terminate();
+      idleManaged.worker.terminate();
 
       // Remove from workers array
-      const index = workers.indexOf(idleWorker);
-      if (index !== -1) {
-        workers.splice(index, 1);
+      const workerIndex = this.workers.indexOf(idleManaged.worker);
+      if (workerIndex !== -1) {
+        this.workers.splice(workerIndex, 1);
+      }
+
+      // Remove from managed workers array
+      const managedIndex = this.managedWorkers.indexOf(idleManaged);
+      if (managedIndex !== -1) {
+        this.managedWorkers.splice(managedIndex, 1);
       }
 
       this.currentWorkerCount--;

@@ -11,7 +11,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import styles from '@/styles/components/projects/VersionCompareView.module.css';
-import { TEAM_COLORS, TEAM_LABELS } from '@/ts/config.js';
+import { getTeamHexColor, TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team } from '@/ts/types/index';
 import type { ProjectState, ProjectVersion } from '@/ts/types/project';
 import {
@@ -324,7 +324,7 @@ function CharacterRow({ character, status, changedFields }: CharacterRowProps) {
       <span className={styles.statusIndicator}>{statusIcon}</span>
       <div
         className={styles.teamIndicator}
-        style={{ backgroundColor: TEAM_COLORS[team] || '#808080' }}
+        style={{ backgroundColor: getTeamHexColor(team) }}
         title={TEAM_LABELS[team] || team}
       />
       <span className={styles.characterName}>{character.name}</span>
@@ -379,7 +379,7 @@ function ExpandableCharacterRow({
         </span>
         <div
           className={styles.teamIndicator}
-          style={{ backgroundColor: TEAM_COLORS[team] || '#808080' }}
+          style={{ backgroundColor: getTeamHexColor(team) }}
           title={TEAM_LABELS[team] || team}
         />
         <span className={styles.characterName}>{currentCharacter.name}</span>

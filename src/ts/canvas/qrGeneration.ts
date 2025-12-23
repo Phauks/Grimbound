@@ -10,6 +10,7 @@
 
 import type { CornerDotType, CornerSquareType, DotType, Gradient } from 'qr-code-styling';
 import QRCodeStyling from 'qr-code-styling';
+import { ResourceNotFoundError, TokenCreationError } from '@/ts/errors.js';
 import type {
   QRCornerDotType,
   QRCornerSquareType,
@@ -284,7 +285,7 @@ export async function generateStyledQRCode(
     const blob = await qrCode.getRawData('png');
 
     if (!blob) {
-      throw new Error('Failed to generate QR code blob');
+      throw new TokenCreationError('Failed to generate QR code blob', 'QR Code');
     }
 
     // Create an image from the blob
@@ -293,7 +294,8 @@ export async function generateStyledQRCode(
 
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Failed to load QR code image'));
+      img.onerror = () =>
+        reject(new ResourceNotFoundError('Failed to load QR code image', 'image', 'QR code blob'));
       img.src = blobUrl;
     });
 
@@ -305,7 +307,7 @@ export async function generateStyledQRCode(
 
     if (!ctx) {
       URL.revokeObjectURL(blobUrl);
-      throw new Error('Failed to get canvas context');
+      throw new TokenCreationError('Failed to get canvas context', 'QR Code');
     }
 
     ctx.drawImage(img, 0, 0, size, size);

@@ -3,6 +3,7 @@
  * Canvas Utilities - Reusable canvas helper functions
  */
 
+import CONFIG from '@/ts/config.js';
 import { ABILITY_TEXT_SHADOW, DEFAULT_COLORS, TEXT_SHADOW } from '@/ts/constants.js';
 
 /**
@@ -39,8 +40,8 @@ export interface CanvasOptions {
  * @throws Error if canvas context cannot be obtained
  */
 export function createCanvas(diameter: number, options: CanvasOptions = {}): CanvasContext {
-  const { dpi = 300 } = options;
-  const dpiScale = dpi / 300;
+  const { dpi = CONFIG.PDF.DPI } = options;
+  const dpiScale = dpi / CONFIG.PDF.DPI;
   const scaledDiameter = Math.floor(diameter * dpiScale);
 
   const canvas = document.createElement('canvas');

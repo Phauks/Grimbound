@@ -16,8 +16,8 @@ import {
 } from '@/ts/canvas/index.js';
 import { generateStyledQRCode } from '@/ts/canvas/qrGeneration.js';
 import CONFIG from '@/ts/config.js';
-import { DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT } from '@/ts/constants.js';
-import { countReminders, getCharacterImageUrl } from '@/ts/data/index.js';
+import { DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT, TOKEN_COUNT_BADGE } from '@/ts/constants.js';
+import { countReminders } from '@/ts/data/index.js';
 import { ValidationError } from '@/ts/errors.js';
 import type { Character } from '@/ts/types/index.js';
 import {
@@ -25,6 +25,7 @@ import {
   type MetaTokenContentRenderer,
   type TokenGeneratorOptions,
 } from '@/ts/types/tokenOptions.js';
+import { resolveCharacterImages } from '@/ts/utils/characterImageResolver.js';
 import { logger } from '@/ts/utils/logger.js';
 import { defaultImageCache } from './ImageCacheAdapter.js';
 import { type IImageCache, TokenImageRenderer } from './TokenImageRenderer.js';
@@ -88,21 +89,20 @@ export class TokenGenerator {
   }
 
   /**
-   * Pre-warm the image cache with all character images
+   * Pre-warm the image cache with all character images using SSOT resolution
    */
   async prewarmImageCache(characters: Character[]): Promise<void> {
-    const imageUrls = new Set<string>();
+    // Use SSOT batch resolution for consistent image URL handling
+    const { urls } = await resolveCharacterImages(characters);
 
-    for (const character of characters) {
-      const url = getCharacterImageUrl(character.image);
-      if (url) {
-        imageUrls.add(url);
-      }
+    if (urls.size === 0) {
+      logger.debug('TokenGenerator', 'No character images to pre-warm');
+      return;
     }
 
-    logger.info('TokenGenerator', `Pre-warming image cache with ${imageUrls.size} images`);
+    logger.info('TokenGenerator', `Pre-warming image cache with ${urls.size} images`);
     await Promise.allSettled(
-      Array.from(imageUrls).map((url) => this.imageRenderer.getCachedImage(url))
+      Array.from(urls.values()).map((url) => this.imageRenderer.getCachedImage(url))
     );
   }
 
@@ -157,7 +157,7 @@ export class TokenGenerator {
       await renderBackground(ctx, this.options.characterBackgroundStyle, diameter);
     } else if (this.options.characterBackgroundType === 'color') {
       if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.characterBackgroundColor || '#FFFFFF';
+        ctx.fillStyle = this.options.characterBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
         ctx.fill();
       }
     } else {
@@ -175,15 +175,54 @@ export class TokenGenerator {
       : undefined;
     const hasAbilityText = Boolean(abilityTextToDisplay);
 
+    // Calculate reminder count early to determine if we need to adjust positioning
+    const reminderCount = this.options.tokenCount ? countReminders(character) : 0;
+    const hasBadge = reminderCount > 0;
+
+    // Determine if we should apply uniform layout (all tokens have same top buffer)
+    const useUniformLayout = this.options.tokenCount && this.options.reminderCountUniformLayout;
+
+    // Calculate adjusted Y position ratio if badge is present or uniform layout is enabled
+    // This is used for both ability text positioning and icon layout
+    let abilityTextYPosition: number | undefined;
+    let topReservedY: number | undefined;
+
+    if (hasBadge || useUniformLayout) {
+      // For uniform layout, use reference count; otherwise use actual reminder count
+      const bufferReminderCount = useUniformLayout
+        ? TOKEN_COUNT_BADGE.UNIFORM_LAYOUT_REFERENCE_COUNT
+        : reminderCount;
+
+      // Get the Y ratio where content can start (below the badge area)
+      const badgeBottomYRatio = this.textRenderer.calculateAbilityTextYWithBadge(
+        bufferReminderCount,
+        diameter
+      );
+
+      if (hasAbilityText) {
+        // Ability text starts below badge area
+        abilityTextYPosition = badgeBottomYRatio;
+      } else {
+        // No ability text, but icon should still avoid badge area
+        // Convert ratio to pixel position for icon layout
+        topReservedY = diameter * badgeBottomYRatio;
+      }
+    }
+
     // Calculate text layout if needed
     let abilityTextLayout: ReturnType<TokenTextRenderer['calculateAbilityTextLayout']> | undefined;
     if (abilityTextToDisplay) {
       abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(
         ctx,
         abilityTextToDisplay,
-        diameter
+        diameter,
+        abilityTextYPosition
       );
     }
+
+    // Convert ability text Y ratio to pixels for icon layout
+    const abilityTextStartYPixels =
+      abilityTextYPosition !== undefined ? diameter * abilityTextYPosition : undefined;
 
     // Draw character image
     await this.imageRenderer.drawCharacterImage(
@@ -193,7 +232,9 @@ export class TokenGenerator {
       'character',
       imageOverride,
       hasAbilityText,
-      abilityTextLayout
+      abilityTextLayout,
+      abilityTextStartYPixels,
+      topReservedY
     );
 
     // Draw setup overlay if needed
@@ -208,9 +249,9 @@ export class TokenGenerator {
       await this.imageRenderer.drawAccents(ctx, diameter);
     }
 
-    // Draw ability text
+    // Draw ability text (with adjusted Y position if badge is present)
     if (abilityTextToDisplay) {
-      this.textRenderer.drawAbilityText(ctx, abilityTextToDisplay, diameter);
+      this.textRenderer.drawAbilityText(ctx, abilityTextToDisplay, diameter, abilityTextYPosition);
     }
 
     // Draw character name
@@ -218,12 +259,9 @@ export class TokenGenerator {
       this.textRenderer.drawCharacterName(ctx, character.name, center, radius, diameter);
     }
 
-    // Draw token count badge
-    if (this.options.tokenCount) {
-      const reminderCount = countReminders(character);
-      if (reminderCount > 0) {
-        this.textRenderer.drawTokenCount(ctx, reminderCount, diameter);
-      }
+    // Draw token count badge (reminderCount already calculated above)
+    if (this.options.tokenCount && reminderCount > 0) {
+      this.textRenderer.drawTokenCount(ctx, reminderCount, diameter);
     }
 
     logger.info('TokenGenerator', 'Generated character token', character.name);
@@ -320,7 +358,7 @@ export class TokenGenerator {
       await renderBackground(ctx, this.options.metaBackgroundStyle, diameter);
     } else if (this.options.metaBackgroundType === 'color') {
       if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.metaBackgroundColor || '#FFFFFF';
+        ctx.fillStyle = this.options.metaBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
         ctx.fill();
       }
     } else {
@@ -446,8 +484,8 @@ export class TokenGenerator {
     // Background options
     const backgroundUseGradient = qrOpts?.backgroundUseGradient ?? false;
     const backgroundGradientType = qrOpts?.backgroundGradientType ?? 'linear';
-    const backgroundColorStart = qrOpts?.backgroundColorStart ?? '#FFFFFF';
-    const backgroundColorEnd = qrOpts?.backgroundColorEnd ?? '#FFFFFF';
+    const backgroundColorStart = qrOpts?.backgroundColorStart ?? QR_COLORS.BACKGROUND;
+    const backgroundColorEnd = qrOpts?.backgroundColorEnd ?? QR_COLORS.BACKGROUND;
     const backgroundOpacity = qrOpts?.backgroundOpacity ?? 100;
     const backgroundRoundedCorners = qrOpts?.backgroundRoundedCorners ?? false;
 
@@ -463,7 +501,7 @@ export class TokenGenerator {
     this.applyCircularClip(ctx, center, radius);
     if (this.options.metaBackgroundType === 'color') {
       if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.metaBackgroundColor || '#FFFFFF';
+        ctx.fillStyle = this.options.metaBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
         ctx.fill();
       }
     } else {
@@ -563,7 +601,7 @@ export class TokenGenerator {
       await renderBackground(ctx, this.options.characterBackgroundStyle, diameter);
     } else if (this.options.characterBackgroundType === 'color') {
       if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.characterBackgroundColor || '#FFFFFF';
+        ctx.fillStyle = this.options.characterBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
         ctx.fill();
       }
     } else {

@@ -4,14 +4,17 @@
  */
 
 import { EXAMPLE_SCRIPT_LIST } from './data/exampleScripts.js';
-import type {
-  AveryTemplate,
-  AveryTemplateId,
-  Config,
-  Team,
-  TeamColors,
-  TeamLabels,
-} from './types/index.js';
+import type { AveryTemplate, AveryTemplateId, Config, Team } from './types/index.js';
+
+// Re-export team colors and labels from constants.ts (SSOT)
+export {
+  getTeamColor,
+  getTeamHexColor,
+  TEAM_COLORS,
+  TEAM_LABELS,
+  type TeamColorKey,
+  type TeamLabelKey,
+} from './constants.js';
 
 /**
  * Avery label template specifications
@@ -212,34 +215,6 @@ export const CONFIG: Config = {
   TRADEMARK: {
     TEXT: 'Blood on the Clocktower is a product of the Pandemonium Institute',
   },
-};
-
-/**
- * Team color mapping for display purposes
- */
-export const TEAM_COLORS: TeamColors = {
-  townsfolk: '#1a5f2a',
-  outsider: '#1a3f5f',
-  minion: '#5f1a3f',
-  demon: '#8b0000',
-  traveller: '#5f4f1a',
-  fabled: '#4f1a5f',
-  loric: '#2a5f5f',
-  meta: '#808080',
-};
-
-/**
- * Team labels for display
- */
-export const TEAM_LABELS: TeamLabels = {
-  townsfolk: 'Townsfolk',
-  outsider: 'Outsider',
-  minion: 'Minion',
-  demon: 'Demon',
-  traveller: 'Traveller',
-  fabled: 'Fabled',
-  loric: 'Loric',
-  meta: 'Meta',
 };
 
 export default CONFIG;

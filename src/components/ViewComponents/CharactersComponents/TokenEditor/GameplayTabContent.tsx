@@ -33,6 +33,7 @@ import { useResolvedImageUrls } from '@/hooks/sync/useResolvedImageUrls';
 import { useAutoResizeTextarea } from '@/hooks/ui/useAutoResizeTextarea';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
+import { TIMING } from '@/ts/constants.js';
 import type { Character } from '@/ts/types/index.js';
 import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
 import { NightOrderField } from './NightOrderField';
@@ -56,13 +57,6 @@ interface GameplayTabContentProps {
   isIdLinked: boolean;
   onIdLinkChange: (linked: boolean) => void;
 }
-
-// ============================================
-// Constants
-// ============================================
-
-const DEBOUNCE_MS = 500;
-const IMAGE_DEBOUNCE_MS = 800;
 
 // ============================================
 // Main Component
@@ -157,7 +151,11 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   // ============================================
 
   const debouncedUpdate = useCallback(
-    (field: keyof Character, value: Character[keyof Character], delay = DEBOUNCE_MS) => {
+    (
+      field: keyof Character,
+      value: Character[keyof Character],
+      delay: number = TIMING.METADATA_DEBOUNCE
+    ) => {
       const timer = setTimeout(() => {
         onEditChange(field, value);
       }, delay);
@@ -248,7 +246,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       debouncedUpdate(
         'image',
         localImages.length === 1 ? value : localImages.map((img, i) => (i === index ? value : img)),
-        IMAGE_DEBOUNCE_MS
+        TIMING.IMAGE_LOAD_DEBOUNCE
       );
     },
     [isOfficial, localImages, debouncedUpdate]

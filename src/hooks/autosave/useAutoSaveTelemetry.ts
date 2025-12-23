@@ -9,12 +9,7 @@
 
 import { useCallback, useRef } from 'react';
 import { logger } from '@/ts/utils/index.js';
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const TELEMETRY_STORAGE_KEY = 'botc-autosave-telemetry';
+import { STORAGE_KEYS } from '@/ts/utils/storageKeys.js';
 
 // ============================================================================
 // Types
@@ -50,7 +45,7 @@ export interface AutoSaveTelemetryStats extends AutoSaveTelemetry {
  */
 function loadTelemetry(): AutoSaveTelemetry {
   try {
-    const stored = localStorage.getItem(TELEMETRY_STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.AUTO_SAVE_TELEMETRY);
     if (stored) {
       return JSON.parse(stored);
     }
@@ -75,7 +70,7 @@ function loadTelemetry(): AutoSaveTelemetry {
  */
 function saveTelemetry(telemetry: AutoSaveTelemetry): void {
   try {
-    localStorage.setItem(TELEMETRY_STORAGE_KEY, JSON.stringify(telemetry));
+    localStorage.setItem(STORAGE_KEYS.AUTO_SAVE_TELEMETRY, JSON.stringify(telemetry));
   } catch (error) {
     logger.warn('AutoSaveTelemetry', 'Failed to save telemetry to localStorage', { error });
   }

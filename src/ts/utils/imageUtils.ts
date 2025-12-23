@@ -134,6 +134,24 @@ export async function canvasToBlob(
 }
 
 /**
+ * Convert canvas to ArrayBuffer (binary image data)
+ * More efficient than toDataURL() - no base64 encoding overhead.
+ * Uses toBlob() internally for optimal memory usage.
+ * @param canvas - Canvas element
+ * @param type - MIME type (e.g., 'image/jpeg', 'image/png')
+ * @param quality - Quality (0-1) for lossy formats like JPEG
+ * @returns ArrayBuffer of image data
+ */
+export async function canvasToArrayBuffer(
+  canvas: HTMLCanvasElement,
+  type: string = 'image/png',
+  quality: number = 1
+): Promise<ArrayBuffer> {
+  const blob = await canvasToBlob(canvas, type, quality);
+  return blob.arrayBuffer();
+}
+
+/**
  * Download a file
  * @param data - File data (Blob or data URL)
  * @param filename - Download filename

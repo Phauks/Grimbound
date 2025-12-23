@@ -3,6 +3,7 @@
  * Provides load balancing, queuing, and automatic worker management.
  */
 
+import { TokenGeneratorError } from '@/ts/errors.js';
 import { logger } from '@/ts/utils/logger.js';
 import type { WorkerResponse, WorkerTask } from '@/ts/workers/prerender-worker.js';
 
@@ -13,6 +14,17 @@ interface QueuedTask {
   task: WorkerTask;
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
+  signal?: AbortSignal;
+  transfer?: Transferable[];
+}
+
+/**
+ * Worker with ready state tracking.
+ */
+interface ManagedWorker {
+  worker: Worker;
+  ready: Promise<void>;
+  isReady: boolean;
 }
 
 /**
@@ -43,8 +55,9 @@ export interface WorkerPoolOptions {
  * })
  */
 export class WorkerPool {
-  private workers: Worker[] = [];
-  private activeWorkers = new Set<Worker>();
+  protected workers: Worker[] = [];
+  protected managedWorkers: ManagedWorker[] = [];
+  protected activeWorkers = new Set<Worker>();
   private queue: QueuedTask[] = [];
   private taskCounter = 0;
   private readonly maxQueueSize: number;
@@ -59,20 +72,52 @@ export class WorkerPool {
 
     // Create workers
     for (let i = 0; i < workerCount; i++) {
-      const worker = this.createWorker();
-      this.workers.push(worker);
+      const managed = this.createManagedWorker();
+      this.managedWorkers.push(managed);
+      this.workers.push(managed.worker);
     }
   }
 
   /**
    * Create a single worker instance.
    * @returns Worker instance
+   * @deprecated Use createManagedWorker for new code
    */
-  private createWorker(): Worker {
+  protected createWorker(): Worker {
+    return this.createManagedWorker().worker;
+  }
+
+  /**
+   * Create a managed worker with ready state tracking.
+   * @returns ManagedWorker with worker and ready promise
+   */
+  protected createManagedWorker(): ManagedWorker {
     // Vite handles this worker import specially
     const worker = new Worker(new URL('../../workers/prerender-worker.ts', import.meta.url), {
       type: 'module',
     });
+
+    // Create ready promise that resolves when worker sends READY message
+    let resolveReady: () => void;
+    const ready = new Promise<void>((resolve) => {
+      resolveReady = resolve;
+    });
+
+    const managed: ManagedWorker = {
+      worker,
+      ready,
+      isReady: false,
+    };
+
+    // Listen for READY message
+    const readyHandler = (e: MessageEvent) => {
+      if (e.data?.type === 'READY') {
+        managed.isReady = true;
+        resolveReady();
+        worker.removeEventListener('message', readyHandler);
+      }
+    };
+    worker.addEventListener('message', readyHandler);
 
     worker.onerror = (error) => {
       logger.error('WorkerPool', 'Worker error', error);
@@ -81,20 +126,26 @@ export class WorkerPool {
       if (index !== -1) {
         this.workers.splice(index, 1);
         this.activeWorkers.delete(worker);
+        // Also remove from managed workers
+        const managedIndex = this.managedWorkers.findIndex((m) => m.worker === worker);
+        if (managedIndex !== -1) {
+          this.managedWorkers.splice(managedIndex, 1);
+        }
       }
 
       // Try to recover by creating a new worker
       if (this.workers.length < (this.options.workerCount || 4)) {
         try {
-          const newWorker = this.createWorker();
-          this.workers.push(newWorker);
+          const newManaged = this.createManagedWorker();
+          this.managedWorkers.push(newManaged);
+          this.workers.push(newManaged.worker);
         } catch (err) {
           logger.error('WorkerPool', 'Failed to recover worker', err);
         }
       }
     };
 
-    return worker;
+    return managed;
   }
 
   /**
@@ -102,9 +153,22 @@ export class WorkerPool {
    * Returns a promise that resolves with the worker's response.
    *
    * @param task - Task to execute
+   * @param options - Optional execution options
+   * @param options.signal - AbortSignal to cancel the task
+   * @param options.transfer - Transferable objects to transfer ownership (zero-copy)
    * @returns Promise resolving to task result
    */
-  async execute<T = unknown>(task: Omit<WorkerTask, 'id'>): Promise<T> {
+  async execute<T = unknown>(
+    task: Omit<WorkerTask, 'id'>,
+    options?: { signal?: AbortSignal; transfer?: Transferable[] }
+  ): Promise<T> {
+    const signal = options?.signal;
+    const transfer = options?.transfer;
+    // Check if already aborted
+    if (signal?.aborted) {
+      throw new DOMException('Task aborted', 'AbortError');
+    }
+
     // Add unique ID to task
     const fullTask: WorkerTask = {
       ...task,
@@ -114,18 +178,78 @@ export class WorkerPool {
     return new Promise<T>((resolve, reject) => {
       // Check queue size limit
       if (this.queue.length >= this.maxQueueSize) {
-        reject(new Error('Worker pool queue is full'));
+        reject(new TokenGeneratorError('Worker pool queue is full'));
         return;
       }
 
-      // Try to find available worker
-      const availableWorker = this.workers.find((w) => !this.activeWorkers.has(w));
+      // Set up abort listener
+      const onAbort = () => {
+        // Remove from queue if still queued
+        const queueIndex = this.queue.findIndex((q) => q.task.id === fullTask.id);
+        if (queueIndex !== -1) {
+          this.queue.splice(queueIndex, 1);
+          reject(new DOMException('Task aborted', 'AbortError'));
+        }
+        // Note: If task is already running, we can't cancel it in the worker
+        // The worker will complete but the result will be ignored
+      };
 
-      if (availableWorker) {
-        this.runTask(availableWorker, fullTask, resolve, reject);
+      if (signal) {
+        signal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      // Wrap resolve/reject to clean up abort listener
+      const wrappedResolve = (value: T) => {
+        signal?.removeEventListener('abort', onAbort);
+        resolve(value);
+      };
+
+      const wrappedReject = (error: Error) => {
+        signal?.removeEventListener('abort', onAbort);
+        reject(error);
+      };
+
+      // Try to find available and ready worker
+      const availableManaged = this.managedWorkers.find(
+        (m) => m.isReady && !this.activeWorkers.has(m.worker)
+      );
+
+      if (availableManaged) {
+        this.runTask(
+          availableManaged.worker,
+          fullTask,
+          wrappedResolve,
+          wrappedReject,
+          signal,
+          transfer
+        );
       } else {
-        // Queue task for later - cast resolve since T is assignable to unknown
-        this.queue.push({ task: fullTask, resolve: resolve as (value: unknown) => void, reject });
+        // Check if there's an available but not-yet-ready worker
+        const pendingManaged = this.managedWorkers.find((m) => !this.activeWorkers.has(m.worker));
+
+        if (pendingManaged && !pendingManaged.isReady) {
+          // Wait for worker to be ready, then run task
+          pendingManaged.ready.then(() => {
+            if (signal?.aborted) return; // Check if aborted while waiting
+            this.runTask(
+              pendingManaged.worker,
+              fullTask,
+              wrappedResolve,
+              wrappedReject,
+              signal,
+              transfer
+            );
+          });
+        } else {
+          // Queue task for later
+          this.queue.push({
+            task: fullTask,
+            resolve: wrappedResolve as (value: unknown) => void,
+            reject: wrappedReject,
+            signal,
+            transfer,
+          });
+        }
       }
     });
   }
@@ -136,42 +260,83 @@ export class WorkerPool {
    * @param task - Task to execute
    * @param resolve - Promise resolve function
    * @param reject - Promise reject function
+   * @param signal - Optional AbortSignal
+   * @param transfer - Optional Transferable objects for zero-copy transfer
    */
   private runTask<T>(
     worker: Worker,
     task: WorkerTask,
     resolve: (value: T) => void,
-    reject: (error: Error) => void
+    reject: (error: Error) => void,
+    signal?: AbortSignal,
+    transfer?: Transferable[]
   ): void {
+    // Check if aborted before starting
+    if (signal?.aborted) {
+      reject(new DOMException('Task aborted', 'AbortError'));
+      this.processQueue();
+      return;
+    }
+
     this.activeWorkers.add(worker);
+    let isCompleted = false;
 
     // Set up one-time message handler for this task
     const handler = (e: MessageEvent<WorkerResponse>) => {
       // Check if this response matches our task
       if (e.data.id !== task.id) return;
 
+      isCompleted = true;
+
       // Clean up
       worker.removeEventListener('message', handler);
       this.activeWorkers.delete(worker);
+
+      // Check if aborted while running (result is discarded)
+      if (signal?.aborted) {
+        // Don't resolve/reject - already handled by abort listener
+        this.processQueue();
+        return;
+      }
 
       // Handle response
       if (e.data.type === 'SUCCESS') {
         resolve(e.data.data as T);
       } else if (e.data.type === 'ERROR') {
-        reject(new Error(e.data.error || 'Worker task failed'));
+        reject(new TokenGeneratorError(e.data.error || 'Worker task failed'));
       }
 
       // Process next queued task if available
       this.processQueue();
     };
 
+    // Set up abort handler for in-flight tasks
+    const onAbort = () => {
+      if (!isCompleted) {
+        worker.removeEventListener('message', handler);
+        this.activeWorkers.delete(worker);
+        reject(new DOMException('Task aborted', 'AbortError'));
+        this.processQueue();
+      }
+    };
+
+    if (signal) {
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+
     worker.addEventListener('message', handler);
 
-    // Send task to worker
+    // Send task to worker (with optional transferables for zero-copy)
     try {
-      worker.postMessage(task);
+      if (transfer && transfer.length > 0) {
+        worker.postMessage(task, transfer);
+      } else {
+        worker.postMessage(task);
+      }
     } catch (error) {
+      isCompleted = true;
       worker.removeEventListener('message', handler);
+      signal?.removeEventListener('abort', onAbort);
       this.activeWorkers.delete(worker);
       reject(error instanceof Error ? error : new Error(String(error)));
       this.processQueue();
@@ -184,12 +349,29 @@ export class WorkerPool {
   private processQueue(): void {
     if (this.queue.length === 0) return;
 
-    const availableWorker = this.workers.find((w) => !this.activeWorkers.has(w));
-    if (!availableWorker) return;
+    // Find available and ready worker
+    const availableManaged = this.managedWorkers.find(
+      (m) => m.isReady && !this.activeWorkers.has(m.worker)
+    );
+    if (!availableManaged) return;
 
     const queued = this.queue.shift();
     if (queued) {
-      this.runTask(availableWorker, queued.task, queued.resolve, queued.reject);
+      // Skip if already aborted
+      if (queued.signal?.aborted) {
+        queued.reject(new DOMException('Task aborted', 'AbortError'));
+        // Process next task
+        this.processQueue();
+        return;
+      }
+      this.runTask(
+        availableManaged.worker,
+        queued.task,
+        queued.resolve,
+        queued.reject,
+        queued.signal,
+        queued.transfer
+      );
     }
   }
 
@@ -198,8 +380,10 @@ export class WorkerPool {
    * @returns Pool stats
    */
   getStats() {
+    const readyWorkers = this.managedWorkers.filter((m) => m.isReady).length;
     return {
       workerCount: this.workers.length,
+      readyWorkers,
       activeWorkers: this.activeWorkers.size,
       queuedTasks: this.queue.length,
       availableWorkers: this.workers.length - this.activeWorkers.size,
@@ -213,7 +397,7 @@ export class WorkerPool {
   terminate(): void {
     // Reject all queued tasks
     for (const queued of this.queue) {
-      queued.reject(new Error('Worker pool terminated'));
+      queued.reject(new TokenGeneratorError('Worker pool terminated'));
     }
     this.queue = [];
 
@@ -222,6 +406,7 @@ export class WorkerPool {
       worker.terminate();
     }
     this.workers = [];
+    this.managedWorkers = [];
     this.activeWorkers.clear();
   }
 
@@ -251,7 +436,7 @@ export class WorkerPool {
         }
 
         if (Date.now() - startTime > timeout) {
-          reject(new Error('Worker pool idle timeout'));
+          reject(new TokenGeneratorError('Worker pool idle timeout'));
           return;
         }
 

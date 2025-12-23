@@ -21,6 +21,7 @@ import { useExpandablePanel } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/script/NightOrderView.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
+import { UI_DIMENSIONS } from '@/ts/constants.js';
 import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfLib.js';
 import {
   syncNightOrderToJson,
@@ -327,7 +328,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     onChange: handleBackgroundChange,
     onPreviewChange: handleBackgroundChange,
     panelHeight: 280,
-    minPanelWidth: 300,
+    minPanelWidth: UI_DIMENSIONS.MIN_PANEL_WIDTH,
   });
 
   // Get display settings (pending when editing, current otherwise)

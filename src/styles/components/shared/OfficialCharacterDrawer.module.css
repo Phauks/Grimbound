@@ -65,17 +65,17 @@
 }
 
 .expandCollapseButton {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
-  border-radius: 6px;
+  border-radius: 4px;
   color: var(--text-muted, #888);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.625rem;
   transition: all 0.15s ease;
 }
 
@@ -181,8 +181,15 @@
 .statsRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.75rem;
   color: var(--text-muted, #888);
+}
+
+.statsRowActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .statHighlight {

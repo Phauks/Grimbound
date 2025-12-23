@@ -166,6 +166,8 @@ export interface TokenGeneratorOptions {
   logoUrl?: string;
   tokenCount: boolean;
   reminderCountStyle?: ReminderCountStyle;
+  /** When true, all tokens use uniform top spacing as if they all have a badge */
+  reminderCountUniformLayout?: boolean;
   setupStyle: string;
   reminderBackground: string;
   reminderBackgroundImage?: string;
@@ -229,6 +231,7 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
   generateBootleggerRules: false,
   tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
+  reminderCountUniformLayout: false,
   setupStyle: CONFIG.STYLE.SETUP_STYLE,
   reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
   characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
@@ -326,6 +329,7 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   displayAbilityText: CONFIG.TOKEN.DISPLAY_ABILITY_TEXT,
   generateBootleggerRules: false,
   tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
+  reminderCountUniformLayout: false,
 
   // Setup overlay
   setupStyle: CONFIG.STYLE.SETUP_STYLE,

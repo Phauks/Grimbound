@@ -122,6 +122,10 @@ import styles from '@/styles/components/Button.module.css';
 // import { logger } from '../../../ts/utils/logger.js';
 ```
 
+### No Hacky Solutions
+
+**Hacky workarounds are not real solutions.** If it requires type casting to access private members, `// @ts-ignore`, `as unknown as T`, or setTimeout to "fix" race conditions - find the proper architectural solution instead. Hacks create technical debt and break when assumptions change.
+
 ---
 
 ## UI Decision Communication
@@ -181,5 +185,5 @@ Detailed documentation is in `.claude/rules/`:
 
 ---
 
-*Last updated: 2025-12-21*
-*Version: v0.4.0*
+*Last updated: 2025-12-23*
+*Version: v0.4.2*

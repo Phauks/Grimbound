@@ -233,9 +233,43 @@ export function useCodeMirrorEditor(
       EditorView.lineWrapping,
     ];
 
-    // Add line numbers if enabled
+    // Add line numbers if enabled - with click-to-select-line support
     if (showLineNumbers) {
-      extensions.push(lineNumbers());
+      extensions.push(
+        lineNumbers({
+          domEventHandlers: {
+            mousedown(view, line, event) {
+              // Select the entire line when clicking on line number
+              const lineStart = line.from;
+              const lineEnd = line.to;
+              const mouseEvent = event as MouseEvent;
+
+              // If shift is held, extend selection from current anchor
+              if (mouseEvent.shiftKey) {
+                const anchor = view.state.selection.main.anchor;
+                view.dispatch({
+                  selection: { anchor, head: lineEnd },
+                  scrollIntoView: true,
+                });
+              } else {
+                // Select the entire line (including newline if not last line)
+                const docLength = view.state.doc.length;
+                const selectEnd = lineEnd < docLength ? lineEnd + 1 : lineEnd;
+                view.dispatch({
+                  selection: { anchor: lineStart, head: selectEnd },
+                  scrollIntoView: true,
+                });
+              }
+
+              // Focus the editor
+              view.focus();
+
+              // Prevent default to avoid text selection issues
+              return true;
+            },
+          },
+        })
+      );
     }
 
     // Add fold gutter if enabled

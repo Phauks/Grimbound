@@ -21,8 +21,9 @@
 | `progressUtils.ts` | Progress tracking | `createProgressState()`, `updateProgress()` |
 | `tokenGrouping.ts` | Token organization | `groupTokensByTeam()`, `sortTokens()` |
 | `scriptSorting.ts` | Script sorting | `sortCharactersByTeam()` |
-| `storageKeys.ts` | localStorage keys | Constants for storage key names |
+| `storageKeys.ts` | localStorage keys | `STORAGE_KEYS.*` (CUSTOM_PRESETS, THEME, AUTO_SAVE_ENABLED, CACHE_LOG_LEVEL, AUTO_SAVE_TELEMETRY), `getStorageItem()`, `setStorageItem()` |
 | `nameGenerator.ts` | Unique names | `generateUniqueName()` |
+| `teamUtils.ts` | Team CSS mapping | `getTeamStyleClass()`, `normalizeTeamName()`, `TEAM_CLASS_MAP` |
 
 ---
 
@@ -35,6 +36,7 @@
 | `canvasPool.ts` | Canvas reuse | `acquireCanvas()`, `releaseCanvas()` |
 | `textDrawing.ts` | Text rendering | `drawCurvedText()`, `drawCenteredWrappedText()`, `drawAbilityText()` |
 | `accentDrawing.ts` | Decorations | `drawAccents()` |
+| `bleedUtils.ts` | **Print bleed** | `sampleEdgeColors()`, `generateBleedRing()`, `interpolateSampleColor()` |
 | `qrGeneration.ts` | QR codes | `generateStyledQRCode()` |
 | `gradientUtils.ts` | Gradients | `createBackgroundGradient()`, `getCSSGradient()` |
 | `backgroundEffects/` | **Background system** | `renderBackground()`, `TextureFactory`, `applyEffects()` |
@@ -90,6 +92,7 @@
 - `TokenGenerator` handles pure canvas rendering (low-level)
 - `TokenFactory` creates Token objects from canvases (metadata assembly)
 - `batchGenerator` orchestrates both with progress tracking, abort handling, and parallel batching (high-level)
+- **SSOT Integration**: `batchGenerator.generateAllTokens()` pre-resolves all character image URLs using `resolveCharacterImageUrl` before generation begins, ensuring proper handling of asset references, sync storage, and external URLs
 
 ---
 
@@ -287,6 +290,23 @@ DEFAULT_COLORS = {
   TEXT_PRIMARY: '#FFFFFF',
   BADGE_BACKGROUND: 'rgba(0, 0, 0, 0.7)',
   FALLBACK_BACKGROUND: '#1a1a2e',
+}
+
+// Timing constants (debounce/delays)
+TIMING = {
+  QR_GENERATION_DELAY: 100,
+  UI_ANIMATION: 200,
+  JSON_VALIDATION_DEBOUNCE: 300,
+  OPTION_CHANGE_DEBOUNCE: 500,
+  METADATA_DEBOUNCE: 500,
+  IMAGE_LOAD_DEBOUNCE: 800,
+  AUTO_SAVE_DELAY: 1000,
+}
+
+// Studio defaults
+STUDIO_DEFAULTS = {
+  BORDER_WIDTH: 3,
+  BORDER_COLOR: '#FFFFFF',
 }
 ```
 

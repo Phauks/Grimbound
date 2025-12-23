@@ -1092,6 +1092,38 @@ type PreRenderableTab = 'characters' | 'tokens' | 'script';
 - Must maintain service as tabs evolve
 - Module-level caches don't share eviction policies with CacheManager
 
+### ADR-009: SSOT Character Image Resolution in Token Generation
+
+**Context**: Token generation used `getCharacterImageUrl()` (simple string extraction) which bypassed the SSOT (`resolveCharacterImageUrl`) causing asset references and sync storage images to fail.
+
+**Decision**: Integrate SSOT into `batchGenerator.ts` by pre-resolving all character image URLs at the entry point of `generateAllTokens()`.
+
+**Implementation**:
+```typescript
+// Pre-resolve before generation
+const resolvedImageUrls = await preResolveCharacterImageUrls(characters, generateVariants);
+
+// Store in BatchContext for O(1) lookup
+interface BatchContext {
+  resolvedImageUrls: Map<string, string>;  // characterId:variantIndex -> resolved URL
+}
+
+// Use resolved URLs in generation functions
+const resolvedUrl = ctx.resolvedImageUrls.get(`${character.id}:${variant.variantIndex}`);
+```
+
+**Rationale**:
+- **Unified resolution path** - All character image types handled consistently
+- **Asset references work** - `asset:uuid` properly resolved
+- **Sync storage supported** - Official character images from IndexedDB
+- **Performance** - Batch parallel resolution before generation starts
+- **Minimal changes** - Resolved URLs flow through existing code
+
+**Trade-offs**:
+- Additional async step before generation
+- Memory for resolved URL map (negligible for typical scripts)
+- Must maintain map key format consistency
+
 ---
 
 ## Future Architecture Considerations

@@ -22,6 +22,10 @@ export const STORAGE_KEYS = {
   AUTO_SAVE_ENABLED: 'clocktower_auto_save_enabled',
   /** Legacy key for preset migration */
   LEGACY_PRESETS: 'bloodOnTheClockTower_presets',
+  /** Cache system log level */
+  CACHE_LOG_LEVEL: 'cache:logLevel',
+  /** Auto-save telemetry data */
+  AUTO_SAVE_TELEMETRY: 'botc-autosave-telemetry',
 } as const;
 
 /**

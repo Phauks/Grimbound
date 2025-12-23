@@ -1,8 +1,10 @@
 /**
- * ExportDownloads Component Styles
+ * Download Components Styles
  *
- * Styles for download cards, sections, and featured downloads
- * in the ExportView right panel.
+ * Styles for download cards, sections, featured downloads,
+ * and character selection in the ExportView.
+ *
+ * Used by: FeaturedDownloads, DownloadCard, DownloadSection, CharacterSelectionCard
  */
 
 /* ============================================
@@ -20,12 +22,36 @@
 .featuredHeader {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
   margin-bottom: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary, #ffffff);
+}
+
+.featuredHeader:hover .featuredArrow {
+  color: var(--accent-primary, #c9a227);
+}
+
+.featuredArrow {
+  font-size: 0.625rem;
+  margin-right: 0.5rem;
+  color: var(--text-muted, #888);
+  transition:
+    transform 0.2s ease,
+    color 0.15s ease;
+}
+
+.featuredArrowOpen {
+  transform: rotate(90deg);
 }
 
 .featuredIcon {
   font-size: 1rem;
+  margin-right: 0.5rem;
 }
 
 .featuredTitle {
@@ -35,6 +61,15 @@
   letter-spacing: 0.05em;
   color: var(--accent-primary, #c9a227);
   margin: 0;
+  flex: 1;
+}
+
+.featuredCount {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #888);
+  background: var(--bg-badge, rgba(255, 255, 255, 0.08));
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
 }
 
 .featuredGrid {
@@ -326,4 +361,174 @@
 
 :global(.theme-light) .downloadCard:hover:not(.disabled) {
   background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+/* ============================================
+   Info Banner (Featured Section)
+   ============================================ */
+
+.infoBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.infoBannerIcon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.infoBannerText {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a0a0a0);
+  line-height: 1.4;
+}
+
+:global(.theme-light) .infoBanner {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================
+   Character Selection Card (Purple Theme)
+   ============================================ */
+
+.characterSelectionCard {
+  background: linear-gradient(135deg, rgba(147, 112, 219, 0.1) 0%, rgba(147, 112, 219, 0.04) 100%);
+  border: 2px solid rgba(147, 112, 219, 0.5);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.characterSelectionCardHeader {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(147, 112, 219, 0.08);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary, #ffffff);
+  transition: background-color 0.15s ease;
+}
+
+.characterSelectionCardHeader:hover {
+  background: rgba(147, 112, 219, 0.15);
+}
+
+.characterSelectionCardArrow {
+  font-size: 0.625rem;
+  margin-right: 0.625rem;
+  color: rgb(180, 150, 220);
+  transition: transform 0.2s ease;
+}
+
+.characterSelectionCardArrowOpen {
+  transform: rotate(90deg);
+}
+
+.characterSelectionCardIcon {
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
+.characterSelectionCardHeading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(180, 150, 220);
+  margin: 0;
+}
+
+.characterSelectionCardSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-left: auto;
+}
+
+.characterSelectionCardCount {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.characterSelectionCardBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background: rgba(240, 173, 78, 0.2);
+  color: #f0ad4e;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.characterSelectionCardContent {
+  border-top: 1px solid rgba(147, 112, 219, 0.3);
+  padding: 0.5rem 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Light theme adjustments for purple card */
+:global(.theme-light) .characterSelectionCard {
+  background: linear-gradient(135deg, rgba(106, 90, 205, 0.1) 0%, rgba(106, 90, 205, 0.04) 100%);
+  border-color: rgba(106, 90, 205, 0.4);
+}
+
+:global(.theme-light) .characterSelectionCardHeader {
+  background: rgba(106, 90, 205, 0.08);
+}
+
+:global(.theme-light) .characterSelectionCardHeader:hover {
+  background: rgba(106, 90, 205, 0.15);
+}
+
+:global(.theme-light) .characterSelectionCardHeading {
+  color: rgb(106, 90, 205);
+}
+
+:global(.theme-light) .characterSelectionCardArrow {
+  color: rgb(106, 90, 205);
+}
+
+:global(.theme-light) .characterSelectionCardContent {
+  border-top-color: rgba(106, 90, 205, 0.2);
+}
+
+:global(.theme-light) .characterSelectionCardBadge {
+  background: rgba(200, 140, 40, 0.15);
+  color: #b8860b;
+}
+
+/* ============================================
+   Section Divider
+   ============================================ */
+
+.sectionDivider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.15) 80%,
+    transparent 100%
+  );
+  margin: 0.5rem 0 1rem 0;
+}
+
+:global(.theme-light) .sectionDivider {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 20%,
+    rgba(0, 0, 0, 0.12) 80%,
+    transparent 100%
+  );
 }

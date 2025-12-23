@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { STUDIO_DEFAULTS } from '@/ts/constants.js';
 import { type BorderOptions, TEAM_COLOR_PRESETS, type TeamColorPreset } from '@/ts/studio/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -149,8 +150,8 @@ export function useAssetEffectState(
       setEffects((prev) => ({
         ...prev,
         borderOptions: {
-          width: options.width ?? prev.borderOptions?.width ?? 3,
-          color: options.color ?? prev.borderOptions?.color ?? '#FFFFFF',
+          width: options.width ?? prev.borderOptions?.width ?? STUDIO_DEFAULTS.BORDER_WIDTH,
+          color: options.color ?? prev.borderOptions?.color ?? STUDIO_DEFAULTS.BORDER_COLOR,
           style: options.style ?? prev.borderOptions?.style ?? 'solid',
         },
       }));
@@ -158,7 +159,7 @@ export function useAssetEffectState(
       if (!skipUndo) {
         logger.info(
           'AssetEffectState',
-          `Applied border: ${options.width ?? 3}px ${options.color ?? '#FFFFFF'}`
+          `Applied border: ${options.width ?? STUDIO_DEFAULTS.BORDER_WIDTH}px ${options.color ?? STUDIO_DEFAULTS.BORDER_COLOR}`
         );
       }
     },

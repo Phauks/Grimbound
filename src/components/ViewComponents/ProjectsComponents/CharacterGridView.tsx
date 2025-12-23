@@ -9,10 +9,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
+import { useCharacterImageResolver } from '@/hooks';
 import styles from '@/styles/components/projects/CharacterGridView.module.css';
 import { TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team, Token } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
+import { getTeamStyleClass } from '@/ts/utils/teamUtils.js';
 
 interface CharacterGridViewProps {
   characters: Character[];
@@ -42,35 +44,17 @@ const TEAM_CONFIG: Record<Team, { label: string }> = {
   meta: { label: 'Meta' },
 };
 
-// Get team class name for consistent styling
-const getTeamClassName = (team: string | undefined): string => {
-  const teamLower = team?.toLowerCase() || 'townsfolk';
-  switch (teamLower) {
-    case 'townsfolk':
-      return styles.teamTownsfolk;
-    case 'outsider':
-      return styles.teamOutsider;
-    case 'minion':
-      return styles.teamMinion;
-    case 'demon':
-      return styles.teamDemon;
-    case 'traveller':
-    case 'traveler':
-      return styles.teamTraveller;
-    case 'fabled':
-      return styles.teamFabled;
-    case 'loric':
-      return styles.teamLoric;
-    default:
-      return styles.teamTownsfolk;
-  }
-};
+// Get team class name using centralized utility
+const getTeamClassName = (team: string | undefined): string => getTeamStyleClass(team, styles);
 
 export function CharacterGridView({ characters, tokens }: CharacterGridViewProps) {
   const { officialData } = useTokenContext();
   const [imageDataUrls, setImageDataUrls] = useState<Map<string, string>>(new Map());
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Team>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Use SSOT hook for character image resolution (handles fallback to official data)
+  const { resolvedUrls: characterImageUrls } = useCharacterImageResolver({ characters });
 
   // Build a map of official character IDs for quick lookup
   const officialCharIds = useMemo(() => {
@@ -81,17 +65,6 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
       }
     }
     return ids;
-  }, [officialData]);
-
-  // Build a map of official character data for image lookup
-  const officialCharMap = useMemo(() => {
-    const map = new Map<string, Character>();
-    for (const char of officialData) {
-      if (char.id) {
-        map.set(char.id.toLowerCase(), char);
-      }
-    }
-    return map;
   }, [officialData]);
 
   // Check if a character is official
@@ -131,29 +104,6 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
 
     return groups;
   }, [characters]);
-
-  // Get character's image URL (from character.image property or official data)
-  const getCharacterImageUrl = (char: Character): string | undefined => {
-    // First try the character's own image property
-    if (char.image) {
-      if (Array.isArray(char.image)) {
-        if (char.image[0]) return char.image[0];
-      } else {
-        return char.image;
-      }
-    }
-
-    // Fall back to official character data from context
-    const officialChar = officialCharMap.get(char.id.toLowerCase());
-    if (officialChar?.image) {
-      if (Array.isArray(officialChar.image)) {
-        return officialChar.image[0] || undefined;
-      }
-      return officialChar.image;
-    }
-
-    return undefined;
-  };
 
   // Get character token by UUID
   const _getCharacterToken = (char: Character): Token | undefined => {
@@ -265,7 +215,8 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
     const activeIndex = char.uuid ? getActiveVariantIndex(char.uuid) : 0;
     const displayToken = hasVariants ? variants[activeIndex] || variants[0] : variants[0];
     const dataUrl = displayToken?.filename ? imageDataUrls.get(displayToken.filename) : undefined;
-    const characterImageUrl = getCharacterImageUrl(char);
+    // Use resolved URL from SSOT hook (handles fallback to official data)
+    const characterImageUrl = char.uuid ? characterImageUrls.get(char.uuid) : undefined;
     const teamClassName = getTeamClassName(char.team);
     const isOfficial = isCharacterOfficial(char);
     const reminderCount = char.uuid

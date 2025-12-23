@@ -349,25 +349,14 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
         {/* Header */}
         <div className={styles.header}>
           <h2 className={styles.title}>Official Characters</h2>
-          <div className={styles.headerButtons}>
-            <button
-              type="button"
-              className={styles.expandCollapseButton}
-              onClick={toggleAllTeams}
-              aria-label={allExpanded ? 'Collapse all sections' : 'Expand all sections'}
-              title={allExpanded ? 'Collapse all' : 'Expand all'}
-            >
-              {allExpanded ? '▲' : '▼'}
-            </button>
-            <button
-              type="button"
-              className={styles.closeButton}
-              onClick={onClose}
-              aria-label="Close drawer"
-            >
-              &times;
-            </button>
-          </div>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close drawer"
+          >
+            &times;
+          </button>
         </div>
 
         {/* Toolbar */}
@@ -420,14 +409,25 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
               On Script: <span className={styles.statHighlight}>{totalOnScript}</span> of{' '}
               {totalOfficial}
             </span>
-            <button
-              type="button"
-              className={`${styles.selectedToggle} ${showSelectedOnly ? styles.selectedToggleActive : ''}`}
-              onClick={toggleShowSelectedOnly}
-              title={showSelectedOnly ? 'Show all characters' : 'Show only selected characters'}
-            >
-              {showSelectedOnly ? '✓ Selected Only' : 'Selected Only'}
-            </button>
+            <div className={styles.statsRowActions}>
+              <button
+                type="button"
+                className={`${styles.selectedToggle} ${showSelectedOnly ? styles.selectedToggleActive : ''}`}
+                onClick={toggleShowSelectedOnly}
+                title={showSelectedOnly ? 'Show all characters' : 'Show only selected characters'}
+              >
+                {showSelectedOnly ? '✓ Selected Only' : 'Selected Only'}
+              </button>
+              <button
+                type="button"
+                className={styles.expandCollapseButton}
+                onClick={toggleAllTeams}
+                aria-label={allExpanded ? 'Collapse all sections' : 'Expand all sections'}
+                title={allExpanded ? 'Collapse all' : 'Expand all'}
+              >
+                {allExpanded ? '▲' : '▼'}
+              </button>
+            </div>
           </div>
         </div>
 

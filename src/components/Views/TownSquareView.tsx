@@ -8,7 +8,7 @@ export function TownSquareView() {
         <ViewErrorFallback view="Town Square" error={error} onRetry={resetErrorBoundary} />
       )}
     >
-      <div className={styles.scriptView}>
+      <div className={styles.townSquareView}>
         <div className={styles.scriptViewPlaceholder}>
           <div className={styles.placeholderIcon}>🏘️</div>
           <h2>Town Square</h2>

@@ -5,6 +5,7 @@
  * Supports both _meta array ordering and per-character number ordering.
  */
 
+import { getCharacterImageUrl } from '@/ts/data/characterUtils.js';
 import { extractScriptMeta, isCharacter, isScriptMeta } from '@/ts/data/scriptParser.js';
 import type { Character, ScriptEntry, Team } from '@/ts/types/index.js';
 import type {
@@ -51,7 +52,7 @@ export function characterToNightOrderEntry(
     type: 'character',
     name: character.name,
     ability: reminderText || character.ability || '',
-    image: getCharacterImageUrl(character),
+    image: getCharacterImageUrl(character.image),
     team: character.team,
     order: orderNumber,
     nightType: hasNightOrderForBoth(character) ? 'both' : nightType,
@@ -69,17 +70,6 @@ function hasNightOrderForBoth(character: Character): boolean {
     character.otherNight !== undefined &&
     character.otherNight !== 0
   );
-}
-
-/**
- * Get the image URL for a character
- * Handles both string and array image fields
- */
-function getCharacterImageUrl(character: Character): string {
-  if (!character.image) {
-    return '';
-  }
-  return Array.isArray(character.image) ? character.image[0] : character.image;
 }
 
 /**

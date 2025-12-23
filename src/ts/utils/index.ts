@@ -105,6 +105,7 @@ export { globalImageCache } from './imageCache.js';
 // Image utilities
 export {
   applyCorsProxy,
+  canvasToArrayBuffer,
   canvasToBlob,
   checkFontsLoaded,
   downloadFile,

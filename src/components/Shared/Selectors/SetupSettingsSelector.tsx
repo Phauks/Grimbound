@@ -133,7 +133,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
         }
         info={<InfoSection label="Setup" />}
         headerSlot={EnableToggle}
-        actionLabel="Change"
+        actionLabel="Customize"
         onAction={() => setShowAssetModal(true)}
         isExpanded={false}
         disabled={disabled}

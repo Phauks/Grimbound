@@ -11,8 +11,11 @@
 import type { NightOrderEntry } from './nightOrderTypes.js';
 import { SPECIAL_ENTRY_IDS } from './nightOrderTypes.js';
 
-/** Base path for script assets (using Vite BASE_URL for GitHub Pages) */
-const SCRIPTS_PATH = `${import.meta.env.BASE_URL}scripts/`;
+/**
+ * Base path for script assets.
+ * Uses absolute path - the characterImageResolver handles BASE_URL resolution.
+ */
+const SCRIPTS_PATH = '/scripts/';
 
 /**
  * Dusk - Always first in any night order

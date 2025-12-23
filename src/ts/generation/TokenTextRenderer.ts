@@ -69,17 +69,20 @@ export class TokenTextRenderer {
 
   /**
    * Calculate ability text layout
+   * @param yPositionOverride - Optional Y position ratio override (e.g., when badge is present)
    */
   calculateAbilityTextLayout(
     ctx: CanvasRenderingContext2D,
     ability: string,
-    diameter: number
+    diameter: number,
+    yPositionOverride?: number
   ): TextLayoutResult {
     ctx.save();
     const fontSize = diameter * CONFIG.FONTS.ABILITY_TEXT.SIZE_RATIO;
     ctx.font = `${fontSize}px "${this.options.abilityTextFont}", sans-serif`;
     const lineHeightMultiplier = CONFIG.FONTS.ABILITY_TEXT.LINE_HEIGHT ?? LINE_HEIGHTS.STANDARD;
-    const startY = diameter * CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+    const yPositionRatio = yPositionOverride ?? CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+    const startY = diameter * yPositionRatio;
 
     // Use optimized circular text layout calculation
     const layout = calculateCircularTextLayout(
@@ -130,8 +133,15 @@ export class TokenTextRenderer {
 
   /**
    * Draw ability text
+   * @param yPositionOverride - Optional Y position ratio override (e.g., when badge is present)
    */
-  drawAbilityText(ctx: CanvasRenderingContext2D, ability: string, diameter: number): void {
+  drawAbilityText(
+    ctx: CanvasRenderingContext2D,
+    ability: string,
+    diameter: number,
+    yPositionOverride?: number
+  ): void {
+    const yPositionRatio = yPositionOverride ?? CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
     drawAbilityText(
       ctx,
       ability,
@@ -140,7 +150,7 @@ export class TokenTextRenderer {
       CONFIG.FONTS.ABILITY_TEXT.SIZE_RATIO,
       CONFIG.FONTS.ABILITY_TEXT.LINE_HEIGHT ?? LINE_HEIGHTS.STANDARD,
       CHARACTER_LAYOUT.ABILITY_TEXT_MAX_WIDTH,
-      CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION,
+      yPositionRatio,
       this.options.abilityTextColor,
       this.options.fontSpacing.abilityText,
       this.options.textShadow?.abilityText ?? 3
@@ -181,6 +191,43 @@ export class TokenTextRenderer {
   }
 
   /**
+   * Calculate the badge radius for a given reminder count
+   * Used to determine ability text positioning when badge is present
+   */
+  private calculateBadgeRadius(count: number, diameter: number): number {
+    const fontSize = diameter * CONFIG.FONTS.TOKEN_COUNT.SIZE_RATIO;
+    const style = this.options.reminderCountStyle || 'arabic';
+
+    return style === 'dots'
+      ? fontSize *
+          TOKEN_COUNT_BADGE.BACKGROUND_RADIUS *
+          (1 + count * TOKEN_COUNT_BADGE.SIZE_GROWTH_PER_ITEM)
+      : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
+  }
+
+  /**
+   * Calculate the Y position ratio where ability text should start
+   * when a reminder count badge is present.
+   * Returns undefined if no adjustment is needed.
+   */
+  calculateAbilityTextYWithBadge(reminderCount: number, diameter: number): number {
+    if (reminderCount <= 0) {
+      return CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+    }
+
+    const badgeRadius = this.calculateBadgeRadius(reminderCount, diameter);
+    const badgeCenterY = diameter * CHARACTER_LAYOUT.TOKEN_COUNT_Y_POSITION;
+    const badgeBottomY = badgeCenterY + badgeRadius;
+    const gap = diameter * TOKEN_COUNT_BADGE.TEXT_GAP;
+
+    // Convert pixel position back to ratio
+    const adjustedYRatio = (badgeBottomY + gap) / diameter;
+
+    // Only adjust if the badge would overlap with default ability text position
+    return Math.max(adjustedYRatio, CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION);
+  }
+
+  /**
    * Draw token count badge
    */
   drawTokenCount(ctx: CanvasRenderingContext2D, count: number, diameter: number): void {
@@ -196,13 +243,8 @@ export class TokenTextRenderer {
     const style = this.options.reminderCountStyle || 'arabic';
     const displayText = formatReminderCount(count, style);
 
-    // Adjust badge size for dots style (wider)
-    const badgeRadius =
-      style === 'dots'
-        ? fontSize *
-          TOKEN_COUNT_BADGE.BACKGROUND_RADIUS *
-          (1 + count * TOKEN_COUNT_BADGE.SIZE_GROWTH_PER_ITEM)
-        : fontSize * TOKEN_COUNT_BADGE.BACKGROUND_RADIUS;
+    // Use shared badge radius calculation
+    const badgeRadius = this.calculateBadgeRadius(count, diameter);
 
     // Draw background circle
     ctx.beginPath();
