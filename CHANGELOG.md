@@ -19,6 +19,11 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 ## [Unreleased]
 
 ### Changed
+- **Project Rebrand**: Renamed from "Clocktower Token Generator" to "Grimbound"
+  - New domain: grimbound.com (via Cloudflare Pages)
+  - Updated all documentation, UI, and configuration files
+  - Migrated deployment from GitHub Pages to Cloudflare Pages
+  - Updated PWA manifest with new branding
 - **Studio Simplification**: Replaced complex multi-layer editor with a focused asset editor
   - Removed 20+ files (~3000+ lines) of over-engineered functionality
   - New simple UI using standard ViewLayout 2-panel pattern (matching TokensView)

@@ -1,4 +1,4 @@
-# Claude Code Guide for Clocktower Token Generator
+# Claude Code Guide for Grimbound
 
 > **Purpose**: Essential rules Claude MUST follow every session. Detailed reference material is in `.claude/rules/`.
 

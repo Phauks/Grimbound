@@ -23,7 +23,7 @@ export function AppHeader({
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
-        <h1 className={styles.title}>Blood on the Clocktower Token Generator</h1>
+        <h1 className={styles.title}>Grimbound</h1>
 
         {/* Show project name when project exists */}
         {currentProjectName && (

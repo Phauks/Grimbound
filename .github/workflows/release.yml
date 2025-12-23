@@ -69,26 +69,26 @@ jobs:
             echo "Note: CHANGELOG.md not found, skipping"
           fi
           cd release
-          zip -r ../clocktower-token-generator-${{ steps.version.outputs.tag }}.zip .
+          zip -r ../grimbound-${{ steps.version.outputs.tag }}.zip .
 
       # Create GitHub Release with auto-generated notes
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.tag }}
+          name: Grimbound ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           files: |
-            clocktower-token-generator-${{ steps.version.outputs.tag }}.zip
+            grimbound-${{ steps.version.outputs.tag }}.zip
           body: |
-            ## Clocktower Token Generator ${{ steps.version.outputs.tag }}
-            
+            ## Grimbound ${{ steps.version.outputs.tag }}
+
             ### Installation
-            Download the ZIP file and extract it to use the token generator locally.
-            
+            Download the ZIP file and extract it to use Grimbound locally.
+
             ### Online Version
-            Visit the [GitHub Pages deployment](https://phauks.github.io/Clocktower_Token_Generator/) for the live version.
-            
+            Visit [grimbound.com](https://grimbound.com) for the live version.
+
             ---
             See [CHANGELOG.md](https://github.com/Phauks/Clocktower_Token_Generator/blob/main/CHANGELOG.md) for detailed changes.
         env:

@@ -1,11 +1,11 @@
-# Clocktower Token Generator - Architecture Documentation
+# Grimbound - Architecture Documentation
 
-> **Purpose**: This document describes the system architecture, design decisions, and technical implementation details of the Clocktower Token Generator.
+> **Purpose**: This document describes the system architecture, design decisions, and technical implementation details of Grimbound.
 
 > **Location**: This file lives in `.claude/rules/` and is loaded by Claude Code when architectural context is needed.
 
-**Last Updated**: 2025-12-20
-**Version**: v0.4.0
+**Last Updated**: 2025-12-23
+**Version**: v0.4.2
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## System Overview
 
-The Clocktower Token Generator is a client-side web application that generates printable tokens for the Blood on the Clocktower board game. It features:
+Grimbound is a client-side web application that generates printable tokens for the Blood on the Clocktower board game. It features:
 
 - **Offline-first architecture** with GitHub data synchronization
 - **Canvas-based rendering** for high-quality token generation

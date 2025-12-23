@@ -1,13 +1,13 @@
-# Blood on the Clocktower Token Generator
+# Grimbound
 
 [![CI](https://github.com/Phauks/Clocktower_Token_Generator/workflows/CI/badge.svg)](https://github.com/Phauks/Clocktower_Token_Generator/actions/workflows/ci.yml)
 [![Security Audit](https://github.com/Phauks/Clocktower_Token_Generator/workflows/Dependency%20Security%20Audit/badge.svg)](https://github.com/Phauks/Clocktower_Token_Generator/actions/workflows/dependency-audit.yml)
 [![Deploy](https://github.com/Phauks/Clocktower_Token_Generator/workflows/Build%20and%20Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/Phauks/Clocktower_Token_Generator/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-🌐 **[Launch Web App](https://phauks.github.io/Clocktower_Token_Generator/)**
+🌐 **[Launch Web App](https://grimbound.com)**
 
-A web-based tool for generating custom Blood on the Clocktower character and reminder tokens with PDF export. Built with TypeScript for type safety and maintainability.
+Grimbound is a web-based tool for generating custom Blood on the Clocktower character and reminder tokens with PDF export. Built with TypeScript for type safety and maintainability.
 
 ## Features
 

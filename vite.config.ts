@@ -6,9 +6,8 @@ import path from 'path';
 export default defineConfig(({ mode }) => ({
   root: '.',
   publicDir: 'assets',
-  // GitHub Pages deploys to /Clocktower_Token_Generator/ subpath
-  // Use '/' in development for easier local testing
-  base: mode === 'production' ? '/Clocktower_Token_Generator/' : '/',
+  // Deploy to root domain (grimbound.com via Cloudflare Pages)
+  base: '/',
 
   resolve: {
     alias: {
@@ -22,14 +21,14 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['fonts/**/*', 'images/**/*', 'scripts/**/*'],
       manifest: {
-        name: 'Blood on the Clocktower Token Generator',
-        short_name: 'Token Generator',
-        description: 'Create custom tokens for Blood on the Clocktower board game',
+        name: 'Grimbound',
+        short_name: 'Grimbound',
+        description: 'Grimbound - Create custom tokens for Blood on the Clocktower board game',
         theme_color: '#6C3BAA',
         background_color: '#1a1a2e',
         display: 'standalone',
-        scope: '/Clocktower_Token_Generator/',
-        start_url: '/Clocktower_Token_Generator/',
+        scope: '/',
+        start_url: '/',
         orientation: 'any',
         categories: ['games', 'utilities'],
         icons: [

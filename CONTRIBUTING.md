@@ -1,6 +1,6 @@
-# Contributing to Clocktower Token Generator
+# Contributing to Grimbound
 
-Thank you for your interest in contributing to the Clocktower Token Generator! 🎉
+Thank you for your interest in contributing to Grimbound! 🎉
 
 This document provides guidelines and information to help you contribute effectively.
 
@@ -29,7 +29,7 @@ This document provides guidelines and information to help you contribute effecti
 ### Initial Setup
 
 1. **Fork the Repository**
-   - Visit [Clocktower Token Generator](https://github.com/Phauks/Clocktower_Token_Generator)
+   - Visit [Grimbound Repository](https://github.com/Phauks/Clocktower_Token_Generator)
    - Click the "Fork" button in the top right
 
 2. **Clone Your Fork**
@@ -612,4 +612,4 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-Thank you for contributing to Clocktower Token Generator! Your efforts help make this tool better for the entire Blood on the Clocktower community. 🎲🔪
+Thank you for contributing to Grimbound! Your efforts help make this tool better for the entire Blood on the Clocktower community. 🎲🔪

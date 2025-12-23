@@ -1,7 +1,7 @@
 {
-  "name": "clocktower-token-generator",
+  "name": "grimbound",
   "version": "0.4.2",
-  "description": "Blood on the Clocktower Token Generator",
+  "description": "Grimbound - Token Generator for Blood on the Clocktower",
   "type": "module",
   "scripts": {
     "build": "tsc",
