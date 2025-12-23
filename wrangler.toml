@@ -1,0 +1,3 @@
+name = "grimbound"
+compatibility_date = "2025-12-23"
+pages_build_output_dir = "dist"

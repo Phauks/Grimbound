@@ -1,7 +1,7 @@
-# Deploy to Cloudflare Pages
-# Builds the project and deploys to Cloudflare Pages
+# Deploy to Cloudflare
+# Builds the project and deploys to Cloudflare
 
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare
 
 on:
   # Deploy on push to main branch
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '25'
           cache: 'npm'
 
       - name: Install dependencies
@@ -35,9 +35,9 @@ jobs:
       - name: Build for production
         run: npx vite build
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=grimbound
+          command: deploy
