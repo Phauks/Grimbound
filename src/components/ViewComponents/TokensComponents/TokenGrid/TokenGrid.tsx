@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { TabType } from '@/components/Layout/TabNavigation';
 import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
@@ -39,12 +39,46 @@ export function TokenGrid({
     updateGenerationOptions,
     generationOptions,
     setMetadata,
+    getMetadata,
   } = useTokenContext();
   const { addToast } = useToast();
 
-  // Use prop tokens if provided, otherwise use context tokens directly (no filtering)
-  const displayTokens = propTokens ?? contextTokens;
-  const allTokens = propTokens ?? contextTokens;
+  // Derive current isOfficial and hasDecorativeOverrides from character state
+  // This ensures tags update when character properties change without regeneration
+  const enrichedTokens = useMemo(() => {
+    const tokensToEnrich = propTokens ?? contextTokens;
+    return tokensToEnrich.map((token) => {
+      // Only enrich tokens that have a parent character
+      if (!token.parentUuid) return token;
+
+      // Find the current character data
+      const character = characters.find((c) => c.uuid === token.parentUuid);
+      if (!character) return token;
+
+      // Get current metadata for decorative overrides
+      const metadata = getMetadata(token.parentUuid);
+      const currentIsOfficial = character.source === 'official';
+      const currentHasDecorativeOverrides = metadata?.decoratives?.useCustomSettings ?? false;
+
+      // Only create new object if values changed
+      if (
+        token.isOfficial === currentIsOfficial &&
+        token.hasDecorativeOverrides === currentHasDecorativeOverrides
+      ) {
+        return token;
+      }
+
+      return {
+        ...token,
+        isOfficial: currentIsOfficial,
+        hasDecorativeOverrides: currentHasDecorativeOverrides,
+      };
+    });
+  }, [propTokens, contextTokens, characters, getMetadata]);
+
+  // Use enriched tokens for display
+  const displayTokens = enrichedTokens;
+  const allTokens = enrichedTokens;
 
   const handleSetAsExample = useCallback(
     (token: Token) => {

@@ -26,10 +26,10 @@ jobs:
     name: Validate (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
 
-    # Test on multiple Node.js versions for compatibility
+    # Test on Node.js versions for compatibility
     strategy:
       matrix:
-        node-version: ['23.x', '24.x', '25.x']
+        node-version: ['22.x', '25.x']
       fail-fast: false
 
     steps:
