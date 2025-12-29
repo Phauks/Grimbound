@@ -40,6 +40,8 @@ jobs:
 
       - name: Build TypeScript
         run: npm run build
+        env:
+          VITE_GOOGLE_FONTS_API_KEY: ${{ secrets.VITE_GOOGLE_FONTS_API_KEY }}
 
       # Determine the version tag
       - name: Get version

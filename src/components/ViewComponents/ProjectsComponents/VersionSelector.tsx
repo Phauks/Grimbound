@@ -169,7 +169,7 @@ export function VersionSelector({
           {/* Current (editing) option */}
           <button
             type="button"
-            className={`${styles.option} ${!selectedVersion ? styles.optionSelected : ''}`}
+            className={`${styles.option} ${selectedVersion ? '' : styles.optionSelected}`}
             onClick={() => handleSelect(null)}
             role="option"
             aria-selected={!selectedVersion}

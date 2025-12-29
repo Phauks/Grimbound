@@ -64,9 +64,10 @@ export function useTokenGrouping(tokens: Token[]): UseTokenGroupingReturn {
   }, [tokens]);
 
   // Filter meta tokens
-  const metaTokens = useMemo(() => {
-    return tokens.filter((t) => t.type !== 'character' && t.type !== 'reminder');
-  }, [tokens]);
+  const metaTokens = useMemo(
+    () => tokens.filter((t) => t.type !== 'character' && t.type !== 'reminder'),
+    [tokens]
+  );
 
   // Sort reminder tokens by parent character order, then by reminder text
   const reminderTokens = useMemo(() => {

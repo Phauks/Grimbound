@@ -3,6 +3,7 @@ import type {
   Character,
   CharacterMetadata,
   GenerationOptions,
+  GenerationProgress,
   ScriptMeta,
   SyncStatus,
   Token,
@@ -21,9 +22,6 @@ interface TokenContextType {
   // Token state
   tokens: Token[];
   setTokens: (tokens: Token[]) => void;
-
-  filteredTokens: Token[];
-  setFilteredTokens: (tokens: Token[]) => void;
 
   // Character state
   characters: Character[];
@@ -76,9 +74,6 @@ interface TokenContextType {
   // Meta tokens (almanac, script-name, pandemonium) are independent
   exampleMetaToken: Token | null;
   setExampleMetaToken: (token: Token | null) => void;
-  // Legacy single accessor (returns character token for backwards compatibility)
-  exampleToken: Token | null;
-  setExampleToken: (token: Token | null) => void;
 
   // UI state
   isLoading: boolean;
@@ -92,8 +87,8 @@ interface TokenContextType {
   setWarnings: (warnings: string[]) => void;
 
   // Generation progress
-  generationProgress: { current: number; total: number } | null;
-  setGenerationProgress: (progress: { current: number; total: number } | null) => void;
+  generationProgress: GenerationProgress | null;
+  setGenerationProgress: (progress: GenerationProgress | null) => void;
 
   // Token generation session tracking - prevents duplicate generation on navigation
   lastGeneratedJsonHash: string | null;
@@ -115,7 +110,6 @@ const DEFAULT_CHARACTER_METADATA: CharacterMetadata = { idLinkedToName: true };
 
 export function TokenProvider({ children }: TokenProviderProps) {
   const [tokens, setTokens] = useState<Token[]>([]);
-  const [filteredTokens, setFilteredTokens] = useState<Token[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [officialData, setOfficialData] = useState<Character[]>([]);
   const [scriptMeta, setScriptMeta] = useState<ScriptMeta | null>(null);
@@ -123,10 +117,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [generationProgress, setGenerationProgress] = useState<{
-    current: number;
-    total: number;
-  } | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
 
   // Token generation session tracking - prevents duplicate generation on navigation
   const [lastGeneratedJsonHash, setLastGeneratedJsonHash] = useState<string | null>(null);
@@ -188,9 +179,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
 
   // Character enable/disable helpers
   const isCharacterEnabled = useCallback(
-    (uuid: string): boolean => {
-      return isCharEnabled(uuid, characterMetadata);
-    },
+    (uuid: string): boolean => isCharEnabled(uuid, characterMetadata),
     [characterMetadata]
   );
 
@@ -218,9 +207,10 @@ export function TokenProvider({ children }: TokenProviderProps) {
     [characters]
   );
 
-  const getEnabledCharacters = useCallback((): Character[] => {
-    return filterEnabledCharacters(characters, characterMetadata);
-  }, [characters, characterMetadata]);
+  const getEnabledCharacters = useCallback(
+    (): Character[] => filterEnabledCharacters(characters, characterMetadata),
+    [characters, characterMetadata]
+  );
 
   // Memoized derived values for performance
   const enabledCharacterUuids = useMemo(
@@ -250,33 +240,6 @@ export function TokenProvider({ children }: TokenProviderProps) {
   const [exampleCharacterToken, setExampleCharacterToken] = useState<Token | null>(null);
   const [exampleMetaToken, setExampleMetaToken] = useState<Token | null>(null);
 
-  // Smart setter that routes to correct state based on token type
-  const setExampleToken = useCallback((token: Token | null) => {
-    if (!token) {
-      // Clear both if null
-      setExampleCharacterToken(null);
-      setExampleMetaToken(null);
-      return;
-    }
-
-    if (token.type === 'character' || token.type === 'reminder') {
-      // Character and reminder tokens go to character slot
-      // For reminders, we store the reminder itself (preview will find parent character)
-      setExampleCharacterToken(token);
-    } else if (
-      token.type === 'almanac' ||
-      token.type === 'script-name' ||
-      token.type === 'pandemonium' ||
-      token.type === 'bootlegger'
-    ) {
-      // All meta tokens go to meta slot
-      setExampleMetaToken(token);
-    }
-  }, []);
-
-  // Legacy accessor returns character token for backwards compatibility
-  const exampleToken = exampleCharacterToken;
-
   const updateGenerationOptions = useCallback((options: Partial<GenerationOptions>) => {
     setGenerationOptions((prev) => ({ ...prev, ...options }));
   }, []);
@@ -288,8 +251,6 @@ export function TokenProvider({ children }: TokenProviderProps) {
   const value: TokenContextType = {
     tokens,
     setTokens,
-    filteredTokens,
-    setFilteredTokens,
     characters,
     setCharacters,
     officialData,
@@ -317,8 +278,6 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setExampleCharacterToken,
     exampleMetaToken,
     setExampleMetaToken,
-    exampleToken,
-    setExampleToken,
     isLoading,
     setIsLoading,
     error,

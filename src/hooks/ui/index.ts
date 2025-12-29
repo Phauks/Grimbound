@@ -51,6 +51,9 @@ export { useIntersectionObserver } from './useIntersectionObserver';
 export type { default as UseModalBehaviorOptions } from './useModalBehavior';
 // Modal behavior hooks
 export { useModalBehavior } from './useModalBehavior';
+export type { UseRecentColorsOptions, UseRecentColorsResult } from './useRecentColors';
+// Recent colors hooks
+export { addRecentColor, getRecentColors, useRecentColors } from './useRecentColors';
 export type { UseSelectionOptions, UseSelectionReturn } from './useSelection';
 // Selection hooks
 export { useSelection } from './useSelection';

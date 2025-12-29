@@ -263,7 +263,7 @@ export function LogoSelector({
               setShowOptions(false);
             }}
             disabled={!logoUrl}
-            title={!logoUrl ? 'No logo URL in _meta' : 'Use logo URL from _meta'}
+            title={logoUrl ? 'Use logo URL from _meta' : 'No logo URL in _meta'}
           >
             <span>🔗</span>
             <div className={styles.optionInfo}>

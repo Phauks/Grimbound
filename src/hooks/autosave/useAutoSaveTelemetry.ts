@@ -151,9 +151,10 @@ export function useAutoSaveTelemetry(): UseAutoSaveTelemetryReturn {
     saveTelemetry(updated);
   }, []);
 
-  const getStats = useCallback((): AutoSaveTelemetryStats => {
-    return computeTelemetryStats(telemetryRef.current);
-  }, []);
+  const getStats = useCallback(
+    (): AutoSaveTelemetryStats => computeTelemetryStats(telemetryRef.current),
+    []
+  );
 
   const reset = useCallback(() => {
     const fresh: AutoSaveTelemetry = {

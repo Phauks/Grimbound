@@ -173,13 +173,13 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
   }, [selectedProject, projectToDelete]);
 
   // Calculate last project (most recently accessed, excluding current)
-  const lastProject = useMemo(() => {
-    return (
+  const lastProject = useMemo(
+    () =>
       projects
         .filter((p) => !currentProject || p.id !== currentProject.id)
-        .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt)[0] || null
-    );
-  }, [projects, currentProject]);
+        .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt)[0] || null,
+    [projects, currentProject]
+  );
 
   const handleLoadLastProject = useCallback(async () => {
     if (lastProject) {

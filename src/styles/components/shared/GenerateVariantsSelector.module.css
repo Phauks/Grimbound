@@ -43,6 +43,10 @@
   background: var(--bg-hover);
 }
 
+.optionRow:hover .optionLabel {
+  color: var(--color-accent);
+}
+
 /* Checkbox styling */
 .checkbox {
   width: 1rem;

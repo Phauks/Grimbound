@@ -114,7 +114,7 @@ export function ViewErrorFallback({ view, error, onRetry }: ViewErrorFallbackPro
             className={styles.reportButton}
             onClick={() => {
               window.open(
-                'https://github.com/anthropics/claude-code/issues',
+                'https://github.com/Phauks/Grimbound/issues',
                 '_blank',
                 'noopener,noreferrer'
               );

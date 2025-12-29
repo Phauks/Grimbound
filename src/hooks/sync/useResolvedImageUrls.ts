@@ -2,14 +2,18 @@
  * useResolvedImageUrls Hook
  *
  * Resolves image URLs from various sources (external, asset:, sync cache)
- * and manages blob URL lifecycle.
+ * using the SSOT characterImageResolver.
  *
  * @module hooks/sync/useResolvedImageUrls
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { dataSyncService } from '@/ts/sync/index.js';
-import { logger } from '@/ts/utils/logger.js';
+import { isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import {
+  extractCharacterIdFromPath,
+  isExternalUrl,
+  resolveCharacterImageUrl,
+} from '@/ts/utils/characterImageResolver.js';
 
 interface UseResolvedImageUrlsOptions {
   /** Array of image URLs to resolve */
@@ -25,14 +29,37 @@ interface UseResolvedImageUrlsReturn {
   isLoading: boolean;
 }
 
+/** Result of resolving a single URL */
+interface ResolveResult {
+  url: string | null;
+  blobUrl: string | null;
+}
+
 /**
- * Extract character ID from a path like "Icon_clockmaker.webp" or "/images/clockmaker.png"
+ * Resolve a single image URL using the SSOT characterImageResolver
+ * Returns both the resolved URL and any blob URL that was created
  */
-function extractCharacterId(path: string): string | null {
-  const segments = path.split('/');
-  const filename = segments[segments.length - 1];
-  const match = filename.match(/^(?:Icon_)?([a-z_]+)(?:\.(?:webp|png|jpg|jpeg|gif))?$/i);
-  return match ? match[1].toLowerCase() : null;
+async function resolveSingleUrl(url: string): Promise<ResolveResult> {
+  if (!url?.trim()) return { url: null, blobUrl: null };
+
+  // External URLs (http/https/data/blob) pass through
+  if (isExternalUrl(url)) return { url, blobUrl: null };
+
+  // Asset references pass through (will be resolved by components)
+  if (isAssetReference(url)) return { url, blobUrl: null };
+
+  // Extract character ID for SSOT resolution
+  const characterId = extractCharacterIdFromPath(url) || url;
+
+  // Use SSOT to resolve the image
+  const result = await resolveCharacterImageUrl(url, characterId, {
+    logContext: 'useResolvedImageUrls',
+  });
+
+  return {
+    url: result.url || null,
+    blobUrl: result.blobUrl || null,
+  };
 }
 
 /**
@@ -67,54 +94,27 @@ export function useResolvedImageUrls({
     }
 
     let isMounted = true;
-    const objectUrls: string[] = [];
 
     async function resolveImages() {
       setIsLoading(true);
 
-      const resolved = await Promise.all(
-        imageUrls.map(async (url) => {
-          if (!url?.trim()) return null;
-
-          // Pass through external URLs
-          if (url.startsWith('http://') || url.startsWith('https://')) return url;
-
-          // Pass through asset URLs
-          if (url.startsWith('asset:')) return url;
-
-          // Try to resolve from sync cache
-          const characterId = extractCharacterId(url);
-          if (characterId) {
-            try {
-              const blob = await dataSyncService.getCharacterImage(characterId);
-              if (blob) {
-                const objectUrl = URL.createObjectURL(blob);
-                objectUrls.push(objectUrl);
-                return objectUrl;
-              }
-            } catch (error) {
-              logger.warn('useResolvedImageUrls', `Failed to resolve image: ${characterId}`, error);
-            }
-          }
-
-          // Fall back to original URL
-          return url;
-        })
-      );
+      const results = await Promise.all(imageUrls.map(resolveSingleUrl));
+      const resolved = results.map((r) => r.url);
+      const newBlobUrls = results.map((r) => r.blobUrl).filter((u): u is string => u !== null);
 
       if (isMounted) {
         // Clean up old blob URLs before setting new ones
-        blobUrlsRef.current.forEach((url) => {
+        for (const url of blobUrlsRef.current) {
           URL.revokeObjectURL(url);
-        });
-        blobUrlsRef.current = objectUrls;
+        }
+        blobUrlsRef.current = newBlobUrls;
         setResolvedUrls(resolved);
         setIsLoading(false);
       } else {
         // If unmounted during resolution, clean up new URLs
-        objectUrls.forEach((url) => {
+        for (const url of newBlobUrls) {
           URL.revokeObjectURL(url);
-        });
+        }
       }
     }
 
@@ -126,14 +126,15 @@ export function useResolvedImageUrls({
   }, [imageUrls, enabled]);
 
   // Cleanup blob URLs on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       blobUrlsRef.current.forEach((url) => {
         URL.revokeObjectURL(url);
       });
       blobUrlsRef.current = [];
-    };
-  }, []);
+    },
+    []
+  );
 
   return { resolvedUrls, isLoading };
 }

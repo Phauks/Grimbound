@@ -82,7 +82,7 @@ export interface ICacheStrategy<K = string, V = unknown> {
    * @param tag - Tag to filter by
    * @returns Array of matching cache entries
    */
-  getByTag(tag: string): Promise<Array<CacheEntry<V>>>;
+  getByTag(tag: string): Promise<CacheEntry<V>[]>;
 }
 
 /**

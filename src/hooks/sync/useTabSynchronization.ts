@@ -182,6 +182,9 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
         case 'closed':
           activeTabs.delete(message.tabId);
           break;
+        default:
+          // Unknown message type - ignore
+          break;
       }
 
       updateActiveTabs();

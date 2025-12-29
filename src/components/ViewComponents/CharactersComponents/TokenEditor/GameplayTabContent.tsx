@@ -36,11 +36,325 @@ import viewStyles from '@/styles/components/views/Views.module.css';
 import { TIMING } from '@/ts/constants.js';
 import type { Character } from '@/ts/types/index.js';
 import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
+import { JinxEditor, type JinxPreviewData } from './JinxEditor';
 import { NightOrderField } from './NightOrderField';
 import { SortableImageUrlRow } from './SortableImageUrlRow';
 import { SortableReminderRow } from './SortableReminderRow';
 import { SpecialItemsEditor } from './SpecialItemsEditor';
 import { TEAM_SELECT_CLASS_MAP } from './types';
+
+// ============================================
+// Helpers
+// ============================================
+
+/** Normalize image array for storage - single image stored as string, multiple as array */
+function normalizeImageValue(images: string[]): string | string[] {
+  return images.length === 1 ? images[0] : images;
+}
+
+/** Parse ability text to update/add/remove setup brackets */
+function adjustAbilityForSetup(ability: string, enableSetup: boolean): string {
+  const hasSetupBrackets = /\[.*?\]/.test(ability);
+  if (enableSetup && !hasSetupBrackets) {
+    return `${ability.trim()} []`;
+  }
+  if (!enableSetup && hasSetupBrackets) {
+    return ability
+      .replace(/\[([^\]]*)\]/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  return ability;
+}
+
+// ============================================
+// Hook: Image URL Management
+// ============================================
+
+interface UseImageUrlsOptions {
+  initialImages: string[];
+  isOfficial: boolean;
+  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
+  onRefreshPreview?: () => void;
+  onPreviewVariant?: (imageUrl: string | undefined) => void;
+  debouncedUpdate: (
+    field: keyof Character,
+    value: Character[keyof Character],
+    delay?: number
+  ) => void;
+}
+
+interface UseImageUrlsResult {
+  localImages: string[];
+  setLocalImages: React.Dispatch<React.SetStateAction<string[]>>;
+  previewVariantIndex: number | null;
+  handleImageUpdate: (index: number, value: string) => void;
+  handleImageBlur: () => void;
+  handleImagePreview: (index: number, url: string) => void;
+  handleAddImage: () => void;
+  handleRemoveImage: (index: number) => void;
+  handleRefreshImages: () => void;
+}
+
+function useImageUrls({
+  initialImages,
+  isOfficial,
+  onEditChange,
+  onRefreshPreview,
+  onPreviewVariant,
+  debouncedUpdate,
+}: UseImageUrlsOptions): UseImageUrlsResult {
+  const [localImages, setLocalImages] = useState<string[]>(initialImages);
+  const [previewVariantIndex, setPreviewVariantIndex] = useState<number | null>(null);
+
+  // Sync with prop changes
+  useEffect(() => {
+    setLocalImages(initialImages);
+    setPreviewVariantIndex(null);
+  }, [initialImages]);
+
+  const handleImageUpdate = useCallback(
+    (index: number, value: string) => {
+      if (isOfficial) return;
+      setLocalImages((prev) => {
+        const newImages = [...prev];
+        newImages[index] = value;
+        return newImages;
+      });
+      const updatedImages = localImages.map((img, i) => (i === index ? value : img));
+      debouncedUpdate('image', normalizeImageValue(updatedImages), TIMING.IMAGE_LOAD_DEBOUNCE);
+    },
+    [isOfficial, localImages, debouncedUpdate]
+  );
+
+  const handleImageBlur = useCallback(() => {
+    if (isOfficial) return;
+    onEditChange('image', normalizeImageValue(localImages));
+  }, [isOfficial, localImages, onEditChange]);
+
+  const handleImagePreview = useCallback(
+    (index: number, url: string) => {
+      if (!onPreviewVariant) return;
+      setPreviewVariantIndex(index);
+      onPreviewVariant(url);
+    },
+    [onPreviewVariant]
+  );
+
+  const handleAddImage = useCallback(() => {
+    if (isOfficial) return;
+    const newImages = [...localImages, ''];
+    setLocalImages(newImages);
+    onEditChange('image', newImages);
+  }, [isOfficial, localImages, onEditChange]);
+
+  const handleRemoveImage = useCallback(
+    (index: number) => {
+      if (isOfficial) return;
+      const isLastImage = localImages.length <= 1;
+      if (isLastImage) {
+        setLocalImages(['']);
+        onEditChange('image', '');
+        return;
+      }
+      const newImages = localImages.filter((_, i) => i !== index);
+      setLocalImages(newImages);
+      onEditChange('image', normalizeImageValue(newImages));
+    },
+    [isOfficial, localImages, onEditChange]
+  );
+
+  const handleRefreshImages = useCallback(() => {
+    if (isOfficial) return;
+    onEditChange('image', normalizeImageValue(localImages));
+    onRefreshPreview?.();
+  }, [isOfficial, localImages, onEditChange, onRefreshPreview]);
+
+  return {
+    localImages,
+    setLocalImages,
+    previewVariantIndex,
+    handleImageUpdate,
+    handleImageBlur,
+    handleImagePreview,
+    handleAddImage,
+    handleRemoveImage,
+    handleRefreshImages,
+  };
+}
+
+// ============================================
+// Helper: Night Order Field Handlers
+// ============================================
+
+interface NightOrderHandlers {
+  reminderValue: string;
+  orderValue: number;
+  onReminderChange: (value: string) => void;
+  onReminderBlur: (value: string) => void;
+  onOrderChange: (value: number) => void;
+  onOrderBlur: (value: number) => void;
+}
+
+function useNightOrderField(
+  initialReminder: string,
+  initialOrder: number,
+  reminderField: 'firstNightReminder' | 'otherNightReminder',
+  orderField: 'firstNight' | 'otherNight',
+  debouncedUpdate: (field: keyof Character, value: Character[keyof Character]) => void,
+  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void
+): NightOrderHandlers {
+  const [reminderValue, setReminderValue] = useState(initialReminder);
+  const [orderValue, setOrderValue] = useState(initialOrder);
+
+  // Sync with prop changes
+  useEffect(() => {
+    setReminderValue(initialReminder);
+    setOrderValue(initialOrder);
+  }, [initialReminder, initialOrder]);
+
+  const onReminderChange = useCallback(
+    (value: string) => {
+      setReminderValue(value);
+      debouncedUpdate(reminderField, value);
+    },
+    [debouncedUpdate, reminderField]
+  );
+
+  const onReminderBlur = useCallback(
+    (value: string) => {
+      onEditChange(reminderField, value);
+    },
+    [onEditChange, reminderField]
+  );
+
+  const onOrderChange = useCallback((value: number) => {
+    setOrderValue(value);
+  }, []);
+
+  const onOrderBlur = useCallback(
+    (value: number) => {
+      onEditChange(orderField, value);
+    },
+    [onEditChange, orderField]
+  );
+
+  return {
+    reminderValue,
+    orderValue,
+    onReminderChange,
+    onReminderBlur,
+    onOrderChange,
+    onOrderBlur,
+  };
+}
+
+// ============================================
+// Hook: Identity Fields (Name, ID, Team)
+// ============================================
+
+interface UseIdentityFieldsOptions {
+  character: Character;
+  isOfficial: boolean;
+  isIdLinked: boolean;
+  onIdLinkChange: (linked: boolean) => void;
+  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
+  onReplaceCharacter?: (character: Character) => void;
+  debouncedUpdate: (field: keyof Character, value: Character[keyof Character]) => void;
+}
+
+interface UseIdentityFieldsResult {
+  localName: string;
+  localId: string;
+  handleToggleIdLink: () => void;
+  handleRandomName: () => void;
+  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleNameBlur: () => void;
+  handleIdChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+function useIdentityFields({
+  character,
+  isOfficial,
+  isIdLinked,
+  onIdLinkChange,
+  onEditChange,
+  onReplaceCharacter,
+  debouncedUpdate,
+}: UseIdentityFieldsOptions): UseIdentityFieldsResult {
+  const [localName, setLocalName] = useState(character.name || '');
+  const [localId, setLocalId] = useState(character.id || '');
+
+  // Sync with prop changes
+  useEffect(() => {
+    setLocalName(character.name || '');
+    setLocalId(character.id || '');
+  }, [character.name, character.id]);
+
+  const handleToggleIdLink = useCallback(() => {
+    if (!isOfficial) onIdLinkChange(!isIdLinked);
+  }, [isOfficial, isIdLinked, onIdLinkChange]);
+
+  const updateNameWithIdLink = useCallback(
+    (newName: string) => {
+      if (isIdLinked && onReplaceCharacter) {
+        onReplaceCharacter({ ...character, name: newName, id: nameToId(newName) });
+        return;
+      }
+      onEditChange('name', newName);
+    },
+    [isIdLinked, onReplaceCharacter, character, onEditChange]
+  );
+
+  const handleRandomName = useCallback(() => {
+    if (isOfficial) return;
+    const newName = generateRandomName();
+    setLocalName(newName);
+    updateNameWithIdLink(newName);
+  }, [isOfficial, updateNameWithIdLink]);
+
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isOfficial) return;
+      setLocalName(e.target.value);
+      debouncedUpdate('name', e.target.value);
+    },
+    [isOfficial, debouncedUpdate]
+  );
+
+  const handleNameBlur = useCallback(() => {
+    if (isOfficial) return;
+    updateNameWithIdLink(localName);
+  }, [isOfficial, localName, updateNameWithIdLink]);
+
+  const handleIdChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (isIdLinked || isOfficial) return;
+      setLocalId(e.target.value);
+      onEditChange('id', e.target.value);
+    },
+    [isIdLinked, isOfficial, onEditChange]
+  );
+
+  const handleTeamChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (!isOfficial) onEditChange('team', e.target.value);
+    },
+    [isOfficial, onEditChange]
+  );
+
+  return {
+    localName,
+    localId,
+    handleToggleIdLink,
+    handleRandomName,
+    handleNameChange,
+    handleNameBlur,
+    handleIdChange,
+    handleTeamChange,
+  };
+}
 
 // ============================================
 // Types
@@ -56,6 +370,14 @@ interface GameplayTabContentProps {
   charUuid: string;
   isIdLinked: boolean;
   onIdLinkChange: (linked: boolean) => void;
+  /** Characters currently on the script (for jinx editor) */
+  scriptCharacters?: Character[];
+  /** All official characters from sync (for jinx editor) */
+  officialCharacters?: Character[];
+  /** Callback to preview a jinx token */
+  onPreviewJinx?: (data: JinxPreviewData | null) => void;
+  /** Index of currently previewed jinx */
+  previewedJinxIndex?: number | null;
 }
 
 // ============================================
@@ -72,79 +394,16 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   charUuid: _charUuid,
   isIdLinked,
   onIdLinkChange,
+  scriptCharacters = [],
+  officialCharacters = [],
+  onPreviewJinx,
+  previewedJinxIndex,
 }: GameplayTabContentProps) {
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-
-  // ============================================
-  // Local State
-  // ============================================
-
-  const [localName, setLocalName] = useState(character.name || '');
-  const [localId, setLocalId] = useState(character.id || '');
-  const [localAbility, setLocalAbility] = useState(character.ability || '');
-  const [localImages, setLocalImages] = useState<string[]>(
-    Array.isArray(character.image) ? character.image : [character.image || '']
-  );
-  const [localFirstNightReminder, setLocalFirstNightReminder] = useState(
-    character.firstNightReminder || ''
-  );
-  const [localOtherNightReminder, setLocalOtherNightReminder] = useState(
-    character.otherNightReminder || ''
-  );
-  const [localFirstNight, setLocalFirstNight] = useState(character.firstNight ?? 0);
-  const [localOtherNight, setLocalOtherNight] = useState(character.otherNight ?? 0);
-  const [previewVariantIndex, setPreviewVariantIndex] = useState<number | null>(null);
-
-  // Auto-resize for ability textarea
-  const abilityTextareaRef = useAutoResizeTextarea({
-    value: localAbility,
-    enabled: !isOfficial,
-    minRows: 3,
-  });
-
-  // Resolved image URLs
-  const { resolvedUrls: resolvedImageUrls } = useResolvedImageUrls({
-    imageUrls: localImages,
-    enabled: true,
-  });
-
-  // ============================================
-  // Sync Local State from Character Prop
-  // ============================================
-
-  useEffect(() => {
-    setLocalName(character.name || '');
-    setLocalId(character.id || '');
-    setLocalAbility(character.ability || '');
-    setLocalImages(Array.isArray(character.image) ? character.image : [character.image || '']);
-    setLocalFirstNightReminder(character.firstNightReminder || '');
-    setLocalOtherNightReminder(character.otherNightReminder || '');
-    setLocalFirstNight(character.firstNight ?? 0);
-    setLocalOtherNight(character.otherNight ?? 0);
-    setPreviewVariantIndex(null);
-  }, [
-    character.name,
-    character.id,
-    character.ability,
-    character.image,
-    character.firstNightReminder,
-    character.otherNightReminder,
-    character.firstNight,
-    character.otherNight,
-  ]);
-
-  // Auto-detect setup text
-  useEffect(() => {
-    if (isOfficial) return;
-    const hasSetupText = /\[.*?\]/.test(localAbility);
-    if (hasSetupText && !character.setup) {
-      onEditChange('setup', true);
-    }
-  }, [localAbility, character.setup, isOfficial, onEditChange]);
 
   // ============================================
   // Debounced Update Helper
@@ -165,6 +424,68 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   );
 
   // ============================================
+  // Identity Fields (Name, ID, Team)
+  // ============================================
+
+  const identity = useIdentityFields({
+    character,
+    isOfficial,
+    isIdLinked,
+    onIdLinkChange,
+    onEditChange,
+    onReplaceCharacter,
+    debouncedUpdate,
+  });
+
+  // ============================================
+  // Ability Text State
+  // ============================================
+
+  const [localAbility, setLocalAbility] = useState(character.ability || '');
+
+  // Auto-resize for ability textarea
+  const abilityTextareaRef = useAutoResizeTextarea({
+    value: localAbility,
+    enabled: !isOfficial,
+    minRows: 3,
+  });
+
+  // Sync ability with prop changes
+  useEffect(() => {
+    setLocalAbility(character.ability || '');
+  }, [character.ability]);
+
+  // Auto-detect setup text
+  useEffect(() => {
+    if (isOfficial) return;
+    const hasSetupText = /\[.*?\]/.test(localAbility);
+    if (hasSetupText && !character.setup) {
+      onEditChange('setup', true);
+    }
+  }, [localAbility, character.setup, isOfficial, onEditChange]);
+
+  // ============================================
+  // Image URL Management (extracted hook)
+  // ============================================
+
+  const initialImages = Array.isArray(character.image) ? character.image : [character.image || ''];
+
+  const imageUrls = useImageUrls({
+    initialImages,
+    isOfficial,
+    onEditChange,
+    onRefreshPreview,
+    onPreviewVariant,
+    debouncedUpdate,
+  });
+
+  // Resolved image URLs for display
+  const { resolvedUrls: resolvedImageUrls } = useResolvedImageUrls({
+    imageUrls: imageUrls.localImages,
+    enabled: true,
+  });
+
+  // ============================================
   // Reminders Management
   // ============================================
 
@@ -179,13 +500,13 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   // ============================================
 
   const imageDnd = useDraggableList({
-    items: localImages,
+    items: imageUrls.localImages,
     getItemId: (_, index) => `image-${index}`,
     onReorder: (newImages) => {
-      setLocalImages(newImages);
-      onEditChange('image', newImages.length === 1 ? newImages[0] : newImages);
+      imageUrls.setLocalImages(newImages);
+      onEditChange('image', normalizeImageValue(newImages));
     },
-    disabled: isOfficial || localImages.length <= 1,
+    disabled: isOfficial || imageUrls.localImages.length <= 1,
   });
 
   const reminderDnd = useDraggableList({
@@ -196,106 +517,8 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   });
 
   // ============================================
-  // Event Handlers
+  // Ability Handlers
   // ============================================
-
-  const handleToggleIdLink = useCallback(() => {
-    if (isOfficial) return;
-    onIdLinkChange(!isIdLinked);
-  }, [isOfficial, isIdLinked, onIdLinkChange]);
-
-  const handleRandomName = useCallback(() => {
-    if (isOfficial) return;
-    const newName = generateRandomName();
-    setLocalName(newName);
-    if (isIdLinked && onReplaceCharacter) {
-      onReplaceCharacter({ ...character, name: newName, id: nameToId(newName) });
-    } else {
-      onEditChange('name', newName);
-    }
-  }, [isOfficial, isIdLinked, onReplaceCharacter, character, onEditChange]);
-
-  const handleNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (isOfficial) return;
-      const newName = e.target.value;
-      setLocalName(newName);
-      debouncedUpdate('name', newName);
-    },
-    [isOfficial, debouncedUpdate]
-  );
-
-  const handleNameBlur = useCallback(() => {
-    if (isOfficial) return;
-    if (isIdLinked && onReplaceCharacter) {
-      onReplaceCharacter({ ...character, name: localName, id: nameToId(localName) });
-    } else {
-      onEditChange('name', localName);
-    }
-  }, [isOfficial, isIdLinked, onReplaceCharacter, character, localName, onEditChange]);
-
-  const handleImageUpdate = useCallback(
-    (index: number, value: string) => {
-      if (isOfficial) return;
-      setLocalImages((prev) => {
-        const newImages = [...prev];
-        newImages[index] = value;
-        return newImages;
-      });
-      // Debounce image updates
-      debouncedUpdate(
-        'image',
-        localImages.length === 1 ? value : localImages.map((img, i) => (i === index ? value : img)),
-        TIMING.IMAGE_LOAD_DEBOUNCE
-      );
-    },
-    [isOfficial, localImages, debouncedUpdate]
-  );
-
-  const handleImageBlur = useCallback(() => {
-    if (isOfficial) return;
-    onEditChange('image', localImages.length === 1 ? localImages[0] : localImages);
-  }, [isOfficial, localImages, onEditChange]);
-
-  const handleImagePreview = useCallback(
-    (index: number, url: string) => {
-      if (onPreviewVariant) {
-        setPreviewVariantIndex(index);
-        onPreviewVariant(url);
-      }
-    },
-    [onPreviewVariant]
-  );
-
-  const handleAddImage = useCallback(() => {
-    if (isOfficial) return;
-    const newImages = [...localImages, ''];
-    setLocalImages(newImages);
-    onEditChange('image', newImages);
-  }, [isOfficial, localImages, onEditChange]);
-
-  const handleRemoveImage = useCallback(
-    (index: number) => {
-      if (isOfficial) return;
-      if (localImages.length <= 1) {
-        setLocalImages(['']);
-        onEditChange('image', '');
-      } else {
-        const newImages = localImages.filter((_, i) => i !== index);
-        setLocalImages(newImages);
-        onEditChange('image', newImages.length === 1 ? newImages[0] : newImages);
-      }
-    },
-    [isOfficial, localImages, onEditChange]
-  );
-
-  const handleRefreshImages = useCallback(() => {
-    if (isOfficial) return;
-    onEditChange('image', localImages.length === 1 ? localImages[0] : localImages);
-    if (onRefreshPreview) {
-      setTimeout(() => onRefreshPreview(), 50);
-    }
-  }, [isOfficial, localImages, onEditChange, onRefreshPreview]);
 
   const handleAbilityChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -306,26 +529,9 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     [isOfficial, debouncedUpdate]
   );
 
-  const handleAbilityKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (isOfficial) return;
-      if (e.key === '[') {
-        e.preventDefault();
-        const textarea = e.currentTarget;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const before = localAbility.slice(0, start);
-        const after = localAbility.slice(end);
-        const newValue = `${before}[]${after}`;
-        setLocalAbility(newValue);
-        debouncedUpdate('ability', newValue);
-        requestAnimationFrame(() => {
-          textarea.selectionStart = textarea.selectionEnd = start + 1;
-        });
-      }
-    },
-    [isOfficial, localAbility, debouncedUpdate]
-  );
+  const handleAbilityBlur = useCallback(() => {
+    if (!isOfficial) onEditChange('ability', localAbility);
+  }, [isOfficial, localAbility, onEditChange]);
 
   const handleSetupChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -333,15 +539,8 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       const newSetupValue = e.target.checked;
       onEditChange('setup', newSetupValue);
 
-      if (newSetupValue && !/\[.*?\]/.test(localAbility)) {
-        const newAbility = `${localAbility.trim()} []`;
-        setLocalAbility(newAbility);
-        onEditChange('ability', newAbility);
-      } else if (!newSetupValue && /\[.*?\]/.test(localAbility)) {
-        const newAbility = localAbility
-          .replace(/\[([^\]]*)\]/g, '$1')
-          .replace(/\s+/g, ' ')
-          .trim();
+      const newAbility = adjustAbilityForSetup(localAbility, newSetupValue);
+      if (newAbility !== localAbility) {
         setLocalAbility(newAbility);
         onEditChange('ability', newAbility);
       }
@@ -349,57 +548,26 @@ export const GameplayTabContent = memo(function GameplayTabContent({
     [isOfficial, localAbility, onEditChange]
   );
 
-  // Night order handlers
-  const handleFirstNightReminderChange = useCallback(
-    (value: string) => {
-      setLocalFirstNightReminder(value);
-      debouncedUpdate('firstNightReminder', value);
-    },
-    [debouncedUpdate]
+  // ============================================
+  // Night Order Handlers
+  // ============================================
+
+  const firstNight = useNightOrderField(
+    character.firstNightReminder || '',
+    character.firstNight ?? 0,
+    'firstNightReminder',
+    'firstNight',
+    debouncedUpdate,
+    onEditChange
   );
 
-  const handleFirstNightReminderBlur = useCallback(
-    (value: string) => {
-      onEditChange('firstNightReminder', value);
-    },
-    [onEditChange]
-  );
-
-  const handleFirstNightOrderChange = useCallback((value: number) => {
-    setLocalFirstNight(value);
-  }, []);
-
-  const handleFirstNightOrderBlur = useCallback(
-    (value: number) => {
-      onEditChange('firstNight', value);
-    },
-    [onEditChange]
-  );
-
-  const handleOtherNightReminderChange = useCallback(
-    (value: string) => {
-      setLocalOtherNightReminder(value);
-      debouncedUpdate('otherNightReminder', value);
-    },
-    [debouncedUpdate]
-  );
-
-  const handleOtherNightReminderBlur = useCallback(
-    (value: string) => {
-      onEditChange('otherNightReminder', value);
-    },
-    [onEditChange]
-  );
-
-  const handleOtherNightOrderChange = useCallback((value: number) => {
-    setLocalOtherNight(value);
-  }, []);
-
-  const handleOtherNightOrderBlur = useCallback(
-    (value: number) => {
-      onEditChange('otherNight', value);
-    },
-    [onEditChange]
+  const otherNight = useNightOrderField(
+    character.otherNightReminder || '',
+    character.otherNight ?? 0,
+    'otherNightReminder',
+    'otherNight',
+    debouncedUpdate,
+    onEditChange
   );
 
   // Team styling
@@ -421,7 +589,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           <button
             type="button"
             className={`${styles.iconButton} ${isIdLinked ? styles.linked : ''}`}
-            onClick={handleToggleIdLink}
+            onClick={identity.handleToggleIdLink}
             disabled={isOfficial}
             title={
               isOfficial
@@ -437,16 +605,11 @@ export const GameplayTabContent = memo(function GameplayTabContent({
         <input
           id="edit-id"
           type="text"
-          value={isIdLinked ? nameToId(localName) : localId}
+          value={isIdLinked ? nameToId(identity.localName) : identity.localId}
           readOnly={isIdLinked || isOfficial}
           disabled={isIdLinked || isOfficial}
           className={isIdLinked ? styles.linkedField : ''}
-          onChange={(e) => {
-            if (!(isIdLinked || isOfficial)) {
-              setLocalId(e.target.value);
-              onEditChange('id', e.target.value);
-            }
-          }}
+          onChange={identity.handleIdChange}
           title={
             isOfficial
               ? 'Official character - cannot edit'
@@ -464,7 +627,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           <button
             type="button"
             className={styles.iconButton}
-            onClick={handleRandomName}
+            onClick={identity.handleRandomName}
             disabled={isOfficial}
             title={isOfficial ? 'Official character - cannot edit' : 'Generate random name'}
           >
@@ -474,10 +637,10 @@ export const GameplayTabContent = memo(function GameplayTabContent({
         <input
           id="edit-name"
           type="text"
-          value={localName}
+          value={identity.localName}
           disabled={isOfficial}
-          onChange={handleNameChange}
-          onBlur={handleNameBlur}
+          onChange={identity.handleNameChange}
+          onBlur={identity.handleNameBlur}
           placeholder="Character name"
         />
       </div>
@@ -489,9 +652,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           id="edit-team"
           value={character.team}
           disabled={isOfficial}
-          onChange={(e) => {
-            if (!isOfficial) onEditChange('team', e.target.value);
-          }}
+          onChange={identity.handleTeamChange}
         >
           <option value="townsfolk">Townsfolk</option>
           <option value="outsider">Outsider</option>
@@ -520,7 +681,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
         >
           <SortableContext items={imageDnd.itemIds} strategy={verticalListSortingStrategy}>
             <ul className={styles.imageUrlsList} aria-labelledby="image-urls-label">
-              {localImages.map((url, index) => (
+              {imageUrls.localImages.map((url, index) => (
                 <SortableImageUrlRow
                   key={imageDnd.itemIds[index]}
                   id={String(imageDnd.itemIds[index])}
@@ -528,15 +689,16 @@ export const GameplayTabContent = memo(function GameplayTabContent({
                   resolvedUrl={resolvedImageUrls[index]}
                   index={index}
                   isPreviewActive={
-                    previewVariantIndex === index || (previewVariantIndex === null && index === 0)
+                    imageUrls.previewVariantIndex === index ||
+                    (imageUrls.previewVariantIndex === null && index === 0)
                   }
                   disabled={isOfficial}
-                  canDrag={localImages.length > 1}
-                  onChange={handleImageUpdate}
-                  onBlur={handleImageBlur}
-                  onPreviewClick={handleImagePreview}
-                  onRemove={handleRemoveImage}
-                  isLastItem={localImages.length <= 1}
+                  canDrag={imageUrls.localImages.length > 1}
+                  onChange={imageUrls.handleImageUpdate}
+                  onBlur={imageUrls.handleImageBlur}
+                  onPreviewClick={imageUrls.handleImagePreview}
+                  onRemove={imageUrls.handleRemoveImage}
+                  isLastItem={imageUrls.localImages.length <= 1}
                 />
               ))}
             </ul>
@@ -547,7 +709,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           <button
             type="button"
             className={`${styles.btnSecondary} ${styles.btnSm}`}
-            onClick={handleAddImage}
+            onClick={imageUrls.handleAddImage}
             disabled={isOfficial}
           >
             + Add Image URL
@@ -555,7 +717,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           <button
             type="button"
             className={`${styles.btnSecondary} ${styles.btnSm}`}
-            onClick={handleRefreshImages}
+            onClick={imageUrls.handleRefreshImages}
             disabled={isOfficial}
             title={
               isOfficial
@@ -578,10 +740,7 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           value={localAbility}
           disabled={isOfficial}
           onChange={handleAbilityChange}
-          onKeyDown={handleAbilityKeyDown}
-          onBlur={() => {
-            if (!isOfficial) onEditChange('ability', localAbility);
-          }}
+          onBlur={handleAbilityBlur}
           placeholder="Character ability description"
           rows={3}
         />
@@ -655,13 +814,13 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       <NightOrderField
         label="First Night Reminder"
         idPrefix="edit-firstnight"
-        reminderValue={localFirstNightReminder}
-        nightOrderValue={localFirstNight}
+        reminderValue={firstNight.reminderValue}
+        nightOrderValue={firstNight.orderValue}
         disabled={isOfficial}
-        onReminderChange={handleFirstNightReminderChange}
-        onReminderBlur={handleFirstNightReminderBlur}
-        onNightOrderChange={handleFirstNightOrderChange}
-        onNightOrderBlur={handleFirstNightOrderBlur}
+        onReminderChange={firstNight.onReminderChange}
+        onReminderBlur={firstNight.onReminderBlur}
+        onNightOrderChange={firstNight.onOrderChange}
+        onNightOrderBlur={firstNight.onOrderBlur}
         placeholder="Reminder text for the first night"
       />
 
@@ -669,18 +828,29 @@ export const GameplayTabContent = memo(function GameplayTabContent({
       <NightOrderField
         label="Other Night Reminder"
         idPrefix="edit-othernight"
-        reminderValue={localOtherNightReminder}
-        nightOrderValue={localOtherNight}
+        reminderValue={otherNight.reminderValue}
+        nightOrderValue={otherNight.orderValue}
         disabled={isOfficial}
-        onReminderChange={handleOtherNightReminderChange}
-        onReminderBlur={handleOtherNightReminderBlur}
-        onNightOrderChange={handleOtherNightOrderChange}
-        onNightOrderBlur={handleOtherNightOrderBlur}
+        onReminderChange={otherNight.onReminderChange}
+        onReminderBlur={otherNight.onReminderBlur}
+        onNightOrderChange={otherNight.onOrderChange}
+        onNightOrderBlur={otherNight.onOrderBlur}
         placeholder="Reminder text for other nights"
       />
 
       {/* Special Items */}
       <SpecialItemsEditor character={character} disabled={isOfficial} onEditChange={onEditChange} />
+
+      {/* Jinxes */}
+      <JinxEditor
+        character={character}
+        disabled={isOfficial}
+        onEditChange={onEditChange}
+        scriptCharacters={scriptCharacters}
+        officialCharacters={officialCharacters}
+        onPreviewJinx={onPreviewJinx}
+        previewedJinxIndex={previewedJinxIndex}
+      />
     </div>
   );
 });

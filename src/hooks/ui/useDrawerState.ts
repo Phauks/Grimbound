@@ -30,6 +30,8 @@ export interface UseDrawerStateOptions<T> {
   disabled?: boolean;
   /** Default value for reset functionality */
   defaultValue?: T;
+  /** Called when drawer is about to open - use to close other panels */
+  onWillOpen?: () => void;
 }
 
 export interface UseDrawerStateReturn<T> {
@@ -39,6 +41,8 @@ export interface UseDrawerStateReturn<T> {
   pendingValue: T;
   /** Open the drawer */
   open: () => void;
+  /** Close the drawer (applies pending changes) */
+  close: () => void;
   /** Toggle drawer open/closed */
   toggle: () => void;
   /** Update entire pending value and trigger preview callback */
@@ -65,6 +69,7 @@ export function useDrawerState<T>({
   onPreviewChange,
   disabled = false,
   defaultValue,
+  onWillOpen,
 }: UseDrawerStateOptions<T>): UseDrawerStateReturn<T> {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingValue, setPendingValue] = useState<T>(value);
@@ -83,10 +88,11 @@ export function useDrawerState<T>({
   // Open drawer
   const open = useCallback(() => {
     if (disabled) return;
+    onWillOpen?.();
     originalValueRef.current = value;
     setPendingValue(value);
     setIsOpen(true);
-  }, [disabled, value]);
+  }, [disabled, value, onWillOpen]);
 
   // Toggle drawer
   const toggle = useCallback(() => {
@@ -96,12 +102,13 @@ export function useDrawerState<T>({
       onChange(pendingValue);
       setIsOpen(false);
     } else {
-      // Opening
+      // Opening - notify parent to close other panels first
+      onWillOpen?.();
       originalValueRef.current = value;
       setPendingValue(value);
       setIsOpen(true);
     }
-  }, [disabled, isOpen, value, pendingValue, onChange]);
+  }, [disabled, isOpen, value, pendingValue, onChange, onWillOpen]);
 
   // Update entire pending value
   const updatePending = useCallback(
@@ -121,6 +128,13 @@ export function useDrawerState<T>({
     },
     [pendingValue, onPreviewChange]
   );
+
+  // Close drawer (applies pending changes)
+  const close = useCallback(() => {
+    if (!isOpen) return;
+    onChange(pendingValue);
+    setIsOpen(false);
+  }, [isOpen, pendingValue, onChange]);
 
   // Apply and close
   const apply = useCallback(() => {
@@ -151,6 +165,7 @@ export function useDrawerState<T>({
     isOpen,
     pendingValue,
     open,
+    close,
     toggle,
     updatePending,
     updatePendingField,

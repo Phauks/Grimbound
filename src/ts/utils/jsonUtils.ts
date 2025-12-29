@@ -174,6 +174,57 @@ export function condenseScript(jsonString: string, officialData: Character[]): s
 }
 
 /**
+ * Build a meta entry object from script metadata.
+ * Only includes fields that have values.
+ */
+function buildMetaEntry(scriptMeta: ScriptMeta): Record<string, unknown> {
+  const entry: Record<string, unknown> = { id: '_meta' };
+  if (scriptMeta.name) entry.name = scriptMeta.name;
+  if (scriptMeta.author) entry.author = scriptMeta.author;
+  if (scriptMeta.logo) entry.logo = scriptMeta.logo;
+  return entry;
+}
+
+/**
+ * Build a custom character entry object for JSON export.
+ * Only includes optional fields that have meaningful values.
+ */
+function buildCustomCharacterEntry(char: Character): Record<string, unknown> {
+  const entry: Record<string, unknown> = {
+    id: char.id,
+    name: char.name,
+  };
+
+  // Only include team if not the default
+  if (char.team && char.team !== 'townsfolk') entry.team = char.team;
+
+  // Include text fields if present
+  if (char.ability) entry.ability = char.ability;
+  if (char.image) entry.image = char.image;
+
+  // Include arrays if non-empty
+  if (char.reminders?.length > 0) entry.reminders = char.reminders;
+  if (char.remindersGlobal?.length > 0) entry.remindersGlobal = char.remindersGlobal;
+
+  // Include night order fields if defined
+  if (char.setup !== undefined) entry.setup = char.setup;
+  if (char.firstNight !== undefined) entry.firstNight = char.firstNight;
+  if (char.firstNightReminder) entry.firstNightReminder = char.firstNightReminder;
+  if (char.otherNight !== undefined) entry.otherNight = char.otherNight;
+  if (char.otherNightReminder) entry.otherNightReminder = char.otherNightReminder;
+
+  return entry;
+}
+
+/**
+ * Convert a character to its JSON representation.
+ * Official characters become string IDs, custom characters become full objects.
+ */
+function characterToJsonEntry(char: Character): string | Record<string, unknown> {
+  return char.source === 'official' ? char.id : buildCustomCharacterEntry(char);
+}
+
+/**
  * Convert a characters array to JSON string format for script export.
  * Official characters are represented as string IDs, custom characters
  * include full definition, and meta is placed first if present.
@@ -185,38 +236,12 @@ export function condenseScript(jsonString: string, officialData: Character[]): s
 export function charactersToJson(characters: Character[], scriptMeta: ScriptMeta | null): string {
   const jsonArray: unknown[] = [];
 
-  // Add meta first if present
   if (scriptMeta) {
-    const metaEntry: Record<string, unknown> = { id: '_meta' };
-    if (scriptMeta.name) metaEntry.name = scriptMeta.name;
-    if (scriptMeta.author) metaEntry.author = scriptMeta.author;
-    if (scriptMeta.logo) metaEntry.logo = scriptMeta.logo;
-    jsonArray.push(metaEntry);
+    jsonArray.push(buildMetaEntry(scriptMeta));
   }
 
-  // Add characters
   for (const char of characters) {
-    if (char.source === 'official') {
-      // Official characters: just use the ID string
-      jsonArray.push(char.id);
-    } else {
-      // Custom characters: include full definition
-      const charEntry: Record<string, unknown> = {
-        id: char.id,
-        name: char.name,
-      };
-      if (char.team && char.team !== 'townsfolk') charEntry.team = char.team;
-      if (char.ability) charEntry.ability = char.ability;
-      if (char.image) charEntry.image = char.image;
-      if (char.reminders?.length) charEntry.reminders = char.reminders;
-      if (char.remindersGlobal?.length) charEntry.remindersGlobal = char.remindersGlobal;
-      if (char.setup !== undefined) charEntry.setup = char.setup;
-      if (char.firstNight !== undefined) charEntry.firstNight = char.firstNight;
-      if (char.firstNightReminder) charEntry.firstNightReminder = char.firstNightReminder;
-      if (char.otherNight !== undefined) charEntry.otherNight = char.otherNight;
-      if (char.otherNightReminder) charEntry.otherNightReminder = char.otherNightReminder;
-      jsonArray.push(charEntry);
-    }
+    jsonArray.push(characterToJsonEntry(char));
   }
 
   return JSON.stringify(jsonArray, null, 2);

@@ -68,9 +68,8 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
   }, [officialData]);
 
   // Check if a character is official
-  const isCharacterOfficial = (char: Character): boolean => {
-    return officialCharIds.has(char.id.toLowerCase());
-  };
+  const isCharacterOfficial = (char: Character): boolean =>
+    officialCharIds.has(char.id.toLowerCase());
 
   // Group characters by team
   const charactersByTeam = useMemo(() => {
@@ -123,9 +122,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
   // State to track active variant index per character
   const [activeVariants, setActiveVariants] = useState<Map<string, number>>(new Map());
 
-  const getActiveVariantIndex = (charUuid: string): number => {
-    return activeVariants.get(charUuid) || 0;
-  };
+  const getActiveVariantIndex = (charUuid: string): number => activeVariants.get(charUuid) || 0;
 
   const handlePrevVariant = (charUuid: string, totalVariants: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -209,13 +206,62 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
     });
   };
 
+  // Render the token/character image with proper fallbacks
+  const renderCardImage = (
+    dataUrl: string | undefined,
+    characterImageUrl: string | undefined,
+    displayToken: Token | undefined,
+    charName: string
+  ) => {
+    if (dataUrl) {
+      return <img src={dataUrl} alt={charName} className={styles.canvas} />;
+    }
+    if (characterImageUrl) {
+      return <img src={characterImageUrl} alt={charName} className={styles.characterImage} />;
+    }
+    if (displayToken) {
+      return <div className={styles.skeleton} />;
+    }
+    return (
+      <div className={styles.imagePlaceholder}>
+        <span>❓</span>
+      </div>
+    );
+  };
+
+  // Render variant navigation controls
+  const renderVariantNav = (charUuid: string, variants: Token[], activeIndex: number) => (
+    <div className={styles.variantNav}>
+      <button
+        type="button"
+        className={styles.variantButton}
+        onClick={(e) => handlePrevVariant(charUuid, variants.length, e)}
+        aria-label="Previous variant"
+        title="Previous variant"
+      >
+        ◀
+      </button>
+      <span className={styles.variantIndicator}>
+        v{activeIndex + 1}/{variants.length}
+      </span>
+      <button
+        type="button"
+        className={styles.variantButton}
+        onClick={(e) => handleNextVariant(charUuid, variants.length, e)}
+        aria-label="Next variant"
+        title="Next variant"
+      >
+        ▶
+      </button>
+    </div>
+  );
+
   const renderCharacterCard = (char: Character) => {
     const variants = getCharacterTokenVariants(char);
     const hasVariants = variants.length > 1;
     const activeIndex = char.uuid ? getActiveVariantIndex(char.uuid) : 0;
     const displayToken = hasVariants ? variants[activeIndex] || variants[0] : variants[0];
     const dataUrl = displayToken?.filename ? imageDataUrls.get(displayToken.filename) : undefined;
-    // Use resolved URL from SSOT hook (handles fallback to official data)
     const characterImageUrl = char.uuid ? characterImageUrls.get(char.uuid) : undefined;
     const teamClassName = getTeamClassName(char.team);
     const isOfficial = isCharacterOfficial(char);
@@ -235,17 +281,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
         }}
       >
         <div className={styles.canvasContainer}>
-          {dataUrl ? (
-            <img src={dataUrl} alt={char.name} className={styles.canvas} />
-          ) : characterImageUrl ? (
-            <img src={characterImageUrl} alt={char.name} className={styles.characterImage} />
-          ) : displayToken ? (
-            <div className={styles.skeleton} />
-          ) : (
-            <div className={styles.imagePlaceholder}>
-              <span>❓</span>
-            </div>
-          )}
+          {renderCardImage(dataUrl, characterImageUrl, displayToken, char.name)}
         </div>
         <div className={styles.footer}>
           <div className={styles.info}>
@@ -263,38 +299,7 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
             </div>
           </div>
         </div>
-        {/* Variant navigation */}
-        {hasVariants && char.uuid && (
-          <div className={styles.variantNav}>
-            <button
-              type="button"
-              className={styles.variantButton}
-              onClick={(e) => {
-                // char.uuid is guaranteed by the && check above
-                handlePrevVariant(char.uuid as string, variants.length, e);
-              }}
-              aria-label="Previous variant"
-              title="Previous variant"
-            >
-              ◀
-            </button>
-            <span className={styles.variantIndicator}>
-              v{activeIndex + 1}/{variants.length}
-            </span>
-            <button
-              type="button"
-              className={styles.variantButton}
-              onClick={(e) => {
-                // char.uuid is guaranteed by the && check above
-                handleNextVariant(char.uuid as string, variants.length, e);
-              }}
-              aria-label="Next variant"
-              title="Next variant"
-            >
-              ▶
-            </button>
-          </div>
-        )}
+        {hasVariants && char.uuid && renderVariantNav(char.uuid, variants, activeIndex)}
       </div>
     );
   };

@@ -56,7 +56,10 @@ export {
   type CharacterPosition,
   calculateCircularTextLayout,
   calculateCircularWidth,
+  calculateFittedCircularTextLayout,
   createCircularWidthCalculator,
+  type FitTextOptions,
+  type FitTextResult,
   precalculateCurvedTextPositions,
   type TextLayoutResult,
 } from './canvasOptimizations.js';
@@ -88,7 +91,6 @@ export {
   createBackgroundGradient,
   createGradientPreview,
   getCSSGradient,
-  interpolateColors,
 } from './gradientUtils.js';
 // QR code generation
 export {

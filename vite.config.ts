@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
+import path from 'node:path';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import path from 'path';
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode: _mode }) => ({
   root: '.',
   publicDir: 'assets',
   // Deploy to root domain (grimbound.com via Cloudflare Pages)
@@ -33,22 +33,17 @@ export default defineConfig(({ mode }) => ({
         categories: ['games', 'utilities'],
         icons: [
           {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: 'pwa-icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
           },
           {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            src: 'pwa-icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'maskable',
           },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ]
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf,eot}'],
@@ -65,12 +60,12 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'cdn-cache',
               expiration: {
                 maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+                statuses: [0, 200],
+              },
+            },
           },
           {
             // Cache Google Fonts stylesheets
@@ -80,9 +75,9 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'google-fonts-stylesheets',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
           },
           {
             // Cache Google Fonts webfonts
@@ -92,12 +87,12 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'google-fonts-webfonts',
               expiration: {
                 maxEntries: 30,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+                statuses: [0, 200],
+              },
+            },
           },
           {
             // Cache GitHub API responses (for character data sync)
@@ -107,10 +102,10 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'github-api-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxAgeSeconds: 60 * 60, // 1 hour
               },
-              networkTimeoutSeconds: 10
-            }
+              networkTimeoutSeconds: 10,
+            },
           },
           {
             // Cache GitHub raw content (character images)
@@ -120,19 +115,19 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'github-images-cache',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       },
       devOptions: {
-        enabled: false // Disable in dev to avoid caching issues during development
-      }
-    })
+        enabled: false, // Disable in dev to avoid caching issues during development
+      },
+    }),
   ],
 
   server: {
@@ -143,11 +138,34 @@ export default defineConfig(({ mode }) => ({
 
   build: {
     outDir: 'dist',
-    emptyOutDir: true,  // Clean old builds to prevent service worker bloat
+    emptyOutDir: true, // Clean old builds to prevent service worker bloat
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': [
+            '@dnd-kit/core',
+            '@dnd-kit/sortable',
+            '@dnd-kit/modifiers',
+            '@dnd-kit/utilities',
+          ],
+          'vendor-db': ['dexie'],
+          'vendor-export': ['pdf-lib', 'jszip', 'pako'],
+          'vendor-editor': [
+            'codemirror',
+            '@codemirror/commands',
+            '@codemirror/lang-json',
+            '@codemirror/lint',
+            '@lezer/highlight',
+          ],
+          'vendor-qr': ['qr-code-styling'],
+        },
+      },
+    },
   },
 
   optimizeDeps: {
     exclude: ['qrcodejs'],
-    include: ['jszip']  // Include JSZip for proper CommonJS-to-ESM conversion
-  }
+    include: ['jszip'], // Include JSZip for proper CommonJS-to-ESM conversion
+  },
 }));

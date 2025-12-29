@@ -7,6 +7,11 @@ dist/
 # TypeScript
 *.tsbuildinfo
 
+# Environment variables (keep .env.example for documentation)
+.env
+.env.local
+.env.*.local
+
 # IDE
 .vscode/
 .idea/
@@ -15,3 +20,6 @@ dist/
 .DS_Store
 Thumbs.db
 nul
+
+*storybook.log
+storybook-static

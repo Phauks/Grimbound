@@ -139,26 +139,22 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
   }, []);
 
   // Character data operations
-  const getCharacters = useCallback(async () => {
-    return dataSyncService.getCharacters();
-  }, []);
+  const getCharacters = useCallback(async () => dataSyncService.getCharacters(), []);
 
-  const getCharacter = useCallback(async (id: string) => {
-    return dataSyncService.getCharacter(id);
-  }, []);
+  const getCharacter = useCallback(async (id: string) => dataSyncService.getCharacter(id), []);
 
-  const searchCharacters = useCallback(async (query: string) => {
-    return dataSyncService.searchCharacters(query);
-  }, []);
+  const searchCharacters = useCallback(
+    async (query: string) => dataSyncService.searchCharacters(query),
+    []
+  );
 
-  const getCharacterImage = useCallback(async (characterId: string) => {
-    return dataSyncService.getCharacterImage(characterId);
-  }, []);
+  const getCharacterImage = useCallback(
+    async (characterId: string) => dataSyncService.getCharacterImage(characterId),
+    []
+  );
 
   // Sync operations
-  const checkForUpdates = useCallback(async () => {
-    return dataSyncService.checkForUpdates();
-  }, []);
+  const checkForUpdates = useCallback(async () => dataSyncService.checkForUpdates(), []);
 
   const downloadUpdate = useCallback(async () => {
     await dataSyncService.downloadAndInstall();

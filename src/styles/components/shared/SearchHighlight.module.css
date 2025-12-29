@@ -1,0 +1,57 @@
+/**
+ * SearchHighlight Component Styles
+ *
+ * Uses CSS custom properties for theme customization.
+ * Semantic <mark> element provides accessibility.
+ */
+
+.highlight {
+  /* Base highlight style - bold with yellow background */
+  background: var(--search-highlight-bg, rgb(255 235 59 / 0.4));
+  color: var(--search-highlight-text, inherit);
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
+  /* Smooth transition for theme changes */
+  transition: background-color 0.2s ease;
+}
+
+/* Subtle variant - lighter background, normal weight */
+.subtle {
+  background: var(--search-highlight-bg-subtle, rgb(255 235 59 / 0.2));
+  font-weight: 500;
+}
+
+/* Strong variant - darker background, bold weight */
+.strong {
+  background: var(--search-highlight-bg-strong, rgb(255 193 7 / 0.6));
+  font-weight: 700;
+}
+
+/**
+ * Theme-aware variables
+ * These can be overridden in the global styles or theme CSS
+ *
+ * Light theme (default):
+ * - Yellow highlight for visibility on white backgrounds
+ *
+ * Dark theme:
+ * - Reduced opacity to avoid harsh contrast
+ * - Can be customized per theme
+ */
+
+/*
+ * Example theme override in index.css or theme.css:
+ *
+ * [data-theme='dark'] {
+ *   --search-highlight-bg: rgb(255 235 59 / 0.25);
+ *   --search-highlight-bg-subtle: rgb(255 235 59 / 0.15);
+ *   --search-highlight-bg-strong: rgb(255 193 7 / 0.4);
+ * }
+ *
+ * [data-theme='light'] {
+ *   --search-highlight-bg: rgb(255 235 59 / 0.4);
+ *   --search-highlight-bg-subtle: rgb(255 235 59 / 0.2);
+ *   --search-highlight-bg-strong: rgb(255 193 7 / 0.6);
+ * }
+ */

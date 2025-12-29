@@ -104,13 +104,14 @@ export function useJsonEditor<T extends object>({
   }, [data, getDisplayData]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   const applyParsed = useCallback(
     (parsed: Record<string, unknown>) => {

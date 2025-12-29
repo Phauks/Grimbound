@@ -362,13 +362,18 @@
 .settingsStack {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--settings-stack-gap, 1rem);
 }
 
 .settingsGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--settings-group-gap, 0.5rem);
+}
+
+/* First group in inline mode should not have top border on its selector */
+.settingsGroup:first-child {
+  --selector-top-border-width: 0;
 }
 
 .settingsGroupLabel {

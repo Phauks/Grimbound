@@ -2,6 +2,10 @@
 
 // Generation option selectors
 export { AccentSettingsSelector, type AccentSettingsSelectorProps } from './AccentSettingsSelector';
+export {
+  AdditionalTokensSettingsSelector,
+  type AdditionalTokensSettingsSelectorProps,
+} from './AdditionalTokensSettingsSelector';
 // Asset selectors
 export { AssetPreviewSelector, type AssetPreviewSelectorProps } from './AssetPreviewSelector';
 // Background style selector (gradients, textures, effects)
@@ -9,12 +13,13 @@ export {
   BackgroundStyleSelector,
   type BackgroundStyleSelectorProps,
 } from './BackgroundStyleSelector';
-export {
-  BootleggerSettingsSelector,
-  type BootleggerSettingsSelectorProps,
-} from './BootleggerSettingsSelector';
 // Color selector
 export { ColorPreviewSelector } from './ColorPreviewSelector';
+// Decoratives selector (Setup + Accents)
+export {
+  DecorativesSettingsSelector,
+  type DecorativesSettingsSelectorProps,
+} from './DecorativesSettingsSelector';
 
 // Font selectors
 export { FontPreviewSelector } from './FontPreviewSelector';
@@ -22,7 +27,6 @@ export { FontSettingsSelector } from './FontSettingsSelector';
 export { GenerateVariantsSelector } from './GenerateVariantsSelector';
 // Icon selector
 export { type IconSettings, IconSettingsSelector } from './IconSettingsSelector';
-export { MetaTokensSelector } from './MetaTokensSelector';
 export { QRCodeSettingsSelector, type QRCodeSettingsSelectorProps } from './QRCodeSettingsSelector';
 export { ReminderCountSelector } from './ReminderCountSelector';
 // Base components

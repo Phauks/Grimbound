@@ -4,11 +4,16 @@
  * Manages character filtering state and logic for search, edition,
  * team, and selected-only filters.
  *
+ * Uses the modular search system for fuzzy matching, special character
+ * support, multi-term AND logic, and search highlighting.
+ *
  * @module hooks/ui/useCharacterFiltering
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { useCharacterSearch } from '@/hooks/search/useCharacterSearch.js';
 import type { Character, Team } from '@/ts/types/index.js';
+import type { SearchMatch } from '@/ts/utils/searchUtils.js';
 
 // ============================================
 // Types
@@ -45,6 +50,10 @@ interface UseCharacterFilteringReturn {
   clearSearch: () => void;
   /** Filtered characters */
   filteredCharacters: Character[];
+  /** Get search match data for highlighting a text field */
+  getSearchMatch: (text: string) => SearchMatch;
+  /** Is search currently active (non-empty query)? */
+  isSearching: boolean;
 }
 
 // ============================================
@@ -68,22 +77,18 @@ function filterByTeam(char: Character, filter: TeamFilter): boolean {
   return char.team === filter;
 }
 
-function filterBySearch(char: Character, query: string): boolean {
-  if (!query.trim()) return true;
-  const q = query.toLowerCase();
-  return (
-    char.name.toLowerCase().includes(q) ||
-    (char.ability?.toLowerCase().includes(q) ?? false) ||
-    char.id.toLowerCase().includes(q)
-  );
-}
-
 // ============================================
 // Hook
 // ============================================
 
 /**
- * Hook for managing character filtering state and logic
+ * Hook for managing character filtering state and logic.
+ *
+ * Features:
+ * - Fuzzy matching with typo tolerance (1-2 characters)
+ * - Special character support ('*' in "Each Night*")
+ * - Multi-term AND logic ("night demon" finds both terms)
+ * - Search highlighting via getSearchMatch()
  *
  * @example
  * ```tsx
@@ -93,10 +98,14 @@ function filterBySearch(char: Character, query: string): boolean {
  *   teamFilter, setTeamFilter,
  *   showSelectedOnly, toggleShowSelectedOnly,
  *   filteredCharacters,
+ *   getSearchMatch,
  * } = useCharacterFiltering({
  *   characters: officialCharacters,
  *   onScriptIds: currentScriptIds,
  * });
+ *
+ * // With highlighting
+ * <SearchHighlight match={getSearchMatch(char.name)} />
  * ```
  */
 export function useCharacterFiltering({
@@ -108,6 +117,17 @@ export function useCharacterFiltering({
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
 
+  // Use the modular character search for fuzzy matching and highlighting
+  const {
+    filteredCharacters: searchFiltered,
+    getMatch,
+    isSearching,
+  } = useCharacterSearch({
+    characters,
+    searchTerm: searchQuery,
+    fields: ['name', 'ability', 'reminders'],
+  });
+
   const toggleShowSelectedOnly = useCallback(() => {
     setShowSelectedOnly((prev) => !prev);
   }, []);
@@ -116,13 +136,15 @@ export function useCharacterFiltering({
     setSearchQuery('');
   }, []);
 
-  const filteredCharacters = useMemo(() => {
-    return characters
-      .filter((c) => filterByEdition(c, editionFilter))
-      .filter((c) => filterByTeam(c, teamFilter))
-      .filter((c) => filterBySearch(c, searchQuery))
-      .filter((c) => !showSelectedOnly || onScriptIds.has(c.id));
-  }, [characters, editionFilter, teamFilter, searchQuery, showSelectedOnly, onScriptIds]);
+  // Apply additional filters (edition, team, selected-only) on top of search results
+  const filteredCharacters = useMemo(
+    () =>
+      searchFiltered
+        .filter((c) => filterByEdition(c, editionFilter))
+        .filter((c) => filterByTeam(c, teamFilter))
+        .filter((c) => !showSelectedOnly || onScriptIds.has(c.id)),
+    [searchFiltered, editionFilter, teamFilter, showSelectedOnly, onScriptIds]
+  );
 
   return {
     searchQuery,
@@ -135,6 +157,8 @@ export function useCharacterFiltering({
     toggleShowSelectedOnly,
     clearSearch,
     filteredCharacters,
+    getSearchMatch: getMatch,
+    isSearching,
   };
 }
 

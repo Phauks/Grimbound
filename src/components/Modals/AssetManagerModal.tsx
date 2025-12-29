@@ -657,7 +657,7 @@ export function AssetManagerModal({
       onClose={onClose}
       title={selectionMode ? 'Select Asset' : 'Asset Manager'}
       size="full"
-      footer={!showPreviewPanel ? renderFooter() : undefined}
+      footer={showPreviewPanel ? undefined : renderFooter()}
     >
       {showPreviewPanel ? (
         /* Side-by-side layout with preview panel */

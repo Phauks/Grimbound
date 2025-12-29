@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import { getBuiltInAsset, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
 import type { AssetType } from '@/ts/services/upload/types.js';
 
 // ============================================================================
@@ -53,6 +54,70 @@ const SOURCE_LABELS: Record<AssetSource, string> = {
 };
 
 // ============================================================================
+// Resolution Helpers (extracted to reduce cognitive complexity)
+// ============================================================================
+
+/** Create empty/none state */
+function createNoneState(noneLabel: string): AssetPreviewState {
+  return {
+    previewUrl: null,
+    label: noneLabel,
+    source: 'none',
+    isLoading: false,
+  };
+}
+
+/** Try to resolve as built-in asset */
+function tryResolveBuiltIn(value: string, assetType: AssetType): AssetPreviewState | null {
+  if (!isBuiltInAsset(value, assetType)) return null;
+
+  const builtIn = getBuiltInAsset(value, assetType);
+  if (!builtIn) return null;
+
+  return {
+    previewUrl: builtIn.thumbnail ?? builtIn.src,
+    label: builtIn.label,
+    source: 'builtin',
+    isLoading: false,
+  };
+}
+
+/** Try to resolve as user/global asset reference */
+async function tryResolveAssetReference(
+  value: string,
+  assetStorageService: IAssetStorageService
+): Promise<AssetPreviewState | null> {
+  if (!isAssetReference(value)) return null;
+
+  const assetId = extractAssetId(value);
+  if (!assetId) return null;
+
+  try {
+    const asset = await assetStorageService.getByIdWithUrl(assetId);
+    if (!asset) return null;
+
+    return {
+      previewUrl: asset.thumbnailUrl ?? asset.url ?? null,
+      label: asset.metadata?.filename ?? 'Custom Asset',
+      source: asset.projectId ? 'user' : 'global',
+      isLoading: false,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Create fallback state for direct paths */
+function createFallbackState(value: string, fallbackLabel?: string): AssetPreviewState {
+  return {
+    previewUrl: value,
+    label: fallbackLabel ?? 'Custom',
+    source: 'builtin',
+    isLoading: false,
+  };
+}
+
+// ============================================================================
 // Hook
 // ============================================================================
 
@@ -88,60 +153,29 @@ export function useAssetPreview({
     async function resolve() {
       // Handle empty or "none" value
       if (!value || value === 'none') {
-        setState({
-          previewUrl: null,
-          label: noneLabel,
-          source: 'none',
-          isLoading: false,
-        });
+        setState(createNoneState(noneLabel));
         return;
       }
 
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Try built-in asset first
-      if (isBuiltInAsset(value, assetType)) {
-        const builtIn = getBuiltInAsset(value, assetType);
-        if (builtIn && !cancelled) {
-          setState({
-            previewUrl: builtIn.thumbnail ?? builtIn.src,
-            label: builtIn.label,
-            source: 'builtin',
-            isLoading: false,
-          });
-          return;
-        }
+      // Try built-in asset
+      const builtInState = tryResolveBuiltIn(value, assetType);
+      if (builtInState && !cancelled) {
+        setState(builtInState);
+        return;
       }
 
-      // Try asset reference (asset:uuid format)
-      if (isAssetReference(value)) {
-        const assetId = extractAssetId(value);
-        if (assetId) {
-          try {
-            const asset = await assetStorageService.getByIdWithUrl(assetId);
-            if (!cancelled && asset) {
-              setState({
-                previewUrl: asset.thumbnailUrl ?? asset.url ?? null,
-                label: asset.metadata?.filename ?? 'Custom Asset',
-                source: asset.projectId ? 'user' : 'global',
-                isLoading: false,
-              });
-              return;
-            }
-          } catch {
-            // Asset not found - fall through to fallback
-          }
-        }
+      // Try asset reference
+      const assetState = await tryResolveAssetReference(value, assetStorageService);
+      if (assetState && !cancelled) {
+        setState(assetState);
+        return;
       }
 
       // Fallback: treat as direct path
       if (!cancelled) {
-        setState({
-          previewUrl: value,
-          label: fallbackLabel ?? 'Custom',
-          source: 'builtin',
-          isLoading: false,
-        });
+        setState(createFallbackState(value, fallbackLabel));
       }
     }
 

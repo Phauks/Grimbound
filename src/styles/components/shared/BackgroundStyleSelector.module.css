@@ -41,6 +41,11 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+.previewEmoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
 /* ============================================
    Panel Container - contained, no overflow
    ============================================ */

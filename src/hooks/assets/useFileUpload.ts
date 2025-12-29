@@ -249,11 +249,12 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
   );
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       abortedRef.current = true;
-    };
-  }, []);
+    },
+    []
+  );
 
   return {
     // State

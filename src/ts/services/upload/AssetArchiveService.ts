@@ -259,97 +259,18 @@ export class AssetArchiveService {
     let skippedCount = 0;
 
     try {
-      // Load ZIP archive
       const zip = await JSZip.loadAsync(archiveFile);
+      await this.validateArchiveManifest(zip);
+      const assetsMetadata = await this.loadAssetsMetadata(zip);
 
-      // Read and validate manifest
-      const manifestFile = zip.file('manifest.json');
-      if (!manifestFile) {
-        throw new Error('Invalid archive: missing manifest.json');
-      }
-
-      const manifestText = await manifestFile.async('text');
-      const manifest: ArchiveManifest = JSON.parse(manifestText);
-
-      if (manifest.format !== 'botc-asset-archive') {
-        throw new Error('Invalid archive format');
-      }
-
-      // Read asset metadata
-      const metadataFile = zip.file('assets-metadata.json');
-      if (!metadataFile) {
-        throw new Error('Invalid archive: missing assets-metadata.json');
-      }
-
-      const metadataText = await metadataFile.async('text');
-      const assetsMetadata: Partial<DBAsset>[] = JSON.parse(metadataText);
-
-      // Restore each asset
       for (const assetMeta of assetsMetadata) {
-        try {
-          if (!assetMeta.id) {
-            errors.push('Asset metadata missing ID');
-            continue;
-          }
-
-          // Check if asset already exists
-          if (options.skipExisting !== false) {
-            const existing = await assetStorageService.getById(assetMeta.id);
-            if (existing) {
-              skippedCount++;
-              continue;
-            }
-          }
-
-          // Get asset blob from archive
-          const assetFile = zip.file(
-            `assets/${assetMeta.id}.${this.getExtensionFromMetadata(assetMeta)}`
-          );
-          const thumbnailFile = zip.file(
-            `thumbnails/${assetMeta.id}.${this.getExtensionFromMetadata(assetMeta)}`
-          );
-
-          if (!(assetFile && thumbnailFile)) {
-            errors.push(`Missing files for asset ${assetMeta.id}`);
-            continue;
-          }
-
-          if (!assetMeta.type || !assetMeta.metadata) {
-            errors.push(`Missing type or metadata for asset ${assetMeta.id}`);
-            continue;
-          }
-
-          const assetBlob = await assetFile.async('blob');
-          const thumbnailBlob = await thumbnailFile.async('blob');
-
-          // Restore to database
-          await assetStorageService.save({
-            id: assetMeta.id,
-            type: assetMeta.type,
-            projectId: options.projectId ?? assetMeta.projectId ?? null,
-            blob: assetBlob,
-            thumbnail: thumbnailBlob,
-            metadata: assetMeta.metadata,
-            linkedTo: assetMeta.linkedTo || [],
-            contentHash: assetMeta.contentHash,
-            lastUsedAt: assetMeta.lastUsedAt,
-            usageCount: assetMeta.usageCount,
-            usedInProjects: assetMeta.usedInProjects,
-          });
-
-          restoredCount++;
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          errors.push(`Failed to restore asset ${assetMeta.id}: ${errorMsg}`);
-        }
+        const result = await this.restoreSingleAsset(zip, assetMeta, options);
+        if (result.restored) restoredCount++;
+        if (result.skipped) skippedCount++;
+        if (result.error) errors.push(result.error);
       }
 
-      return {
-        success: errors.length === 0,
-        restoredCount,
-        skippedCount,
-        errors,
-      };
+      return { success: errors.length === 0, restoredCount, skippedCount, errors };
     } catch (error) {
       logger.error('AssetArchiveService', 'Restore failed', error);
       return {
@@ -359,6 +280,119 @@ export class AssetArchiveService {
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
+  }
+
+  /**
+   * Validate the archive manifest exists and has correct format
+   */
+  private async validateArchiveManifest(zip: JSZip): Promise<void> {
+    const manifestFile = zip.file('manifest.json');
+    if (!manifestFile) {
+      throw new Error('Invalid archive: missing manifest.json');
+    }
+
+    const manifestText = await manifestFile.async('text');
+    const manifest: ArchiveManifest = JSON.parse(manifestText);
+
+    if (manifest.format !== 'botc-asset-archive') {
+      throw new Error('Invalid archive format');
+    }
+  }
+
+  /**
+   * Load and parse assets metadata from archive
+   */
+  private async loadAssetsMetadata(zip: JSZip): Promise<Partial<DBAsset>[]> {
+    const metadataFile = zip.file('assets-metadata.json');
+    if (!metadataFile) {
+      throw new Error('Invalid archive: missing assets-metadata.json');
+    }
+
+    const metadataText = await metadataFile.async('text');
+    return JSON.parse(metadataText);
+  }
+
+  /**
+   * Restore a single asset from the archive
+   */
+  private async restoreSingleAsset(
+    zip: JSZip,
+    assetMeta: Partial<DBAsset>,
+    options: RestoreOptions
+  ): Promise<{ restored: boolean; skipped: boolean; error?: string }> {
+    try {
+      if (!assetMeta.id) {
+        return { restored: false, skipped: false, error: 'Asset metadata missing ID' };
+      }
+
+      if (options.skipExisting !== false) {
+        const existing = await assetStorageService.getById(assetMeta.id);
+        if (existing) {
+          return { restored: false, skipped: true };
+        }
+      }
+
+      const files = this.getAssetFilesFromZip(zip, assetMeta);
+      if (!files) {
+        return {
+          restored: false,
+          skipped: false,
+          error: `Missing files for asset ${assetMeta.id}`,
+        };
+      }
+
+      if (!(assetMeta.type && assetMeta.metadata)) {
+        return {
+          restored: false,
+          skipped: false,
+          error: `Missing type or metadata for asset ${assetMeta.id}`,
+        };
+      }
+
+      const assetBlob = await files.assetFile.async('blob');
+      const thumbnailBlob = await files.thumbnailFile.async('blob');
+
+      await assetStorageService.save({
+        id: assetMeta.id,
+        type: assetMeta.type,
+        projectId: options.projectId ?? assetMeta.projectId ?? null,
+        blob: assetBlob,
+        thumbnail: thumbnailBlob,
+        metadata: assetMeta.metadata,
+        linkedTo: assetMeta.linkedTo || [],
+        contentHash: assetMeta.contentHash,
+        lastUsedAt: assetMeta.lastUsedAt,
+        usageCount: assetMeta.usageCount,
+        usedInProjects: assetMeta.usedInProjects,
+      });
+
+      return { restored: true, skipped: false };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        restored: false,
+        skipped: false,
+        error: `Failed to restore asset ${assetMeta.id}: ${errorMsg}`,
+      };
+    }
+  }
+
+  /**
+   * Get asset and thumbnail files from the ZIP archive
+   */
+  private getAssetFilesFromZip(
+    zip: JSZip,
+    assetMeta: Partial<DBAsset>
+  ): { assetFile: JSZip.JSZipObject; thumbnailFile: JSZip.JSZipObject } | null {
+    const ext = this.getExtensionFromMetadata(assetMeta);
+    const assetFile = zip.file(`assets/${assetMeta.id}.${ext}`);
+    const thumbnailFile = zip.file(`thumbnails/${assetMeta.id}.${ext}`);
+
+    if (!(assetFile && thumbnailFile)) {
+      return null;
+    }
+
+    return { assetFile, thumbnailFile };
   }
 
   /**

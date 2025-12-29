@@ -173,13 +173,14 @@ export const AlmanacTabContent = memo(function AlmanacTabContent({
   }, [resizeTextarea]);
 
   // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   // Create change handler for a specific field
   const createChangeHandler = useCallback(

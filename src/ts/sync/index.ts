@@ -14,7 +14,6 @@
 export * from './dataSyncService.js';
 // Phase 2: GitHub Integration
 export * from './githubReleaseClient.js';
-export * from './migrationHelper.js';
 export * from './packageExtractor.js';
 export * from './storageManager.js';
 // Phase 1: Core Infrastructure

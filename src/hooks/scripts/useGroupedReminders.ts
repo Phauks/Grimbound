@@ -143,7 +143,7 @@ export function useGroupedReminders({
       if (clampedCount > currentCount) {
         // Add more instances at the end
         const toAdd = clampedCount - currentCount;
-        updated = [...reminders, ...Array(toAdd).fill(text)];
+        updated = [...reminders, ...new Array(toAdd).fill(text)];
       } else {
         // Remove instances from the end
         let removeCount = currentCount - clampedCount;

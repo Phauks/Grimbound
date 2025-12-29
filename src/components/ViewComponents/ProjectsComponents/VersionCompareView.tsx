@@ -64,14 +64,16 @@ export function VersionCompareView({
   const [expandedCharacters, setExpandedCharacters] = useState<Set<string>>(new Set());
 
   // Calculate the detailed diff between current and version states
-  const detailedDiff = useMemo(() => {
-    return calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState);
-  }, [currentState, compareVersion.stateSnapshot]);
+  const detailedDiff = useMemo(
+    () => calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState),
+    [currentState, compareVersion.stateSnapshot]
+  );
 
   // Also calculate simple diff for summary (reuses existing logic)
-  const diff = useMemo(() => {
-    return calculateProjectDiff(compareVersion.stateSnapshot, currentState);
-  }, [currentState, compareVersion.stateSnapshot]);
+  const diff = useMemo(
+    () => calculateProjectDiff(compareVersion.stateSnapshot, currentState),
+    [currentState, compareVersion.stateSnapshot]
+  );
 
   const summary = useMemo(() => getDiffSummary(diff), [diff]);
 

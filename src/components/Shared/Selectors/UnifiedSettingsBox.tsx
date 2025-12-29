@@ -243,11 +243,11 @@ function UnifiedSettingsBoxInner<T>({
   // Toggle expansion
   const handleToggle = () => {
     if (disabled) return;
-    if (!isExpanded) {
+    if (isExpanded) {
+      onChange(pendingValue);
+    } else {
       originalValueRef.current = value;
       setPendingValue(value);
-    } else {
-      onChange(pendingValue);
     }
     setIsExpanded(!isExpanded);
   };

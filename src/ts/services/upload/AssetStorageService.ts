@@ -1052,13 +1052,13 @@ export class AssetStorageService {
   private attachUrls(asset: DBAsset): AssetWithUrl {
     let cached = this.urlCache.get(asset.id);
 
-    if (!cached) {
+    if (cached) {
+      cached.refCount++;
+    } else {
       const url = URL.createObjectURL(asset.blob);
       const thumbnailUrl = URL.createObjectURL(asset.thumbnail);
       cached = { url, thumbnailUrl, refCount: 1, weakRefs: new Set() };
       this.urlCache.set(asset.id, cached);
-    } else {
-      cached.refCount++;
     }
 
     return {

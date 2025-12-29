@@ -23,7 +23,7 @@ export {
   releaseStudioCanvas,
   resizeCanvas,
 } from './canvasOperations.js';
-// Legacy character presets (for backwards compatibility)
+// Character presets (team color transforms)
 export {
   applyCharacterPreset,
   CHARACTER_PRESETS,

@@ -166,9 +166,10 @@ function calculateTotalHeight(entries: NightOrderEntry[], scaleFactor: number): 
   if (entries.length === 0) return 0;
 
   // Sum up all entry heights
-  const entriesHeight = entries.reduce((sum, entry) => {
-    return sum + estimateEntryHeight(entry, scaleFactor);
-  }, 0);
+  const entriesHeight = entries.reduce(
+    (sum, entry) => sum + estimateEntryHeight(entry, scaleFactor),
+    0
+  );
 
   // Add spacing between entries
   const spacingHeight = (entries.length - 1) * BASELINE_ENTRY_SPACING * scaleFactor;

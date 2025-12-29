@@ -181,11 +181,10 @@ export function updateMetaInJson(
 
     // Handle array-based scripts
     if (Array.isArray(parsed)) {
-      const index = parsed.findIndex((item: unknown) => {
-        return (
+      const index = parsed.findIndex(
+        (item: unknown) =>
           typeof item === 'object' && item !== null && (item as { id?: string }).id === '_meta'
-        );
-      });
+      );
 
       if (index !== -1) {
         // Update existing _meta

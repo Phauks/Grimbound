@@ -16,6 +16,18 @@ interface DownloadOptions {
   exportFn: (progressCallback?: ProgressCallback) => Promise<Blob | undefined>;
 }
 
+/** Check if error is an intentional abort */
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+/** Throw if export was cancelled */
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    throw new DOMException('Export cancelled', 'AbortError');
+  }
+}
+
 export function useExport() {
   const { tokens, generationOptions, scriptMeta, jsonInput, enabledCharacterUuids } =
     useTokenContext();
@@ -76,6 +88,19 @@ export function useExport() {
     setExportStep(null);
   }, []);
 
+  // Create progress callback that checks for abort
+  const createProgressCallback = useCallback(
+    (requiresTokens: boolean): ProgressCallback | undefined => {
+      if (!requiresTokens) return undefined;
+
+      return (current, total) => {
+        throwIfAborted(abortControllerRef.current?.signal);
+        setExportProgress({ current, total });
+      };
+    },
+    []
+  );
+
   // Unified download function that handles all export types
   const executeDownload = useCallback(
     async (options: DownloadOptions) => {
@@ -96,36 +121,22 @@ export function useExport() {
       }
 
       try {
-        // Create progress callback if needed
-        const progressCallback: ProgressCallback | undefined = requiresTokens
-          ? (current, total) => {
-              if (abortControllerRef.current?.signal.aborted) {
-                throw new DOMException('Export cancelled', 'AbortError');
-              }
-              setExportProgress({ current, total });
-            }
-          : undefined;
+        const progressCallback = createProgressCallback(requiresTokens);
 
         // Set initial progress for token-based exports
-        if (requiresTokens && progressCallback) {
+        if (requiresTokens) {
           setExportProgress({ current: 0, total: enabledTokens.length });
         }
 
-        // Execute the export function
         const result = await exportFn(progressCallback);
 
-        // Check if cancelled before downloading
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new DOMException('Export cancelled', 'AbortError');
-        }
+        throwIfAborted(abortControllerRef.current?.signal);
 
-        // Download the file if a blob was returned
         if (result instanceof Blob) {
           downloadFile(result, filename);
         }
       } catch (error) {
-        // Don't log abort errors as they're intentional
-        if (error instanceof DOMException && error.name === 'AbortError') {
+        if (isAbortError(error)) {
           logger.debug('useExport', `${step} export cancelled`);
           return;
         }
@@ -141,7 +152,7 @@ export function useExport() {
         }
       }
     },
-    [enabledTokens, jsonInput, cancelExport]
+    [enabledTokens, jsonInput, cancelExport, createProgressCallback]
   );
 
   const downloadZip = useCallback(async () => {
@@ -157,15 +168,14 @@ export function useExport() {
       step: 'zip',
       filename: `${getBaseFilename()}.zip`,
       requiresTokens: true,
-      exportFn: async (progressCallback) => {
-        return await createTokensZip(
+      exportFn: async (progressCallback) =>
+        await createTokensZip(
           enabledTokens,
           progressCallback ?? null,
           zipSettings,
           zipSettings.includeScriptJson ? jsonInput : undefined,
           generationOptions.pngSettings
-        );
-      },
+        ),
     });
   }, [enabledTokens, generationOptions, jsonInput, getBaseFilename, executeDownload]);
 
@@ -257,8 +267,7 @@ export function useExport() {
 
       downloadFile(blob, `${baseFilename}_complete.zip`);
     } catch (error) {
-      // Don't log abort errors as they're intentional
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (isAbortError(error)) {
         logger.debug('useExport', 'Download All cancelled');
         return;
       }

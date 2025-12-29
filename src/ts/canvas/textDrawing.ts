@@ -5,6 +5,7 @@
 
 import { getCachedFont } from '@/ts/cache/instances/fontCache.js';
 import { CHARACTER_LAYOUT, DEFAULT_COLORS, LINE_HEIGHTS } from '@/ts/constants.js';
+import type { TextRenderStyle } from '@/ts/types/index.js';
 import { getLineSegments, parseAbilityText } from '@/ts/utils/abilityTextParser.js';
 import {
   calculateCircularTextLayout,
@@ -26,6 +27,12 @@ export interface CurvedTextOptions {
   color: string;
   letterSpacing: number;
   shadowBlur: number;
+  /** Text render style: 'filled' (default), 'outlined', or 'both' */
+  renderStyle?: TextRenderStyle;
+  /** Stroke color for outlined/both styles */
+  strokeColor?: string;
+  /** Stroke width for outlined/both styles */
+  strokeWidth?: number;
 }
 
 /**
@@ -71,6 +78,9 @@ export function drawCurvedText(ctx: CanvasRenderingContext2D, options: CurvedTex
     color,
     letterSpacing,
     shadowBlur,
+    renderStyle = 'filled',
+    strokeColor = '#000000',
+    strokeWidth = 2,
   } = options;
 
   ctx.save();
@@ -80,6 +90,13 @@ export function drawCurvedText(ctx: CanvasRenderingContext2D, options: CurvedTex
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
+  // Setup stroke style if needed
+  if (renderStyle === 'outlined' || renderStyle === 'both') {
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineJoin = 'round';
+  }
 
   // Add text shadow for readability
   applyConfigurableShadow(ctx, shadowBlur);
@@ -133,7 +150,19 @@ export function drawCurvedText(ctx: CanvasRenderingContext2D, options: CurvedTex
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
-    ctx.fillText(char, 0, 0);
+
+    // Draw based on render style
+    if (renderStyle === 'outlined') {
+      ctx.strokeText(char, 0, 0);
+    } else if (renderStyle === 'both') {
+      // Draw stroke first, then fill on top
+      ctx.strokeText(char, 0, 0);
+      ctx.fillText(char, 0, 0);
+    } else {
+      // 'filled' (default)
+      ctx.fillText(char, 0, 0);
+    }
+
     ctx.restore();
   }
 
@@ -233,6 +262,86 @@ export function drawTwoLineCenteredText(
 }
 
 /**
+ * Options for ability text rendering
+ */
+export interface AbilityTextOptions {
+  ability: string;
+  diameter: number;
+  fontFamily: string;
+  fontSizeRatio: number;
+  lineHeightMultiplier: number;
+  yPositionRatio: number;
+  color: string;
+  letterSpacing: number;
+  shadowBlur: number;
+  /** Absolute font size in pixels (overrides ratio if > 0) */
+  fontSizeOverride?: number;
+  /** Text render style: 'filled' (default), 'outlined', or 'both' */
+  renderStyle?: TextRenderStyle;
+  /** Stroke color for outlined/both styles */
+  strokeColor?: string;
+  /** Stroke width for outlined/both styles */
+  strokeWidth?: number;
+}
+
+/**
+ * Draw text based on render style (filled, outlined, or both)
+ */
+function drawTextWithStyle(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  renderStyle: TextRenderStyle
+): void {
+  if (renderStyle === 'outlined') {
+    ctx.strokeText(text, x, y);
+  } else if (renderStyle === 'both') {
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+  } else {
+    ctx.fillText(text, x, y);
+  }
+}
+
+/**
+ * Render a line with mixed bold/normal segments
+ */
+function renderBoldSegmentedLine(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  ability: string,
+  diameter: number,
+  fontSize: number,
+  fontFamily: string,
+  currentY: number,
+  renderStyle: TextRenderStyle
+): void {
+  const lineSegments = getLineSegments(line, ability);
+
+  // Calculate total line width with mixed fonts
+  let totalWidth = 0;
+  for (const seg of lineSegments) {
+    ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
+    totalWidth += ctx.measureText(seg.text).width;
+  }
+
+  // Start from left edge of centered text
+  let xPos = diameter / 2 - totalWidth / 2;
+
+  // Draw each segment with appropriate font weight
+  ctx.textAlign = 'left';
+  for (const seg of lineSegments) {
+    ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
+    drawTextWithStyle(ctx, seg.text, xPos, currentY, renderStyle);
+    xPos += ctx.measureText(seg.text).width;
+  }
+
+  // Reset alignment
+  ctx.textAlign = 'center';
+}
+
+/**
  * Draw ability text on token (horizontal, word-wrapped with adaptive width based on circular shape)
  * This version uses optimized circular text layout calculation
  * @param ctx - Canvas context
@@ -246,6 +355,7 @@ export function drawTwoLineCenteredText(
  * @param color - Text color
  * @param letterSpacing - Letter spacing in pixels
  * @param shadowBlur - Shadow blur radius
+ * @param options - Optional additional options (fontSizeOverride, renderStyle, strokeColor, strokeWidth)
  */
 export function drawAbilityText(
   ctx: CanvasRenderingContext2D,
@@ -258,16 +368,38 @@ export function drawAbilityText(
   yPositionRatio: number,
   color: string,
   letterSpacing: number,
-  shadowBlur: number
+  shadowBlur: number,
+  options?: Partial<
+    Pick<AbilityTextOptions, 'fontSizeOverride' | 'renderStyle' | 'strokeColor' | 'strokeWidth'>
+  >
 ): void {
   ctx.save();
 
-  const fontSize = diameter * fontSizeRatio;
-  // Use cached font string (normal weight for ability text)
+  // Extract options with defaults
+  const {
+    fontSizeOverride,
+    renderStyle = 'filled',
+    strokeColor = '#000000',
+    strokeWidth = 2,
+  } = options ?? {};
+
+  // Use absolute font size if provided, otherwise ratio-based
+  const fontSize =
+    fontSizeOverride && fontSizeOverride > 0 ? fontSizeOverride : diameter * fontSizeRatio;
+
+  // Setup context styles
   ctx.font = getCachedFont('', fontSize, fontFamily, 'sans-serif');
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+
+  // Setup stroke style if needed
+  const needsStroke = renderStyle === 'outlined' || renderStyle === 'both';
+  if (needsStroke) {
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineJoin = 'round';
+  }
 
   // Apply letterSpacing if supported (modern browsers)
   if ('letterSpacing' in ctx && letterSpacing !== 0) {
@@ -301,33 +433,19 @@ export function drawAbilityText(
   // Draw lines
   let currentY = startY;
   for (const line of layout.lines) {
-    if (!hasBoldText) {
-      // Fast path: no bold text, use simple centered drawing
-      ctx.fillText(line, diameter / 2, currentY);
+    if (hasBoldText) {
+      renderBoldSegmentedLine(
+        ctx,
+        line,
+        ability,
+        diameter,
+        fontSize,
+        fontFamily,
+        currentY,
+        renderStyle
+      );
     } else {
-      // Slow path: render segment-by-segment for mixed bold/normal text
-      const lineSegments = getLineSegments(line, ability);
-
-      // Calculate total line width with mixed fonts
-      let totalWidth = 0;
-      for (const seg of lineSegments) {
-        ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
-        totalWidth += ctx.measureText(seg.text).width;
-      }
-
-      // Start from left edge of centered text
-      let xPos = diameter / 2 - totalWidth / 2;
-
-      // Draw each segment with appropriate font weight
-      for (const seg of lineSegments) {
-        ctx.font = getCachedFont(seg.isBold ? 'bold' : '', fontSize, fontFamily, 'sans-serif');
-        ctx.textAlign = 'left'; // Left-align for segment drawing
-        ctx.fillText(seg.text, xPos, currentY);
-        xPos += ctx.measureText(seg.text).width;
-      }
-
-      // Reset alignment for next iteration
-      ctx.textAlign = 'center';
+      drawTextWithStyle(ctx, line, diameter / 2, currentY, renderStyle);
     }
     currentY += layout.lineHeight;
   }

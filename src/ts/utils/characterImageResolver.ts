@@ -403,7 +403,7 @@ export async function resolveCharacterImages(
         }
       }
 
-      if (!imageUrl || !char.uuid) return null;
+      if (!(imageUrl && char.uuid)) return null;
 
       const result = await resolveCharacterImageUrl(imageUrl, char.id);
 

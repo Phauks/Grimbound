@@ -18,6 +18,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { SearchHighlight } from '@/components/Shared/UI/SearchHighlight';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useOfficialCharacterImages } from '@/hooks/sync/useOfficialCharacterImages';
@@ -29,6 +30,7 @@ import type { Character, Team } from '@/ts/types/index.js';
 import { charactersToJson } from '@/ts/utils/jsonUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { generateStableUuid } from '@/ts/utils/nameGenerator';
+import type { SearchMatch } from '@/ts/utils/searchUtils.js';
 
 // ============================================
 // Types
@@ -89,6 +91,8 @@ interface CharacterRowProps {
   isOnScript: boolean;
   imageUrl: string | null;
   onToggle: () => void;
+  /** Function to get search match data for highlighting */
+  getSearchMatch: (text: string) => SearchMatch;
 }
 
 const CharacterRow = memo(function CharacterRow({
@@ -96,6 +100,7 @@ const CharacterRow = memo(function CharacterRow({
   isOnScript,
   imageUrl,
   onToggle,
+  getSearchMatch,
 }: CharacterRowProps) {
   return (
     <button
@@ -115,8 +120,14 @@ const CharacterRow = memo(function CharacterRow({
         style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
       />
       <div className={styles.characterInfo}>
-        <h4 className={styles.characterName}>{character.name}</h4>
-        {character.ability && <p className={styles.abilityText}>{character.ability}</p>}
+        <h4 className={styles.characterName}>
+          <SearchHighlight match={getSearchMatch(character.name)} />
+        </h4>
+        {character.ability && (
+          <p className={styles.abilityText}>
+            <SearchHighlight match={getSearchMatch(character.ability)} variant="subtle" />
+          </p>
+        )}
       </div>
     </button>
   );
@@ -134,6 +145,8 @@ interface TeamSectionProps {
   onToggleCharacter: (char: Character) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  /** Function to get search match data for highlighting */
+  getSearchMatch: (text: string) => SearchMatch;
 }
 
 const TeamSection = memo(function TeamSection({
@@ -144,6 +157,7 @@ const TeamSection = memo(function TeamSection({
   onToggleCharacter,
   isExpanded,
   onToggleExpand,
+  getSearchMatch,
 }: TeamSectionProps) {
   if (characters.length === 0) return null;
 
@@ -171,6 +185,7 @@ const TeamSection = memo(function TeamSection({
             isOnScript={onScriptIds.has(char.id)}
             imageUrl={imageUrls.get(char.id) ?? null}
             onToggle={() => onToggleCharacter(char)}
+            getSearchMatch={getSearchMatch}
           />
         ))}
       </div>
@@ -207,11 +222,12 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   const [expandedTeams, setExpandedTeams] = useState<Set<Team>>(new Set());
 
   // Compute which official characters are on script
-  const onScriptIds = useMemo(() => {
-    return new Set(characters.filter((c) => c.source === 'official').map((c) => c.id));
-  }, [characters]);
+  const onScriptIds = useMemo(
+    () => new Set(characters.filter((c) => c.source === 'official').map((c) => c.id)),
+    [characters]
+  );
 
-  // Character filtering
+  // Character filtering with search highlighting
   const {
     searchQuery,
     setSearchQuery,
@@ -223,6 +239,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
     toggleShowSelectedOnly,
     clearSearch,
     filteredCharacters,
+    getSearchMatch,
   } = useCharacterFiltering({
     characters: officialCharacters,
     onScriptIds,
@@ -265,9 +282,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   }, [isOpen, isInitialized, getCharacters]);
 
   // Group by team
-  const charactersByTeam = useMemo(() => {
-    return groupByTeam(filteredCharacters);
-  }, [filteredCharacters]);
+  const charactersByTeam = useMemo(() => groupByTeam(filteredCharacters), [filteredCharacters]);
 
   // Stats
   const totalOnScript = characters.filter((c) => c.source === 'official').length;
@@ -451,6 +466,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
                 onToggleCharacter={toggleCharacter}
                 isExpanded={expandedTeams.has(team)}
                 onToggleExpand={() => toggleTeamExpand(team)}
+                getSearchMatch={getSearchMatch}
               />
             ))
           )}

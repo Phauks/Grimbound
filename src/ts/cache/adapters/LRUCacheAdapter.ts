@@ -240,13 +240,13 @@ export class LRUCacheAdapter<K = string, V = unknown> implements ICacheStrategy<
     return count;
   }
 
-  async getByTag(tag: string): Promise<Array<CacheEntry<V>>> {
+  async getByTag(tag: string): Promise<CacheEntry<V>[]> {
     const keys = this.tagIndex.get(tag);
     if (!keys || keys.size === 0) {
       return [];
     }
 
-    const entries: Array<CacheEntry<V>> = [];
+    const entries: CacheEntry<V>[] = [];
     for (const key of keys) {
       const entry = this.cache.get(key);
       if (entry) {

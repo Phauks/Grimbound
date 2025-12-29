@@ -1,15 +1,21 @@
 /**
  * Auto-discover example scripts from the example_scripts folder
  * Uses Vite's import.meta.glob to find all JSON files at build time
+ *
+ * JSON content is inlined into the bundle for:
+ * - Fewer HTTP requests
+ * - Immediate offline availability
+ * - Better PWA caching
  */
 
+import type { ScriptEntry } from '@/ts/types/index.js';
+
 // Import all JSON files from example_scripts folder
-// The 'eager: false' makes them lazy-loaded, and 'query: ?url' gets just the URL
+// Content is bundled directly into JS (no separate fetch needed)
 const scriptModules = import.meta.glob('/example_scripts/*.json', {
   eager: true,
-  query: '?url',
   import: 'default',
-}) as Record<string, string>;
+}) as Record<string, ScriptEntry[]>;
 
 /**
  * Get list of example script filenames (auto-populated from example_scripts folder)
@@ -27,9 +33,9 @@ export function getExampleScriptNames(): string[] {
 }
 
 /**
- * Get the URL for an example script (for direct loading)
+ * Get example script data directly (bundled, no fetch needed)
  */
-export function getExampleScriptUrl(filename: string): string | null {
+export function getExampleScriptData(filename: string): ScriptEntry[] | null {
   const key = `/example_scripts/${filename}`;
   return scriptModules[key] || null;
 }

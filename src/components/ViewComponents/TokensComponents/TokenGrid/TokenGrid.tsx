@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { TabType } from '@/components/Layout/TabNavigation';
+import { GenerationProgressOverlay } from '@/components/Shared/Feedback/GenerationProgressOverlay';
 import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -9,7 +10,25 @@ import { buildTokenMetadata, embedPngMetadata } from '@/ts/export/pngMetadata';
 import type { Token } from '@/ts/types/index.js';
 import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils';
 import { logger } from '@/ts/utils/logger';
+import {
+  getStorageItem,
+  STORAGE_KEYS,
+  type StorageKey,
+  setStorageItem,
+} from '@/ts/utils/storageKeys';
 import { TokenCard } from './TokenCard';
+
+/**
+ * Helper to get initial section open state from localStorage
+ */
+function getInitialSectionState(key: StorageKey, defaultValue: boolean): boolean {
+  const stored = getStorageItem(key);
+  if (stored === null) return defaultValue;
+  return stored === 'true';
+}
+
+/** Meta token types that should be set as example meta token (not character) */
+const META_TOKEN_TYPES = new Set(['script-name', 'almanac', 'pandemonium', 'bootlegger', 'jinx']);
 
 interface TokenGridProps {
   /** Optional tokens array - when provided, uses these instead of context */
@@ -35,11 +54,13 @@ export function TokenGrid({
     setTokens,
     characters,
     setCharacters,
-    setExampleToken,
+    setExampleCharacterToken,
+    setExampleMetaToken,
     updateGenerationOptions,
     generationOptions,
     setMetadata,
     getMetadata,
+    generationProgress,
   } = useTokenContext();
   const { addToast } = useToast();
 
@@ -82,9 +103,14 @@ export function TokenGrid({
 
   const handleSetAsExample = useCallback(
     (token: Token) => {
-      setExampleToken(token);
+      // Route meta tokens to the meta example slot, character/reminder to character slot
+      if (META_TOKEN_TYPES.has(token.type)) {
+        setExampleMetaToken(token);
+      } else {
+        setExampleCharacterToken(token);
+      }
     },
-    [setExampleToken]
+    [setExampleCharacterToken, setExampleMetaToken]
   );
 
   // Download single token as PNG
@@ -141,6 +167,36 @@ export function TokenGrid({
 
   const studioNav = useStudioNavigation({ onTabChange });
 
+  // Section open/closed state - persisted to localStorage
+  const [charactersOpen, setCharactersOpen] = useState(() =>
+    getInitialSectionState(STORAGE_KEYS.TOKEN_SECTION_CHARACTERS_OPEN, true)
+  );
+  const [remindersOpen, setRemindersOpen] = useState(() =>
+    getInitialSectionState(STORAGE_KEYS.TOKEN_SECTION_REMINDERS_OPEN, true)
+  );
+  const [metaOpen, setMetaOpen] = useState(() =>
+    getInitialSectionState(STORAGE_KEYS.TOKEN_SECTION_META_OPEN, true)
+  );
+
+  // Handlers to toggle and persist section state using onToggle event
+  const handleCharactersToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+    const isOpen = e.currentTarget.open;
+    setCharactersOpen(isOpen);
+    setStorageItem(STORAGE_KEYS.TOKEN_SECTION_CHARACTERS_OPEN, String(isOpen));
+  }, []);
+
+  const handleRemindersToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+    const isOpen = e.currentTarget.open;
+    setRemindersOpen(isOpen);
+    setStorageItem(STORAGE_KEYS.TOKEN_SECTION_REMINDERS_OPEN, String(isOpen));
+  }, []);
+
+  const handleMetaToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+    const isOpen = e.currentTarget.open;
+    setMetaOpen(isOpen);
+    setStorageItem(STORAGE_KEYS.TOKEN_SECTION_META_OPEN, String(isOpen));
+  }, []);
+
   // For readOnly mode with prop tokens, skip loading/error states
   if (!propTokens && allTokens.length === 0) {
     return (
@@ -150,13 +206,8 @@ export function TokenGrid({
     );
   }
 
-  if (!propTokens && isLoading) {
-    return (
-      <div className={styles.loadingState}>
-        <div className={styles.spinner}></div>
-        <p>Generating tokens...</p>
-      </div>
-    );
+  if (!propTokens && isLoading && generationProgress) {
+    return <GenerationProgressOverlay progress={generationProgress} />;
   }
 
   if (!propTokens && error) {
@@ -172,7 +223,11 @@ export function TokenGrid({
       <div className={styles.tokenContainer}>
         {grouping.groupedCharacterTokens.length > 0 && (
           <div className={styles.section}>
-            <details open className={styles.collapsible}>
+            <details
+              open={charactersOpen}
+              className={styles.collapsible}
+              onToggle={handleCharactersToggle}
+            >
               <summary className={styles.sectionHeader}>Character Tokens</summary>
               <div id="characterTokenGrid" className={styles.grid}>
                 {grouping.groupedCharacterTokens.map((group) => (
@@ -196,7 +251,11 @@ export function TokenGrid({
 
         {grouping.groupedReminderTokens.length > 0 && (
           <div className={styles.section}>
-            <details open className={styles.collapsible}>
+            <details
+              open={remindersOpen}
+              className={styles.collapsible}
+              onToggle={handleRemindersToggle}
+            >
               <summary className={styles.sectionHeader}>Reminder Tokens</summary>
               <div id="reminderTokenGrid" className={`${styles.grid} ${styles.gridReminders}`}>
                 {grouping.groupedReminderTokens.map((group) => (
@@ -219,7 +278,7 @@ export function TokenGrid({
 
         {grouping.groupedMetaTokens.length > 0 && (
           <div className={styles.section}>
-            <details open className={styles.collapsible}>
+            <details open={metaOpen} className={styles.collapsible} onToggle={handleMetaToggle}>
               <summary className={styles.sectionHeader}>Meta Tokens</summary>
               <div id="metaTokenGrid" className={styles.grid}>
                 {grouping.groupedMetaTokens.map((group) => (

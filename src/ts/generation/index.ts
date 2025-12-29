@@ -5,13 +5,22 @@
 
 // Batch generation (orchestration layer)
 export {
+  calculateTokenCountsByType,
   generateAllTokens as generateAllTokensBatch,
   generateAllTokens,
+  type TokenCountsByType,
 } from './batchGenerator.js';
 // Export image cache adapter
 export { defaultImageCache } from './ImageCacheAdapter.js';
 // Presets
 export { getPreset, getPresetNames, PRESETS } from './presets.js';
+// QR code options resolution
+export {
+  buildStyledQRParams,
+  DEFAULT_QR_OPTIONS,
+  resolveQROptions,
+  type StyledQRCodeParams,
+} from './QROptionsResolver.js';
 // Token Factory (Token object creation)
 export {
   type CharacterTokenOptions,

@@ -13,6 +13,8 @@ export * from './backgroundEffects.js';
 
 import type { BackgroundStyle } from './backgroundEffects.js';
 
+// Font system types
+export * from './fonts.js';
 // Measurement system types
 export * from './measurement.js';
 // Project management types
@@ -168,12 +170,6 @@ export interface DecorativeOverrides {
   setupStyle?: string;
 
   // Accent settings (from AdditionalOptionsPanel)
-  // Legacy fields (kept for backwards compatibility)
-  useCustomAccents?: boolean;
-  accentStyle?: string;
-  accentCount?: number;
-  accentProbability?: number;
-  // New accent settings matching GenerationOptions
   accentEnabled?: boolean;
   accentGeneration?: string;
   maximumAccents?: number;
@@ -195,6 +191,17 @@ export interface CharacterMetadata {
     enabled: boolean;
     filename?: string; // Filename in ZIP or IndexedDB
   };
+}
+
+/**
+ * A jinx represents a special rule interaction between two characters.
+ * When both characters are on the same script, this rule modifies gameplay.
+ */
+export interface Jinx {
+  /** Character ID of the jinxed character */
+  id: string;
+  /** The special rule text explaining the interaction */
+  reason: string;
 }
 
 // Character data from BotC API
@@ -227,6 +234,8 @@ export interface Character {
   // Internal fields for the generator (stripped on export)
   uuid?: string; // Stable internal identifier
   source?: 'official' | 'custom'; // Whether character is official or custom
+  // Jinx data - special rules when interacting with other characters
+  jinxes?: Jinx[];
 }
 
 // Script meta information
@@ -282,17 +291,67 @@ export interface TokenConfig {
 // Font spacing configuration
 export interface FontSpacingOptions {
   characterName: number;
-  abilityText: number;
+  characterText: number;
   reminderText: number;
+  metaName: number;
   metaText: number;
 }
 
 // Text shadow configuration
 export interface TextShadowOptions {
   characterName: number;
-  abilityText: number;
+  characterText: number;
   reminderText: number;
+  metaName: number;
   metaText: number;
+}
+
+// Font size configuration (in points, 0 = auto/ratio-based)
+export interface FontSizeOptions {
+  characterName?: number;
+  characterText?: number;
+  reminderText?: number;
+  metaName?: number;
+  metaText?: number;
+}
+
+// Text render style (filled, outlined, or both)
+export type TextRenderStyle = 'filled' | 'outlined' | 'both';
+
+// Text render style configuration per text element
+export interface TextRenderStyleOptions {
+  characterName?: TextRenderStyle;
+  characterText?: TextRenderStyle;
+  reminderText?: TextRenderStyle;
+  metaName?: TextRenderStyle;
+  metaText?: TextRenderStyle;
+}
+
+// Text stroke color configuration
+export interface TextStrokeColorOptions {
+  characterName?: string;
+  characterText?: string;
+  reminderText?: string;
+  metaName?: string;
+  metaText?: string;
+}
+
+// Text stroke width configuration
+export interface TextStrokeWidthOptions {
+  characterName?: number;
+  characterText?: number;
+  reminderText?: number;
+  metaName?: number;
+  metaText?: number;
+}
+
+// Text location configuration for curved text (none = hide text, bottom = default, top = reversed)
+export type TextLocation = 'none' | 'bottom' | 'top';
+
+export interface TextLocationOptions {
+  characterName?: TextLocation;
+  reminderText?: TextLocation;
+  metaName?: TextLocation;
 }
 
 // PNG export configuration
@@ -348,6 +407,30 @@ export interface IconSettingsOptions {
   meta: IconSettings;
 }
 
+/**
+ * Settings link configuration for Character/Meta tokens.
+ * When enabled, changing settings on one token type updates both.
+ * Supports bidirectional sync - editing either Character or Meta updates the other.
+ */
+export interface TokenSettingsLink {
+  /** Link background styles between Character and Meta */
+  background: boolean;
+  /** Link font settings (Character Name ↔ Meta Name) */
+  font: boolean;
+  /** Link icon settings between Character and Meta */
+  icon: boolean;
+  /** Link text settings (Ability Text ↔ Meta Text) */
+  text: boolean;
+}
+
+/** Default link state - all unlinked */
+export const DEFAULT_TOKEN_SETTINGS_LINK: TokenSettingsLink = {
+  background: false,
+  font: false,
+  icon: false,
+  text: false,
+};
+
 // Bootlegger icon type options
 export type BootleggerIconType = 'bootlegger' | 'script';
 
@@ -386,6 +469,8 @@ export interface GenerationOptions {
   characterNameColor?: string;
   metaNameFont?: string;
   metaNameColor?: string;
+  metaTextFont?: string;
+  metaTextColor?: string;
   characterReminderFont: string;
   abilityTextFont?: string;
   abilityTextColor?: string;
@@ -394,6 +479,8 @@ export interface GenerationOptions {
   hideScriptNameAuthor?: boolean;
   almanacToken: boolean;
   pandemoniumToken: boolean;
+  jinxTokens?: boolean; // Generate special tokens for character jinx interactions
+  jinxIconSpacing?: number; // Distance of jinx icons from center (0 = default, positive = further apart)
   accentGeneration?: string;
   accentEnabled?: boolean; // Whether accents are enabled
   maximumAccents?: number;
@@ -406,6 +493,11 @@ export interface GenerationOptions {
   dpi?: DPIOption;
   fontSpacing?: FontSpacingOptions;
   textShadow?: TextShadowOptions;
+  fontSizes?: FontSizeOptions;
+  textRenderStyles?: TextRenderStyleOptions;
+  textStrokeColors?: TextStrokeColorOptions;
+  textStrokeWidths?: TextStrokeWidthOptions;
+  textLocations?: TextLocationOptions;
   pngSettings?: PngExportOptions;
   zipSettings?: ZipExportOptions;
   pdfPadding?: number;
@@ -417,11 +509,19 @@ export interface GenerationOptions {
   logoUrl?: string; // Custom logo URL for meta tokens
   measurementUnit?: MeasurementUnit; // User's preferred display unit (inches/millimeters)
   qrCodeOptions?: QRCodeOptions; // QR code styling options for almanac tokens
+  characterMetaLink?: TokenSettingsLink; // Link settings between Character and Meta tokens
 }
 
 // Generated token
 export interface Token {
-  type: 'character' | 'reminder' | 'script-name' | 'almanac' | 'pandemonium' | 'bootlegger';
+  type:
+    | 'character'
+    | 'reminder'
+    | 'script-name'
+    | 'almanac'
+    | 'pandemonium'
+    | 'bootlegger'
+    | 'jinx';
   name: string;
   filename: string;
   team: Team | string;
@@ -441,6 +541,12 @@ export interface Token {
   characterData?: Character; // Original character data (for icon editing)
   imageUrl?: string; // URL of the icon used for this specific token variant
   hasDecorativeOverrides?: boolean; // Whether this token was generated with per-character decorative overrides
+  // Jinx token data (for regeneration)
+  jinxData?: {
+    reason: string; // The jinx rule text
+    char1: { id: string; name: string; image: string }; // First character minimal data
+    char2: { id: string; name: string; image: string }; // Second character minimal data
+  };
 }
 
 // Avery label template type
@@ -529,6 +635,26 @@ export interface CharacterValidationResult {
 
 // Progress callback type
 export type ProgressCallback = (current: number, total: number) => void;
+
+// Detailed progress callback with token type breakdown
+export type DetailedProgressCallback = (progress: GenerationProgress) => void;
+
+/**
+ * Detailed generation progress with breakdown by token type.
+ * Used to show accurate progress information during token generation.
+ */
+export interface GenerationProgress {
+  /** Current phase of generation */
+  phase: 'character' | 'reminder' | 'meta' | 'complete';
+  /** Character tokens generated / expected */
+  character: { current: number; total: number };
+  /** Reminder tokens generated / expected */
+  reminder: { current: number; total: number };
+  /** Meta tokens generated / expected */
+  meta: { current: number; total: number };
+  /** Overall progress (derived from character + reminder + meta) */
+  overall: { current: number; total: number };
+}
 
 // Incremental token callback - called as each token is generated
 export type TokenCallback = (token: Token) => void;
@@ -715,6 +841,11 @@ export interface Config {
   AUTO_GENERATE_DEFAULT: boolean;
   API: {
     CORS_PROXY: string;
+  };
+  GOOGLE_FONTS: {
+    API_KEY: string;
+    API_ENDPOINT: string;
+    CATALOG_CACHE_DURATION: number;
   };
   ASSETS: {
     FONTS: string;

@@ -1,0 +1,1110 @@
+/**
+ * FontDrawer Component Styles
+ *
+ * Wide horizontal panel for font settings that positions itself
+ * below the TokenPreviewRow. Uses 3-column layout:
+ * Column 1: Font Selection (search, filters, font list)
+ * Column 2: Style Settings (color, spacing, shadow)
+ * Column 3: Preview & Upload
+ *
+ * Matches the visual style of BackgroundDrawer.module.css
+ */
+
+/* ============================================
+   Overlay - Dims background when drawer is open
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  /* Transparent - no darkening so user can see preview changes clearly */
+  background: transparent;
+  z-index: 899;
+  /* Still captures clicks to close drawer */
+}
+
+.overlayVisible {
+  /* No visual change needed since overlay is transparent */
+}
+
+/* ============================================
+   Drawer Container - Wide Horizontal Panel
+   ============================================ */
+
+.drawer {
+  position: fixed;
+  /* Match the width of the right panel exactly */
+  right: var(--drawer-right, 16px);
+  top: var(--drawer-top, 200px);
+  left: var(--drawer-left, 320px);
+  background: var(--bg-secondary, #2a2a2a);
+  border-radius: 10px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 900;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+
+  /* Animation - fade in */
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+
+  /* Allow scrolling within columns if needed */
+  overflow: hidden;
+  max-height: calc(100vh - var(--drawer-top, 200px) - 32px);
+}
+
+.drawerOpen {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   Drawer Header - Compact (matches BackgroundDrawer)
+   ============================================ */
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 10px 10px 0 0;
+}
+
+.drawerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #f0f0f0);
+  margin: 0;
+}
+
+.drawerTitleIcon {
+  font-size: 0.875rem;
+}
+
+/* Left side of header: title + token type tabs */
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Header action buttons */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resetButton,
+.cancelButton,
+.applyButton {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.resetButton {
+  color: var(--text-muted, #888);
+  background: transparent;
+  border: none;
+}
+
+.resetButton:hover {
+  color: var(--color-danger, #f87171);
+}
+
+.cancelButton {
+  color: var(--text-secondary, #ccc);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.cancelButton:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+}
+
+.applyButton {
+  color: white;
+  background: var(--color-accent, #8b5cf6);
+  border: none;
+}
+
+.applyButton:hover {
+  background: var(--color-accent-hover, #7c3aed);
+}
+
+/* ============================================
+   Drawer Content - 3 Column Layout
+   Font Selection | Style Settings | Preview
+   ============================================ */
+
+.drawerContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  max-height: calc(100vh - var(--drawer-top, 200px) - 80px);
+  /* Ensure grid rows stretch to fill available height */
+  height: 100%;
+}
+
+/* Each column */
+.column {
+  padding: 0.625rem 0.75rem;
+  border-right: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  /* Prevent content from forcing column wider */
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.column:last-of-type {
+  border-right: none;
+}
+
+/* Left column - font selection needs scrolling */
+.fontSelectionColumn {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Ensure column fills available height for scroll to work */
+  height: 100%;
+  max-height: 100%;
+}
+
+/* Middle column - style settings */
+.styleColumn {
+  overflow-y: auto;
+}
+
+/* Right column - preview & upload */
+.previewColumn {
+  overflow-y: auto;
+}
+
+/* ============================================
+   Section Headers - Very Compact
+   ============================================ */
+
+.sectionHeader {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.375rem;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Search Input
+   ============================================ */
+
+.searchContainer {
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-primary, #f0f0f0);
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.1s ease;
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted, #666);
+}
+
+.searchInput:focus {
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+/* ============================================
+   Source Tabs - Inline Compact
+   ============================================ */
+
+.sourceTabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border-radius: 4px;
+  padding: 2px;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.sourceTab {
+  flex: 1;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.sourceTab:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.sourceTabActive {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f0f0f0);
+}
+
+/* ============================================
+   Category Filter Chips
+   ============================================ */
+
+.categoryFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.categoryChip {
+  padding: 0.1875rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.categoryChip:hover {
+  border-color: var(--text-muted, #666);
+  color: var(--text-primary, #f0f0f0);
+}
+
+.categoryChipActive {
+  border-color: var(--color-accent, #8b5cf6);
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--color-accent, #8b5cf6);
+}
+
+/* ============================================
+   View Toggle (List/Grid)
+   ============================================ */
+
+.viewToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.375rem;
+  flex-shrink: 0;
+}
+
+.fontCount {
+  font-size: 0.625rem;
+  color: var(--text-muted, #666);
+}
+
+.viewToggleButtons {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border-radius: 3px;
+  padding: 2px;
+}
+
+.viewToggleButton {
+  padding: 0.1875rem 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted, #999);
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.viewToggleButton:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.viewToggleButtonActive {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f0f0f0);
+}
+
+/* ============================================
+   Font List View
+   ============================================ */
+
+.fontListContainer {
+  flex: 1 1 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  /* No max-height - let it fill available space to bottom */
+}
+
+.fontList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fontListItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.fontListItem:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+}
+
+.fontListItemSelected {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+.fontListPreview {
+  font-size: 1.25rem;
+  width: 36px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary, #f0f0f0);
+  flex-shrink: 0;
+}
+
+.fontListInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fontListName {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary, #f0f0f0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fontListMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.fontListCategory {
+  font-size: 0.5625rem;
+  color: var(--text-muted, #888);
+}
+
+.fontListBadge {
+  font-size: 0.5rem;
+  font-weight: 600;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 2px;
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--color-accent, #8b5cf6);
+}
+
+.fontListCheck {
+  font-size: 0.75rem;
+  color: var(--color-accent, #8b5cf6);
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Font Grid View
+   ============================================ */
+
+.fontGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.375rem;
+}
+
+.fontGridItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-align: center;
+}
+
+.fontGridItem:hover {
+  border-color: var(--text-muted, #666);
+}
+
+.fontGridItemSelected {
+  border-color: var(--color-accent, #8b5cf6);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.fontGridPreview {
+  font-size: 1.5rem;
+  color: var(--text-primary, #f0f0f0);
+  line-height: 1;
+}
+
+.fontGridName {
+  font-size: 0.5625rem;
+  color: var(--text-muted, #999);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ============================================
+   Category Headers in Font List
+   ============================================ */
+
+.categoryHeader {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #666);
+  padding: 0.5rem 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+  margin-top: 0.25rem;
+}
+
+.categoryHeader:first-child {
+  margin-top: 0;
+}
+
+/* ============================================
+   Upload Section (Column 1 - subtle)
+   ============================================ */
+
+.uploadSection {
+  margin-top: auto;
+  padding-top: 0.375rem;
+  flex-shrink: 0;
+}
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted, #888);
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.uploadButton:hover {
+  color: var(--text-primary, #f0f0f0);
+  border-color: var(--text-muted, #666);
+}
+
+.uploadHint {
+  display: none;
+}
+
+/* ============================================
+   Upload Section - Prominent (top of My Fonts)
+   ============================================ */
+
+.uploadSectionTop {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.uploadButtonProminent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #888);
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 2px dashed var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.uploadButtonProminent:hover {
+  color: var(--color-accent, #8b5cf6);
+  border-color: var(--color-accent, #8b5cf6);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.uploadIcon {
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.uploadButtonProminent:hover .uploadIcon {
+  opacity: 1;
+}
+
+.uploadButtonProminent .uploadHint {
+  display: block;
+  font-size: 0.5625rem;
+  color: var(--text-muted, #666);
+  margin-top: 0.125rem;
+}
+
+/* ============================================
+   Style Column - Color Swatches
+   ============================================ */
+
+.colorSection {
+  margin-bottom: 0.75rem;
+}
+
+.colorSwatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.colorSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.1);
+}
+
+.colorSwatchSelected {
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+.colorSwatchLight {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.colorCheck {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #000;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.customColorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.customColorButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary, #f0f0f0);
+}
+
+.customColorButton:hover {
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+.hiddenColorInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ============================================
+   Style Column - Sliders
+   ============================================ */
+
+.sliderSection {
+  margin-bottom: 0.75rem;
+}
+
+.sliderHint {
+  display: block;
+  font-size: 0.5625rem;
+  color: var(--text-muted, #666);
+  margin-top: 0.125rem;
+  font-style: italic;
+}
+
+/* ============================================
+   Text Render Style Section
+   ============================================ */
+
+.textStyleSection {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.sectionSubheader {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.375rem;
+}
+
+.textStyleButtons {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.textStyleButton {
+  flex: 1;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.textStyleButton:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.textStyleButtonActive {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f0f0f0);
+}
+
+/* Side-by-side color panels (Fill | Stroke) */
+.colorPanelsRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.colorPanel {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.02));
+  border-radius: 4px;
+}
+
+.colorPanelDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.colorPanelHeader {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.375rem;
+}
+
+.colorPanelSwatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+  margin-bottom: 0.25rem;
+}
+
+.colorPanelSwatch {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 3px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.colorPanelSwatch:hover {
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.colorPanelSwatchSelected {
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+.colorPanelSwatchLight {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.colorPanelCustomRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+.colorPanelCustomButton {
+  flex: 1;
+  padding: 0.1875rem 0.375rem;
+  font-size: 0.5625rem;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-primary, #f0f0f0);
+}
+
+.colorPanelCustomButton:hover {
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+/* Stroke width slider in color panel */
+.strokeWidthRow {
+  margin-top: 0.5rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+}
+
+/* Separator between color section and other settings */
+.settingsSeparator {
+  height: 1px;
+  background: var(--border-color, rgba(255, 255, 255, 0.1));
+  margin: 0.75rem 0;
+}
+
+/* Legacy stroke settings (keeping for backwards compat) */
+.strokeSettings {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.02));
+  border-radius: 4px;
+}
+
+.strokeColorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.strokeLabel {
+  font-size: 0.6875rem;
+  color: var(--text-secondary, #ccc);
+}
+
+.strokeColorInput {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.strokeColorInput::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.strokeColorInput::-webkit-color-swatch {
+  border-radius: 2px;
+  border: none;
+}
+
+/* ============================================
+   Preview Column - Live Preview Box
+   ============================================ */
+
+.previewBox {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.previewText {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+/* ============================================
+   Preview Column - Current Font Info
+   ============================================ */
+
+.currentFontInfo {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.currentFontLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #666);
+  margin-bottom: 0.25rem;
+}
+
+.currentFontName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #f0f0f0);
+  margin-bottom: 0.125rem;
+}
+
+.currentFontMeta {
+  font-size: 0.625rem;
+  color: var(--text-muted, #888);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted, #666);
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.emptyStateText {
+  font-size: 0.75rem;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted, #888);
+  font-size: 0.75rem;
+}
+
+/* ============================================
+   Color Pickers Row
+   ============================================ */
+
+.colorPickersRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.colorPickerItem {
+  flex: 1;
+}
+
+.colorPickerDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ============================================
+   Options Column (Column 3)
+   ============================================ */
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checkboxOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--text-primary, #f0f0f0);
+  cursor: pointer;
+}
+
+.checkboxOption input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent, #8b5cf6);
+  cursor: pointer;
+}
+
+.checkboxOption:hover {
+  color: var(--color-accent, #8b5cf6);
+}
+
+.noOptions {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* ============================================
+   Option Group - Label + Controls Row
+   ============================================ */
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.optionLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #ccc);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.styleButton {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.styleButton:hover {
+  color: var(--text-primary, #f0f0f0);
+}
+
+.styleButton.active {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f0f0f0);
+}
+
+.styleButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.styleButton:disabled:hover {
+  color: var(--text-muted, #999);
+}
+
+/* Disabled state for option groups and checkboxes */
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.checkboxOption.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.checkboxOption.disabled:hover {
+  color: var(--text-primary, #f0f0f0);
+}

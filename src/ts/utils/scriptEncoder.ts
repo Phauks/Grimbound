@@ -41,8 +41,8 @@ export function encodeScriptForUrl(script: ScriptEntry[]): string {
   // Convert to base64
   let base64 = '';
   const bytes = new Uint8Array(compressed);
-  for (let i = 0; i < bytes.length; i++) {
-    base64 += String.fromCharCode(bytes[i]);
+  for (const byte of bytes) {
+    base64 += String.fromCharCode(byte);
   }
   base64 = btoa(base64);
 

@@ -15,7 +15,6 @@ import {
   generateUuid,
   getStorageItem,
   logger,
-  removeStorageItem,
   STORAGE_KEYS,
   sanitizeFilename,
   setStorageItem,
@@ -58,17 +57,7 @@ export function usePresets() {
 
   const getCustomPresets = useCallback((): CustomPreset[] => {
     try {
-      // Try new key first, then fallback to old key for migration
-      let data = getStorageItem(STORAGE_KEYS.CUSTOM_PRESETS);
-      if (!data) {
-        // Check old key and migrate if found
-        const oldData = getStorageItem(STORAGE_KEYS.LEGACY_PRESETS);
-        if (oldData) {
-          setStorageItem(STORAGE_KEYS.CUSTOM_PRESETS, oldData);
-          removeStorageItem(STORAGE_KEYS.LEGACY_PRESETS);
-          data = oldData;
-        }
-      }
+      const data = getStorageItem(STORAGE_KEYS.CUSTOM_PRESETS);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -83,9 +72,10 @@ export function usePresets() {
     }
   }, []);
 
-  const getDefaultPresetId = useCallback((): string => {
-    return getStorageItem(STORAGE_KEYS.DEFAULT_PRESET) || 'classic';
-  }, []);
+  const getDefaultPresetId = useCallback(
+    (): string => getStorageItem(STORAGE_KEYS.DEFAULT_PRESET) || 'classic',
+    []
+  );
 
   const saveCustomPreset = useCallback(
     (name: string, description: string, icon: string) => {

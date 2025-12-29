@@ -56,6 +56,10 @@ export function handleHookError(
     case 'debug':
       logger.debug(context, userMessage, ...logData);
       break;
+    default:
+      // Exhaustive check for logLevel type
+      logger.error(context, userMessage, ...logData);
+      break;
   }
 
   // Call custom error handler if provided

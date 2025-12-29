@@ -22,26 +22,24 @@
 import { memo, useCallback, useMemo } from 'react';
 import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
 import { AssetPreviewSelector } from '@/components/Shared/Selectors/AssetPreviewSelector';
-import { BackgroundStyleSelector } from '@/components/Shared/Selectors/BackgroundStyleSelector';
 import {
-  type FontOption,
+  type AllBackgroundStyles,
+  BackgroundStyleSelector,
+} from '@/components/Shared/Selectors/BackgroundStyleSelector';
+import {
+  type AllFontSettings,
   type FontSettings,
   FontSettingsSelector,
 } from '@/components/Shared/Selectors/FontSettingsSelector';
 import {
-  type IconSettings,
-  IconSettingsSelector,
-} from '@/components/Shared/Selectors/IconSettingsSelector';
+  type SingleIconSettings,
+  SingleIconSettingsSelector,
+} from '@/components/Shared/Selectors/SingleIconSettingsSelector';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
 import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects';
-import type {
-  BackgroundStyle,
-  Character,
-  DecorativeOverrides,
-  GenerationOptions,
-} from '@/ts/types/index';
+import type { Character, DecorativeOverrides, GenerationOptions } from '@/ts/types/index';
 import {
   createEffectiveOptions,
   mapAccentOptionsToDecorative,
@@ -61,19 +59,6 @@ const DEFAULTS = {
   TEXT_COLOR: '#FFFFFF',
   SETUP_STYLE: 'setup_flower_1',
 } as const;
-
-/** Font options for character name */
-const CHARACTER_NAME_FONT_OPTIONS: FontOption[] = [
-  { value: 'Dumbledor', label: 'Dumbledor', category: 'Display' },
-  { value: 'DumbledorThin', label: 'Dumbledor Thin', category: 'Display' },
-  { value: 'DumbledorWide', label: 'Dumbledor Wide', category: 'Display' },
-];
-
-/** Font options for ability text */
-const ABILITY_TEXT_FONT_OPTIONS: FontOption[] = [
-  { value: 'TradeGothic', label: 'Trade Gothic', category: 'Sans Serif' },
-  { value: 'TradeGothicBold', label: 'Trade Gothic Bold', category: 'Sans Serif' },
-];
 
 // ============================================================================
 // Types
@@ -105,7 +90,7 @@ const ToggleButtonGroup = memo(function ToggleButtonGroup({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!enabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${enabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => onToggle(false)}
       >
         Off
@@ -148,17 +133,33 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
     [onDecorativesChange]
   );
 
-  // Background style change handler
+  // Background style change handler - extract character style from AllBackgroundStyles
   const handleBackgroundStyleChange = useCallback(
-    (style: BackgroundStyle) => {
-      onDecorativesChange({ backgroundStyle: style });
+    (styles: AllBackgroundStyles) => {
+      // For per-character overrides, we only use the character style
+      onDecorativesChange({ backgroundStyle: styles.character });
     },
     [onDecorativesChange]
   );
 
-  // Font settings change handler (for character name)
+  // Wrap single background style into AllBackgroundStyles for the selector
+  const wrappedBackgroundStyle: AllBackgroundStyles = useMemo(() => {
+    const characterStyle =
+      decoratives.backgroundStyle ??
+      effectiveOptions.characterBackgroundStyle ??
+      DEFAULT_BACKGROUND_STYLE;
+    // Use same style for all types since we're only editing character
+    return {
+      character: characterStyle,
+      reminder: characterStyle,
+      meta: characterStyle,
+    };
+  }, [decoratives.backgroundStyle, effectiveOptions.characterBackgroundStyle]);
+
+  // Font settings change handler (for character name) - extracts 'character' from AllFontSettings
   const handleFontSettingsChange = useCallback(
-    (settings: FontSettings) => {
+    (allSettings: AllFontSettings) => {
+      const settings = allSettings.character;
       onDecorativesChange({
         nameFont: settings.fontFamily,
         nameColor: settings.color,
@@ -171,7 +172,7 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
 
   // Icon settings change handler
   const handleIconSettingsChange = useCallback(
-    (settings: IconSettings) => {
+    (settings: SingleIconSettings) => {
       onDecorativesChange({
         iconScale: settings.scale,
         iconOffsetX: settings.offsetX,
@@ -189,9 +190,10 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
     [onDecorativesChange]
   );
 
-  // Ability text font settings change handler
+  // Ability text font settings change handler - extracts 'characterText' from AllFontSettings
   const handleAbilityFontSettingsChange = useCallback(
-    (settings: FontSettings) => {
+    (allSettings: AllFontSettings) => {
+      const settings = allSettings.characterText;
       onDecorativesChange({
         abilityTextFont: settings.fontFamily,
         abilityTextColor: settings.color,
@@ -226,42 +228,57 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
     [onDecorativesChange]
   );
 
-  // Current font settings for character name
-  const currentNameFontSettings: FontSettings = {
-    fontFamily:
-      decoratives.nameFont ??
-      effectiveOptions.characterNameFont ??
-      CHARACTER_NAME_FONT_OPTIONS[0].value,
-    color: decoratives.nameColor ?? effectiveOptions.characterNameColor ?? DEFAULTS.TEXT_COLOR,
-    letterSpacing:
-      decoratives.nameFontSpacing ??
-      effectiveOptions.fontSpacing?.characterName ??
-      DEFAULTS.FONT_SPACING,
-    shadowBlur:
-      decoratives.nameTextShadow ??
-      effectiveOptions.textShadow?.characterName ??
-      DEFAULTS.NAME_SHADOW_BLUR,
+  // Default font settings for unused token types
+  const defaultFontSettings: FontSettings = {
+    fontFamily: 'Dumbledor',
+    color: '#FFFFFF',
+    letterSpacing: 0,
+    shadowBlur: 4,
   };
 
-  // Current font settings for ability text
-  const currentAbilityFontSettings: FontSettings = {
-    fontFamily:
-      decoratives.abilityTextFont ??
-      effectiveOptions.abilityTextFont ??
-      ABILITY_TEXT_FONT_OPTIONS[0].value,
-    color: decoratives.abilityTextColor ?? effectiveOptions.abilityTextColor ?? DEFAULTS.TEXT_COLOR,
-    letterSpacing:
-      decoratives.abilityTextFontSpacing ??
-      effectiveOptions.fontSpacing?.abilityText ??
-      DEFAULTS.FONT_SPACING,
-    shadowBlur:
-      decoratives.abilityTextShadow ??
-      effectiveOptions.textShadow?.abilityText ??
-      DEFAULTS.ABILITY_SHADOW_BLUR,
+  // Current font settings for character name - wrapped in AllFontSettings
+  const currentNameFontSettings: AllFontSettings = {
+    character: {
+      fontFamily: decoratives.nameFont ?? effectiveOptions.characterNameFont ?? 'Dumbledor',
+      color: decoratives.nameColor ?? effectiveOptions.characterNameColor ?? DEFAULTS.TEXT_COLOR,
+      letterSpacing:
+        decoratives.nameFontSpacing ??
+        effectiveOptions.fontSpacing?.characterName ??
+        DEFAULTS.FONT_SPACING,
+      shadowBlur:
+        decoratives.nameTextShadow ??
+        effectiveOptions.textShadow?.characterName ??
+        DEFAULTS.NAME_SHADOW_BLUR,
+    },
+    meta: defaultFontSettings,
+    characterText: defaultFontSettings,
+    metaText: defaultFontSettings,
+    reminder: defaultFontSettings,
+  };
+
+  // Current font settings for ability text - wrapped in AllFontSettings
+  const currentAbilityFontSettings: AllFontSettings = {
+    character: defaultFontSettings,
+    meta: defaultFontSettings,
+    characterText: {
+      fontFamily: decoratives.abilityTextFont ?? effectiveOptions.abilityTextFont ?? 'TradeGothic',
+      color:
+        decoratives.abilityTextColor ?? effectiveOptions.abilityTextColor ?? DEFAULTS.TEXT_COLOR,
+      letterSpacing:
+        decoratives.abilityTextFontSpacing ??
+        effectiveOptions.fontSpacing?.characterText ??
+        DEFAULTS.FONT_SPACING,
+      shadowBlur:
+        decoratives.abilityTextShadow ??
+        effectiveOptions.textShadow?.characterText ??
+        DEFAULTS.ABILITY_SHADOW_BLUR,
+    },
+    metaText: defaultFontSettings,
+    reminder: defaultFontSettings,
   };
 
   // Current icon settings
-  const currentIconSettings: IconSettings = {
+  const currentIconSettings: SingleIconSettings = {
     scale:
       decoratives.iconScale ??
       effectiveOptions.iconSettings?.character?.scale ??
@@ -319,13 +336,9 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
           {/* Background Style */}
           <div className={optionStyles.settingsGroup}>
             <BackgroundStyleSelector
-              value={
-                (decoratives.backgroundStyle ?? effectiveOptions.characterBackgroundStyle) ||
-                DEFAULT_BACKGROUND_STYLE
-              }
+              value={wrappedBackgroundStyle}
               onChange={handleBackgroundStyleChange}
               onPreviewChange={handleBackgroundStyleChange}
-              tokenType="character"
               ariaLabel="Character background style"
               projectId={projectId}
               generationOptions={effectiveOptions}
@@ -338,20 +351,19 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
               value={currentNameFontSettings}
               onChange={handleFontSettingsChange}
               onPreviewChange={handleFontSettingsChange}
-              fontOptions={CHARACTER_NAME_FONT_OPTIONS}
-              previewText="Character Name"
               title="Font"
+              initialTokenType="character"
               defaults={{
                 letterSpacing: DEFAULTS.FONT_SPACING,
                 shadowBlur: DEFAULTS.NAME_SHADOW_BLUR,
               }}
-              ariaLabel="Character name font settings"
+              ariaLabel="Character name text settings"
             />
           </div>
 
           {/* Icon Settings */}
           <div className={optionStyles.settingsGroup}>
-            <IconSettingsSelector
+            <SingleIconSettingsSelector
               value={currentIconSettings}
               onChange={handleIconSettingsChange}
               onPreviewChange={handleIconSettingsChange}
@@ -375,16 +387,15 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
               value={currentAbilityFontSettings}
               onChange={handleAbilityFontSettingsChange}
               onPreviewChange={handleAbilityFontSettingsChange}
-              fontOptions={ABILITY_TEXT_FONT_OPTIONS}
-              previewText="Ability Text"
               title="Ability Text"
+              initialTokenType="characterText"
               defaults={{
                 letterSpacing: DEFAULTS.FONT_SPACING,
                 shadowBlur: DEFAULTS.ABILITY_SHADOW_BLUR,
               }}
               visuallyDisabled={!abilityTextEnabled}
               headerSlot={AbilityTextToggle}
-              ariaLabel="Ability text font settings"
+              ariaLabel="Ability text settings"
             />
           </div>
 

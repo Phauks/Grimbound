@@ -51,7 +51,7 @@ const CountPreview = memo(function CountPreview({
   const previewText = style === 'roman' ? 'III' : '3';
 
   return (
-    <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
+    <div className={`${styles.previewContainer} ${isEnabled ? '' : styles.previewDisabled}`}>
       <span className={styles.previewIcon}>{previewText}</span>
     </div>
   );
@@ -119,7 +119,7 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!isEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${isEnabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => handleToggle(false)}
       >
         Off
@@ -183,7 +183,7 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
             <div className={styles.toggleGroup}>
               <button
                 type="button"
-                className={`${styles.toggleBtn} ${!panel.pendingValue.uniformLayout ? styles.toggleBtnActive : ''}`}
+                className={`${styles.toggleBtn} ${panel.pendingValue.uniformLayout ? '' : styles.toggleBtnActive}`}
                 onClick={() => panel.updatePendingField('uniformLayout', false)}
                 disabled={!isEnabled}
               >

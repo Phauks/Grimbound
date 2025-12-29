@@ -106,6 +106,35 @@ export class TokenTextRenderer {
   }
 
   /**
+   * Calculate ability text layout for a bootlegger token without drawing.
+   * Creates a temporary canvas context for measurement.
+   * Used for pre-calculating layouts to normalize icon sizes across multiple tokens.
+   *
+   * @param abilityText - The ability text to calculate layout for
+   * @returns The calculated text layout result, or undefined if no text
+   */
+  calculateBootleggerTextLayout(abilityText: string): TextLayoutResult | undefined {
+    if (!abilityText?.trim()) {
+      return undefined;
+    }
+
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * (this.options.dpi || 300);
+
+    // Create temporary canvas for measurement
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = diameter;
+    tempCanvas.height = diameter;
+    const ctx = tempCanvas.getContext('2d');
+
+    if (!ctx) {
+      logger.warn('TokenTextRenderer', 'Failed to create canvas context for bootlegger layout');
+      return undefined;
+    }
+
+    return this.calculateAbilityTextLayout(ctx, abilityText, diameter);
+  }
+
+  /**
    * Draw character name text
    */
   drawCharacterName(
@@ -115,20 +144,45 @@ export class TokenTextRenderer {
     radius: number,
     diameter: number
   ): void {
+    // Skip rendering if text location is 'none'
+    const textLocation = this.options.textLocations?.characterName ?? 'bottom';
+    if (textLocation === 'none') {
+      logger.debug('TokenTextRenderer', 'Skipped character name (location: none)', name);
+      return;
+    }
+
+    // Calculate font size - use absolute if set, otherwise ratio-based
+    const fontSizeOverride = this.options.fontSizes?.characterName;
+    const fontSize =
+      fontSizeOverride && fontSizeOverride > 0
+        ? this.pointsToPixels(fontSizeOverride)
+        : diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO;
+
     drawCurvedText(ctx, {
       text: name.toUpperCase(),
       centerX: center.x,
       centerY: center.y,
       radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
       fontFamily: this.options.characterNameFont,
-      fontSize: diameter * CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO,
-      position: 'bottom',
+      fontSize,
+      position: textLocation,
       color: this.options.characterNameColor,
       letterSpacing: this.options.fontSpacing.characterName,
       shadowBlur: this.options.textShadow?.characterName ?? 4,
+      renderStyle: this.options.textRenderStyles?.characterName ?? 'filled',
+      strokeColor: this.options.textStrokeColors?.characterName ?? '#000000',
+      strokeWidth: this.options.textStrokeWidths?.characterName ?? 2,
     });
 
     logger.debug('TokenTextRenderer', 'Drew character name', name);
+  }
+
+  /**
+   * Convert points to pixels based on DPI
+   */
+  private pointsToPixels(points: number): number {
+    // 1 point = 1/72 inch, convert to pixels based on DPI
+    return (points / 72) * (this.options.dpi || 300);
   }
 
   /**
@@ -142,6 +196,12 @@ export class TokenTextRenderer {
     yPositionOverride?: number
   ): void {
     const yPositionRatio = yPositionOverride ?? CHARACTER_LAYOUT.ABILITY_TEXT_Y_POSITION;
+
+    // Calculate font size - use absolute if set, otherwise ratio-based
+    const fontSizeOverride = this.options.fontSizes?.characterText;
+    const fontSizePixels =
+      fontSizeOverride && fontSizeOverride > 0 ? this.pointsToPixels(fontSizeOverride) : 0; // 0 = use ratio-based
+
     drawAbilityText(
       ctx,
       ability,
@@ -152,8 +212,14 @@ export class TokenTextRenderer {
       CHARACTER_LAYOUT.ABILITY_TEXT_MAX_WIDTH,
       yPositionRatio,
       this.options.abilityTextColor,
-      this.options.fontSpacing.abilityText,
-      this.options.textShadow?.abilityText ?? 3
+      this.options.fontSpacing.characterText,
+      this.options.textShadow?.characterText ?? 3,
+      {
+        fontSizeOverride: fontSizePixels,
+        renderStyle: this.options.textRenderStyles?.characterText ?? 'filled',
+        strokeColor: this.options.textStrokeColors?.characterText ?? '#000000',
+        strokeWidth: this.options.textStrokeWidths?.characterText ?? 2,
+      }
     );
 
     logger.debug('TokenTextRenderer', 'Drew ability text', {
@@ -172,7 +238,21 @@ export class TokenTextRenderer {
     radius: number,
     diameter: number
   ): void {
+    // Skip rendering if text location is 'none'
+    const textLocation = this.options.textLocations?.reminderText ?? 'bottom';
+    if (textLocation === 'none') {
+      logger.debug('TokenTextRenderer', 'Skipped reminder text (location: none)', reminderText);
+      return;
+    }
+
     const reminderLayout = REMINDER_LAYOUT;
+
+    // Calculate font size - use absolute if set, otherwise ratio-based
+    const fontSizeOverride = this.options.fontSizes?.reminderText;
+    const fontSize =
+      fontSizeOverride && fontSizeOverride > 0
+        ? this.pointsToPixels(fontSizeOverride)
+        : diameter * CONFIG.FONTS.REMINDER_TEXT.SIZE_RATIO;
 
     drawCurvedText(ctx, {
       text: reminderText.toUpperCase(),
@@ -180,11 +260,14 @@ export class TokenTextRenderer {
       centerY: center.y,
       radius: radius * reminderLayout.CURVED_TEXT_RADIUS,
       fontFamily: this.options.characterReminderFont,
-      fontSize: diameter * CONFIG.FONTS.REMINDER_TEXT.SIZE_RATIO,
-      position: 'bottom',
+      fontSize,
+      position: textLocation,
       color: this.options.reminderTextColor,
       letterSpacing: this.options.fontSpacing.reminderText,
       shadowBlur: this.options.textShadow?.reminderText ?? 4,
+      renderStyle: this.options.textRenderStyles?.reminderText ?? 'filled',
+      strokeColor: this.options.textStrokeColors?.reminderText ?? '#000000',
+      strokeWidth: this.options.textStrokeWidths?.reminderText ?? 2,
     });
 
     logger.debug('TokenTextRenderer', 'Drew reminder text', reminderText);
@@ -299,23 +382,40 @@ export class TokenTextRenderer {
     radius: number,
     diameter: number
   ): void {
-    const metaFont = this.options.metaNameFont || this.options.characterNameFont;
-    const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
+    // Skip rendering if text location is 'none'
+    const textLocation = this.options.textLocations?.metaName ?? 'bottom';
+    if (textLocation === 'none') {
+      logger.debug('TokenTextRenderer', 'Skipped author text (location: none)', author);
+      return;
+    }
+
+    // Use meta text font/color (separate from meta name settings)
+    const metaTextFont = this.options.metaTextFont || this.options.abilityTextFont;
+    const metaTextColor = this.options.metaTextColor || DEFAULT_COLORS.META_TEXT;
+
+    // Calculate font size - use absolute if set, otherwise ratio-based
+    const fontSizeOverride = this.options.fontSizes?.metaText;
+    const fontSize =
+      fontSizeOverride && fontSizeOverride > 0
+        ? this.pointsToPixels(fontSizeOverride)
+        : diameter *
+          CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO *
+          META_TOKEN_LAYOUT.AUTHOR_TEXT_SIZE_FACTOR;
 
     drawCurvedText(ctx, {
       text: author,
       centerX: center.x,
       centerY: center.y,
       radius: radius * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS,
-      fontFamily: metaFont,
-      fontSize:
-        diameter *
-        CONFIG.FONTS.CHARACTER_NAME.SIZE_RATIO *
-        META_TOKEN_LAYOUT.AUTHOR_TEXT_SIZE_FACTOR,
-      position: 'bottom',
-      color: metaColor,
+      fontFamily: metaTextFont,
+      fontSize,
+      position: textLocation,
+      color: metaTextColor,
       letterSpacing: this.options.fontSpacing.metaText ?? 0,
       shadowBlur: this.options.textShadow?.metaText ?? 4,
+      renderStyle: this.options.textRenderStyles?.metaText ?? 'filled',
+      strokeColor: this.options.textStrokeColors?.metaText ?? '#000000',
+      strokeWidth: this.options.textStrokeWidths?.metaText ?? 2,
     });
 
     logger.debug('TokenTextRenderer', 'Drew author text', author);

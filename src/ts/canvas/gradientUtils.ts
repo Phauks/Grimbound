@@ -5,9 +5,6 @@
 
 import type { GradientConfig } from '@/ts/types/backgroundEffects.js';
 
-// Re-export interpolateColors from colorUtils for backwards compatibility
-export { interpolateColors } from '@/ts/utils/colorUtils.js';
-
 // ============================================================================
 // GRADIENT CREATION
 // ============================================================================

@@ -82,12 +82,12 @@ function tokenize(text: string): string[] {
  * Find the Longest Common Subsequence of two arrays
  * Returns array of indices pairs [oldIndex, newIndex]
  */
-function findLCS(oldArr: string[], newArr: string[]): Array<[number, number]> {
+function findLCS(oldArr: string[], newArr: string[]): [number, number][] {
   const m = oldArr.length;
   const n = newArr.length;
 
   // Build LCS length table
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -100,7 +100,7 @@ function findLCS(oldArr: string[], newArr: string[]): Array<[number, number]> {
   }
 
   // Backtrack to find the actual LCS indices
-  const result: Array<[number, number]> = [];
+  const result: [number, number][] = [];
   let i = m;
   let j = n;
 
@@ -125,7 +125,7 @@ function findLCS(oldArr: string[], newArr: string[]): Array<[number, number]> {
 function buildDiffSegments(
   oldWords: string[],
   newWords: string[],
-  lcs: Array<[number, number]>
+  lcs: [number, number][]
 ): DiffSegment[] {
   const segments: DiffSegment[] = [];
 

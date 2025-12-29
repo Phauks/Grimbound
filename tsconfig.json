@@ -9,7 +9,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@test/*": ["src/__tests__/*"]
     },
     "esModuleInterop": true,
     "skipLibCheck": true,

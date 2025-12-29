@@ -6,6 +6,16 @@
 import { STORAGE_KEYS } from '@/ts/utils/storageKeys.js';
 
 /**
+ * Extend Window interface for debug utilities
+ */
+declare global {
+  interface Window {
+    __CACHE_DEBUG__?: boolean;
+    __CacheLogger__?: typeof CacheLogger;
+  }
+}
+
+/**
  * Log levels for cache operations.
  * Higher levels include all lower levels.
  */
@@ -76,6 +86,7 @@ interface CacheAccessTracker {
   durations: number[];
 }
 
+// biome-ignore lint/style/noNamespace: Namespace pattern used for singleton logger with mutable state
 export namespace CacheLogger {
   let level: CacheLogLevel = CacheLogLevel.WARN;
   let performanceMetrics: CachePerformanceMetrics[] = [];
@@ -93,10 +104,7 @@ export namespace CacheLogger {
     }
 
     // Check for debug flag
-    if (
-      typeof window !== 'undefined' &&
-      (window as unknown as { __CACHE_DEBUG__?: boolean }).__CACHE_DEBUG__
-    ) {
+    if (typeof window !== 'undefined' && window.__CACHE_DEBUG__) {
       level = CacheLogLevel.DEBUG;
     }
 
@@ -608,5 +616,5 @@ if (typeof window !== 'undefined') {
 
 // Expose to window for DevTools access
 if (typeof window !== 'undefined') {
-  (window as unknown as { __CacheLogger__?: typeof CacheLogger }).__CacheLogger__ = CacheLogger;
+  window.__CacheLogger__ = CacheLogger;
 }

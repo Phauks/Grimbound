@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
   EnableToggle,
   InfoSection,
@@ -414,25 +415,13 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
 
           {/* Custom Color */}
           <div className={styles.settingGroup}>
-            <label className={styles.settingLabel} htmlFor="night-order-custom-color">
-              Custom Color
-            </label>
-            <div className={styles.colorPickerRow}>
-              <input
-                id="night-order-custom-color"
-                type="color"
-                value={backgroundPanel.pendingValue.baseColor}
-                onChange={(e) => backgroundPanel.updatePendingField('baseColor', e.target.value)}
-                className={styles.colorPicker}
-              />
-              <input
-                type="text"
-                value={backgroundPanel.pendingValue.baseColor}
-                onChange={(e) => backgroundPanel.updatePendingField('baseColor', e.target.value)}
-                className={styles.colorInput}
-                maxLength={7}
-              />
-            </div>
+            <ColorPreviewSelector
+              label="Custom Color"
+              value={backgroundPanel.pendingValue.baseColor}
+              onChange={(color) => backgroundPanel.updatePendingField('baseColor', color)}
+              onPreviewChange={(color) => backgroundPanel.updatePendingField('baseColor', color)}
+              size="small"
+            />
           </div>
 
           {/* Texture Toggle */}
@@ -565,58 +554,60 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
 
       {/* Print Preview Area */}
       <ViewLayout.Panel position="right" width="flex" scrollable className={styles.previewArea}>
-        {!generateNightOrder ? (
+        {generateNightOrder ? (
+          hasNoData ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>🌙</div>
+              <h3>No Night Order Available</h3>
+              <p>Load a script in the Editor tab to view the night order.</p>
+              <p className={styles.hint}>
+                The night order shows when each character wakes during the night phase.
+              </p>
+            </div>
+          ) : (
+            <div className={styles.sheetsContainer}>
+              {/* First Night Page */}
+              <div className={styles.pageWrapper}>
+                <div className={styles.page}>
+                  <NightSheet
+                    ref={firstNightRef}
+                    type="first"
+                    entries={firstNight.entries}
+                    characters={characters}
+                    scriptMeta={displayMeta}
+                    enableDragDrop={enableDragDrop}
+                    onMoveEntry={handleMoveFirstNight}
+                    onToggleLock={handleConvertToCustom}
+                    background={displayBackground}
+                    onEditCharacter={onEditCharacter}
+                  />
+                </div>
+              </div>
+
+              {/* Other Nights Page */}
+              <div className={styles.pageWrapper}>
+                <div className={styles.page}>
+                  <NightSheet
+                    ref={otherNightRef}
+                    type="other"
+                    entries={otherNight.entries}
+                    characters={characters}
+                    scriptMeta={displayMeta}
+                    enableDragDrop={enableDragDrop}
+                    onMoveEntry={handleMoveOtherNight}
+                    onToggleLock={handleConvertToCustom}
+                    background={displayBackground}
+                    onEditCharacter={onEditCharacter}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        ) : (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>🌙</div>
             <h3>Night Order Generation Disabled</h3>
             <p>Enable "Generate Night Order" in the Options section to view night order sheets.</p>
-          </div>
-        ) : hasNoData ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>🌙</div>
-            <h3>No Night Order Available</h3>
-            <p>Load a script in the Editor tab to view the night order.</p>
-            <p className={styles.hint}>
-              The night order shows when each character wakes during the night phase.
-            </p>
-          </div>
-        ) : (
-          <div className={styles.sheetsContainer}>
-            {/* First Night Page */}
-            <div className={styles.pageWrapper}>
-              <div className={styles.page}>
-                <NightSheet
-                  ref={firstNightRef}
-                  type="first"
-                  entries={firstNight.entries}
-                  characters={characters}
-                  scriptMeta={displayMeta}
-                  enableDragDrop={enableDragDrop}
-                  onMoveEntry={handleMoveFirstNight}
-                  onToggleLock={handleConvertToCustom}
-                  background={displayBackground}
-                  onEditCharacter={onEditCharacter}
-                />
-              </div>
-            </div>
-
-            {/* Other Nights Page */}
-            <div className={styles.pageWrapper}>
-              <div className={styles.page}>
-                <NightSheet
-                  ref={otherNightRef}
-                  type="other"
-                  entries={otherNight.entries}
-                  characters={characters}
-                  scriptMeta={displayMeta}
-                  enableDragDrop={enableDragDrop}
-                  onMoveEntry={handleMoveOtherNight}
-                  onToggleLock={handleConvertToCustom}
-                  background={displayBackground}
-                  onEditCharacter={onEditCharacter}
-                />
-              </div>
-            </div>
           </div>
         )}
       </ViewLayout.Panel>

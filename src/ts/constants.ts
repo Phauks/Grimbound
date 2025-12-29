@@ -95,6 +95,39 @@ export const QR_TOKEN_LAYOUT = {
   LOGO_SIZE_RATIO: 0.25,
 } as const;
 
+/**
+ * Layout ratios for jinx tokens (two-character interaction tokens)
+ * Icons are the focal point, with curved names at top/bottom
+ */
+export const JINX_TOKEN_LAYOUT = {
+  /** Size of each character icon relative to diameter - large for visual focus */
+  ICON_SIZE_RATIO: 0.42,
+  /** Vertical position of icons from top (ratio) - centered in token */
+  ICON_Y_POSITION: 0.2,
+  /** Horizontal spacing between icons (ratio) */
+  ICON_SPACING: 0.06,
+  /** Radius for curved character names (same as character tokens) */
+  CURVED_NAME_RADIUS: 0.88,
+  /** Font size for curved character names - matches character token names (0.12) */
+  CURVED_NAME_FONT_SIZE_RATIO: 0.12,
+  /** Vertical position where jinx text starts (ratio) - below icons */
+  JINX_Y_POSITION: 0.64,
+  /** Maximum width for jinx text (ratio) - used as circular padding */
+  JINX_MAX_WIDTH: 0.85,
+  /** Font size for jinx reason text (ratio) */
+  JINX_FONT_SIZE_RATIO: 0.055,
+  /** Line height multiplier for jinx text */
+  JINX_LINE_HEIGHT: 1.3,
+  /** Circular padding ratio for text wrapping */
+  JINX_CIRCULAR_PADDING: 0.9,
+  /** Maximum Y position (ratio) for jinx text when name IS shown - leaves room for curved name */
+  JINX_TEXT_MAX_Y_WITH_NAME: 0.79,
+  /** Maximum Y position (ratio) for jinx text when name is hidden - can extend further */
+  JINX_TEXT_MAX_Y_NO_NAME: 0.9,
+  /** Minimum font size ratio for jinx text when auto-fitting */
+  JINX_MIN_FONT_SIZE_RATIO: 0.038,
+} as const;
+
 // ============================================================================
 // TEXT SIZING - Line heights and typography settings
 // ============================================================================
@@ -316,6 +349,8 @@ export const DEFAULT_COLORS = {
   TEXT_PRIMARY: '#FFFFFF',
   /** Black text color for QR tokens */
   TEXT_DARK: '#000000',
+  /** Default meta text color (black) */
+  META_TEXT: '#000000',
   /** Text shadow color for readability */
   TEXT_SHADOW: 'rgba(0, 0, 0, 0.8)',
   /** Semi-transparent background for badges */
@@ -487,6 +522,7 @@ export default {
   REMINDER_LAYOUT,
   META_TOKEN_LAYOUT,
   QR_TOKEN_LAYOUT,
+  JINX_TOKEN_LAYOUT,
   LINE_HEIGHTS,
   TOKEN_COUNT_BADGE,
   ACCENT_LAYOUT,

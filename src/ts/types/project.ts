@@ -7,13 +7,7 @@
  * @module types/project
  */
 
-import type {
-  Character,
-  CharacterMetadata,
-  GenerationOptions,
-  ScriptMeta,
-  Token,
-} from './index.js';
+import type { Character, GenerationOptions, ScriptMeta, Token } from './index.js';
 
 // ============================================================================
 // Project Entity
@@ -89,10 +83,6 @@ export interface ProjectState {
   // Schema version
   schemaVersion: number; // Current: 1
 }
-
-// Note: CharacterMetadata and GenerationOptions are imported from the main types file to avoid duplication
-// Re-export CharacterMetadata for backward compatibility
-export type { CharacterMetadata };
 
 /**
  * UI filter state

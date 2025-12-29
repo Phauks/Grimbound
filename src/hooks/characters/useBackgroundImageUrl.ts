@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
 import type { AssetType } from '@/ts/services/upload/types.js';
 
 // ============================================================================
@@ -35,6 +36,51 @@ interface UseBackgroundImageUrlResult {
   isLoading: boolean;
   /** Error message if resolution failed */
   error: string | null;
+}
+
+// ============================================================================
+// Resolution Helpers (extracted to reduce cognitive complexity)
+// ============================================================================
+
+/** Try to resolve asset reference (asset:uuid format) */
+async function tryResolveAssetReference(
+  url: string,
+  assetStorageService: IAssetStorageService
+): Promise<string | null> {
+  if (!isAssetReference(url)) return null;
+
+  const assetId = extractAssetId(url);
+  if (!assetId) return null;
+
+  const asset = await assetStorageService.getByIdWithUrl(assetId);
+  return asset?.url ?? null;
+}
+
+/** Try to resolve built-in asset ID */
+function tryResolveBuiltInAsset(url: string, assetType: AssetType): string | null {
+  if (!isBuiltInAsset(url, assetType)) return null;
+  return getBuiltInAssetPath(url, assetType);
+}
+
+/**
+ * Resolve URL from various formats
+ * Returns resolved URL or the original URL if it's a direct URL
+ */
+async function resolveImageUrl(
+  url: string,
+  assetType: AssetType,
+  assetStorageService: IAssetStorageService
+): Promise<string | null> {
+  // 1. Try asset reference
+  const assetUrl = await tryResolveAssetReference(url, assetStorageService);
+  if (assetUrl) return assetUrl;
+
+  // 2. Try built-in asset
+  const builtInUrl = tryResolveBuiltInAsset(url, assetType);
+  if (builtInUrl) return builtInUrl;
+
+  // 3. Direct URL (http/https/data/blob)
+  return url;
 }
 
 // ============================================================================
@@ -84,24 +130,7 @@ export function useBackgroundImageUrl({
       setError(null);
 
       try {
-        let url: string | null = null;
-
-        // 1. Check for asset reference (asset:uuid format)
-        if (isAssetReference(urlToResolve)) {
-          const assetId = extractAssetId(urlToResolve);
-          if (assetId) {
-            const asset = await assetStorageService.getByIdWithUrl(assetId);
-            url = asset?.url ?? null;
-          }
-        }
-        // 2. Check for built-in asset ID (character_background_1)
-        else if (isBuiltInAsset(urlToResolve, assetType)) {
-          url = getBuiltInAssetPath(urlToResolve, assetType);
-        }
-        // 3. Direct URL (http/https/data/blob)
-        else {
-          url = urlToResolve;
-        }
+        const url = await resolveImageUrl(urlToResolve, assetType, assetStorageService);
 
         if (!cancelled) {
           setResolvedUrl(url);

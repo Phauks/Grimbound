@@ -16,8 +16,55 @@ import { TokenGenerator } from '@/ts/generation/index.js';
 import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
 import type { AssetType } from '@/ts/services/upload/index.js';
 import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects.js';
-import type { BackgroundStyle, Character, GenerationOptions } from '@/ts/types/index.js';
+import type {
+  BackgroundStyle,
+  Character,
+  GenerationOptions,
+  ScriptMeta,
+} from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
+
+// ============================================================================
+// Helper Functions (extracted to reduce cognitive complexity)
+// ============================================================================
+
+/**
+ * Resolves a selected asset ID to an asset value string for preview options.
+ * Handles 'none', 'builtin:*', and user asset IDs.
+ */
+function resolveAssetValue(selectedAssetId: string | null): string | null {
+  if (!selectedAssetId) return null;
+  if (selectedAssetId === 'none') return 'none';
+  if (selectedAssetId.startsWith('builtin:')) {
+    return selectedAssetId.replace('builtin:', '');
+  }
+  return createAssetReference(selectedAssetId);
+}
+
+/**
+ * Generates the appropriate token canvas based on token type.
+ */
+async function generateTokenCanvas(
+  generator: TokenGenerator,
+  previewTokenType: PreviewTokenType,
+  sampleCharacter: Character | null,
+  sampleReminderText: string,
+  scriptMeta: ScriptMeta | null
+): Promise<HTMLCanvasElement | null> {
+  switch (previewTokenType) {
+    case 'reminder':
+      return sampleCharacter
+        ? generator.generateReminderToken(sampleCharacter, sampleReminderText)
+        : null;
+    case 'meta':
+      return generator.generateScriptNameToken(
+        scriptMeta?.name || 'Custom Script',
+        scriptMeta?.author
+      );
+    default:
+      return sampleCharacter ? generator.generateCharacterToken(sampleCharacter) : null;
+  }
+}
 
 // ============================================================================
 // Types
@@ -81,7 +128,7 @@ export function useAssetPreviewGenerator(
   const generationIdRef = useRef(0);
 
   // Get character data from context for preview
-  const { characters, scriptMeta, exampleToken } = useTokenContext();
+  const { characters, scriptMeta, exampleCharacterToken } = useTokenContext();
 
   // Get official character data for fallback preview
   const { getCharacter, isInitialized: isSyncInitialized } = useDataSync();
@@ -108,8 +155,8 @@ export function useAssetPreviewGenerator(
   // Get the character for preview - prioritize example token, then best preview candidate
   const sampleCharacter = useMemo((): Character | null => {
     // If there's an example token set, use its character data
-    if (exampleToken?.characterData) {
-      return exampleToken.characterData;
+    if (exampleCharacterToken?.characterData) {
+      return exampleCharacterToken.characterData;
     }
     // Use centralized selection logic (matches TokenPreviewRow)
     const bestPreview = getBestPreviewCharacter(characters);
@@ -117,7 +164,7 @@ export function useAssetPreviewGenerator(
 
     // Use official character from synced data (null if not yet loaded)
     return officialFallbackCharacter;
-  }, [characters, exampleToken, officialFallbackCharacter]);
+  }, [characters, exampleCharacterToken, officialFallbackCharacter]);
 
   // Sample reminder text for reminder token preview
   const sampleReminderText = useMemo(() => {
@@ -185,22 +232,14 @@ export function useAssetPreviewGenerator(
     }
 
     const genId = ++generationIdRef.current;
+    const isCurrentGeneration = () => genId === generationIdRef.current;
 
     const generatePreview = async () => {
       setIsGenerating(true);
 
       try {
-        // Get the asset value for preview options (if an asset is selected)
-        let assetValue: string | null = null;
-        if (selectedAssetId) {
-          if (selectedAssetId === 'none') {
-            assetValue = 'none';
-          } else if (selectedAssetId.startsWith('builtin:')) {
-            assetValue = selectedAssetId.replace('builtin:', '');
-          } else {
-            assetValue = createAssetReference(selectedAssetId);
-          }
-        }
+        // Resolve asset value using extracted helper
+        const assetValue = resolveAssetValue(selectedAssetId);
 
         // Merge preview options with generation options
         const previewOptions = {
@@ -210,39 +249,27 @@ export function useAssetPreviewGenerator(
         };
 
         const generator = new TokenGenerator(previewOptions);
-        let canvas: HTMLCanvasElement | null = null;
 
-        // Generate the appropriate token type
-        switch (previewTokenType) {
-          case 'reminder':
-            if (sampleCharacter) {
-              canvas = await generator.generateReminderToken(sampleCharacter, sampleReminderText);
-            }
-            break;
-          case 'meta':
-            canvas = await generator.generateScriptNameToken(
-              scriptMeta?.name || 'Custom Script',
-              scriptMeta?.author
-            );
-            break;
-          default:
-            if (sampleCharacter) {
-              canvas = await generator.generateCharacterToken(sampleCharacter);
-            }
-            break;
-        }
+        // Generate the appropriate token type using extracted helper
+        const canvas = await generateTokenCanvas(
+          generator,
+          previewTokenType,
+          sampleCharacter,
+          sampleReminderText,
+          scriptMeta
+        );
 
         // Only update if this is still the current generation
-        if (genId === generationIdRef.current && canvas) {
+        if (isCurrentGeneration() && canvas) {
           setPreviewUrl(canvas.toDataURL('image/png'));
         }
       } catch (err) {
-        if (genId === generationIdRef.current) {
+        if (isCurrentGeneration()) {
           logger.error('AssetPreviewGenerator', 'Preview generation error', err);
           setPreviewUrl(null);
         }
       } finally {
-        if (genId === generationIdRef.current) {
+        if (isCurrentGeneration()) {
           setIsGenerating(false);
         }
       }

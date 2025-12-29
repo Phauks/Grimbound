@@ -88,11 +88,9 @@ export function IconManagementModal({
         } else {
           updatedIcons.push(iconData);
         }
-      } else {
+      } else if (existingIndex >= 0) {
         // Remove icon
-        if (existingIndex >= 0) {
-          updatedIcons.splice(existingIndex, 1);
-        }
+        updatedIcons.splice(existingIndex, 1);
       }
 
       onUpdateIcons(updatedIcons);

@@ -171,20 +171,20 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
           break;
         case 'ArrowDown':
           event.preventDefault();
-          if (!isOpen) {
+          if (isOpen) {
+            setFocusedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0));
+          } else {
             setIsOpen(true);
             setFocusedIndex(options.findIndex((opt) => opt.value === value));
-          } else {
-            setFocusedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0));
           }
           break;
         case 'ArrowUp':
           event.preventDefault();
-          if (!isOpen) {
+          if (isOpen) {
+            setFocusedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1));
+          } else {
             setIsOpen(true);
             setFocusedIndex(options.findIndex((opt) => opt.value === value));
-          } else {
-            setFocusedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1));
           }
           break;
         case 'Escape':
@@ -196,6 +196,9 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
         case 'Tab':
           setIsOpen(false);
           setFocusedIndex(-1);
+          break;
+        default:
+          // Other keys are handled by default browser behavior
           break;
       }
     },

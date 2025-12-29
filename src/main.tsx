@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { DataSyncProvider } from './contexts/DataSyncContext';
+import { FontProvider } from './contexts/FontContext';
 import { ServiceProvider } from './contexts/ServiceContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { logger } from './ts/utils/logger.js';
@@ -52,9 +53,11 @@ root.render(
   <React.StrictMode>
     <ThemeProvider>
       <ServiceProvider>
-        <DataSyncProvider>
-          <App />
-        </DataSyncProvider>
+        <FontProvider>
+          <DataSyncProvider>
+            <App />
+          </DataSyncProvider>
+        </FontProvider>
       </ServiceProvider>
     </ThemeProvider>
   </React.StrictMode>

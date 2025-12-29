@@ -109,7 +109,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
   // Auto-generate tokens after debounce
   useEffect(() => {
     // Skip early if not ready (no logging needed for expected skip path)
-    if (isLoading || !characters.length) {
+    if (isLoading || characters.length === 0) {
       return;
     }
 
@@ -262,7 +262,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
             {/* Upload Script */}
             <details className={layoutStyles.sidebarCard} open>
               <summary className={layoutStyles.sectionHeader}>Upload Script</summary>
-              <div className={layoutStyles.optionSection}>
+              <div className={styles.jsonViewSectionContent}>
                 <p className={styles.leftPanelDesc}>
                   Import a script JSON file from your computer.
                 </p>
@@ -274,7 +274,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
                   style={{ display: 'none' }}
                 />
                 <Button variant="secondary" fullWidth onClick={() => fileInputRef.current?.click()}>
-                  📁 Upload JSON File
+                  Upload JSON File
                 </Button>
               </div>
             </details>
@@ -282,7 +282,7 @@ export function JsonView({ onGenerate }: JsonViewProps) {
             {/* Load Example Script */}
             <details className={layoutStyles.sidebarCard} open>
               <summary className={layoutStyles.sectionHeader}>Example Scripts</summary>
-              <div className={layoutStyles.optionSection}>
+              <div className={styles.jsonViewSectionContent}>
                 <p className={styles.leftPanelDesc}>
                   Try an example script to explore the generator.
                 </p>
@@ -303,7 +303,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
                   fullWidth
                   onClick={() => selectedExample && loadExampleScriptByName(selectedExample)}
                   disabled={!selectedExample}
-                  style={{ marginTop: '0.5rem' }}
                 >
                   Load Example
                 </Button>

@@ -14,7 +14,7 @@ import type { Character, Team, Token, TokenCallback } from '@/ts/types/index.js'
 // ============================================================================
 
 /** Token types for meta tokens */
-export type MetaTokenType = 'script-name' | 'almanac' | 'pandemonium' | 'bootlegger';
+export type MetaTokenType = 'script-name' | 'almanac' | 'pandemonium' | 'bootlegger' | 'jinx';
 
 /** Variant information for characters with multiple images */
 export interface VariantInfo {
@@ -44,6 +44,13 @@ export interface ReminderTokenOptions {
   hasDecorativeOverrides?: boolean;
 }
 
+/** Jinx data for regenerating jinx tokens */
+export interface JinxTokenData {
+  reason: string;
+  char1: { id: string; name: string; image: string };
+  char2: { id: string; name: string; image: string };
+}
+
 /** Options for creating a meta token */
 export interface MetaTokenOptions {
   canvas: HTMLCanvasElement;
@@ -51,6 +58,7 @@ export interface MetaTokenOptions {
   name: string;
   filename: string;
   order?: number;
+  jinxData?: JinxTokenData;
 }
 
 // ============================================================================
@@ -181,10 +189,10 @@ export class TokenFactory {
   // ==========================================================================
 
   /**
-   * Create a meta token (script-name, almanac, pandemonium, bootlegger)
+   * Create a meta token (script-name, almanac, pandemonium, bootlegger, jinx)
    */
   createMetaToken(options: MetaTokenOptions): Token {
-    const { canvas, type, name, filename, order } = options;
+    const { canvas, type, name, filename, order, jinxData } = options;
 
     const token: Token = {
       type,
@@ -197,6 +205,10 @@ export class TokenFactory {
 
     if (order !== undefined) {
       token.order = order;
+    }
+
+    if (jinxData) {
+      token.jinxData = jinxData;
     }
 
     return token;

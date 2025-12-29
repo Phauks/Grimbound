@@ -86,14 +86,23 @@
   cursor: pointer;
 }
 
+.optionRow:hover .optionLabel {
+  color: var(--color-accent);
+}
+
 .optionRow:has(input:disabled) {
   cursor: not-allowed;
+}
+
+.optionRow:has(input:disabled):hover .optionLabel {
+  color: var(--text-primary);
 }
 
 .checkbox {
   margin-top: 2px;
   flex-shrink: 0;
   cursor: inherit;
+  accent-color: var(--color-accent);
 }
 
 .optionInfo {

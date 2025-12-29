@@ -86,13 +86,167 @@ function createAlphaMask(imageData: ImageData): Uint8Array {
   return mask;
 }
 
+// ============================================================================
+// Distance Transform Helpers (extracted to reduce cognitive complexity)
+// ============================================================================
+
+/**
+ * Initialize distance field from source mask.
+ * Sets 0 for opaque pixels (mapped with offset), INF² for transparent.
+ */
+function initializeDistanceField(
+  mask: Uint8Array,
+  width: number,
+  height: number,
+  expandedWidth: number,
+  offset: number,
+  distSq: Float32Array,
+  infinity: number
+): void {
+  distSq.fill(infinity * infinity);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const srcIdx = y * width + x;
+      if (mask[srcIdx] >= ALPHA_THRESHOLD) {
+        const dstIdx = (y + offset) * expandedWidth + (x + offset);
+        distSq[dstIdx] = 0;
+      }
+    }
+  }
+}
+
+/**
+ * Phase 1 of Meijster algorithm: Column-wise vertical distance scan.
+ * Computes 1D distance transform for each column.
+ */
+function computeColumnDistances(
+  distSq: Float32Array,
+  expandedWidth: number,
+  expandedHeight: number,
+  infinity: number
+): Float32Array {
+  const size = expandedWidth * expandedHeight;
+  const colDist = new Float32Array(size);
+
+  for (let x = 0; x < expandedWidth; x++) {
+    // Forward pass: propagate distances downward
+    colDist[x] = distSq[x] === 0 ? 0 : infinity;
+    for (let y = 1; y < expandedHeight; y++) {
+      const idx = y * expandedWidth + x;
+      colDist[idx] = distSq[idx] === 0 ? 0 : colDist[idx - expandedWidth] + 1;
+    }
+
+    // Backward pass: propagate distances upward
+    for (let y = expandedHeight - 2; y >= 0; y--) {
+      const idx = y * expandedWidth + x;
+      const below = colDist[idx + expandedWidth] + 1;
+      if (below < colDist[idx]) {
+        colDist[idx] = below;
+      }
+    }
+  }
+
+  return colDist;
+}
+
+/**
+ * Phase 2 of Meijster algorithm: Row-wise scan using parabola envelope.
+ * Computes final squared Euclidean distance for each pixel.
+ */
+function computeRowDistances(
+  colDist: Float32Array,
+  distSq: Float32Array,
+  expandedWidth: number,
+  expandedHeight: number
+): void {
+  const s = new Int32Array(expandedWidth); // Envelope indices
+  const t = new Int32Array(expandedWidth); // Intersection points
+
+  for (let y = 0; y < expandedHeight; y++) {
+    const rowOffset = y * expandedWidth;
+    let q = 0;
+    s[0] = 0;
+    t[0] = 0;
+
+    // Build lower envelope of parabolas
+    for (let u = 1; u < expandedWidth; u++) {
+      const gu = colDist[rowOffset + u];
+      q = buildEnvelopeForColumn(colDist, s, t, q, u, gu, rowOffset);
+      s[q] = u;
+      t[q] = computeIntersection(
+        u,
+        s[q - 1],
+        colDist[rowOffset + u],
+        colDist[rowOffset + s[q - 1]]
+      );
+    }
+
+    // Sample envelope to get final distances
+    sampleEnvelope(colDist, distSq, s, t, q, rowOffset, expandedWidth);
+  }
+}
+
+/**
+ * Build parabola envelope for a single column position.
+ * Returns the updated envelope index q.
+ */
+function buildEnvelopeForColumn(
+  colDist: Float32Array,
+  s: Int32Array,
+  t: Int32Array,
+  q: number,
+  u: number,
+  gu: number,
+  rowOffset: number
+): number {
+  while (q >= 0) {
+    const sq = s[q];
+    const gsq = colDist[rowOffset + sq];
+    const sepPoint = (u * u - sq * sq + gu * gu - gsq * gsq) / (2 * (u - sq));
+    if (sepPoint > t[q]) break;
+    q--;
+  }
+  return q + 1;
+}
+
+/**
+ * Compute parabola intersection point.
+ */
+function computeIntersection(u: number, sPrev: number, gu: number, gsPrev: number): number {
+  return Math.floor((u * u - sPrev * sPrev + gu ** 2 - gsPrev ** 2) / (2 * (u - sPrev)));
+}
+
+/**
+ * Sample the envelope to compute final squared distances for a row.
+ */
+function sampleEnvelope(
+  colDist: Float32Array,
+  distSq: Float32Array,
+  s: Int32Array,
+  t: Int32Array,
+  q: number,
+  rowOffset: number,
+  expandedWidth: number
+): void {
+  let qLocal = q;
+  for (let u = expandedWidth - 1; u >= 0; u--) {
+    while (t[qLocal] > u && qLocal > 0) qLocal--;
+    const sq = s[qLocal];
+    const dx = u - sq;
+    distSq[rowOffset + u] = dx * dx + colDist[rowOffset + sq] ** 2;
+  }
+}
+
+// ============================================================================
+// Distance Transform Main Function
+// ============================================================================
+
 /**
  * Compute squared distance transform using Meijster algorithm.
  * Returns squared distance to nearest opaque pixel for each position.
  *
  * This is O(n) where n = width × height, much faster than naive O(n×r²).
- *
- * @see https://www.cs.rug.nl/~roe/publications/dt.pdf
  */
 function computeDistanceTransform(
   mask: Uint8Array,
@@ -106,79 +260,14 @@ function computeDistanceTransform(
   const size = expandedWidth * expandedHeight;
   const distSq = new Float32Array(size);
 
-  // Initialize: 0 for opaque pixels (mapped from source), INF² for rest
-  distSq.fill(INF * INF);
+  // Phase 0: Initialize distance field from mask
+  initializeDistanceField(mask, width, height, expandedWidth, offset, distSq, INF);
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const srcIdx = y * width + x;
-      if (mask[srcIdx] >= ALPHA_THRESHOLD) {
-        const dstIdx = (y + offset) * expandedWidth + (x + offset);
-        distSq[dstIdx] = 0;
-      }
-    }
-  }
+  // Phase 1: Column-wise vertical distance scan
+  const colDist = computeColumnDistances(distSq, expandedWidth, expandedHeight, INF);
 
-  // Phase 1: Column-wise scan (vertical distance)
-  const colDist = new Float32Array(size);
-
-  for (let x = 0; x < expandedWidth; x++) {
-    // Forward pass
-    colDist[x] = distSq[x] === 0 ? 0 : INF;
-    for (let y = 1; y < expandedHeight; y++) {
-      const idx = y * expandedWidth + x;
-      colDist[idx] = distSq[idx] === 0 ? 0 : colDist[idx - expandedWidth] + 1;
-    }
-    // Backward pass
-    for (let y = expandedHeight - 2; y >= 0; y--) {
-      const idx = y * expandedWidth + x;
-      const below = colDist[idx + expandedWidth] + 1;
-      if (below < colDist[idx]) {
-        colDist[idx] = below;
-      }
-    }
-  }
-
-  // Phase 2: Row-wise scan using parabola envelope
-  const s = new Int32Array(expandedWidth); // Envelope indices
-  const t = new Int32Array(expandedWidth); // Intersection points
-
-  for (let y = 0; y < expandedHeight; y++) {
-    const rowOffset = y * expandedWidth;
-    let q = 0;
-    s[0] = 0;
-    t[0] = 0;
-
-    // Build envelope
-    for (let u = 1; u < expandedWidth; u++) {
-      const gu = colDist[rowOffset + u];
-      while (q >= 0) {
-        const sq = s[q];
-        const gsq = colDist[rowOffset + sq];
-        // Compare parabolas: f(s[q], y) vs f(u, y) at intersection
-        const sepPoint = (u * u - sq * sq + gu * gu - gsq * gsq) / (2 * (u - sq));
-        if (sepPoint > t[q]) break;
-        q--;
-      }
-      q++;
-      s[q] = u;
-      t[q] = Math.floor(
-        (u * u -
-          s[q - 1] * s[q - 1] +
-          colDist[rowOffset + u] ** 2 -
-          colDist[rowOffset + s[q - 1]] ** 2) /
-          (2 * (u - s[q - 1]))
-      );
-    }
-
-    // Sample envelope
-    for (let u = expandedWidth - 1; u >= 0; u--) {
-      while (t[q] > u && q > 0) q--;
-      const sq = s[q];
-      const dx = u - sq;
-      distSq[rowOffset + u] = dx * dx + colDist[rowOffset + sq] ** 2;
-    }
-  }
+  // Phase 2: Row-wise parabola envelope sampling
+  computeRowDistances(colDist, distSq, expandedWidth, expandedHeight);
 
   return distSq;
 }

@@ -15,7 +15,15 @@
       "Bash(powershell -Command \"Rename-Item -Path ''assets/images/setup_flower'' -NewName ''setup_overlays''\")",
       "Bash(powershell -Command \"Remove-Item ''C:\\\\Users\\\\Trevo\\\\OneDrive\\\\Desktop\\\\Board Games\\\\Blood on the Clocktower\\\\Github - Token Generator\\\\Clocktower_Token_Generator\\\\src\\\\hooks\\\\cache\\\\useProjectCacheWarming.ts''\")",
       "Bash(git ls-tree:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Path src -Recurse -Filter ''*.ts'' | Measure-Object | Select-Object -ExpandProperty Count\")",
+      "Bash(powershell -Command:*)",
+      "WebSearch",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:www.hslpicker.com)",
+      "Bash(tree:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx prettier:*)"
     ]
   }
 }

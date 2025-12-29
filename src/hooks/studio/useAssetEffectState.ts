@@ -208,14 +208,14 @@ export function useAssetEffectState(
   // Derived State
   // ============================================================================
 
-  const hasChanges = useMemo(() => {
-    return (
+  const hasChanges = useMemo(
+    () =>
       effects.teamColorPreset !== null ||
       effects.customColor !== null ||
       effects.borderOptions !== null ||
-      effects.inverted
-    );
-  }, [effects]);
+      effects.inverted,
+    [effects]
+  );
 
   // ============================================================================
   // Return

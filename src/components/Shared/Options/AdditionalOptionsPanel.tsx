@@ -2,8 +2,6 @@
  * AdditionalOptionsPanel Component
  *
  * A flat panel (no tabs) containing advanced token generation options:
- * - Ability Text (with font settings)
- * - Reminder Count (with style options)
  * - Setup (setup flower asset selector)
  * - Accents (accent decorations)
  *
@@ -16,11 +14,9 @@
 
 import { memo } from 'react';
 import { AccentSettingsSelector } from '@/components/Shared/Selectors/AccentSettingsSelector';
-import { ReminderCountSelector } from '@/components/Shared/Selectors/ReminderCountSelector';
 import { SetupSettingsSelector } from '@/components/Shared/Selectors/SetupSettingsSelector';
 import styles from '@/styles/components/options/OptionsPanel.module.css';
 import type { GenerationOptions } from '@/ts/types/index';
-import { AbilityTextSection } from './AppearancePanel';
 
 interface AdditionalOptionsPanelProps {
   generationOptions: GenerationOptions;
@@ -33,23 +29,7 @@ export const AdditionalOptionsPanel = memo(
     return (
       <div className={styles.panelContent}>
         <div className={styles.settingsStack}>
-          {/* 1. Ability Text */}
-          <div className={styles.settingsGroup}>
-            <AbilityTextSection
-              generationOptions={generationOptions}
-              onOptionChange={onOptionChange}
-            />
-          </div>
-
-          {/* 2. Reminder Count */}
-          <div className={styles.settingsGroup}>
-            <ReminderCountSelector
-              generationOptions={generationOptions}
-              onOptionChange={onOptionChange}
-            />
-          </div>
-
-          {/* 3. Setup (renamed from Setup Flower) */}
+          {/* 1. Setup */}
           <div className={styles.settingsGroup}>
             <SetupSettingsSelector
               generationOptions={generationOptions}
@@ -58,7 +38,7 @@ export const AdditionalOptionsPanel = memo(
             />
           </div>
 
-          {/* 4. Accents */}
+          {/* 2. Accents */}
           <div className={styles.settingsGroup}>
             <AccentSettingsSelector
               generationOptions={generationOptions}

@@ -87,9 +87,10 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
   /**
    * Check if there are characters without tokens
    */
-  const hasMissingTokens = useCallback((): boolean => {
-    return getMissingCharacters().length > 0;
-  }, [getMissingCharacters]);
+  const hasMissingTokens = useCallback(
+    (): boolean => getMissingCharacters().length > 0,
+    [getMissingCharacters]
+  );
 
   /**
    * Generate tokens for characters that don't have them yet.

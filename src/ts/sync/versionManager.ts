@@ -188,9 +188,9 @@ export const VersionManager = {
       throw new ValidationError('Cannot get latest version from empty array');
     }
 
-    return versions.reduce((latest, current) => {
-      return VersionManager.isNewer(current, latest) ? current : latest;
-    });
+    return versions.reduce((latest, current) =>
+      VersionManager.isNewer(current, latest) ? current : latest
+    );
   },
 
   /**

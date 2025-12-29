@@ -24,6 +24,44 @@
 | `storageKeys.ts` | localStorage keys | `STORAGE_KEYS.*` (CUSTOM_PRESETS, THEME, AUTO_SAVE_ENABLED, CACHE_LOG_LEVEL, AUTO_SAVE_TELEMETRY), `getStorageItem()`, `setStorageItem()` |
 | `nameGenerator.ts` | Unique names | `generateUniqueName()` |
 | `teamUtils.ts` | Team CSS mapping | `getTeamStyleClass()`, `normalizeTeamName()`, `TEAM_CLASS_MAP` |
+| `searchUtils.ts` | **Modular search** | `searchFilter()`, `getSearchMatch()`, `parseSearchQuery()`, `matchesTerm()`, `levenshteinDistance()` |
+
+---
+
+## Search Module (`src/hooks/search/`)
+
+| Hook | Purpose | Key Exports |
+|------|---------|-------------|
+| `useSearch.ts` | Generic search hook | `useSearch<T>()` - filtering, highlighting, query parsing |
+| `useCharacterSearch.ts` | Character preset | `useCharacterSearch()` - searches name, ability, reminders |
+| `useAssetSearch.ts` | Asset preset | `useAssetSearch()` - searches filename, type, tags |
+
+**Features:**
+- Fuzzy matching with Levenshtein distance (1-2 character tolerance)
+- Multi-term AND logic ("night demon" requires both terms)
+- Special character support (`*`, `+`, `[`, `]` match literally)
+- Space/dash agnostic matching
+- Search highlighting with position data
+
+**Usage Pattern:**
+```typescript
+// Generic search
+const { filteredItems, getMatch, isSearching } = useSearch({
+  items: characters,
+  query: searchTerm,
+  config: { fields: (c) => [c.name, c.ability] }
+});
+
+// Character preset (pre-configured)
+const { filteredCharacters, getMatch } = useCharacterSearch({
+  characters: officialCharacters,
+  searchTerm: 'night demon'
+});
+
+// With highlighting
+<SearchHighlight match={getMatch(char.name)} />
+<SearchHighlight match={getMatch(char.ability)} variant="subtle" />
+```
 
 ---
 
@@ -215,7 +253,7 @@
 | `useModalBehavior` | Modal interactions (escape key, body scroll, backdrop) |
 | `useDrawerAnimation` | Drawer open/close animation lifecycle |
 | `useDrawerState` | Drawer state management (pending value, apply/cancel/reset) |
-| `useCharacterFiltering` | Character search, edition, team, selected-only filters |
+| `useCharacterFiltering` | Character search with highlighting, edition, team, selected-only filters (uses `useCharacterSearch`) |
 | `useContextMenu` | Context menu state |
 | `useExpandablePanel` | Expandable panel state and positioning |
 | `useIntersectionObserver` | Visibility detection |
@@ -367,4 +405,4 @@ src/
 
 ---
 
-*Last updated: 2025-12-21*
+*Last updated: 2025-12-29*

@@ -36,14 +36,16 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       almanacToken: true,
       fontSpacing: {
         characterName: 2,
-        abilityText: 1,
+        characterText: 1,
         reminderText: 1,
+        metaName: 2,
         metaText: 2,
       },
       textShadow: {
         characterName: 6,
-        abilityText: 4,
+        characterText: 4,
         reminderText: 5,
+        metaName: 6,
         metaText: 6,
       },
       pngSettings: {
@@ -82,14 +84,16 @@ export const PRESETS: Record<PresetName, PresetConfig> = {
       almanacToken: false,
       fontSpacing: {
         characterName: 0,
-        abilityText: 0,
+        characterText: 0,
         reminderText: 0,
+        metaName: 0,
         metaText: 0,
       },
       textShadow: {
         characterName: 2,
-        abilityText: 2,
+        characterText: 2,
         reminderText: 2,
+        metaName: 2,
         metaText: 2,
       },
       pngSettings: {

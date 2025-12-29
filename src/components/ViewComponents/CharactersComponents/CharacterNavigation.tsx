@@ -195,7 +195,7 @@ export function CharacterNavigation({
     return (
       <div
         key={char.uuid || char.id}
-        className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}
+        className={`${styles.itemWrapper} ${isLast ? '' : styles.withDivider}`}
       >
         <button
           ref={isSelected ? selectedRef : null}
@@ -237,44 +237,42 @@ export function CharacterNavigation({
     );
   };
 
-  const renderMetaTokenItem = (token: Token, isLast: boolean) => {
-    return (
-      <div
-        key={token.filename}
-        className={`${styles.itemWrapper} ${!isLast ? styles.withDivider : ''}`}
+  const renderMetaTokenItem = (token: Token, isLast: boolean) => (
+    <div
+      key={token.filename}
+      className={`${styles.itemWrapper} ${isLast ? '' : styles.withDivider}`}
+    >
+      <button
+        type="button"
+        className={`${styles.item} ${styles.teamMeta}`}
+        title={token.name}
+        onClick={() => onSelectMetaToken?.(token)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            onSelectMetaToken?.(token);
+          }
+        }}
       >
-        <button
-          type="button"
-          className={`${styles.item} ${styles.teamMeta}`}
-          title={token.name}
-          onClick={() => onSelectMetaToken?.(token)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              onSelectMetaToken?.(token);
-            }
-          }}
-        >
-          <div className={styles.thumbnail}>
-            <canvas
-              width="40"
-              height="40"
-              ref={(canvas) => {
-                if (canvas && token.canvas) {
-                  const ctx = canvas.getContext('2d');
-                  if (ctx) {
-                    ctx.drawImage(token.canvas, 0, 0, 40, 40);
-                  }
+        <div className={styles.thumbnail}>
+          <canvas
+            width="40"
+            height="40"
+            ref={(canvas) => {
+              if (canvas && token.canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(token.canvas, 0, 0, 40, 40);
                 }
-              }}
-            />
-          </div>
-          <div className={styles.info}>
-            <div className={styles.name}>{token.name}</div>
-          </div>
-        </button>
-      </div>
-    );
-  };
+              }
+            }}
+          />
+        </div>
+        <div className={styles.info}>
+          <div className={styles.name}>{token.name}</div>
+        </div>
+      </button>
+    </div>
+  );
 
   // Check if all teams are collapsed
   const allCollapsed =

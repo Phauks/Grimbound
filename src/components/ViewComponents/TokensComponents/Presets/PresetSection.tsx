@@ -12,7 +12,6 @@ import { SavePresetModal } from './SavePresetModal';
 interface PresetSectionProps {
   customPresets: CustomPreset[];
   onCustomPresetsChange: (presets: CustomPreset[]) => void;
-  onShowSaveModal: () => void;
 }
 
 const BUILT_IN_PRESETS: Array<{ name: PresetName; icon: string }> = [
@@ -21,11 +20,7 @@ const BUILT_IN_PRESETS: Array<{ name: PresetName; icon: string }> = [
   { name: 'minimal', icon: '⬜' },
 ];
 
-export function PresetSection({
-  customPresets,
-  onCustomPresetsChange,
-  onShowSaveModal: _onShowSaveModal,
-}: PresetSectionProps) {
+export function PresetSection({ customPresets, onCustomPresetsChange }: PresetSectionProps) {
   const {
     applyPreset,
     applyCustomPreset,
@@ -273,27 +268,6 @@ export function PresetSection({
       }
     },
     [exportPreset, addToast]
-  );
-
-  const _handleImportFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      try {
-        const newPreset = await importPreset(file);
-        onCustomPresetsChange(getCustomPresets());
-        setActivePresetId(newPreset.id);
-        addToast(`Preset "${newPreset.name}" imported`, 'success');
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Invalid preset file';
-        addToast(message, 'error');
-      }
-
-      // Reset input
-      e.target.value = '';
-    },
-    [importPreset, getCustomPresets, onCustomPresetsChange, addToast]
   );
 
   const defaultPresetId = getDefaultPresetId();

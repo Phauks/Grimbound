@@ -3,7 +3,7 @@
  * Data Loader - I/O operations for loading script and character data
  */
 
-import { getExampleScriptUrl } from '@/ts/data/exampleScripts.js';
+import { getExampleScriptData } from '@/ts/data/exampleScripts.js';
 import type { ScriptEntry } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -12,7 +12,7 @@ import { logger } from '@/ts/utils/logger.js';
 // ============================================================================
 
 /**
- * Load example script from file
+ * Load example script (bundled - no fetch needed)
  * @param filename - Example script filename (with or without .json extension)
  * @returns Parsed script data
  */
@@ -22,52 +22,15 @@ export async function loadExampleScript(filename: string): Promise<ScriptEntry[]
   // Ensure filename has .json extension
   const jsonFilename = filename.endsWith('.json') ? filename : `${filename}.json`;
 
-  // First, try the Vite-transformed URL which includes the correct base path
-  // This is the preferred method as it works correctly on GitHub Pages
-  const viteUrl = getExampleScriptUrl(jsonFilename);
-  if (viteUrl) {
-    try {
-      logger.debug('DataLoader', `Trying Vite URL: ${viteUrl}`);
-      const response = await fetch(viteUrl);
-      if (response.ok) {
-        const data = (await response.json()) as ScriptEntry[];
-        logger.debug('DataLoader', `Successfully loaded from Vite URL: ${viteUrl}`, data);
-        return data;
-      }
-      logger.debug('DataLoader', `Vite URL returned status: ${response.status}`);
-    } catch (error) {
-      logger.debug('DataLoader', `Vite URL failed: ${viteUrl}`, error);
-    }
+  // Get bundled script data (no network request needed)
+  const data = getExampleScriptData(jsonFilename);
+  if (data) {
+    logger.debug('DataLoader', `Loaded bundled script: ${jsonFilename}`, data);
+    return data;
   }
 
-  // Fallback: Try manual path variations for development or edge cases
-  const basePath = new URL('.', window.location.href).href;
-  const pathsToTry = [
-    `./example_scripts/${jsonFilename}`,
-    `example_scripts/${jsonFilename}`,
-    new URL(`example_scripts/${jsonFilename}`, basePath).href,
-  ];
-
-  let lastError: Error | null = null;
-
-  for (const path of pathsToTry) {
-    try {
-      logger.debug('DataLoader', `Trying fallback path: ${path}`);
-      const response = await fetch(path);
-      if (response.ok) {
-        const data = (await response.json()) as ScriptEntry[];
-        logger.debug('DataLoader', `Successfully loaded from: ${path}`, data);
-        return data;
-      }
-      logger.debug('DataLoader', `Path returned status: ${response.status}`);
-    } catch (error) {
-      logger.debug('DataLoader', `Path failed: ${path}`, error);
-      lastError = error instanceof Error ? error : new Error(String(error));
-    }
-  }
-
-  const errorMessage = `Failed to load example script: ${filename}. ${lastError?.message ?? 'Unknown error'}`;
-  logger.error('DataLoader', errorMessage, lastError);
+  const errorMessage = `Example script not found: ${filename}`;
+  logger.error('DataLoader', errorMessage);
   throw new Error(errorMessage);
 }
 

@@ -12,10 +12,11 @@
  * @module components/Shared/AccentSettingsSelector
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/AccentSettingsSelector.module.css';
@@ -305,7 +306,7 @@ const AccentPreview = memo(function AccentPreview({
   const previewSrc = getAccentPreviewSrc();
 
   return (
-    <div className={`${styles.previewImage} ${!isEnabled ? styles.previewDisabledState : ''}`}>
+    <div className={`${styles.previewImage} ${isEnabled ? '' : styles.previewDisabledState}`}>
       {previewSrc ? (
         <img
           src={previewSrc}
@@ -593,6 +594,10 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     [onOptionChange]
   );
 
+  // Panel coordination - closes other panels when this one opens
+  const panelCloseRef = useRef<(() => void) | undefined>(undefined);
+  const onWillOpen = useCoordinatedPanel('accent-settings', () => panelCloseRef.current);
+
   const panel = useExpandablePanel<PendingAccentSettings>({
     value: currentSettings,
     onChange: handlePanelChange,
@@ -600,7 +605,11 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     disabled,
     panelHeight: 380,
     minPanelWidth: 580,
+    onWillOpen,
   });
+
+  // Keep ref updated for coordination
+  panelCloseRef.current = panel.close;
 
   const displaySettings = panel.isExpanded ? panel.pendingValue : currentSettings;
   // Max arc accents is limited by the number of arc slots (side accents are separate)
@@ -620,7 +629,7 @@ export const AccentSettingsSelector = memo(function AccentSettingsSelector({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!isEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${isEnabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => handleToggle(false)}
       >
         Off

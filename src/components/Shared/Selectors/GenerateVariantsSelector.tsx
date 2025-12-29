@@ -83,7 +83,7 @@ const TEAM_OPTIONS: TeamOption[] = [
 
 const VariantPreview = memo(function VariantPreview({ isEnabled }: { isEnabled: boolean }) {
   return (
-    <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
+    <div className={`${styles.previewContainer} ${isEnabled ? '' : styles.previewDisabled}`}>
       <span className={styles.previewIcon}>🎭</span>
     </div>
   );
@@ -184,7 +184,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!isEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${isEnabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => handleToggle(false)}
       >
         Off
@@ -272,7 +272,7 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
             <div className={styles.sectionSubtitle}>Team Variants</div>
 
             <div
-              className={`${styles.teamList} ${!isAutoGenEnabled ? styles.teamListDisabled : ''}`}
+              className={`${styles.teamList} ${isAutoGenEnabled ? '' : styles.teamListDisabled}`}
             >
               {TEAM_OPTIONS.map((team) => (
                 <label key={team.id} className={styles.teamCheckboxRow}>

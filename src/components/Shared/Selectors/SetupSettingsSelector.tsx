@@ -8,8 +8,9 @@
  * @module components/Shared/SetupSettingsSelector
  */
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
+import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
 import styles from '@/styles/components/shared/SimplePanelSelector.module.css';
 import { CONFIG } from '@/ts/config';
@@ -44,7 +45,7 @@ const SetupPreview = memo(function SetupPreview({
   const previewSrc = getSetupPreviewSrc();
 
   return (
-    <div className={`${styles.previewContainer} ${!isEnabled ? styles.previewDisabled : ''}`}>
+    <div className={`${styles.previewContainer} ${isEnabled ? '' : styles.previewDisabled}`}>
       {previewSrc ? (
         <img
           src={previewSrc}
@@ -81,6 +82,21 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
   // Store last selected setup for when toggling back on
   const [lastSetup, setLastSetup] = useState(isEnabled ? currentSetup : 'setup_flower_1');
 
+  // Panel coordination - closes other panels when this modal opens
+  const closeModalRef = useRef<(() => void) | undefined>(undefined);
+  const onWillOpen = useCoordinatedPanel('setup-settings', () => closeModalRef.current);
+
+  // Keep close ref updated
+  useEffect(() => {
+    closeModalRef.current = () => setShowAssetModal(false);
+  }, []);
+
+  // Open modal with coordination
+  const handleOpenModal = useCallback(() => {
+    onWillOpen();
+    setShowAssetModal(true);
+  }, [onWillOpen]);
+
   const handleToggle = useCallback(
     (enabled: boolean) => {
       if (enabled) {
@@ -108,7 +124,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!isEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${isEnabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => handleToggle(false)}
       >
         Off
@@ -134,7 +150,7 @@ export const SetupSettingsSelector = memo(function SetupSettingsSelector({
         info={<InfoSection label="Setup" />}
         headerSlot={EnableToggle}
         actionLabel="Customize"
-        onAction={() => setShowAssetModal(true)}
+        onAction={handleOpenModal}
         isExpanded={false}
         disabled={disabled}
         visuallyDisabled={!isEnabled}

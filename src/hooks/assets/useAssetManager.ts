@@ -199,11 +199,12 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   }, [options.autoRefreshInterval, fetchAssets]);
 
   // Cleanup URLs on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       assetStorageService.revokeAllUrls();
-    };
-  }, [assetStorageService]);
+    },
+    [assetStorageService]
+  );
 
   // Filter methods
   const setFilter = useCallback(

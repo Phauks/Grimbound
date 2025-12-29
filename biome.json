@@ -7,7 +7,17 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/coverage", "!**/*.min.js", "!**/*.d.ts"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/coverage",
+      "!**/*.min.js",
+      "!**/*.d.ts",
+      "!**/example_scripts",
+      "!**/.wrangler",
+      "!**/workspace.*.js"
+    ]
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
@@ -19,7 +29,87 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": { "maxAllowedComplexity": 25 }
+        },
+        "noUselessFragments": "error",
+        "noUselessLoneBlockStatements": "error",
+        "noUselessTernary": "error",
+        "noVoid": "error",
+        "useDateNow": "error",
+        "useSimplifiedLogicExpression": "warn"
+      },
+      "correctness": {
+        "noConstantMathMinMaxClamp": "error",
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedPrivateClassMembers": "error",
+        "useHookAtTopLevel": "error",
+        "useExhaustiveDependencies": "error"
+      },
+      "nursery": {
+        "noDeprecatedImports": "warn",
+        "noDuplicateDependencies": "error",
+        "noEqualsToNull": "error",
+        "noFloatingPromises": "off",
+        "noForIn": "error",
+        "noLeakedRender": "off",
+        "noMisusedPromises": "off",
+        "noParametersOnlyUsedInRecursion": "warn",
+        "noProto": "error",
+        "noScriptUrl": "error",
+        "noShadow": "off",
+        "noUnknownAttribute": "warn",
+        "noUnnecessaryConditions": "off",
+        "useArraySortCompare": "warn",
+        "useConsistentArrowReturn": "warn",
+        "useExhaustiveSwitchCases": "off",
+        "useExplicitType": "off",
+        "useFind": "error",
+        "useSortedClasses": "off",
+        "useSpread": "error"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "noReExportAll": "off",
+        "useTopLevelRegex": "off"
+      },
+      "style": {
+        "noNamespace": "warn",
+        "noNegationElse": "warn",
+        "noShoutyConstants": "warn",
+        "useCollapsedElseIf": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": { "syntax": "shorthand" }
+        },
+        "useConsistentBuiltinInstantiation": "error",
+        "useDefaultSwitchClause": "warn",
+        "useExplicitLengthCheck": "error",
+        "useForOf": "error",
+        "useFragmentSyntax": "error",
+        "useNodeAssertStrict": "error",
+        "useShorthandAssign": "error",
+        "useThrowNewError": "error",
+        "useThrowOnlyError": "error"
+      },
+      "suspicious": {
+        "noEmptyBlockStatements": "off",
+        "noEvolvingTypes": "off",
+        "useAwait": "off",
+        "useErrorMessage": "warn"
+      },
+      "a11y": {
+        "noAriaHiddenOnFocusable": "error",
+        "noInteractiveElementToNoninteractiveRole": "warn",
+        "useAltText": "error",
+        "useButtonType": "error",
+        "useHeadingContent": "error",
+        "useKeyWithClickEvents": "warn",
+        "useValidAnchor": "error"
+      }
     }
   },
   "javascript": {

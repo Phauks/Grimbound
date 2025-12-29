@@ -43,15 +43,38 @@ const DEFAULT_ZIP_OPTIONS: ZipExportOptions = {
 // ============================================================================
 
 /**
- * Check if a token is a meta token (script name, almanac, pandemonium, bootlegger)
+ * Check if a token is a meta token (not character or reminder).
+ * Includes: script-name, almanac, pandemonium, bootlegger, jinx
  */
-export function isMetaToken(token: Token): boolean {
-  return (
-    token.type === 'script-name' ||
-    token.type === 'almanac' ||
-    token.type === 'pandemonium' ||
-    token.type === 'bootlegger'
-  );
+export function isMetaToken(token?: Token): boolean {
+  return !!token && token.type !== 'character' && token.type !== 'reminder';
+}
+
+/**
+ * Bundle data for downloads (blob with filename)
+ */
+export interface BundleData {
+  blob: Blob;
+  filename: string;
+}
+
+/**
+ * Convert tokens to bundle data (blobs with filenames) for downloads.
+ * Skips tokens that fail to convert.
+ */
+export async function tokensToBundleData(tokens: Token[]): Promise<BundleData[]> {
+  const results: BundleData[] = [];
+  for (const token of tokens) {
+    try {
+      const blob = await canvasToBlob(token.canvas);
+      if (blob) {
+        results.push({ blob, filename: token.filename });
+      }
+    } catch {
+      // Skip tokens that fail to convert
+    }
+  }
+  return results;
 }
 
 /**

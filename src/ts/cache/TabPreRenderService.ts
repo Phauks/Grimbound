@@ -30,17 +30,8 @@ import { hashArray, hashGenerationOptions } from './utils/hashUtils.js';
 // Constants
 // ============================================================================
 
-/** Maximum tokens to pre-render per batch */
-const MAX_TOKENS_PER_BATCH = 20;
-
-/** Timeout for token encoding idle callback (ms) */
-const TOKEN_ENCODE_TIMEOUT_MS = 100;
-
 /** Timeout for image preload idle callback (ms) */
 const IMAGE_PRELOAD_TIMEOUT_MS = 200;
-
-/** Minimum time remaining (ms) to start encoding another token */
-const MIN_IDLE_TIME_MS = 10;
 
 // ============================================================================
 // Types
@@ -82,13 +73,6 @@ interface NightOrderCacheEntry {
   hash: string;
   firstNight: NightOrderResult;
   otherNight: NightOrderResult;
-  timestamp: number;
-}
-
-/** Cached gallery token data URLs */
-interface GalleryCacheEntry {
-  dataUrls: Map<string, string>;
-  tokenCount: number;
   timestamp: number;
 }
 
@@ -195,13 +179,6 @@ export class TabPreRenderService {
   // Night order cache (lightweight data computation)
   private nightOrderCache: NightOrderCacheEntry | null = null;
 
-  // Gallery token data URL cache
-  private galleryCache: GalleryCacheEntry = {
-    dataUrls: new Map(),
-    tokenCount: 0,
-    timestamp: 0,
-  };
-
   // Character image URL cache (for night order)
   private characterImageCache: CharacterImageCacheEntry = {
     resolvedUrls: new Map(),
@@ -214,7 +191,6 @@ export class TabPreRenderService {
   private static readonly MAX_CHARACTER_TOKEN_CACHE_SIZE = 10;
 
   // Concurrency guards
-  private isPreRenderingGallery = false;
   private isPreRenderingCharacterImages = false;
   private isPreRenderingCharacterTokens = false;
 
@@ -249,7 +225,8 @@ export class TabPreRenderService {
       case 'characters':
         return this.preRenderCharacters(context);
       case 'tokens':
-        return this.preRenderTokens(context);
+        // Token gallery has its own caching in TokenCard - no pre-render needed here
+        return emptyResult('tokens');
       case 'script':
         return this.preRenderScript(context);
       default:
@@ -282,26 +259,6 @@ export class TabPreRenderService {
       firstNight: this.nightOrderCache.firstNight,
       otherNight: this.nightOrderCache.otherNight,
     };
-  }
-
-  /**
-   * Get cached data URL for a token.
-   *
-   * @param filename - Token filename
-   * @returns Data URL or undefined if not cached
-   */
-  getCachedTokenDataUrl(filename: string): string | undefined {
-    return this.galleryCache.dataUrls.get(filename);
-  }
-
-  /**
-   * Check if a token data URL is cached.
-   *
-   * @param filename - Token filename
-   * @returns True if cached
-   */
-  hasTokenDataUrl(filename: string): boolean {
-    return this.galleryCache.dataUrls.has(filename);
   }
 
   /**
@@ -360,8 +317,6 @@ export class TabPreRenderService {
    */
   clearAll(): void {
     this.nightOrderCache = null;
-    this.galleryCache.dataUrls.clear();
-    this.galleryCache.tokenCount = 0;
     this.characterImageCache.resolvedUrls.clear();
     this.characterTokenCache.clear();
     CacheLogger.info('All tab pre-render caches cleared');
@@ -377,11 +332,13 @@ export class TabPreRenderService {
         this.characterImageCache.resolvedUrls.clear();
         break;
       case 'tokens':
-        this.galleryCache.dataUrls.clear();
-        this.galleryCache.tokenCount = 0;
+        // Token gallery has its own caching in TokenCard - nothing to clear here
         break;
       case 'characters':
         this.characterTokenCache.clear();
+        break;
+      default:
+        // Exhaustive check - should never reach here
         break;
     }
     CacheLogger.debug(`Cache cleared for tab: ${tab}`);
@@ -459,90 +416,6 @@ export class TabPreRenderService {
       if (found) return found;
     }
     return characters[0];
-  }
-
-  /**
-   * Pre-render for Tokens tab.
-   * Encodes token canvases to data URLs.
-   */
-  private preRenderTokens(context: TabPreRenderContext): TabPreRenderResult {
-    const { tokens } = context;
-
-    if (tokens.length === 0) {
-      return emptyResult('tokens');
-    }
-
-    // Prevent concurrent pre-rendering
-    if (this.isPreRenderingGallery) {
-      return {
-        success: true,
-        tab: 'tokens',
-        fromCache: true,
-        itemCount: this.galleryCache.dataUrls.size,
-      };
-    }
-
-    this.isPreRenderingGallery = true;
-
-    scheduleIdleWork(
-      (deadline) => this.encodeTokenBatch(tokens, 0, deadline),
-      TOKEN_ENCODE_TIMEOUT_MS
-    );
-
-    return {
-      success: true,
-      tab: 'tokens',
-      fromCache: false,
-      itemCount: Math.min(tokens.length, MAX_TOKENS_PER_BATCH),
-    };
-  }
-
-  /**
-   * Encode a batch of tokens to data URLs, yielding to browser when idle time runs out.
-   * @param tokens - All tokens to process
-   * @param startIndex - Index to resume from
-   * @param deadline - Idle deadline (null if using setTimeout fallback)
-   */
-  private encodeTokenBatch(
-    tokens: Token[],
-    startIndex: number,
-    deadline: IdleDeadline | null
-  ): void {
-    let count = 0;
-    let i = startIndex;
-
-    for (; i < tokens.length && count < MAX_TOKENS_PER_BATCH; i++) {
-      // Check if we should yield (only if we have deadline info)
-      if (deadline && deadline.timeRemaining() < MIN_IDLE_TIME_MS) {
-        // Reschedule remaining work
-        scheduleIdleWork(
-          (nextDeadline) => this.encodeTokenBatch(tokens, i, nextDeadline),
-          TOKEN_ENCODE_TIMEOUT_MS
-        );
-        return;
-      }
-
-      const token = tokens[i];
-      if (!token.canvas || this.galleryCache.dataUrls.has(token.filename)) continue;
-
-      this.galleryCache.dataUrls.set(token.filename, token.canvas.toDataURL('image/png'));
-      count++;
-    }
-
-    // Check if we processed all tokens or hit MAX_TOKENS_PER_BATCH
-    if (i < tokens.length && count >= MAX_TOKENS_PER_BATCH) {
-      // More tokens remain, reschedule
-      scheduleIdleWork(
-        (nextDeadline) => this.encodeTokenBatch(tokens, i, nextDeadline),
-        TOKEN_ENCODE_TIMEOUT_MS
-      );
-      return;
-    }
-
-    // All done
-    this.galleryCache.tokenCount = tokens.length;
-    this.galleryCache.timestamp = Date.now();
-    this.isPreRenderingGallery = false;
   }
 
   /**

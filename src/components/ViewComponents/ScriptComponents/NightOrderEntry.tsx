@@ -184,18 +184,15 @@ export function NightOrderEntry({
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && entry.type !== 'special') {
           e.preventDefault();
-          contextMenu.onContextMenu(
-            // Create a synthetic MouseEvent for context menu
-            {
-              ...e,
-              preventDefault: () => {},
-              stopPropagation: () => {},
-              button: 2,
-              clientX: 0,
-              clientY: 0,
-            } as unknown as React.MouseEvent,
-            entry.id
-          );
+          // Use element-based positioning - keyboard events don't have clientX/Y
+          // The hook ignores clientX/Y when positionMode is 'element'
+          const syntheticEvent = {
+            preventDefault: e.preventDefault.bind(e),
+            stopPropagation: e.stopPropagation.bind(e),
+            clientX: 0,
+            clientY: 0,
+          } as React.MouseEvent;
+          contextMenu.onContextMenu(syntheticEvent, entry.id);
         }
       }}
       aria-label={`Night order entry for ${entry.name}`}

@@ -133,12 +133,6 @@ export interface EffectsConfig {
   innerGlowRadius: number;
   /** Inner glow intensity (0-100), default 30 */
   innerGlowIntensity: number;
-
-  // Hue shift (legacy - kept for backwards compatibility)
-  /** Enable hue shift effect */
-  hueShiftEnabled: boolean;
-  /** Hue shift in degrees (0-360) */
-  hueShiftDegrees: number;
 }
 
 // ============================================================================
@@ -235,8 +229,6 @@ export const DEFAULT_EFFECTS_CONFIG: EffectsConfig = {
   innerGlowColor: '#C9A227', // Gold accent
   innerGlowRadius: 10,
   innerGlowIntensity: 30,
-  hueShiftEnabled: false,
-  hueShiftDegrees: 0,
 };
 
 /**
@@ -402,8 +394,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#C9A227',
         innerGlowRadius: 10,
         innerGlowIntensity: 30,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: DEFAULT_LIGHT_CONFIG,
     },
@@ -441,8 +431,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#C9A227',
         innerGlowRadius: 10,
         innerGlowIntensity: 30,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: { brightness: 95, contrast: 110, saturation: 90, vibrance: 100 },
     },
@@ -480,8 +468,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#FF4500',
         innerGlowRadius: 8,
         innerGlowIntensity: 20,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: { brightness: 90, contrast: 115, saturation: 120, vibrance: 110 },
     },
@@ -519,8 +505,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#4169E1',
         innerGlowRadius: 12,
         innerGlowIntensity: 15,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: { brightness: 95, contrast: 105, saturation: 110, vibrance: 105 },
     },
@@ -558,8 +542,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#FFD700',
         innerGlowRadius: 15,
         innerGlowIntensity: 25,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: { brightness: 105, contrast: 100, saturation: 115, vibrance: 110 },
     },
@@ -597,8 +579,6 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#228B22',
         innerGlowRadius: 10,
         innerGlowIntensity: 18,
-        hueShiftEnabled: false,
-        hueShiftDegrees: 0,
       },
       light: { brightness: 90, contrast: 110, saturation: 100, vibrance: 105 },
     },

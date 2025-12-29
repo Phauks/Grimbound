@@ -1,0 +1,277 @@
+/* ============================================
+   FontManagerPanel Component Styles
+
+   Settings panel for managing custom fonts.
+   ============================================ */
+
+/* ============================================
+   Container
+   ============================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.count {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: var(--border-radius);
+}
+
+/* ============================================
+   Description
+   ============================================ */
+
+.description {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ============================================
+   Upload Area
+   ============================================ */
+
+.uploadArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  padding: var(--spacing-lg);
+  background: var(--bg-input);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.uploadArea:hover:not(.uploadAreaDisabled) {
+  border-color: var(--color-accent);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+.uploadArea:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.uploadAreaDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uploadContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  text-align: center;
+}
+
+.uploadIcon {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.uploadContent > span:not(.uploadIcon):not(.uploadHint) {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.uploadHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.uploadingText {
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* ============================================
+   Error Message
+   ============================================ */
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--border-radius);
+  color: #e74c3c;
+  font-size: 0.8125rem;
+}
+
+.errorIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Font List
+   ============================================ */
+
+.fontList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.emptyState {
+  margin: 0;
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ============================================
+   Font Item
+   ============================================ */
+
+.fontItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-fast);
+}
+
+.fontItem:last-child {
+  border-bottom: none;
+}
+
+.fontItem:hover {
+  background: var(--bg-hover);
+}
+
+.fontInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fontPreview {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fontMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variableBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.weightInfo {
+  color: var(--text-muted);
+  font-size: 0.625rem;
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Storage Info
+   ============================================ */
+
+.storageInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--spacing-xs);
+}
+
+.storageText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

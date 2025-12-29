@@ -53,9 +53,9 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
   shouldTrigger(context: PreRenderContext): boolean {
     return (
       context.type === 'characters-hover' &&
-      context.characters != null &&
+      context.characters !== null &&
       context.characters.length > 0 &&
-      context.generationOptions != null
+      context.generationOptions !== null
     );
   }
 
@@ -255,7 +255,7 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash &= hash; // Convert to 32-bit integer
     }
     return hash.toString(36);
   }

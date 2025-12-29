@@ -111,18 +111,14 @@ export const CONFIG: Config = {
     SAVE_REMINDERS_SEPARATELY: true,
   },
 
-  // Batch Generation Settings
+  // Token Generation Settings
   GENERATION: {
-    // Adaptive batch size based on CPU cores
-    // Formula: min(15, max(4, cores))
-    // 2-core: 4 parallel, 4-core: 4, 8-core: 8, 16-core: 15 (capped)
-    // Higher parallelism improves throughput on modern browsers
-    BATCH_SIZE: Math.min(
-      15,
-      Math.max(4, typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 4)
-    ),
-    MIN_BATCH_SIZE: 4,
-    MAX_BATCH_SIZE: 15,
+    // NOTE: Batching is DISABLED for token generation as of performance optimization.
+    // All character/reminder tokens now generate via unbounded Promise.all (like jinx tokens).
+    // These values are kept for backward compatibility with types but are not used.
+    BATCH_SIZE: Infinity,
+    MIN_BATCH_SIZE: 1,
+    MAX_BATCH_SIZE: Infinity,
   },
 
   // Data Synchronization Settings
@@ -164,6 +160,16 @@ export const CONFIG: Config = {
   // API Endpoints
   API: {
     CORS_PROXY: 'https://cors-header-proxy.infiniteinstants.com/?', // Cloudflare Workers CORS proxy
+  },
+
+  // Google Fonts API Configuration
+  // API Key is loaded from environment variable (set in GitHub secrets)
+  // Falls back to static font catalog if not provided
+  // Google Fonts API is FREE - no billing charges
+  GOOGLE_FONTS: {
+    API_KEY: import.meta.env.VITE_GOOGLE_FONTS_API_KEY || '',
+    API_ENDPOINT: 'https://www.googleapis.com/webfonts/v1/webfonts',
+    CATALOG_CACHE_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
   },
 
   // Asset Paths (served from publicDir 'assets')

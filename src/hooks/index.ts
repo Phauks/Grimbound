@@ -46,11 +46,14 @@ export {
   type UseCharacterEditorResult,
   type UseCharacterOperationsOptions,
   type UseCharacterOperationsResult,
+  type UseJinxOperationsOptions,
+  type UseJinxOperationsResult,
   useBackgroundImageUrl,
   useCharacterDownloads,
   useCharacterEditor,
   useCharacterImageResolver,
   useCharacterOperations,
+  useJinxOperations,
 } from './characters/index.js';
 // ============================================================================
 // Editor Hooks
@@ -75,6 +78,26 @@ export {
   useExportDownloads,
   useScriptPdfDownloads,
 } from './export/index.js';
+// ============================================================================
+// Font Hooks
+// ============================================================================
+export {
+  type FontOption,
+  type SourceTab,
+  type UseFontFilteringOptions,
+  type UseFontFilteringResult,
+  type UseFontOperationsOptions,
+  type UseFontOperationsResult,
+  type UseFontOptionsResult,
+  useAbilityTextFontOptions,
+  useCharacterNameFontOptions,
+  useFontFiltering,
+  useFontOperations,
+  useFontOptions,
+  useMetaFontOptions,
+  useReminderTextFontOptions,
+  type ViewMode,
+} from './fonts/index.js';
 // ============================================================================
 // Project Hooks
 // ============================================================================
@@ -135,6 +158,8 @@ export {
 // UI Hooks
 // ============================================================================
 export {
+  addRecentColor,
+  getRecentColors,
   type PanelPosition,
   type UseDraggableListOptions,
   type UseDraggableListResult,
@@ -142,6 +167,8 @@ export {
   type UseDrawerStateReturn,
   type UseExpandablePanelOptions,
   type UseExpandablePanelReturn,
+  type UseRecentColorsOptions,
+  type UseRecentColorsResult,
   type UseSelectionOptions,
   type UseSelectionReturn,
   useAutoResizeTextarea,
@@ -152,6 +179,7 @@ export {
   useFilters,
   useIntersectionObserver,
   useModalBehavior,
+  useRecentColors,
   useSelection,
   useUndoStack,
 } from './ui/index.js';

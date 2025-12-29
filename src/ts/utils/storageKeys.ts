@@ -20,12 +20,16 @@ export const STORAGE_KEYS = {
   CUSTOM_THEMES: 'clocktower_custom_themes',
   /** Auto-save enabled preference */
   AUTO_SAVE_ENABLED: 'clocktower_auto_save_enabled',
-  /** Legacy key for preset migration */
-  LEGACY_PRESETS: 'bloodOnTheClockTower_presets',
   /** Cache system log level */
   CACHE_LOG_LEVEL: 'cache:logLevel',
   /** Auto-save telemetry data */
   AUTO_SAVE_TELEMETRY: 'botc-autosave-telemetry',
+  /** Recently used colors in color pickers */
+  RECENT_COLORS: 'clocktower_recent_colors',
+  /** Token grid section collapse states */
+  TOKEN_SECTION_CHARACTERS_OPEN: 'clocktower_token_section_characters_open',
+  TOKEN_SECTION_REMINDERS_OPEN: 'clocktower_token_section_reminders_open',
+  TOKEN_SECTION_META_OPEN: 'clocktower_token_section_meta_open',
 } as const;
 
 /**

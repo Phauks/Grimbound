@@ -2,9 +2,10 @@ import { useTokenContext } from '@/contexts/TokenContext';
 import styles from '@/styles/components/tokens/TokenStats.module.css';
 import { TEAM_LABELS } from '@/ts/config';
 import { calculateTokenCounts } from '@/ts/data/characterUtils';
+import { calculateTokenCountsByType } from '@/ts/generation/index.js';
 
 export function TokenStats() {
-  const { characters, tokens } = useTokenContext();
+  const { characters, generationOptions, scriptMeta } = useTokenContext();
 
   // Don't show stats if no characters
   if (characters.length === 0) {
@@ -13,14 +14,10 @@ export function TokenStats() {
 
   const counts = calculateTokenCounts(characters);
 
-  // Count meta tokens from the actual generated tokens
-  const metaTokenCount = tokens.filter(
-    (t) =>
-      t.type === 'script-name' ||
-      t.type === 'almanac' ||
-      t.type === 'pandemonium' ||
-      t.type === 'bootlegger'
-  ).length;
+  // Calculate expected meta token count from generation options (not from generated tokens)
+  // This ensures the count is known upfront and doesn't increment during generation
+  const tokenCounts = calculateTokenCountsByType(characters, generationOptions, scriptMeta);
+  const metaTokenCount = tokenCounts.meta;
 
   return (
     <div className={styles.container}>

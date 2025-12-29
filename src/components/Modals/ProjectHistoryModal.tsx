@@ -240,97 +240,125 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
 
         {/* Right Panel: Details/Diff */}
         <div className={styles.details}>
-          {!selectedItem ? (
-            <div className={styles.emptyDetails}>
-              <p>Select an item from the timeline to view details</p>
-            </div>
-          ) : (
-            <div className={styles.detailsContent}>
-              <div className={styles.detailsHeader}>
-                <h3>
-                  {selectedItem.type === 'version'
-                    ? `Version ${selectedItem.data.versionNumber}`
-                    : 'Auto-Save Snapshot'}
-                </h3>
-                <p className={styles.detailsTimestamp}>{formatTimestamp(selectedItem.timestamp)}</p>
-              </div>
+          <DetailsPanel selectedItem={selectedItem} selectedDiff={selectedDiff} />
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
-              {/* Release Notes (versions only) */}
-              {selectedItem.type === 'version' && selectedItem.data.releaseNotes && (
-                <div className={styles.releaseNotes}>
-                  <h4>Release Notes</h4>
-                  <p>{selectedItem.data.releaseNotes}</p>
+// ==========================================================================
+// Details Panel - Shows selected item details and diff
+// ==========================================================================
+
+interface DetailsPanelProps {
+  selectedItem: TimelineItem | null;
+  selectedDiff: ReturnType<typeof calculateProjectDiff> | null;
+}
+
+function DetailsPanel({ selectedItem, selectedDiff }: DetailsPanelProps) {
+  if (!selectedItem) {
+    return (
+      <div className={styles.emptyDetails}>
+        <p>Select an item from the timeline to view details</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.detailsContent}>
+      <div className={styles.detailsHeader}>
+        <h3>
+          {selectedItem.type === 'version'
+            ? `Version ${selectedItem.data.versionNumber}`
+            : 'Auto-Save Snapshot'}
+        </h3>
+        <p className={styles.detailsTimestamp}>{formatTimestamp(selectedItem.timestamp)}</p>
+      </div>
+
+      {/* Release Notes (versions only) */}
+      {selectedItem.type === 'version' && selectedItem.data.releaseNotes && (
+        <div className={styles.releaseNotes}>
+          <h4>Release Notes</h4>
+          <p>{selectedItem.data.releaseNotes}</p>
+        </div>
+      )}
+
+      {/* Diff Summary */}
+      {selectedDiff && <DiffSummarySection diff={selectedDiff} />}
+    </div>
+  );
+}
+
+// ==========================================================================
+// Diff Summary Section
+// ==========================================================================
+
+interface DiffSummarySectionProps {
+  diff: ReturnType<typeof calculateProjectDiff>;
+}
+
+function DiffSummarySection({ diff }: DiffSummarySectionProps) {
+  const hasCharacterChanges =
+    diff.characters.added.length > 0 ||
+    diff.characters.removed.length > 0 ||
+    diff.characters.modified.length > 0;
+
+  return (
+    <div className={styles.diff}>
+      <h4>Changes from Current State</h4>
+      {diff.hasChanges ? (
+        <>
+          <p className={styles.diffSummary}>{getDiffSummary(diff)}</p>
+
+          {/* Character Changes */}
+          {hasCharacterChanges && (
+            <div className={styles.diffSection}>
+              <h5>Characters</h5>
+              {diff.characters.added.length > 0 && (
+                <div className={styles.diffItem}>
+                  <span className={styles.diffLabel}>Added:</span>
+                  <span>{diff.characters.added.map((c) => c.name).join(', ')}</span>
                 </div>
               )}
-
-              {/* Diff Summary */}
-              {selectedDiff && (
-                <div className={styles.diff}>
-                  <h4>Changes from Current State</h4>
-                  {!selectedDiff.hasChanges ? (
-                    <p className={styles.noChanges}>✓ Identical to current state</p>
-                  ) : (
-                    <>
-                      <p className={styles.diffSummary}>{getDiffSummary(selectedDiff)}</p>
-
-                      {/* Character Changes */}
-                      {(selectedDiff.characters.added.length > 0 ||
-                        selectedDiff.characters.removed.length > 0 ||
-                        selectedDiff.characters.modified.length > 0) && (
-                        <div className={styles.diffSection}>
-                          <h5>Characters</h5>
-                          {selectedDiff.characters.added.length > 0 && (
-                            <div className={styles.diffItem}>
-                              <span className={styles.diffLabel}>Added:</span>
-                              <span>
-                                {selectedDiff.characters.added.map((c) => c.name).join(', ')}
-                              </span>
-                            </div>
-                          )}
-                          {selectedDiff.characters.removed.length > 0 && (
-                            <div className={styles.diffItem}>
-                              <span className={styles.diffLabel}>Removed:</span>
-                              <span>
-                                {selectedDiff.characters.removed.map((c) => c.name).join(', ')}
-                              </span>
-                            </div>
-                          )}
-                          {selectedDiff.characters.modified.length > 0 && (
-                            <div className={styles.diffItem}>
-                              <span className={styles.diffLabel}>Modified:</span>
-                              <span>
-                                {selectedDiff.characters.modified.length} character
-                                {selectedDiff.characters.modified.length !== 1 ? 's' : ''}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Script Meta Changes */}
-                      {selectedDiff.scriptMeta.changed && (
-                        <div className={styles.diffSection}>
-                          <h5>Script Metadata</h5>
-                          {selectedDiff.scriptMeta.fields.name && (
-                            <div className={styles.diffItem}>
-                              <span className={styles.diffLabel}>Name:</span>
-                              <span>
-                                {selectedDiff.scriptMeta.fields.name.old || '(none)'} →{' '}
-                                {selectedDiff.scriptMeta.fields.name.new || '(none)'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
+              {diff.characters.removed.length > 0 && (
+                <div className={styles.diffItem}>
+                  <span className={styles.diffLabel}>Removed:</span>
+                  <span>{diff.characters.removed.map((c) => c.name).join(', ')}</span>
+                </div>
+              )}
+              {diff.characters.modified.length > 0 && (
+                <div className={styles.diffItem}>
+                  <span className={styles.diffLabel}>Modified:</span>
+                  <span>
+                    {diff.characters.modified.length} character
+                    {diff.characters.modified.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
               )}
             </div>
           )}
-        </div>
-      </div>
-    </Modal>
+
+          {/* Script Meta Changes */}
+          {diff.scriptMeta.changed && (
+            <div className={styles.diffSection}>
+              <h5>Script Metadata</h5>
+              {diff.scriptMeta.fields.name && (
+                <div className={styles.diffItem}>
+                  <span className={styles.diffLabel}>Name:</span>
+                  <span>
+                    {diff.scriptMeta.fields.name.old || '(none)'} →{' '}
+                    {diff.scriptMeta.fields.name.new || '(none)'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className={styles.noChanges}>✓ Identical to current state</p>
+      )}
+    </div>
   );
 }
 

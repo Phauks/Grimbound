@@ -62,10 +62,10 @@ export function AutoSaveIndicator() {
     lines.push(`Status: ${statusInfo.label}`);
 
     // Helpful message when no project is active
-    if (!isAutoSaveEnabled) {
-      lines.push('Create or load a project to enable auto-save');
-    } else {
+    if (isAutoSaveEnabled) {
       lines.push('Auto-save: Enabled (saves every 2 seconds)');
+    } else {
+      lines.push('Create or load a project to enable auto-save');
     }
 
     // Last saved

@@ -397,7 +397,7 @@ export const ProjectSettingsBox = memo(function ProjectSettingsBox({
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={!isEditing || isLoading}
-          className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+          className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
         />
       </div>
 
@@ -412,7 +412,7 @@ export const ProjectSettingsBox = memo(function ProjectSettingsBox({
           disabled={!isEditing || isLoading}
           rows={2}
           placeholder="Project description..."
-          className={`${styles.textarea} ${!isEditing ? styles.inputDisabled : ''}`}
+          className={`${styles.textarea} ${isEditing ? '' : styles.inputDisabled}`}
         />
       </div>
 
@@ -478,7 +478,7 @@ export const ProjectSettingsBox = memo(function ProjectSettingsBox({
                 onChange={(e) => optionalFields.setValue(field.key, e.target.value)}
                 disabled={!isEditing || isLoading}
                 placeholder={field.placeholder}
-                className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+                className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
               />
             ) : (
               <textarea
@@ -488,7 +488,7 @@ export const ProjectSettingsBox = memo(function ProjectSettingsBox({
                 disabled={!isEditing || isLoading}
                 rows={2}
                 placeholder={field.placeholder}
-                className={`${styles.textarea} ${!isEditing ? styles.inputDisabled : ''}`}
+                className={`${styles.textarea} ${isEditing ? '' : styles.inputDisabled}`}
               />
             )}
           </div>
@@ -571,7 +571,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
             onChange={(e) => onMetaFieldChange('name', e.target.value)}
             disabled={!isEditing || isLoading}
             placeholder="Script name"
-            className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+            className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
           />
         </div>
         <div className={styles.formGroup}>
@@ -585,7 +585,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
             onChange={(e) => onMetaFieldChange('author', e.target.value)}
             disabled={!isEditing || isLoading}
             placeholder="Author"
-            className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+            className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
           />
         </div>
         <div className={styles.formGroup}>
@@ -599,7 +599,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
             onChange={(e) => onMetaFieldChange('version', e.target.value)}
             disabled={!isEditing || isLoading}
             placeholder="1.0.0"
-            className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+            className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
           />
         </div>
         <div className={styles.formGroup}>
@@ -613,7 +613,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
             onChange={(e) => onMetaFieldChange('logo', e.target.value)}
             disabled={!isEditing || isLoading}
             placeholder="https://..."
-            className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+            className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
           />
         </div>
         <div className={styles.formGroupFull}>
@@ -627,7 +627,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
             onChange={(e) => onMetaFieldChange('almanac', e.target.value)}
             disabled={!isEditing || isLoading}
             placeholder="https://..."
-            className={`${styles.input} ${!isEditing ? styles.inputDisabled : ''}`}
+            className={`${styles.input} ${isEditing ? '' : styles.inputDisabled}`}
           />
         </div>
       </div>

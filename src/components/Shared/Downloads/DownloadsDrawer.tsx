@@ -19,6 +19,34 @@ import styles from '@/styles/components/shared/DownloadsDrawer.module.css';
 import { downloadFile } from '@/ts/utils/imageUtils';
 
 /**
+ * Creates a ZIP bundle from bundleable download items
+ */
+async function createBundledZip(items: DownloadItem[]): Promise<Blob> {
+  const zip = new JSZip();
+
+  for (const item of items) {
+    const result = await item.getBlob?.();
+    if (result) {
+      const bundleItems: BundleData[] = Array.isArray(result) ? result : [result];
+      for (const { blob, filename } of bundleItems) {
+        zip.file(filename, blob);
+      }
+    }
+  }
+
+  return zip.generateAsync({ type: 'blob' });
+}
+
+/**
+ * Executes download actions sequentially as a fallback
+ */
+async function executeDownloadsFallback(items: DownloadItem[]): Promise<void> {
+  for (const item of items) {
+    await item.action();
+  }
+}
+
+/**
  * Individual download item card
  */
 const DownloadItemCard = memo(function DownloadItemCard({
@@ -81,32 +109,15 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
 
     setIsDownloadingAll(true);
     try {
-      // Check if all items support getBlob for bundling
       const bundleableItems = enabledDownloads.filter((d) => d.getBlob);
+      const allItemsAreBundleable =
+        bundleableItems.length === enabledDownloads.length && bundleableItems.length > 0;
 
-      if (bundleableItems.length === enabledDownloads.length && bundleableItems.length > 0) {
-        // All items support bundling - create a combined ZIP
-        const zip = new JSZip();
-
-        for (const item of bundleableItems) {
-          const result = await item.getBlob?.();
-          if (result) {
-            // Handle both single and array results
-            const items: BundleData[] = Array.isArray(result) ? result : [result];
-            for (const { blob, filename } of items) {
-              zip.file(filename, blob);
-            }
-          }
-        }
-
-        // Generate and download the combined ZIP
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+      if (allItemsAreBundleable) {
+        const zipBlob = await createBundledZip(bundleableItems);
         downloadFile(zipBlob, 'downloads.zip');
       } else {
-        // Fallback: execute each download action separately
-        for (const item of enabledDownloads) {
-          await item.action();
-        }
+        await executeDownloadsFallback(enabledDownloads);
       }
     } finally {
       setIsDownloadingAll(false);
@@ -136,9 +147,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
   }, [closeDrawer, clearCloseTimeout]);
 
   // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => clearCloseTimeout();
-  }, [clearCloseTimeout]);
+  useEffect(() => () => clearCloseTimeout(), [clearCloseTimeout]);
 
   // Handle escape key to close
   useEffect(() => {
@@ -230,7 +239,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
           {hasMultipleDownloads && (
             <button
               type="button"
-              className={`${styles.downloadItem} ${styles.downloadAll} ${!hasEnabledDownloads ? styles.disabled : ''} ${isDownloadingAll ? styles.executing : ''}`}
+              className={`${styles.downloadItem} ${styles.downloadAll} ${hasEnabledDownloads ? '' : styles.disabled} ${isDownloadingAll ? styles.executing : ''}`}
               onClick={handleDownloadAll}
               disabled={!hasEnabledDownloads || isDownloadingAll}
             >

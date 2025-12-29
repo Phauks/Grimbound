@@ -416,25 +416,7 @@ export function extractScriptMeta(scriptData: ScriptEntry[]): ScriptMeta | null 
 
   for (const entry of scriptData) {
     if (isScriptMeta(entry)) {
-      const meta = { ...entry };
-
-      // Backward compatibility: convert old bootlegger string to array format
-      // Old format: bootlegger: "Custom ability text"
-      // New format: bootlegger: ["Custom ability text"]
-      // Note: Type assertion needed because old JSON data may have string format
-      const bootleggerValue = meta.bootlegger as string | string[] | undefined;
-      if (bootleggerValue !== undefined) {
-        if (typeof bootleggerValue === 'string') {
-          meta.bootlegger = bootleggerValue.trim() ? [bootleggerValue] : [];
-          logger.debug('ScriptParser', 'Migrated bootlegger from string to array format');
-        } else if (!Array.isArray(bootleggerValue)) {
-          // Invalid format, reset to empty array
-          meta.bootlegger = [];
-          logger.warn('ScriptParser', 'Invalid bootlegger format, reset to empty array');
-        }
-      }
-
-      return meta;
+      return { ...entry };
     }
   }
 

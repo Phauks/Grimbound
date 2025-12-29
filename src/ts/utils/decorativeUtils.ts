@@ -19,6 +19,88 @@ const DEFAULTS = {
   TEXT_COLOR: '#FFFFFF',
 } as const;
 
+/** Default icon settings for reminder and meta tokens */
+const DEFAULT_ICON_SETTINGS = {
+  scale: DEFAULTS.ICON_SCALE,
+  offsetX: DEFAULTS.ICON_OFFSET,
+  offsetY: DEFAULTS.ICON_OFFSET,
+} as const;
+
+/** Build font spacing settings from decoratives and global options */
+function buildFontSpacing(
+  d: DecorativeOverrides,
+  g: GenerationOptions
+): GenerationOptions['fontSpacing'] {
+  return {
+    characterName: d.nameFontSpacing ?? g.fontSpacing?.characterName ?? DEFAULTS.FONT_SPACING,
+    characterText:
+      d.abilityTextFontSpacing ?? g.fontSpacing?.characterText ?? DEFAULTS.FONT_SPACING,
+    reminderText: g.fontSpacing?.reminderText ?? DEFAULTS.FONT_SPACING,
+    metaName: g.fontSpacing?.metaName ?? DEFAULTS.FONT_SPACING,
+    metaText: g.fontSpacing?.metaText ?? DEFAULTS.FONT_SPACING,
+  };
+}
+
+/** Build text shadow settings from decoratives and global options */
+function buildTextShadow(
+  d: DecorativeOverrides,
+  g: GenerationOptions
+): GenerationOptions['textShadow'] {
+  return {
+    characterName: d.nameTextShadow ?? g.textShadow?.characterName ?? DEFAULTS.NAME_SHADOW_BLUR,
+    characterText:
+      d.abilityTextShadow ?? g.textShadow?.characterText ?? DEFAULTS.ABILITY_SHADOW_BLUR,
+    reminderText: g.textShadow?.reminderText ?? DEFAULTS.NAME_SHADOW_BLUR,
+    metaName: g.textShadow?.metaName ?? DEFAULTS.NAME_SHADOW_BLUR,
+    metaText: g.textShadow?.metaText ?? DEFAULTS.NAME_SHADOW_BLUR,
+  };
+}
+
+/** Build icon settings from decoratives and global options */
+function buildIconSettings(
+  d: DecorativeOverrides,
+  g: GenerationOptions
+): GenerationOptions['iconSettings'] {
+  return {
+    character: {
+      scale: d.iconScale ?? g.iconSettings?.character?.scale ?? DEFAULTS.ICON_SCALE,
+      offsetX: d.iconOffsetX ?? g.iconSettings?.character?.offsetX ?? DEFAULTS.ICON_OFFSET,
+      offsetY: d.iconOffsetY ?? g.iconSettings?.character?.offsetY ?? DEFAULTS.ICON_OFFSET,
+    },
+    reminder: g.iconSettings?.reminder ?? DEFAULT_ICON_SETTINGS,
+    meta: g.iconSettings?.meta ?? DEFAULT_ICON_SETTINGS,
+  };
+}
+
+/** Build accent settings from decoratives and global options */
+function buildAccentSettings(
+  d: DecorativeOverrides,
+  g: GenerationOptions
+): Pick<
+  GenerationOptions,
+  | 'accentEnabled'
+  | 'accentGeneration'
+  | 'maximumAccents'
+  | 'accentPopulationProbability'
+  | 'accentArcSpan'
+  | 'accentSlots'
+  | 'enableLeftAccent'
+  | 'enableRightAccent'
+  | 'sideAccentProbability'
+> {
+  return {
+    accentEnabled: d.accentEnabled ?? g.accentEnabled,
+    accentGeneration: d.accentGeneration ?? g.accentGeneration,
+    maximumAccents: d.maximumAccents ?? g.maximumAccents,
+    accentPopulationProbability: d.accentPopulationProbability ?? g.accentPopulationProbability,
+    accentArcSpan: d.accentArcSpan ?? g.accentArcSpan,
+    accentSlots: d.accentSlots ?? g.accentSlots,
+    enableLeftAccent: d.enableLeftAccent ?? g.enableLeftAccent,
+    enableRightAccent: d.enableRightAccent ?? g.enableRightAccent,
+    sideAccentProbability: d.sideAccentProbability ?? g.sideAccentProbability,
+  };
+}
+
 /**
  * Creates an effective GenerationOptions object by merging global options
  * with character-specific decorative overrides.
@@ -49,6 +131,9 @@ export function createEffectiveOptions(
   const d = decoratives;
   const g = globalOptions;
 
+  // Determine setup style: hidden if hideSetupOverlay is true
+  const setupStyle = d.hideSetupOverlay === true ? '' : (d.setupStyle ?? g.setupStyle);
+
   return {
     ...globalOptions,
     // Background
@@ -56,52 +141,18 @@ export function createEffectiveOptions(
     // Font
     characterNameFont: d.nameFont ?? g.characterNameFont,
     characterNameColor: d.nameColor ?? g.characterNameColor,
-    fontSpacing: {
-      characterName: d.nameFontSpacing ?? g.fontSpacing?.characterName ?? DEFAULTS.FONT_SPACING,
-      abilityText: d.abilityTextFontSpacing ?? g.fontSpacing?.abilityText ?? DEFAULTS.FONT_SPACING,
-      reminderText: g.fontSpacing?.reminderText ?? DEFAULTS.FONT_SPACING,
-      metaText: g.fontSpacing?.metaText ?? DEFAULTS.FONT_SPACING,
-    },
-    textShadow: {
-      characterName: d.nameTextShadow ?? g.textShadow?.characterName ?? DEFAULTS.NAME_SHADOW_BLUR,
-      abilityText: d.abilityTextShadow ?? g.textShadow?.abilityText ?? DEFAULTS.ABILITY_SHADOW_BLUR,
-      reminderText: g.textShadow?.reminderText ?? DEFAULTS.NAME_SHADOW_BLUR,
-      metaText: g.textShadow?.metaText ?? DEFAULTS.NAME_SHADOW_BLUR,
-    },
+    fontSpacing: buildFontSpacing(d, g),
+    textShadow: buildTextShadow(d, g),
     // Icon
-    iconSettings: {
-      character: {
-        scale: d.iconScale ?? g.iconSettings?.character?.scale ?? DEFAULTS.ICON_SCALE,
-        offsetX: d.iconOffsetX ?? g.iconSettings?.character?.offsetX ?? DEFAULTS.ICON_OFFSET,
-        offsetY: d.iconOffsetY ?? g.iconSettings?.character?.offsetY ?? DEFAULTS.ICON_OFFSET,
-      },
-      reminder: g.iconSettings?.reminder ?? {
-        scale: DEFAULTS.ICON_SCALE,
-        offsetX: DEFAULTS.ICON_OFFSET,
-        offsetY: DEFAULTS.ICON_OFFSET,
-      },
-      meta: g.iconSettings?.meta ?? {
-        scale: DEFAULTS.ICON_SCALE,
-        offsetX: DEFAULTS.ICON_OFFSET,
-        offsetY: DEFAULTS.ICON_OFFSET,
-      },
-    },
+    iconSettings: buildIconSettings(d, g),
     // Ability text
     displayAbilityText: d.displayAbilityText ?? g.displayAbilityText,
     abilityTextFont: d.abilityTextFont ?? g.abilityTextFont,
     abilityTextColor: d.abilityTextColor ?? g.abilityTextColor,
-    // Setup - apply hideSetupOverlay by setting setupStyle to empty string when hidden
-    setupStyle: d.hideSetupOverlay === true ? '' : (d.setupStyle ?? g.setupStyle),
+    // Setup
+    setupStyle,
     // Accents
-    accentEnabled: d.accentEnabled ?? g.accentEnabled,
-    accentGeneration: d.accentGeneration ?? g.accentGeneration,
-    maximumAccents: d.maximumAccents ?? g.maximumAccents,
-    accentPopulationProbability: d.accentPopulationProbability ?? g.accentPopulationProbability,
-    accentArcSpan: d.accentArcSpan ?? g.accentArcSpan,
-    accentSlots: d.accentSlots ?? g.accentSlots,
-    enableLeftAccent: d.enableLeftAccent ?? g.enableLeftAccent,
-    enableRightAccent: d.enableRightAccent ?? g.enableRightAccent,
-    sideAccentProbability: d.sideAccentProbability ?? g.sideAccentProbability,
+    ...buildAccentSettings(d, g),
   };
 }
 

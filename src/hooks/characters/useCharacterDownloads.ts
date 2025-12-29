@@ -147,7 +147,7 @@ export function useCharacterDownloads({
 
   // Download reminder tokens only
   const handleDownloadReminders = useCallback(async () => {
-    if (!displayReminderTokens.length) {
+    if (displayReminderTokens.length === 0) {
       addToast('No reminder tokens to download', 'warning');
       return;
     }
@@ -208,7 +208,7 @@ export function useCharacterDownloads({
           return { blob, filename: displayCharacterToken.filename };
         },
         disabled: !(hasCharacter && hasCharacterToken),
-        disabledReason: !hasCharacter ? 'Select a character' : 'Generate token first',
+        disabledReason: hasCharacter ? 'Generate token first' : 'Select a character',
         category: 'character',
         sourceView: 'characters',
       },
@@ -238,7 +238,7 @@ export function useCharacterDownloads({
           return results;
         },
         disabled: !(hasCharacter && hasReminderTokens),
-        disabledReason: !hasCharacter ? 'Select a character' : 'No reminder tokens',
+        disabledReason: hasCharacter ? 'No reminder tokens' : 'Select a character',
         category: 'character',
         sourceView: 'characters',
       },

@@ -49,10 +49,7 @@ export {
 } from './ModalBase';
 // Options Panel Components (from Options/ subdirectory)
 export { AdditionalOptionsPanel } from './Options/AdditionalOptionsPanel';
-export { AdditionalTokensPanel } from './Options/AdditionalTokensPanel';
 export { AppearancePanel } from './Options/AppearancePanel';
-export { CharacterTab } from './Options/CharacterTab';
-export { OptionsPanel } from './Options/OptionsPanel';
 export { ReminderTab } from './Options/ReminderTab';
 export {
   AccentSettingsSelector,
@@ -64,6 +61,11 @@ export {
   type AssetPreviewSelectorProps,
 } from './Selectors/AssetPreviewSelector';
 export {
+  type AllBackgroundStyles,
+  BackgroundStyleSelector,
+  type BackgroundStyleSelectorProps,
+} from './Selectors/BackgroundStyleSelector';
+export {
   type ColorPreset,
   ColorPreviewSelector,
   type ColorPreviewSelectorProps,
@@ -73,13 +75,15 @@ export {
   type FontPreviewSelectorProps,
 } from './Selectors/FontPreviewSelector';
 export {
-  type FontOption,
+  type AllFontSettings,
   type FontSettings,
   FontSettingsSelector,
   type FontSettingsSelectorProps,
+  type TokenType,
 } from './Selectors/FontSettingsSelector';
 export { GenerateVariantsSelector } from './Selectors/GenerateVariantsSelector';
 export {
+  type AllIconSettings,
   type IconSettings,
   IconSettingsSelector,
   type IconSettingsSelectorProps,
@@ -101,6 +105,11 @@ export {
   type ToggleOption,
 } from './Selectors/SettingsSelectorBase';
 export { SetupSettingsSelector } from './Selectors/SetupSettingsSelector';
+export {
+  type SingleIconSettings,
+  SingleIconSettingsSelector,
+  type SingleIconSettingsSelectorProps,
+} from './Selectors/SingleIconSettingsSelector';
 export {
   type BoxMode,
   type PreviewConfig,

@@ -38,7 +38,7 @@ export class ProjectPreRenderStrategy implements IPreRenderStrategy {
 
   shouldTrigger(context: PreRenderContext): boolean {
     return (
-      context.type === 'project-hover' && context.projectId != null && context.tokens.length > 0
+      context.type === 'project-hover' && context.projectId !== null && context.tokens.length > 0
     );
   }
 

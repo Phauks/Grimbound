@@ -104,7 +104,7 @@ export function SyncProgressBar() {
         <div className={styles.barContainer}>
           <div
             className={`${styles.bar} ${isIndeterminate ? styles.indeterminate : ''}`}
-            style={!isIndeterminate ? { width: `${percentage}%` } : undefined}
+            style={isIndeterminate ? undefined : { width: `${percentage}%` }}
             role="progressbar"
             aria-valuenow={percentage}
             aria-valuemin={0}

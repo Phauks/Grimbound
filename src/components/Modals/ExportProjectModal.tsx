@@ -174,7 +174,7 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
             onChange={(e) =>
               setOptions((prev) => ({ ...prev, includeCustomIcons: e.target.checked }))
             }
-            disabled={isExporting || !project.state.customIcons?.length}
+            disabled={isExporting || project.state.customIcons?.length === 0}
           />
           <div className={styles.optionContent}>
             <span className={styles.optionLabel}>Include Custom Icons</span>

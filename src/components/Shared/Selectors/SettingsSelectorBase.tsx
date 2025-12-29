@@ -46,6 +46,8 @@ export interface SettingsSelectorBaseProps {
   className?: string;
   /** Children rendered after the container (e.g., portal panels) */
   children?: React.ReactNode;
+  /** Inline children rendered inside the container (e.g., sub-options like sliders) */
+  inlineChildren?: React.ReactNode;
 }
 
 // ============================================================================
@@ -68,6 +70,7 @@ export const SettingsSelectorBase = memo(
       onKeyDown,
       className,
       children,
+      inlineChildren,
     },
     ref
   ) {
@@ -114,6 +117,9 @@ export const SettingsSelectorBase = memo(
               {isExpanded ? 'Done' : actionLabel}
             </button>
           </div>
+
+          {/* Inline Children (sub-options like sliders) */}
+          {inlineChildren}
         </section>
 
         {/* Children (portal panels, etc.) */}
@@ -236,7 +242,7 @@ export const EnableToggle = memo(function EnableToggle({
       {/* Off button first (left side) */}
       <button
         type="button"
-        className={`${styles.toggleButton} ${!enabled ? styles.toggleButtonActive : ''}`}
+        className={`${styles.toggleButton} ${enabled ? '' : styles.toggleButtonActive}`}
         onClick={() => onChange(false)}
         disabled={disabled}
       >

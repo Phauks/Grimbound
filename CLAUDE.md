@@ -33,8 +33,11 @@ npx biome check src/
 - Fix ALL errors and warnings before finishing
 - No exceptions - failing biome check = incomplete work
 - Use `--write` flag for auto-fixable issues: `npx biome check src/ --write`
+- Use `--write --unsafe` for safe "unsafe" fixes like unused parameter prefixing
 
-**Work is NOT complete until `biome check` passes with zero errors.**
+**Work is NOT complete until `biome check` passes with zero errors and zero warnings.**
+
+**Never use `// biome-ignore` comments to suppress warnings.** Fix the underlying issue instead.
 
 ---
 
@@ -126,6 +129,13 @@ import styles from '@/styles/components/Button.module.css';
 
 **Hacky workarounds are not real solutions.** If it requires type casting to access private members, `// @ts-ignore`, `as unknown as T`, or setTimeout to "fix" race conditions - find the proper architectural solution instead. Hacks create technical debt and break when assumptions change.
 
+**Biome warnings are not optional.** Never suppress warnings with:
+- `// biome-ignore` comments
+- Prefixing unused parameters with `_` when they should be removed
+- Leaving complexity warnings unaddressed in new code
+
+For **existing** complex functions (`noExcessiveCognitiveComplexity`), refactoring is preferred but may be deferred if the function is stable and well-tested. New code must not exceed complexity limits.
+
 ---
 
 ## UI Decision Communication
@@ -138,7 +148,7 @@ import styles from '@/styles/components/Button.module.css';
 
 Before committing, verify:
 
-- [ ] **Biome check passes** - `npx biome check src/` shows zero errors
+- [ ] **Biome check passes** - `npx biome check src/` shows zero errors AND zero warnings
 - [ ] **Use `@/` path aliases** - no `../../../` imports
 - [ ] NO `console.log/error/warn` - use `logger`
 - [ ] NO magic numbers - use constants
@@ -185,5 +195,5 @@ Detailed documentation is in `.claude/rules/`:
 
 ---
 
-*Last updated: 2025-12-23*
-*Version: v0.4.2*
+*Last updated: 2025-12-28*
+*Version: v0.5.0*

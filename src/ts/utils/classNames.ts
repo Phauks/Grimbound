@@ -61,7 +61,6 @@ export function createVariantClasses<T extends string>(config: {
   base: string;
   variants: Record<T, string>;
 }): (variant: T, ...extra: ClassValue[]) => string {
-  return (variant: T, ...extra: ClassValue[]) => {
-    return cn(config.base, config.variants[variant], ...extra);
-  };
+  return (variant: T, ...extra: ClassValue[]) =>
+    cn(config.base, config.variants[variant], ...extra);
 }

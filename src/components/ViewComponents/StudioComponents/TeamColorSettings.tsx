@@ -7,6 +7,7 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
   EnableToggle,
   InfoSection,
@@ -143,24 +144,17 @@ const TeamColorPanelContent = memo(function TeamColorPanelContent({
 
         {/* Custom Color */}
         <div className={baseStyles.settingSection}>
-          <div className={baseStyles.settingLabel}>Custom Color</div>
           <div className={styles.customColorRow}>
-            <input
-              type="color"
+            <ColorPreviewSelector
+              label="Custom Color"
               value={colorPickerValue}
-              onChange={(e) => onColorPickerChange(e.target.value)}
-              className={styles.colorPicker}
+              onChange={(color) => {
+                onColorPickerChange(color);
+                onCustomColorApply();
+              }}
+              onPreviewChange={onColorPickerChange}
+              size="small"
             />
-            <button
-              type="button"
-              className={cn(
-                styles.presetButton,
-                customColor === colorPickerValue && styles.selected
-              )}
-              onClick={onCustomColorApply}
-            >
-              Apply Custom
-            </button>
             <button type="button" className={styles.presetButton} onClick={onInvert}>
               Invert
             </button>

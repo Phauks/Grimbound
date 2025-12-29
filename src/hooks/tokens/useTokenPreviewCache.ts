@@ -14,8 +14,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getPreRenderedTokens, hashOptions } from '@/ts/cache/index.js';
+import { getPreRenderedTokens, hashGenerationOptions } from '@/ts/cache/index.js';
 import { HOVER_DELAY_MS } from '@/ts/data/characterUtils.js';
+import { isMetaToken } from '@/ts/export/zipExporter.js';
 import type { Character, DecorativeOverrides, GenerationOptions, Token } from '@/ts/types/index.js';
 import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
 import { createEffectiveOptions } from '@/ts/utils/decorativeUtils.js';
@@ -61,13 +62,6 @@ export interface UseTokenPreviewCacheResult {
   invalidateCache: (uuid: string) => void;
   /** Clear all cached tokens */
   clearCache: () => void;
-}
-
-/**
- * Check if a token is a meta token (not character or reminder)
- */
-function isMetaToken(token?: Token): boolean {
-  return !!token && token.type !== 'character' && token.type !== 'reminder';
 }
 
 /**
@@ -155,7 +149,7 @@ export function useTokenPreviewCache({
   const preRenderCacheRef = useRef<Map<string, CachedTokens>>(new Map());
   const preRenderingRef = useRef<Set<string>>(new Set());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentOptionsHashRef = useRef<string>(hashOptions(effectiveOptions));
+  const currentOptionsHashRef = useRef<string>(hashGenerationOptions(effectiveOptions));
   const skipRegenerateForUuidRef = useRef<string | null>(
     (() => {
       if (initialToken?.type === 'character') return selectedCharacterUuid;
@@ -168,7 +162,7 @@ export function useTokenPreviewCache({
 
   // Clear pre-render cache when options change since cached tokens would be stale
   useEffect(() => {
-    const newHash = hashOptions(effectiveOptions);
+    const newHash = hashGenerationOptions(effectiveOptions);
     if (currentOptionsHashRef.current !== newHash) {
       currentOptionsHashRef.current = newHash;
       preRenderCacheRef.current.clear();

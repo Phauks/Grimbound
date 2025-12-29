@@ -20,6 +20,7 @@ import type {
   ProjectVersion,
   StorageQuota,
 } from '@/ts/types/project.js';
+import { logger } from '@/ts/utils/logger.js';
 
 // ============================================================================
 // Database Class
@@ -162,8 +163,9 @@ export class ProjectDatabase extends Dexie {
         // Update 'leaf' → 'accent'
         await assets.where('type').equals('leaf').modify({ type: 'accent' });
 
-        console.log(
-          '[DB Migration v7] Asset types migrated: setup-flower → setup-overlay, leaf → accent'
+        logger.info(
+          'ProjectDb',
+          'Asset types migrated: setup-flower → setup-overlay, leaf → accent'
         );
       });
   }

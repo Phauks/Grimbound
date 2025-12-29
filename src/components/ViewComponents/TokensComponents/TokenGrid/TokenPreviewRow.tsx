@@ -1,13 +1,150 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useTokenGenerator } from '@/hooks';
+import { useTokenGenerator } from '@/hooks/tokens/useTokenGenerator';
 import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
 import { CONFIG } from '@/ts/config.js';
 import { calculateTokenCounts, getBestPreviewCharacter } from '@/ts/data/characterUtils';
-import { TokenGenerator } from '@/ts/generation/index.js';
-import type { Character, GenerationOptions, ScriptMeta, Token } from '@/ts/types/index.js';
+import { calculateTokenCountsByType, TokenGenerator } from '@/ts/generation/index.js';
+import type {
+  Character,
+  GenerationOptions,
+  Jinx,
+  ScriptMeta,
+  Token,
+  TokenType,
+} from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
+
+/** Result of sample character selection */
+interface SampleCharacterResult {
+  sampleCharacter: Character;
+  wasAutoSelected: boolean;
+  selectedReminderText: string | null;
+}
+
+/**
+ * Determines the sample character to display in preview.
+ * Extracted to reduce cognitive complexity.
+ */
+function selectSampleCharacter(
+  characters: Character[],
+  exampleToken: Token | null,
+  fallback: Character
+): SampleCharacterResult {
+  if (characters.length === 0) {
+    return { sampleCharacter: fallback, wasAutoSelected: false, selectedReminderText: null };
+  }
+
+  // Character token selected - find matching character
+  if (exampleToken?.type === 'character') {
+    const found = characters.find((char) => char.name === exampleToken.name);
+    if (found) {
+      return { sampleCharacter: found, wasAutoSelected: false, selectedReminderText: null };
+    }
+  }
+
+  // Reminder token selected - find parent character
+  if (exampleToken?.type === 'reminder') {
+    const parentName = exampleToken.parentCharacter || exampleToken.name;
+    const found = characters.find((char) => char.name === parentName);
+    if (found) {
+      return {
+        sampleCharacter: found,
+        wasAutoSelected: false,
+        selectedReminderText: exampleToken.reminderText || null,
+      };
+    }
+  }
+
+  // Auto-select best preview character
+  return {
+    sampleCharacter: getBestPreviewCharacter(characters) || fallback,
+    wasAutoSelected: true,
+    selectedReminderText: null,
+  };
+}
+
+/**
+ * Creates an auto-selected token object for context.
+ */
+function createAutoSelectedToken(
+  character: Character,
+  canvas: HTMLCanvasElement,
+  dpi: number
+): Token {
+  const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi;
+  return {
+    type: 'character',
+    name: character.name,
+    filename: sanitizeFilename(`${character.name}.png`),
+    team: character.team,
+    canvas,
+    diameter,
+    characterData: character,
+    hasReminders: (character.reminders?.length ?? 0) > 0,
+    reminderCount: character.reminders?.length ?? 0,
+  };
+}
+
+/**
+ * Helper to generate meta token canvas based on token type.
+ * Extracted to reduce cognitive complexity of generatePreview callback.
+ */
+async function generateMetaTokenCanvas(
+  generator: TokenGenerator,
+  metaTokenType: TokenType | undefined,
+  scriptMeta: ScriptMeta | null | undefined,
+  generationOptions: GenerationOptions,
+  exampleMetaToken: Token | null
+): Promise<HTMLCanvasElement> {
+  const scriptName = scriptMeta?.name || 'Script Name';
+  const scriptAuthor = scriptMeta?.author || 'Author';
+  const hideAuthor = generationOptions.hideScriptNameAuthor ?? false;
+
+  switch (metaTokenType) {
+    case 'almanac': {
+      const almanacUrl = scriptMeta?.almanac || '';
+      const scriptLogo = scriptMeta?.logo;
+      return generator.generateAlmanacQRToken(almanacUrl, scriptName, scriptLogo);
+    }
+    case 'pandemonium':
+      return generator.generatePandemoniumToken();
+    case 'bootlegger': {
+      const bootleggerRules = scriptMeta?.bootlegger || [];
+      const abilityText = bootleggerRules[0] || 'Sample Bootlegger Rule Text';
+      return generator.generateBootleggerToken(abilityText);
+    }
+    case 'jinx': {
+      // Use jinxData from the token to regenerate with current options
+      const jinxData = exampleMetaToken?.jinxData;
+      if (jinxData) {
+        const jinx: Jinx = { id: jinxData.char2.id, reason: jinxData.reason };
+        const char1: Character = {
+          id: jinxData.char1.id,
+          uuid: jinxData.char1.id, // Use id as uuid for image resolution
+          name: jinxData.char1.name,
+          image: jinxData.char1.image,
+          team: 'townsfolk', // Team doesn't matter for jinx rendering
+          ability: '',
+        };
+        const char2: Character = {
+          id: jinxData.char2.id,
+          uuid: jinxData.char2.id, // Use id as uuid for image resolution
+          name: jinxData.char2.name,
+          image: jinxData.char2.image,
+          team: 'townsfolk',
+          ability: '',
+        };
+        return generator.generateJinxToken(jinx, char1, char2);
+      }
+      // Fallback to script name if no jinx data
+      return generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor);
+    }
+    default:
+      return generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor);
+  }
+}
 
 // Sample character for preview when no script is loaded
 // Uses 'washerwoman' as id so sync storage can resolve the icon
@@ -20,6 +157,45 @@ const SAMPLE_CHARACTER: Character = {
   reminders: ['Townsfolk', 'Wrong'],
   setup: false,
 };
+
+/** Props for TokenPreviewImage subcomponent */
+interface TokenPreviewImageProps {
+  canvas: HTMLCanvasElement | null;
+  isGenerating: boolean;
+  alt: string;
+  label: string;
+  emptyText: string;
+  imageClassName?: string;
+  placeholderClassName?: string;
+}
+
+/** Extracted component to reduce parent complexity */
+function TokenPreviewImage({
+  canvas,
+  isGenerating,
+  alt,
+  label,
+  emptyText,
+  imageClassName = '',
+  placeholderClassName = '',
+}: TokenPreviewImageProps) {
+  return (
+    <div className={styles.tokenWrapper}>
+      {canvas ? (
+        <img
+          src={canvas.toDataURL('image/png')}
+          alt={alt}
+          className={`${styles.tokenImage} ${imageClassName}`.trim()}
+        />
+      ) : (
+        <div className={`${styles.tokenPlaceholder} ${placeholderClassName}`.trim()}>
+          {isGenerating ? '...' : emptyText}
+        </div>
+      )}
+      <span className={styles.tokenLabel}>{label}</span>
+    </div>
+  );
+}
 
 /**
  * Props for TokenPreviewRow component.
@@ -46,7 +222,6 @@ export interface TokenPreviewRowProps {
 
 export function TokenPreviewRow({
   characters: propCharacters,
-  tokens: propTokens,
   generationOptions: propGenerationOptions,
   scriptMeta: propScriptMeta,
   isLoading: propIsLoading,
@@ -56,11 +231,15 @@ export function TokenPreviewRow({
 }: TokenPreviewRowProps = {}) {
   // Get context values (used as fallbacks when props not provided)
   const context = useTokenContext();
-  const { generateTokens } = useTokenGenerator();
+  const {
+    generateTokens,
+    regenerateCharacterTokens,
+    regenerateReminderTokens,
+    regenerateMetaTokens,
+  } = useTokenGenerator();
 
   // Use props if provided, otherwise fall back to context
   const characters = propCharacters ?? context.characters;
-  const tokens = propTokens ?? context.tokens;
   const generationOptions = propGenerationOptions ?? context.generationOptions;
   const scriptMeta = propScriptMeta ?? context.scriptMeta;
   const isLoading = propIsLoading ?? context.isLoading;
@@ -82,46 +261,11 @@ export function TokenPreviewRow({
   // Guard to prevent duplicate preview generation (React StrictMode double-mounts)
   const isGeneratingRef = useRef(false);
 
-  // Get sample character from exampleCharacterToken
-  // Character/Reminder tokens are in sync - reminders find their parent character
-  // Memoized to prevent callback recreation on every render
-  const { sampleCharacter, wasAutoSelected, selectedReminderText } = useMemo(() => {
-    if (characters.length === 0) {
-      return {
-        sampleCharacter: SAMPLE_CHARACTER,
-        wasAutoSelected: false,
-        selectedReminderText: null,
-      };
-    }
-
-    // If a character token is selected
-    if (exampleCharacterToken?.type === 'character') {
-      const exampleChar = characters.find((char) => char.name === exampleCharacterToken.name);
-      if (exampleChar) {
-        return { sampleCharacter: exampleChar, wasAutoSelected: false, selectedReminderText: null };
-      }
-    }
-
-    // If a reminder token is selected, find its parent character
-    if (exampleCharacterToken?.type === 'reminder') {
-      const parentName = exampleCharacterToken.parentCharacter || exampleCharacterToken.name;
-      const parentChar = characters.find((char) => char.name === parentName);
-      if (parentChar) {
-        return {
-          sampleCharacter: parentChar,
-          wasAutoSelected: false,
-          selectedReminderText: exampleCharacterToken.reminderText || null,
-        };
-      }
-    }
-
-    // Auto-select best preview character
-    return {
-      sampleCharacter: getBestPreviewCharacter(characters) || SAMPLE_CHARACTER,
-      wasAutoSelected: true,
-      selectedReminderText: null,
-    };
-  }, [characters, exampleCharacterToken]);
+  // Get sample character from exampleCharacterToken using extracted helper
+  const { sampleCharacter, wasAutoSelected, selectedReminderText } = useMemo(
+    () => selectSampleCharacter(characters, exampleCharacterToken, SAMPLE_CHARACTER),
+    [characters, exampleCharacterToken]
+  );
 
   // Generate preview tokens - always regenerate fresh to ensure all settings changes are reflected
   const generatePreview = useCallback(async () => {
@@ -143,72 +287,33 @@ export function TokenPreviewRow({
       const charCanvas = await generator.generateCharacterToken(sampleCharacter);
       setPreviewCharCanvas(charCanvas);
 
-      // If we auto-selected this character (no example was set), set it as the example character token
-      // Don't set the sample Washerwoman as the example token - only script characters
+      // Set auto-selected character as example token (if auto-selected and not sample Washerwoman)
       if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
         const dpi = generationOptions.dpi || CONFIG.PDF.DPI;
-        const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi;
-
-        const autoSelectedToken: Token = {
-          type: 'character',
-          name: sampleCharacter.name,
-          filename: sanitizeFilename(`${sampleCharacter.name}.png`),
-          team: sampleCharacter.team,
-          canvas: charCanvas,
-          diameter,
-          characterData: sampleCharacter,
-          hasReminders: (sampleCharacter.reminders?.length ?? 0) > 0,
-          reminderCount: sampleCharacter.reminders?.length ?? 0,
-        };
-
-        setExampleCharacterToken(autoSelectedToken);
+        setExampleCharacterToken(createAutoSelectedToken(sampleCharacter, charCanvas, dpi));
       }
 
       // Generate reminder token - use selected reminder if user picked one, otherwise first reminder
-      let reminderCanvas: HTMLCanvasElement | null = null;
-      if (sampleCharacter.reminders && sampleCharacter.reminders.length > 0) {
-        // Use the selected reminder text if available, otherwise default to first
+      const reminders = sampleCharacter.reminders ?? [];
+      if (reminders.length > 0) {
         const reminderText =
-          selectedReminderText && sampleCharacter.reminders.includes(selectedReminderText)
+          selectedReminderText && reminders.includes(selectedReminderText)
             ? selectedReminderText
-            : sampleCharacter.reminders[0];
-        reminderCanvas = await generator.generateReminderToken(sampleCharacter, reminderText);
+            : reminders[0];
+        const reminderCanvas = await generator.generateReminderToken(sampleCharacter, reminderText);
         setPreviewReminderCanvas(reminderCanvas);
       } else {
         setPreviewReminderCanvas(null);
       }
 
-      // Generate meta token - use exampleMetaToken (independent from character selection)
-      // ALWAYS regenerate fresh to ensure all settings changes are reflected
-      let metaCanvas: HTMLCanvasElement;
-      if (exampleMetaToken?.type === 'almanac') {
-        // Regenerate almanac token with current QR styling
-        const almanacUrl = scriptMeta?.almanac || '';
-        const scriptName = scriptMeta?.name || 'Script Name';
-        const scriptLogo = scriptMeta?.logo;
-        metaCanvas = await generator.generateAlmanacQRToken(almanacUrl, scriptName, scriptLogo);
-      } else if (exampleMetaToken?.type === 'pandemonium') {
-        // Regenerate pandemonium token
-        metaCanvas = await generator.generatePandemoniumToken();
-      } else if (exampleMetaToken?.type === 'bootlegger') {
-        // Regenerate bootlegger token - get ability text from scriptMeta or use default
-        const bootleggerRules = scriptMeta?.bootlegger || [];
-        // Use the first rule if available, otherwise a sample text
-        const abilityText = bootleggerRules[0] || 'Sample Bootlegger Rule Text';
-        metaCanvas = await generator.generateBootleggerToken(abilityText);
-      } else if (exampleMetaToken?.type === 'script-name') {
-        // Regenerate script name token
-        const scriptName = scriptMeta?.name || 'Script Name';
-        const scriptAuthor = scriptMeta?.author || 'Author';
-        const hideAuthor = generationOptions.hideScriptNameAuthor ?? false;
-        metaCanvas = await generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor);
-      } else {
-        // Default: generate Script Name token when no meta token selected
-        const scriptName = scriptMeta?.name || 'Script Name';
-        const scriptAuthor = scriptMeta?.author || 'Author';
-        const hideAuthor = generationOptions.hideScriptNameAuthor ?? false;
-        metaCanvas = await generator.generateScriptNameToken(scriptName, scriptAuthor, hideAuthor);
-      }
+      // Generate meta token using helper function
+      const metaCanvas = await generateMetaTokenCanvas(
+        generator,
+        exampleMetaToken?.type,
+        scriptMeta,
+        generationOptions,
+        exampleMetaToken
+      );
       setPreviewMetaCanvas(metaCanvas);
     } catch (error) {
       logger.error('TokenPreviewRow', 'Failed to generate preview', error);
@@ -242,27 +347,16 @@ export function TokenPreviewRow({
     }
   }, [generationOptions, autoRegenerate, characters.length, isLoading, generateTokens]);
 
-  // Handle apply to all tokens
-  const handleApplyToAll = () => {
-    if (characters.length > 0) {
-      // Use custom handler if provided, otherwise use generateTokens from hook
-      if (onGenerate) {
-        onGenerate();
-      } else {
-        generateTokens();
-      }
-    }
-  };
+  // Handle apply to all tokens - use custom handler or default
+  const handleApplyToAll = useCallback(() => {
+    if (characters.length === 0) return;
+    (onGenerate ?? generateTokens)();
+  }, [characters.length, onGenerate, generateTokens]);
 
-  // Calculate token counts
+  // Calculate token counts - use upfront calculation so meta count doesn't increment during generation
   const counts = calculateTokenCounts(characters);
-  const metaTokenCount = tokens.filter(
-    (t) =>
-      t.type === 'script-name' ||
-      t.type === 'almanac' ||
-      t.type === 'pandemonium' ||
-      t.type === 'bootlegger'
-  ).length;
+  const tokenCounts = calculateTokenCountsByType(characters, generationOptions, scriptMeta);
+  const metaTokenCount = tokenCounts.meta;
   // Don't include meta tokens in total character count
   const totalCharacters = counts.total.characters;
   const totalReminders = counts.total.reminders;
@@ -295,50 +389,29 @@ export function TokenPreviewRow({
       <div className={styles.previewSection}>
         <div className={styles.tokenColumn}>
           <div className={styles.tokenPreview}>
-            <div className={styles.tokenWrapper}>
-              {previewCharCanvas ? (
-                <img
-                  src={previewCharCanvas.toDataURL('image/png')}
-                  alt="Character token preview"
-                  className={styles.tokenImage}
-                />
-              ) : (
-                <div className={styles.tokenPlaceholder}>
-                  {isGeneratingPreview ? '...' : 'No preview'}
-                </div>
-              )}
-              <span className={styles.tokenLabel}>Character</span>
-            </div>
-
-            <div className={styles.tokenWrapper}>
-              {previewReminderCanvas ? (
-                <img
-                  src={previewReminderCanvas.toDataURL('image/png')}
-                  alt="Reminder token preview"
-                  className={`${styles.tokenImage} ${styles.reminderImage}`}
-                />
-              ) : (
-                <div className={`${styles.tokenPlaceholder} ${styles.reminderPlaceholder}`}>
-                  {isGeneratingPreview ? '...' : 'No reminder'}
-                </div>
-              )}
-              <span className={styles.tokenLabel}>Reminder</span>
-            </div>
-
-            <div className={styles.tokenWrapper}>
-              {previewMetaCanvas ? (
-                <img
-                  src={previewMetaCanvas.toDataURL('image/png')}
-                  alt="Meta token preview"
-                  className={styles.tokenImage}
-                />
-              ) : (
-                <div className={styles.tokenPlaceholder}>
-                  {isGeneratingPreview ? '...' : 'No meta'}
-                </div>
-              )}
-              <span className={styles.tokenLabel}>Meta</span>
-            </div>
+            <TokenPreviewImage
+              canvas={previewCharCanvas}
+              isGenerating={isGeneratingPreview}
+              alt="Character token preview"
+              label="Character"
+              emptyText="No preview"
+            />
+            <TokenPreviewImage
+              canvas={previewReminderCanvas}
+              isGenerating={isGeneratingPreview}
+              alt="Reminder token preview"
+              label="Reminder"
+              emptyText="No reminder"
+              imageClassName={styles.reminderImage}
+              placeholderClassName={styles.reminderPlaceholder}
+            />
+            <TokenPreviewImage
+              canvas={previewMetaCanvas}
+              isGenerating={isGeneratingPreview}
+              alt="Meta token preview"
+              label="Meta"
+              emptyText="No meta"
+            />
           </div>
 
           {(showGenerateButton || showAutoRegenerate) && (
@@ -352,7 +425,7 @@ export function TokenPreviewRow({
                     disabled={isLoading || characters.length === 0}
                     title="Generate all tokens with current options"
                   >
-                    {isLoading ? 'Generating...' : 'Generate'}
+                    {isLoading ? 'Generating...' : 'Generate All'}
                   </button>
                 )}
                 {showAutoRegenerate && (
@@ -366,6 +439,37 @@ export function TokenPreviewRow({
                   </button>
                 )}
               </div>
+              {showGenerateButton && (
+                <div className={styles.partialGroup}>
+                  <button
+                    type="button"
+                    className={styles.partialBtnFirst}
+                    onClick={() => regenerateCharacterTokens()}
+                    disabled={isLoading || characters.length === 0}
+                    title="Regenerate character tokens only"
+                  >
+                    Character
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.partialBtnMiddle}
+                    onClick={() => regenerateReminderTokens()}
+                    disabled={isLoading || characters.length === 0}
+                    title="Regenerate reminder tokens only"
+                  >
+                    Reminder
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.partialBtnLast}
+                    onClick={() => regenerateMetaTokens()}
+                    disabled={isLoading || characters.length === 0}
+                    title="Regenerate meta tokens only"
+                  >
+                    Meta
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

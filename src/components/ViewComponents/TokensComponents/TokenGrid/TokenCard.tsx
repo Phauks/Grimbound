@@ -297,7 +297,8 @@ function TokenCardComponent({
       displayToken.type === 'script-name' ||
       displayToken.type === 'almanac' ||
       displayToken.type === 'pandemonium' ||
-      displayToken.type === 'bootlegger'
+      displayToken.type === 'bootlegger' ||
+      displayToken.type === 'jinx'
     ) {
       return 'Meta';
     }
@@ -316,7 +317,8 @@ function TokenCardComponent({
       displayToken.type === 'script-name' ||
       displayToken.type === 'almanac' ||
       displayToken.type === 'pandemonium' ||
-      displayToken.type === 'bootlegger'
+      displayToken.type === 'bootlegger' ||
+      displayToken.type === 'jinx'
     ) {
       return teamClassMap.meta || '';
     }

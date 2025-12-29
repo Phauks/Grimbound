@@ -5,7 +5,16 @@
 
 import type { Point } from '@/ts/canvas/index.js';
 import CONFIG from '@/ts/config.js';
-import type { DPIOption, GenerationOptions, MeasurementUnit, ReminderCountStyle } from './index.js';
+import type {
+  DPIOption,
+  FontSizeOptions,
+  GenerationOptions,
+  MeasurementUnit,
+  ReminderCountStyle,
+  TextRenderStyleOptions,
+  TextStrokeColorOptions,
+  TextStrokeWidthOptions,
+} from './index.js';
 
 // ============================================================================
 // TOKEN GENERATOR OPTIONS
@@ -188,6 +197,10 @@ export interface TokenGeneratorOptions {
   characterNameColor: string;
   metaNameFont?: string;
   metaNameColor?: string;
+  /** Font for meta token text/description (defaults to abilityTextFont if not set) */
+  metaTextFont?: string;
+  /** Color for meta token text/description (defaults to abilityTextColor if not set) */
+  metaTextColor?: string;
   characterReminderFont: string;
   abilityTextFont: string;
   abilityTextColor: string;
@@ -205,15 +218,31 @@ export interface TokenGeneratorOptions {
   dpi: number;
   fontSpacing: {
     characterName: number;
-    abilityText: number;
+    characterText: number;
     reminderText: number;
+    metaName?: number;
     metaText?: number;
   };
   textShadow?: {
     characterName: number;
-    abilityText: number;
+    characterText: number;
     reminderText: number;
+    metaName?: number;
     metaText?: number;
+  };
+  /** Font sizes in points (0 = auto/ratio-based) */
+  fontSizes?: FontSizeOptions;
+  /** Text render styles (filled, outlined, both) */
+  textRenderStyles?: TextRenderStyleOptions;
+  /** Text stroke colors for outlined/both styles */
+  textStrokeColors?: TextStrokeColorOptions;
+  /** Text stroke widths for outlined/both styles */
+  textStrokeWidths?: TextStrokeWidthOptions;
+  /** Text location for curved text: 'none' (hidden), 'bottom' (default) or 'top' */
+  textLocations?: {
+    characterName?: 'none' | 'bottom' | 'top';
+    reminderText?: 'none' | 'bottom' | 'top';
+    metaName?: 'none' | 'bottom' | 'top';
   };
   iconSettings?: {
     character: IconSettings;
@@ -256,15 +285,22 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   dpi: CONFIG.PDF.DPI,
   fontSpacing: {
     characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
-    abilityText: CONFIG.FONT_SPACING.ABILITY_TEXT,
+    characterText: CONFIG.FONT_SPACING.ABILITY_TEXT,
     reminderText: CONFIG.FONT_SPACING.REMINDER_TEXT,
+    metaName: CONFIG.FONT_SPACING.CHARACTER_NAME,
     metaText: CONFIG.FONT_SPACING.META_TEXT,
   },
   textShadow: {
     characterName: CONFIG.TEXT_SHADOW.CHARACTER_NAME,
-    abilityText: CONFIG.TEXT_SHADOW.ABILITY_TEXT,
+    characterText: CONFIG.TEXT_SHADOW.ABILITY_TEXT,
     reminderText: CONFIG.TEXT_SHADOW.REMINDER_TEXT,
+    metaName: CONFIG.TEXT_SHADOW.CHARACTER_NAME,
     metaText: CONFIG.TEXT_SHADOW.META_TEXT,
+  },
+  textLocations: {
+    characterName: 'bottom',
+    reminderText: 'bottom',
+    metaName: 'bottom',
   },
   qrCodeOptions: {
     // Token options
@@ -404,17 +440,26 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   // Font spacing (0 = normal spacing)
   fontSpacing: {
     characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
-    abilityText: CONFIG.FONT_SPACING.ABILITY_TEXT,
+    characterText: CONFIG.FONT_SPACING.ABILITY_TEXT,
     reminderText: CONFIG.FONT_SPACING.REMINDER_TEXT,
+    metaName: CONFIG.FONT_SPACING.CHARACTER_NAME,
     metaText: CONFIG.FONT_SPACING.META_TEXT,
   },
 
   // Text shadows (subtle by default)
   textShadow: {
     characterName: 4,
-    abilityText: 3,
+    characterText: 3,
     reminderText: 4,
+    metaName: 4,
     metaText: 4,
+  },
+
+  // Text locations for curved text
+  textLocations: {
+    characterName: 'bottom',
+    reminderText: 'bottom',
+    metaName: 'bottom',
   },
 
   // Meta tokens
@@ -446,6 +491,14 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
 
   // Measurement unit for UI display
   measurementUnit: 'inches' as MeasurementUnit,
+
+  // Character/Meta token settings link (default: unlinked)
+  characterMetaLink: {
+    background: false,
+    font: false,
+    icon: false,
+    text: false,
+  },
 };
 
 // ============================================================================

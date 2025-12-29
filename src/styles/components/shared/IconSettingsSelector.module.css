@@ -123,3 +123,63 @@
   width: 12px;
   height: 12px;
 }
+
+/* ============================================
+   Variants Column Styles
+   ============================================ */
+
+.noVariantsMessage {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+/* Plain checkbox row */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.checkboxRow input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkboxRow:hover {
+  color: var(--color-accent);
+}
+
+/* Section Divider */
+.sectionDivider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 0;
+}
+
+/* Indented sub-options */
+.subOptions {
+  margin-left: 1.25rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.subOptionsDisabled {
+  opacity: 0.4;
+}
+
+/* Helper text for settings explanation */
+.helperText {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 0.25rem;
+}

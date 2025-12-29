@@ -12,7 +12,7 @@
  */
 export function estimateSize(value: unknown): number {
   // Handle null/undefined
-  if (value == null) {
+  if (value === null) {
     return 0;
   }
 

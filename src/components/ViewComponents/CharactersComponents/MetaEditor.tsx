@@ -145,12 +145,13 @@ export function MetaEditor({
     [meta, onMetaChange]
   );
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
-    };
-  }, []);
+    },
+    []
+  );
 
   const handleJsonChange = (newText: string) => {
     setJsonText(newText);

@@ -8,14 +8,13 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import type { BundleData, DownloadItem } from '@/contexts/DownloadsContext';
+import type { DownloadItem } from '@/contexts/DownloadsContext';
 import { useNightOrder } from '@/contexts/NightOrderContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useExport } from '@/hooks';
-import { createTokensZip, isMetaToken } from '@/ts/export/zipExporter.js';
+import { createTokensZip, isMetaToken, tokensToBundleData } from '@/ts/export/zipExporter.js';
 import { downloadNightOrderPdf } from '@/ts/nightOrder/nightOrderPdfLib.js';
-import type { Token } from '@/ts/types/index.js';
-import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils.js';
+import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { getOfficialScriptToolUrl } from '@/ts/utils/scriptEncoder.js';
 
@@ -34,24 +33,6 @@ export interface UseExportDownloadsResult {
   executingId: string | null;
   /** Execute a download */
   executeDownload: (item: DownloadItem) => Promise<void>;
-}
-
-/**
- * Convert tokens to bundle data (blobs with filenames)
- */
-async function tokensToBundleData(tokens: Token[]): Promise<BundleData[]> {
-  const results: BundleData[] = [];
-  for (const token of tokens) {
-    try {
-      const blob = await canvasToBlob(token.canvas);
-      if (blob) {
-        results.push({ blob, filename: token.filename });
-      }
-    } catch {
-      // Skip tokens that fail to convert
-    }
-  }
-  return results;
 }
 
 /**
@@ -125,7 +106,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
 
   // Download handlers for token sets
   const handleDownloadCharacterTokens = useCallback(async () => {
-    if (!characterTokens.length) return;
+    if (characterTokens.length === 0) return;
     try {
       const blob = await createTokensZip(
         characterTokens,
@@ -147,7 +128,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
   }, [characterTokens, generationOptions.pngSettings]);
 
   const handleDownloadReminderTokens = useCallback(async () => {
-    if (!reminderTokens.length) return;
+    if (reminderTokens.length === 0) return;
     try {
       const blob = await createTokensZip(
         reminderTokens,
@@ -169,7 +150,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
   }, [reminderTokens, generationOptions.pngSettings]);
 
   const handleDownloadMetaTokens = useCallback(async () => {
-    if (!metaTokens.length) return;
+    if (metaTokens.length === 0) return;
     try {
       const blob = await createTokensZip(
         metaTokens,
@@ -236,7 +217,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
       description: hasTokens ? 'PDF for Avery labels' : 'Generate tokens first',
       action: downloadPdf,
       disabled: !hasTokens || isExporting,
-      disabledReason: !hasTokens ? 'Generate tokens first' : 'Export in progress',
+      disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
       category: 'tokens',
       featured: true,
       sourceView: 'export',
@@ -280,7 +261,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
       description: scriptMeta?.name || 'Current script',
       action: downloadJson,
       disabled: !jsonInput?.trim() || isExporting,
-      disabledReason: !jsonInput?.trim() ? 'No script data' : 'Export in progress',
+      disabledReason: jsonInput?.trim() ? 'Export in progress' : 'No script data',
       category: 'json',
       sourceView: 'export',
     });
@@ -341,7 +322,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
       description: hasTokens ? `${tokens.length} tokens (PDF)` : 'Generate tokens first',
       action: downloadPdf,
       disabled: !hasTokens || isExporting,
-      disabledReason: !hasTokens ? 'Generate tokens first' : 'Export in progress',
+      disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
       category: 'tokens',
       sourceView: 'export',
     });
@@ -358,7 +339,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
         : 'No characters in script',
       action: handleOpenScriptInOfficialTool,
       disabled: !hasCharacters,
-      disabledReason: !hasCharacters ? 'Add characters to your script first' : undefined,
+      disabledReason: hasCharacters ? undefined : 'Add characters to your script first',
       category: 'script',
       sourceView: 'export',
     });

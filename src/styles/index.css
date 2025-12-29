@@ -1,15 +1,11 @@
 /* ============================================
    Blood on the Clocktower Token Generator
    Main Styles Entry Point
-   
+
    This file imports the design system foundation
-   and the legacy styles (to be migrated incrementally)
    ============================================ */
 
 /* Design System Foundation */
 @import "./tokens/index.css";
 @import "./base/index.css";
 @import "./utilities/index.css";
-
-/* Legacy styles - TEMPORARILY DISABLED to identify missing CSS Module styles */
-/* @import '../../css/styles.css'; */

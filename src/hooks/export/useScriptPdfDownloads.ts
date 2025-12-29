@@ -87,7 +87,7 @@ export function useScriptPdfDownloads({ characters, scriptMeta }: UseScriptPdfDo
           : 'No characters in script',
         action: handleOpenInOfficialTool,
         disabled: !hasCharacters,
-        disabledReason: !hasCharacters ? 'Add characters to your script first' : undefined,
+        disabledReason: hasCharacters ? undefined : 'Add characters to your script first',
         category: 'script',
         sourceView: 'script',
       },

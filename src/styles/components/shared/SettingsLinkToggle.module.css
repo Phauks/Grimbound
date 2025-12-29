@@ -1,0 +1,67 @@
+/**
+ * SettingsLinkToggle Styles
+ *
+ * Toggle button for linking Character/Meta token settings.
+ */
+
+.linkToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.linkToggle:hover:not(.disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.linkToggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Size variants */
+.small {
+  width: 24px;
+  height: 24px;
+}
+
+.small svg {
+  width: 14px;
+  height: 14px;
+}
+
+.medium {
+  width: 28px;
+  height: 28px;
+}
+
+.medium svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Linked state */
+.linked {
+  color: var(--color-accent);
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--color-accent);
+}
+
+.linked:hover:not(.disabled) {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

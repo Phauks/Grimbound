@@ -36,6 +36,8 @@ export interface UseExpandablePanelOptions<T> {
   minPanelWidth?: number;
   /** Whether to auto-apply on close (click outside, scroll) */
   autoApplyOnClose?: boolean;
+  /** Called when panel is about to open - use to close other panels */
+  onWillOpen?: () => void;
 }
 
 export interface UseExpandablePanelReturn<T> {
@@ -83,6 +85,7 @@ export function useExpandablePanel<T>({
   panelHeight = 350,
   minPanelWidth = 280,
   autoApplyOnClose = true,
+  onWillOpen,
 }: UseExpandablePanelOptions<T>): UseExpandablePanelReturn<T> {
   const [isExpanded, setIsExpanded] = useState(false);
   const [pendingValue, setPendingValue] = useState<T>(value);
@@ -180,25 +183,27 @@ export function useExpandablePanel<T>({
   const toggle = useCallback(() => {
     if (disabled) return;
 
-    if (!isExpanded) {
-      // Opening: store original value for cancel
-      originalValueRef.current = value;
-      setPendingValue(value);
-      setIsExpanded(true);
-    } else {
+    if (isExpanded) {
       // Closing via toggle: apply changes
       onChange(pendingValue);
       setIsExpanded(false);
+    } else {
+      // Opening: notify parent to close other panels first
+      onWillOpen?.();
+      originalValueRef.current = value;
+      setPendingValue(value);
+      setIsExpanded(true);
     }
-  }, [disabled, isExpanded, value, pendingValue, onChange]);
+  }, [disabled, isExpanded, value, pendingValue, onChange, onWillOpen]);
 
   // Open panel
   const open = useCallback(() => {
     if (disabled || isExpanded) return;
+    onWillOpen?.();
     originalValueRef.current = value;
     setPendingValue(value);
     setIsExpanded(true);
-  }, [disabled, isExpanded, value]);
+  }, [disabled, isExpanded, value, onWillOpen]);
 
   // Close panel
   const close = useCallback(() => {

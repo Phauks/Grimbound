@@ -8,16 +8,10 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
+import type { BundleData } from '@/ts/export/zipExporter.js';
 
-/**
- * Data returned by getBlob for bundling into a combined ZIP
- */
-export interface BundleData {
-  /** The file blob */
-  blob: Blob;
-  /** Filename to use in the ZIP */
-  filename: string;
-}
+// Re-export BundleData for consumers (SSOT is zipExporter)
+export type { BundleData };
 
 /**
  * Download categories for grouping in ExportView

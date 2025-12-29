@@ -1,41 +1,45 @@
 /**
  * ColorPreviewSelector Component
  *
- * A polished color selector with preset swatches, live preview,
- * and intuitive editing controls.
+ * A compact color selector with a clickable swatch that opens a full
+ * color picker panel with HSV sliders, presets, and recent colors.
  *
  * Features:
- * - Quick preset color swatches organized by group
- * - Live color preview with visual feedback
- * - Custom color picker integration
+ * - Clickable color swatch (no separate button)
+ * - HSV sliders with canvas-based gradients
+ * - Quick preset color swatches organized in a grid
+ * - Recent colors tracking
  * - Apply/Cancel workflow for controlled changes
  * - Portal-based panel to avoid overflow clipping
- *
- * Uses SettingsSelectorBase for consistent styling and useExpandablePanel
- * for panel management.
  *
  * @module components/Shared/ColorPreviewSelector
  */
 
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useExpandablePanel } from '@/hooks';
+import { drawSliderToggle } from '@/components/Shared/Controls/CanvasSlider';
+import { useExpandablePanel, useRecentColors } from '@/hooks';
 import styles from '@/styles/components/shared/ColorPreviewSelector.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
-import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
+import {
+  BASIC_COLORS,
+  type ColorPreset,
+  DEFAULT_COLOR_PRESETS,
+} from '@/ts/constants/colorPresets.js';
+import {
+  hexToHsv,
+  hsvToHex,
+  isLightColor,
+  parseHexColor,
+  rgbToHex,
+} from '@/ts/utils/colorUtils.js';
+
+// Check if EyeDropper API is supported (Chrome/Edge only)
+const isEyeDropperSupported = typeof window !== 'undefined' && 'EyeDropper' in window;
 
 // ============================================================================
 // Types
 // ============================================================================
-
-export interface ColorPreset {
-  /** Color value in hex format */
-  value: string;
-  /** Display name for the color */
-  name: string;
-  /** Optional group/category */
-  group?: string;
-}
 
 export interface ColorPreviewSelectorProps {
   /** Current color value (hex format) */
@@ -44,129 +48,50 @@ export interface ColorPreviewSelectorProps {
   onChange: (value: string) => void;
   /** Called on every change for live preview (optional) */
   onPreviewChange?: (value: string) => void;
-  /** Display label */
+  /** Display label (shown next to the swatch) */
   label?: string;
-  /** Preview shape */
-  shape?: 'circle' | 'square';
   /** Component size */
   size?: 'small' | 'medium' | 'large';
   /** Disabled state */
   disabled?: boolean;
-  /** Aria label for accessibility */
-  ariaLabel?: string;
-  /** Custom preset colors (optional - uses defaults if not provided) */
-  presets?: ColorPreset[];
-  /** Show preset swatches */
-  showPresets?: boolean;
-  /** Optional slot for content above the action button (e.g., toggle) */
-  headerSlot?: React.ReactNode;
-}
-
-// ============================================================================
-// Default Color Presets
-// ============================================================================
-
-const DEFAULT_PRESETS: ColorPreset[] = [
-  // Neutrals
-  { value: '#FFFFFF', name: 'White', group: 'Neutral' },
-  { value: '#F5F5F5', name: 'Off White', group: 'Neutral' },
-  { value: '#E0E0E0', name: 'Light Gray', group: 'Neutral' },
-  { value: '#808080', name: 'Gray', group: 'Neutral' },
-  { value: '#404040', name: 'Dark Gray', group: 'Neutral' },
-  { value: '#1A1A1A', name: 'Charcoal', group: 'Neutral' },
-  { value: '#000000', name: 'Black', group: 'Neutral' },
-
-  // Blood on the Clocktower Theme
-  { value: '#8B0000', name: 'Blood Red', group: 'Theme' },
-  { value: '#C9A227', name: 'Accent Gold', group: 'Theme' },
-  { value: '#2C3E50', name: 'Midnight', group: 'Theme' },
-
-  // Team Colors
-  { value: '#1A5F2A', name: 'Townsfolk', group: 'Teams' },
-  { value: '#1A3F5F', name: 'Outsider', group: 'Teams' },
-  { value: '#5F1A3F', name: 'Minion', group: 'Teams' },
-  { value: '#8B0000', name: 'Demon', group: 'Teams' },
-  { value: '#5F4F1A', name: 'Traveller', group: 'Teams' },
-  { value: '#4F1A5F', name: 'Fabled', group: 'Teams' },
-
-  // Vivid Colors
-  { value: '#E74C3C', name: 'Red', group: 'Vivid' },
-  { value: '#E67E22', name: 'Orange', group: 'Vivid' },
-  { value: '#F1C40F', name: 'Yellow', group: 'Vivid' },
-  { value: '#27AE60', name: 'Green', group: 'Vivid' },
-  { value: '#3498DB', name: 'Blue', group: 'Vivid' },
-  { value: '#9B59B6', name: 'Purple', group: 'Vivid' },
-];
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Convert hex color to a human-readable name or formatted hex
- */
-function getColorDisplayName(hex: string, presets: ColorPreset[]): string {
-  const normalized = hex.toUpperCase();
-  const preset = presets.find((p) => p.value.toUpperCase() === normalized);
-  if (preset) return preset.name;
-
-  // Common color names
-  const commonNames: Record<string, string> = {
-    '#FFFFFF': 'White',
-    '#000000': 'Black',
-    '#FF0000': 'Red',
-    '#00FF00': 'Lime',
-    '#0000FF': 'Blue',
-    '#FFFF00': 'Yellow',
-    '#FF00FF': 'Magenta',
-    '#00FFFF': 'Cyan',
-  };
-
-  return commonNames[normalized] || 'Custom';
-}
-
-/**
- * Determine if a color is light or dark (for contrast)
- */
-function isLightColor(hex: string): boolean {
-  const color = hex.replace('#', '');
-  const r = parseInt(color.slice(0, 2), 16);
-  const g = parseInt(color.slice(2, 4), 16);
-  const b = parseInt(color.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5;
 }
 
 // ============================================================================
 // Color Preview Component
 // ============================================================================
 
-const ColorPreview = memo(function ColorPreview({
+const ColorSwatch = memo(function ColorSwatch({
   color,
-  shape,
   size,
+  onClick,
+  disabled,
 }: {
   color: string;
-  shape: 'circle' | 'square';
   size: 'small' | 'medium' | 'large';
+  onClick: () => void;
+  disabled: boolean;
 }) {
   const isLight = isLightColor(color);
 
-  const previewClasses = [
-    styles.preview,
-    styles[`preview${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-    shape === 'circle' ? styles.previewCircle : styles.previewSquare,
+  const swatchClasses = [
+    styles.clickableSwatch,
+    styles[`swatch${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    disabled && styles.swatchDisabled,
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={previewClasses}>
-      <div className={styles.colorSwatch} style={{ backgroundColor: color }}>
-        {/* Border overlay for light colors */}
-        {isLight && <div className={styles.swatchBorder} />}
-      </div>
-    </div>
+    <button
+      type="button"
+      className={swatchClasses}
+      style={{ backgroundColor: color }}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label="Select color"
+    >
+      {isLight && <div className={styles.swatchBorder} />}
+    </button>
   );
 });
 
@@ -179,67 +104,413 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   onChange,
   onPreviewChange,
   label,
-  shape = 'circle',
   size = 'medium',
   disabled = false,
-  ariaLabel,
-  presets = DEFAULT_PRESETS,
-  showPresets = true,
-  headerSlot,
 }: ColorPreviewSelectorProps) {
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const hueSliderRef = useRef<HTMLCanvasElement>(null);
+  const satSliderRef = useRef<HTMLCanvasElement>(null);
+  const valueSliderRef = useRef<HTMLCanvasElement>(null);
+
+  // Use the recent colors hook
+  const { colors: recentColors, addColor: addRecentColor } = useRecentColors();
+
+  // Local state for color editing
+  const [hexInput, setHexInput] = useState(value);
+  const [hue, setHue] = useState(0);
+  const [saturation, setSaturation] = useState(100);
+  const [brightness, setBrightness] = useState(100);
+  const [rgbInputs, setRgbInputs] = useState({ r: '255', g: '255', b: '255' });
+  const [hsvInputs, setHsvInputs] = useState({ h: '0', s: '100', v: '100' });
 
   // Default color for reset
   const defaultColor = '#FFFFFF';
 
+  // Wrap onChange to track recent colors
+  const handleApply = useCallback(
+    (color: string) => {
+      addRecentColor(color);
+      onChange(color);
+    },
+    [onChange, addRecentColor]
+  );
+
   // Use the shared expandable panel hook
   const panel = useExpandablePanel<string>({
     value,
-    onChange,
+    onChange: handleApply,
     onPreviewChange,
     disabled,
-    panelHeight: 350,
-    minPanelWidth: 280,
+    panelHeight: 400,
+    minPanelWidth: 420,
   });
 
+  // Sync hex input, hue, saturation, brightness, and RGB when panel opens
+  useEffect(() => {
+    if (panel.isExpanded) {
+      setHexInput(panel.pendingValue);
+      const hsv = hexToHsv(panel.pendingValue);
+      setHue(hsv.h);
+      setSaturation(hsv.s);
+      setBrightness(hsv.v);
+      setHsvInputs({
+        h: String(Math.round(hsv.h)),
+        s: String(Math.round(hsv.s)),
+        v: String(Math.round(hsv.v)),
+      });
+      const rgb = parseHexColor(panel.pendingValue);
+      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+    }
+  }, [panel.isExpanded, panel.pendingValue]);
+
+  // Track which slider is being dragged
+  const [draggingSlider, setDraggingSlider] = useState<'hue' | 'sat' | 'val' | null>(null);
+
+  // Draw the Hue slider gradient with toggle (deferred to ensure portal is in DOM)
+  useEffect(() => {
+    if (!panel.isExpanded) return;
+
+    const rafId = requestAnimationFrame(() => {
+      const canvas = hueSliderRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Draw rainbow gradient horizontally (full saturation, full value)
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      for (let i = 0; i <= 360; i += 60) {
+        gradient.addColorStop(i / 360, hsvToHex(i, 100, 100));
+      }
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw toggle at current hue position
+      const toggleX = (hue / 360) * width;
+      drawSliderToggle(ctx, toggleX, height);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [panel.isExpanded, hue]);
+
+  // Draw the Saturation slider gradient with toggle (deferred to ensure portal is in DOM)
+  useEffect(() => {
+    if (!panel.isExpanded) return;
+
+    const rafId = requestAnimationFrame(() => {
+      const canvas = satSliderRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Gradient from white (0% sat) to full color (100% sat) at full value
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, hsvToHex(hue, 0, 100));
+      gradient.addColorStop(1, hsvToHex(hue, 100, 100));
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw toggle at current saturation position
+      const toggleX = (saturation / 100) * width;
+      drawSliderToggle(ctx, toggleX, height);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [panel.isExpanded, hue, saturation]);
+
+  // Draw the Value (brightness) slider gradient with toggle (deferred to ensure portal is in DOM)
+  useEffect(() => {
+    if (!panel.isExpanded) return;
+
+    const rafId = requestAnimationFrame(() => {
+      const canvas = valueSliderRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Gradient from black (0% value) to full color (100% value)
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, hsvToHex(hue, saturation, 0));
+      gradient.addColorStop(1, hsvToHex(hue, saturation, 100));
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw toggle at current brightness/value position
+      const toggleX = (brightness / 100) * width;
+      drawSliderToggle(ctx, toggleX, height);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [panel.isExpanded, hue, saturation, brightness]);
+
+  // Handle global mouse events for slider dragging
+  useEffect(() => {
+    if (!draggingSlider) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      let canvas: HTMLCanvasElement | null = null;
+      if (draggingSlider === 'hue') canvas = hueSliderRef.current;
+      else if (draggingSlider === 'sat') canvas = satSliderRef.current;
+      else if (draggingSlider === 'val') canvas = valueSliderRef.current;
+
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const ratio = x / rect.width;
+
+      // During drag: only update local state, NOT panel.updatePending (to avoid triggering preview on every move)
+      if (draggingSlider === 'hue') {
+        const newHue = ratio * 360;
+        setHue(newHue);
+        setHsvInputs((prev) => ({ ...prev, h: String(Math.round(newHue)) }));
+        const hex = hsvToHex(newHue, saturation, brightness);
+        setHexInput(hex);
+        const rgb = parseHexColor(hex);
+        setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+      } else if (draggingSlider === 'sat') {
+        const newSat = ratio * 100;
+        setSaturation(newSat);
+        setHsvInputs((prev) => ({ ...prev, s: String(Math.round(newSat)) }));
+        const hex = hsvToHex(hue, newSat, brightness);
+        setHexInput(hex);
+        const rgb = parseHexColor(hex);
+        setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+      } else if (draggingSlider === 'val') {
+        const newVal = ratio * 100;
+        setBrightness(newVal);
+        setHsvInputs((prev) => ({ ...prev, v: String(Math.round(newVal)) }));
+        const hex = hsvToHex(hue, saturation, newVal);
+        setHexInput(hex);
+        const rgb = parseHexColor(hex);
+        setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+      }
+    };
+
+    const handleMouseUp = () => {
+      // On release: update panel pending value and trigger preview
+      const finalColor = hsvToHex(hue, saturation, brightness);
+      panel.updatePending(finalColor);
+      setDraggingSlider(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingSlider, hue, saturation, brightness, panel]);
+
+  // Update all state from a hex color
+  const updateFromHex = useCallback(
+    (hex: string) => {
+      panel.updatePending(hex);
+      setHexInput(hex);
+      const hsv = hexToHsv(hex);
+      setHue(hsv.h);
+      setSaturation(hsv.s);
+      setBrightness(hsv.v);
+      setHsvInputs({
+        h: String(Math.round(hsv.h)),
+        s: String(Math.round(hsv.s)),
+        v: String(Math.round(hsv.v)),
+      });
+      const rgb = parseHexColor(hex);
+      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+    },
+    [panel]
+  );
+
+  // Update color from HSV values
+  const updateFromHsv = useCallback(
+    (h: number, s: number, v: number) => {
+      const hex = hsvToHex(h, s, v);
+      panel.updatePending(hex);
+      setHexInput(hex);
+      setHue(h);
+      setSaturation(s);
+      setBrightness(v);
+      setHsvInputs({
+        h: String(Math.round(h)),
+        s: String(Math.round(s)),
+        v: String(Math.round(v)),
+      });
+      const rgb = parseHexColor(hex);
+      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+    },
+    [panel]
+  );
+
+  // Handle mousedown on the Hue slider (starts drag)
+  const handleHueSliderMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = hueSliderRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const newHue = (x / rect.width) * 360;
+      updateFromHsv(newHue, saturation, brightness);
+      setDraggingSlider('hue');
+    },
+    [saturation, brightness, updateFromHsv]
+  );
+
+  // Handle mousedown on the Saturation slider (starts drag)
+  const handleSatSliderMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = satSliderRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const newSat = (x / rect.width) * 100;
+      updateFromHsv(hue, newSat, brightness);
+      setDraggingSlider('sat');
+    },
+    [hue, brightness, updateFromHsv]
+  );
+
+  // Handle mousedown on the Value slider (starts drag)
+  const handleValueSliderMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = valueSliderRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const newValue = (x / rect.width) * 100;
+      updateFromHsv(hue, saturation, newValue);
+      setDraggingSlider('val');
+    },
+    [hue, saturation, updateFromHsv]
+  );
+
+  // Handle HSV input changes
+  const handleHsvInputChange = useCallback(
+    (channel: 'h' | 's' | 'v', val: string) => {
+      const newHsv = { ...hsvInputs, [channel]: val };
+      setHsvInputs(newHsv);
+
+      const h = parseFloat(newHsv.h);
+      const s = parseFloat(newHsv.s);
+      const v = parseFloat(newHsv.v);
+
+      if (!(Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(v))) {
+        const clampedH = Math.max(0, Math.min(360, h));
+        const clampedS = Math.max(0, Math.min(100, s));
+        const clampedV = Math.max(0, Math.min(100, v));
+
+        const hex = hsvToHex(clampedH, clampedS, clampedV);
+        panel.updatePending(hex);
+        setHexInput(hex);
+        setHue(clampedH);
+        setSaturation(clampedS);
+        setBrightness(clampedV);
+        const rgb = parseHexColor(hex);
+        setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+      }
+    },
+    [hsvInputs, panel]
+  );
+
+  // Handle hex input change
+  const handleHexInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let val = e.target.value.toUpperCase();
+      if (val && !val.startsWith('#')) {
+        val = `#${val}`;
+      }
+      setHexInput(val);
+
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        updateFromHex(val);
+      }
+    },
+    [updateFromHex]
+  );
+
+  // Handle RGB input changes
+  const handleRgbChange = useCallback(
+    (channel: 'r' | 'g' | 'b', val: string) => {
+      const newRgb = { ...rgbInputs, [channel]: val };
+      setRgbInputs(newRgb);
+
+      const r = parseInt(newRgb.r, 10);
+      const g = parseInt(newRgb.g, 10);
+      const b = parseInt(newRgb.b, 10);
+
+      if (!(Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b))) {
+        if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+          const hex = rgbToHex(r, g, b);
+          panel.updatePending(hex);
+          setHexInput(hex);
+          const hsv = hexToHsv(hex);
+          setHue(hsv.h);
+          setSaturation(hsv.s);
+          setBrightness(hsv.v);
+          setHsvInputs({
+            h: String(Math.round(hsv.h)),
+            s: String(Math.round(hsv.s)),
+            v: String(Math.round(hsv.v)),
+          });
+        }
+      }
+    },
+    [rgbInputs, panel]
+  );
+
   const displayColor = panel.isExpanded ? panel.pendingValue : value;
-  const colorName = getColorDisplayName(displayColor, presets);
 
   // Handle preset selection
   const handlePresetClick = useCallback(
     (presetValue: string) => {
-      panel.updatePending(presetValue);
+      updateFromHex(presetValue);
     },
-    [panel]
+    [updateFromHex]
   );
 
-  // Handle custom color picker
-  const handleColorInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      panel.updatePending(e.target.value);
-    },
-    [panel]
-  );
+  // Handle EyeDropper color picker
+  const handleEyeDropper = useCallback(async () => {
+    if (!isEyeDropperSupported) return;
 
-  // Open native color picker
-  const handlePickerClick = useCallback(() => {
-    colorInputRef.current?.click();
-  }, []);
+    try {
+      // @ts-expect-error - EyeDropper API not in TypeScript types yet
+      const eyeDropper = new window.EyeDropper();
+      const result = await eyeDropper.open();
+      if (result?.sRGBHex) {
+        updateFromHex(result.sRGBHex.toUpperCase());
+      }
+    } catch {
+      // User cancelled or error - do nothing
+    }
+  }, [updateFromHex]);
 
-  // Group presets for display
-  const presetsByGroup = presets.reduce(
-    (acc, preset) => {
-      const group = preset.group || 'Other';
-      if (!acc[group]) acc[group] = [];
-      acc[group].push(preset);
-      return acc;
-    },
-    {} as Record<string, ColorPreset[]>
-  );
+  // Handle randomize color
+  const handleRandomize = useCallback(() => {
+    const randomHex = `#${Math.floor(Math.random() * 16777215)
+      .toString(16)
+      .padStart(6, '0')
+      .toUpperCase()}`;
+    updateFromHex(randomHex);
+  }, [updateFromHex]);
+
+  // Use hexInput for display during dragging (it updates live), fall back to panel.pendingValue
+  const displayPendingColor = hexInput || panel.pendingValue;
+  const pendingIsLight = isLightColor(displayPendingColor);
 
   // Render expanded panel via portal
   const renderPanel = () => {
-    if (!(panel.isExpanded && showPresets && panel.panelPosition)) return null;
+    if (!(panel.isExpanded && panel.panelPosition)) return null;
 
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
@@ -258,71 +529,208 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
         className={`${baseStyles.panel} ${panel.panelPosition.openUpward ? baseStyles.panelUpward : ''}`}
         style={panelStyle}
       >
-        <div className={baseStyles.panelContent}>
-          {/* Custom Color Picker Row */}
-          <div className={styles.customPickerRow}>
-            <button type="button" className={styles.pickerButton} onClick={handlePickerClick}>
-              <span className={styles.pickerIcon}>🎨</span>
-              <span>Custom Color</span>
-            </button>
-
-            <div className={styles.currentColorDisplay}>
-              <div
-                className={styles.currentColorSwatch}
-                style={{ backgroundColor: panel.pendingValue }}
-              />
-              <span className={styles.currentColorHex}>{panel.pendingValue.toUpperCase()}</span>
+        {/* Two-column layout */}
+        <div className={styles.pickerContent}>
+          {/* Left column: Basic colors + Recent */}
+          <div className={styles.pickerLeft}>
+            <span className={styles.pickerLabel}>Basic colors:</span>
+            <div className={styles.basicGrid}>
+              {BASIC_COLORS.map((color) => {
+                const colorIsLight = isLightColor(color);
+                const isSelected = color.toUpperCase() === panel.pendingValue.toUpperCase();
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`${styles.gridSwatch} ${colorIsLight ? styles.gridSwatchLight : ''} ${isSelected ? styles.gridSwatchSelected : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => handlePresetClick(color)}
+                    title={color}
+                  />
+                );
+              })}
             </div>
 
-            {/* Hidden native color input */}
-            <input
-              ref={colorInputRef}
-              type="color"
-              value={panel.pendingValue}
-              onChange={handleColorInputChange}
-              disabled={disabled}
-              className={styles.colorInput}
-              aria-label="Custom color picker"
-            />
-          </div>
-
-          {/* Preset Swatches */}
-          {Object.entries(presetsByGroup).map(([groupName, groupPresets]) => (
-            <div key={groupName} className={styles.presetGroup}>
-              <span className={styles.presetGroupLabel}>{groupName}</span>
-              <div className={styles.presetSwatches}>
-                {groupPresets.map((preset) => {
-                  const isSelected =
-                    preset.value.toUpperCase() === panel.pendingValue.toUpperCase();
-                  const presetIsLight = isLightColor(preset.value);
-
+            {/* Recent colors */}
+            <span className={styles.pickerLabel}>Recent:</span>
+            <div className={styles.recentGrid}>
+              {recentColors.length > 0 ? (
+                recentColors.map((color) => {
+                  const colorIsLight = isLightColor(color);
+                  const isSelected = color.toUpperCase() === panel.pendingValue.toUpperCase();
                   return (
                     <button
-                      key={preset.value}
+                      key={`recent-${color}`}
                       type="button"
-                      className={[
-                        styles.presetSwatch,
-                        isSelected && styles.presetSwatchSelected,
-                        presetIsLight && styles.presetSwatchLight,
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      style={{ backgroundColor: preset.value }}
-                      onClick={() => handlePresetClick(preset.value)}
-                      title={preset.name}
-                      aria-label={`Select ${preset.name}`}
-                    >
-                      {isSelected && <span className={styles.presetCheck}>✓</span>}
-                    </button>
+                      className={`${styles.gridSwatch} ${colorIsLight ? styles.gridSwatchLight : ''} ${isSelected ? styles.gridSwatchSelected : ''}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => handlePresetClick(color)}
+                      title={color}
+                    />
                   );
-                })}
+                })
+              ) : (
+                <span className={styles.emptyRecent}>None yet</span>
+              )}
+            </div>
+          </div>
+
+          {/* Right column: Current color + HSV sliders + RGB inputs */}
+          <div className={styles.pickerRight}>
+            {/* Current color + Hex + eyedropper */}
+            <div className={styles.currentRow}>
+              <div
+                className={`${styles.currentSwatch} ${pendingIsLight ? styles.gridSwatchLight : ''}`}
+                style={{ backgroundColor: displayPendingColor }}
+              />
+              <input
+                type="text"
+                className={styles.hexInput}
+                value={hexInput}
+                onChange={handleHexInputChange}
+                placeholder="#FFFFFF"
+                maxLength={7}
+              />
+              {isEyeDropperSupported && (
+                <button
+                  type="button"
+                  className={styles.eyedropperBtn}
+                  onClick={handleEyeDropper}
+                  title="Pick color from screen"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                  >
+                    <path d="M13.354.646a1.207 1.207 0 0 0-1.708 0L8.5 3.793l-.646-.647a.5.5 0 1 0-.708.708L8.293 5l-7.147 7.146A.5.5 0 0 0 1 12.5v1.793l-.854.853a.5.5 0 1 0 .708.707L1.707 15H3.5a.5.5 0 0 0 .354-.146L11 7.707l1.146 1.147a.5.5 0 0 0 .708-.708l-.647-.646 3.147-3.146a1.207 1.207 0 0 0 0-1.708zM2 12.707l7-7L10.293 7l-7 7H2z" />
+                  </svg>
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.eyedropperBtn}
+                onClick={handleRandomize}
+                title="Random color"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                >
+                  <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m8 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
+                </svg>
+              </button>
+            </div>
+
+            {/* HSV Sliders */}
+            <div className={styles.hslSliders}>
+              <div className={styles.sliderRow}>
+                <span className={styles.sliderLabel}>H</span>
+                <canvas
+                  ref={hueSliderRef}
+                  className={styles.sliderTrack}
+                  width={120}
+                  height={16}
+                  onMouseDown={handleHueSliderMouseDown}
+                  style={{ cursor: draggingSlider === 'hue' ? 'grabbing' : 'pointer' }}
+                />
+                <input
+                  type="number"
+                  className={styles.sliderInput}
+                  value={hsvInputs.h}
+                  onChange={(e) => handleHsvInputChange('h', e.target.value)}
+                  min={0}
+                  max={360}
+                />
+              </div>
+              <div className={styles.sliderRow}>
+                <span className={styles.sliderLabel}>S</span>
+                <canvas
+                  ref={satSliderRef}
+                  className={styles.sliderTrack}
+                  width={120}
+                  height={16}
+                  onMouseDown={handleSatSliderMouseDown}
+                  style={{ cursor: draggingSlider === 'sat' ? 'grabbing' : 'pointer' }}
+                />
+                <input
+                  type="number"
+                  className={styles.sliderInput}
+                  value={hsvInputs.s}
+                  onChange={(e) => handleHsvInputChange('s', e.target.value)}
+                  min={0}
+                  max={100}
+                />
+              </div>
+              <div className={styles.sliderRow}>
+                <span className={styles.sliderLabel}>V</span>
+                <canvas
+                  ref={valueSliderRef}
+                  className={styles.sliderTrack}
+                  width={120}
+                  height={16}
+                  onMouseDown={handleValueSliderMouseDown}
+                  style={{ cursor: draggingSlider === 'val' ? 'grabbing' : 'pointer' }}
+                />
+                <input
+                  type="number"
+                  className={styles.sliderInput}
+                  value={hsvInputs.v}
+                  onChange={(e) => handleHsvInputChange('v', e.target.value)}
+                  min={0}
+                  max={100}
+                />
               </div>
             </div>
-          ))}
+
+            {/* RGB inputs */}
+            <div className={styles.rgbRow}>
+              <label className={styles.rgbLabel}>
+                R
+                <input
+                  type="number"
+                  className={styles.rgbInput}
+                  value={rgbInputs.r}
+                  onChange={(e) => handleRgbChange('r', e.target.value)}
+                  min={0}
+                  max={255}
+                />
+              </label>
+              <label className={styles.rgbLabel}>
+                G
+                <input
+                  type="number"
+                  className={styles.rgbInput}
+                  value={rgbInputs.g}
+                  onChange={(e) => handleRgbChange('g', e.target.value)}
+                  min={0}
+                  max={255}
+                />
+              </label>
+              <label className={styles.rgbLabel}>
+                B
+                <input
+                  type="number"
+                  className={styles.rgbInput}
+                  value={rgbInputs.b}
+                  onChange={(e) => handleRgbChange('b', e.target.value)}
+                  min={0}
+                  max={255}
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Panel Footer */}
-        <div className={baseStyles.panelFooter}>
+        <div className={styles.pickerFooter}>
           <button
             type="button"
             className={baseStyles.resetLink}
@@ -331,10 +739,10 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
             Reset
           </button>
           <div className={baseStyles.panelActions}>
-            <button type="button" className={baseStyles.cancelButton} onClick={panel.cancel}>
+            <button type="button" className={styles.pickerCancelBtn} onClick={panel.cancel}>
               Cancel
             </button>
-            <button type="button" className={baseStyles.confirmButton} onClick={panel.apply}>
+            <button type="button" className={styles.pickerApplyBtn} onClick={panel.apply}>
               Apply
             </button>
           </div>
@@ -345,22 +753,16 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   };
 
   return (
-    <SettingsSelectorBase
-      ref={panel.containerRef}
-      preview={<ColorPreview color={displayColor} shape={shape} size={size} />}
-      info={<InfoSection label={label || colorName} summary={displayColor.toUpperCase()} />}
-      headerSlot={headerSlot}
-      actionLabel="Customize"
-      onAction={panel.toggle}
-      isExpanded={panel.isExpanded}
-      disabled={disabled}
-      size={size}
-      ariaLabel={ariaLabel ?? 'Select color'}
-      onKeyDown={panel.handleKeyDown}
-    >
+    <div ref={panel.containerRef} className={styles.colorPickerContainer}>
+      {label && <span className={styles.swatchLabel}>{label}</span>}
+      <ColorSwatch color={displayColor} size={size} onClick={panel.toggle} disabled={disabled} />
       {renderPanel()}
-    </SettingsSelectorBase>
+    </div>
   );
 });
+
+// Re-export types and presets for backwards compatibility
+export { DEFAULT_COLOR_PRESETS as DEFAULT_PRESETS };
+export type { ColorPreset };
 
 export default ColorPreviewSelector;

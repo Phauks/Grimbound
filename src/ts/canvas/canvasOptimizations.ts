@@ -3,7 +3,6 @@
  * Canvas Optimization Utilities - Performance optimizations for canvas rendering
  */
 
-import { clearFontCache, getCachedFont } from '@/ts/cache/instances/fontCache.js';
 import { CHARACTER_LAYOUT } from '@/ts/constants.js';
 
 // ============================================================================
@@ -17,6 +16,8 @@ export interface TextLayoutResult {
   lines: string[];
   totalHeight: number;
   lineHeight: number;
+  /** Whether text was truncated (not applicable for basic layout) */
+  wasTruncated?: boolean;
 }
 
 /**
@@ -162,15 +163,6 @@ export function calculateCircularWidth(
 }
 
 // ============================================================================
-// FONT STRING CACHING
-// ============================================================================
-
-// Font cache now uses hexagonal cache architecture with LRU eviction
-// See: src/ts/cache/instances/fontCache.ts
-// Re-export for backward compatibility
-export { getCachedFont as globalFontCache, clearFontCache };
-
-// ============================================================================
 // CURVED TEXT POSITION CACHING
 // ============================================================================
 
@@ -225,14 +217,11 @@ export function precalculateCurvedTextPositions(
     const x = centerX + radius * Math.cos(currentAngle);
     const y = centerY + radius * Math.sin(currentAngle);
 
-    // Calculate rotation
-    let rotation = currentAngle + Math.PI / 2;
-    if (position === 'top') {
-      rotation -= Math.PI;
-    } else {
-      // For bottom text, flip 180 degrees to face outward
-      rotation += Math.PI;
-    }
+    // Calculate rotation to make text readable from outside the circle
+    // Top: currentAngle + π/2 (no additional rotation needed)
+    // Bottom: currentAngle + π/2 + π (add 180° for bottom text)
+    const rotation =
+      position === 'bottom' ? currentAngle + Math.PI / 2 + Math.PI : currentAngle + Math.PI / 2;
 
     positions.push({ char, x, y, rotation });
 
@@ -242,11 +231,125 @@ export function precalculateCurvedTextPositions(
   return positions;
 }
 
+/**
+ * Options for fitting text within bounded circular space
+ */
+export interface FitTextOptions {
+  /** Minimum font size ratio (relative to diameter) to shrink to */
+  minFontSizeRatio?: number;
+  /** Font size reduction step per iteration */
+  fontSizeStep?: number;
+  /** Maximum iterations to prevent infinite loops */
+  maxIterations?: number;
+}
+
+/**
+ * Result of auto-fitting text calculation
+ */
+export interface FitTextResult extends TextLayoutResult {
+  /** The font size that was used (may be smaller than requested) */
+  actualFontSize: number;
+  /** Whether the font size was reduced to fit */
+  wasReduced: boolean;
+}
+
+/**
+ * Calculate text layout that fits within available vertical space by reducing font size if needed.
+ * Useful for jinx tokens and other contexts where text must not overflow a bounded area.
+ *
+ * @param ctx - Canvas context (font will be temporarily modified during calculation)
+ * @param text - Text to layout
+ * @param diameter - Token diameter
+ * @param preferredFontSize - Preferred font size in pixels
+ * @param lineHeightMultiplier - Line height multiplier
+ * @param startY - Starting Y position
+ * @param maxY - Maximum Y position (text must not exceed this)
+ * @param circularPadding - Padding ratio for circular bounds
+ * @param fontFamily - Font family for recalculating after size changes
+ * @param options - Additional fitting options
+ * @returns Layout result with actual font size used
+ */
+export function calculateFittedCircularTextLayout(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  diameter: number,
+  preferredFontSize: number,
+  lineHeightMultiplier: number,
+  startY: number,
+  maxY: number,
+  circularPadding: number,
+  fontFamily: string,
+  options: FitTextOptions = {}
+): FitTextResult {
+  const { minFontSizeRatio = 0.03, fontSizeStep = 0.005, maxIterations = 20 } = options;
+
+  const minFontSize = diameter * minFontSizeRatio;
+  const fontSizeDecrement = diameter * fontSizeStep;
+  let currentFontSize = preferredFontSize;
+  let iterations = 0;
+
+  // Save original font
+  const originalFont = ctx.font;
+
+  while (iterations < maxIterations && currentFontSize >= minFontSize) {
+    // Update font for accurate measurement
+    ctx.font = `${currentFontSize}px ${fontFamily}`;
+
+    const layout = calculateCircularTextLayout(
+      ctx,
+      text,
+      diameter,
+      currentFontSize,
+      lineHeightMultiplier,
+      startY,
+      circularPadding
+    );
+
+    const endY = startY + layout.totalHeight;
+
+    // Check if layout fits within bounds
+    if (endY <= maxY) {
+      // Restore original font
+      ctx.font = originalFont;
+
+      return {
+        ...layout,
+        actualFontSize: currentFontSize,
+        wasReduced: currentFontSize < preferredFontSize,
+      };
+    }
+
+    // Reduce font size and try again
+    currentFontSize -= fontSizeDecrement;
+    iterations++;
+  }
+
+  // If we still can't fit, use the minimum font size
+  ctx.font = `${minFontSize}px ${fontFamily}`;
+  const finalLayout = calculateCircularTextLayout(
+    ctx,
+    text,
+    diameter,
+    minFontSize,
+    lineHeightMultiplier,
+    startY,
+    circularPadding
+  );
+
+  // Restore original font
+  ctx.font = originalFont;
+
+  return {
+    ...finalLayout,
+    actualFontSize: minFontSize,
+    wasReduced: true,
+  };
+}
+
 export default {
   calculateCircularTextLayout,
+  calculateFittedCircularTextLayout,
   createCircularWidthCalculator,
   calculateCircularWidth,
-  getCachedFont,
-  clearFontCache,
   precalculateCurvedTextPositions,
 };

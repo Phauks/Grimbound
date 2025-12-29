@@ -15,6 +15,7 @@ import { Button } from '@/components/Shared/UI/Button';
 import { CharacterNavigation } from '@/components/ViewComponents/CharactersComponents/CharacterNavigation';
 import { MetaEditor } from '@/components/ViewComponents/CharactersComponents/MetaEditor';
 import { TokenEditor } from '@/components/ViewComponents/CharactersComponents/TokenEditor';
+import type { JinxPreviewData } from '@/components/ViewComponents/CharactersComponents/TokenEditor/index';
 import { TokenPreview } from '@/components/ViewComponents/CharactersComponents/TokenPreview';
 import { useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -28,6 +29,7 @@ import {
 import previewStyles from '@/styles/components/characterEditor/TokenPreview.module.css';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
+import { isMetaToken } from '@/ts/export/zipExporter.js';
 import type { Token } from '@/ts/types/index.js';
 import { updateMetaInJson } from '@/ts/ui/detailViewUtils.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -37,13 +39,6 @@ interface CharactersViewProps {
   selectedCharacterUuid?: string;
   onCharacterSelect?: (characterUuid: string) => void;
   createNewCharacter?: boolean;
-}
-
-/**
- * Check if a token is a meta token (not character or reminder)
- */
-function isMetaToken(token?: Token): boolean {
-  return !!token && token.type !== 'character' && token.type !== 'reminder';
 }
 
 export function CharactersView({
@@ -102,6 +97,11 @@ export function CharactersView({
   );
   const [isMetaSelected, setIsMetaSelected] = useState(!!selectedMetaToken);
   const [isOfficialDrawerOpen, setIsOfficialDrawerOpen] = useState(false);
+
+  // Jinx preview state
+  const [jinxPreviewData, setJinxPreviewData] = useState<JinxPreviewData | null>(null);
+  const [jinxPreviewToken, setJinxPreviewToken] = useState<Token | null>(null);
+  const [previewedJinxIndex, setPreviewedJinxIndex] = useState<number | null>(null);
 
   // Track original UUID for character operations
   const originalCharacterUuidRef = useRef<string>(selectedCharacterUuid);
@@ -204,9 +204,10 @@ export function CharactersView({
   );
 
   // Check if selected character is official
-  const isSelectedCharacterOfficial = useMemo(() => {
-    return selectedCharacter?.source === 'official';
-  }, [selectedCharacter]);
+  const isSelectedCharacterOfficial = useMemo(
+    () => selectedCharacter?.source === 'official',
+    [selectedCharacter]
+  );
 
   // Handle character selection
   const handleSelectCharacter = useCallback(
@@ -235,6 +236,84 @@ export function CharactersView({
     setSelectedCharacterUuid('');
     setIsMetaSelected(true);
   }, []);
+
+  // Handle jinx preview
+  const handlePreviewJinx = useCallback((data: JinxPreviewData | null) => {
+    if (!data) {
+      // Clear jinx preview
+      setJinxPreviewData(null);
+      setJinxPreviewToken(null);
+      setPreviewedJinxIndex(null);
+      return;
+    }
+
+    // Store the preview data - we'll generate the token in an effect
+    setJinxPreviewData(data);
+
+    // Find the index of this jinx in the character's jinxes array
+    const jinxes = data.character.jinxes || [];
+    const index = jinxes.findIndex((j) => j.id === data.jinx.id && j.reason === data.jinx.reason);
+    setPreviewedJinxIndex(index >= 0 ? index : 0);
+  }, []);
+
+  // Generate jinx token when preview data changes
+  useEffect(() => {
+    if (!jinxPreviewData) {
+      setJinxPreviewToken(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const generateJinxPreview = async () => {
+      try {
+        const { TokenGenerator } = await import('@/ts/generation/TokenGenerator.js');
+        const generator = new TokenGenerator(generationOptions);
+
+        const canvas = await generator.generateJinxToken(
+          jinxPreviewData.jinx,
+          jinxPreviewData.character,
+          jinxPreviewData.targetCharacter
+        );
+
+        if (cancelled) return;
+
+        // Create a Token object for display
+        const token: Token = {
+          name: `${jinxPreviewData.character.name} & ${jinxPreviewData.targetCharacter.name}`,
+          type: 'jinx',
+          canvas,
+          filename: `jinx_${jinxPreviewData.character.id}_${jinxPreviewData.targetCharacter.id}.png`,
+          jinxData: {
+            char1Id: jinxPreviewData.character.id,
+            char2Id: jinxPreviewData.targetCharacter.id,
+            reason: jinxPreviewData.jinx.reason,
+          },
+        };
+
+        setJinxPreviewToken(token);
+      } catch (error) {
+        logger.error('CharactersView', 'Failed to generate jinx preview', error);
+        setJinxPreviewToken(null);
+      }
+    };
+
+    generateJinxPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jinxPreviewData, generationOptions]);
+
+  // Clear jinx preview when character changes
+  useEffect(() => {
+    // Clear preview data when switching to any character (or deselecting)
+    if (selectedCharacterUuid || selectedCharacterUuid === '') {
+      setJinxPreviewData(null);
+      setJinxPreviewToken(null);
+      setPreviewedJinxIndex(null);
+    }
+  }, [selectedCharacterUuid]);
 
   return (
     <ErrorBoundary
@@ -286,9 +365,26 @@ export function CharactersView({
               )}
             </div>
           ) : selectedCharacter ? (
-            // Character preview
+            // Character preview (or jinx preview when active)
             <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
-              {previewCharacterToken ? (
+              {jinxPreviewToken ? (
+                // Jinx token preview
+                <div className={styles.jinxTokenPreview}>
+                  <img
+                    src={jinxPreviewToken.canvas.toDataURL('image/png')}
+                    alt={jinxPreviewToken.name}
+                    className={styles.jinxTokenImage}
+                  />
+                  <button
+                    type="button"
+                    className={styles.closeJinxPreview}
+                    onClick={() => handlePreviewJinx(null)}
+                    aria-label="Close jinx preview"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : previewCharacterToken ? (
                 <TokenPreview
                   characterToken={previewCharacterToken}
                   reminderTokens={previewReminderTokens}
@@ -383,6 +479,8 @@ export function CharactersView({
               onRefreshPreview={regeneratePreview}
               onPreviewVariant={handlePreviewVariant}
               isOfficial={isSelectedCharacterOfficial}
+              onPreviewJinx={handlePreviewJinx}
+              previewedJinxIndex={previewedJinxIndex}
             />
           ) : null}
         </ViewLayout.Panel>

@@ -13,7 +13,8 @@
  * @module components/CharactersComponents/TokenEditor
  */
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useDataSync } from '@/contexts/DataSyncContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character, DecorativeOverrides } from '@/ts/types/index.js';
@@ -21,6 +22,7 @@ import { CharacterDecorativesPanel } from './CharacterDecorativesPanel';
 import {
   AlmanacTabContent,
   GameplayTabContent,
+  type JinxPreviewData,
   JsonTabContent,
   type TokenEditorTab,
 } from './TokenEditor/index';
@@ -32,6 +34,10 @@ interface TokenEditorProps {
   onRefreshPreview?: () => void;
   onPreviewVariant?: (imageUrl: string | undefined) => void;
   isOfficial?: boolean;
+  /** Callback to preview a jinx token */
+  onPreviewJinx?: (data: JinxPreviewData | null) => void;
+  /** Index of currently previewed jinx */
+  previewedJinxIndex?: number | null;
 }
 
 /**
@@ -50,13 +56,24 @@ export const TokenEditor = memo(function TokenEditor({
   onRefreshPreview,
   onPreviewVariant,
   isOfficial = false,
+  onPreviewJinx,
+  previewedJinxIndex,
 }: TokenEditorProps) {
   // Access metadata store from context
-  const { getMetadata, setMetadata, generationOptions } = useTokenContext();
+  const { getMetadata, setMetadata, generationOptions, characters } = useTokenContext();
+  const { getCharacters, isInitialized } = useDataSync();
   const charUuid = character.uuid || '';
   const metadata = getMetadata(charUuid);
   const decoratives = metadata.decoratives || {};
   const isIdLinked = metadata.idLinkedToName ?? true;
+
+  // Load official characters for jinx editor
+  const [officialCharacters, setOfficialCharacters] = useState<Character[]>([]);
+  useEffect(() => {
+    if (isInitialized) {
+      getCharacters().then(setOfficialCharacters);
+    }
+  }, [isInitialized, getCharacters]);
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<TokenEditorTab>('info');
@@ -174,6 +191,10 @@ export const TokenEditor = memo(function TokenEditor({
             charUuid={charUuid}
             isIdLinked={isIdLinked}
             onIdLinkChange={handleIdLinkChange}
+            scriptCharacters={characters}
+            officialCharacters={officialCharacters}
+            onPreviewJinx={onPreviewJinx}
+            previewedJinxIndex={previewedJinxIndex}
           />
         )}
 

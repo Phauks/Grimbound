@@ -91,12 +91,10 @@ export function getLineSegments(line: string, originalText: string): TextSegment
   // Build a map of character positions to their bold status
   // This approach handles the case where a line may contain parts of multiple segments
   const charBoldMap: boolean[] = [];
-  let _pos = 0;
   for (const segment of fullSegments) {
-    for (let i = 0; i < segment.text.length; i++) {
+    for (const _char of segment.text) {
       charBoldMap.push(segment.isBold);
     }
-    _pos += segment.text.length;
   }
 
   // Find where this line appears in the original text

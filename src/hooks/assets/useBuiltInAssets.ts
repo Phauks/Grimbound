@@ -214,9 +214,7 @@ export function useBuiltInAssets({
 
   // Check if value is a built-in asset
   const isBuiltIn = useCallback(
-    (value: string): boolean => {
-      return isBuiltInAsset(value, assetType);
-    },
+    (value: string): boolean => isBuiltInAsset(value, assetType),
     [assetType]
   );
 

@@ -173,7 +173,7 @@ export function useScriptTransformations(
 
   // Memoized analysis: check for condensable character references
   const hasCondensableRefs = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0 || !officialData.length) return false;
+    if (!jsonInput.trim() || characters.length === 0 || officialData.length === 0) return false;
     return hasCondensableReferences(jsonInput, officialData);
   }, [jsonInput, characters.length, officialData]);
 

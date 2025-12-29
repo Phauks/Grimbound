@@ -8,6 +8,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
   EnableToggle,
   InfoSection,
@@ -83,13 +84,12 @@ const BorderPanelContent = memo(function BorderPanelContent({
 
         {/* Color Picker */}
         <div className={baseStyles.settingSection}>
-          <div className={baseStyles.settingLabel}>Color</div>
-          <input
-            type="color"
+          <ColorPreviewSelector
+            label="Color"
             value={borderColor}
-            onChange={(e) => onColorChange(e.target.value)}
-            className={styles.colorPicker}
-            style={{ width: '100%', height: '36px' }}
+            onChange={onColorChange}
+            onPreviewChange={onColorChange}
+            size="small"
           />
         </div>
       </div>

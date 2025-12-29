@@ -313,7 +313,7 @@ export async function preResolveAssetsWithPriority(
       inProgress.add(promise);
 
       // Remove from in-progress when done
-      promise.finally(() => {
+      await promise.finally(() => {
         inProgress.delete(promise);
       });
     }

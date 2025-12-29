@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
+import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
 import { SegmentedControl } from '@/components/Shared/UI/SegmentedControl';
 import styles from '@/styles/components/options/OptionsTab.module.css';
@@ -18,8 +19,9 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
   const handleFontSpacingChange = (type: string, value: number) => {
     const currentSpacing = generationOptions.fontSpacing || {
       characterName: 0,
-      abilityText: 0,
+      characterText: 0,
       reminderText: 0,
+      metaName: 0,
       metaText: 0,
     };
     onOptionChange({
@@ -33,8 +35,9 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
   const handleTextShadowChange = (type: string, value: number) => {
     const currentShadow = generationOptions.textShadow || {
       characterName: 4,
-      abilityText: 3,
+      characterText: 3,
       reminderText: 4,
+      metaName: 4,
       metaText: 4,
     };
     onOptionChange({
@@ -90,11 +93,11 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
                   label="Background Color"
                   description="Choose a solid background color for reminder tokens."
                 >
-                  <input
-                    type="color"
-                    className={styles.colorInput}
+                  <ColorPreviewSelector
                     value={generationOptions.reminderBackground}
-                    onChange={(e) => onOptionChange({ reminderBackground: e.target.value })}
+                    onChange={(color) => onOptionChange({ reminderBackground: color })}
+                    onPreviewChange={(color) => onOptionChange({ reminderBackground: color })}
+                    size="small"
                   />
                 </OptionGroup>
               ) : (
@@ -139,11 +142,11 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
               </OptionGroup>
 
               <OptionGroup label="Color" helpText="Text color for reminder text">
-                <input
-                  type="color"
-                  className={styles.colorInput}
-                  value={generationOptions.reminderTextColor}
-                  onChange={(e) => onOptionChange({ reminderTextColor: e.target.value })}
+                <ColorPreviewSelector
+                  value={generationOptions.reminderTextColor ?? '#FFFFFF'}
+                  onChange={(color) => onOptionChange({ reminderTextColor: color })}
+                  onPreviewChange={(color) => onOptionChange({ reminderTextColor: color })}
+                  size="small"
                 />
               </OptionGroup>
 

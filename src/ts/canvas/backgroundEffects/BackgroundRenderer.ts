@@ -13,6 +13,7 @@ import { ResourceNotFoundError, TokenCreationError } from '@/ts/errors.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
 import type { BackgroundStyle, TextureConfig } from '@/ts/types/backgroundEffects.js';
 import { DEFAULT_LIGHT_CONFIG } from '@/ts/types/backgroundEffects.js';
+import { logger } from '@/ts/utils/logger.js';
 import { applyEffects, applyVibrance } from './effects/index.js';
 import { type TextureContext, TextureFactory } from './textures/index.js';
 
@@ -219,6 +220,212 @@ function applyContrastAdjustment(
 }
 
 // ============================================================================
+// RENDER HELPERS (extracted to reduce cognitive complexity)
+// ============================================================================
+
+/** Light configuration for filter building */
+interface LightConfig {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  vibrance: number;
+}
+
+/** Calculated image dimensions and position */
+interface ImageLayout {
+  drawWidth: number;
+  drawHeight: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
+ * Build CSS filter string from light configuration.
+ */
+function buildFilterString(light: LightConfig): string {
+  const filters: string[] = [];
+  if (light.brightness !== 100) {
+    filters.push(`brightness(${light.brightness / 100})`);
+  }
+  if (light.contrast !== 100) {
+    filters.push(`contrast(${light.contrast / 100})`);
+  }
+  if (light.saturation !== 100) {
+    filters.push(`saturate(${light.saturation / 100})`);
+  }
+  return filters.join(' ');
+}
+
+/**
+ * Calculate initial image dimensions to cover the circular area.
+ */
+function calculateCoverDimensions(
+  imgWidth: number,
+  imgHeight: number,
+  diameter: number
+): ImageLayout {
+  const aspectRatio = imgWidth / imgHeight;
+  let drawWidth = diameter;
+  let drawHeight = diameter;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  if (aspectRatio > 1) {
+    drawWidth = diameter * aspectRatio;
+    offsetX = (diameter - drawWidth) / 2;
+  } else {
+    drawHeight = diameter / aspectRatio;
+    offsetY = (diameter - drawHeight) / 2;
+  }
+
+  return { drawWidth, drawHeight, offsetX, offsetY };
+}
+
+/**
+ * Apply zoom transformation to image layout.
+ */
+function applyZoomTransform(layout: ImageLayout, zoom: number): ImageLayout {
+  if (zoom === 1) return layout;
+
+  const prevWidth = layout.drawWidth;
+  const prevHeight = layout.drawHeight;
+  const drawWidth = layout.drawWidth * zoom;
+  const drawHeight = layout.drawHeight * zoom;
+
+  return {
+    drawWidth,
+    drawHeight,
+    offsetX: layout.offsetX - (drawWidth - prevWidth) / 2,
+    offsetY: layout.offsetY - (drawHeight - prevHeight) / 2,
+  };
+}
+
+/**
+ * Apply manual offset to image layout.
+ * Y is inverted so positive = up (matches user expectations).
+ */
+function applyManualOffset(
+  layout: ImageLayout,
+  offsetXPercent: number,
+  offsetYPercent: number,
+  diameter: number
+): ImageLayout {
+  return {
+    ...layout,
+    offsetX: layout.offsetX + offsetXPercent * diameter,
+    offsetY: layout.offsetY - offsetYPercent * diameter,
+  };
+}
+
+/**
+ * Apply crop offset (random or fixed) to image layout.
+ */
+function applyCropOffset(
+  layout: ImageLayout,
+  style: BackgroundStyle,
+  diameter: number
+): ImageLayout {
+  const maxOffsetX = Math.abs(layout.drawWidth - diameter) / 2;
+  const maxOffsetY = Math.abs(layout.drawHeight - diameter) / 2;
+
+  let offsetX = layout.offsetX;
+  let offsetY = layout.offsetY;
+
+  if (style.randomCrop) {
+    offsetX += (Math.random() - 0.5) * 2 * maxOffsetX;
+    offsetY += (Math.random() - 0.5) * 2 * maxOffsetY;
+  } else if (style.cropOffsetX !== undefined || style.cropOffsetY !== undefined) {
+    offsetX += ((style.cropOffsetX ?? 0.5) - 0.5) * 2 * maxOffsetX;
+    offsetY += ((style.cropOffsetY ?? 0.5) - 0.5) * 2 * maxOffsetY;
+  }
+
+  return { ...layout, offsetX, offsetY };
+}
+
+/**
+ * Determine rotation angle from style configuration.
+ */
+function getRotationAngle(style: BackgroundStyle): number {
+  if (style.randomizeRotation) {
+    return Math.random() * 360;
+  }
+  return style.imageRotation ?? 0;
+}
+
+/**
+ * Draw error checkerboard pattern (red/yellow) when image fails to load.
+ */
+function drawErrorCheckerboard(ctx: CanvasRenderingContext2D, diameter: number): void {
+  const checkerSize = Math.max(8, Math.floor(diameter / 16));
+  const colors = ['#FF0000', '#FFFF00'];
+
+  for (let y = 0; y < diameter; y += checkerSize) {
+    for (let x = 0; x < diameter; x += checkerSize) {
+      const colorIndex = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2;
+      ctx.fillStyle = colors[colorIndex];
+      ctx.fillRect(x, y, checkerSize, checkerSize);
+    }
+  }
+}
+
+/**
+ * Render image background with all transformations applied.
+ */
+async function renderImageBackground(
+  ctx: CanvasRenderingContext2D,
+  style: BackgroundStyle & { imageUrl: string },
+  diameter: number,
+  center: number
+): Promise<void> {
+  drawCheckerboardBackground(ctx, diameter);
+
+  try {
+    const img = await loadBackgroundImage(style.imageUrl);
+
+    // Calculate layout with all transformations
+    let layout = calculateCoverDimensions(img.width, img.height, diameter);
+    layout = applyZoomTransform(layout, style.imageZoom ?? 1);
+    layout = applyManualOffset(layout, style.imageOffsetX ?? 0, style.imageOffsetY ?? 0, diameter);
+    layout = applyCropOffset(layout, style, diameter);
+
+    const rotation = getRotationAngle(style);
+
+    // Apply rotation if needed
+    if (rotation !== 0) {
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.translate(-center, -center);
+    }
+
+    ctx.drawImage(img, layout.offsetX, layout.offsetY, layout.drawWidth, layout.drawHeight);
+
+    if (rotation !== 0) {
+      ctx.restore();
+    }
+  } catch (error) {
+    logger.warn('BackgroundRenderer', 'Failed to load background image, using fallback', error);
+    drawErrorCheckerboard(ctx, diameter);
+  }
+}
+
+/**
+ * Render solid or gradient background.
+ */
+function renderColorBackground(
+  ctx: CanvasRenderingContext2D,
+  style: BackgroundStyle,
+  diameter: number
+): void {
+  if (style.mode === 'solid') {
+    ctx.fillStyle = style.solidColor;
+  } else {
+    ctx.fillStyle = createBackgroundGradient(ctx, style.gradient, diameter);
+  }
+  ctx.fill();
+}
+
+// ============================================================================
 // MAIN RENDER FUNCTION
 // ============================================================================
 
@@ -242,125 +449,20 @@ export async function renderBackground(
 
   ctx.save();
 
-  // 1. Apply CSS-style filters for brightness/contrast/saturation (before drawing)
-  const filters: string[] = [];
-  if (light.brightness !== 100) {
-    filters.push(`brightness(${light.brightness / 100})`);
-  }
-  if (light.contrast !== 100) {
-    filters.push(`contrast(${light.contrast / 100})`);
-  }
-  if (light.saturation !== 100) {
-    filters.push(`saturate(${light.saturation / 100})`);
-  }
-  if (filters.length > 0) {
-    ctx.filter = filters.join(' ');
+  // 1. Apply CSS-style filters for brightness/contrast/saturation
+  const filterString = buildFilterString(light);
+  if (filterString) {
+    ctx.filter = filterString;
   }
 
   // 2. Draw base depending on sourceType
   if (style.sourceType === 'image' && style.imageUrl) {
-    // Image mode: draw checkerboard background first, then the image
-    // Checkerboard indicates "paper" areas visible when zoomed out or offset
-    drawCheckerboardBackground(ctx, diameter);
-
-    try {
-      const img = await loadBackgroundImage(style.imageUrl);
-      // Draw image to cover the circular area (center and crop)
-      const aspectRatio = img.width / img.height;
-      let drawWidth = diameter;
-      let drawHeight = diameter;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      if (aspectRatio > 1) {
-        // Image is wider - fit height, crop width
-        drawWidth = diameter * aspectRatio;
-        offsetX = (diameter - drawWidth) / 2;
-      } else {
-        // Image is taller - fit width, crop height
-        drawHeight = diameter / aspectRatio;
-        offsetY = (diameter - drawHeight) / 2;
-      }
-
-      // Apply zoom (1.0 = cover fit, >1 = zoom in, <1 = zoom out)
-      const zoom = style.imageZoom ?? 1;
-      if (zoom !== 1) {
-        const prevWidth = drawWidth;
-        const prevHeight = drawHeight;
-        drawWidth *= zoom;
-        drawHeight *= zoom;
-        // Re-center after scaling
-        offsetX -= (drawWidth - prevWidth) / 2;
-        offsetY -= (drawHeight - prevHeight) / 2;
-      }
-
-      // Apply manual offset (-1 to 1 range, as percentage of diameter)
-      // Y is inverted so positive = up (matches user expectations)
-      const manualOffsetX = (style.imageOffsetX ?? 0) * diameter;
-      const manualOffsetY = (style.imageOffsetY ?? 0) * diameter;
-      offsetX += manualOffsetX;
-      offsetY -= manualOffsetY;
-
-      // Apply random crop offset if enabled
-      if (style.randomCrop) {
-        const maxOffsetX = Math.abs(drawWidth - diameter) / 2;
-        const maxOffsetY = Math.abs(drawHeight - diameter) / 2;
-        offsetX += (Math.random() - 0.5) * 2 * maxOffsetX;
-        offsetY += (Math.random() - 0.5) * 2 * maxOffsetY;
-      } else if (style.cropOffsetX !== undefined || style.cropOffsetY !== undefined) {
-        // Use fixed crop offset (0-1 range, 0.5 = centered)
-        const maxOffsetX = Math.abs(drawWidth - diameter) / 2;
-        const maxOffsetY = Math.abs(drawHeight - diameter) / 2;
-        offsetX += ((style.cropOffsetX ?? 0.5) - 0.5) * 2 * maxOffsetX;
-        offsetY += ((style.cropOffsetY ?? 0.5) - 0.5) * 2 * maxOffsetY;
-      }
-
-      // Determine rotation angle
-      let rotation = style.imageRotation ?? 0;
-      if (style.randomizeRotation) {
-        rotation = Math.random() * 360;
-      }
-
-      // Apply rotation if needed
-      if (rotation !== 0) {
-        ctx.save();
-        ctx.translate(center, center);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.translate(-center, -center);
-      }
-
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-
-      if (rotation !== 0) {
-        ctx.restore();
-      }
-    } catch (error) {
-      // Fallback to error pattern if image fails to load
-      // Using console.warn here is intentional for debugging failed loads
-      // eslint-disable-next-line no-console
-      console.warn('Failed to load background image, using fallback color:', error);
-      // Draw red/yellow checkerboard pattern to indicate error
-      const checkerSize = Math.max(8, Math.floor(diameter / 16));
-      const colors = ['#FF0000', '#FFFF00'];
-      for (let y = 0; y < diameter; y += checkerSize) {
-        for (let x = 0; x < diameter; x += checkerSize) {
-          const colorIndex = (Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2;
-          ctx.fillStyle = colors[colorIndex];
-          ctx.fillRect(x, y, checkerSize, checkerSize);
-        }
-      }
-    }
-  } else if (style.mode === 'solid') {
-    // Solid color mode
-    ctx.fillStyle = style.solidColor;
-    ctx.fill();
+    await renderImageBackground(ctx, style, diameter, center);
   } else {
-    // Gradient mode
-    ctx.fillStyle = createBackgroundGradient(ctx, style.gradient, diameter);
-    ctx.fill();
+    renderColorBackground(ctx, style, diameter);
   }
 
-  // 3. Apply texture overlay if enabled (works for all source types)
+  // 3. Apply texture overlay if enabled
   if (style.texture.type !== 'none') {
     applyTexture(ctx, style.texture, diameter, style.solidColor);
   }

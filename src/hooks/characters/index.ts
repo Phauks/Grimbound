@@ -38,3 +38,9 @@ export {
   type UseCharacterOperationsResult,
   useCharacterOperations,
 } from './useCharacterOperations.js';
+// Jinx operations
+export {
+  type UseJinxOperationsOptions,
+  type UseJinxOperationsResult,
+  useJinxOperations,
+} from './useJinxOperations.js';

@@ -173,15 +173,15 @@ function compareCharacters(oldChars: Character[], newChars: Character[]): Charac
   // Find added and modified
   for (const newChar of newChars) {
     const oldChar = oldMap.get(newChar.id);
-    if (!oldChar) {
-      added.push(newChar);
-    } else {
+    if (oldChar) {
       const changes = findCharacterChanges(oldChar, newChar);
       if (changes.length > 0) {
         modified.push({ character: newChar, changes });
       } else {
         unchanged++;
       }
+    } else {
+      added.push(newChar);
     }
   }
 
@@ -257,9 +257,11 @@ function compareGenerationOptions(
   const newKeys = Object.keys(newOptions);
   const allKeys = new Set([...oldKeys, ...newKeys]);
 
+  // Type-safe dynamic property access using keyof
   for (const key of allKeys) {
-    const oldValue = (oldOptions as unknown as Record<string, unknown>)[key];
-    const newValue = (newOptions as unknown as Record<string, unknown>)[key];
+    const typedKey = key as keyof typeof oldOptions;
+    const oldValue = oldOptions[typedKey];
+    const newValue = newOptions[typedKey];
 
     if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
       fields.push(key);
@@ -588,15 +590,15 @@ function compareCharactersDetailed(
   // Find added and modified
   for (const newChar of newChars) {
     const oldChar = oldMap.get(newChar.id);
-    if (!oldChar) {
-      added.push(newChar);
-    } else {
+    if (oldChar) {
       const detailedChanges = findCharacterChangesDetailed(oldChar, newChar);
       if (detailedChanges) {
         modified.push(detailedChanges);
       } else {
         unchanged++;
       }
+    } else {
+      added.push(newChar);
     }
   }
 

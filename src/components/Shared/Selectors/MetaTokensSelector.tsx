@@ -118,7 +118,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
     <div className={optionStyles.inboxToggle}>
       <button
         type="button"
-        className={`${optionStyles.inboxToggleButton} ${!isEnabled ? optionStyles.inboxToggleButtonActive : ''}`}
+        className={`${optionStyles.inboxToggleButton} ${isEnabled ? '' : optionStyles.inboxToggleButtonActive}`}
         onClick={() => handleToggle(false)}
       >
         Off
@@ -178,7 +178,7 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
 
           {/* Show Author (sub-option) */}
           <label
-            className={`${styles.checkboxRow} ${styles.subOption} ${!panel.pendingValue.scriptName ? styles.optionDisabled : ''}`}
+            className={`${styles.checkboxRow} ${styles.subOption} ${panel.pendingValue.scriptName ? '' : styles.optionDisabled}`}
           >
             <input
               type="checkbox"

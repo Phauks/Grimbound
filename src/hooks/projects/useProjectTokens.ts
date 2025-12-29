@@ -84,11 +84,12 @@ export function useProjectTokens({
   const lastPreviewTokensRef = useRef<Token[]>([]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       abortControllerRef.current?.abort();
-    };
-  }, []);
+    },
+    []
+  );
 
   // Generate preview tokens for non-active projects
   useEffect(() => {

@@ -246,3 +246,49 @@
 .toggleLabel {
   user-select: none;
 }
+
+/* Partial Regeneration Button Group */
+.partialGroup {
+  display: flex;
+  align-items: stretch;
+}
+
+.partialBtnFirst,
+.partialBtnMiddle,
+.partialBtnLast {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.partialBtnFirst {
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.partialBtnMiddle {
+  border-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.partialBtnLast {
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+}
+
+.partialBtnFirst:hover:not(:disabled),
+.partialBtnMiddle:hover:not(:disabled),
+.partialBtnLast:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.partialBtnFirst:disabled,
+.partialBtnMiddle:disabled,
+.partialBtnLast:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

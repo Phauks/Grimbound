@@ -163,7 +163,7 @@ export class PreRenderCacheManager extends EventEmitter {
     this.inProgressOperations.set(operationKey, renderPromise);
 
     // Clean up after completion
-    renderPromise.finally(() => {
+    await renderPromise.finally(() => {
       this.inProgressOperations.delete(operationKey);
       this.isRendering.delete(strategy.name);
     });

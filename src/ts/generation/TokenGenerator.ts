@@ -8,18 +8,26 @@
 
 import {
   type CanvasContext,
+  calculateFittedCircularTextLayout,
   createCanvas,
   createCircularClipPath,
+  drawCurvedText,
   type Point,
   renderBackground,
   type TextLayoutResult,
 } from '@/ts/canvas/index.js';
 import { generateStyledQRCode } from '@/ts/canvas/qrGeneration.js';
 import CONFIG from '@/ts/config.js';
-import { DEFAULT_COLORS, QR_COLORS, QR_TOKEN_LAYOUT, TOKEN_COUNT_BADGE } from '@/ts/constants.js';
+import {
+  DEFAULT_COLORS,
+  JINX_TOKEN_LAYOUT,
+  QR_TOKEN_LAYOUT,
+  TOKEN_COUNT_BADGE,
+} from '@/ts/constants.js';
 import { countReminders } from '@/ts/data/index.js';
 import { ValidationError } from '@/ts/errors.js';
-import type { Character } from '@/ts/types/index.js';
+import type { BackgroundStyle } from '@/ts/types/backgroundEffects.js';
+import type { Character, Jinx } from '@/ts/types/index.js';
 import {
   DEFAULT_TOKEN_OPTIONS,
   type MetaTokenContentRenderer,
@@ -28,6 +36,7 @@ import {
 import { resolveCharacterImages } from '@/ts/utils/characterImageResolver.js';
 import { logger } from '@/ts/utils/logger.js';
 import { defaultImageCache } from './ImageCacheAdapter.js';
+import { buildStyledQRParams, resolveQROptions } from './QROptionsResolver.js';
 import { type IImageCache, TokenImageRenderer } from './TokenImageRenderer.js';
 import { TokenTextRenderer } from './TokenTextRenderer.js';
 
@@ -127,6 +136,95 @@ export class TokenGenerator {
     createCircularClipPath(ctx, center, radius);
   }
 
+  /**
+   * Draw token background based on type selection
+   * Priority: BackgroundStyle > color > image
+   */
+  private async drawTokenBackground(
+    ctx: CanvasRenderingContext2D,
+    diameter: number,
+    tokenType: 'character' | 'reminder' | 'meta'
+  ): Promise<void> {
+    const styleMap = {
+      character: this.options.characterBackgroundStyle,
+      reminder: this.options.reminderBackgroundStyle,
+      meta: this.options.metaBackgroundStyle,
+    };
+    const typeMap = {
+      character: this.options.characterBackgroundType,
+      reminder: this.options.reminderBackgroundType,
+      meta: this.options.metaBackgroundType,
+    };
+    const colorMap = {
+      character: this.options.characterBackgroundColor,
+      reminder: this.options.reminderBackground,
+      meta: this.options.metaBackgroundColor,
+    };
+    const imageMap = {
+      character: this.options.characterBackground,
+      reminder: this.options.reminderBackgroundImage || 'character_background_1',
+      meta: this.options.metaBackground || this.options.characterBackground,
+    };
+
+    const style = styleMap[tokenType];
+    const bgType = typeMap[tokenType];
+    const color = colorMap[tokenType];
+    const bgImage = imageMap[tokenType];
+
+    if (style) {
+      await renderBackground(ctx, style as BackgroundStyle, diameter);
+    } else if (bgType === 'color') {
+      if (!this.options.transparentBackground) {
+        ctx.fillStyle = color || DEFAULT_COLORS.BACKGROUND_WHITE;
+        ctx.fill();
+      }
+    } else if (tokenType === 'reminder' && bgType !== 'image') {
+      // Reminder tokens: default to color if not explicitly set to image
+      if (!this.options.transparentBackground) {
+        ctx.fillStyle = this.options.reminderBackground;
+        ctx.fill();
+      }
+    } else {
+      await this.imageRenderer.drawBackground(
+        ctx,
+        bgImage,
+        diameter,
+        DEFAULT_COLORS.FALLBACK_BACKGROUND
+      );
+    }
+  }
+
+  /**
+   * Calculate Y positions adjusted for badge presence
+   * Returns positions for ability text and icon layout when badge is visible
+   */
+  private calculateBadgeAdjustedPositions(
+    diameter: number,
+    reminderCount: number,
+    hasAbilityText: boolean
+  ): { abilityTextYPosition?: number; topReservedY?: number } {
+    const useUniformLayout = this.options.tokenCount && this.options.reminderCountUniformLayout;
+    const hasBadge = reminderCount > 0;
+
+    if (!(hasBadge || useUniformLayout)) {
+      return {};
+    }
+
+    const bufferReminderCount = useUniformLayout
+      ? TOKEN_COUNT_BADGE.UNIFORM_LAYOUT_REFERENCE_COUNT
+      : reminderCount;
+
+    const badgeBottomYRatio = this.textRenderer.calculateAbilityTextYWithBadge(
+      bufferReminderCount,
+      diameter
+    );
+
+    if (hasAbilityText) {
+      return { abilityTextYPosition: badgeBottomYRatio };
+    }
+    return { topReservedY: diameter * badgeBottomYRatio };
+  }
+
   // ========================================================================
   // CHARACTER TOKEN GENERATION
   // ========================================================================
@@ -149,25 +247,7 @@ export class TokenGenerator {
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
     this.applyCircularClip(ctx, center, radius);
-
-    // Draw background based on type selection
-    // Priority: BackgroundStyle > color > image
-    if (this.options.characterBackgroundStyle) {
-      // Advanced background styling with gradients, textures, and effects
-      await renderBackground(ctx, this.options.characterBackgroundStyle, diameter);
-    } else if (this.options.characterBackgroundType === 'color') {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.characterBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
-        ctx.fill();
-      }
-    } else {
-      await this.imageRenderer.drawBackground(
-        ctx,
-        this.options.characterBackground,
-        diameter,
-        DEFAULT_COLORS.FALLBACK_BACKGROUND
-      );
-    }
+    await this.drawTokenBackground(ctx, diameter, 'character');
 
     // Determine ability text
     const abilityTextToDisplay = this.options.displayAbilityText
@@ -175,42 +255,16 @@ export class TokenGenerator {
       : undefined;
     const hasAbilityText = Boolean(abilityTextToDisplay);
 
-    // Calculate reminder count early to determine if we need to adjust positioning
+    // Calculate reminder count and badge-adjusted positions
     const reminderCount = this.options.tokenCount ? countReminders(character) : 0;
-    const hasBadge = reminderCount > 0;
-
-    // Determine if we should apply uniform layout (all tokens have same top buffer)
-    const useUniformLayout = this.options.tokenCount && this.options.reminderCountUniformLayout;
-
-    // Calculate adjusted Y position ratio if badge is present or uniform layout is enabled
-    // This is used for both ability text positioning and icon layout
-    let abilityTextYPosition: number | undefined;
-    let topReservedY: number | undefined;
-
-    if (hasBadge || useUniformLayout) {
-      // For uniform layout, use reference count; otherwise use actual reminder count
-      const bufferReminderCount = useUniformLayout
-        ? TOKEN_COUNT_BADGE.UNIFORM_LAYOUT_REFERENCE_COUNT
-        : reminderCount;
-
-      // Get the Y ratio where content can start (below the badge area)
-      const badgeBottomYRatio = this.textRenderer.calculateAbilityTextYWithBadge(
-        bufferReminderCount,
-        diameter
-      );
-
-      if (hasAbilityText) {
-        // Ability text starts below badge area
-        abilityTextYPosition = badgeBottomYRatio;
-      } else {
-        // No ability text, but icon should still avoid badge area
-        // Convert ratio to pixel position for icon layout
-        topReservedY = diameter * badgeBottomYRatio;
-      }
-    }
+    const { abilityTextYPosition, topReservedY } = this.calculateBadgeAdjustedPositions(
+      diameter,
+      reminderCount,
+      hasAbilityText
+    );
 
     // Calculate text layout if needed
-    let abilityTextLayout: ReturnType<TokenTextRenderer['calculateAbilityTextLayout']> | undefined;
+    let abilityTextLayout: TextLayoutResult | undefined;
     if (abilityTextToDisplay) {
       abilityTextLayout = this.textRenderer.calculateAbilityTextLayout(
         ctx,
@@ -259,7 +313,7 @@ export class TokenGenerator {
       this.textRenderer.drawCharacterName(ctx, character.name, center, radius, diameter);
     }
 
-    // Draw token count badge (reminderCount already calculated above)
+    // Draw token count badge
     if (this.options.tokenCount && reminderCount > 0) {
       this.textRenderer.drawTokenCount(ctx, reminderCount, diameter);
     }
@@ -297,26 +351,7 @@ export class TokenGenerator {
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
     this.applyCircularClip(ctx, center, radius);
-
-    // Draw background based on type selection
-    // Priority: BackgroundStyle > image > color
-    if (this.options.reminderBackgroundStyle) {
-      // Advanced background styling with gradients, textures, and effects
-      await renderBackground(ctx, this.options.reminderBackgroundStyle, diameter);
-    } else if (this.options.reminderBackgroundType === 'image') {
-      const bgImage = this.options.reminderBackgroundImage || 'character_background_1';
-      await this.imageRenderer.drawBackground(
-        ctx,
-        bgImage,
-        diameter,
-        DEFAULT_COLORS.FALLBACK_BACKGROUND
-      );
-    } else {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.reminderBackground;
-        ctx.fill();
-      }
-    }
+    await this.drawTokenBackground(ctx, diameter, 'reminder');
 
     // Draw character image
     await this.imageRenderer.drawCharacterImage(
@@ -344,34 +379,13 @@ export class TokenGenerator {
 
   private async generateMetaToken(
     renderContent: MetaTokenContentRenderer,
-    backgroundOverride?: string
+    _backgroundOverride?: string
   ): Promise<HTMLCanvasElement> {
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
     this.applyCircularClip(ctx, center, radius);
-
-    // Draw background based on type selection
-    // Priority: BackgroundStyle > color > image
-    if (this.options.metaBackgroundStyle) {
-      // Advanced background styling with gradients, textures, and effects
-      await renderBackground(ctx, this.options.metaBackgroundStyle, diameter);
-    } else if (this.options.metaBackgroundType === 'color') {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.metaBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
-        ctx.fill();
-      }
-    } else {
-      const bgName =
-        backgroundOverride || this.options.metaBackground || this.options.characterBackground;
-      await this.imageRenderer.drawBackground(
-        ctx,
-        bgName,
-        diameter,
-        DEFAULT_COLORS.FALLBACK_BACKGROUND
-      );
-    }
-
+    await this.drawTokenBackground(ctx, diameter, 'meta');
     ctx.restore();
 
     await renderContent(ctx, diameter, center, radius);
@@ -428,148 +442,67 @@ export class TokenGenerator {
     const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
-    // Get user's QR options with defaults
-    const qrOpts = this.options.qrCodeOptions;
-
-    // Token options
-    const showAlmanacLabel = qrOpts?.showAlmanacLabel ?? true;
-    const showLogo = qrOpts?.showLogo ?? true;
+    // Resolve QR options with defaults
+    const qrOpts = resolveQROptions(this.options.qrCodeOptions);
 
     // Pre-load external logo through our CORS proxy and convert to data URL
     // This is necessary because qr-code-styling loads images internally without our CORS proxy
-    let logoDataUrl: string | undefined;
-    if (scriptLogoUrl && showLogo) {
-      try {
-        // Load through our CORS proxy (getCachedImage → loadImage → proxy fallback)
-        const logoImage = await this.imageRenderer.getCachedImage(scriptLogoUrl);
+    const logoDataUrl = await this.preloadLogoAsDataUrl(scriptLogoUrl, qrOpts.showLogo);
 
-        // Convert to data URL (data URLs don't have CORS issues)
-        const logoCanvas = document.createElement('canvas');
-        logoCanvas.width = logoImage.naturalWidth || logoImage.width;
-        logoCanvas.height = logoImage.naturalHeight || logoImage.height;
-        const logoCtx = logoCanvas.getContext('2d');
-        if (logoCtx) {
-          logoCtx.drawImage(logoImage, 0, 0);
-          logoDataUrl = logoCanvas.toDataURL('image/png');
-          logger.debug('TokenGenerator', 'Pre-loaded QR logo as data URL');
-        }
-      } catch (error) {
-        // Logo failed to load, QR will generate without logo
-        logger.warn('TokenGenerator', `Failed to pre-load QR logo: ${scriptLogoUrl}`, error);
-      }
-    }
-
-    // Dots options
-    const dotType = qrOpts?.dotType ?? 'extra-rounded';
-    const dotsUseGradient = qrOpts?.dotsUseGradient ?? true;
-    const dotsGradientType = qrOpts?.dotsGradientType ?? 'linear';
-    const dotsGradientRotation = qrOpts?.dotsGradientRotation ?? 45;
-    const dotsColorStart = qrOpts?.dotsColorStart ?? QR_COLORS.GRADIENT_START;
-    const dotsColorEnd = qrOpts?.dotsColorEnd ?? QR_COLORS.GRADIENT_END;
-
-    // Corner square options
-    const cornerSquareType = qrOpts?.cornerSquareType ?? 'extra-rounded';
-    const cornerSquareUseGradient = qrOpts?.cornerSquareUseGradient ?? false;
-    const cornerSquareGradientType = qrOpts?.cornerSquareGradientType ?? 'linear';
-    const cornerSquareColorStart = qrOpts?.cornerSquareColorStart ?? QR_COLORS.GRADIENT_START;
-    const cornerSquareColorEnd = qrOpts?.cornerSquareColorEnd ?? QR_COLORS.GRADIENT_START;
-
-    // Corner dot options
-    const cornerDotType = qrOpts?.cornerDotType ?? 'dot';
-    const cornerDotUseGradient = qrOpts?.cornerDotUseGradient ?? false;
-    const cornerDotGradientType = qrOpts?.cornerDotGradientType ?? 'linear';
-    const cornerDotColorStart = qrOpts?.cornerDotColorStart ?? QR_COLORS.GRADIENT_END;
-    const cornerDotColorEnd = qrOpts?.cornerDotColorEnd ?? QR_COLORS.GRADIENT_END;
-
-    // Background options
-    const backgroundUseGradient = qrOpts?.backgroundUseGradient ?? false;
-    const backgroundGradientType = qrOpts?.backgroundGradientType ?? 'linear';
-    const backgroundColorStart = qrOpts?.backgroundColorStart ?? QR_COLORS.BACKGROUND;
-    const backgroundColorEnd = qrOpts?.backgroundColorEnd ?? QR_COLORS.BACKGROUND;
-    const backgroundOpacity = qrOpts?.backgroundOpacity ?? 100;
-    const backgroundRoundedCorners = qrOpts?.backgroundRoundedCorners ?? false;
-
-    // Image options
-    const imageHideBackgroundDots = qrOpts?.imageHideBackgroundDots ?? true;
-    const imageSize = qrOpts?.imageSize ?? 30;
-    const imageMargin = qrOpts?.imageMargin ?? 4;
-
-    // QR options
-    const errorCorrectionLevel = qrOpts?.errorCorrectionLevel ?? 'H';
-
-    // Draw meta background (same as other meta tokens)
+    // Draw meta background
     this.applyCircularClip(ctx, center, radius);
-    if (this.options.metaBackgroundType === 'color') {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.metaBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
-        ctx.fill();
-      }
-    } else {
-      const bgName = this.options.metaBackground || this.options.characterBackground;
-      await this.imageRenderer.drawBackground(
-        ctx,
-        bgName,
-        diameter,
-        DEFAULT_COLORS.FALLBACK_BACKGROUND
-      );
-    }
+    await this.drawTokenBackground(ctx, diameter, 'meta');
     ctx.restore();
 
     // Calculate QR size and position
     const qrSize = Math.floor(diameter * QR_TOKEN_LAYOUT.QR_CODE_SIZE);
     const qrOffset = (diameter - qrSize) / 2;
 
-    // Generate styled QR code with all options
-    // Use pre-loaded data URL for logo to avoid CORS issues in qr-code-styling library
-    const qrCanvas = await generateStyledQRCode({
-      text: almanacUrl,
-      size: qrSize,
-      logoUrl: logoDataUrl,
-      showLogo: showLogo && !!logoDataUrl,
-      // Dots
-      dotType,
-      dotsUseGradient,
-      dotsGradientType,
-      dotsGradientRotation,
-      dotsColorStart,
-      dotsColorEnd,
-      // Corner squares
-      cornerSquareType,
-      cornerSquareUseGradient,
-      cornerSquareGradientType,
-      cornerSquareColorStart,
-      cornerSquareColorEnd,
-      // Corner dots
-      cornerDotType,
-      cornerDotUseGradient,
-      cornerDotGradientType,
-      cornerDotColorStart,
-      cornerDotColorEnd,
-      // Background
-      backgroundUseGradient,
-      backgroundGradientType,
-      backgroundColorStart,
-      backgroundColorEnd,
-      backgroundOpacity,
-      backgroundRoundedCorners,
-      // Image
-      imageHideBackgroundDots,
-      imageSize,
-      imageMargin,
-      // QR
-      errorCorrectionLevel,
-    });
+    // Generate styled QR code with resolved options
+    const qrParams = buildStyledQRParams(almanacUrl, qrSize, logoDataUrl, qrOpts);
+    const qrCanvas = await generateStyledQRCode(qrParams);
 
     // Draw QR code centered on token
     ctx.drawImage(qrCanvas, qrOffset, qrOffset, qrSize, qrSize);
 
     // Optionally draw "ALMANAC" curved at bottom
-    if (showAlmanacLabel) {
+    if (qrOpts.showAlmanacLabel) {
       this.textRenderer.drawAlmanacLabel(ctx, center, radius, diameter);
     }
 
     logger.info('TokenGenerator', 'Generated almanac QR token', _scriptName);
     return canvas;
+  }
+
+  /**
+   * Pre-load an external logo through CORS proxy and convert to data URL
+   * This is necessary because qr-code-styling loads images internally without our CORS proxy
+   */
+  private async preloadLogoAsDataUrl(
+    logoUrl: string | undefined,
+    showLogo: boolean
+  ): Promise<string | undefined> {
+    if (!(logoUrl && showLogo)) {
+      return undefined;
+    }
+
+    try {
+      const logoImage = await this.imageRenderer.getCachedImage(logoUrl);
+      const logoCanvas = document.createElement('canvas');
+      logoCanvas.width = logoImage.naturalWidth || logoImage.width;
+      logoCanvas.height = logoImage.naturalHeight || logoImage.height;
+      const logoCtx = logoCanvas.getContext('2d');
+
+      if (logoCtx) {
+        logoCtx.drawImage(logoImage, 0, 0);
+        logger.debug('TokenGenerator', 'Pre-loaded QR logo as data URL');
+        return logoCanvas.toDataURL('image/png');
+      }
+    } catch (error) {
+      logger.warn('TokenGenerator', `Failed to pre-load QR logo: ${logoUrl}`, error);
+    }
+
+    return undefined;
   }
 
   // ========================================================================
@@ -594,24 +527,7 @@ export class TokenGenerator {
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
 
     this.applyCircularClip(ctx, center, radius);
-
-    // Draw background (same as character tokens)
-    // Priority: BackgroundStyle > color > image
-    if (this.options.characterBackgroundStyle) {
-      await renderBackground(ctx, this.options.characterBackgroundStyle, diameter);
-    } else if (this.options.characterBackgroundType === 'color') {
-      if (!this.options.transparentBackground) {
-        ctx.fillStyle = this.options.characterBackgroundColor || DEFAULT_COLORS.BACKGROUND_WHITE;
-        ctx.fill();
-      }
-    } else {
-      await this.imageRenderer.drawBackground(
-        ctx,
-        this.options.characterBackground,
-        diameter,
-        DEFAULT_COLORS.FALLBACK_BACKGROUND
-      );
-    }
+    await this.drawTokenBackground(ctx, diameter, 'character');
 
     // Bootlegger tokens always have ability text
     const hasAbilityText = Boolean(abilityText?.trim());
@@ -662,15 +578,212 @@ export class TokenGenerator {
    * Used for pre-calculating layouts to normalize icon sizes.
    * @param abilityText - The ability text to calculate layout for
    * @returns The calculated text layout result, or undefined if no text
+   * @deprecated Use textRenderer.calculateBootleggerTextLayout() instead
    */
   calculateBootleggerLayout(abilityText: string): TextLayoutResult | undefined {
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
-    const { ctx } = this.createBaseCanvas(diameter);
+    return this.textRenderer.calculateBootleggerTextLayout(abilityText);
+  }
 
-    if (!abilityText?.trim()) {
-      return undefined;
-    }
+  // ========================================================================
+  // JINX TOKEN GENERATION
+  // ========================================================================
 
-    return this.textRenderer.calculateAbilityTextLayout(ctx, abilityText, diameter);
+  /**
+   * Generate a jinx token showing the interaction between two characters.
+   * Layout:
+   * - First character name curved at the top
+   * - Two character icons side by side in the middle
+   * - Jinx reason text below the icons
+   * - Second character name curved at the bottom
+   *
+   * @param jinx - The jinx data (contains target id and reason text)
+   * @param char1 - First character (the one with the jinx)
+   * @param char2 - Second character (the target of the jinx)
+   * @returns Promise resolving to canvas element
+   */
+  async generateJinxToken(
+    jinx: Jinx,
+    char1: Character,
+    char2: Character,
+    preResolvedUrls?: Map<string, string>
+  ): Promise<HTMLCanvasElement> {
+    logger.debug('TokenGenerator', `Generating jinx token: ${char1.name} ⚡ ${char2.name}`);
+
+    return this.generateMetaToken(async (ctx, diameter, center) => {
+      const radius = diameter / 2;
+
+      // Use meta icon settings for jinx tokens (they are a type of meta token)
+      const defaultIconSettings = { scale: 1.0, offsetX: 0, offsetY: 0 };
+      const metaIconSettings = this.options.iconSettings?.meta || defaultIconSettings;
+
+      // Apply meta icon scale to jinx icons
+      const baseIconSize = diameter * JINX_TOKEN_LAYOUT.ICON_SIZE_RATIO;
+      const iconSize = baseIconSize * metaIconSettings.scale;
+
+      // Apply offsets (scaled relative to diameter for resolution independence)
+      const offsetX = (metaIconSettings.offsetX || 0) * diameter;
+      const offsetY = (metaIconSettings.offsetY || 0) * diameter;
+
+      // Jinx icon spacing adjustment (distance from center)
+      // Positive values move icons further apart, negative moves closer together
+      const jinxSpacingAdjust = (this.options.jinxIconSpacing || 0) * diameter;
+
+      const halfSpacing = (diameter * JINX_TOKEN_LAYOUT.ICON_SPACING) / 2;
+      const baseHalfIconSize = baseIconSize / 2;
+
+      // Calculate icon CENTER positions using base (unscaled) size
+      // This ensures icons scale from their own centers, not from the token center
+      // Offsets move both icons together as a unit
+      // jinxSpacingAdjust moves icons symmetrically apart/together
+      const icon1CenterX = center.x - baseHalfIconSize - halfSpacing + offsetX - jinxSpacingAdjust;
+      const icon2CenterX = center.x + baseHalfIconSize + halfSpacing + offsetX + jinxSpacingAdjust;
+      const iconCenterY = diameter * JINX_TOKEN_LAYOUT.ICON_Y_POSITION + baseHalfIconSize + offsetY;
+
+      // Calculate top-left positions from centers for drawing
+      const scaledHalfSize = iconSize / 2;
+      const icon1X = icon1CenterX - scaledHalfSize;
+      const icon2X = icon2CenterX - scaledHalfSize;
+      const iconY = iconCenterY - scaledHalfSize;
+
+      // Draw character names unless hidden via textLocations.metaName === 'none'
+      const metaTextLocation = this.options.textLocations?.metaName ?? 'bottom';
+      if (metaTextLocation !== 'none') {
+        const metaFont = this.options.metaNameFont || this.options.characterNameFont;
+        const metaColor = this.options.metaNameColor || DEFAULT_COLORS.TEXT_PRIMARY;
+        const curvedNameFontSize = diameter * JINX_TOKEN_LAYOUT.CURVED_NAME_FONT_SIZE_RATIO;
+        const curvedNameRadius = radius * JINX_TOKEN_LAYOUT.CURVED_NAME_RADIUS;
+
+        // Draw first character name curved at TOP
+        drawCurvedText(ctx, {
+          text: char1.name.toUpperCase(),
+          centerX: center.x,
+          centerY: center.y,
+          radius: curvedNameRadius,
+          fontFamily: metaFont,
+          fontSize: curvedNameFontSize,
+          position: 'top',
+          color: metaColor,
+          letterSpacing: 1,
+          shadowBlur: 4,
+          renderStyle: 'filled',
+        });
+
+        // Draw second character name curved at BOTTOM
+        drawCurvedText(ctx, {
+          text: char2.name.toUpperCase(),
+          centerX: center.x,
+          centerY: center.y,
+          radius: curvedNameRadius,
+          fontFamily: metaFont,
+          fontSize: curvedNameFontSize,
+          position: 'bottom',
+          color: metaColor,
+          letterSpacing: 1,
+          shadowBlur: 4,
+          renderStyle: 'filled',
+        });
+      }
+
+      // Try to load and draw both character images
+      try {
+        // Use pre-resolved URLs if available, otherwise resolve (backward compat)
+        let char1ImageUrl: string | undefined;
+        let char2ImageUrl: string | undefined;
+
+        if (preResolvedUrls) {
+          // Use pre-resolved URLs from BatchContext (format: "characterId:0")
+          char1ImageUrl = preResolvedUrls.get(`${char1.id}:0`);
+          char2ImageUrl = preResolvedUrls.get(`${char2.id}:0`);
+        } else {
+          // Fallback: resolve image URLs (for standalone usage)
+          const { urls } = await resolveCharacterImages([char1, char2]);
+          char1ImageUrl = urls.get(char1.uuid || char1.id);
+          char2ImageUrl = urls.get(char2.uuid || char2.id);
+        }
+
+        // Draw first character icon
+        if (char1ImageUrl) {
+          const char1Image = await this.imageRenderer.getCachedImage(char1ImageUrl);
+          // Draw circular clipped icon
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(icon1X + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(char1Image, icon1X, iconY, iconSize, iconSize);
+          ctx.restore();
+        }
+
+        // Draw second character icon
+        if (char2ImageUrl) {
+          const char2Image = await this.imageRenderer.getCachedImage(char2ImageUrl);
+          // Draw circular clipped icon
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(icon2X + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(char2Image, icon2X, iconY, iconSize, iconSize);
+          ctx.restore();
+        }
+      } catch (error) {
+        logger.warn('TokenGenerator', 'Failed to load jinx character icons', error);
+      }
+
+      // Draw jinx reason text using auto-fitting circular text layout
+      const jinxY = diameter * JINX_TOKEN_LAYOUT.JINX_Y_POSITION;
+      const preferredJinxFontSize = diameter * JINX_TOKEN_LAYOUT.JINX_FONT_SIZE_RATIO;
+      const metaTextFont = this.options.metaTextFont || this.options.abilityTextFont;
+      const metaTextColor = this.options.metaTextColor || DEFAULT_COLORS.META_TEXT;
+
+      // Determine max Y based on whether names are shown
+      const maxYRatio =
+        metaTextLocation === 'none'
+          ? JINX_TOKEN_LAYOUT.JINX_TEXT_MAX_Y_NO_NAME
+          : JINX_TOKEN_LAYOUT.JINX_TEXT_MAX_Y_WITH_NAME;
+      const maxY = diameter * maxYRatio;
+
+      ctx.save();
+      ctx.font = `${preferredJinxFontSize}px ${metaTextFont}`;
+      ctx.fillStyle = metaTextColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 2;
+
+      // Use auto-fitting circular text layout to ensure text fits within bounds
+      const layout = calculateFittedCircularTextLayout(
+        ctx,
+        jinx.reason,
+        diameter,
+        preferredJinxFontSize,
+        JINX_TOKEN_LAYOUT.JINX_LINE_HEIGHT,
+        jinxY,
+        maxY,
+        JINX_TOKEN_LAYOUT.JINX_CIRCULAR_PADDING,
+        metaTextFont,
+        { minFontSizeRatio: JINX_TOKEN_LAYOUT.JINX_MIN_FONT_SIZE_RATIO }
+      );
+
+      // Update font to actual size used (may have been reduced to fit)
+      ctx.font = `${layout.actualFontSize}px ${metaTextFont}`;
+
+      // Draw each line centered
+      let currentY = jinxY;
+      for (const line of layout.lines) {
+        ctx.fillText(line, center.x, currentY);
+        currentY += layout.lineHeight;
+      }
+      ctx.restore();
+
+      if (layout.wasReduced) {
+        logger.debug(
+          'TokenGenerator',
+          `Drew jinx token with ${layout.lines.length} lines (font reduced from ${preferredJinxFontSize.toFixed(1)} to ${layout.actualFontSize.toFixed(1)})`
+        );
+      } else {
+        logger.debug('TokenGenerator', `Drew jinx token with ${layout.lines.length} lines of text`);
+      }
+    });
   }
 }

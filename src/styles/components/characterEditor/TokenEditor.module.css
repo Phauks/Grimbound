@@ -837,22 +837,6 @@
   cursor: pointer;
 }
 
-/* Legacy decoratives section (for backwards compat) */
-.decorativesSection {
-  background: var(--color-background);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.decorativesSection h4 {
-  margin: 0 0 var(--spacing-md) 0;
-  font-size: 1rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-}
-
 .decorativesNote {
   margin-top: var(--spacing-lg);
   padding: var(--spacing-md);
@@ -1198,4 +1182,272 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ============================================================================
+   Character Selector (Jinx Editor)
+   ============================================================================ */
+
+.characterSelector {
+  position: relative;
+  flex: 1;
+  min-width: 150px;
+}
+
+.characterSelectorDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.characterSelectorInput {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.characterSelectorInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.characterSelectorDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+}
+
+.characterGroup {
+  padding: var(--spacing-xs) 0;
+}
+
+.characterGroup:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.characterGroupLabel {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.characterOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.characterOption:hover,
+.characterOptionHighlighted {
+  background: var(--bg-hover);
+}
+
+.characterOptionSelected {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.characterOptionName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.characterOptionTeam {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  margin-left: var(--spacing-sm);
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+}
+
+/* Team color variants */
+.characterOptionTeam.teamTownsfolk {
+  background: var(--color-team-townsfolk-subtle, rgba(59, 130, 246, 0.15));
+  color: var(--color-team-townsfolk);
+}
+
+.characterOptionTeam.teamOutsider {
+  background: var(--color-team-outsider-subtle, rgba(34, 197, 94, 0.15));
+  color: var(--color-team-outsider);
+}
+
+.characterOptionTeam.teamMinion {
+  background: var(--color-team-minion-subtle, rgba(249, 115, 22, 0.15));
+  color: var(--color-team-minion);
+}
+
+.characterOptionTeam.teamDemon {
+  background: var(--color-team-demon-subtle, rgba(239, 68, 68, 0.15));
+  color: var(--color-team-demon);
+}
+
+.characterOptionTeam.teamTraveller {
+  background: var(--color-team-traveller-subtle, rgba(168, 85, 247, 0.15));
+  color: var(--color-team-traveller);
+}
+
+.characterOptionTeam.teamFabled {
+  background: var(--color-team-fabled-subtle, rgba(234, 179, 8, 0.15));
+  color: var(--color-team-fabled);
+}
+
+.characterSelectorEmpty {
+  padding: var(--spacing-md);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================================
+   Jinx Editor
+   ============================================================================ */
+
+.jinxList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.jinxRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.jinxRow:hover {
+  background: var(--bg-tertiary);
+}
+
+.jinxHeader {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.jinxCharacterDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-hover);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.jinxSeparator {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.jinxReasonInput {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 48px;
+}
+
+.jinxReasonInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.jinxReasonInput:disabled {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.jinxReadOnly {
+  background: var(--bg-hover);
+  cursor: default;
+}
+
+.jinxReadOnly .jinxReasonInput {
+  background: var(--bg-hover);
+  cursor: default;
+}
+
+/* Jinx thumbnail preview button - matches variantThumbnail styling */
+.jinxThumbnail {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.jinxThumbnail:hover {
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+
+.jinxThumbnailActive {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+}
+
+.jinxThumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.jinxThumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
 }

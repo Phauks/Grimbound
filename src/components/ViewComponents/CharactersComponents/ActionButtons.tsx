@@ -99,7 +99,7 @@ export function ActionButtons({
                 setShowDownloadMenu(false);
               }}
               disabled={!hasReminderTokens}
-              title={!hasReminderTokens ? 'No reminder tokens to download' : undefined}
+              title={hasReminderTokens ? undefined : 'No reminder tokens to download'}
             >
               Reminder Tokens Only
             </button>

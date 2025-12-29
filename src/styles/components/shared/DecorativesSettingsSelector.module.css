@@ -1,0 +1,508 @@
+/**
+ * DecorativesSettingsSelector Component Styles
+ *
+ * Styles for the unified decoratives settings selector including:
+ * - Preview box with stacked setup/accent images
+ * - Asset selection rows with toggle and browse buttons
+ * - Accent settings controls (reusing AccentSettingsSelector patterns)
+ * - Visual preview with probability distribution
+ */
+
+/* ============================================
+   Preview (in selector box)
+   ============================================ */
+
+.previewStack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.previewDisabledState {
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+.previewSetup {
+  position: absolute;
+  max-width: 70%;
+  max-height: 70%;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.previewAccent {
+  position: absolute;
+  max-width: 50%;
+  max-height: 50%;
+  object-fit: contain;
+  z-index: 2;
+  bottom: 2px;
+  right: 2px;
+  transform: rotate(15deg);
+}
+
+.previewFallback {
+  font-size: 1.25rem;
+}
+
+/* ============================================
+   Asset Row (Compact)
+   ============================================ */
+
+.assetRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.enableBtn {
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.enableBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.enableBtnActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--text-on-accent);
+}
+
+.enableBtnActive:hover {
+  background: var(--color-accent-hover, var(--color-accent));
+}
+
+.assetThumb {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  margin-left: auto;
+}
+
+/* Column Divider */
+.columnDivider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 0;
+}
+
+.browseButton {
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.browseButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.browseButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Section Divider
+   ============================================ */
+
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.375rem 0 0.25rem;
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sectionDivider::before,
+.sectionDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* ============================================
+   Arc Slot Control
+   ============================================ */
+
+.arcSlotControl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.25rem;
+}
+
+.arcSlotHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arcSlotLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.arcSlotSummary {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+.arcSlotSummary strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.arcSlotRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slotAdjustButton {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.slotAdjustButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.slotAdjustButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.slotDotsContainer {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
+  padding: 0.25rem 0;
+}
+
+.slotDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.slotDot:hover {
+  transform: scale(1.2);
+}
+
+.slotDotActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.slotDotActive:hover {
+  background: var(--color-accent-hover, var(--color-accent));
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.slotDotInactive {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  opacity: 0.5;
+}
+
+.slotDotInactive:hover {
+  opacity: 1;
+  border-color: var(--text-muted);
+}
+
+.slotDotThreshold {
+  box-shadow:
+    0 0 0 2px var(--bg-tertiary),
+    0 0 0 4px var(--color-accent);
+}
+
+.arcSlotHint {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* ============================================
+   Settings Group
+   ============================================ */
+
+.settingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+}
+
+/* ============================================
+   Checkbox Controls
+   ============================================ */
+
+.checkboxRow {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel:hover {
+  color: var(--color-accent);
+}
+
+.checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.checkbox:hover {
+  border-color: var(--color-accent);
+}
+
+.checkbox:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ============================================
+   Visual Preview
+   ============================================ */
+
+.visualPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.arcContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+  position: relative;
+  cursor: pointer;
+  border: none;
+}
+
+.arcVisualization {
+  width: 2in;
+  height: 2in;
+  position: relative;
+}
+
+.tokenCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1.75in;
+  height: 1.75in;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--bg-secondary);
+}
+
+.slotMarker {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  transform: translate(-50%, -50%);
+  transition: all 0.2s ease;
+}
+
+.slotMarkerFilled {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 4px var(--color-accent);
+}
+
+.slotMarkerPossible {
+  background: var(--bg-tertiary);
+  border-color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.sideAccentMarker {
+  width: 10px;
+  height: 10px;
+}
+
+/* ============================================
+   Distribution Section
+   ============================================ */
+
+.distributionSection {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.5rem;
+}
+
+.distributionTitle {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.distributionBar {
+  display: flex;
+  height: 16px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.distributionSegment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: white;
+  transition: width 0.3s ease;
+}
+
+.distributionLow {
+  background: var(--color-success, #22c55e);
+}
+
+.distributionMed {
+  background: var(--color-warning, #f59e0b);
+}
+
+.distributionHigh {
+  background: var(--color-accent);
+}
+
+/* ============================================
+   Stats Row
+   ============================================ */
+
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.0625rem;
+}
+
+.statValue {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+}
+
+.statLabel {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 700px) {
+  .arcVisualization {
+    width: 1.5in;
+    height: 1.5in;
+  }
+
+  .tokenCircle {
+    width: 1.25in;
+    height: 1.25in;
+  }
+}

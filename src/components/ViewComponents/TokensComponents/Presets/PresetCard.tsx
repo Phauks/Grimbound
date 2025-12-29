@@ -68,14 +68,16 @@ export const PresetCard = memo(
     });
 
     // Convert MenuItemConfig to ContextMenuItem format
-    const contextMenuItems: ContextMenuItem[] = useMemo(() => {
-      return menuItems.map((item) => ({
-        icon: item.icon,
-        label: item.label,
-        description: item.description,
-        onClick: item.onClick,
-      }));
-    }, [menuItems]);
+    const contextMenuItems: ContextMenuItem[] = useMemo(
+      () =>
+        menuItems.map((item) => ({
+          icon: item.icon,
+          label: item.label,
+          description: item.description,
+          onClick: item.onClick,
+        })),
+      [menuItems]
+    );
 
     const cardClasses = cn(
       styles.card,
