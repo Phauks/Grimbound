@@ -39,12 +39,16 @@ export function sanitizeFilename(filename: string): string {
     .replace(/[<>:"/\\|?*]/g, '')
     // Replace spaces with underscores
     .replace(/\s+/g, '_')
-    // Remove leading/trailing dots (problematic on Windows)
-    .replace(/^\.+|\.+$/g, '')
+    // Remove leading dots (problematic on Windows) - split to avoid ReDoS
+    .replace(/^\.+/, '')
+    // Remove trailing dots
+    .replace(/\.+$/, '')
     // Collapse multiple underscores
     .replace(/_+/g, '_')
-    // Remove leading/trailing underscores
-    .replace(/^_+|_+$/g, '');
+    // Remove leading underscores - split to avoid ReDoS
+    .replace(/^_+/, '')
+    // Remove trailing underscores
+    .replace(/_+$/, '');
 
   // Handle reserved Windows filenames
   if (RESERVED_NAMES.test(sanitized)) {

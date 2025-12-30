@@ -23,34 +23,36 @@ export interface TextSegment {
  * // ]
  */
 export function parseAbilityText(text: string): TextSegment[] {
+  // Use a state machine approach to avoid ReDoS vulnerability (O(n) complexity)
   const segments: TextSegment[] = [];
-  const regex = /(\[[^\]]*\])/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null = regex.exec(text);
+  let currentText = '';
+  let inBracket = false;
 
-  while (match !== null) {
-    // Add text before the match (non-bold)
-    if (match.index > lastIndex) {
-      segments.push({
-        text: text.slice(lastIndex, match.index),
-        isBold: false,
-      });
+  for (const char of text) {
+    if (char === '[' && !inBracket) {
+      // Starting a bracket section - save any accumulated non-bold text
+      if (currentText) {
+        segments.push({ text: currentText, isBold: false });
+        currentText = '';
+      }
+      inBracket = true;
+      currentText = '[';
+    } else if (char === ']' && inBracket) {
+      // Ending a bracket section
+      currentText += ']';
+      segments.push({ text: currentText, isBold: true });
+      currentText = '';
+      inBracket = false;
+    } else {
+      currentText += char;
     }
-    // Add the matched bracket text (bold)
-    segments.push({
-      text: match[1],
-      isBold: true,
-    });
-    lastIndex = regex.lastIndex;
-    match = regex.exec(text);
   }
 
-  // Add remaining text after last match
-  if (lastIndex < text.length) {
-    segments.push({
-      text: text.slice(lastIndex),
-      isBold: false,
-    });
+  // Handle any remaining text
+  if (currentText) {
+    // If we're still inside an unclosed bracket, treat it as non-bold
+    // (the bracket was never properly closed)
+    segments.push({ text: currentText, isBold: false });
   }
 
   // Return at least one segment for empty or non-matching text
