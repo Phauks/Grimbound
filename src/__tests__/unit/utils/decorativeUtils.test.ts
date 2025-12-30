@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import type { DecorativeOverrides, GenerationOptions } from '@/ts/types';
 import {
   ACCENT_DECORATIVE_KEYS,
   createEffectiveOptions,
   mapAccentOptionsToDecorative,
 } from '@/ts/utils/decorativeUtils';
-import type { DecorativeOverrides, GenerationOptions } from '@/ts/types';
 
 // Minimal mock generation options
-function createMockGenerationOptions(overrides: Partial<GenerationOptions> = {}): GenerationOptions {
+function createMockGenerationOptions(
+  overrides: Partial<GenerationOptions> = {}
+): GenerationOptions {
   return {
     characterBackgroundStyle: 'default',
     characterNameFont: 'Arial',

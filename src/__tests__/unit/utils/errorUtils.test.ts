@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearHookError,
   guardAgainstUndefined,
@@ -180,13 +180,9 @@ describe('errorUtils', () => {
       const onFinally = vi.fn();
 
       // Test on success
-      await handleAsyncOperation(
-        () => Promise.resolve('ok'),
-        'TestContext',
-        setLoading,
-        setError,
-        { onFinally }
-      );
+      await handleAsyncOperation(() => Promise.resolve('ok'), 'TestContext', setLoading, setError, {
+        onFinally,
+      });
       expect(onFinally).toHaveBeenCalledTimes(1);
 
       // Test on failure
@@ -413,11 +409,7 @@ describe('errorUtils', () => {
       const obj = { id: 1 };
 
       expect(() => {
-        validateRequiredFields(
-          obj,
-          ['id', 'name', 'email'] as (keyof typeof obj)[],
-          'TestContext'
-        );
+        validateRequiredFields(obj, ['id', 'name', 'email'] as (keyof typeof obj)[], 'TestContext');
       }).toThrow('Missing required fields: name, email');
     });
 

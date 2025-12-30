@@ -11,9 +11,9 @@
  * @module services/upload/__tests__/FileValidationService.test
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FileValidationService } from '@/ts/services/upload/FileValidationService';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MB } from '@/ts/services/upload/constants';
+import { FileValidationService } from '@/ts/services/upload/FileValidationService';
 import type { AssetType } from '@/ts/services/upload/types';
 
 // ============================================================================
@@ -103,7 +103,7 @@ function setupImageMock(width: number, height: number, shouldFail: boolean = fal
         }
       }, 0);
     }
-  } as any;
+  } as unknown as typeof Image;
 }
 
 // ============================================================================
@@ -411,12 +411,20 @@ describe('FileValidationService', () => {
             drawImage: vi.fn(),
             getImageData: vi.fn().mockReturnValue({
               data: new Uint8ClampedArray([
-                255, 255, 255, 255, // Opaque
-                255, 255, 255, 128, // Transparent
+                255,
+                255,
+                255,
+                255, // Opaque
+                255,
+                255,
+                255,
+                128, // Transparent
               ]),
             }),
           };
-          vi.spyOn(element, 'getContext').mockReturnValue(mockContext as any);
+          vi.spyOn(element, 'getContext').mockReturnValue(
+            mockContext as unknown as CanvasRenderingContext2D
+          );
         }
         return element;
       });
@@ -453,7 +461,9 @@ describe('FileValidationService', () => {
               data: new Uint8ClampedArray([255, 255, 255, 255]), // All opaque
             }),
           };
-          vi.spyOn(element, 'getContext').mockReturnValue(mockContext as any);
+          vi.spyOn(element, 'getContext').mockReturnValue(
+            mockContext as unknown as CanvasRenderingContext2D
+          );
         }
         return element;
       });
@@ -473,11 +483,20 @@ describe('FileValidationService', () => {
             drawImage: vi.fn(),
             getImageData: vi.fn().mockReturnValue({
               data: new Uint8ClampedArray([
-                255, 255, 255, 255, 255, 255, 255, 200, // Second pixel is transparent
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                200, // Second pixel is transparent
               ]),
             }),
           };
-          vi.spyOn(element, 'getContext').mockReturnValue(mockContext as any);
+          vi.spyOn(element, 'getContext').mockReturnValue(
+            mockContext as unknown as CanvasRenderingContext2D
+          );
         }
         return element;
       });
@@ -719,7 +738,9 @@ describe('FileValidationService', () => {
       const file = createPngFile();
 
       const result = await service.validate(file, 'character-icon');
-      expect(result.errors).toContainEqual(expect.stringContaining('Could not read image dimensions'));
+      expect(result.errors).toContainEqual(
+        expect.stringContaining('Could not read image dimensions')
+      );
     });
 
     it('should continue validation even if image loading fails', async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Character, ScriptMeta } from '@/ts/types';
 import {
   charactersToJson,
   condenseScript,
@@ -9,7 +10,6 @@ import {
   stripInternalFields,
   validateJson,
 } from '@/ts/utils/jsonUtils';
-import type { Character, ScriptMeta } from '@/ts/types';
 
 describe('jsonUtils', () => {
   describe('formatJson', () => {
@@ -286,7 +286,13 @@ describe('jsonUtils', () => {
   describe('charactersToJson', () => {
     it('should convert official characters to string IDs', () => {
       const characters: Character[] = [
-        { id: 'washerwoman', name: 'Washerwoman', team: 'townsfolk', ability: '', source: 'official' },
+        {
+          id: 'washerwoman',
+          name: 'Washerwoman',
+          team: 'townsfolk',
+          ability: '',
+          source: 'official',
+        },
       ] as Character[];
       const result = JSON.parse(charactersToJson(characters, null));
       expect(result).toEqual(['washerwoman']);
@@ -294,7 +300,13 @@ describe('jsonUtils', () => {
 
     it('should convert custom characters to full objects', () => {
       const characters: Character[] = [
-        { id: 'custom', name: 'Custom', team: 'townsfolk', ability: 'Test ability', source: 'custom' },
+        {
+          id: 'custom',
+          name: 'Custom',
+          team: 'townsfolk',
+          ability: 'Test ability',
+          source: 'custom',
+        },
       ] as Character[];
       const result = JSON.parse(charactersToJson(characters, null));
       expect(result[0]).toHaveProperty('id', 'custom');
@@ -304,7 +316,13 @@ describe('jsonUtils', () => {
 
     it('should include meta entry first when provided', () => {
       const characters: Character[] = [
-        { id: 'washerwoman', name: 'Washerwoman', team: 'townsfolk', ability: '', source: 'official' },
+        {
+          id: 'washerwoman',
+          name: 'Washerwoman',
+          team: 'townsfolk',
+          ability: '',
+          source: 'official',
+        },
       ] as Character[];
       const meta: ScriptMeta = { id: '_meta', name: 'Test Script', author: 'Author' };
       const result = JSON.parse(charactersToJson(characters, meta));

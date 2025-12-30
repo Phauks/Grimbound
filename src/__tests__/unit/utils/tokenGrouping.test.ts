@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { groupTokensByIdentity, type GroupedToken } from '@/ts/utils/tokenGrouping';
 import type { Token } from '@/ts/types';
+import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping';
 
 // Helper to create mock tokens
 function createMockToken(overrides: Partial<Token> = {}): Token {

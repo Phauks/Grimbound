@@ -213,10 +213,7 @@ describe('scriptParser', () => {
     });
 
     it('should skip _meta entries', async () => {
-      const script: ScriptEntry[] = [
-        { id: '_meta', name: 'Test Script' },
-        'washerwoman',
-      ];
+      const script: ScriptEntry[] = [{ id: '_meta', name: 'Test Script' }, 'washerwoman'];
 
       const result = await parseScriptData(script, officialData);
 
@@ -315,7 +312,11 @@ describe('scriptParser', () => {
 
     it('should validate character reminders format', async () => {
       const script: ScriptEntry[] = [
-        createMockCharacter({ id: 'custom', name: 'Custom', reminders: 'not-array' as unknown as Character['reminders'] }),
+        createMockCharacter({
+          id: 'custom',
+          name: 'Custom',
+          reminders: 'not-array' as unknown as Character['reminders'],
+        }),
       ];
 
       const result = await validateAndParseScript(script, officialData);

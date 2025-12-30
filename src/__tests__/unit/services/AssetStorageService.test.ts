@@ -12,12 +12,15 @@
  * - Error handling and edge cases
  */
 
-import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
-import { AssetStorageService, type CreateAssetData } from '@/ts/services/upload/AssetStorageService';
-import type { DBAsset, AssetMetadata, AssetFilter } from '@/ts/services/upload/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService';
 import { projectDb } from '@/ts/db/projectDb';
+import {
+  AssetStorageService,
+  type CreateAssetData,
+} from '@/ts/services/upload/AssetStorageService';
 import { imageProcessingService } from '@/ts/services/upload/ImageProcessingService';
+import type { AssetMetadata, DBAsset } from '@/ts/services/upload/types';
 
 // Mock dependencies
 vi.mock('@/ts/cache/CacheInvalidationService');
@@ -74,7 +77,7 @@ describe('AssetStorageService', () => {
     vi.mocked(projectDb.assets.toArray).mockResolvedValue([]);
     vi.mocked(projectDb.assets.toCollection).mockReturnValue({
       toArray: vi.fn().mockResolvedValue([]),
-    } as any);
+    } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
     vi.mocked(projectDb.assets.where).mockReturnValue({
       equals: vi.fn().mockReturnValue({
         first: vi.fn().mockResolvedValue(undefined),
@@ -83,7 +86,7 @@ describe('AssetStorageService', () => {
       anyOf: vi.fn().mockReturnValue({
         toArray: vi.fn().mockResolvedValue([]),
       }),
-    } as any);
+    } as unknown as ReturnType<typeof projectDb.assets.where>);
   });
 
   afterEach(() => {
@@ -107,7 +110,7 @@ describe('AssetStorageService', () => {
         equals: vi.fn().mockReturnValue({
           first: vi.fn().mockResolvedValue(undefined),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       const id = await service.save(data);
 
@@ -141,7 +144,7 @@ describe('AssetStorageService', () => {
         equals: vi.fn().mockReturnValue({
           first: vi.fn().mockResolvedValue(existingAsset),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       const id = await service.save(data);
 
@@ -162,7 +165,7 @@ describe('AssetStorageService', () => {
         equals: vi.fn().mockReturnValue({
           first: vi.fn().mockResolvedValue(existingAsset),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
       vi.mocked(projectDb.assets.update).mockResolvedValue();
 
       await service.save(data);
@@ -337,10 +340,7 @@ describe('AssetStorageService', () => {
 
       await service.delete('asset-1');
 
-      expect(cacheInvalidationService.invalidateAsset).toHaveBeenCalledWith(
-        'asset-1',
-        'delete'
-      );
+      expect(cacheInvalidationService.invalidateAsset).toHaveBeenCalledWith('asset-1', 'delete');
     });
   });
 
@@ -467,7 +467,7 @@ describe('AssetStorageService', () => {
       const assets = [createMockAsset({ id: 'asset-1' }), createMockAsset({ id: 'asset-2' })];
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list();
 
@@ -483,7 +483,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.where).mockReturnValue({
         equals: equalsFn,
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       await service.list({ type: 'character-icon', projectId: 'project-1' });
 
@@ -499,7 +499,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       await service.list({ type: 'character-icon' });
 
@@ -518,7 +520,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       await service.list({ type: ['character-icon', 'token-background'] });
 
@@ -528,12 +532,15 @@ describe('AssetStorageService', () => {
     it('should apply search filter', async () => {
       const assets = [
         createMockAsset({ id: 'asset-1', metadata: createMockMetadata() }),
-        createMockAsset({ id: 'asset-2', metadata: { ...createMockMetadata(), filename: 'other.png' } }),
+        createMockAsset({
+          id: 'asset-2',
+          metadata: { ...createMockMetadata(), filename: 'other.png' },
+        }),
       ];
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list({ search: 'test' });
 
@@ -549,7 +556,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list({ orphanedOnly: true });
 
@@ -565,7 +572,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list({ sortBy: 'filename', sortDirection: 'asc' });
 
@@ -581,7 +588,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list({ sortBy: 'size', sortDirection: 'desc' });
 
@@ -601,7 +608,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       // Default sort is desc by uploadedAt, so offset:2 limit:3 gives assets 7, 6, 5
       const result = await service.list({ offset: 2, limit: 3 });
@@ -616,7 +623,7 @@ describe('AssetStorageService', () => {
       const assets = [createMockAsset(), createMockAsset(), createMockAsset()];
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const count = await service.count({ offset: 1, limit: 1 });
 
@@ -629,7 +636,7 @@ describe('AssetStorageService', () => {
       const assets = [createMockAsset({ id: 'asset-1' })];
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
       vi.mocked(projectDb.assets.get).mockResolvedValue(assets[0]);
 
       const result = await service.listWithUrls();
@@ -649,7 +656,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       const result = await service.getByType('character-icon');
 
@@ -667,7 +676,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       const result = await service.findByHash('test-hash');
 
@@ -682,7 +693,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       const result = await service.findByHash('nonexistent-hash');
 
@@ -699,7 +712,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       const result = await service.getByProject('project-1');
 
@@ -727,10 +742,7 @@ describe('AssetStorageService', () => {
 
   describe('getOrphaned()', () => {
     it('should get assets not linked to any character', async () => {
-      const assets = [
-        createMockAsset({ linkedTo: [] }),
-        createMockAsset({ linkedTo: ['char-1'] }),
-      ];
+      const assets = [createMockAsset({ linkedTo: [] }), createMockAsset({ linkedTo: ['char-1'] })];
 
       // getOrphaned() uses toArray() directly, not toCollection()
       vi.mocked(projectDb.assets.toArray).mockResolvedValueOnce(assets);
@@ -751,7 +763,9 @@ describe('AssetStorageService', () => {
         }),
       };
 
-      vi.mocked(projectDb.assets.where).mockReturnValue(whereChain as any);
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
 
       const result = await service.getByCharacter('char-1');
 
@@ -821,7 +835,11 @@ describe('AssetStorageService', () => {
 
   describe('replaceCharacterLink()', () => {
     it('should replace all links for a character with new asset', async () => {
-      const oldAsset = createMockAsset({ id: 'old-asset', type: 'character-icon', linkedTo: ['char-1'] });
+      const oldAsset = createMockAsset({
+        id: 'old-asset',
+        type: 'character-icon',
+        linkedTo: ['char-1'],
+      });
       const newAsset = createMockAsset({ id: 'new-asset', type: 'character-icon', linkedTo: [] });
 
       const equalsFnForOld = vi.fn().mockReturnValue({
@@ -830,7 +848,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.where).mockReturnValueOnce({
         equals: equalsFnForOld,
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       vi.mocked(projectDb.assets.get)
         .mockResolvedValueOnce(oldAsset)
@@ -858,7 +876,7 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.where).mockReturnValueOnce({
         equals: equalsFn,
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       vi.mocked(projectDb.assets.get).mockResolvedValue(oldAsset);
       vi.mocked(projectDb.assets.update).mockResolvedValue();
@@ -891,9 +909,12 @@ describe('AssetStorageService', () => {
         usedInProjects: ['project-1', 'project-2'],
       });
 
-      const callArgs = vi.mocked(projectDb.assets.update).mock.calls[0][1];
-      expect((callArgs as any).lastUsedAt).toBeGreaterThanOrEqual(beforeTime);
-      expect((callArgs as any).lastUsedAt).toBeLessThanOrEqual(afterTime);
+      const callArgs = vi.mocked(projectDb.assets.update).mock.calls[0][1] as Record<
+        string,
+        unknown
+      >;
+      expect(callArgs.lastUsedAt).toBeGreaterThanOrEqual(beforeTime);
+      expect(callArgs.lastUsedAt).toBeLessThanOrEqual(afterTime);
     });
 
     it('should not add duplicate projects to usedInProjects', async () => {
@@ -1104,9 +1125,7 @@ describe('AssetStorageService', () => {
       const asset1 = createMockAsset({ id: 'asset-1' });
       const asset2 = createMockAsset({ id: 'asset-2' });
 
-      vi.mocked(projectDb.assets.get)
-        .mockResolvedValueOnce(asset1)
-        .mockResolvedValueOnce(asset2);
+      vi.mocked(projectDb.assets.get).mockResolvedValueOnce(asset1).mockResolvedValueOnce(asset2);
 
       await service.getAssetUrl('asset-1');
       await service.getAssetUrl('asset-2');
@@ -1134,9 +1153,7 @@ describe('AssetStorageService', () => {
       const asset1 = createMockAsset({ id: 'asset-1' });
       const asset2 = createMockAsset({ id: 'asset-2' });
 
-      vi.mocked(projectDb.assets.get)
-        .mockResolvedValueOnce(asset1)
-        .mockResolvedValueOnce(asset2);
+      vi.mocked(projectDb.assets.get).mockResolvedValueOnce(asset1).mockResolvedValueOnce(asset2);
 
       await service.getAssetUrl('asset-1');
       await service.getAssetUrl('asset-2');
@@ -1166,13 +1183,15 @@ describe('AssetStorageService', () => {
 
       vi.mocked(projectDb.assets.where).mockReturnValueOnce({
         equals: equalsFn,
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       vi.mocked(projectDb.assets.toCollection).mockReturnValueOnce({
         toArray: vi.fn().mockResolvedValue([]),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
-      vi.mocked(projectDb.projects.get).mockResolvedValue(mockProject as any);
+      vi.mocked(projectDb.projects.get).mockResolvedValue(
+        mockProject as unknown as Awaited<ReturnType<typeof projectDb.projects.get>>
+      );
 
       const result = await service.getExportableAssets('project-1');
 
@@ -1217,7 +1236,7 @@ describe('AssetStorageService', () => {
       // getStats calls list() which uses toCollection().toArray()
       vi.mocked(projectDb.assets.toCollection).mockReturnValue({
         toArray: vi.fn().mockResolvedValue(assets),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const stats = await service.getStats();
 
@@ -1263,7 +1282,7 @@ describe('AssetStorageService', () => {
         equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(projectAssets),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       vi.mocked(projectDb.assets.bulkDelete).mockResolvedValue();
       vi.mocked(cacheInvalidationService.invalidateAssets).mockResolvedValue();
@@ -1282,7 +1301,7 @@ describe('AssetStorageService', () => {
     it('should handle empty asset lists', async () => {
       vi.mocked(projectDb.assets.toCollection).mockReturnValueOnce({
         toArray: vi.fn().mockResolvedValue([]),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
 
       const result = await service.list();
 
@@ -1311,9 +1330,13 @@ describe('AssetStorageService', () => {
         anyOf: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
-      const result = await service.list({ type: 'character-icon', sortBy: 'lastUsedAt', sortDirection: 'desc' });
+      const result = await service.list({
+        type: 'character-icon',
+        sortBy: 'lastUsedAt',
+        sortDirection: 'desc',
+      });
 
       expect(result).toHaveLength(3);
       expect(result[0].lastUsedAt).toBe(2000);
@@ -1339,7 +1362,7 @@ describe('AssetStorageService', () => {
         anyOf: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       // Default sort is desc by uploadedAt, so order is: 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
       // offset: 2, limit: 3 would give: 7, 6, 5
@@ -1350,6 +1373,5 @@ describe('AssetStorageService', () => {
       expect(result[1].id).toBe('mock-asset-6');
       expect(result[2].id).toBe('mock-asset-5');
     });
-
   });
 });

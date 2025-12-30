@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Character, ScriptEntry } from '@/ts/types';
 import {
   getScriptSortStats,
   isScriptJsonSortedBySAO,
@@ -8,7 +9,6 @@ import {
   sortScriptBySAO,
   sortScriptJsonBySAO,
 } from '@/ts/utils/scriptSorting';
-import type { Character, ScriptEntry } from '@/ts/types';
 
 // Helper to create mock characters
 function createMockCharacter(overrides: Partial<Character> = {}): Character {
@@ -140,7 +140,12 @@ describe('scriptSorting', () => {
 
     it('should sort by name length before alphabetical', () => {
       // Shorter names come first even if alphabetically later
-      const alice = createMockCharacter({ id: 'alice', name: 'Alice', team: 'townsfolk', ability: 'X' });
+      const alice = createMockCharacter({
+        id: 'alice',
+        name: 'Alice',
+        team: 'townsfolk',
+        ability: 'X',
+      });
       const bo = createMockCharacter({ id: 'bo', name: 'Bo', team: 'townsfolk', ability: 'X' });
 
       const result = sortScriptBySAO([alice, bo]);
@@ -324,10 +329,7 @@ describe('scriptSorting', () => {
     });
 
     it('should detect _meta presence', () => {
-      const withMeta: ScriptEntry[] = [
-        { id: '_meta', name: 'Script' },
-        createMockCharacter(),
-      ];
+      const withMeta: ScriptEntry[] = [{ id: '_meta', name: 'Script' }, createMockCharacter()];
       const withoutMeta: ScriptEntry[] = [createMockCharacter()];
 
       expect(getScriptSortStats(withMeta).hasMeta).toBe(true);
@@ -356,9 +358,7 @@ describe('scriptSorting', () => {
     });
 
     it('should default undefined team to townsfolk', () => {
-      const chars: ScriptEntry[] = [
-        createMockCharacter({ team: undefined }),
-      ];
+      const chars: ScriptEntry[] = [createMockCharacter({ team: undefined })];
       const stats = getScriptSortStats(chars);
       expect(stats.teamCounts.townsfolk).toBe(1);
     });

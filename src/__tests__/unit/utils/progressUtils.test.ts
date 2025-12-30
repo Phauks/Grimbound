@@ -2,10 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createProgressState,
   getProgressPercentage,
+  type ProgressCallback,
   resetProgress,
   updateProgress,
-  type ProgressCallback,
-  type ProgressState,
 } from '@/ts/utils/progressUtils';
 
 describe('progressUtils', () => {

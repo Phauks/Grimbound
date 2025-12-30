@@ -90,7 +90,14 @@ describe('characterUtils', () => {
     });
 
     it('should accept all valid teams', () => {
-      const validTeams = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled'] as const;
+      const validTeams = [
+        'townsfolk',
+        'outsider',
+        'minion',
+        'demon',
+        'traveller',
+        'fabled',
+      ] as const;
       for (const team of validTeams) {
         const result = validateCharacter({ name: 'Test', team, image: 'test.png' });
         expect(result.valid).toBe(true);
@@ -161,7 +168,9 @@ describe('characterUtils', () => {
     });
 
     it('should handle non-array reminders', () => {
-      const char = createMockCharacter({ reminders: 'invalid' as unknown as Character['reminders'] });
+      const char = createMockCharacter({
+        reminders: 'invalid' as unknown as Character['reminders'],
+      });
       expect(countReminders(char)).toBe(0);
     });
   });
@@ -206,7 +215,9 @@ describe('characterUtils', () => {
     });
 
     it('should default to townsfolk for invalid team', () => {
-      const chars = [createMockCharacter({ name: 'Unknown', team: 'invalid' as Character['team'] })];
+      const chars = [
+        createMockCharacter({ name: 'Unknown', team: 'invalid' as Character['team'] }),
+      ];
 
       const groups = groupByTeam(chars);
 

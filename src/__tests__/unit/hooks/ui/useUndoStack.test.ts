@@ -9,8 +9,8 @@
  * - Multiple data types (primitives, objects, arrays)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { useUndoStack } from '@/hooks/ui/useUndoStack';
 
 // Test factories for various data types
@@ -208,7 +208,7 @@ describe('useUndoStack', () => {
         result.current.push('state2');
       });
 
-      let undidValue;
+      let undidValue: string | undefined;
       act(() => {
         undidValue = result.current.undo();
       });
@@ -230,7 +230,7 @@ describe('useUndoStack', () => {
     it('should return undefined when nothing to undo', () => {
       const { result } = renderHook(() => useUndoStack('initial'));
 
-      let undidValue;
+      let undidValue: string | undefined;
       act(() => {
         undidValue = result.current.undo();
       });
@@ -347,7 +347,7 @@ describe('useUndoStack', () => {
       expect(result.current.canRedo).toBe(true);
 
       // Redo should return state3 (what we're redoing to)
-      let redidValue;
+      let redidValue: string | undefined;
       act(() => {
         redidValue = result.current.redo();
       });
@@ -373,7 +373,7 @@ describe('useUndoStack', () => {
     it('should return undefined when nothing to redo', () => {
       const { result } = renderHook(() => useUndoStack('initial'));
 
-      let redidValue;
+      let redidValue: string | undefined;
       act(() => {
         redidValue = result.current.redo();
       });
@@ -988,9 +988,9 @@ describe('useUndoStack', () => {
     });
 
     it('should work with mixed data types across operations', () => {
-      const { result } = renderHook(() => useUndoStack<string | number | object>(
-        createMockObject({ id: 0 })
-      ));
+      const { result } = renderHook(() =>
+        useUndoStack<string | number | object>(createMockObject({ id: 0 }))
+      );
 
       act(() => {
         result.current.push('string value');
@@ -1039,7 +1039,7 @@ describe('useUndoStack', () => {
       const { result } = renderHook(() => useUndoStack('only'));
 
       // Try to undo when can't
-      let undoResult;
+      let undoResult: string | undefined;
       act(() => {
         undoResult = result.current.undo();
       });
@@ -1048,7 +1048,7 @@ describe('useUndoStack', () => {
       expect(result.current.current).toBe('only');
 
       // Try to redo when can't
-      let redoResult;
+      let redoResult: string | undefined;
       act(() => {
         redoResult = result.current.redo();
       });
@@ -1067,7 +1067,7 @@ describe('useUndoStack', () => {
         result.current.push('C');
       });
 
-      let returned;
+      let returned: string | undefined;
       act(() => {
         returned = result.current.undo();
       });
@@ -1087,7 +1087,7 @@ describe('useUndoStack', () => {
         result.current.undo();
       });
 
-      let returned;
+      let returned: string | undefined;
       act(() => {
         returned = result.current.redo();
       });
@@ -1098,7 +1098,7 @@ describe('useUndoStack', () => {
     it('undo should return undefined when no history', () => {
       const { result } = renderHook(() => useUndoStack('initial'));
 
-      let returned;
+      let returned: string | undefined;
       act(() => {
         returned = result.current.undo();
       });
@@ -1109,7 +1109,7 @@ describe('useUndoStack', () => {
     it('redo should return undefined when no future', () => {
       const { result } = renderHook(() => useUndoStack('initial'));
 
-      let returned;
+      let returned: string | undefined;
       act(() => {
         returned = result.current.redo();
       });

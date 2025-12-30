@@ -22,46 +22,96 @@ export function generateUniqueFilename(nameCount: Map<string, number>, baseName:
   return `${baseName}_${String(count).padStart(2, '0')}`;
 }
 
+// Characters that are invalid in filenames on Windows/macOS/Linux
+const INVALID_FILENAME_CHARS = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*']);
+
+// Reserved filenames on Windows (case-insensitive)
+const RESERVED_NAMES = new Set([
+  'con',
+  'prn',
+  'aux',
+  'nul',
+  'com1',
+  'com2',
+  'com3',
+  'com4',
+  'com5',
+  'com6',
+  'com7',
+  'com8',
+  'com9',
+  'lpt1',
+  'lpt2',
+  'lpt3',
+  'lpt4',
+  'lpt5',
+  'lpt6',
+  'lpt7',
+  'lpt8',
+  'lpt9',
+]);
+
 /**
- * Sanitize filename by removing invalid characters and handling edge cases
+ * Sanitize filename by removing invalid characters and handling edge cases.
+ * Uses character-by-character processing to avoid ReDoS vulnerabilities.
  * @param filename - Original filename
  * @returns Sanitized filename safe for all operating systems
  */
 export function sanitizeFilename(filename: string): string {
-  // Reserved filenames on Windows
-  const RESERVED_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+  // Build sanitized string character by character (O(n) complexity)
+  let result = '';
+  let lastCharWasUnderscore = false;
 
-  let sanitized = filename
-    .trim()
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentionally matching control chars to remove them
-    .replace(/[\x00-\x1F]/g, '')
-    // Remove characters invalid on Windows/macOS/Linux
-    .replace(/[<>:"/\\|?*]/g, '')
-    // Replace spaces with underscores
-    .replace(/\s+/g, '_')
-    // Remove leading dots (problematic on Windows) - split to avoid ReDoS
-    .replace(/^\.+/, '')
-    // Remove trailing dots
-    .replace(/\.+$/, '')
-    // Collapse multiple underscores
-    .replace(/_+/g, '_')
-    // Remove leading underscores - split to avoid ReDoS
-    .replace(/^_+/, '')
-    // Remove trailing underscores
-    .replace(/_+$/, '');
+  for (const char of filename) {
+    const code = char.charCodeAt(0);
+
+    // Skip control characters (0x00-0x1F)
+    if (code <= 0x1f) {
+      continue;
+    }
+
+    // Skip invalid filename characters
+    if (INVALID_FILENAME_CHARS.has(char)) {
+      continue;
+    }
+
+    // Replace whitespace with underscore, collapse consecutive underscores
+    if (char === ' ' || char === '\t' || char === '_') {
+      if (!lastCharWasUnderscore && result.length > 0) {
+        result += '_';
+        lastCharWasUnderscore = true;
+      }
+      continue;
+    }
+
+    // Skip leading dots
+    if (char === '.' && result.length === 0) {
+      continue;
+    }
+
+    result += char;
+    lastCharWasUnderscore = false;
+  }
+
+  // Remove trailing dots and underscores
+  let endIndex = result.length;
+  while (endIndex > 0 && (result[endIndex - 1] === '.' || result[endIndex - 1] === '_')) {
+    endIndex--;
+  }
+  result = result.slice(0, endIndex);
 
   // Handle reserved Windows filenames
-  if (RESERVED_NAMES.test(sanitized)) {
-    sanitized = `_${sanitized}`;
+  if (RESERVED_NAMES.has(result.toLowerCase())) {
+    result = `_${result}`;
   }
 
   // Limit length (leave room for extension)
-  if (sanitized.length > 200) {
-    sanitized = sanitized.substring(0, 200);
+  if (result.length > 200) {
+    result = result.substring(0, 200);
   }
 
   // Fallback for empty result
-  return sanitized || 'unnamed';
+  return result || 'unnamed';
 }
 
 /**
