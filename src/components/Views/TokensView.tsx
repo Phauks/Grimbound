@@ -10,7 +10,7 @@ import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsCont
 import { PanelCoordinationProvider } from '@/contexts/PanelCoordinationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { type CustomPreset, useExport, useMissingTokenGenerator, usePresets } from '@/hooks';
+import { useExport, useMissingTokenGenerator } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import { createTokensZip, isMetaToken, tokensToBundleData } from '@/ts/export/zipExporter';
@@ -31,14 +31,12 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
     updateGenerationOptions,
     isLoading,
     characterSelectionSummary,
+    enabledCharacterUuids,
   } = useTokenContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
   const { addToast } = useToast();
-  const { getCustomPresets } = usePresets();
   const { generateMissingTokens, hasMissingTokens } = useMissingTokenGenerator();
   const { downloadPdf, isExporting } = useExport();
-  // Initialize with presets directly to avoid flash of empty state
-  const [customPresets, setCustomPresets] = useState<CustomPreset[]>(() => getCustomPresets());
 
   // Ref to ensure missing token check only runs once per mount
   const hasCheckedMissingRef = useRef(false);
@@ -55,10 +53,30 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
     }
   }, [hasMissingTokens, generateMissingTokens]);
 
-  // Filter tokens by type
-  const characterTokens = useMemo(() => tokens.filter((t) => t.type === 'character'), [tokens]);
-  const reminderTokens = useMemo(() => tokens.filter((t) => t.type === 'reminder'), [tokens]);
-  const metaTokens = useMemo(() => tokens.filter((t) => isMetaToken(t)), [tokens]);
+  // Cache version is now managed by useTokenGenerator which pre-renders during generation
+  // This value triggers re-render if tokens need to be re-cached (e.g., after tab switch)
+  const [cacheReady] = useState(0);
+
+  // Filter tokens to only show enabled characters (meta tokens always shown)
+  const displayTokens = useMemo(() => {
+    return tokens.filter((t) => {
+      // Meta tokens always shown
+      if (isMetaToken(t)) return true;
+      // Character/reminder tokens filtered by enabled status
+      return t.parentUuid && enabledCharacterUuids.has(t.parentUuid);
+    });
+  }, [tokens, enabledCharacterUuids]);
+
+  // Filter tokens by type (using filtered display tokens)
+  const characterTokens = useMemo(
+    () => displayTokens.filter((t) => t.type === 'character'),
+    [displayTokens]
+  );
+  const reminderTokens = useMemo(
+    () => displayTokens.filter((t) => t.type === 'reminder'),
+    [displayTokens]
+  );
+  const metaTokens = useMemo(() => displayTokens.filter((t) => isMetaToken(t)), [displayTokens]);
 
   // Factory for creating download handlers - reduces repetition
   const createDownloadHandler = useCallback(
@@ -66,19 +84,13 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
       async () => {
         if (tokenList.length === 0) return;
         try {
-          const blob = await createTokensZip(
-            tokenList,
-            null,
-            {
-              saveInTeamFolders: useTeamFolders,
-              saveRemindersSeparately: false,
-              metaTokenFolder: false,
-              includeScriptJson: false,
-              compressionLevel: 'normal',
-            },
-            undefined,
-            generationOptions.pngSettings
-          );
+          const blob = await createTokensZip(tokenList, null, {
+            saveInTeamFolders: useTeamFolders,
+            saveRemindersSeparately: false,
+            metaTokenFolder: false,
+            includeScriptJson: false,
+            compressionLevel: 'normal',
+          });
           downloadFile(blob, filename);
           addToast(`Downloaded ${tokenList.length} ${tokenType} tokens`, 'success');
         } catch (error) {
@@ -86,7 +98,7 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
           addToast(`Failed to download ${tokenType} tokens`, 'error');
         }
       },
-    [generationOptions.pngSettings, addToast]
+    [addToast]
   );
 
   // Download handlers using factory
@@ -195,10 +207,7 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
               <details className={layoutStyles.sidebarCard}>
                 <summary className={layoutStyles.sectionHeader}>Presets</summary>
                 <div className={layoutStyles.optionSection}>
-                  <PresetSection
-                    customPresets={customPresets}
-                    onCustomPresetsChange={setCustomPresets}
-                  />
+                  <PresetSection />
                 </div>
               </details>
 
@@ -227,9 +236,21 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
                 {characterSelectionSummary.disabled} character
                 {characterSelectionSummary.disabled !== 1 ? 's' : ''} excluded
               </span>
+              <button
+                type="button"
+                className={styles.exclusionLink}
+                onClick={() => onTabChange('projects')}
+              >
+                Manage in Projects
+              </button>
             </div>
           )}
-          <TokenGrid onTokenClick={onTokenClick} onTabChange={onTabChange} />
+          <TokenGrid
+            tokens={displayTokens}
+            onTokenClick={onTokenClick}
+            onTabChange={onTabChange}
+            cacheVersion={cacheReady}
+          />
         </ViewLayout.Panel>
       </ViewLayout>
     </ErrorBoundary>

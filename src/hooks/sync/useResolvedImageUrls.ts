@@ -86,7 +86,18 @@ export function useResolvedImageUrls({
   const [isLoading, setIsLoading] = useState(false);
   const blobUrlsRef = useRef<string[]>([]);
 
+  // Track previous content to prevent infinite loops when parent creates
+  // new array references with same content
+  const prevKeyRef = useRef<string>('');
+  const currentKey = imageUrls.join('\x00');
+
   useEffect(() => {
+    // Skip if content hasn't changed (prevents infinite loops from new array refs)
+    if (prevKeyRef.current === currentKey && resolvedUrls.length > 0) {
+      return;
+    }
+    prevKeyRef.current = currentKey;
+
     if (!enabled || imageUrls.length === 0) {
       setResolvedUrls([]);
       setIsLoading(false);
@@ -123,7 +134,7 @@ export function useResolvedImageUrls({
     return () => {
       isMounted = false;
     };
-  }, [imageUrls, enabled]);
+  }, [imageUrls, enabled, currentKey, resolvedUrls.length]);
 
   // Cleanup blob URLs on unmount
   useEffect(

@@ -11,6 +11,7 @@
  * - Filters
  * - Auto-resize textarea
  * - Intersection observer
+ * - Controlled field state (debounce + cursor protection)
  *
  * @module hooks/ui
  */
@@ -28,6 +29,18 @@ export type {
 } from './useContextMenu';
 // Context menu hooks
 export { useContextMenu } from './useContextMenu';
+// Controlled field hooks (debounce + cursor protection)
+export type {
+  UseControlledFieldOptions,
+  UseControlledFieldResult,
+} from './useControlledField';
+export { useControlledField } from './useControlledField';
+export type {
+  FieldState,
+  UseControlledFieldsOptions,
+  UseControlledFieldsResult,
+} from './useControlledFields';
+export { useControlledFields } from './useControlledFields';
 export type { UseDraggableListOptions, UseDraggableListResult } from './useDraggableList';
 // Draggable list hooks
 export { useDraggableList } from './useDraggableList';
@@ -51,6 +64,9 @@ export { useIntersectionObserver } from './useIntersectionObserver';
 export type { default as UseModalBehaviorOptions } from './useModalBehavior';
 // Modal behavior hooks
 export { useModalBehavior } from './useModalBehavior';
+export type { UsePageScaleResult } from './usePageScale';
+// Page scale hooks (WYSIWYG preview)
+export { usePageScale } from './usePageScale';
 export type { UseRecentColorsOptions, UseRecentColorsResult } from './useRecentColors';
 // Recent colors hooks
 export { addRecentColor, getRecentColors, useRecentColors } from './useRecentColors';

@@ -1,6 +1,6 @@
 /**
  * PresetSection Component Styles
- * Organized preset grid with visual hierarchy
+ * Two-tier preset system with Global and Project sections
  */
 
 /* ============================================
@@ -34,16 +34,22 @@
   padding: 0 var(--spacing-xs);
 }
 
-.presetGroupLabel::before,
-.presetGroupLabel::after {
+.presetGroupLabel::before {
   content: "";
-  flex: 1;
+  flex: 0 0 auto;
+  width: 20px;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(201, 162, 39, 0.2) 50%, transparent);
+  background: linear-gradient(to left, rgba(201, 162, 39, 0.2), transparent);
 }
 
-.presetGroupLabel::before {
-  background: linear-gradient(to left, transparent, rgba(201, 162, 39, 0.2) 50%, transparent);
+.presetGroupHint {
+  flex: 1;
+  font-family: var(--font-family-body, inherit);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.4));
 }
 
 /* ============================================
@@ -55,6 +61,12 @@
   gap: var(--spacing-sm);
   overflow: visible;
   padding: var(--spacing-xs);
+  min-height: 60px;
+  border-radius: var(--radius-md);
+  border: 2px dashed transparent;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 /* Ensure at least 3 columns on wider screens */
@@ -64,56 +76,19 @@
   }
 }
 
-/* ============================================
-   PRESET ACTION BUTTONS
-   ============================================ */
-.presetActions {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.presetActions .btnSecondary {
-  flex: 1;
-  justify-content: center;
+/* Container drop target state - highlight when dragging from other tier */
+.containerDropTarget {
+  border-color: var(--color-accent);
+  background: rgba(201, 162, 39, 0.05);
 }
 
 /* ============================================
-   DIVIDER LINE
+   DRAG HINT - Cross-tier copy guidance
    ============================================ */
-.divider {
-  height: 1px;
-  margin: var(--spacing-xs) 0;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(201, 162, 39, 0.15) 20%,
-    rgba(201, 162, 39, 0.15) 80%,
-    transparent
-  );
-}
-
-/* ============================================
-   EMPTY STATE
-   ============================================ */
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
+.dragHint {
   text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-lg);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.emptyStateIcon {
-  font-size: 1.5rem;
-  opacity: 0.5;
+  font-size: 0.7rem;
+  color: var(--text-subtle, rgba(255, 255, 255, 0.35));
+  padding: var(--spacing-xs) 0;
+  font-style: italic;
 }

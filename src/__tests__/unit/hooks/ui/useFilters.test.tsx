@@ -55,13 +55,17 @@ const createMockTokenContext = (overrides = {}): TokenContextType => ({
 
   // Generation options
   generationOptions: {
-    backgroundColor: '#fff',
-    backgroundStyle: 'solid',
-    borderColor: '#000',
-    borderWidth: 1,
-    textColor: '#000',
-    fontSize: 12,
-    fontFamily: 'Arial',
+    displayAbilityText: true,
+    generateBootleggerRules: false,
+    tokenCount: true,
+    setupStyle: 'default',
+    reminderBackground: '#000000',
+    characterBackground: '#ffffff',
+    characterNameFont: 'Arial',
+    characterReminderFont: 'Arial',
+    scriptNameToken: true,
+    almanacToken: false,
+    pandemoniumToken: false,
   },
   updateGenerationOptions: vi.fn(),
 
@@ -106,11 +110,12 @@ const createMockTokenContext = (overrides = {}): TokenContextType => ({
 
   // Sync status
   syncStatus: {
-    hasChecked: false,
-    lastCheckedAt: null,
-    isChecking: false,
+    state: 'idle',
+    dataSource: 'cache',
+    currentVersion: null,
+    availableVersion: null,
+    lastSync: null,
     error: null,
-    charactersCount: 0,
   },
   isSyncInitialized: false,
 

@@ -15,13 +15,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { BundleData, DownloadItem } from '@/contexts/DownloadsContext';
-import type { Character, PngExportOptions, Token } from '@/ts/types/index.js';
+import type { Character, Token } from '@/ts/types/index.js';
 import {
   downloadCharacterTokenOnly,
   downloadCharacterTokensAsZip,
   downloadReminderTokensOnly,
 } from '@/ts/ui/detailViewUtils.js';
-import { canvasToBlob } from '@/ts/utils/imageUtils.js';
+import { getTokenBlob } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 
 export interface UseCharacterDownloadsOptions {
@@ -33,8 +33,6 @@ export interface UseCharacterDownloadsOptions {
   editedCharacter: Character | null;
   /** The selected character from source data */
   selectedCharacter: Character | undefined;
-  /** PNG export settings */
-  pngSettings: PngExportOptions;
   /** Whether meta is selected (hides character downloads) */
   isMetaSelected: boolean;
   /** Toast notification function */
@@ -49,7 +47,7 @@ export interface UseCharacterDownloadsResult {
   /** Download all tokens (character + reminders) as ZIP */
   handleDownloadAll: () => Promise<void>;
   /** Download character token only as PNG */
-  handleDownloadCharacter: () => Promise<void>;
+  handleDownloadCharacter: () => void;
   /** Download reminder tokens only as ZIP */
   handleDownloadReminders: () => Promise<void>;
   /** Download character definition as JSON */
@@ -72,7 +70,6 @@ export interface UseCharacterDownloadsResult {
  *   displayReminderTokens,
  *   editedCharacter,
  *   selectedCharacter,
- *   pngSettings: generationOptions.pngSettings,
  *   isMetaSelected,
  *   addToast,
  *   setDownloads,
@@ -85,7 +82,6 @@ export function useCharacterDownloads({
   displayReminderTokens,
   editedCharacter,
   selectedCharacter,
-  pngSettings,
   isMetaSelected,
   addToast,
   setDownloads,
@@ -106,7 +102,6 @@ export function useCharacterDownloads({
         displayCharacterToken,
         displayReminderTokens,
         selectedCharacter?.name || charData?.name || 'character',
-        pngSettings,
         charData
       );
       addToast(`Downloaded ${selectedCharacter?.name} tokens`, 'success');
@@ -116,26 +111,15 @@ export function useCharacterDownloads({
     } finally {
       setIsDownloading(false);
     }
-  }, [
-    displayCharacterToken,
-    displayReminderTokens,
-    selectedCharacter,
-    charData,
-    pngSettings,
-    addToast,
-  ]);
+  }, [displayCharacterToken, displayReminderTokens, selectedCharacter, charData, addToast]);
 
   // Download character token only
-  const handleDownloadCharacter = useCallback(async () => {
+  const handleDownloadCharacter = useCallback(() => {
     if (!displayCharacterToken) return;
 
     setIsDownloading(true);
     try {
-      await downloadCharacterTokenOnly(
-        displayCharacterToken,
-        selectedCharacter?.name || 'character',
-        pngSettings
-      );
+      downloadCharacterTokenOnly(displayCharacterToken, selectedCharacter?.name || 'character');
       addToast(`Downloaded ${selectedCharacter?.name} character token`, 'success');
     } catch (error) {
       logger.error('useCharacterDownloads', 'Failed to download character token', error);
@@ -143,7 +127,7 @@ export function useCharacterDownloads({
     } finally {
       setIsDownloading(false);
     }
-  }, [displayCharacterToken, selectedCharacter, pngSettings, addToast]);
+  }, [displayCharacterToken, selectedCharacter, addToast]);
 
   // Download reminder tokens only
   const handleDownloadReminders = useCallback(async () => {
@@ -156,8 +140,7 @@ export function useCharacterDownloads({
     try {
       await downloadReminderTokensOnly(
         displayReminderTokens,
-        selectedCharacter?.name || 'character',
-        pngSettings
+        selectedCharacter?.name || 'character'
       );
       addToast(`Downloaded ${selectedCharacter?.name} reminder tokens`, 'success');
     } catch (error) {
@@ -166,7 +149,7 @@ export function useCharacterDownloads({
     } finally {
       setIsDownloading(false);
     }
-  }, [displayReminderTokens, selectedCharacter, pngSettings, addToast]);
+  }, [displayReminderTokens, selectedCharacter, addToast]);
 
   // Download character JSON
   const handleDownloadJson = useCallback(() => {
@@ -203,9 +186,12 @@ export function useCharacterDownloads({
         action: handleDownloadCharacter,
         getBlob: async (): Promise<BundleData | null> => {
           if (!displayCharacterToken) return null;
-          const blob = await canvasToBlob(displayCharacterToken.canvas);
-          if (!blob) return null;
-          return { blob, filename: displayCharacterToken.filename };
+          try {
+            const blob = getTokenBlob(displayCharacterToken);
+            return { blob, filename: displayCharacterToken.filename };
+          } catch {
+            return null;
+          }
         },
         disabled: !(hasCharacter && hasCharacterToken),
         disabledReason: hasCharacter ? 'Generate token first' : 'Select a character',
@@ -227,10 +213,8 @@ export function useCharacterDownloads({
           const results: BundleData[] = [];
           for (const token of displayReminderTokens) {
             try {
-              const blob = await canvasToBlob(token.canvas);
-              if (blob) {
-                results.push({ blob, filename: token.filename });
-              }
+              const blob = getTokenBlob(token);
+              results.push({ blob, filename: token.filename });
             } catch {
               // Skip tokens that fail to convert
             }

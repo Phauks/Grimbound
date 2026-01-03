@@ -12,8 +12,8 @@ export {
 } from './batchGenerator.js';
 // Export image cache adapter
 export { defaultImageCache } from './ImageCacheAdapter.js';
-// Presets
-export { getPreset, getPresetNames, PRESETS } from './presets.js';
+// Presets utilities (no built-in presets - users create their own)
+export { createPreset, duplicatePreset, getDefaultOptions, isValidPreset } from './presets.js';
 // QR code options resolution
 export {
   buildStyledQRParams,

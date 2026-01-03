@@ -7,7 +7,14 @@
  */
 
 import { QR_COLORS } from '@/ts/constants.js';
-import type { QRCodeOptions } from '@/ts/types/tokenOptions.js';
+import type {
+  QRCodeOptions,
+  QRCornerDotType,
+  QRCornerSquareType,
+  QRDotType,
+  QRErrorCorrectionLevel,
+  QRGradientType,
+} from '@/ts/types/tokenOptions.js';
 
 /**
  * Default QR code options
@@ -90,27 +97,27 @@ export interface StyledQRCodeParams {
   logoUrl?: string;
   showLogo: boolean;
   // Dots
-  dotType: string;
+  dotType: QRDotType;
   dotsUseGradient: boolean;
-  dotsGradientType: string;
+  dotsGradientType: QRGradientType;
   dotsGradientRotation: number;
   dotsColorStart: string;
   dotsColorEnd: string;
   // Corner squares
-  cornerSquareType: string;
+  cornerSquareType: QRCornerSquareType;
   cornerSquareUseGradient: boolean;
-  cornerSquareGradientType: string;
+  cornerSquareGradientType: QRGradientType;
   cornerSquareColorStart: string;
   cornerSquareColorEnd: string;
   // Corner dots
-  cornerDotType: string;
+  cornerDotType: QRCornerDotType;
   cornerDotUseGradient: boolean;
-  cornerDotGradientType: string;
+  cornerDotGradientType: QRGradientType;
   cornerDotColorStart: string;
   cornerDotColorEnd: string;
   // Background
   backgroundUseGradient: boolean;
-  backgroundGradientType: string;
+  backgroundGradientType: QRGradientType;
   backgroundColorStart: string;
   backgroundColorEnd: string;
   backgroundOpacity: number;
@@ -120,7 +127,7 @@ export interface StyledQRCodeParams {
   imageSize: number;
   imageMargin: number;
   // QR
-  errorCorrectionLevel: string;
+  errorCorrectionLevel: QRErrorCorrectionLevel;
 }
 
 /**

@@ -48,13 +48,8 @@ export {
   type ModalSize,
 } from './ModalBase';
 // Options Panel Components (from Options/ subdirectory)
-export { AdditionalOptionsPanel } from './Options/AdditionalOptionsPanel';
 export { AppearancePanel } from './Options/AppearancePanel';
 export { ReminderTab } from './Options/ReminderTab';
-export {
-  AccentSettingsSelector,
-  type AccentSettingsSelectorProps,
-} from './Selectors/AccentSettingsSelector';
 // Preview Selector Components (unified "box" pattern)
 export {
   AssetPreviewSelector,
@@ -104,12 +99,6 @@ export {
   type ToggleGroupProps,
   type ToggleOption,
 } from './Selectors/SettingsSelectorBase';
-export { SetupSettingsSelector } from './Selectors/SetupSettingsSelector';
-export {
-  type SingleIconSettings,
-  SingleIconSettingsSelector,
-  type SingleIconSettingsSelectorProps,
-} from './Selectors/SingleIconSettingsSelector';
 export {
   type BoxMode,
   type PreviewConfig,

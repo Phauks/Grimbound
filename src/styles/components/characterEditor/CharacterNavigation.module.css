@@ -242,6 +242,8 @@
 .item.selected {
   background: var(--color-primary-subtle);
   border-color: var(--color-primary);
+  position: relative;
+  z-index: 1;
 }
 
 /* Team border colors for nav items */

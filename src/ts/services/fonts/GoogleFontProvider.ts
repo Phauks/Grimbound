@@ -509,6 +509,22 @@ export class GoogleFontProvider implements IGoogleFontProvider {
     // Try to load from IndexedDB first
     const cached = await fontDb.getGoogleFontsCatalog();
     if (cached && Date.now() - cached.fetchedAt.getTime() < CATALOG_CACHE_DURATION) {
+      // Check if we have an API key but only have static catalog cached
+      // Static catalog has ~40 fonts, API returns 1600+
+      const hasApiKey = !!CONFIG.GOOGLE_FONTS?.API_KEY;
+      const isStaticCatalog = cached.fonts.length <= 50;
+
+      if (hasApiKey && isStaticCatalog) {
+        // API key is now available but we only have static catalog
+        // Refresh to get full catalog from API
+        logger.info(
+          'GoogleFontProvider',
+          'API key detected with static catalog cached, refreshing from API...'
+        );
+        await this.refreshCatalog();
+        return;
+      }
+
       this.loadCatalogFromCache(cached.fonts);
       this.catalogFetchedAt = cached.fetchedAt;
 
@@ -517,8 +533,8 @@ export class GoogleFontProvider implements IGoogleFontProvider {
       return;
     }
 
-    // Load static catalog
-    await this.loadStaticCatalog();
+    // Refresh catalog (tries API first, falls back to static)
+    await this.refreshCatalog();
   }
 
   /**

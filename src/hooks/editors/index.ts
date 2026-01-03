@@ -18,6 +18,6 @@ export type {
 } from './useJsonEditor';
 // JSON Editor Hook
 export { useJsonEditor } from './useJsonEditor';
-export type { CustomPreset } from './usePresets';
-// Presets Hook
+// Presets Hook - re-exports types from the hook
+export type { Preset, PresetTier, PresetWithTier } from './usePresets';
 export { usePresets } from './usePresets';

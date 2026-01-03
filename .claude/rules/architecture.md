@@ -4,7 +4,7 @@
 
 > **Location**: This file lives in `.claude/rules/` and is loaded by Claude Code when architectural context is needed.
 
-**Last Updated**: 2025-12-23
+**Last Updated**: 2025-12-31
 **Version**: v0.5.0
 
 ---
@@ -170,7 +170,7 @@ interface DataSyncContextType {
 
 ### Layer 4: Custom Hooks
 
-35+ hooks that encapsulate business logic:
+60+ hooks that encapsulate business logic:
 
 ```typescript
 // Token generation orchestration
@@ -324,6 +324,8 @@ src/ts/generation/
 │   └── generateCharacterAndReminderTokens()
 ├── TokenImageRenderer.ts       # Image rendering
 ├── TokenTextRenderer.ts        # Text rendering
+├── QROptionsResolver.ts        # QR code option resolution
+├── teamVariantGenerator.ts     # Team variant generation
 ├── presets.ts                  # Preset configurations
 ├── ImageCacheAdapter.ts        # DI adapter
 └── iconLayoutStrategies.ts     # Strategy pattern
@@ -360,6 +362,7 @@ src/ts/canvas/backgroundEffects/
 ├── BackgroundRenderer.ts       # Main orchestrator
 │   ├── renderBackground()      # Complete rendering pipeline
 │   └── renderTexturePreview()  # Preview-only rendering
+├── constants.ts                # Shared constants
 ├── noise/                      # Procedural noise utilities
 │   ├── index.ts                # Barrel export
 │   ├── perlin.ts               # Perlin noise implementation
@@ -387,6 +390,7 @@ src/ts/canvas/backgroundEffects/
 └── effects/                    # Visual effects
     ├── index.ts                # Effect orchestration
     ├── EffectStrategy.ts       # Interface
+    ├── BorderEffect.ts         # Border rendering
     ├── VignetteEffect.ts       # Edge darkening
     ├── InnerGlowEffect.ts      # Rim lighting
     └── VibranceEffect.ts       # Smart saturation
@@ -398,11 +402,18 @@ src/ts/canvas/backgroundEffects/
 src/ts/cache/
 ├── index.ts                    # Barrel export
 ├── CacheManager.ts             # Cache facade (application layer)
+├── ICacheManager.ts            # Cache manager interface
 ├── CacheInvalidationService.ts # Cache lifecycle
 ├── TabPreRenderService.ts      # Unified tab hover pre-rendering
 ├── charactersPreRenderHelpers.ts
+├── adapters/
+│   └── LRUCacheAdapter.ts      # LRU cache implementation
 ├── core/                       # Core types & interfaces
+│   ├── index.ts                # Barrel export
+│   ├── interfaces.ts           # Core interfaces
 │   └── types.ts                # PreRenderContextType, CacheEntry, etc.
+├── instances/
+│   └── fontCache.ts            # Font caching singleton
 ├── manager/
 │   └── PreRenderCacheManager.ts
 ├── policies/
@@ -412,9 +423,13 @@ src/ts/cache/
 │   ├── TokensPreRenderStrategy.ts
 │   └── ProjectPreRenderStrategy.ts
 └── utils/
+    ├── AdaptiveWorkerPool.ts   # Adaptive worker pooling
+    ├── CacheLogger.ts          # Cache-specific logging
     ├── EventEmitter.ts         # Typed events
     ├── hashUtils.ts            # Shared hash utilities
-    └── index.ts
+    ├── index.ts                # Barrel export
+    ├── memoryEstimator.ts      # Memory estimation
+    └── WorkerPool.ts           # Worker pool implementation
 ```
 
 **TabPreRenderService** is a Facade that unifies all tab hover pre-rendering:
@@ -428,13 +443,23 @@ src/ts/cache/
 ```
 src/ts/services/
 ├── ServiceContainer.ts         # Lightweight DI container
+├── fonts/                      # Font management
+│   ├── index.ts                # Barrel export
+│   ├── IFontServices.ts        # DI interfaces (contracts)
+│   ├── FontRegistry.ts         # Font registration orchestrator
+│   ├── BuiltInFontProvider.ts  # Built-in font loading
+│   ├── CustomFontProvider.ts   # Custom font loading
+│   ├── GoogleFontProvider.ts   # Google Fonts API integration
+│   └── fontDatabase.ts         # Font data storage
 ├── project/                    # Project management
+│   ├── index.ts                # Barrel export
 │   ├── IProjectService.ts      # DI interfaces (contracts)
 │   ├── ProjectService.ts       # Main orchestrator (uses DI)
 │   ├── ProjectDatabaseService.ts
 │   ├── ProjectExporter.ts      # Export (uses DI)
 │   └── ProjectImporter.ts
 └── upload/                     # File upload processing
+    ├── index.ts                # Barrel export
     ├── IUploadServices.ts      # DI interfaces (contracts)
     ├── FileUploadService.ts    # Main orchestrator (uses DI)
     ├── FileValidationService.ts
@@ -443,6 +468,7 @@ src/ts/services/
     ├── AssetArchiveService.ts
     ├── AssetSuggestionService.ts
     ├── assetResolver.ts
+    ├── constants.ts            # Upload constants
     └── types.ts
 ```
 

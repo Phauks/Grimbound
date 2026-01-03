@@ -5,38 +5,27 @@
 
 import JSZip from 'jszip';
 import { TEAM_LABELS } from '@/ts/config.js';
-import type {
-  PngExportOptions,
-  ProgressCallback,
-  Token,
-  ZipExportOptions,
-} from '@/ts/types/index.js';
-import { canvasToBlob } from '@/ts/utils/index.js';
-import { buildTokenMetadata, embedPngMetadata } from './pngMetadata.js';
+import type { ProgressCallback, Token, ZipExportOptions } from '@/ts/types/index.js';
+import { getTokenBlob } from '@/ts/utils/index.js';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 /**
- * Compression level mapping for JSZip
+ * Hardcoded ZIP export settings.
+ * All sub-folder options are active, compression is normal.
  */
-const COMPRESSION_LEVELS: Record<string, number> = {
-  fast: 1,
-  normal: 6,
-  maximum: 9,
-};
-
-/**
- * Default ZIP export options
- */
-const DEFAULT_ZIP_OPTIONS: ZipExportOptions = {
+const ZIP_SETTINGS: ZipExportOptions = {
   saveInTeamFolders: true,
   saveRemindersSeparately: true,
   metaTokenFolder: true,
   includeScriptJson: false,
   compressionLevel: 'normal',
 };
+
+/** Compression level for normal quality */
+const COMPRESSION_LEVEL = 6;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -60,16 +49,15 @@ export interface BundleData {
 
 /**
  * Convert tokens to bundle data (blobs with filenames) for downloads.
+ * Uses token.dataUrl when available (memory-efficient path).
  * Skips tokens that fail to convert.
  */
 export async function tokensToBundleData(tokens: Token[]): Promise<BundleData[]> {
   const results: BundleData[] = [];
   for (const token of tokens) {
     try {
-      const blob = await canvasToBlob(token.canvas);
-      if (blob) {
-        results.push({ blob, filename: token.filename });
-      }
+      const blob = getTokenBlob(token);
+      results.push({ blob, filename: token.filename });
     } catch {
       // Skip tokens that fail to convert
     }
@@ -118,20 +106,11 @@ export function getTokenFolderPath(token: Token, settings: ZipExportOptions): st
 }
 
 /**
- * Process a token and convert to blob with optional metadata
+ * Process a token and convert to blob.
+ * Uses token.dataUrl when available (memory-efficient path).
  */
-export async function processTokenToBlob(
-  token: Token,
-  pngSettings?: PngExportOptions
-): Promise<Blob> {
-  let blob = await canvasToBlob(token.canvas);
-
-  if (pngSettings?.embedMetadata) {
-    const metadata = buildTokenMetadata(token);
-    blob = await embedPngMetadata(blob, metadata);
-  }
-
-  return blob;
+export function processTokenToBlob(token: Token): Blob {
+  return getTokenBlob(token);
 }
 
 // ============================================================================
@@ -146,20 +125,20 @@ export async function processTokenToBlob(
 const EXPORT_BATCH_SIZE = Infinity;
 
 /**
- * Create a ZIP file with all token images
+ * Create a ZIP file with all token images.
+ * Uses hardcoded settings: team folders, separate reminders, meta folder, normal compression.
+ *
  * @param tokens - Array of token objects with canvas
  * @param progressCallback - Progress callback
- * @param zipSettings - ZIP folder structure settings
+ * @param zipSettings - ZIP folder structure settings (optional override)
  * @param scriptJson - Optional script JSON to include
- * @param pngSettings - Optional PNG export settings (for metadata embedding)
  * @returns ZIP file blob
  */
 export async function createTokensZip(
   tokens: Token[],
   progressCallback: ProgressCallback | null = null,
-  zipSettings: ZipExportOptions = DEFAULT_ZIP_OPTIONS,
-  scriptJson?: string,
-  pngSettings?: PngExportOptions
+  zipSettings: Partial<ZipExportOptions> = {},
+  scriptJson?: string
 ): Promise<Blob> {
   // Validate input
   if (!(tokens && Array.isArray(tokens))) {
@@ -171,8 +150,7 @@ export async function createTokensZip(
   }
 
   const zip = new JSZip();
-  const settings = { ...DEFAULT_ZIP_OPTIONS, ...zipSettings };
-  const compressionValue = COMPRESSION_LEVELS[settings.compressionLevel] ?? 6;
+  const settings = { ...ZIP_SETTINGS, ...zipSettings };
 
   // Process tokens in parallel batches for better performance
   // Use smaller batch size for small token counts to show progress
@@ -186,7 +164,7 @@ export async function createTokensZip(
     // Process batch in parallel, reporting progress for each token
     const batchResults = await Promise.all(
       batch.map(async (token) => {
-        const blob = await processTokenToBlob(token, pngSettings);
+        const blob = processTokenToBlob(token);
         const filename = getTokenFilename(token);
         const folderPath = getTokenFolderPath(token, settings);
 
@@ -212,12 +190,12 @@ export async function createTokensZip(
     zip.file(`${metaFolder}script.json`, scriptJson);
   }
 
-  // Generate ZIP with compression settings
+  // Generate ZIP with normal compression
   return await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
     compressionOptions: {
-      level: compressionValue,
+      level: COMPRESSION_LEVEL,
     },
   });
 }

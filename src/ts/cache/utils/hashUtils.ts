@@ -111,13 +111,13 @@ export function hashGenerationOptions(options: GenerationOptions): string {
     generateBootleggerRules: options.generateBootleggerRules,
     tokenCount: options.tokenCount,
     setupStyle: options.setupStyle,
+    setupPlacement: options.setupPlacement,
     characterBackground: options.characterBackground,
     characterBackgroundType: options.characterBackgroundType,
     reminderBackground: options.reminderBackground,
     reminderBackgroundType: options.reminderBackgroundType,
     characterNameFont: options.characterNameFont,
     characterReminderFont: options.characterReminderFont,
-    dpi: options.dpi,
     accentGeneration: options.accentGeneration,
   });
   return simpleHash(key);

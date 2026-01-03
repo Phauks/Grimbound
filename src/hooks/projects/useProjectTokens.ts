@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { generateAllTokens } from '@/ts/generation/batchGenerator.js';
-import type { Token } from '@/ts/types/index.js';
+import type { GenerationProgress, Token } from '@/ts/types/index.js';
 import type { Project } from '@/ts/types/project.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -39,6 +39,8 @@ export interface UseProjectTokensResult {
   displayTokens: Token[];
   /** Whether token generation is in progress */
   isGenerating: boolean;
+  /** Detailed generation progress (null when not generating) */
+  generationProgress: GenerationProgress | null;
 }
 
 // ============================================================================
@@ -80,6 +82,7 @@ export function useProjectTokens({
 }: UseProjectTokensOptions): UseProjectTokensResult {
   const [previewTokens, setPreviewTokens] = useState<Token[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastPreviewTokensRef = useRef<Token[]>([]);
 
@@ -120,10 +123,12 @@ export function useProjectTokens({
         const generated = await generateAllTokens(
           project.state.characters,
           project.state.generationOptions,
-          null,
+          null, // progressCallback
           project.state.scriptMeta,
-          null,
-          abortControllerRef.current.signal
+          null, // tokenCallback
+          abortControllerRef.current.signal,
+          undefined, // characterMetadata
+          setGenerationProgress // detailedProgressCallback
         );
         setPreviewTokens(generated);
         lastPreviewTokensRef.current = generated;
@@ -133,6 +138,7 @@ export function useProjectTokens({
         }
       } finally {
         setIsGenerating(false);
+        setGenerationProgress(null);
       }
     };
 
@@ -159,10 +165,12 @@ export function useProjectTokens({
         const generated = await generateAllTokens(
           project.state.characters,
           project.state.generationOptions,
-          null,
+          null, // progressCallback
           project.state.scriptMeta,
-          null,
-          abortControllerRef.current.signal
+          null, // tokenCallback
+          abortControllerRef.current.signal,
+          undefined, // characterMetadata
+          setGenerationProgress // detailedProgressCallback
         );
         setContextTokens(generated);
       } catch (err: unknown) {
@@ -171,6 +179,7 @@ export function useProjectTokens({
         }
       } finally {
         setIsGenerating(false);
+        setGenerationProgress(null);
       }
     };
 
@@ -187,5 +196,5 @@ export function useProjectTokens({
 
   const displayTokens = isActiveProject ? contextTokens : previewTokens;
 
-  return { displayTokens, isGenerating };
+  return { displayTokens, isGenerating, generationProgress };
 }

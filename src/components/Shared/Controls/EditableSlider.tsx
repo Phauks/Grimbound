@@ -41,6 +41,8 @@ export interface EditableSliderProps {
   ariaLabel?: string;
   /** Additional CSS class for the container */
   className?: string;
+  /** Number of decimal places to display (auto-detected from step if not specified) */
+  decimals?: number;
 }
 
 export const EditableSlider = memo(function EditableSlider({
@@ -55,16 +57,26 @@ export const EditableSlider = memo(function EditableSlider({
   disabled = false,
   ariaLabel,
   className,
+  decimals,
 }: EditableSliderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Determine decimal places: explicit prop > auto-detect from step > 0
+  const decimalPlaces = decimals ?? (step < 1 ? Math.max(0, Math.ceil(-Math.log10(step))) : 0);
+
+  // Format value for display
+  const formatValue = useCallback(
+    (val: number) => (decimalPlaces > 0 ? val.toFixed(decimalPlaces) : String(Math.round(val))),
+    [decimalPlaces]
+  );
+
   // Handle text input focus
   const handleFocus = useCallback(() => {
     setIsEditing(true);
-    setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
-  }, [value, step]);
+    setEditValue(formatValue(value));
+  }, [value, formatValue]);
 
   // Handle text input blur - apply value
   const handleBlur = useCallback(() => {
@@ -82,11 +94,11 @@ export const EditableSlider = memo(function EditableSlider({
       if (e.key === 'Enter') {
         inputRef.current?.blur();
       } else if (e.key === 'Escape') {
-        setEditValue(String(step < 1 ? value.toFixed(1) : Math.round(value)));
+        setEditValue(formatValue(value));
         inputRef.current?.blur();
       }
     },
-    [value, step]
+    [value, formatValue]
   );
 
   // Handle slider change
@@ -104,7 +116,7 @@ export const EditableSlider = memo(function EditableSlider({
     }
   }, [defaultValue, onChange]);
 
-  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value);
+  const displayValue = formatValue(value);
   const hasReset = defaultValue !== undefined && value !== defaultValue;
 
   return (

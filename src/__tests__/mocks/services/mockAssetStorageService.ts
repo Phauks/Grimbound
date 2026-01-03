@@ -13,15 +13,20 @@ export function createMockAssetStorageService(
 
   const createMockAsset = (id: string, type: AssetType = 'character-icon'): DBAsset => ({
     id,
-    name: `Asset ${id}`,
     type,
+    projectId: null, // null = global
     blob: new Blob(['mock-data']),
-    thumbnailBlob: new Blob(['mock-thumbnail']),
-    mimeType: 'image/webp',
-    size: 1000,
-    scope: 'global',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    thumbnail: new Blob(['mock-thumbnail']),
+    metadata: {
+      filename: `Asset ${id}`,
+      mimeType: 'image/webp',
+      size: 1000,
+      width: 256,
+      height: 256,
+      uploadedAt: Date.now(),
+      sourceType: 'upload',
+    },
+    linkedTo: [],
   });
 
   return {
@@ -29,7 +34,7 @@ export function createMockAssetStorageService(
     save: vi.fn().mockImplementation(async (data) => {
       const id = `mock-asset-${++idCounter}`;
       const asset = createMockAsset(id, data.type);
-      asset.name = data.name;
+      asset.metadata.filename = data.metadata?.filename ?? `Asset ${id}`;
       assets.set(id, asset);
       return id;
     }),
@@ -77,7 +82,7 @@ export function createMockAssetStorageService(
     getGlobal: vi
       .fn()
       .mockImplementation(async () =>
-        Array.from(assets.values()).filter((a) => a.scope === 'global')
+        Array.from(assets.values()).filter((a) => a.projectId === null)
       ),
     getOrphaned: vi.fn().mockResolvedValue([]),
     getByCharacter: vi.fn().mockResolvedValue([]),

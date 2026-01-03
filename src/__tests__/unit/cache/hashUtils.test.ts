@@ -217,7 +217,6 @@ describe('hashUtils', () => {
       reminderBackgroundType: 'solid',
       characterNameFont: 'Dumbledore',
       characterReminderFont: 'Dumbledore',
-      dpi: 300,
       accentGeneration: 'none',
     } as GenerationOptions;
 
@@ -234,13 +233,6 @@ describe('hashUtils', () => {
 
     it('should return different hash when displayAbilityText changes', () => {
       const options2 = { ...baseOptions, displayAbilityText: false };
-      const hash1 = hashGenerationOptions(baseOptions);
-      const hash2 = hashGenerationOptions(options2);
-      expect(hash1).not.toBe(hash2);
-    });
-
-    it('should return different hash when dpi changes', () => {
-      const options2 = { ...baseOptions, dpi: 150 };
       const hash1 = hashGenerationOptions(baseOptions);
       const hash2 = hashGenerationOptions(options2);
       expect(hash1).not.toBe(hash2);
@@ -264,6 +256,14 @@ describe('hashUtils', () => {
       const options2 = { ...baseOptions, accentGeneration: 'team' };
       const hash1 = hashGenerationOptions(baseOptions);
       const hash2 = hashGenerationOptions(options2 as GenerationOptions);
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should return different hash when setupPlacement changes', () => {
+      const options1 = { ...baseOptions, setupPlacement: 'left' } as GenerationOptions;
+      const options2 = { ...baseOptions, setupPlacement: 'right' } as GenerationOptions;
+      const hash1 = hashGenerationOptions(options1);
+      const hash2 = hashGenerationOptions(options2);
       expect(hash1).not.toBe(hash2);
     });
 

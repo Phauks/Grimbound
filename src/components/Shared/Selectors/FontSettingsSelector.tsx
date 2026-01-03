@@ -28,10 +28,16 @@ import { useDrawerState, useFontFiltering, useFontOperations } from '@/hooks';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import type { FontCategory, FontSource } from '@/ts/types/fonts.js';
 import type {
+  FontSizeOptions,
+  FontSpacingOptions,
   GenerationOptions,
   ReminderCountStyle,
   TextLocation,
   TextRenderStyle,
+  TextRenderStyleOptions,
+  TextShadowOptions,
+  TextStrokeColorOptions,
+  TextStrokeWidthOptions,
 } from '@/ts/types/index.js';
 import { FontOptionsColumn, FontSelectionColumn, FontStyleColumn } from './FontSettings';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
@@ -184,12 +190,12 @@ const DEFAULT_STROKE_WIDTHS = {
 
 /** Resolved font options extracted from GenerationOptions */
 interface ResolvedFontOptions {
-  spacing: typeof DEFAULT_FONT_SPACING;
-  shadow: typeof DEFAULT_TEXT_SHADOW;
-  sizes: typeof DEFAULT_FONT_SIZES;
-  renderStyles: typeof DEFAULT_RENDER_STYLES;
-  strokeColors: typeof DEFAULT_STROKE_COLORS;
-  strokeWidths: typeof DEFAULT_STROKE_WIDTHS;
+  spacing: FontSpacingOptions;
+  shadow: TextShadowOptions;
+  sizes: FontSizeOptions;
+  renderStyles: TextRenderStyleOptions;
+  strokeColors: TextStrokeColorOptions;
+  strokeWidths: TextStrokeWidthOptions;
 }
 
 /** Resolves font-related options with defaults */

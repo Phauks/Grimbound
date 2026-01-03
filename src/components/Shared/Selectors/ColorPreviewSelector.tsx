@@ -48,6 +48,8 @@ export interface ColorPreviewSelectorProps {
   onChange: (value: string) => void;
   /** Called on every change for live preview (optional) */
   onPreviewChange?: (value: string) => void;
+  /** Default color to reset to (defaults to #FFFFFF) */
+  defaultValue?: string;
   /** Display label (shown next to the swatch) */
   label?: string;
   /** Component size */
@@ -103,6 +105,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   value,
   onChange,
   onPreviewChange,
+  defaultValue = '#FFFFFF',
   label,
   size = 'medium',
   disabled = false,
@@ -121,9 +124,6 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   const [brightness, setBrightness] = useState(100);
   const [rgbInputs, setRgbInputs] = useState({ r: '255', g: '255', b: '255' });
   const [hsvInputs, setHsvInputs] = useState({ h: '0', s: '100', v: '100' });
-
-  // Default color for reset
-  const defaultColor = '#FFFFFF';
 
   // Wrap onChange to track recent colors
   const handleApply = useCallback(
@@ -512,14 +512,29 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   const renderPanel = () => {
     if (!(panel.isExpanded && panel.panelPosition)) return null;
 
+    // Calculate position - ensure panel stays on screen
+    let left = panel.panelPosition.left;
+    const panelWidth = panel.panelPosition.width;
+    const viewportWidth = window.innerWidth;
+
+    // If panel would go off right edge, shift it left
+    if (left + panelWidth > viewportWidth - 16) {
+      left = viewportWidth - panelWidth - 16;
+    }
+
+    // Ensure it doesn't go off left edge either
+    if (left < 16) {
+      left = 16;
+    }
+
     const panelStyle: React.CSSProperties = {
       position: 'fixed',
       top: panel.panelPosition.openUpward ? 'auto' : panel.panelPosition.top,
       bottom: panel.panelPosition.openUpward
         ? window.innerHeight - panel.panelPosition.top
         : 'auto',
-      left: panel.panelPosition.left,
-      width: panel.panelPosition.width,
+      left,
+      width: panelWidth,
       zIndex: 10000,
     };
 
@@ -528,6 +543,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
         ref={panel.panelRef}
         className={`${baseStyles.panel} ${panel.panelPosition.openUpward ? baseStyles.panelUpward : ''}`}
         style={panelStyle}
+        data-color-picker-panel
       >
         {/* Two-column layout */}
         <div className={styles.pickerContent}>
@@ -734,7 +750,7 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
           <button
             type="button"
             className={baseStyles.resetLink}
-            onClick={() => panel.reset(defaultColor)}
+            onClick={() => panel.reset(defaultValue)}
           >
             Reset
           </button>

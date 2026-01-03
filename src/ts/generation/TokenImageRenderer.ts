@@ -177,7 +177,6 @@ export class TokenImageRenderer {
       // Create layout context (offsets are in inches, converted to pixels in strategy)
       const layoutContext: LayoutContext = {
         diameter,
-        dpi: this.options.dpi || CONFIG.PDF.DPI,
         iconScale: iconSettings.scale,
         iconOffsetX: iconSettings.offsetX,
         iconOffsetY: iconSettings.offsetY,
@@ -244,8 +243,24 @@ export class TokenImageRenderer {
       const overlayImage = overlayPath.startsWith('blob:')
         ? await this.getCachedImage(overlayPath)
         : await this.getLocalImage(overlayPath);
-      drawImageCover(ctx, overlayImage, diameter, diameter);
-      logger.debug('TokenImageRenderer', 'Drew setup overlay', this.options.setupStyle);
+
+      // Check if we need to flip the image for left placement (default is right)
+      const placement = this.options.setupPlacement ?? 'right';
+      if (placement === 'left') {
+        // Save context state, flip horizontally, draw, then restore
+        ctx.save();
+        ctx.translate(diameter, 0);
+        ctx.scale(-1, 1);
+        drawImageCover(ctx, overlayImage, diameter, diameter);
+        ctx.restore();
+      } else {
+        drawImageCover(ctx, overlayImage, diameter, diameter);
+      }
+
+      logger.debug('TokenImageRenderer', 'Drew setup overlay', {
+        style: this.options.setupStyle,
+        placement,
+      });
     } catch (error) {
       logger.warn(
         'TokenImageRenderer',
@@ -413,7 +428,6 @@ export class TokenImageRenderer {
       // Create layout context
       const layoutContext: LayoutContext = {
         diameter,
-        dpi: this.options.dpi || CONFIG.PDF.DPI,
         iconScale: iconSettings.scale,
         iconOffsetX: iconSettings.offsetX,
         iconOffsetY: iconSettings.offsetY,

@@ -25,10 +25,14 @@ export {
   type EffectContext,
   type EffectResult,
   type EffectStrategy,
+  // Frame mode (border scaling)
+  type FrameModeInfo,
   // Noise utilities
   fbm,
+  getFrameModeInfo,
   InnerGlowEffect,
   initPermutation,
+  isFrameModeActive,
   isVibranceEnabled,
   perlin2D,
   // Main renderer
@@ -73,7 +77,6 @@ export {
   applyAbilityTextShadow,
   applyTextShadow,
   type CanvasContext,
-  type CanvasOptions,
   clearShadow,
   createCanvas,
   createCircularClipPath,

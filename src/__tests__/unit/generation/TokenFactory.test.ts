@@ -890,34 +890,6 @@ describe('TokenFactory', () => {
       expect(token.hasDecorativeOverrides).toBeUndefined();
     });
 
-    it('should handle multiple DPI values correctly', () => {
-      const testCases = [72, 150, 300, 600];
-
-      for (const dpi of testCases) {
-        const testFactory = new TokenFactory(dpi);
-        const character = createCharacter();
-        const canvas = createMockCanvas();
-
-        const charToken = testFactory.createCharacterToken({
-          canvas,
-          character,
-          filename: 'char.png',
-          order: 1,
-        });
-
-        const remToken = testFactory.createReminderToken({
-          canvas,
-          character,
-          reminderText: 'Test',
-          filename: 'rem.png',
-          order: 2,
-        });
-
-        expect(charToken.diameter).toBe(CONFIG.TOKEN.ROLE_DIAMETER_INCHES * dpi);
-        expect(remToken.diameter).toBe(CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * dpi);
-      }
-    });
-
     it('should handle all team types', () => {
       const teams = ['townsfolk', 'outsider', 'minion', 'demon', 'traveller', 'fabled'] as const;
       const canvas = createMockCanvas();

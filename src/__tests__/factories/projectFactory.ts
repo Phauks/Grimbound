@@ -29,7 +29,6 @@ export function createDefaultGenerationOptions(): GenerationOptions {
     scriptNameToken: false,
     almanacToken: false,
     pandemoniumToken: false,
-    dpi: 300,
   };
 }
 

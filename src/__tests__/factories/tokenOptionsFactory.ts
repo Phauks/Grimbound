@@ -42,7 +42,6 @@ export function createMinimalGenerationOptions(): GenerationOptions {
     scriptNameToken: false,
     almanacToken: false,
     pandemoniumToken: false,
-    dpi: 300,
   };
 }
 
@@ -62,7 +61,6 @@ export function createFullGenerationOptions(): GenerationOptions {
     scriptNameToken: true,
     almanacToken: true,
     pandemoniumToken: true,
-    dpi: 300,
     accentEnabled: true,
     accentGeneration: 'random',
     maximumAccents: 3,
@@ -90,7 +88,6 @@ export function createGenerationOptions(
     scriptNameToken: false,
     almanacToken: false,
     pandemoniumToken: false,
-    dpi: 300,
     ...overrides,
   };
 }

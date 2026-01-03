@@ -1271,6 +1271,25 @@
   font-weight: 500;
 }
 
+.exclusionLink {
+  margin-left: auto;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: 1px solid var(--color-warning, #f0ad4e);
+  border-radius: var(--border-radius);
+  color: var(--color-warning, #f0ad4e);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.exclusionLink:hover {
+  background: rgba(240, 173, 78, 0.2);
+  color: var(--text-primary);
+}
+
 /* ========================================
    Subtabs Styles (DownloadView)
    ======================================== */

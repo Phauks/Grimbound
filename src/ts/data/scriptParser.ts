@@ -19,6 +19,7 @@
 
 import CONFIG from '@/ts/config.js';
 import type { Character, ScriptEntry, ScriptMeta } from '@/ts/types/index.js';
+import { ensureUniqueId } from '@/ts/utils/idUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { generateStableUuid, generateUuid } from '@/ts/utils/nameGenerator.js';
 
@@ -344,11 +345,32 @@ export async function parseScriptData(
 
   const ctx = createParsingContext(officialData, false);
   const characters: Character[] = [];
+  const seenIds: string[] = [];
 
   for (let i = 0; i < scriptData.length; i++) {
     const result = await processScriptEntry(scriptData[i], ctx, `Entry ${i + 1}`);
     if (result.character) {
-      characters.push(result.character);
+      // Ensure unique ID
+      const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(result.character.id, seenIds);
+
+      if (wasRenamed) {
+        // Regenerate UUID for the renamed character
+        const newUuid = result.character.name
+          ? await generateStableUuid(uniqueId, result.character.name)
+          : generateUuid();
+
+        logger.info('ScriptParser', `Renamed duplicate ID '${originalId}' to '${uniqueId}'`);
+
+        characters.push({
+          ...result.character,
+          id: uniqueId,
+          uuid: newUuid,
+        });
+      } else {
+        characters.push(result.character);
+      }
+
+      seenIds.push(uniqueId);
     }
   }
 
@@ -387,13 +409,34 @@ export async function validateAndParseScript(
   const ctx = createParsingContext(officialData, true);
   const characters: Character[] = [];
   const warnings: string[] = [];
+  const seenIds: string[] = [];
 
   for (let i = 0; i < scriptData.length; i++) {
     const position = `Entry ${i + 1}`;
     const result = await processScriptEntry(scriptData[i], ctx, position);
 
     if (result.character) {
-      characters.push(result.character);
+      // Ensure unique ID
+      const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(result.character.id, seenIds);
+
+      if (wasRenamed) {
+        // Regenerate UUID for the renamed character
+        const newUuid = result.character.name
+          ? await generateStableUuid(uniqueId, result.character.name)
+          : generateUuid();
+
+        warnings.push(`${position}: Duplicate ID '${originalId}' renamed to '${uniqueId}'`);
+
+        characters.push({
+          ...result.character,
+          id: uniqueId,
+          uuid: newUuid,
+        });
+      } else {
+        characters.push(result.character);
+      }
+
+      seenIds.push(uniqueId);
     }
     if (result.warning) {
       warnings.push(result.warning);

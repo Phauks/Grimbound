@@ -163,52 +163,34 @@ export function ProjectNavigation({
 
   return (
     <div className={layoutStyles.panelContent}>
-      {/* Header with Actions */}
-      <details className={layoutStyles.sidebarCard} open>
-        <summary className={layoutStyles.sectionHeader}>My Projects</summary>
-        <div className={layoutStyles.optionSection}>
-          <div className={styles.actionButtons}>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={onCreateProject}
-              title="Create New Project"
-            >
-              + Create
-            </Button>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={onImportProject}
-              title="Import Project"
-            >
-              Import
-            </Button>
-          </div>
-        </div>
-      </details>
+      {/* Header with Create Button */}
+      <div className={styles.headerRow}>
+        <Button variant="primary" size="small" onClick={onCreateProject} title="Create New Project">
+          + Create Project
+        </Button>
+        <Button variant="secondary" size="small" onClick={onImportProject} title="Import Project">
+          Import
+        </Button>
+      </div>
 
       {/* Search and Sort */}
-      <details className={layoutStyles.sidebarCard} open>
-        <summary className={layoutStyles.sectionHeader}>Filter</summary>
-        <div className={layoutStyles.optionSection}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search projects..."
-            className={styles.searchInput}
-          />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'recent' | 'alphabetical')}
-            className={styles.sortSelect}
-          >
-            <option value="recent">Most Recent</option>
-            <option value="alphabetical">Alphabetical</option>
-          </select>
-        </div>
-      </details>
+      <div className={layoutStyles.sidebarCard}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search projects..."
+          className={styles.searchInput}
+        />
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'recent' | 'alphabetical')}
+          className={styles.sortSelect}
+        >
+          <option value="recent">Most Recent</option>
+          <option value="alphabetical">Alphabetical</option>
+        </select>
+      </div>
 
       {/* Projects List */}
       <div className={styles.listContainer}>

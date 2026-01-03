@@ -89,6 +89,7 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
 
       try {
         channelRef.current.postMessage(fullMessage);
+
         logger.debug('TabSync', 'Broadcasted message', {
           type: message.type,
           projectId: message.projectId,
@@ -102,44 +103,51 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
 
   /**
    * Update active tabs and detect conflicts
+   * Only updates state if something actually changed to avoid unnecessary re-renders
    */
   const updateActiveTabs = useCallback(() => {
     const now = Date.now();
-    const activeTabs = new Map(activeTabsRef.current);
+    const currentTabs = activeTabsRef.current;
 
-    // Remove inactive tabs (missed heartbeats)
-    for (const [tabId, tab] of activeTabs.entries()) {
-      if (now - tab.lastHeartbeat > INACTIVE_THRESHOLD_MS) {
+    // Find inactive tabs
+    const inactiveTabIds = [...currentTabs.entries()]
+      .filter(([, tab]) => now - tab.lastHeartbeat > INACTIVE_THRESHOLD_MS)
+      .map(([tabId]) => tabId);
+
+    // Remove inactive tabs if any
+    if (inactiveTabIds.length > 0) {
+      const activeTabs = new Map(currentTabs);
+      for (const tabId of inactiveTabIds) {
         logger.debug('TabSync', 'Tab inactive, removing', { tabId });
         activeTabs.delete(tabId);
       }
+      activeTabsRef.current = activeTabs;
     }
 
-    // Count tabs editing the same project
-    let conflictingTabCount = 0;
-    if (projectId) {
-      for (const tab of activeTabs.values()) {
-        if (tab.projectId === projectId && tab.isEditing) {
-          conflictingTabCount++;
-        }
-      }
-    }
+    // Count conflicting tabs
+    const conflictingTabCount = projectId
+      ? [...activeTabsRef.current.values()].filter(
+          (tab) => tab.projectId === projectId && tab.isEditing
+        ).length
+      : 0;
 
     const hasConflict = conflictingTabCount > 0;
 
-    activeTabsRef.current = activeTabs;
-    setSyncState({
-      activeTabs,
-      hasConflict,
-      conflictingTabCount,
-    });
+    // Only update state if something changed
+    setSyncState((prev) => {
+      const unchanged =
+        prev.hasConflict === hasConflict &&
+        prev.conflictingTabCount === conflictingTabCount &&
+        prev.activeTabs.size === activeTabsRef.current.size;
 
-    if (hasConflict) {
-      logger.warn('TabSync', 'Concurrent editing detected', {
-        projectId,
-        conflictingTabs: conflictingTabCount,
-      });
-    }
+      if (unchanged) return prev;
+
+      if (hasConflict) {
+        logger.warn('TabSync', 'Concurrent editing detected', { projectId, conflictingTabCount });
+      }
+
+      return { activeTabs: activeTabsRef.current, hasConflict, conflictingTabCount };
+    });
   }, [projectId]);
 
   /**
@@ -212,7 +220,21 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
     });
   }, [broadcast, projectId]);
 
-  // Initialize BroadcastChannel
+  // Store callbacks in refs so the effect doesn't re-run when they change
+  const handleMessageRef = useRef(handleMessage);
+  const sendHeartbeatRef = useRef(sendHeartbeat);
+  const broadcastRef = useRef(broadcast);
+  const updateActiveTabsRef = useRef(updateActiveTabs);
+
+  // Keep refs up to date
+  useEffect(() => {
+    handleMessageRef.current = handleMessage;
+    sendHeartbeatRef.current = sendHeartbeat;
+    broadcastRef.current = broadcast;
+    updateActiveTabsRef.current = updateActiveTabs;
+  });
+
+  // Initialize BroadcastChannel - only depends on `enabled`
   useEffect(() => {
     if (!enabled || typeof BroadcastChannel === 'undefined') {
       logger.warn('TabSync', 'BroadcastChannel not available or disabled');
@@ -223,20 +245,29 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
 
     // Create broadcast channel
     channelRef.current = new BroadcastChannel('clocktower-token-generator');
-    channelRef.current.addEventListener('message', handleMessage);
+
+    // Message handler wrapper that uses ref
+    const messageHandler = (event: MessageEvent<TabMessage>) => {
+      handleMessageRef.current(event);
+    };
+    channelRef.current.addEventListener('message', messageHandler);
 
     // Send initial heartbeat
-    sendHeartbeat();
+    sendHeartbeatRef.current();
 
-    // Start heartbeat interval
-    heartbeatTimerRef.current = window.setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
+    // Start heartbeat interval (uses ref so it always calls latest version)
+    heartbeatTimerRef.current = window.setInterval(() => {
+      sendHeartbeatRef.current();
+    }, HEARTBEAT_INTERVAL_MS);
 
     // Start cleanup interval (check for inactive tabs)
-    cleanupTimerRef.current = window.setInterval(updateActiveTabs, HEARTBEAT_INTERVAL_MS);
+    cleanupTimerRef.current = window.setInterval(() => {
+      updateActiveTabsRef.current();
+    }, HEARTBEAT_INTERVAL_MS);
 
     // Notify other tabs when closing
     const handleUnload = () => {
-      broadcast({ type: 'closed' });
+      broadcastRef.current({ type: 'closed' });
     };
     window.addEventListener('beforeunload', handleUnload);
 
@@ -249,14 +280,14 @@ export function useTabSynchronization(projectId: string | null, enabled: boolean
         clearInterval(cleanupTimerRef.current);
       }
       if (channelRef.current) {
-        channelRef.current.removeEventListener('message', handleMessage);
+        channelRef.current.removeEventListener('message', messageHandler);
         channelRef.current.close();
       }
       window.removeEventListener('beforeunload', handleUnload);
 
       logger.info('TabSync', 'Tab synchronization stopped');
     };
-  }, [enabled, handleMessage, sendHeartbeat, broadcast, updateActiveTabs]);
+  }, [enabled]); // Only re-run when enabled changes!
 
   // Update editing status when project changes
   useEffect(() => {

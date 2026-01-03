@@ -92,6 +92,6 @@ jobs:
             Visit [grimbound.com](https://grimbound.com) for the live version.
 
             ---
-            See [CHANGELOG.md](https://github.com/Phauks/Clocktower_Token_Generator/blob/main/CHANGELOG.md) for detailed changes.
+            See [CHANGELOG.md](https://github.com/Phauks/Grimbound/blob/main/CHANGELOG.md) for detailed changes.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,6 @@
 // Selector Components - Settings selectors with expandable panels
 
 // Generation option selectors
-export { AccentSettingsSelector, type AccentSettingsSelectorProps } from './AccentSettingsSelector';
 export {
   AdditionalTokensSettingsSelector,
   type AdditionalTokensSettingsSelectorProps,
@@ -43,6 +42,5 @@ export {
   type ToggleGroupProps,
   type ToggleOption,
 } from './SettingsSelectorBase';
-export { SetupSettingsSelector } from './SetupSettingsSelector';
 // Unified settings box
 export { UnifiedSettingsBox } from './UnifiedSettingsBox';

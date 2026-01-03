@@ -203,8 +203,9 @@ function buildCustomCharacterEntry(char: Character): Record<string, unknown> {
   if (char.image) entry.image = char.image;
 
   // Include arrays if non-empty
-  if (char.reminders?.length > 0) entry.reminders = char.reminders;
-  if (char.remindersGlobal?.length > 0) entry.remindersGlobal = char.remindersGlobal;
+  if (char.reminders && char.reminders.length > 0) entry.reminders = char.reminders;
+  if (char.remindersGlobal && char.remindersGlobal.length > 0)
+    entry.remindersGlobal = char.remindersGlobal;
 
   // Include night order fields if defined
   if (char.setup !== undefined) entry.setup = char.setup;

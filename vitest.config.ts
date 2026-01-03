@@ -10,10 +10,7 @@ export default defineConfig({
     passWithNoTests: true,
 
     // Test file patterns
-    include: [
-      'src/__tests__/**/*.{test,spec}.{ts,tsx}',
-      'src/**/*.{test,spec}.{ts,tsx}',
-    ],
+    include: ['src/__tests__/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'dist', 'e2e', '.storybook'],
 
     // Setup files - run before each test file

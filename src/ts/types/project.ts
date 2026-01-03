@@ -7,7 +7,14 @@
  * @module types/project
  */
 
-import type { Character, GenerationOptions, ScriptMeta, Token } from './index.js';
+import type {
+  Character,
+  CharacterMetadata,
+  GenerationOptions,
+  ScriptMeta,
+  Token,
+} from './index.js';
+import type { Preset } from './presets.js';
 
 // ============================================================================
 // Project Entity
@@ -80,8 +87,11 @@ export interface ProjectState {
   // Generated tokens (for cache warming, not persisted to IndexedDB)
   tokens?: Token[];
 
+  // Local presets (stored with this project, travel with exports)
+  presets?: Preset[];
+
   // Schema version
-  schemaVersion: number; // Current: 1
+  schemaVersion: number; // Current: 2
 }
 
 /**

@@ -72,56 +72,39 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
     let rendered = 0;
     let skipped = 0;
 
-    // Filter out already cached and invalid tokens
-    const tokensToProcess = tokensToRender.filter((token) => {
+    // Separate tokens into those with dataUrl (direct cache) and those needing encoding
+    const tokensWithDataUrl: typeof tokensToRender = [];
+    const tokensNeedingEncoding: Array<{ canvas: HTMLCanvasElement; filename: string }> = [];
+
+    for (const token of tokensToRender) {
       if (this.cache.has(token.filename)) {
         skipped++;
-        return false;
+        continue;
       }
-      if (!token.canvas) {
+      if (token.dataUrl) {
+        tokensWithDataUrl.push(token);
+      } else if (token.canvas && token.canvas.width > 1) {
+        // We've verified canvas exists, so we can safely add with the required type
+        tokensNeedingEncoding.push({ canvas: token.canvas, filename: token.filename });
+      } else {
         skipped++;
-        return false;
       }
-      return true;
-    });
+    }
 
-    // Choose encoding method based on configuration
-    if (this.workerPool && this.options.useWorkers) {
-      // Worker-based encoding (off main thread)
-      rendered = await this.encodeWithWorkers(tokensToProcess);
-    } else {
-      // Main thread encoding (with optional batching)
-      const batches = this.chunk(tokensToProcess, this.options.maxConcurrent);
+    // Cache tokens with existing dataUrl directly (no encoding needed)
+    for (const token of tokensWithDataUrl) {
+      await this.cache.set(token.filename, token.dataUrl as string);
+      rendered++;
+    }
 
-      for (const batch of batches) {
-        // Encode batch concurrently using Promise.all
-        const results = await Promise.allSettled(
-          batch.map(async (token) => {
-            if (!token.canvas) {
-              throw new ValidationError(`Token ${token.filename} is missing canvas`, [
-                `Token: ${token.filename}`,
-              ]);
-            }
-            const dataUrl = await this.encodeCanvas(token.canvas);
-            await this.cache.set(token.filename, dataUrl);
-            return token.filename;
-          })
-        );
-
-        // Count successes and failures
-        for (const result of results) {
-          if (result.status === 'fulfilled') {
-            rendered++;
-          } else {
-            logger.error(
-              'TokensPreRenderStrategy',
-              'Failed to pre-render token',
-              new Error(result.reason)
-            );
-            skipped++;
-          }
-        }
-      }
+    // Encode remaining tokens that only have canvas (legacy path)
+    if (tokensNeedingEncoding.length > 0) {
+      const { encoded, failed } =
+        this.workerPool && this.options.useWorkers
+          ? { encoded: await this.encodeWithWorkers(tokensNeedingEncoding), failed: 0 }
+          : await this.encodeOnMainThread(tokensNeedingEncoding);
+      rendered += encoded;
+      skipped += failed;
     }
 
     return {
@@ -138,6 +121,51 @@ export class TokensPreRenderStrategy implements IPreRenderStrategy {
         workerPoolStats: this.workerPool?.getAdaptiveStats(),
       },
     };
+  }
+
+  /**
+   * Encode tokens on main thread with batching.
+   * Fallback path when workers are not available.
+   *
+   * @param tokens - Tokens to encode
+   * @returns Encoded count and failed count
+   */
+  private async encodeOnMainThread(
+    tokens: Array<{ canvas?: HTMLCanvasElement; filename: string }>
+  ): Promise<{ encoded: number; failed: number }> {
+    let encoded = 0;
+    let failed = 0;
+    const batches = this.chunk(tokens, this.options.maxConcurrent);
+
+    for (const batch of batches) {
+      const results = await Promise.allSettled(
+        batch.map(async (token) => {
+          if (!token.canvas) {
+            throw new ValidationError(`Token ${token.filename} is missing canvas`, [
+              `Token: ${token.filename}`,
+            ]);
+          }
+          const dataUrl = await this.encodeCanvas(token.canvas);
+          await this.cache.set(token.filename, dataUrl);
+          return token.filename;
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          encoded++;
+        } else {
+          logger.error(
+            'TokensPreRenderStrategy',
+            'Failed to pre-render token',
+            new Error(result.reason)
+          );
+          failed++;
+        }
+      }
+    }
+
+    return { encoded, failed };
   }
 
   /**

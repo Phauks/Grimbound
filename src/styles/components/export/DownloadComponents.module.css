@@ -12,8 +12,12 @@
    ============================================ */
 
 .featuredSection {
-  background: linear-gradient(135deg, rgba(201, 162, 39, 0.08) 0%, rgba(201, 162, 39, 0.03) 100%);
-  border: 1px solid var(--accent-primary, #c9a227);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb), 0.08) 0%,
+    rgba(var(--accent-rgb), 0.03) 100%
+  );
+  border: 1px solid var(--color-accent);
   border-radius: var(--radius-lg, 12px);
   padding: 1rem;
   margin-bottom: 1rem;
@@ -33,7 +37,7 @@
 }
 
 .featuredHeader:hover .featuredArrow {
-  color: var(--accent-primary, #c9a227);
+  color: var(--color-accent);
 }
 
 .featuredArrow {
@@ -59,7 +63,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--accent-primary, #c9a227);
+  color: var(--color-accent);
   margin: 0;
   flex: 1;
 }
@@ -174,7 +178,7 @@
 
 .downloadCard:hover:not(.disabled) {
   background: var(--bg-hover, rgba(255, 255, 255, 0.06));
-  border-color: var(--accent-primary, #c9a227);
+  border-color: var(--color-accent);
 }
 
 .downloadCard:active:not(.disabled) {
@@ -198,7 +202,7 @@
 }
 
 .downloadCardFeatured:hover:not(.disabled) {
-  background: rgba(201, 162, 39, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 /* Card icon */
@@ -248,7 +252,7 @@
 .downloadIcon {
   font-size: 0.875rem;
   font-weight: bold;
-  color: var(--accent-primary, #c9a227);
+  color: var(--color-accent);
   transition: transform 0.15s ease;
 }
 
@@ -260,7 +264,7 @@
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--accent-primary, #c9a227);
+  border: 2px solid var(--color-accent);
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -290,12 +294,20 @@
 
 .downloadAllCard {
   margin-top: 0.5rem;
-  background: linear-gradient(135deg, rgba(201, 162, 39, 0.15) 0%, rgba(201, 162, 39, 0.08) 100%);
-  border-color: var(--accent-primary, #c9a227);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb), 0.15) 0%,
+    rgba(var(--accent-rgb), 0.08) 100%
+  );
+  border-color: var(--color-accent);
 }
 
 .downloadAllCard:hover:not(.disabled) {
-  background: linear-gradient(135deg, rgba(201, 162, 39, 0.25) 0%, rgba(201, 162, 39, 0.12) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb), 0.25) 0%,
+    rgba(var(--accent-rgb), 0.12) 100%
+  );
 }
 
 /* ============================================
@@ -340,7 +352,11 @@
    ============================================ */
 
 :global(.theme-light) .featuredSection {
-  background: linear-gradient(135deg, rgba(180, 140, 30, 0.1) 0%, rgba(180, 140, 30, 0.04) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb), 0.1) 0%,
+    rgba(var(--accent-rgb), 0.04) 100%
+  );
 }
 
 :global(.theme-light) .downloadSection {
@@ -395,12 +411,16 @@
 }
 
 /* ============================================
-   Character Selection Card (Purple Theme)
+   Character Selection Card (Primary Theme)
    ============================================ */
 
 .characterSelectionCard {
-  background: linear-gradient(135deg, rgba(147, 112, 219, 0.1) 0%, rgba(147, 112, 219, 0.04) 100%);
-  border: 2px solid rgba(147, 112, 219, 0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--primary-rgb), 0.18) 0%,
+    rgba(var(--primary-rgb), 0.08) 100%
+  );
+  border: 2px solid rgba(var(--primary-rgb), 0.6);
   border-radius: var(--radius-lg, 12px);
   margin-bottom: 1rem;
   overflow: hidden;
@@ -411,7 +431,7 @@
   align-items: center;
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(147, 112, 219, 0.08);
+  background: rgba(var(--primary-rgb), 0.15);
   border: none;
   cursor: pointer;
   text-align: left;
@@ -420,13 +440,13 @@
 }
 
 .characterSelectionCardHeader:hover {
-  background: rgba(147, 112, 219, 0.15);
+  background: rgba(var(--primary-rgb), 0.22);
 }
 
 .characterSelectionCardArrow {
   font-size: 0.625rem;
   margin-right: 0.625rem;
-  color: rgb(180, 150, 220);
+  color: var(--color-primary-light);
   transition: transform 0.2s ease;
 }
 
@@ -442,7 +462,7 @@
 .characterSelectionCardHeading {
   font-size: 0.875rem;
   font-weight: 600;
-  color: rgb(180, 150, 220);
+  color: var(--color-primary-light);
   margin: 0;
 }
 
@@ -470,41 +490,45 @@
 }
 
 .characterSelectionCardContent {
-  border-top: 1px solid rgba(147, 112, 219, 0.3);
+  border-top: 1px solid rgba(var(--primary-rgb), 0.4);
   padding: 0.5rem 0.75rem;
   max-height: 400px;
   overflow-y: auto;
 }
 
-/* Light theme adjustments for purple card */
+/* Light theme adjustments for primary card */
 :global(.theme-light) .characterSelectionCard {
-  background: linear-gradient(135deg, rgba(106, 90, 205, 0.1) 0%, rgba(106, 90, 205, 0.04) 100%);
-  border-color: rgba(106, 90, 205, 0.4);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--primary-rgb), 0.15) 0%,
+    rgba(var(--primary-rgb), 0.06) 100%
+  );
+  border-color: rgba(var(--primary-rgb), 0.5);
 }
 
 :global(.theme-light) .characterSelectionCardHeader {
-  background: rgba(106, 90, 205, 0.08);
+  background: rgba(var(--primary-rgb), 0.12);
 }
 
 :global(.theme-light) .characterSelectionCardHeader:hover {
-  background: rgba(106, 90, 205, 0.15);
+  background: rgba(var(--primary-rgb), 0.18);
 }
 
 :global(.theme-light) .characterSelectionCardHeading {
-  color: rgb(106, 90, 205);
+  color: var(--color-primary);
 }
 
 :global(.theme-light) .characterSelectionCardArrow {
-  color: rgb(106, 90, 205);
+  color: var(--color-primary);
 }
 
 :global(.theme-light) .characterSelectionCardContent {
-  border-top-color: rgba(106, 90, 205, 0.2);
+  border-top-color: rgba(var(--primary-rgb), 0.2);
 }
 
 :global(.theme-light) .characterSelectionCardBadge {
-  background: rgba(200, 140, 40, 0.15);
-  color: #b8860b;
+  background: rgba(var(--accent-rgb), 0.15);
+  color: var(--color-accent-dark);
 }
 
 /* ============================================

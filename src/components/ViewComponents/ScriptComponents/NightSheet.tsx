@@ -21,9 +21,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { forwardRef, useCallback, useMemo } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/components/script/NightSheet.module.css';
-import { calculateScaleConfig, getScaleWarning } from '@/ts/nightOrder/index.js';
+import {
+  calculateScaleConfig,
+  getFullScaleConfig,
+  getScaleWarning,
+} from '@/ts/nightOrder/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import type { Character, ScriptMeta } from '@/ts/types/index.js';
 import { NightOrderEntry } from './NightOrderEntry';
@@ -48,6 +52,10 @@ interface NightSheetProps {
   onEditCharacter?: (characterId: string) => void;
   /** Callback when lock state is toggled for an entry */
   onToggleLock?: (entryId: string) => void;
+  /** Current page number (1-based) for multi-page exports */
+  pageNumber?: number;
+  /** Total number of pages for this night type */
+  totalPages?: number;
 }
 
 /**
@@ -76,10 +84,17 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
     background,
     onEditCharacter,
     onToggleLock,
+    pageNumber,
+    totalPages,
   },
   ref
 ) {
-  const title = getSheetTitle(type);
+  // Build title with page number if multi-page
+  const baseTitle = getSheetTitle(type);
+  const title =
+    pageNumber && totalPages && totalPages > 1
+      ? `${baseTitle} (${pageNumber}/${totalPages})`
+      : baseTitle;
   const scriptName = scriptMeta?.name || 'Untitled Script';
   const scriptLogo = scriptMeta?.logo;
 
@@ -104,11 +119,21 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
     [characterSourceMap]
   );
 
-  // Calculate dynamic scaling to fit all entries on one page
-  const scaleConfig = useMemo(() => calculateScaleConfig(entries), [entries]);
+  // Calculate scaling: full scale when paginated, dynamic scaling otherwise
+  const scaleConfig = useMemo(() => {
+    // If paginated (pageNumber provided), use full scale - pagination handles overflow
+    if (pageNumber !== undefined) {
+      return getFullScaleConfig(entries);
+    }
+    // Otherwise, scale to fit all entries on one page
+    return calculateScaleConfig(entries);
+  }, [entries, pageNumber]);
 
-  // Get warning message if scaled to minimum
-  const scaleWarning = useMemo(() => getScaleWarning(scaleConfig), [scaleConfig]);
+  // Get warning message if scaled to minimum (only applies when not paginated)
+  const scaleWarning = useMemo(() => {
+    if (pageNumber !== undefined) return null; // No warning when paginated
+    return getScaleWarning(scaleConfig);
+  }, [scaleConfig, pageNumber]);
 
   // Build dynamic background style with CSS custom properties for scaling
   const sheetStyle = useMemo(() => {
@@ -132,6 +157,26 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
     return style;
   }, [background, scaleConfig]);
 
+  // Track if currently dragging for cursor state
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Apply grabbing cursor to body when dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.body.style.cursor = 'grabbing';
+      // Prevent text selection during drag
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
+
   // Configure dnd-kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -144,9 +189,15 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
     })
   );
 
+  // Handle drag start
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
   // Handle drag end
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setIsDragging(false);
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
@@ -159,11 +210,19 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
     [entries, onMoveEntry]
   );
 
-  // Get IDs for sortable context
-  const entryIds = entries.map((entry) => entry.id);
+  // Handle drag cancel (e.g., pressing Escape)
+  const handleDragCancel = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
-  // Check if we have any draggable entries (custom characters)
-  const hasDraggableEntries = entries.some((e) => !isEntryOfficial(e));
+  // Get IDs for sortable context - memoized to prevent re-renders during drag
+  const entryIds = useMemo(() => entries.map((entry) => entry.id), [entries]);
+
+  // Check if we have any draggable entries (custom characters) - memoized
+  const hasDraggableEntries = useMemo(
+    () => entries.some((e) => !isEntryOfficial(e)),
+    [entries, isEntryOfficial]
+  );
 
   // Render entries list
   const renderEntries = () => {
@@ -199,7 +258,9 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
         modifiers={[restrictToVerticalAxis, restrictToParentElement]}
       >
         <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>

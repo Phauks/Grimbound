@@ -254,18 +254,11 @@ export function CharacterNavigation({
         }}
       >
         <div className={styles.thumbnail}>
-          <canvas
-            width="40"
-            height="40"
-            ref={(canvas) => {
-              if (canvas && token.canvas) {
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                  ctx.drawImage(token.canvas, 0, 0, 40, 40);
-                }
-              }
-            }}
-          />
+          {token.dataUrl ? (
+            <img src={token.dataUrl} alt={token.name} width="40" height="40" />
+          ) : (
+            <div className={styles.thumbnailPlaceholder} />
+          )}
         </div>
         <div className={styles.info}>
           <div className={styles.name}>{token.name}</div>

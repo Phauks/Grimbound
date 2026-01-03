@@ -11,9 +11,14 @@ import { createBackgroundGradient } from '@/ts/canvas/gradientUtils.js';
 import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { ResourceNotFoundError, TokenCreationError } from '@/ts/errors.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
-import type { BackgroundStyle, TextureConfig } from '@/ts/types/backgroundEffects.js';
+import type {
+  BackgroundStyle,
+  EffectsConfig,
+  TextureConfig,
+} from '@/ts/types/backgroundEffects.js';
 import { DEFAULT_LIGHT_CONFIG } from '@/ts/types/backgroundEffects.js';
 import { logger } from '@/ts/utils/logger.js';
+import { BORDER_EFFECT } from './constants.js';
 import { applyEffects, applyVibrance } from './effects/index.js';
 import { type TextureContext, TextureFactory } from './textures/index.js';
 
@@ -426,6 +431,113 @@ function renderColorBackground(
 }
 
 // ============================================================================
+// BORDER FRAME MODE SUPPORT
+// ============================================================================
+
+/**
+ * Check if border frame mode is active
+ */
+export function isFrameModeActive(effects: EffectsConfig): boolean {
+  return effects.borderEnabled && effects.borderMode === 'frame' && effects.borderWidth > 0;
+}
+
+/**
+ * Frame mode scale information for use by TokenGenerator
+ */
+export interface FrameModeInfo {
+  /** Whether frame mode is active */
+  isActive: boolean;
+  /** Scale factor for content (1.0 = no scaling) */
+  scale: number;
+  /** Border width in pixels */
+  borderWidth: number;
+  /** Content diameter (inner area) in pixels */
+  contentDiameter: number;
+}
+
+/**
+ * Get frame mode scaling information
+ * Used by TokenGenerator to scale all content inside the border
+ *
+ * @param effects - Effects configuration
+ * @param diameter - Token diameter in pixels
+ * @returns Frame mode info including scale factor
+ */
+export function getFrameModeInfo(effects: EffectsConfig, diameter: number): FrameModeInfo {
+  if (!isFrameModeActive(effects)) {
+    return {
+      isActive: false,
+      scale: 1,
+      borderWidth: 0,
+      contentDiameter: diameter,
+    };
+  }
+
+  const borderWidth = diameter * (effects.borderWidth / 100);
+  const contentDiameter = diameter - borderWidth * 2;
+  const scale = contentDiameter / diameter;
+
+  return {
+    isActive: true,
+    scale,
+    borderWidth,
+    contentDiameter,
+  };
+}
+
+/**
+ * Calculate the content radius when frame mode is active
+ * Content shrinks to make room for the border
+ */
+function calculateContentRadius(radius: number, effects: EffectsConfig): number {
+  if (!isFrameModeActive(effects)) {
+    return radius;
+  }
+  const borderWidth = radius * 2 * (effects.borderWidth / 100);
+  return radius - borderWidth;
+}
+
+/**
+ * Draw the border ring for frame mode
+ * This is drawn before content, outside the content clip area
+ */
+function drawFrameBorder(
+  ctx: CanvasRenderingContext2D,
+  center: number,
+  outerRadius: number,
+  innerRadius: number,
+  effects: EffectsConfig
+): void {
+  const borderWidth = outerRadius - innerRadius;
+
+  if (borderWidth <= 0) return;
+
+  ctx.save();
+
+  // Draw the border as a stroke between inner and outer radius
+  ctx.beginPath();
+  ctx.arc(center, center, outerRadius - borderWidth / 2, 0, Math.PI * 2);
+
+  ctx.strokeStyle = effects.borderColor;
+  ctx.lineWidth = borderWidth;
+
+  // Apply line dash pattern for dashed/dotted styles
+  if (effects.borderStyle === 'dashed') {
+    const dashLength = borderWidth * BORDER_EFFECT.DASH_MULTIPLIER;
+    const gapLength = borderWidth * BORDER_EFFECT.GAP_MULTIPLIER;
+    ctx.setLineDash([dashLength, gapLength]);
+  } else if (effects.borderStyle === 'dotted') {
+    const dotLength = borderWidth * BORDER_EFFECT.DOT_MULTIPLIER;
+    const gapLength = borderWidth * BORDER_EFFECT.GAP_MULTIPLIER;
+    ctx.setLineDash([dotLength, gapLength]);
+    ctx.lineCap = 'round';
+  }
+
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ============================================================================
 // MAIN RENDER FUNCTION
 // ============================================================================
 
@@ -433,7 +545,11 @@ function renderColorBackground(
  * Render a complete background with base, texture, and effects
  *
  * This is the main entry point for background rendering.
- * Pipeline: filters → base (solid/gradient/image) → texture → effects → vibrance
+ * Pipeline: [frame border] → scale transform → filters → base (solid/gradient/image) → texture → effects → vibrance
+ *
+ * For frame mode, the border is drawn first, then a scale transform is applied
+ * so all content renders at a smaller size inside the border.
+ * For overlay mode, the border is drawn as part of the effects pipeline.
  *
  * @param ctx - Canvas context (should have circular clip already applied)
  * @param style - Complete background style configuration
@@ -445,9 +561,33 @@ export async function renderBackground(
   diameter: number
 ): Promise<void> {
   const center = diameter / 2;
+  const radius = diameter / 2;
   const light = style.light || DEFAULT_LIGHT_CONFIG;
 
+  // Check if frame mode border is active
+  const frameModeInfo = getFrameModeInfo(style.effects, diameter);
+
   ctx.save();
+
+  // 0. For frame mode: draw border first, apply scale transform, then clip
+  if (frameModeInfo.isActive) {
+    const contentRadius = calculateContentRadius(radius, style.effects);
+
+    // Draw border at full size (before any transform)
+    drawFrameBorder(ctx, center, radius, contentRadius, style.effects);
+
+    // Apply scale transform centered on the token
+    // This makes all subsequent rendering appear at a smaller size, centered
+    ctx.translate(center, center);
+    ctx.scale(frameModeInfo.scale, frameModeInfo.scale);
+    ctx.translate(-center, -center);
+
+    // Create circular clip AFTER transform - clip at full radius in transformed space
+    // This creates a clip at the content area size in final output
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, Math.PI * 2);
+    ctx.clip();
+  }
 
   // 1. Apply CSS-style filters for brightness/contrast/saturation
   const filterString = buildFilterString(light);
@@ -456,8 +596,15 @@ export async function renderBackground(
   }
 
   // 2. Draw base depending on sourceType
+  // In frame mode, this renders at full coordinates but gets scaled down
   if (style.sourceType === 'image' && style.imageUrl) {
-    await renderImageBackground(ctx, style, diameter, center);
+    // Type assertion safe after imageUrl check
+    await renderImageBackground(
+      ctx,
+      style as BackgroundStyle & { imageUrl: string },
+      diameter,
+      center
+    );
   } else {
     renderColorBackground(ctx, style, diameter);
   }
@@ -470,8 +617,8 @@ export async function renderBackground(
   // Reset filter before effects (effects should not be filtered)
   ctx.filter = 'none';
 
-  // 4. Apply visual effects
-  applyEffects(ctx, style.effects, center, diameter / 2);
+  // 4. Apply visual effects (at full radius - transform handles scaling)
+  applyEffects(ctx, style.effects, center, radius);
 
   ctx.restore();
 

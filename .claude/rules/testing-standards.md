@@ -358,4 +358,4 @@ export const createMockProject = (overrides = {}): Project => ({
 
 ---
 
-*Last updated: 2025-12-20*
+*Last updated: 2025-12-31*

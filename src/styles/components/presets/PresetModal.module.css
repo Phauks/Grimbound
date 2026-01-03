@@ -264,6 +264,35 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.footerWithReset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.footerButtons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.resetLink {
+  padding: 0;
+  font-family: var(--font-family-body, inherit);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.resetLink:hover {
+  color: var(--text-primary);
+}
+
 /* ============================================
    SECTION DIVIDER
    ============================================ */

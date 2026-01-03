@@ -151,6 +151,7 @@ export function createEffectiveOptions(
     abilityTextColor: d.abilityTextColor ?? g.abilityTextColor,
     // Setup
     setupStyle,
+    setupPlacement: d.setupPlacement ?? g.setupPlacement,
     // Accents
     ...buildAccentSettings(d, g),
   };
@@ -173,6 +174,18 @@ export const ACCENT_DECORATIVE_KEYS = [
 ] as const;
 
 /**
+ * Keys that map from DecorativeOverrides to GenerationOptions for decoratives settings
+ * (setup overlay + accents). Used by DecorativesSettingsSelector conversion.
+ */
+export const DECORATIVES_KEYS = [
+  // Setup settings
+  'setupStyle',
+  'setupPlacement',
+  // Accent settings
+  ...ACCENT_DECORATIVE_KEYS,
+] as const;
+
+/**
  * Maps GenerationOptions changes to DecorativeOverrides updates for accent settings.
  * Only includes keys that are present in the options object.
  *
@@ -188,6 +201,32 @@ export function mapAccentOptionsToDecorative(
     if (key in options) {
       (updates as Record<string, unknown>)[key] = (options as Record<string, unknown>)[key];
     }
+  }
+
+  return updates;
+}
+
+/**
+ * Maps GenerationOptions changes to DecorativeOverrides updates for all decoratives settings
+ * (setup overlay + accents). Used by CharacterDecorativesPanel with DecorativesSettingsSelector.
+ *
+ * @param options - Partial GenerationOptions with decoratives settings
+ * @returns Partial DecorativeOverrides with mapped values
+ */
+export function mapDecorativesOptionsToDecorative(
+  options: Partial<GenerationOptions>
+): Partial<DecorativeOverrides> {
+  const updates: Partial<DecorativeOverrides> = {};
+
+  for (const key of DECORATIVES_KEYS) {
+    if (key in options) {
+      (updates as Record<string, unknown>)[key] = (options as Record<string, unknown>)[key];
+    }
+  }
+
+  // Handle hideSetupOverlay: if setupStyle is 'none', set hideSetupOverlay to true
+  if ('setupStyle' in options) {
+    updates.hideSetupOverlay = options.setupStyle === 'none';
   }
 
   return updates;

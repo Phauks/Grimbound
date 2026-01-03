@@ -99,6 +99,50 @@ export interface TextureConfig {
 // ============================================================================
 
 /**
+ * Border style options
+ */
+export type BorderStyle = 'solid' | 'dashed' | 'dotted';
+
+/**
+ * Border mode - how border interacts with content
+ */
+export type BorderMode = 'overlay' | 'frame';
+
+/**
+ * Border style option for UI display
+ */
+export interface BorderStyleOption {
+  value: BorderStyle;
+  label: string;
+}
+
+/**
+ * Border mode option for UI display
+ */
+export interface BorderModeOption {
+  value: BorderMode;
+  label: string;
+  description: string;
+}
+
+/**
+ * Available border styles for the UI
+ */
+export const BORDER_STYLE_OPTIONS: BorderStyleOption[] = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'dashed', label: 'Dashed' },
+  { value: 'dotted', label: 'Dotted' },
+];
+
+/**
+ * Available border modes for the UI
+ */
+export const BORDER_MODE_OPTIONS: BorderModeOption[] = [
+  { value: 'overlay', label: 'Overlay', description: 'Border draws on top of content' },
+  { value: 'frame', label: 'Frame', description: 'Content shrinks to fit inside border' },
+];
+
+/**
  * Light/color adjustment configuration
  */
 export interface LightConfig {
@@ -133,6 +177,18 @@ export interface EffectsConfig {
   innerGlowRadius: number;
   /** Inner glow intensity (0-100), default 30 */
   innerGlowIntensity: number;
+
+  // Border effect
+  /** Enable border effect */
+  borderEnabled: boolean;
+  /** Border color (supports alpha), default '#FFFFFF' */
+  borderColor: string;
+  /** Border width as percentage of diameter (0-10), default 3 */
+  borderWidth: number;
+  /** Border style: solid, dashed, or dotted */
+  borderStyle: BorderStyle;
+  /** Border mode: overlay (on top) or frame (content shrinks) */
+  borderMode: BorderMode;
 }
 
 // ============================================================================
@@ -229,6 +285,11 @@ export const DEFAULT_EFFECTS_CONFIG: EffectsConfig = {
   innerGlowColor: '#C9A227', // Gold accent
   innerGlowRadius: 10,
   innerGlowIntensity: 30,
+  borderEnabled: false,
+  borderColor: '#FFFFFF',
+  borderWidth: 3,
+  borderStyle: 'solid',
+  borderMode: 'overlay',
 };
 
 /**
@@ -394,6 +455,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#C9A227',
         innerGlowRadius: 10,
         innerGlowIntensity: 30,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: DEFAULT_LIGHT_CONFIG,
     },
@@ -431,6 +497,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#C9A227',
         innerGlowRadius: 10,
         innerGlowIntensity: 30,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: { brightness: 95, contrast: 110, saturation: 90, vibrance: 100 },
     },
@@ -468,6 +539,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#FF4500',
         innerGlowRadius: 8,
         innerGlowIntensity: 20,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: { brightness: 90, contrast: 115, saturation: 120, vibrance: 110 },
     },
@@ -505,6 +581,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#4169E1',
         innerGlowRadius: 12,
         innerGlowIntensity: 15,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: { brightness: 95, contrast: 105, saturation: 110, vibrance: 105 },
     },
@@ -542,6 +623,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#FFD700',
         innerGlowRadius: 15,
         innerGlowIntensity: 25,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: { brightness: 105, contrast: 100, saturation: 115, vibrance: 110 },
     },
@@ -579,6 +665,11 @@ export const BACKGROUND_PRESETS: BackgroundPresetOption[] = [
         innerGlowColor: '#228B22',
         innerGlowRadius: 10,
         innerGlowIntensity: 18,
+        borderEnabled: false,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        borderStyle: 'solid',
+        borderMode: 'overlay',
       },
       light: { brightness: 90, contrast: 110, saturation: 100, vibrance: 105 },
     },

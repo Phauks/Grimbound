@@ -156,35 +156,20 @@ export function useExport() {
   );
 
   const downloadZip = useCallback(async () => {
-    const zipSettings = {
-      saveInTeamFolders: generationOptions.zipSettings?.saveInTeamFolders ?? true,
-      saveRemindersSeparately: generationOptions.zipSettings?.saveRemindersSeparately ?? true,
-      metaTokenFolder: generationOptions.zipSettings?.metaTokenFolder ?? true,
-      includeScriptJson: generationOptions.zipSettings?.includeScriptJson ?? false,
-      compressionLevel: generationOptions.zipSettings?.compressionLevel ?? ('normal' as const),
-    };
-
     await executeDownload({
       step: 'zip',
       filename: `${getBaseFilename()}.zip`,
       requiresTokens: true,
       exportFn: async (progressCallback) =>
-        await createTokensZip(
-          enabledTokens,
-          progressCallback ?? null,
-          zipSettings,
-          zipSettings.includeScriptJson ? jsonInput : undefined,
-          generationOptions.pngSettings
-        ),
+        await createTokensZip(enabledTokens, progressCallback ?? null),
     });
-  }, [enabledTokens, generationOptions, jsonInput, getBaseFilename, executeDownload]);
+  }, [enabledTokens, getBaseFilename, executeDownload]);
 
   const downloadPdf = useCallback(async () => {
     const pdfGenerator = new PDFGenerator({
       tokenPadding: generationOptions.pdfPadding ?? 0.25, // Default 1/4" padding
       xOffset: generationOptions.pdfXOffset ?? 0, // Inches
       yOffset: generationOptions.pdfYOffset ?? 0, // Inches
-      imageQuality: generationOptions.pdfImageQuality ?? 0.9,
       bleed: generationOptions.pdfBleed ?? 0.125, // Default 1/8" bleed
     });
 
@@ -243,19 +228,11 @@ export function useExport() {
       setIsExporting(true);
 
       const baseFilename = getBaseFilename();
-      const zipSettings = {
-        saveInTeamFolders: generationOptions.zipSettings?.saveInTeamFolders ?? true,
-        saveRemindersSeparately: generationOptions.zipSettings?.saveRemindersSeparately ?? true,
-        metaTokenFolder: generationOptions.zipSettings?.metaTokenFolder ?? true,
-        includeScriptJson: false,
-        compressionLevel: generationOptions.zipSettings?.compressionLevel ?? ('normal' as const),
-      };
 
       const blob = await createCompletePackage({
         tokens: enabledTokens,
         scriptJson: jsonInput,
         generationOptions,
-        zipSettings,
         scriptMeta,
         baseFilename,
         signal: abortControllerRef.current.signal,

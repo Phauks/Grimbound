@@ -11,10 +11,12 @@ interface TokenPreviewProps {
 
 const REMINDERS_PER_PAGE = 3;
 
-// Helper to convert canvas to data URL with caching
-const canvasToDataUrl = (canvas: HTMLCanvasElement | undefined): string | null => {
-  if (!canvas) return null;
-  return canvas.toDataURL('image/png');
+// Helper to get token image URL (prefers dataUrl, falls back to canvas)
+const getTokenImageUrl = (token: Token | undefined | null): string | null => {
+  if (!token) return null;
+  if (token.dataUrl) return token.dataUrl;
+  if (token.canvas && token.canvas.width > 1) return token.canvas.toDataURL('image/png');
+  return null;
 };
 
 export function TokenPreview({
@@ -32,14 +34,11 @@ export function TokenPreview({
   const selectedReminder =
     selectedIndex !== null ? (groupedReminders[selectedIndex]?.token ?? null) : null;
 
-  // Convert canvases to data URLs for high-quality img rendering
-  const characterImageUrl = useMemo(
-    () => canvasToDataUrl(characterToken.canvas),
-    [characterToken.canvas]
-  );
+  // Get image URLs for tokens (prefers dataUrl, falls back to canvas)
+  const characterImageUrl = useMemo(() => getTokenImageUrl(characterToken), [characterToken]);
   const selectedReminderImageUrl = useMemo(
-    () => canvasToDataUrl(selectedReminder?.canvas),
-    [selectedReminder?.canvas]
+    () => getTokenImageUrl(selectedReminder),
+    [selectedReminder]
   );
 
   // Calculate visible reminders based on pagination (using grouped reminders)
@@ -108,7 +107,7 @@ export function TokenPreview({
             {visibleReminders.length > 0 ? (
               visibleReminders.map(({ token: reminder, count }, i) => {
                 const globalIndex = startIndex + i;
-                const reminderImageUrl = canvasToDataUrl(reminder.canvas);
+                const reminderImageUrl = getTokenImageUrl(reminder);
                 return (
                   <button
                     type="button"

@@ -11,6 +11,16 @@ export interface TextSegment {
 }
 
 /**
+ * Result of splitting ability text into regular text and setup content.
+ */
+export interface AbilitySplit {
+  /** Ability text with setup brackets removed */
+  abilityWithoutSetup: string;
+  /** Content inside the [] brackets (without brackets) */
+  setupContent: string;
+}
+
+/**
  * Parses ability text and extracts segments with bold markers.
  * Text inside [] (including the brackets) is marked as bold.
  *
@@ -184,4 +194,91 @@ function findLineInText(line: string, originalText: string): number {
 
     searchStart = wordIndex + 1;
   }
+}
+
+/**
+ * Splits ability text into regular ability and setup content.
+ * Uses a state machine approach (O(n) complexity) to avoid ReDoS.
+ *
+ * @param text - The ability text to split
+ * @returns Object containing ability without setup and the setup content
+ *
+ * @example
+ * splitAbilityText("Each night, learn something. [+1 Outsider]")
+ * // Returns: {
+ * //   abilityWithoutSetup: "Each night, learn something.",
+ * //   setupContent: "+1 Outsider"
+ * // }
+ *
+ * splitAbilityText("You start knowing [+2 Outsiders] and more")
+ * // Returns: {
+ * //   abilityWithoutSetup: "You start knowing  and more",
+ * //   setupContent: "+2 Outsiders"
+ * // }
+ */
+export function splitAbilityText(text: string): AbilitySplit {
+  let abilityWithoutSetup = '';
+  let setupContent = '';
+  let inBracket = false;
+  let foundBracket = false;
+
+  for (const char of text) {
+    if (char === '[' && !inBracket && !foundBracket) {
+      // Starting a bracket section
+      inBracket = true;
+    } else if (char === ']' && inBracket) {
+      // Ending a bracket section
+      inBracket = false;
+      foundBracket = true;
+    } else if (inBracket) {
+      // Inside brackets - add to setup content
+      setupContent += char;
+    } else {
+      // Outside brackets - add to ability text
+      abilityWithoutSetup += char;
+    }
+  }
+
+  // If bracket was never closed, treat the content as regular ability text
+  if (inBracket) {
+    abilityWithoutSetup += `[${setupContent}`;
+    setupContent = '';
+  }
+
+  // Clean up ability text - trim and normalize multiple spaces
+  abilityWithoutSetup = abilityWithoutSetup.trim().replace(/\s{2,}/g, ' ');
+
+  return {
+    abilityWithoutSetup,
+    setupContent,
+  };
+}
+
+/**
+ * Combines regular ability text with setup content.
+ * Setup content is always appended at the end in brackets.
+ *
+ * @param ability - The ability text (without brackets)
+ * @param setupContent - The setup content (without brackets)
+ * @returns Combined ability text with setup in brackets at the end
+ *
+ * @example
+ * combineAbilityWithSetup("Each night, learn something.", "+1 Outsider")
+ * // Returns: "Each night, learn something. [+1 Outsider]"
+ *
+ * combineAbilityWithSetup("Each night", "+1 Outsider")
+ * // Returns: "Each night [+1 Outsider]"
+ */
+export function combineAbilityWithSetup(ability: string, setupContent: string): string {
+  const trimmedAbility = ability.trim();
+  const trimmedSetup = setupContent.trim();
+
+  if (!trimmedSetup) {
+    return trimmedAbility;
+  }
+
+  // Add space before brackets if ability doesn't end with space
+  const needsSpace = trimmedAbility.length > 0 && !/\s$/.test(trimmedAbility);
+
+  return `${trimmedAbility}${needsSpace ? ' ' : ''}[${trimmedSetup}]`;
 }

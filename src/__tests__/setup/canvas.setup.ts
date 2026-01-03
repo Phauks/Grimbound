@@ -131,7 +131,12 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation(function (
 ) {
   if (contextId === '2d') {
     const ctx = createMockContext();
-    ctx.canvas = this;
+    // Use Object.defineProperty to set the readonly canvas property
+    Object.defineProperty(ctx, 'canvas', {
+      value: this,
+      writable: false,
+      configurable: true,
+    });
     return ctx;
   }
   return originalGetContext.call(this, contextId, _options);

@@ -100,6 +100,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
         characterMetadata: Object.fromEntries(characterMetadata),
         generationOptions: { ...generationOptions },
         customIcons: currentProject.state.customIcons || [], // Preserve custom icons
+        presets: currentProject.state.presets || [], // Preserve local presets
         filters,
         schemaVersion: 1,
       };
@@ -110,7 +111,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
         tokenCount: 0, // Will be updated when tokens are generated
         reminderCount: characters.reduce((sum, char) => sum + (char.reminders?.length || 0), 0),
         customIconCount: currentState.customIcons.length,
-        presetCount: 0,
+        presetCount: currentState.presets?.length || 0,
         lastGeneratedAt: currentProject.stats.lastGeneratedAt,
       };
 

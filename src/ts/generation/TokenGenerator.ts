@@ -12,6 +12,8 @@ import {
   createCanvas,
   createCircularClipPath,
   drawCurvedText,
+  type FrameModeInfo,
+  getFrameModeInfo,
   type Point,
   renderBackground,
   type TextLayoutResult,
@@ -82,7 +84,6 @@ export class TokenGenerator {
     this.textRenderer = new TokenTextRenderer(this.options);
 
     logger.debug('TokenGenerator', 'Initialized with options', {
-      dpi: this.options.dpi,
       transparentBackground: this.options.transparentBackground,
     });
   }
@@ -128,12 +129,50 @@ export class TokenGenerator {
   // ========================================================================
 
   private createBaseCanvas(diameter: number): CanvasContext {
-    return createCanvas(diameter, { dpi: this.options.dpi });
+    return createCanvas(diameter);
   }
 
   private applyCircularClip(ctx: CanvasRenderingContext2D, center: Point, radius: number): void {
     ctx.save();
     createCircularClipPath(ctx, center, radius);
+  }
+
+  /**
+   * Get frame mode info for a token type
+   * Returns scaling information if frame mode border is active
+   */
+  private getFrameModeInfoForType(
+    tokenType: 'character' | 'reminder' | 'meta',
+    diameter: number
+  ): FrameModeInfo {
+    const styleMap = {
+      character: this.options.characterBackgroundStyle,
+      reminder: this.options.reminderBackgroundStyle,
+      meta: this.options.metaBackgroundStyle,
+    };
+
+    const style = styleMap[tokenType];
+    if (!style?.effects) {
+      return { isActive: false, scale: 1, borderWidth: 0, contentDiameter: diameter };
+    }
+
+    return getFrameModeInfo(style.effects, diameter);
+  }
+
+  /**
+   * Apply frame mode scale transform if active
+   * Scales all content to fit inside the border frame
+   */
+  private applyFrameModeTransform(
+    ctx: CanvasRenderingContext2D,
+    frameModeInfo: FrameModeInfo,
+    center: number
+  ): void {
+    if (!frameModeInfo.isActive) return;
+
+    ctx.translate(center, center);
+    ctx.scale(frameModeInfo.scale, frameModeInfo.scale);
+    ctx.translate(-center, -center);
   }
 
   /**
@@ -237,17 +276,21 @@ export class TokenGenerator {
     if (!character?.name) {
       throw new ValidationError('Character must have a name');
     }
-    if (this.options.dpi <= 0) {
-      throw new ValidationError('DPI must be positive');
-    }
 
     logger.debug('TokenGenerator', 'Generating character token', character.name);
 
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
+
+    // Get frame mode info for scaling content
+    const frameModeInfo = this.getFrameModeInfoForType('character', diameter);
 
     this.applyCircularClip(ctx, center, radius);
     await this.drawTokenBackground(ctx, diameter, 'character');
+
+    // Apply frame mode transform for all content (icon, text, etc.)
+    // Background already handles its own scaling internally
+    this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
 
     // Determine ability text
     const abilityTextToDisplay = this.options.displayAbilityText
@@ -298,6 +341,12 @@ export class TokenGenerator {
 
     ctx.restore();
 
+    // For frame mode, apply transform again for content outside the clip
+    if (frameModeInfo.isActive) {
+      ctx.save();
+      this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
+    }
+
     // Draw accents
     if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
       await this.imageRenderer.drawAccents(ctx, diameter);
@@ -316,6 +365,11 @@ export class TokenGenerator {
     // Draw token count badge
     if (this.options.tokenCount && reminderCount > 0) {
       this.textRenderer.drawTokenCount(ctx, reminderCount, diameter);
+    }
+
+    // Restore frame mode transform
+    if (frameModeInfo.isActive) {
+      ctx.restore();
     }
 
     logger.info('TokenGenerator', 'Generated character token', character.name);
@@ -338,20 +392,23 @@ export class TokenGenerator {
     if (!reminderText?.trim()) {
       throw new ValidationError('Reminder text cannot be empty');
     }
-    if (this.options.dpi <= 0) {
-      throw new ValidationError('DPI must be positive');
-    }
 
     logger.debug('TokenGenerator', 'Generating reminder token', {
       character: character.name,
       reminder: reminderText,
     });
 
-    const diameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * this.options.dpi;
+    const diameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * CONFIG.PDF.DPI;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
+
+    // Get frame mode info for scaling content
+    const frameModeInfo = this.getFrameModeInfoForType('reminder', diameter);
 
     this.applyCircularClip(ctx, center, radius);
     await this.drawTokenBackground(ctx, diameter, 'reminder');
+
+    // Apply frame mode transform for all content
+    this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
 
     // Draw character image
     await this.imageRenderer.drawCharacterImage(
@@ -363,8 +420,19 @@ export class TokenGenerator {
     );
     ctx.restore();
 
+    // For frame mode, apply transform again for content outside the clip
+    if (frameModeInfo.isActive) {
+      ctx.save();
+      this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
+    }
+
     // Draw reminder text
     this.textRenderer.drawReminderText(ctx, reminderText, center, radius, diameter);
+
+    // Restore frame mode transform
+    if (frameModeInfo.isActive) {
+      ctx.restore();
+    }
 
     logger.info('TokenGenerator', 'Generated reminder token', {
       character: character.name,
@@ -381,14 +449,29 @@ export class TokenGenerator {
     renderContent: MetaTokenContentRenderer,
     _backgroundOverride?: string
   ): Promise<HTMLCanvasElement> {
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
+
+    // Get frame mode info for scaling content
+    const frameModeInfo = this.getFrameModeInfoForType('meta', diameter);
 
     this.applyCircularClip(ctx, center, radius);
     await this.drawTokenBackground(ctx, diameter, 'meta');
     ctx.restore();
 
+    // Apply frame mode transform for content
+    if (frameModeInfo.isActive) {
+      ctx.save();
+      this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
+    }
+
     await renderContent(ctx, diameter, center, radius);
+
+    // Restore frame mode transform
+    if (frameModeInfo.isActive) {
+      ctx.restore();
+    }
+
     return canvas;
   }
 
@@ -439,8 +522,11 @@ export class TokenGenerator {
   ): Promise<HTMLCanvasElement> {
     logger.debug('TokenGenerator', 'Generating almanac QR token', _scriptName);
 
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
+
+    // Get frame mode info for scaling content
+    const frameModeInfo = this.getFrameModeInfoForType('meta', diameter);
 
     // Resolve QR options with defaults
     const qrOpts = resolveQROptions(this.options.qrCodeOptions);
@@ -453,6 +539,12 @@ export class TokenGenerator {
     this.applyCircularClip(ctx, center, radius);
     await this.drawTokenBackground(ctx, diameter, 'meta');
     ctx.restore();
+
+    // Apply frame mode transform for content
+    if (frameModeInfo.isActive) {
+      ctx.save();
+      this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
+    }
 
     // Calculate QR size and position
     const qrSize = Math.floor(diameter * QR_TOKEN_LAYOUT.QR_CODE_SIZE);
@@ -468,6 +560,11 @@ export class TokenGenerator {
     // Optionally draw "ALMANAC" curved at bottom
     if (qrOpts.showAlmanacLabel) {
       this.textRenderer.drawAlmanacLabel(ctx, center, radius, diameter);
+    }
+
+    // Restore frame mode transform
+    if (frameModeInfo.isActive) {
+      ctx.restore();
     }
 
     logger.info('TokenGenerator', 'Generated almanac QR token', _scriptName);
@@ -523,11 +620,17 @@ export class TokenGenerator {
   ): Promise<HTMLCanvasElement> {
     logger.debug('TokenGenerator', 'Generating bootlegger token');
 
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * this.options.dpi;
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
     const { canvas, ctx, center, radius } = this.createBaseCanvas(diameter);
+
+    // Get frame mode info for scaling content (bootlegger uses character background)
+    const frameModeInfo = this.getFrameModeInfoForType('character', diameter);
 
     this.applyCircularClip(ctx, center, radius);
     await this.drawTokenBackground(ctx, diameter, 'character');
+
+    // Apply frame mode transform for all content
+    this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
 
     // Bootlegger tokens always have ability text
     const hasAbilityText = Boolean(abilityText?.trim());
@@ -554,6 +657,12 @@ export class TokenGenerator {
 
     ctx.restore();
 
+    // For frame mode, apply transform again for content outside the clip
+    if (frameModeInfo.isActive) {
+      ctx.save();
+      this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
+    }
+
     // Draw accents if enabled
     if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
       await this.imageRenderer.drawAccents(ctx, diameter);
@@ -567,6 +676,11 @@ export class TokenGenerator {
     // Draw "BOOTLEGGER" at the bottom (like character name) unless hidden
     if (!this.options.bootleggerHideName) {
       this.textRenderer.drawCharacterName(ctx, 'Bootlegger', center, radius, diameter);
+    }
+
+    // Restore frame mode transform
+    if (frameModeInfo.isActive) {
+      ctx.restore();
     }
 
     logger.info('TokenGenerator', 'Generated bootlegger token');

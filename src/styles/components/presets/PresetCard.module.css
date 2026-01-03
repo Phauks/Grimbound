@@ -145,7 +145,8 @@
 /* ============================================
    DISABLED STATE
    ============================================ */
-.card:disabled {
+.card:disabled,
+.card.disabled {
   opacity: 0.5;
   cursor: not-allowed;
   filter: grayscale(0.5);
@@ -415,11 +416,7 @@
   opacity: 1;
 }
 
-/* Grab cursor for draggable cards */
-.card[draggable="true"] {
-  cursor: grab;
-}
-
+/* Draggable cards use pointer cursor normally, grabbing only when actively dragging */
 .card[draggable="true"]:active {
   cursor: grabbing;
 }

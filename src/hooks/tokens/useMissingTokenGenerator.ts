@@ -4,10 +4,17 @@
  */
 
 import { useCallback, useRef } from 'react';
+import { preRenderGalleryTokens } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { simpleHash } from '@/ts/cache/utils/hashUtils.js';
 import { generateAllTokens } from '@/ts/generation/batchGenerator.js';
-import type { Character, ProgressCallback, Token, TokenCallback } from '@/ts/types/index.js';
+import type {
+  Character,
+  DetailedProgressCallback,
+  GenerationProgress,
+  Token,
+  TokenCallback,
+} from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
 export interface UseMissingTokenGeneratorResult {
@@ -126,13 +133,19 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
     try {
       setIsLoading(true);
       setError(null);
-      setGenerationProgress({ current: 0, total: missingCharacters.length });
+      setGenerationProgress({
+        phase: 'character',
+        character: { current: 0, total: missingCharacters.length },
+        reminder: { current: 0, total: 0 },
+        meta: { current: 0, total: 0 },
+        overall: { current: 0, total: missingCharacters.length },
+      });
 
       // Reset new tokens array
       newTokensRef.current = [];
 
-      const progressCallback: ProgressCallback = (current, total) => {
-        setGenerationProgress({ current, total });
+      const detailedProgressCallback: DetailedProgressCallback = (progress: GenerationProgress) => {
+        setGenerationProgress(progress);
       };
 
       // Capture existing tokens at the start of generation
@@ -159,15 +172,20 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
           almanacToken: false,
           generateBootleggerRules: false,
         },
-        progressCallback,
+        null, // No legacy progressCallback
         null, // No script meta - don't generate meta tokens
         tokenCallback,
-        signal
+        signal,
+        undefined, // No characterMetadata
+        detailedProgressCallback
       );
 
       // Note: No final setTokens needed - tokens already added incrementally via callback
       const newTokens = newTokensRef.current;
       setError(null);
+
+      // Pre-render all tokens (existing + new) to dataURLs
+      preRenderGalleryTokens([...existingTokens, ...newTokens]);
 
       // Mark the JSON as processed to prevent duplicate generation
       setLastGeneratedJsonHash(simpleHash(jsonInput));

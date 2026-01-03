@@ -10,12 +10,16 @@
  * Storage keys for user preferences and presets
  */
 export const STORAGE_KEYS = {
-  /** Custom user presets */
+  /** Global presets (available across all projects) */
+  GLOBAL_PRESETS: 'clocktower_global_presets',
+  /** @deprecated Use GLOBAL_PRESETS instead. Kept for migration. */
   CUSTOM_PRESETS: 'clocktower_custom_presets',
-  /** Default preset selection */
+  /** Default preset selection - no longer used, kept for cleanup */
   DEFAULT_PRESET: 'clocktower_default_preset',
   /** UI theme selection */
   THEME: 'clocktower_ui_theme',
+  /** Theme color overrides (customization on top of preset) */
+  THEME_OVERRIDES: 'clocktower_theme_overrides',
   /** Custom themes created by user */
   CUSTOM_THEMES: 'clocktower_custom_themes',
   /** Auto-save enabled preference */

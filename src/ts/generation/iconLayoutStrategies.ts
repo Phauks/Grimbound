@@ -4,6 +4,7 @@
  */
 
 import type { Point } from '@/ts/canvas/index.js';
+import CONFIG from '@/ts/config.js';
 import {
   CHARACTER_LAYOUT,
   REMINDER_LAYOUT,
@@ -26,11 +27,10 @@ export interface IconLayoutResult {
 /**
  * Context for layout calculations
  * Note: iconOffsetX and iconOffsetY are in INCHES (canonical unit)
- * They are converted to pixels using the dpi parameter
+ * They are converted to pixels during rendering
  */
 export interface LayoutContext {
   diameter: number;
-  dpi: number;
   iconScale: number;
   /** Horizontal offset in inches */
   iconOffsetX: number;
@@ -68,11 +68,11 @@ export class CharacterWithAbilityTextLayout implements IconLayoutStrategy {
   ) {}
 
   calculate(context: LayoutContext): IconLayoutResult {
-    const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+    const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
 
     // Convert inch offsets to pixels
-    const offsetXPixels = iconOffsetX * dpi;
-    const offsetYPixels = iconOffsetY * dpi;
+    const offsetXPixels = iconOffsetX * CONFIG.PDF.DPI;
+    const offsetYPixels = iconOffsetY * CONFIG.PDF.DPI;
 
     // Character name is at the bottom (curved text)
     const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
@@ -120,11 +120,11 @@ export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
   constructor(private topBoundaryOverride?: number) {}
 
   calculate(context: LayoutContext): IconLayoutResult {
-    const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+    const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
 
     // Convert inch offsets to pixels
-    const offsetXPixels = iconOffsetX * dpi;
-    const offsetYPixels = iconOffsetY * dpi;
+    const offsetXPixels = iconOffsetX * CONFIG.PDF.DPI;
+    const offsetYPixels = iconOffsetY * CONFIG.PDF.DPI;
 
     // Character name is at the bottom (curved text)
     const characterNameY = diameter * CHARACTER_LAYOUT.CURVED_TEXT_RADIUS;
@@ -171,11 +171,11 @@ export class CharacterWithoutAbilityTextLayout implements IconLayoutStrategy {
  */
 export class ReminderTokenLayout implements IconLayoutStrategy {
   calculate(context: LayoutContext): IconLayoutResult {
-    const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+    const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
 
     // Convert inch offsets to pixels
-    const offsetXPixels = iconOffsetX * dpi;
-    const offsetYPixels = iconOffsetY * dpi;
+    const offsetXPixels = iconOffsetX * CONFIG.PDF.DPI;
+    const offsetYPixels = iconOffsetY * CONFIG.PDF.DPI;
 
     // Use reminder layout constants
     const imageSizeRatio = REMINDER_LAYOUT.IMAGE_SIZE_RATIO;
@@ -204,11 +204,11 @@ export class ReminderTokenLayout implements IconLayoutStrategy {
  */
 export class MetaTokenLayout implements IconLayoutStrategy {
   calculate(context: LayoutContext): IconLayoutResult {
-    const { diameter, dpi, iconScale, iconOffsetX, iconOffsetY } = context;
+    const { diameter, iconScale, iconOffsetX, iconOffsetY } = context;
 
     // Convert inch offsets to pixels
-    const offsetXPixels = iconOffsetX * dpi;
-    const offsetYPixels = iconOffsetY * dpi;
+    const offsetXPixels = iconOffsetX * CONFIG.PDF.DPI;
+    const offsetYPixels = iconOffsetY * CONFIG.PDF.DPI;
 
     // Simple centered layout
     const imageSizeRatio = 1.0;

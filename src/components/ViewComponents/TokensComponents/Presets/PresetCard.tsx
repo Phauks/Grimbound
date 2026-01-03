@@ -23,6 +23,7 @@ interface PresetCardProps {
   menuItems?: MenuItemConfig[];
   defaultStar?: boolean;
   isAddButton?: boolean;
+  disabled?: boolean;
   // Drag and drop props
   draggable?: boolean;
   isDragging?: boolean;
@@ -46,6 +47,7 @@ export const PresetCard = memo(
     menuItems = [],
     defaultStar = false,
     isAddButton = false,
+    disabled = false,
     draggable = false,
     isDragging = false,
     isDropTarget = false,
@@ -83,6 +85,7 @@ export const PresetCard = memo(
       styles.card,
       isActive && styles.active,
       isAddButton && styles.cardAdd,
+      disabled && styles.disabled,
       isDragging && styles.dragging,
       isDropTarget && styles.dropTarget
     );
@@ -114,7 +117,8 @@ export const PresetCard = memo(
         onClick={onApply}
         onContextMenu={handleContextMenu}
         title={title}
-        draggable={draggable}
+        disabled={disabled}
+        draggable={draggable && !disabled}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}

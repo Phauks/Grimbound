@@ -16,6 +16,18 @@ import { PDFGenerator } from './pdfGenerator.js';
 import { getTokenFilename, getTokenFolderPath, processTokenToBlob } from './zipExporter.js';
 
 /**
+ * Hardcoded ZIP settings for complete package.
+ * All sub-folder options are active, compression is normal.
+ */
+const ZIP_SETTINGS: ZipExportOptions = {
+  saveInTeamFolders: true,
+  saveRemindersSeparately: true,
+  metaTokenFolder: true,
+  includeScriptJson: false,
+  compressionLevel: 'normal',
+};
+
+/**
  * Progress callback with step information
  */
 export type CompletePackageProgressCallback = (
@@ -31,7 +43,6 @@ export interface CompletePackageOptions {
   tokens: Token[];
   scriptJson?: string;
   generationOptions: GenerationOptions;
-  zipSettings: ZipExportOptions;
   scriptMeta: ScriptMeta | null;
   baseFilename: string;
   progressCallback?: CompletePackageProgressCallback | null;
@@ -53,7 +64,6 @@ export async function createCompletePackage(options: CompletePackageOptions): Pr
     tokens,
     scriptJson,
     generationOptions,
-    zipSettings,
     scriptMeta,
     baseFilename,
     progressCallback,
@@ -115,9 +125,9 @@ export async function createCompletePackage(options: CompletePackageOptions): Pr
     // Process batch in parallel
     const batchResults = await Promise.all(
       batch.map(async (token) => {
-        const blob = await processTokenToBlob(token, generationOptions.pngSettings);
+        const blob = processTokenToBlob(token);
         const filename = getTokenFilename(token);
-        const folderPath = getTokenFolderPath(token, zipSettings);
+        const folderPath = getTokenFolderPath(token, ZIP_SETTINGS);
 
         // Report progress for each token
         processedCount++;
@@ -148,7 +158,6 @@ export async function createCompletePackage(options: CompletePackageOptions): Pr
     tokenPadding: generationOptions.pdfPadding ?? 0.25, // Default 1/4" padding
     xOffset: generationOptions.pdfXOffset ?? 0, // Inches
     yOffset: generationOptions.pdfYOffset ?? 0, // Inches
-    imageQuality: generationOptions.pdfImageQuality ?? 0.9,
     bleed: generationOptions.pdfBleed ?? 0.125, // Default 1/8" bleed
   });
 

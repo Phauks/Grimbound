@@ -9,19 +9,26 @@ import { useEffect, useState } from 'react';
 import { FormGroup, Input } from '@/components/Shared/Form';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
-import type { CustomPreset } from '@/hooks/editors/usePresets';
 import styles from '@/styles/components/presets/PresetModal.module.css';
+import type { Preset } from '@/ts/types/index';
 
 interface EditPresetModalProps {
   isOpen: boolean;
-  preset: CustomPreset;
+  preset: Preset;
   onClose: () => void;
   onSave: (name: string, icon: string, description: string) => void;
+  onResetToDefaults?: () => void;
 }
 
 const EMOJI_OPTIONS = ['⭐', '🌸', '⬜', '🎨', '✨', '🎭', '🎪', '🎯', '🌙', '🔥', '💎', '🍀'];
 
-export function EditPresetModal({ isOpen, preset, onClose, onSave }: EditPresetModalProps) {
+export function EditPresetModal({
+  isOpen,
+  preset,
+  onClose,
+  onSave,
+  onResetToDefaults,
+}: EditPresetModalProps) {
   const [presetName, setPresetName] = useState(preset.name);
   const [presetDescription, setPresetDescription] = useState(preset.description || '');
   const [presetIcon, setPresetIcon] = useState(preset.icon);
@@ -45,14 +52,28 @@ export function EditPresetModal({ isOpen, preset, onClose, onSave }: EditPresetM
       title="Edit Preset"
       size="medium"
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="accent" onClick={handleSave} disabled={!presetName.trim()}>
-            Save Changes
-          </Button>
-        </>
+        <div className={styles.footerWithReset}>
+          {onResetToDefaults && (
+            <button
+              type="button"
+              className={styles.resetLink}
+              onClick={() => {
+                onResetToDefaults();
+                onClose();
+              }}
+            >
+              reset to defaults
+            </button>
+          )}
+          <div className={styles.footerButtons}>
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button variant="accent" onClick={handleSave} disabled={!presetName.trim()}>
+              Save Changes
+            </Button>
+          </div>
+        </div>
       }
     >
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>

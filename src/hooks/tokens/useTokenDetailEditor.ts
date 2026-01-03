@@ -76,16 +76,11 @@ export function useTokenDetailEditor({
 
   const handleDownloadAll = useCallback(async () => {
     try {
-      await downloadCharacterTokensAsZip(
-        previewToken,
-        reminderTokens,
-        character.name,
-        generationOptions.pngSettings
-      );
+      await downloadCharacterTokensAsZip(previewToken, reminderTokens, character.name);
     } catch (error) {
       logger.error('useTokenDetailEditor', 'Failed to download tokens:', error);
     }
-  }, [previewToken, reminderTokens, character.name, generationOptions.pngSettings]);
+  }, [previewToken, reminderTokens, character.name]);
 
   return {
     editedCharacter,

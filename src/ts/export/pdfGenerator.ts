@@ -7,6 +7,7 @@ import { PDFDocument } from 'pdf-lib';
 import { generateBleedRing, hasValidSamples, sampleEdgeColors } from '@/ts/canvas/bleedUtils.js';
 import CONFIG, { AVERY_TEMPLATES } from '@/ts/config.js';
 import { BLEED_ALGORITHM, DEFAULT_COLORS, PDF_POINTS_PER_INCH } from '@/ts/constants.js';
+import { getTokenCanvas } from '@/ts/generation/TokenFactory.js';
 import type {
   AveryTemplate,
   PDFOptions,
@@ -54,24 +55,24 @@ export class PDFGenerator {
   private usableWidth: number;
   private usableHeight: number;
 
+  private readonly dpi = CONFIG.PDF.DPI;
+
   constructor(options: Partial<PDFOptions> = {}) {
     this.options = {
       pageWidth: options.pageWidth ?? CONFIG.PDF.PAGE_WIDTH,
       pageHeight: options.pageHeight ?? CONFIG.PDF.PAGE_HEIGHT,
-      dpi: options.dpi ?? CONFIG.PDF.DPI,
       margin: options.margin ?? CONFIG.PDF.MARGIN,
       tokenPadding: options.tokenPadding ?? CONFIG.PDF.TOKEN_PADDING,
       xOffset: options.xOffset ?? CONFIG.PDF.X_OFFSET,
       yOffset: options.yOffset ?? CONFIG.PDF.Y_OFFSET,
-      imageQuality: options.imageQuality ?? CONFIG.PDF.IMAGE_QUALITY,
       template: options.template ?? CONFIG.PDF.DEFAULT_TEMPLATE,
       bleed: options.bleed ?? 0.125, // Default 1/8" bleed for cutting
     };
 
     // Calculate usable area in pixels at configured DPI
-    this.pageWidthPx = this.options.pageWidth * this.options.dpi;
-    this.pageHeightPx = this.options.pageHeight * this.options.dpi;
-    this.marginPx = this.options.margin * this.options.dpi;
+    this.pageWidthPx = this.options.pageWidth * this.dpi;
+    this.pageHeightPx = this.options.pageHeight * this.dpi;
+    this.marginPx = this.options.margin * this.dpi;
 
     // Usable area
     this.usableWidth = this.pageWidthPx - 2 * this.marginPx;
@@ -86,9 +87,9 @@ export class PDFGenerator {
     this.options = { ...this.options, ...newOptions };
 
     // Recalculate dimensions
-    this.pageWidthPx = this.options.pageWidth * this.options.dpi;
-    this.pageHeightPx = this.options.pageHeight * this.options.dpi;
-    this.marginPx = this.options.margin * this.options.dpi;
+    this.pageWidthPx = this.options.pageWidth * this.dpi;
+    this.pageHeightPx = this.options.pageHeight * this.dpi;
+    this.marginPx = this.options.margin * this.dpi;
     this.usableWidth = this.pageWidthPx - 2 * this.marginPx;
     this.usableHeight = this.pageHeightPx - 2 * this.marginPx;
   }
@@ -155,7 +156,7 @@ export class PDFGenerator {
     let currentPage: TokenLayoutItem[] = [];
 
     // Convert template dimensions to pixels
-    const dpi = this.options.dpi;
+    const dpi = this.dpi;
     const _leftMarginPx = inchesToPixels(template.leftMargin, dpi);
     const _topMarginPx = inchesToPixels(template.topMargin, dpi);
     const gapPx = inchesToPixels(template.gap, dpi);
@@ -388,7 +389,7 @@ export class PDFGenerator {
 
     // Calculate bleed in pixels and inches
     const bleedInches = this.options.bleed ?? 0;
-    const bleedPx = Math.round(bleedInches * this.options.dpi);
+    const bleedPx = Math.round(bleedInches * this.dpi);
 
     // Generate each page
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
@@ -404,14 +405,16 @@ export class PDFGenerator {
 
       // Add tokens to page
       for (const item of pageItems) {
+        // Get canvas from token (recreates from dataUrl if needed)
+        const tokenCanvas = await getTokenCanvas(item.token);
         // Create bleed canvas
-        const bleedCanvas = this.createBleedCanvas(item.token.canvas, bleedPx);
+        const bleedCanvas = this.createBleedCanvas(tokenCanvas, bleedPx);
 
         // Convert canvas to ArrayBuffer (efficient, no base64)
         const imageBuffer = await canvasToArrayBuffer(
           bleedCanvas,
           'image/jpeg',
-          this.options.imageQuality
+          CONFIG.PDF.IMAGE_QUALITY
         );
 
         // Embed image in PDF
@@ -423,13 +426,13 @@ export class PDFGenerator {
         const yOffsetInches = this.options.yOffset;
 
         // Position calculation (accounting for bleed offset)
-        const xInches = leftMarginInches + xOffsetInches + item.x / this.options.dpi - bleedInches;
+        const xInches = leftMarginInches + xOffsetInches + item.x / this.dpi - bleedInches;
         // Convert from top-down (layout) to bottom-up (PDF) coordinates
-        const yFromTop = topMarginInches + yOffsetInches + item.y / this.options.dpi - bleedInches;
-        const heightInches = (item.height + bleedPx * 2) / this.options.dpi;
+        const yFromTop = topMarginInches + yOffsetInches + item.y / this.dpi - bleedInches;
+        const heightInches = (item.height + bleedPx * 2) / this.dpi;
         const yInches = this.options.pageHeight - yFromTop - heightInches;
 
-        const widthInches = (item.width + bleedPx * 2) / this.options.dpi;
+        const widthInches = (item.width + bleedPx * 2) / this.dpi;
 
         // Draw image on page (convert inches to points)
         page.drawImage(image, {

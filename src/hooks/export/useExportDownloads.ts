@@ -13,7 +13,7 @@ import { useNightOrder } from '@/contexts/NightOrderContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useExport } from '@/hooks';
 import { createTokensZip, isMetaToken, tokensToBundleData } from '@/ts/export/zipExporter.js';
-import { downloadNightOrderPdf } from '@/ts/nightOrder/nightOrderPdfLib.js';
+import { downloadNightOrderPdf } from '@/ts/nightOrder/nightOrderPdfExporter.js';
 import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { getOfficialScriptToolUrl } from '@/ts/utils/scriptEncoder.js';
@@ -51,8 +51,7 @@ export interface UseExportDownloadsResult {
  * ```
  */
 export function useExportDownloads(): UseExportDownloadsResult {
-  const { tokens, generationOptions, scriptMeta, jsonInput, getEnabledCharacters } =
-    useTokenContext();
+  const { tokens, scriptMeta, jsonInput, getEnabledCharacters } = useTokenContext();
 
   const { downloadPdf, downloadJson, isExporting } = useExport();
 
@@ -108,68 +107,42 @@ export function useExportDownloads(): UseExportDownloadsResult {
   const handleDownloadCharacterTokens = useCallback(async () => {
     if (characterTokens.length === 0) return;
     try {
-      const blob = await createTokensZip(
-        characterTokens,
-        null,
-        {
-          saveInTeamFolders: true,
-          saveRemindersSeparately: false,
-          metaTokenFolder: false,
-          includeScriptJson: false,
-          compressionLevel: 'normal',
-        },
-        undefined,
-        generationOptions.pngSettings
-      );
+      const blob = await createTokensZip(characterTokens, null, {
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+      });
       downloadFile(blob, 'character_tokens.zip');
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download character tokens', error);
     }
-  }, [characterTokens, generationOptions.pngSettings]);
+  }, [characterTokens]);
 
   const handleDownloadReminderTokens = useCallback(async () => {
     if (reminderTokens.length === 0) return;
     try {
-      const blob = await createTokensZip(
-        reminderTokens,
-        null,
-        {
-          saveInTeamFolders: true,
-          saveRemindersSeparately: false,
-          metaTokenFolder: false,
-          includeScriptJson: false,
-          compressionLevel: 'normal',
-        },
-        undefined,
-        generationOptions.pngSettings
-      );
+      const blob = await createTokensZip(reminderTokens, null, {
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+      });
       downloadFile(blob, 'reminder_tokens.zip');
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download reminder tokens', error);
     }
-  }, [reminderTokens, generationOptions.pngSettings]);
+  }, [reminderTokens]);
 
   const handleDownloadMetaTokens = useCallback(async () => {
     if (metaTokens.length === 0) return;
     try {
-      const blob = await createTokensZip(
-        metaTokens,
-        null,
-        {
-          saveInTeamFolders: false,
-          saveRemindersSeparately: false,
-          metaTokenFolder: false,
-          includeScriptJson: false,
-          compressionLevel: 'normal',
-        },
-        undefined,
-        generationOptions.pngSettings
-      );
+      const blob = await createTokensZip(metaTokens, null, {
+        saveInTeamFolders: false,
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+      });
       downloadFile(blob, 'meta_tokens.zip');
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download meta tokens', error);
     }
-  }, [metaTokens, generationOptions.pngSettings]);
+  }, [metaTokens]);
 
   // Night Order PDF handler
   const handleDownloadNightOrder = useCallback(async () => {
@@ -178,6 +151,8 @@ export function useExportDownloads(): UseExportDownloadsResult {
       const filename = scriptMeta?.name
         ? `${scriptMeta.name.replace(/[^a-zA-Z0-9]/g, '_')}_night_order.pdf`
         : 'night_order.pdf';
+      // DPI uses default from CONFIG.PDF.DPI (300)
+      // Uses default background (parchment) for exports from Export view
       await downloadNightOrderPdf(firstNight, otherNight, scriptMeta || null, filename, {
         includeFirstNight: true,
         includeOtherNight: true,
@@ -188,19 +163,31 @@ export function useExportDownloads(): UseExportDownloadsResult {
     }
   }, [firstNight, otherNight, scriptMeta, hasNightOrder]);
 
-  // Script PDF (Official Tool) handler - uses enabled characters only
-  const handleOpenScriptInOfficialTool = useCallback(() => {
+  // Official Script Share Link handler - downloads a URL shortcut file
+  const handleDownloadScriptShareLink = useCallback(() => {
     if (!hasCharacters) {
       logger.warn('useExportDownloads', 'No characters to export to script tool');
       return;
     }
     const scriptData = scriptMeta ? [scriptMeta, ...enabledCharacters] : enabledCharacters;
     const url = getOfficialScriptToolUrl(scriptData);
-    logger.info('useExportDownloads', 'Opening official BOTC Script Tool', {
+
+    // Create .url shortcut file content (Windows Internet Shortcut format)
+    // Windows requires CRLF line endings for .url files to work properly
+    const urlFileContent = `[InternetShortcut]\r\nURL=${url}\r\n`;
+    const blob = new Blob([urlFileContent], { type: 'application/internet-shortcut' });
+
+    // Generate filename from script name or default
+    const scriptName = scriptMeta?.name
+      ? scriptMeta.name.replace(/[^a-zA-Z0-9\s-]/g, '').trim()
+      : 'Script';
+    const filename = `${scriptName} - Official Script Tool.url`;
+
+    logger.info('useExportDownloads', 'Downloading official BOTC Script Tool shortcut', {
       characterCount: enabledCharacters.length,
       hasMeta: !!scriptMeta,
     });
-    window.open(url, '_blank');
+    downloadFile(blob, filename);
   }, [enabledCharacters, scriptMeta, hasCharacters]);
 
   // Build all downloads with categories
@@ -329,15 +316,15 @@ export function useExportDownloads(): UseExportDownloadsResult {
 
     // === SCRIPT DOWNLOADS ===
 
-    // Script PDF (Official Tool)
+    // Official Script Share Link (URL shortcut)
     items.push({
-      id: 'script-pdf-official',
-      icon: '📄',
-      label: 'Script PDF',
+      id: 'script-share-link',
+      icon: '🔗',
+      label: 'Official Script Share Link',
       description: hasCharacters
-        ? `Open in official BOTC Script Tool (${enabledCharacters.length} characters)`
+        ? `Download shortcut to official tool (${enabledCharacters.length} characters)`
         : 'No characters in script',
-      action: handleOpenScriptInOfficialTool,
+      action: handleDownloadScriptShareLink,
       disabled: !hasCharacters,
       disabledReason: hasCharacters ? undefined : 'Add characters to your script first',
       category: 'script',
@@ -362,7 +349,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
     handleDownloadReminderTokens,
     handleDownloadMetaTokens,
     handleDownloadNightOrder,
-    handleOpenScriptInOfficialTool,
+    handleDownloadScriptShareLink,
     tokens.length,
   ]);
 

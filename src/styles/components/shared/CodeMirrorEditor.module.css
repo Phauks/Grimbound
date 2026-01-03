@@ -26,21 +26,21 @@
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 99, 102, 241), 0.15);
 }
 
-/* Disabled state - grey overlay matching other disabled sections */
-.editorContainer.disabled::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(128, 128, 128, 0.3);
-  pointer-events: none;
-  z-index: 10;
-  border-radius: inherit;
+/* Disabled state - subtle visual distinction without obscuring content */
+.editorContainer.disabled {
+  border-color: var(--border-color-muted, var(--border-color));
+  background-color: var(--bg-tertiary, var(--bg-secondary));
 }
 
-/* Block editing but allow scrolling in disabled mode */
+/* Remove focus styling in disabled mode */
+.editorContainer.disabled:focus-within {
+  border-color: var(--border-color-muted, var(--border-color));
+  box-shadow: none;
+}
+
+/* Allow text selection and scrolling in disabled mode - keep text cursor */
 .editorContainer.disabled .codeMirrorWrapper :global(.cm-content) {
-  pointer-events: none;
-  cursor: not-allowed;
+  cursor: text;
 }
 
 /* Wrapper for the CodeMirror instance */

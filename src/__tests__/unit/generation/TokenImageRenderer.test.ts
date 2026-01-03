@@ -178,7 +178,7 @@ describe('TokenImageRenderer', () => {
     });
 
     it('should accept options parameter', () => {
-      const customOptions = createDefaultOptions({ dpi: 600 });
+      const customOptions = createDefaultOptions({ tokenCount: true });
       const customRenderer = new TokenImageRenderer(customOptions, mockImageCache);
       expect(customRenderer).toBeDefined();
     });
@@ -196,15 +196,14 @@ describe('TokenImageRenderer', () => {
 
   describe('updateOptions', () => {
     it('should update options with partial values', () => {
-      renderer.updateOptions({ dpi: 600 });
+      renderer.updateOptions({ tokenCount: true });
       // Options are private, but we can test behavior in other methods
       expect(renderer).toBeDefined();
     });
 
     it('should merge new options with existing options', () => {
-      const _initialDpi = options.dpi;
       renderer.updateOptions({ backgroundName: 'new-bg' });
-      // Should preserve dpi, update backgroundName
+      // Should preserve existing options, update backgroundName
       expect(renderer).toBeDefined();
     });
 

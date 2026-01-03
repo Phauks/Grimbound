@@ -6,11 +6,11 @@
 import type { Point } from '@/ts/canvas/index.js';
 import CONFIG from '@/ts/config.js';
 import type {
-  DPIOption,
   FontSizeOptions,
   GenerationOptions,
   MeasurementUnit,
   ReminderCountStyle,
+  SetupPlacement,
   TextRenderStyleOptions,
   TextStrokeColorOptions,
   TextStrokeWidthOptions,
@@ -178,6 +178,8 @@ export interface TokenGeneratorOptions {
   /** When true, all tokens use uniform top spacing as if they all have a badge */
   reminderCountUniformLayout?: boolean;
   setupStyle: string;
+  /** Placement of setup overlay: 'left' or 'right' (default) */
+  setupPlacement?: SetupPlacement;
   reminderBackground: string;
   reminderBackgroundImage?: string;
   reminderBackgroundType?: 'color' | 'image';
@@ -215,7 +217,6 @@ export interface TokenGeneratorOptions {
   enableRightAccent: boolean;
   sideAccentProbability: number;
   transparentBackground: boolean;
-  dpi: number;
   fontSpacing: {
     characterName: number;
     characterText: number;
@@ -251,6 +252,8 @@ export interface TokenGeneratorOptions {
   };
   /** QR code styling options for almanac tokens */
   qrCodeOptions?: QRCodeOptions;
+  /** Distance of jinx icons from center (0 = default, positive = further apart) */
+  jinxIconSpacing?: number;
 }
 
 /**
@@ -262,6 +265,7 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   tokenCount: CONFIG.TOKEN.TOKEN_COUNT,
   reminderCountUniformLayout: false,
   setupStyle: CONFIG.STYLE.SETUP_STYLE,
+  setupPlacement: 'right',
   reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
   characterBackground: CONFIG.STYLE.CHARACTER_BACKGROUND,
   characterNameFont: CONFIG.STYLE.CHARACTER_NAME_FONT,
@@ -282,7 +286,6 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   enableRightAccent: true,
   sideAccentProbability: 50, // Side accents have 50% probability by default
   transparentBackground: false,
-  dpi: CONFIG.PDF.DPI,
   fontSpacing: {
     characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
     characterText: CONFIG.FONT_SPACING.ABILITY_TEXT,
@@ -369,6 +372,7 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
 
   // Setup overlay
   setupStyle: CONFIG.STYLE.SETUP_STYLE,
+  setupPlacement: 'right',
 
   // Reminder token background
   reminderBackground: CONFIG.STYLE.REMINDER_BACKGROUND,
@@ -434,9 +438,6 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   accentArcSpan: CONFIG.STYLE.ACCENT_ARC_SPAN,
   accentSlots: CONFIG.STYLE.ACCENT_SLOTS,
 
-  // DPI
-  dpi: CONFIG.PDF.DPI as DPIOption,
-
   // Font spacing (0 = normal spacing)
   fontSpacing: {
     characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
@@ -466,21 +467,6 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   pandemoniumToken: true,
   scriptNameToken: true,
   almanacToken: true,
-
-  // PNG export settings
-  pngSettings: {
-    embedMetadata: false,
-    transparentBackground: false,
-  },
-
-  // ZIP export settings
-  zipSettings: {
-    saveInTeamFolders: CONFIG.ZIP.SAVE_IN_TEAM_FOLDERS,
-    saveRemindersSeparately: CONFIG.ZIP.SAVE_REMINDERS_SEPARATELY,
-    metaTokenFolder: true,
-    includeScriptJson: false,
-    compressionLevel: 'normal',
-  },
 
   // Icon positioning
   iconSettings: {

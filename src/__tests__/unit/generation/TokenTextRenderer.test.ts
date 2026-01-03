@@ -135,7 +135,7 @@ describe('TokenTextRenderer', () => {
 
   describe('updateOptions', () => {
     it('should update renderer options', () => {
-      const newOptions = { dpi: 600, characterNameFont: 'Times New Roman' };
+      const newOptions = { characterNameFont: 'Times New Roman' };
       renderer.updateOptions(newOptions);
 
       // Draw character name to verify updated font is used
@@ -150,7 +150,7 @@ describe('TokenTextRenderer', () => {
     });
 
     it('should merge with existing options', () => {
-      renderer.updateOptions({ dpi: 600 });
+      renderer.updateOptions({ displayAbilityText: false });
 
       // Original characterNameFont should still be present
       renderer.drawCharacterName(mockCtx, 'Test', { x: 150, y: 150 }, 150, 300);
@@ -250,22 +250,6 @@ describe('TokenTextRenderer', () => {
       renderer.calculateBootleggerTextLayout('Test ability');
 
       expect(createElementSpy).toHaveBeenCalledWith('canvas');
-      createElementSpy.mockRestore();
-    });
-
-    it('should use correct diameter based on DPI', () => {
-      renderer.updateOptions({ dpi: 600 });
-      const expectedDiameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * 600;
-
-      const createElementSpy = vi.spyOn(document, 'createElement');
-      renderer.calculateBootleggerTextLayout('Test ability');
-
-      const canvasCall = createElementSpy.mock.results[0]?.value;
-      if (canvasCall) {
-        expect(canvasCall.width).toBe(expectedDiameter);
-        expect(canvasCall.height).toBe(expectedDiameter);
-      }
-
       createElementSpy.mockRestore();
     });
   });
@@ -783,20 +767,6 @@ describe('TokenTextRenderer', () => {
       renderer.drawTokenCount(mockCtx, 3, 0);
 
       expect(mockCtx.fillText).toHaveBeenCalled();
-    });
-
-    it('should handle different DPI values', () => {
-      renderer.updateOptions({ dpi: 600, fontSizes: { characterName: 24 } });
-      renderer.drawCharacterName(mockCtx, 'Test', { x: 150, y: 150 }, 150, 300);
-
-      // 24 points at 600 DPI = 24/72 * 600 = 200 pixels
-      const expectedFontSize = (24 / 72) * 600;
-      expect(drawCurvedText).toHaveBeenCalledWith(
-        mockCtx,
-        expect.objectContaining({
-          fontSize: expectedFontSize,
-        })
-      );
     });
   });
 });

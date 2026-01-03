@@ -86,11 +86,13 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | Module | Purpose | Key Exports |
 |--------|---------|-------------|
 | `BackgroundRenderer.ts` | Main orchestrator | `renderBackground()`, `renderTexturePreview()` |
+| `constants.ts` | Shared constants | Effect and texture constants |
 | `noise/perlin.ts` | Perlin noise | `perlin2D()`, `initPermutation()` |
 | `noise/fbm.ts` | Fractal noise | `fbm()`, `turbulence()`, `ridgedNoise()` |
 | `textures/TextureStrategy.ts` | Interface | `TextureStrategy`, `BaseTextureStrategy`, `TextureContext` |
 | `textures/index.ts` | Factory | `TextureFactory.create()`, `TextureFactory.register()` |
 | `effects/index.ts` | Effects | `applyEffects()`, `VignetteEffect`, `InnerGlowEffect` |
+| `effects/BorderEffect.ts` | Border rendering | `BorderEffect` |
 | `effects/VibranceEffect.ts` | Post-processing | `applyVibrance()`, `isVibranceEnabled()` |
 
 **Available Textures**: marble, clouds, watercolor, perlin, radial-fade, organic-cells, silk-flow, parchment, linen, wood-grain, brushed-metal
@@ -102,10 +104,18 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | Module | Purpose | Key Exports |
 |--------|---------|-------------|
 | `CacheManager.ts` | Cache facade | `cacheManager.preRender()`, `.clearCache()`, `.getStats()` |
+| `ICacheManager.ts` | Cache interface | `ICacheManager` |
 | `TabPreRenderService.ts` | Unified tab pre-render (DI-enabled) | `TabPreRenderService`, `tabPreRenderService.preRenderTab()`, `.getCachedNightOrder()`, `.getCachedTokenDataUrl()`, `.getCachedCharacterImageUrl()` |
 | `CacheInvalidationService.ts` | Cache lifecycle | `cacheInvalidationService.invalidate()`, `.subscribe()` |
+| `adapters/LRUCacheAdapter.ts` | LRU cache adapter | `LRUCacheAdapter` |
+| `core/interfaces.ts` | Core interfaces | Cache interfaces |
+| `instances/fontCache.ts` | Font caching | Font cache singleton |
 | `utils/hashUtils.ts` | Hash utilities | `simpleHash()`, `hashArray()`, `hashObject()`, `combineHashes()` |
 | `utils/EventEmitter.ts` | Typed events | `EventEmitter` class |
+| `utils/AdaptiveWorkerPool.ts` | Adaptive workers | `AdaptiveWorkerPool` |
+| `utils/CacheLogger.ts` | Cache logging | Cache-specific logger |
+| `utils/memoryEstimator.ts` | Memory estimation | Memory usage utilities |
+| `utils/WorkerPool.ts` | Worker pooling | `WorkerPool` |
 | `policies/LRUEvictionPolicy.ts` | LRU eviction | `LRUEvictionPolicy` |
 | `strategies/CharactersPreRenderStrategy.ts` | Character pre-render | `CharactersPreRenderStrategy` |
 | `strategies/TokensPreRenderStrategy.ts` | Token pre-render | `TokensPreRenderStrategy` |
@@ -122,6 +132,8 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `batchGenerator.ts` | Batch orchestration | `generateAllTokens()`, `generateScriptNameTokenOnly()`, `BatchContext` |
 | `TokenImageRenderer.ts` | Image rendering | `TokenImageRenderer`, `IImageCache` interface |
 | `TokenTextRenderer.ts` | Text rendering | `TokenTextRenderer` |
+| `QROptionsResolver.ts` | QR code options | QR code option resolution |
+| `teamVariantGenerator.ts` | Team variants | Team variant generation |
 | `presets.ts` | Preset configs | `PRESETS`, `getPreset()`, `applyPreset()` |
 | `iconLayoutStrategies.ts` | Strategy pattern | `IconLayoutStrategy`, `IconLayoutStrategyFactory` |
 | `ImageCacheAdapter.ts` | DI adapter | `ImageCacheAdapter` |
@@ -161,6 +173,19 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `pngExporter.ts` | PNG download | `downloadPng()`, `downloadAllTokens()` |
 | `pngMetadata.ts` | PNG tEXt chunks | `embedMetadata()`, `extractMetadata()` |
 | `completePackageExporter.ts` | Full export | `exportCompletePackage()` |
+
+---
+
+## Font Services Module (`src/ts/services/fonts/`)
+
+| Module | Purpose | Key Exports |
+|--------|---------|-------------|
+| `FontRegistry.ts` | Font registration orchestrator | `FontRegistry`, `fontRegistry` singleton |
+| `IFontServices.ts` | DI interfaces | `IFontProvider`, `IFontRegistry` |
+| `BuiltInFontProvider.ts` | Built-in font loading | `BuiltInFontProvider` |
+| `CustomFontProvider.ts` | Custom font loading | `CustomFontProvider` |
+| `GoogleFontProvider.ts` | Google Fonts API | `GoogleFontProvider` |
+| `fontDatabase.ts` | Font data storage | Font database utilities |
 
 ---
 
@@ -228,12 +253,16 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `useCharacterMetadata` | Sub-hook: Team changes, metadata updates |
 | `useCharacterDownloads` | Character download operations, DownloadsContext registration |
 | `useTokenPreviewCache` | Preview generation, hover pre-rendering, cache management, live decorative updates |
+| `useBackgroundImageUrl` | Background image URL resolution |
+| `useJinxOperations` | Jinx add/remove/update operations |
 
 ### Data & Scripts
 
 | Hook | Purpose |
 |------|---------|
 | `useScriptData` | Script data loading |
+| `useScriptTransformations` | Script data transformations |
+| `useGroupedReminders` | Reminder grouping logic |
 | `usePresets` | Preset management |
 | `useFilters` | Filter state management |
 
@@ -242,6 +271,8 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | Hook | Purpose |
 |------|---------|
 | `useExport` | Export operations |
+| `useExportDownloads` | Export download management |
+| `useScriptPdfDownloads` | Script PDF download operations |
 | `useFileUpload` | File upload handling |
 
 ### UI & Interaction
@@ -258,6 +289,10 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `useExpandablePanel` | Expandable panel state and positioning |
 | `useIntersectionObserver` | Visibility detection |
 | `useAutoResizeTextarea` | Textarea sizing |
+| `useControlledField` | Single controlled input field state |
+| `useControlledFields` | Multiple controlled input fields state |
+| `useDraggableList` | Drag-and-drop list state |
+| `useRecentColors` | Recent color picker history |
 
 ### Navigation & Multi-Tab
 
@@ -284,6 +319,15 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | Hook | Purpose |
 |------|---------|
 | `useCodeMirrorEditor` | CodeMirror 6 editor lifecycle |
+| `useJsonEditor` | JSON editor state and validation |
+
+### Fonts
+
+| Hook | Purpose |
+|------|---------|
+| `useFontFiltering` | Font search and filtering |
+| `useFontOperations` | Font CRUD operations |
+| `useFontOptions` | Font option state management |
 
 ### Studio
 
@@ -405,4 +449,4 @@ src/
 
 ---
 
-*Last updated: 2025-12-29*
+*Last updated: 2025-12-31*

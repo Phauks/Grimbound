@@ -136,7 +136,14 @@ export function useExpandablePanel<T>({
       const isInContainer = containerRef.current?.contains(target);
       const isInPanel = panelRef.current?.contains(target);
 
-      if (!(isInContainer || isInPanel) && isExpanded) {
+      // Also check if click is inside any nested expandable panel
+      // This handles cases where a color picker inside this panel opens its own portal
+      const targetElement = target as Element;
+      const isInNestedPanel =
+        targetElement.closest?.('[data-expandable-panel]') !== null ||
+        targetElement.closest?.('[data-color-picker-panel]') !== null;
+
+      if (!(isInContainer || isInPanel || isInNestedPanel) && isExpanded) {
         if (autoApplyOnClose) {
           onChange(pendingValue);
         }

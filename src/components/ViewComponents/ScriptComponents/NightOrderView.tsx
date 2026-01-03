@@ -5,9 +5,10 @@
  * Uses sidebar layout with print preview showing realistic 8.5" x 11" pages.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
+import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
   EnableToggle,
@@ -15,6 +16,7 @@ import {
   PreviewBox,
   SettingsSelectorBase,
 } from '@/components/Shared/Selectors/SettingsSelectorBase';
+import { Button } from '@/components/Shared/UI/Button';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useNightOrder } from '@/contexts/NightOrderContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -23,15 +25,21 @@ import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/script/NightOrderView.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 import { UI_DIMENSIONS } from '@/ts/constants.js';
-import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfLib.js';
+import { downloadNightOrderPdfHybrid } from '@/ts/nightOrder/hybridPdfExporter.js';
+import { paginateEntries } from '@/ts/nightOrder/nightOrderLayout.js';
+import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfExporter.js';
 import {
   syncNightOrderToJson,
   updateCharacterNightNumbers,
 } from '@/ts/nightOrder/nightOrderSync.js';
+import { warmDefaultNightSheetFonts } from '@/ts/nightOrder/nightSheetRenderer.js';
 import { logger } from '@/ts/utils/logger.js';
-// TODO: Re-enable when Script PDF export is fixed
-// import { getOfficialScriptToolUrl } from '@/ts/utils/scriptEncoder.js';
+import {
+  formatCharacterForOfficialTool,
+  getOfficialScriptToolUrl,
+} from '@/ts/utils/scriptEncoder.js';
 import { NightSheet } from './NightSheet';
+import { ScaledPage } from './ScaledPage';
 import type { ScriptSubTab } from './ScriptTabNavigation';
 
 /**
@@ -90,6 +98,9 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   // Generation state
   const [generateNightOrder, setGenerateNightOrder] = useState(true);
 
+  // Export mode: 'hybrid' (fast, pdf-lib fonts) or 'legacy' (Snapdom font embedding)
+  const [useHybridMode, setUseHybridMode] = useState(true);
+
   // Background customization state
   const [background, setBackground] = useState<NightSheetBackground>(DEFAULT_BACKGROUND);
 
@@ -97,13 +108,21 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   const firstNightRef = useRef<HTMLDivElement>(null);
   const otherNightRef = useRef<HTMLDivElement>(null);
 
-  // Initialize night order when characters change and generation is enabled
+  // Initialize night order when generation is toggled on
+  // Note: NightOrderContext handles auto-init from TokenContext, so we only
+  // need to respond to generateNightOrder toggle changes here.
+  // IMPORTANT: Skip if isDirty to avoid overwriting user's drag-drop changes.
   useEffect(() => {
-    if (generateNightOrder && characters.length > 0) {
+    if (generateNightOrder && characters.length > 0 && !isDirty) {
       const scriptData = scriptMeta ? [scriptMeta, ...characters] : characters;
       initializeFromScript(scriptData);
     }
-  }, [generateNightOrder, characters, scriptMeta, initializeFromScript]);
+  }, [generateNightOrder, characters, scriptMeta, initializeFromScript, isDirty]);
+
+  // Warm fonts in background on mount (makes first PDF export fast)
+  useEffect(() => {
+    warmDefaultNightSheetFonts();
+  }, []);
 
   // Use night order's script meta if available
   const displayMeta = nightOrderMeta || scriptMeta;
@@ -235,17 +254,38 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
         ? `${displayMeta.name.replace(/[^a-zA-Z0-9]/g, '_')}_night_order.pdf`
         : 'night_order.pdf';
 
-      // Use new pdf-lib exporter (fast, native OTF support)
-      await downloadNightOrderPdf(firstNight, otherNight, displayMeta || null, filename, {
+      const exportOptions = {
         includeFirstNight: true,
         includeOtherNight: true,
         showScriptName: true,
-        onProgress: (phase, current, total) => {
+        background,
+        onProgress: (phase: ExportPhase, current: number, total: number) => {
           setExportPhase(phase);
           setExportProgress({ current, total });
         },
         signal: abortControllerRef.current.signal,
-      });
+      };
+
+      // Use hybrid mode (fast, pdf-lib fonts) or legacy mode (Snapdom font embedding)
+      if (useHybridMode) {
+        logger.info('NightOrderView', 'Using hybrid PDF export mode');
+        await downloadNightOrderPdfHybrid(
+          firstNight,
+          otherNight,
+          displayMeta || null,
+          filename,
+          exportOptions
+        );
+      } else {
+        logger.info('NightOrderView', 'Using legacy PDF export mode');
+        await downloadNightOrderPdf(
+          firstNight,
+          otherNight,
+          displayMeta || null,
+          filename,
+          exportOptions
+        );
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         logger.info('NightOrderView', 'PDF export cancelled');
@@ -258,34 +298,35 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       setExportPhase(null);
       abortControllerRef.current = null;
     }
-  }, [displayMeta, isExporting, firstNight, otherNight]);
+  }, [displayMeta, isExporting, firstNight, otherNight, background, useHybridMode]);
 
-  // TODO: Re-enable when Script PDF export is fixed
   // Handler to open script in official BOTC Script Tool
-  // const handleOpenInOfficialTool = useCallback(() => {
-  //   if (characters.length === 0) {
-  //     logger.warn('NightOrderView', 'No characters to export');
-  //     return;
-  //   }
-  //
-  //   const scriptData = scriptMeta ? [scriptMeta, ...characters] : characters;
-  //   const url = getOfficialScriptToolUrl(scriptData);
-  //
-  //   logger.info('NightOrderView', 'Opening official BOTC Script Tool', {
-  //     characterCount: characters.length,
-  //     hasMeta: !!scriptMeta,
-  //   });
-  //
-  //   window.open(url, '_blank');
-  // }, [characters, scriptMeta]);
+  const handleOpenInOfficialTool = useCallback(() => {
+    // Build script data - always include meta
+    const meta = scriptMeta || { id: '_meta', author: '', name: '' };
+
+    // Format characters for official tool:
+    // - Official characters: just send the ID string
+    // - Custom characters: send full character object
+    const formattedCharacters = characters.map((char) => formatCharacterForOfficialTool(char));
+
+    const scriptData = [meta, ...formattedCharacters];
+    const url = getOfficialScriptToolUrl(scriptData);
+
+    logger.info('NightOrderView', 'Opening official BOTC Script Tool', {
+      characterCount: characters.length,
+      customCount: characters.filter((c) => c.source !== 'official').length,
+      hasMeta: !!scriptMeta,
+    });
+
+    window.open(url, '_blank');
+  }, [characters, scriptMeta]);
 
   // Register downloads for this view
   useEffect(() => {
     const hasNoData = firstNight.entries.length === 0 && otherNight.entries.length === 0;
 
     const downloads: DownloadItem[] = [
-      // TODO: Script PDF export - disabled pending investigation of URL encoding format
-      // Re-enable when getOfficialScriptToolUrl encoding is verified to work
       {
         id: 'night-order-pdf',
         icon: '🌙',
@@ -334,6 +375,10 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
 
   // Get display settings (pending when editing, current otherwise)
   const displayBackground = backgroundPanel.isExpanded ? backgroundPanel.pendingValue : background;
+
+  // Paginate entries for UI preview (multi-page instead of scaling)
+  const firstNightPages = useMemo(() => paginateEntries(firstNight.entries), [firstNight.entries]);
+  const otherNightPages = useMemo(() => paginateEntries(otherNight.entries), [otherNight.entries]);
 
   // Loading state
   if (isLoading) {
@@ -441,23 +486,19 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
 
           {/* Texture Opacity */}
           {backgroundPanel.pendingValue.showTexture && (
-            <div className={styles.settingGroup}>
-              <label className={styles.settingLabel} htmlFor="night-order-texture-opacity">
-                Texture Intensity
-              </label>
-              <input
-                id="night-order-texture-opacity"
-                type="range"
-                min="0.01"
-                max="0.15"
-                step="0.01"
-                value={backgroundPanel.pendingValue.textureOpacity}
-                onChange={(e) =>
-                  backgroundPanel.updatePendingField('textureOpacity', parseFloat(e.target.value))
-                }
-                className={styles.rangeSlider}
-              />
-            </div>
+            <EditableSlider
+              label="Texture Intensity"
+              value={backgroundPanel.pendingValue.textureOpacity * 100}
+              onChange={(value) =>
+                backgroundPanel.updatePendingField('textureOpacity', value / 100)
+              }
+              min={1}
+              max={15}
+              step={1}
+              defaultValue={6}
+              suffix="%"
+              ariaLabel="Texture intensity percentage"
+            />
           )}
         </div>
 
@@ -496,6 +537,18 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       {/* Sidebar */}
       <ViewLayout.Panel position="left" width="left" scrollable>
         <div className={layoutStyles.panelContent}>
+          {/* Open in Official Tool */}
+          <div className={styles.headerRow}>
+            <Button
+              variant="primary"
+              size="small"
+              onClick={handleOpenInOfficialTool}
+              title="Open in official Blood on the Clocktower Script Tool"
+            >
+              Open in Official Tool
+            </Button>
+          </div>
+
           {/* Player Script (Coming Soon - Disabled) */}
           <SettingsSelectorBase
             preview={
@@ -549,6 +602,29 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
           >
             {renderBackgroundPanel()}
           </SettingsSelectorBase>
+
+          {/* Export Mode Toggle */}
+          {generateNightOrder && (
+            <div className={styles.exportModeToggle}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={useHybridMode}
+                  onChange={(e) => setUseHybridMode(e.target.checked)}
+                  className={styles.checkbox}
+                />
+                <span>
+                  Fast PDF export
+                  <span className={styles.hint}> (experimental)</span>
+                </span>
+              </label>
+              <p className={styles.exportModeHint}>
+                {useHybridMode
+                  ? 'Uses optimized font rendering for faster exports'
+                  : 'Uses legacy mode with full font embedding (slower but more accurate)'}
+              </p>
+            </div>
+          )}
         </div>
       </ViewLayout.Panel>
 
@@ -566,41 +642,55 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
             </div>
           ) : (
             <div className={styles.sheetsContainer}>
-              {/* First Night Page */}
-              <div className={styles.pageWrapper}>
-                <div className={styles.page}>
-                  <NightSheet
-                    ref={firstNightRef}
-                    type="first"
-                    entries={firstNight.entries}
-                    characters={characters}
-                    scriptMeta={displayMeta}
-                    enableDragDrop={enableDragDrop}
-                    onMoveEntry={handleMoveFirstNight}
-                    onToggleLock={handleConvertToCustom}
-                    background={displayBackground}
-                    onEditCharacter={onEditCharacter}
-                  />
+              {/* First Night Pages (one or more) */}
+              {firstNightPages.pages.map((pageEntries, pageIndex) => (
+                <div
+                  key={`first-${pageEntries[0]?.id || pageIndex}`}
+                  className={styles.pageWrapper}
+                >
+                  <ScaledPage>
+                    <NightSheet
+                      ref={pageIndex === 0 ? firstNightRef : undefined}
+                      type="first"
+                      entries={pageEntries}
+                      characters={characters}
+                      scriptMeta={displayMeta}
+                      enableDragDrop={enableDragDrop && firstNightPages.pageCount === 1}
+                      onMoveEntry={handleMoveFirstNight}
+                      onToggleLock={handleConvertToCustom}
+                      background={displayBackground}
+                      onEditCharacter={onEditCharacter}
+                      pageNumber={pageIndex + 1}
+                      totalPages={firstNightPages.pageCount}
+                    />
+                  </ScaledPage>
                 </div>
-              </div>
+              ))}
 
-              {/* Other Nights Page */}
-              <div className={styles.pageWrapper}>
-                <div className={styles.page}>
-                  <NightSheet
-                    ref={otherNightRef}
-                    type="other"
-                    entries={otherNight.entries}
-                    characters={characters}
-                    scriptMeta={displayMeta}
-                    enableDragDrop={enableDragDrop}
-                    onMoveEntry={handleMoveOtherNight}
-                    onToggleLock={handleConvertToCustom}
-                    background={displayBackground}
-                    onEditCharacter={onEditCharacter}
-                  />
+              {/* Other Nights Pages (one or more) */}
+              {otherNightPages.pages.map((pageEntries, pageIndex) => (
+                <div
+                  key={`other-${pageEntries[0]?.id || pageIndex}`}
+                  className={styles.pageWrapper}
+                >
+                  <ScaledPage>
+                    <NightSheet
+                      ref={pageIndex === 0 ? otherNightRef : undefined}
+                      type="other"
+                      entries={pageEntries}
+                      characters={characters}
+                      scriptMeta={displayMeta}
+                      enableDragDrop={enableDragDrop && otherNightPages.pageCount === 1}
+                      onMoveEntry={handleMoveOtherNight}
+                      onToggleLock={handleConvertToCustom}
+                      background={displayBackground}
+                      onEditCharacter={onEditCharacter}
+                      pageNumber={pageIndex + 1}
+                      totalPages={otherNightPages.pageCount}
+                    />
+                  </ScaledPage>
                 </div>
-              </div>
+              ))}
             </div>
           )
         ) : (

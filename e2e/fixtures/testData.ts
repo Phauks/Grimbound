@@ -23,10 +23,7 @@ export const SAMPLE_SCRIPT_JSON = JSON.stringify(SAMPLE_SCRIPT, null, 2);
 /**
  * Minimal script for quick tests.
  */
-export const MINIMAL_SCRIPT = [
-  { id: '_meta', name: 'Minimal Script' },
-  'imp',
-];
+export const MINIMAL_SCRIPT = [{ id: '_meta', name: 'Minimal Script' }, 'imp'];
 
 /**
  * Minimal script as JSON string.

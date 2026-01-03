@@ -8,6 +8,7 @@
  */
 
 import type { EffectsConfig } from '@/ts/types/backgroundEffects.js';
+import { BorderEffect } from './BorderEffect.js';
 import type { EffectContext, EffectStrategy } from './EffectStrategy.js';
 import { InnerGlowEffect } from './InnerGlowEffect.js';
 import { VignetteEffect } from './VignetteEffect.js';
@@ -18,8 +19,9 @@ import { VignetteEffect } from './VignetteEffect.js';
 
 /**
  * All available visual effects in application order
+ * Border is applied last so it draws on top of other effects
  */
-const effects: EffectStrategy[] = [new VignetteEffect(), new InnerGlowEffect()];
+const effects: EffectStrategy[] = [new VignetteEffect(), new InnerGlowEffect(), new BorderEffect()];
 
 // ============================================================================
 // EFFECT APPLICATION
@@ -61,10 +63,10 @@ export function applyEffects(
 // EXPORTS
 // ============================================================================
 
+// Individual effects
+export { BorderEffect } from './BorderEffect.js';
 // Strategy interface
 export type { EffectContext, EffectResult, EffectStrategy } from './EffectStrategy.js';
-
-// Individual effects
 export { InnerGlowEffect } from './InnerGlowEffect.js';
 // Vibrance (post-processing)
 export { applyVibrance, isVibranceEnabled } from './VibranceEffect.js';

@@ -355,3 +355,286 @@ export function getColorName(hex: string): string {
 
   return commonNames[normalized] || 'Custom';
 }
+
+// ============================================================================
+// THEME DERIVATION UTILITIES
+// ============================================================================
+
+/**
+ * Lighten a hex color by a given amount
+ *
+ * @param hex - Hex color string (e.g., '#FF5500')
+ * @param amount - Amount to lighten (0-1, where 1 is white)
+ * @returns Lightened hex color
+ */
+export function lighten(hex: string, amount: number): string {
+  const rgb = parseHexColor(hex);
+  const clampedAmount = Math.max(0, Math.min(1, amount));
+
+  const r = Math.round(rgb.r + (255 - rgb.r) * clampedAmount);
+  const g = Math.round(rgb.g + (255 - rgb.g) * clampedAmount);
+  const b = Math.round(rgb.b + (255 - rgb.b) * clampedAmount);
+
+  return rgbToHex(r, g, b);
+}
+
+/**
+ * Darken a hex color by a given amount
+ *
+ * @param hex - Hex color string (e.g., '#FF5500')
+ * @param amount - Amount to darken (0-1, where 1 is black)
+ * @returns Darkened hex color
+ */
+export function darken(hex: string, amount: number): string {
+  const rgb = parseHexColor(hex);
+  const clampedAmount = Math.max(0, Math.min(1, amount));
+
+  const r = Math.round(rgb.r * (1 - clampedAmount));
+  const g = Math.round(rgb.g * (1 - clampedAmount));
+  const b = Math.round(rgb.b * (1 - clampedAmount));
+
+  return rgbToHex(r, g, b);
+}
+
+/**
+ * Adjust saturation of a color
+ *
+ * @param hex - Hex color string
+ * @param amount - Saturation adjustment (-1 to 1, negative desaturates)
+ * @returns Adjusted hex color
+ */
+export function adjustSaturation(hex: string, amount: number): string {
+  const hsv = hexToHsv(hex);
+  const newSat = Math.max(0, Math.min(100, hsv.s + amount * 100));
+  return hsvToHex(hsv.h, newSat, hsv.v);
+}
+
+/**
+ * Shift hue of a color
+ *
+ * @param hex - Hex color string
+ * @param degrees - Degrees to shift hue (can be negative)
+ * @returns Color with shifted hue
+ */
+export function shiftHue(hex: string, degrees: number): string {
+  const hsv = hexToHsv(hex);
+  let newHue = (hsv.h + degrees) % 360;
+  if (newHue < 0) newHue += 360;
+  return hsvToHex(newHue, hsv.s, hsv.v);
+}
+
+/**
+ * Get appropriate text color for a background (with accessibility check)
+ *
+ * @param bgColor - Background hex color
+ * @param preferredLight - Preferred light text color (default white)
+ * @param preferredDark - Preferred dark text color (default near-black)
+ * @returns Appropriate text color for readability
+ */
+export function deriveTextColor(
+  bgColor: string,
+  preferredLight = '#F5F5F5',
+  preferredDark = '#1A1A1A'
+): string {
+  return isLightColor(bgColor) ? preferredDark : preferredLight;
+}
+
+/**
+ * Derive CodeMirror JSON syntax colors from an accent color
+ * Generates harmonious colors for JSON keys, strings, numbers, etc.
+ *
+ * @param accent - Accent hex color to base syntax colors on
+ * @param isDark - Whether the theme is dark mode
+ * @returns Object with CodeMirror syntax color variables
+ */
+export function deriveSyntaxColors(accent: string, isDark: boolean): Record<string, string> {
+  const hsv = hexToHsv(accent);
+
+  if (isDark) {
+    // Dark mode: Bright, saturated colors
+    return {
+      '--cm-json-key': hsvToHex((hsv.h + 180) % 360, Math.min(hsv.s, 60), 85), // Complementary, lighter
+      '--cm-json-string': hsvToHex((hsv.h + 30) % 360, Math.min(hsv.s, 70), 75), // Analogous warm
+      '--cm-json-number': hsvToHex((hsv.h + 90) % 360, Math.min(hsv.s, 50), 80), // Triadic
+      '--cm-json-boolean': hsvToHex((hsv.h + 240) % 360, Math.min(hsv.s, 55), 75), // Split complementary
+      '--cm-json-null': hsvToHex(hsv.h, Math.min(hsv.s, 45), 70), // Same hue, muted
+    };
+  }
+  // Light mode: Darker, less saturated for readability
+  return {
+    '--cm-json-key': hsvToHex((hsv.h + 180) % 360, Math.min(hsv.s, 70), 45),
+    '--cm-json-string': hsvToHex((hsv.h + 30) % 360, Math.min(hsv.s, 80), 40),
+    '--cm-json-number': hsvToHex((hsv.h + 90) % 360, Math.min(hsv.s, 60), 50),
+    '--cm-json-boolean': hsvToHex((hsv.h + 240) % 360, Math.min(hsv.s, 65), 45),
+    '--cm-json-null': hsvToHex(hsv.h, Math.min(hsv.s, 55), 50),
+  };
+}
+
+/** Background shade configuration for theme derivation */
+export interface BackgroundShades {
+  '--bg-main': string;
+  '--bg-primary': string;
+  '--bg-panel': string;
+  '--bg-card': string;
+  '--bg-input': string;
+  '--bg-hover': string;
+  '--bg-tertiary': string;
+  '--bg-secondary': string;
+  '--color-background': string;
+}
+
+/**
+ * Derive all background shade variations from a base color
+ *
+ * @param baseColor - Base background hex color
+ * @param isDark - Whether generating for dark mode
+ * @returns Object with all background CSS variables
+ */
+export function deriveBackgroundShades(baseColor: string, isDark: boolean): BackgroundShades {
+  if (isDark) {
+    // Dark mode: progressively lighter shades
+    return {
+      '--bg-main': baseColor,
+      '--bg-primary': baseColor,
+      '--bg-panel': lighten(baseColor, 0.04),
+      '--bg-card': lighten(baseColor, 0.08),
+      '--bg-input': lighten(baseColor, 0.12),
+      '--bg-hover': lighten(baseColor, 0.16),
+      '--bg-tertiary': lighten(baseColor, 0.06),
+      '--bg-secondary': lighten(baseColor, 0.03),
+      '--color-background': baseColor,
+    };
+  }
+  // Light mode: progressively darker shades
+  return {
+    '--bg-main': baseColor,
+    '--bg-primary': baseColor,
+    '--bg-panel': darken(baseColor, 0.02),
+    '--bg-card': darken(baseColor, 0.04),
+    '--bg-input': lighten(baseColor, 0.02), // Input lighter for contrast
+    '--bg-hover': darken(baseColor, 0.06),
+    '--bg-tertiary': darken(baseColor, 0.03),
+    '--bg-secondary': darken(baseColor, 0.01),
+    '--color-background': baseColor,
+  };
+}
+
+/** Text color configuration for theme derivation */
+export interface TextColors {
+  '--text-primary': string;
+  '--text-secondary': string;
+  '--text-muted': string;
+  '--text-disabled': string;
+}
+
+/**
+ * Derive text color variations based on background
+ *
+ * @param bgColor - Background hex color
+ * @param isDark - Whether the theme is dark mode
+ * @returns Object with text CSS variables
+ */
+export function deriveTextColors(bgColor: string, isDark: boolean): TextColors {
+  // Derive text colors with contrast against background
+  if (isDark) {
+    // Light text on dark backgrounds - use lighter variants of bg for muted/disabled
+    return {
+      '--text-primary': '#F5F5F5',
+      '--text-secondary': '#B0B0B0',
+      '--text-muted': lighten(bgColor, 0.35),
+      '--text-disabled': lighten(bgColor, 0.25),
+    };
+  }
+  // Dark text on light backgrounds - use darker variants of bg for muted/disabled
+  return {
+    '--text-primary': '#1A1A1A',
+    '--text-secondary': '#4A4A4A',
+    '--text-muted': darken(bgColor, 0.35),
+    '--text-disabled': darken(bgColor, 0.25),
+  };
+}
+
+/** Border color configuration for theme derivation */
+export interface BorderColors {
+  '--border-color': string;
+  '--border-color-light': string;
+}
+
+/**
+ * Derive border colors from background
+ *
+ * @param bgColor - Background hex color
+ * @param isDark - Whether the theme is dark mode
+ * @returns Object with border CSS variables
+ */
+export function deriveBorderColors(bgColor: string, isDark: boolean): BorderColors {
+  if (isDark) {
+    return {
+      '--border-color': lighten(bgColor, 0.15),
+      '--border-color-light': lighten(bgColor, 0.22),
+    };
+  }
+  return {
+    '--border-color': darken(bgColor, 0.12),
+    '--border-color-light': darken(bgColor, 0.08),
+  };
+}
+
+/**
+ * Extract RGB string from hex for use in rgba() CSS functions
+ *
+ * @param hex - Hex color string
+ * @returns RGB string like "255, 128, 64"
+ */
+export function hexToRgbString(hex: string): string {
+  const rgb = parseHexColor(hex);
+  return `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+}
+
+/** Primary color configuration */
+export interface PrimaryColors {
+  '--color-primary': string;
+  '--color-primary-dark': string;
+  '--color-primary-light': string;
+  '--color-primary-subtle': string;
+  '--primary-rgb': string;
+}
+
+/**
+ * Derive primary color variations
+ *
+ * @param primary - Primary hex color
+ * @returns Object with primary color CSS variables
+ */
+export function derivePrimaryColors(primary: string): PrimaryColors {
+  return {
+    '--color-primary': primary,
+    '--color-primary-dark': darken(primary, 0.25),
+    '--color-primary-light': lighten(primary, 0.15),
+    '--color-primary-subtle': `rgba(${hexToRgbString(primary)}, 0.1)`,
+    '--primary-rgb': hexToRgbString(primary),
+  };
+}
+
+/** Accent color configuration */
+export interface AccentColors {
+  '--color-accent': string;
+  '--color-accent-light': string;
+  '--color-accent-dark': string;
+  '--accent-rgb': string;
+}
+
+/**
+ * Derive accent color variations
+ *
+ * @param accent - Accent hex color
+ * @returns Object with accent color CSS variables
+ */
+export function deriveAccentColors(accent: string): AccentColors {
+  return {
+    '--color-accent': accent,
+    '--color-accent-light': lighten(accent, 0.2),
+    '--color-accent-dark': darken(accent, 0.15),
+    '--accent-rgb': hexToRgbString(accent),
+  };
+}

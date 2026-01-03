@@ -12,12 +12,14 @@
  * - compressionUtils: gzip compression/decompression for storage optimization
  */
 
-export type { TextSegment } from './abilityTextParser.js';
+export type { AbilitySplit, TextSegment } from './abilityTextParser.js';
 // Ability text parser utilities (for bold [] rendering on tokens)
 export {
+  combineAbilityWithSetup,
   getLineSegments,
   hasSetupBrackets,
   parseAbilityText,
+  splitAbilityText,
 } from './abilityTextParser.js';
 // Re-export types
 export type { DebouncedFunction } from './asyncUtils.js';
@@ -84,7 +86,9 @@ export {
 export {
   ACCENT_DECORATIVE_KEYS,
   createEffectiveOptions,
+  DECORATIVES_KEYS,
   mapAccentOptionsToDecorative,
+  mapDecorativesOptionsToDecorative,
 } from './decorativeUtils.js';
 export type {
   AsyncOperationOptions,
@@ -100,6 +104,14 @@ export {
   retryOperation,
   validateRequiredFields,
 } from './errorUtils.js';
+export type { UniqueIdResult } from './idUtils.js';
+// ID uniqueness utilities (for preventing character ID collisions)
+export {
+  ensureUniqueId,
+  getBaseId,
+  getOtherCharacterIds,
+  wouldCollide,
+} from './idUtils.js';
 // Global image cache
 export { globalImageCache } from './imageCache.js';
 // Image utilities
@@ -108,7 +120,10 @@ export {
   canvasToArrayBuffer,
   canvasToBlob,
   checkFontsLoaded,
+  dataUrlToBlob,
   downloadFile,
+  getTokenBlob,
+  getTokenBlobAsync,
   loadImage,
   loadLocalImage,
 } from './imageUtils.js';
@@ -155,9 +170,12 @@ export {
 export {
   generateMultipleNames,
   generateRandomName,
+  generateStableUuid,
   generateUuid,
   nameToId,
 } from './nameGenerator.js';
+// Preset migration utilities
+export { isMigrationNeeded, migratePresets } from './presetMigration.js';
 export type { ProgressCallback, ProgressState } from './progressUtils.js';
 // Progress tracking utilities
 export {
@@ -166,10 +184,12 @@ export {
   resetProgress,
   updateProgress,
 } from './progressUtils.js';
+export type { EncodableScriptData } from './scriptEncoder.js';
 // Script encoder utilities (for official BOTC Script Tool integration)
 export {
   decodeScriptFromUrl,
   encodeScriptForUrl,
+  formatCharacterForOfficialTool,
   getOfficialScriptToolUrl,
   openInOfficialScriptTool,
 } from './scriptEncoder.js';

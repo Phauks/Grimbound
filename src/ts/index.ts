@@ -24,7 +24,6 @@ export {
   applyConfigurableShadow,
   applyTextShadow,
   type CanvasContext,
-  type CanvasOptions,
   type CenteredTextOptions,
   type CurvedTextOptions,
   clearShadow,
@@ -83,25 +82,16 @@ export {
 // ============================================================================
 // Export Module
 // ============================================================================
-export {
-  buildTokenMetadata,
-  createCharacterMetadata,
-  createMetaTokenMetadata,
-  createReminderMetadata,
-  createTokensZip,
-  downloadTokenPNG,
-  embedPngMetadata,
-  PDFGenerator,
-  type PngMetadata,
-} from './export/index.js';
+export { createTokensZip, downloadTokenPNG, PDFGenerator } from './export/index.js';
 // ============================================================================
 // Generation Module
 // ============================================================================
 export {
+  createPreset,
+  duplicatePreset,
   generateAllTokens,
-  getPreset,
-  getPresetNames,
-  PRESETS,
+  getDefaultOptions,
+  isValidPreset,
   TokenGenerator,
 } from './generation/index.js';
 // ============================================================================
@@ -111,8 +101,9 @@ export type {
   Character,
   CharacterValidationResult,
   GenerationOptions,
-  PresetConfig,
-  PresetName,
+  Preset,
+  PresetTier,
+  PresetWithTier,
   ProgressCallback,
   ScriptEntry,
   ScriptMeta,

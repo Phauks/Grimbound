@@ -171,10 +171,6 @@ export function CharactersView({
     displayReminderTokens: previewReminderTokens,
     editedCharacter,
     selectedCharacter: characters.find((c) => c.uuid === selectedCharacterUuid),
-    pngSettings: generationOptions.pngSettings ?? {
-      embedMetadata: true,
-      transparentBackground: false,
-    },
     isMetaSelected,
     addToast,
     setDownloads,
@@ -279,15 +275,29 @@ export function CharactersView({
         if (cancelled) return;
 
         // Create a Token object for display
+        // Extract first image from array if needed
+        const getFirstImage = (img: string | string[]): string =>
+          Array.isArray(img) ? img[0] || '' : img || '';
+
         const token: Token = {
           name: `${jinxPreviewData.character.name} & ${jinxPreviewData.targetCharacter.name}`,
           type: 'jinx',
+          team: 'meta',
           canvas,
+          diameter: canvas.width,
           filename: `jinx_${jinxPreviewData.character.id}_${jinxPreviewData.targetCharacter.id}.png`,
           jinxData: {
-            char1Id: jinxPreviewData.character.id,
-            char2Id: jinxPreviewData.targetCharacter.id,
             reason: jinxPreviewData.jinx.reason,
+            char1: {
+              id: jinxPreviewData.character.id,
+              name: jinxPreviewData.character.name,
+              image: getFirstImage(jinxPreviewData.character.image),
+            },
+            char2: {
+              id: jinxPreviewData.targetCharacter.id,
+              name: jinxPreviewData.targetCharacter.name,
+              image: getFirstImage(jinxPreviewData.targetCharacter.image),
+            },
           },
         };
 
@@ -349,7 +359,7 @@ export function CharactersView({
               {selectedMetaToken ? (
                 <div className={styles.metaTokenPreview}>
                   <img
-                    src={selectedMetaToken.canvas.toDataURL('image/png')}
+                    src={selectedMetaToken.dataUrl || ''}
                     alt={selectedMetaToken.name}
                     className={styles.metaTokenImage}
                   />
@@ -371,7 +381,7 @@ export function CharactersView({
                 // Jinx token preview
                 <div className={styles.jinxTokenPreview}>
                   <img
-                    src={jinxPreviewToken.canvas.toDataURL('image/png')}
+                    src={jinxPreviewToken.dataUrl || ''}
                     alt={jinxPreviewToken.name}
                     className={styles.jinxTokenImage}
                   />

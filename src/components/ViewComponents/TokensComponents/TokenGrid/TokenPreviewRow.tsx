@@ -2,17 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useTokenGenerator } from '@/hooks/tokens/useTokenGenerator';
 import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
+import { combineHashes, hashGenerationOptions, simpleHash } from '@/ts/cache/utils/hashUtils.js';
 import { CONFIG } from '@/ts/config.js';
 import { calculateTokenCounts, getBestPreviewCharacter } from '@/ts/data/characterUtils';
 import { calculateTokenCountsByType, TokenGenerator } from '@/ts/generation/index.js';
-import type {
-  Character,
-  GenerationOptions,
-  Jinx,
-  ScriptMeta,
-  Token,
-  TokenType,
-} from '@/ts/types/index.js';
+import type { Character, GenerationOptions, Jinx, ScriptMeta, Token } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 
@@ -93,7 +87,7 @@ function createAutoSelectedToken(
  */
 async function generateMetaTokenCanvas(
   generator: TokenGenerator,
-  metaTokenType: TokenType | undefined,
+  metaTokenType: Token['type'] | undefined,
   scriptMeta: ScriptMeta | null | undefined,
   generationOptions: GenerationOptions,
   exampleMetaToken: Token | null
@@ -246,7 +240,9 @@ export function TokenPreviewRow({
 
   // These are only used when in context mode (no props provided)
   const exampleCharacterToken = propCharacters ? null : context.exampleCharacterToken;
-  const setExampleCharacterToken = propCharacters ? () => {} : context.setExampleCharacterToken;
+  // Stable no-op function to avoid creating new reference each render
+  const noopSetToken = useCallback(() => {}, []);
+  const setExampleCharacterToken = propCharacters ? noopSetToken : context.setExampleCharacterToken;
   const exampleMetaToken = propCharacters ? null : context.exampleMetaToken;
 
   const [previewCharCanvas, setPreviewCharCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -260,6 +256,8 @@ export function TokenPreviewRow({
   const optionsRef = useRef(generationOptions);
   // Guard to prevent duplicate preview generation (React StrictMode double-mounts)
   const isGeneratingRef = useRef(false);
+  // Track previous values to detect actual changes (prevents infinite loops from reference changes)
+  const prevHashRef = useRef<string>('');
 
   // Get sample character from exampleCharacterToken using extracted helper
   const { sampleCharacter, wasAutoSelected, selectedReminderText } = useMemo(
@@ -267,60 +265,87 @@ export function TokenPreviewRow({
     [characters, exampleCharacterToken]
   );
 
-  // Generate preview tokens - always regenerate fresh to ensure all settings changes are reflected
-  const generatePreview = useCallback(async () => {
-    // Prevent duplicate generation (React StrictMode double-mounts)
+  // Generate preview on mount and when options actually change (deep comparison)
+  useEffect(() => {
+    // Prevent duplicate/concurrent generation first
     if (isGeneratingRef.current) {
       return;
     }
-    isGeneratingRef.current = true;
 
-    setIsGeneratingPreview(true);
-    try {
-      // Pass scriptMeta logo to generator options
-      const generatorOptions = {
-        ...generationOptions,
-        logoUrl: scriptMeta?.logo,
-      };
-      const generator = new TokenGenerator(generatorOptions);
+    // Create hash of current values using stable hash utilities
+    // This prevents infinite loops from object reference changes
+    const optionsHash = hashGenerationOptions(generationOptions);
+    const metaHash = simpleHash(
+      `${scriptMeta?.name || ''}:${scriptMeta?.logo || ''}:${scriptMeta?.author || ''}`
+    );
+    const currentHash = combineHashes([
+      optionsHash,
+      sampleCharacter.id,
+      metaHash,
+      exampleMetaToken?.type || 'script',
+      selectedReminderText || '',
+    ]);
 
-      const charCanvas = await generator.generateCharacterToken(sampleCharacter);
-      setPreviewCharCanvas(charCanvas);
-
-      // Set auto-selected character as example token (if auto-selected and not sample Washerwoman)
-      if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
-        const dpi = generationOptions.dpi || CONFIG.PDF.DPI;
-        setExampleCharacterToken(createAutoSelectedToken(sampleCharacter, charCanvas, dpi));
-      }
-
-      // Generate reminder token - use selected reminder if user picked one, otherwise first reminder
-      const reminders = sampleCharacter.reminders ?? [];
-      if (reminders.length > 0) {
-        const reminderText =
-          selectedReminderText && reminders.includes(selectedReminderText)
-            ? selectedReminderText
-            : reminders[0];
-        const reminderCanvas = await generator.generateReminderToken(sampleCharacter, reminderText);
-        setPreviewReminderCanvas(reminderCanvas);
-      } else {
-        setPreviewReminderCanvas(null);
-      }
-
-      // Generate meta token using helper function
-      const metaCanvas = await generateMetaTokenCanvas(
-        generator,
-        exampleMetaToken?.type,
-        scriptMeta,
-        generationOptions,
-        exampleMetaToken
-      );
-      setPreviewMetaCanvas(metaCanvas);
-    } catch (error) {
-      logger.error('TokenPreviewRow', 'Failed to generate preview', error);
-    } finally {
-      setIsGeneratingPreview(false);
-      isGeneratingRef.current = false;
+    // Skip if nothing actually changed (prevents infinite loop from reference changes)
+    if (currentHash === prevHashRef.current) {
+      return;
     }
+    prevHashRef.current = currentHash;
+
+    const runGeneration = async () => {
+      isGeneratingRef.current = true;
+      setIsGeneratingPreview(true);
+
+      try {
+        // Pass scriptMeta logo to generator options
+        const generatorOptions = {
+          ...generationOptions,
+          logoUrl: scriptMeta?.logo,
+        };
+        const generator = new TokenGenerator(generatorOptions);
+
+        const charCanvas = await generator.generateCharacterToken(sampleCharacter);
+        setPreviewCharCanvas(charCanvas);
+
+        // Set auto-selected character as example token (if auto-selected and not sample Washerwoman)
+        if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
+          setExampleCharacterToken(createAutoSelectedToken(sampleCharacter, charCanvas, CONFIG.PDF.DPI));
+        }
+
+        // Generate reminder token - use selected reminder if user picked one, otherwise first reminder
+        const reminders = sampleCharacter.reminders ?? [];
+        if (reminders.length > 0) {
+          const reminderText =
+            selectedReminderText && reminders.includes(selectedReminderText)
+              ? selectedReminderText
+              : reminders[0];
+          const reminderCanvas = await generator.generateReminderToken(
+            sampleCharacter,
+            reminderText
+          );
+          setPreviewReminderCanvas(reminderCanvas);
+        } else {
+          setPreviewReminderCanvas(null);
+        }
+
+        // Generate meta token using helper function
+        const metaCanvas = await generateMetaTokenCanvas(
+          generator,
+          exampleMetaToken?.type,
+          scriptMeta,
+          generationOptions,
+          exampleMetaToken
+        );
+        setPreviewMetaCanvas(metaCanvas);
+      } catch (error) {
+        logger.error('TokenPreviewRow', 'Failed to generate preview', error);
+      } finally {
+        setIsGeneratingPreview(false);
+        isGeneratingRef.current = false;
+      }
+    };
+
+    runGeneration();
   }, [
     generationOptions,
     sampleCharacter,
@@ -330,11 +355,6 @@ export function TokenPreviewRow({
     wasAutoSelected,
     setExampleCharacterToken,
   ]);
-
-  // Generate preview on mount and when options change
-  useEffect(() => {
-    generatePreview();
-  }, [generatePreview]);
 
   // Auto-regenerate all tokens when options change (if enabled)
   useEffect(() => {

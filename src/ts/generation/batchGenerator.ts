@@ -10,7 +10,6 @@
 
 import { hashObject } from '@/ts/cache/utils/hashUtils.js';
 import type { TextLayoutResult } from '@/ts/canvas/index.js';
-import CONFIG from '@/ts/config.js';
 import { getAllCharacterImageUrls, getCharacterImageUrl } from '@/ts/data/characterUtils.js';
 import {
   createPreloadTasks,
@@ -136,7 +135,11 @@ export function calculateTokenCountsByType(
   if (options.pandemoniumToken) metaCount++;
   if (options.scriptNameToken && scriptMeta?.name) metaCount++;
   if (options.almanacToken && scriptMeta?.almanac) metaCount++;
-  if (options.generateBootleggerRules && scriptMeta?.bootlegger?.length > 0) {
+  if (
+    options.generateBootleggerRules &&
+    scriptMeta?.bootlegger &&
+    scriptMeta.bootlegger.length > 0
+  ) {
     metaCount += scriptMeta.bootlegger.length;
   }
   if (options.jinxTokens) {
@@ -356,19 +359,20 @@ function calculateNormalizedBootleggerLayout(
 async function generateBootleggerTokens(ctx: BatchContext): Promise<Token[]> {
   const tokens: Token[] = [];
 
-  if (!(ctx.options.generateBootleggerRules && ctx.scriptMeta?.bootlegger?.length > 0)) {
+  const bootlegger = ctx.scriptMeta?.bootlegger;
+  if (!(ctx.options.generateBootleggerRules && bootlegger && bootlegger.length > 0)) {
     return tokens;
   }
 
-  const bootleggerEntries = ctx.scriptMeta.bootlegger.filter((text) => text?.trim());
+  const bootleggerEntries = bootlegger.filter((text) => text?.trim());
   const normalizedLayout = calculateNormalizedBootleggerLayout(
     ctx.generator,
     bootleggerEntries,
     ctx.options.bootleggerNormalizeIcons ?? false
   );
 
-  for (let i = 0; i < ctx.scriptMeta.bootlegger.length; i++) {
-    const abilityText = ctx.scriptMeta.bootlegger[i];
+  for (let i = 0; i < bootlegger.length; i++) {
+    const abilityText = bootlegger[i];
 
     checkAbort(ctx.signal);
 
@@ -648,7 +652,7 @@ function getOrCreateDecoratedGenerator(
     const effectiveOptions = createEffectiveOptions(ctx.options as GenerationOptions, decoratives);
     generator = new TokenGenerator({
       ...effectiveOptions,
-      transparentBackground: effectiveOptions.pngSettings?.transparentBackground ?? false,
+      transparentBackground: false,
     });
     ctx.decoratedGeneratorCache.set(hash, generator);
     logger.debug(
@@ -773,10 +777,7 @@ function getGeneratorForCharacter(
   }
 
   const effectiveOptions = createEffectiveOptions(ctx.options as GenerationOptions, decoratives);
-  const generator = new TokenGenerator({
-    ...effectiveOptions,
-    transparentBackground: effectiveOptions.pngSettings?.transparentBackground ?? false,
-  });
+  const generator = new TokenGenerator(effectiveOptions);
 
   return { generator, hasDecorativeOverrides: true };
 }
@@ -1205,7 +1206,6 @@ async function generateCharacterAndReminderTokens(
 function buildGeneratorOptions(options: Partial<GenerationOptions>, scriptMeta: ScriptMeta | null) {
   return {
     ...options,
-    transparentBackground: options.pngSettings?.transparentBackground ?? false,
     bootleggerRules: options.generateBootleggerRules ? scriptMeta?.bootlegger : undefined,
     bootleggerIconType: options.bootleggerIconType,
     bootleggerNormalizeIcons: options.bootleggerNormalizeIcons,
@@ -1326,8 +1326,7 @@ export async function generateAllTokens(
   // Create generator and factory
   const generatorOptions = buildGeneratorOptions(options, scriptMeta);
   const generator = new TokenGenerator(generatorOptions);
-  const dpi = options.dpi ?? CONFIG.PDF.DPI;
-  const factory = new TokenFactory(dpi, tokenCallback);
+  const factory = new TokenFactory(tokenCallback);
 
   // Pre-warm caches
   await prewarmCaches(generator, characters);
@@ -1412,8 +1411,7 @@ async function createPartialGenerationContext(
 
   const generatorOptions = buildGeneratorOptions(options, scriptMeta);
   const generator = new TokenGenerator(generatorOptions);
-  const dpi = options.dpi ?? CONFIG.PDF.DPI;
-  const factory = new TokenFactory(dpi, tokenCallback);
+  const factory = new TokenFactory(tokenCallback);
 
   await prewarmCaches(generator, characters);
 

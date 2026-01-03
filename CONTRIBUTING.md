@@ -29,13 +29,13 @@ This document provides guidelines and information to help you contribute effecti
 ### Initial Setup
 
 1. **Fork the Repository**
-   - Visit [Grimbound Repository](https://github.com/Phauks/Clocktower_Token_Generator)
+   - Visit [Grimbound Repository](https://github.com/Phauks/Grimbound)
    - Click the "Fork" button in the top right
 
 2. **Clone Your Fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Clocktower_Token_Generator.git
-   cd Clocktower_Token_Generator
+   git clone https://github.com/YOUR_USERNAME/Grimbound.git
+   cd Grimbound
    ```
 
 3. **Install Dependencies**
@@ -50,7 +50,7 @@ This document provides guidelines and information to help you contribute effecti
 
 5. **Set Up Upstream Remote** (to sync with main repo)
    ```bash
-   git remote add upstream https://github.com/Phauks/Clocktower_Token_Generator.git
+   git remote add upstream https://github.com/Phauks/Grimbound.git
    ```
 
 ---
@@ -566,9 +566,9 @@ import { createCanvas } from '@/ts/canvas/canvasUtils.js';
   - [TypeScript Docs](https://www.typescriptlang.org/docs/)
 
 - **Issues**
-  - [Existing Issues](https://github.com/Phauks/Clocktower_Token_Generator/issues)
-  - [Feature Requests](https://github.com/Phauks/Clocktower_Token_Generator/issues/new?template=feature_request.md)
-  - [Bug Reports](https://github.com/Phauks/Clocktower_Token_Generator/issues/new?template=bug_report.md)
+  - [Existing Issues](https://github.com/Phauks/Grimbound/issues)
+  - [Feature Requests](https://github.com/Phauks/Grimbound/issues/new?template=feature_request.md)
+  - [Bug Reports](https://github.com/Phauks/Grimbound/issues/new?template=bug_report.md)
 
 ### Getting Support
 

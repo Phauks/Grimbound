@@ -31,6 +31,21 @@ export const INNER_GLOW_EFFECT = {
   RADIUS_SCALE_DIVISOR: 50,
 } as const;
 
+/**
+ * Border effect parameters
+ * Creates a ring border around the token edge
+ */
+export const BORDER_EFFECT = {
+  /** Maximum border width as percentage of diameter */
+  MAX_WIDTH_PERCENT: 10,
+  /** Dash length multiplier for dashed style (relative to border width) */
+  DASH_MULTIPLIER: 2,
+  /** Dot length multiplier for dotted style (relative to border width) */
+  DOT_MULTIPLIER: 0.5,
+  /** Gap multiplier for dashed/dotted patterns */
+  GAP_MULTIPLIER: 1,
+} as const;
+
 // ============================================================================
 // TEXTURE CONSTANTS - Procedural texture generation parameters
 // ============================================================================
@@ -206,6 +221,7 @@ export default {
   // Effects
   VIGNETTE_EFFECT,
   INNER_GLOW_EFFECT,
+  BORDER_EFFECT,
   // Textures
   NOISE_NORMALIZATION,
   MARBLE_TEXTURE,

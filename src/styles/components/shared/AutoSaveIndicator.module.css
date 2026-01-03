@@ -100,10 +100,13 @@
 
 /* Save Now Button */
 .saveButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px;
-  background: #1976d2;
-  color: white;
-  border: none;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
   border-radius: 16px;
   font-size: 13px;
   font-weight: 500;
@@ -113,9 +116,10 @@
 }
 
 .saveButton:hover:not(:disabled) {
-  background: #1565c0;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-accent-light);
+  border-color: var(--color-accent-light);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
 }
 
 .saveButton:active:not(:disabled) {
@@ -123,7 +127,9 @@
 }
 
 .saveButton:disabled {
-  background: #bbbbbb;
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-muted);
+  border-color: var(--text-muted);
   cursor: not-allowed;
   opacity: 0.6;
 }

@@ -23,7 +23,14 @@
       "WebFetch(domain:www.hslpicker.com)",
       "Bash(tree:*)",
       "Bash(npx playwright install chromium)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Skill(superpowers:brainstorming)",
+      "WebFetch(domain:script.bloodontheclocktower.com)",
+      "WebFetch(domain:cors-header-proxy.grimbound.com)",
+      "WebFetch(domain:snapdom.dev)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:npmtrends.com)",
+      "mcp__plugin_episodic-memory_episodic-memory__read"
     ]
   }
 }

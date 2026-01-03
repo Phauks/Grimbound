@@ -103,6 +103,7 @@ export function MeasurementSlider({
       defaultValue={displayConfig.defaultValue}
       ariaLabel={ariaLabel || config.ariaLabel}
       className={className}
+      decimals={DECIMAL_PLACES[displayUnit]}
     />
   );
 }

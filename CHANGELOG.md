@@ -259,7 +259,7 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - Support for CORS-restricted external images with graceful fallback
 - CDN-based dependencies (jsPDF, JSZip, FileSaver.js)
 
-[Unreleased]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.2.3...v0.3.0
-[0.2.3]: https://github.com/Phauks/Clocktower_Token_Generator/compare/v0.1.0...v0.2.3
-[0.1.0]: https://github.com/Phauks/Clocktower_Token_Generator/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Phauks/Grimbound/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Phauks/Grimbound/compare/v0.2.3...v0.3.0
+[0.2.3]: https://github.com/Phauks/Grimbound/compare/v0.1.0...v0.2.3
+[0.1.0]: https://github.com/Phauks/Grimbound/releases/tag/v0.1.0

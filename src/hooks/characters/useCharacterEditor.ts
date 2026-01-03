@@ -97,18 +97,57 @@ export function useCharacterEditor({
   const pendingSaveRef = useRef<Character | null>(null);
   const jsonInputRef = useRef(jsonInput);
   const charactersRef = useRef(characters);
+  const prevSelectedUuidRef = useRef<string>(selectedCharacterUuid);
+  const setJsonInputRef = useRef(setJsonInput);
+  const setCharactersRef = useRef(setCharacters);
 
   // Keep refs in sync
   jsonInputRef.current = jsonInput;
   charactersRef.current = characters;
+  setJsonInputRef.current = setJsonInput;
+  setCharactersRef.current = setCharacters;
 
   // Sync editedCharacter when selected character changes
   useEffect(() => {
-    // Skip if we just saved - the editedCharacter is already up to date
-    if (justSavedRef.current) {
+    const isNewCharacter = selectedCharacterUuid !== prevSelectedUuidRef.current;
+
+    // If switching to a DIFFERENT character, flush any pending save for the old character first
+    if (isNewCharacter && pendingSaveRef.current) {
+      // Cancel debounced timer
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      // Flush immediately
+      const charToSave = pendingSaveRef.current;
+      try {
+        const origUuid = originalCharacterUuidRef.current;
+        const origChar = charactersRef.current.find((c) => c.uuid === origUuid);
+        const origId = origChar?.id || charToSave.id;
+        const updatedJson = updateCharacterInJson(jsonInputRef.current, origId, charToSave);
+        setJsonInputRef.current(updatedJson);
+        const updatedChars = charactersRef.current.map((c) =>
+          c.uuid === origUuid ? charToSave : c
+        );
+        setCharactersRef.current(updatedChars);
+        pendingSaveRef.current = null;
+        logger.debug('useCharacterEditor', 'Flushed pending save on selection change');
+      } catch (error) {
+        logger.error('useCharacterEditor', 'Flush save failed on selection change', error);
+      }
+    }
+
+    // Update previous UUID ref
+    prevSelectedUuidRef.current = selectedCharacterUuid;
+
+    // Skip loading only if we just saved for the SAME character (not when switching)
+    if (justSavedRef.current && !isNewCharacter) {
       justSavedRef.current = false;
       return;
     }
+
+    // Reset justSavedRef
+    justSavedRef.current = false;
 
     if (selectedCharacterUuid && characters.length > 0) {
       const char = characters.find((c) => c.uuid === selectedCharacterUuid);

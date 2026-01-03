@@ -108,16 +108,19 @@ export async function loadLocalImage(path: string): Promise<HTMLImageElement> {
 
 /**
  * Convert canvas to blob
- * @param canvas - Canvas element
+ * @param canvas - Canvas element (optional, may be undefined/cleared)
  * @param type - MIME type
  * @param quality - Quality (0-1)
  * @returns Image blob
  */
 export async function canvasToBlob(
-  canvas: HTMLCanvasElement,
+  canvas: HTMLCanvasElement | undefined,
   type: string = 'image/png',
   quality: number = 1
 ): Promise<Blob> {
+  if (!canvas || canvas.width <= 1 || canvas.height <= 1) {
+    throw new Error('Canvas is undefined or cleared - use dataUrlToBlob instead');
+  }
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -131,6 +134,86 @@ export async function canvasToBlob(
       quality
     );
   });
+}
+
+/**
+ * Convert a data URL to a Blob.
+ * More efficient than recreating a canvas when you just need the binary data.
+ *
+ * @param dataUrl - Data URL string (e.g., "data:image/png;base64,...")
+ * @returns Blob containing the image data
+ */
+export function dataUrlToBlob(dataUrl: string): Blob {
+  // Parse data URL
+  const [header, base64Data] = dataUrl.split(',');
+  const mimeMatch = header.match(/:(.*?);/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+
+  // Decode base64
+  const binaryString = atob(base64Data);
+  const length = binaryString.length;
+  const bytes = new Uint8Array(length);
+
+  for (let i = 0; i < length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
+/**
+ * Token-like interface for getTokenBlob helper.
+ * Matches the Token type's relevant properties.
+ */
+interface TokenLike {
+  dataUrl?: string;
+  canvas?: HTMLCanvasElement;
+  name?: string;
+}
+
+/**
+ * Get a Blob from a token, preferring dataUrl over canvas.
+ * This is the recommended way to get a blob for export when tokens have pre-encoded dataUrls.
+ *
+ * @param token - Token object with dataUrl and/or canvas
+ * @returns Blob containing the token image
+ * @throws Error if neither dataUrl nor valid canvas is available
+ */
+export function getTokenBlob(token: TokenLike): Blob {
+  // Prefer dataUrl (already encoded, more efficient)
+  if (token.dataUrl) {
+    return dataUrlToBlob(token.dataUrl);
+  }
+
+  // Fallback to canvas (legacy path or tokens with valid canvas)
+  if (token.canvas && token.canvas.width > 1 && token.canvas.height > 1) {
+    // Synchronous fallback: use toDataURL then convert
+    const dataUrl = token.canvas.toDataURL('image/png');
+    return dataUrlToBlob(dataUrl);
+  }
+
+  throw new Error(`Token "${token.name || 'unknown'}" has no dataUrl or valid canvas`);
+}
+
+/**
+ * Async version of getTokenBlob that uses canvas.toBlob for better quality.
+ * Use this when you need the native PNG encoding from canvas.toBlob.
+ *
+ * @param token - Token object with dataUrl and/or canvas
+ * @returns Promise resolving to Blob containing the token image
+ */
+export async function getTokenBlobAsync(token: TokenLike): Promise<Blob> {
+  // Prefer dataUrl (already encoded)
+  if (token.dataUrl) {
+    return dataUrlToBlob(token.dataUrl);
+  }
+
+  // Fallback to canvas with native toBlob
+  if (token.canvas && token.canvas.width > 1 && token.canvas.height > 1) {
+    return canvasToBlob(token.canvas);
+  }
+
+  throw new Error(`Token "${token.name || 'unknown'}" has no dataUrl or valid canvas`);
 }
 
 /**

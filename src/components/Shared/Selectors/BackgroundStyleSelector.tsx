@@ -21,9 +21,11 @@ import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
 import { useBackgroundImageUrl, useDrawerState } from '@/hooks';
 import drawerStyles from '@/styles/components/shared/BackgroundDrawer.module.css';
 import styles from '@/styles/components/shared/BackgroundStyleSelector.module.css';
-import type { TextureBlendMode } from '@/ts/types/backgroundEffects';
+import type { BorderMode, BorderStyle, TextureBlendMode } from '@/ts/types/backgroundEffects';
 import {
   BLEND_MODE_OPTIONS,
+  BORDER_MODE_OPTIONS,
+  BORDER_STYLE_OPTIONS,
   DEFAULT_BACKGROUND_STYLE,
   DEFAULT_EFFECTS_CONFIG,
   DEFAULT_GRADIENT_CONFIG,
@@ -639,6 +641,82 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         className={drawerStyles.subOptionIndent}
         ariaLabel="Glow intensity"
       />
+
+      {/* Border effect */}
+      <div className={drawerStyles.controlRow}>
+        <label className={drawerStyles.effectCheckbox}>
+          <input
+            type="checkbox"
+            checked={activeStyle.effects.borderEnabled}
+            onChange={(e) =>
+              handleEffectsChange({ ...activeStyle.effects, borderEnabled: e.target.checked })
+            }
+          />
+          Border
+        </label>
+        <ColorPreviewSelector
+          value={activeStyle.effects.borderColor}
+          onChange={(color) => handleEffectsChange({ ...activeStyle.effects, borderColor: color })}
+          onPreviewChange={(color) =>
+            handleEffectsChange({ ...activeStyle.effects, borderColor: color })
+          }
+          disabled={!activeStyle.effects.borderEnabled}
+          size="small"
+        />
+      </div>
+      <EditableSlider
+        label="Width"
+        value={activeStyle.effects.borderWidth}
+        onChange={(v) => handleEffectsChange({ ...activeStyle.effects, borderWidth: v })}
+        min={0}
+        max={10}
+        step={0.5}
+        suffix="%"
+        defaultValue={DEFAULT_EFFECTS_CONFIG.borderWidth}
+        disabled={!activeStyle.effects.borderEnabled}
+        className={drawerStyles.subOptionIndent}
+        ariaLabel="Border width"
+      />
+      <div className={`${drawerStyles.controlRow} ${drawerStyles.subOptionIndent}`}>
+        <span className={drawerStyles.controlLabel}>Style</span>
+        <select
+          value={activeStyle.effects.borderStyle}
+          onChange={(e) =>
+            handleEffectsChange({
+              ...activeStyle.effects,
+              borderStyle: e.target.value as BorderStyle,
+            })
+          }
+          className={drawerStyles.typeSelect}
+          disabled={!activeStyle.effects.borderEnabled}
+        >
+          {BORDER_STYLE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className={`${drawerStyles.controlRow} ${drawerStyles.subOptionIndent}`}>
+        <span className={drawerStyles.controlLabel}>Mode</span>
+        <select
+          value={activeStyle.effects.borderMode}
+          onChange={(e) =>
+            handleEffectsChange({
+              ...activeStyle.effects,
+              borderMode: e.target.value as BorderMode,
+            })
+          }
+          className={drawerStyles.typeSelect}
+          disabled={!activeStyle.effects.borderEnabled}
+        >
+          {BORDER_MODE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value} title={opt.description}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 

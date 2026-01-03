@@ -4,21 +4,27 @@
  * Encodes script JSON data for use with the official Blood on the Clocktower
  * Script Tool at script.bloodontheclocktower.com.
  *
- * The official tool accepts scripts via URL parameter using gzip + base64url encoding.
+ * The official tool accepts scripts via URL parameter using gzip + base64 encoding.
  * This utility provides functions to encode scripts in this format.
  *
  * @module ts/utils/scriptEncoder
  */
 
 import pako from 'pako';
-import type { ScriptEntry } from '@/ts/types/index.js';
+import type { Character, ScriptEntry } from '@/ts/types/index.js';
+
+/** Type for script data that can be encoded - looser than ScriptEntry for flexibility */
+export type EncodableScriptData = unknown[];
 
 /**
- * Encode script JSON for URL parameter (gzip + base64url)
+ * Encode script JSON for URL parameter (gzip + base64)
  * Matches the format expected by script.bloodontheclocktower.com
  *
+ * The official tool expects standard base64 encoding (not base64url).
+ * The result should be URL-encoded when used in a query string.
+ *
  * @param script - Array of script entries (meta, characters, id references)
- * @returns Base64url encoded gzip-compressed JSON string
+ * @returns Standard base64 encoded gzip-compressed JSON string
  *
  * @example
  * ```typescript
@@ -29,52 +35,41 @@ import type { ScriptEntry } from '@/ts/types/index.js';
  *   'imp'
  * ]);
  * // Returns something like: "H4sIAAAAAAAA..."
+ * // Use with: `?script=${encodeURIComponent(encoded)}`
  * ```
  */
-export function encodeScriptForUrl(script: ScriptEntry[]): string {
+export function encodeScriptForUrl(script: EncodableScriptData): string {
   // Convert script to JSON string
   const json = JSON.stringify(script);
 
   // Compress with gzip
   const compressed = pako.gzip(json);
 
-  // Convert to base64
+  // Convert to standard base64 (not base64url)
+  // The official BOTC script tool expects standard base64 with URL encoding
   let base64 = '';
   const bytes = new Uint8Array(compressed);
   for (const byte of bytes) {
     base64 += String.fromCharCode(byte);
   }
-  base64 = btoa(base64);
-
-  // Convert to base64url (RFC 4648)
-  // Replace + with -, / with _, and remove trailing =
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(base64);
 }
 
 /**
  * Decode script from URL parameter format back to JSON
  * Useful for debugging or importing scripts from URLs
  *
- * @param encoded - Base64url encoded gzip-compressed string
+ * @param encoded - Standard base64 encoded gzip-compressed string
  * @returns Parsed script entries array
  *
  * @example
  * ```typescript
  * const script = decodeScriptFromUrl("H4sIAAAAAAAA...");
- * // Returns the original script array
  * ```
  */
 export function decodeScriptFromUrl(encoded: string): ScriptEntry[] {
-  // Convert from base64url back to base64
-  let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
-
-  // Add padding if needed
-  while (base64.length % 4 !== 0) {
-    base64 += '=';
-  }
-
   // Decode base64 to binary
-  const binaryString = atob(base64);
+  const binaryString = atob(encoded);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
@@ -90,7 +85,7 @@ export function decodeScriptFromUrl(encoded: string): ScriptEntry[] {
 /**
  * Generate the full URL to the official BOTC Script Tool with the script pre-loaded
  *
- * @param script - Array of script entries
+ * @param script - Array of script entries (can include meta objects, character IDs, or full character objects)
  * @returns Full URL to script.bloodontheclocktower.com with encoded script
  *
  * @example
@@ -104,15 +99,16 @@ export function decodeScriptFromUrl(encoded: string): ScriptEntry[] {
  * window.open(url, '_blank');
  * ```
  */
-export function getOfficialScriptToolUrl(script: ScriptEntry[]): string {
+export function getOfficialScriptToolUrl(script: EncodableScriptData): string {
   const encoded = encodeScriptForUrl(script);
-  return `https://script.bloodontheclocktower.com/?script=${encoded}`;
+  // URL-encode the base64 string (+ becomes %2B, / becomes %2F, = becomes %3D)
+  return `https://script.bloodontheclocktower.com/?script=${encodeURIComponent(encoded)}`;
 }
 
 /**
  * Open the official BOTC Script Tool in a new tab with the script pre-loaded
  *
- * @param script - Array of script entries
+ * @param script - Array of script entries (can include meta objects, character IDs, or full character objects)
  * @returns The window reference (or null if popup was blocked)
  *
  * @example
@@ -120,7 +116,47 @@ export function getOfficialScriptToolUrl(script: ScriptEntry[]): string {
  * openInOfficialScriptTool(myScript);
  * ```
  */
-export function openInOfficialScriptTool(script: ScriptEntry[]): Window | null {
+export function openInOfficialScriptTool(script: EncodableScriptData): Window | null {
   const url = getOfficialScriptToolUrl(script);
   return window.open(url, '_blank');
+}
+
+/**
+ * Format a character for the official BOTC Script Tool
+ *
+ * - Official characters: returns just the ID string
+ * - Custom characters: returns full character object with all properties
+ *
+ * @param char - Character to format
+ * @returns String ID for official characters, or full object for custom
+ */
+export function formatCharacterForOfficialTool(char: Character): string | Record<string, unknown> {
+  // Official characters can be referenced by ID alone
+  if (char.source === 'official') {
+    return char.id;
+  }
+
+  // Custom characters need full data for the tool to display them
+  const customChar: Record<string, unknown> = {
+    id: char.id,
+    name: char.name,
+    ability: char.ability || '',
+    team: char.team,
+  };
+
+  // Add optional properties only if they have values
+  if (char.image) customChar.image = char.image;
+  if (char.firstNight) customChar.firstNight = char.firstNight;
+  if (char.firstNightReminder) customChar.firstNightReminder = char.firstNightReminder;
+  if (char.otherNight) customChar.otherNight = char.otherNight;
+  if (char.otherNightReminder) customChar.otherNightReminder = char.otherNightReminder;
+  if (char.reminders && char.reminders.length > 0) customChar.reminders = char.reminders;
+  if (char.remindersGlobal && char.remindersGlobal.length > 0) {
+    customChar.remindersGlobal = char.remindersGlobal;
+  }
+  if (char.setup) customChar.setup = char.setup;
+  if (char.flavor) customChar.flavor = char.flavor;
+  if (char.jinxes && char.jinxes.length > 0) customChar.jinxes = char.jinxes;
+
+  return customChar;
 }

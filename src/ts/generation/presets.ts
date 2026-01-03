@@ -1,122 +1,93 @@
 /**
  * Blood on the Clocktower Token Generator
- * Preset Configurations
+ * Preset Utilities
+ *
+ * This module provides utilities for the preset system.
+ * All presets are user-created; no built-in presets ship with the app.
+ *
+ * Presets are stored in two tiers:
+ * - Global: localStorage (available across all projects)
+ * - Local: ProjectState (travel with project exports/imports)
+ *
+ * @module generation/presets
  */
 
-import type { PresetConfig, PresetName } from '@/ts/types/index.js';
+import type { GenerationOptions, Preset } from '@/ts/types/index.js';
 import { DEFAULT_GENERATION_OPTIONS } from '@/ts/types/tokenOptions.js';
+import { generateUuid } from '@/ts/utils/index.js';
 
-export const PRESETS: Record<PresetName, PresetConfig> = {
-  classic: {
-    name: 'Default',
-    description: 'Application defaults - always reflects current default settings',
-    icon: '⚙️',
-    settings: DEFAULT_GENERATION_OPTIONS,
-  },
-  fullbloom: {
-    name: 'Full Bloom',
-    description: 'Maximum decorative elements with ornate styling',
-    icon: '🌸',
-    settings: {
-      displayAbilityText: true,
-      generateBootleggerRules: false,
-      tokenCount: true,
-      setupStyle: 'setup_flower_3',
-      reminderBackground: '#FFF8DC',
-      characterBackground: 'character_background_3',
-      characterNameFont: 'Dumbledor 1',
-      characterNameColor: '#1a1a2e',
-      characterReminderFont: 'TradeGothic',
-      abilityTextFont: 'TradeGothic',
-      abilityTextColor: '#2d2d44',
-      reminderTextColor: '#1a1a2e',
-      maximumAccents: 5,
-      pandemoniumToken: true,
-      scriptNameToken: true,
-      almanacToken: true,
-      fontSpacing: {
-        characterName: 2,
-        characterText: 1,
-        reminderText: 1,
-        metaName: 2,
-        metaText: 2,
-      },
-      textShadow: {
-        characterName: 6,
-        characterText: 4,
-        reminderText: 5,
-        metaName: 6,
-        metaText: 6,
-      },
-      pngSettings: {
-        embedMetadata: true,
-        transparentBackground: false,
-      },
-      zipSettings: {
-        saveInTeamFolders: true,
-        saveRemindersSeparately: true,
-        metaTokenFolder: true,
-        includeScriptJson: true,
-        compressionLevel: 'normal',
-      },
-    },
-  },
-  minimal: {
-    name: 'Minimal',
-    description: 'Clean, simple tokens with reduced visual elements',
-    icon: '⬜',
-    settings: {
-      displayAbilityText: false,
-      generateBootleggerRules: false,
-      tokenCount: false,
-      setupStyle: 'setup_flower_1',
-      reminderBackground: '#FFFFFF',
-      characterBackground: 'character_background_1',
-      characterNameFont: 'TradeGothic',
-      characterNameColor: '#000000',
-      characterReminderFont: 'TradeGothic',
-      abilityTextFont: 'TradeGothic',
-      abilityTextColor: '#333333',
-      reminderTextColor: '#000000',
-      maximumAccents: 0,
-      pandemoniumToken: false,
-      scriptNameToken: false,
-      almanacToken: false,
-      fontSpacing: {
-        characterName: 0,
-        characterText: 0,
-        reminderText: 0,
-        metaName: 0,
-        metaText: 0,
-      },
-      textShadow: {
-        characterName: 2,
-        characterText: 2,
-        reminderText: 2,
-        metaName: 2,
-        metaText: 2,
-      },
-      pngSettings: {
-        embedMetadata: false,
-        transparentBackground: false,
-      },
-      zipSettings: {
-        saveInTeamFolders: false,
-        saveRemindersSeparately: false,
-        metaTokenFolder: false,
-        includeScriptJson: false,
-        compressionLevel: 'fast',
-      },
-    },
-  },
-};
-
-export function getPreset(name: PresetName): PresetConfig {
-  return PRESETS[name];
+/**
+ * Create a new preset from current settings
+ *
+ * @param name - Display name for the preset
+ * @param description - Optional description
+ * @param icon - Emoji icon for visual identification
+ * @param settings - Generation options to save
+ * @returns New Preset object with generated ID and timestamps
+ */
+export function createPreset(
+  name: string,
+  description: string,
+  icon: string,
+  settings: GenerationOptions
+): Preset {
+  const now = Date.now();
+  return {
+    id: `preset_${generateUuid()}`,
+    name,
+    description,
+    icon,
+    settings: { ...settings }, // Deep copy to avoid mutations
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
-export function getPresetNames(): PresetName[] {
-  return Object.keys(PRESETS) as PresetName[];
+/**
+ * Get the default generation options.
+ * Used for the "Reset to Defaults" functionality.
+ *
+ * @returns A copy of DEFAULT_GENERATION_OPTIONS
+ */
+export function getDefaultOptions(): GenerationOptions {
+  return { ...DEFAULT_GENERATION_OPTIONS };
 }
 
-export default PRESETS;
+/**
+ * Create a copy of an existing preset with a new ID
+ *
+ * @param preset - The preset to duplicate
+ * @param nameSuffix - Optional suffix to add to the name (default: " (Copy)")
+ * @returns New Preset object with fresh ID and timestamps
+ */
+export function duplicatePreset(preset: Preset, nameSuffix = ' (Copy)'): Preset {
+  const now = Date.now();
+  return {
+    id: `preset_${generateUuid()}`,
+    name: `${preset.name}${nameSuffix}`,
+    description: preset.description,
+    icon: preset.icon,
+    settings: { ...preset.settings },
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+/**
+ * Validate that an object has the required Preset fields
+ *
+ * @param obj - Object to validate
+ * @returns true if object is a valid Preset
+ */
+export function isValidPreset(obj: unknown): obj is Preset {
+  if (typeof obj !== 'object' || obj === null) return false;
+
+  const preset = obj as Record<string, unknown>;
+
+  return (
+    typeof preset.id === 'string' &&
+    typeof preset.name === 'string' &&
+    typeof preset.settings === 'object' &&
+    preset.settings !== null
+  );
+}

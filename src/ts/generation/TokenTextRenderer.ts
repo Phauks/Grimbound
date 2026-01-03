@@ -118,7 +118,7 @@ export class TokenTextRenderer {
       return undefined;
     }
 
-    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * (this.options.dpi || 300);
+    const diameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
 
     // Create temporary canvas for measurement
     const tempCanvas = document.createElement('canvas');
@@ -182,7 +182,7 @@ export class TokenTextRenderer {
    */
   private pointsToPixels(points: number): number {
     // 1 point = 1/72 inch, convert to pixels based on DPI
-    return (points / 72) * (this.options.dpi || 300);
+    return (points / 72) * CONFIG.PDF.DPI;
   }
 
   /**

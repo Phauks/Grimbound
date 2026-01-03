@@ -294,12 +294,19 @@ export class CustomFontProvider implements ICustomFontProvider {
     const { isVariable, axes } = detectVariableFont(data);
 
     // Extract weight range from wght axis if available
+    // Valid CSS font weights are 100-900 in increments of 100
+    const VALID_WEIGHTS: FontWeight[] = [100, 200, 300, 400, 500, 600, 700, 800, 900];
     const wghtAxis = axes.find((a) => a.tag === 'wght');
-    const weights: number[] = wghtAxis
-      ? [Math.round(wghtAxis.min), Math.round(wghtAxis.default), Math.round(wghtAxis.max)].filter(
-          (v, i, arr) => arr.indexOf(v) === i
-        ) // unique values
-      : [400];
+    const weights: FontWeight[] = wghtAxis
+      ? ([Math.round(wghtAxis.min), Math.round(wghtAxis.default), Math.round(wghtAxis.max)]
+          .filter((v, i, arr) => arr.indexOf(v) === i) // unique values
+          .map((w) => {
+            // Round to nearest valid font weight
+            const clamped = Math.max(100, Math.min(900, w));
+            return (Math.round(clamped / 100) * 100) as FontWeight;
+          })
+          .filter((w): w is FontWeight => VALID_WEIGHTS.includes(w)) as FontWeight[])
+      : [400 as FontWeight];
 
     // Check for italic axis
     const hasItalic = axes.some((a) => a.tag === 'ital' || a.tag === 'slnt');

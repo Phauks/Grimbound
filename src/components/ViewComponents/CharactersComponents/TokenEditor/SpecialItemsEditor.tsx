@@ -24,11 +24,8 @@ interface SpecialItemsEditorProps {
   character: Character;
   /** Whether editing is disabled */
   disabled: boolean;
-  /** Callback to update the character - accepts 'special' as valid field for CharacterWithSpecial */
-  onEditChange: <K extends keyof CharacterWithSpecial>(
-    field: K,
-    value: CharacterWithSpecial[K]
-  ) => void;
+  /** Callback to update the character - cast internally to handle 'special' field */
+  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
 }
 
 /**
@@ -198,7 +195,8 @@ export const SpecialItemsEditor = memo(function SpecialItemsEditor({
 
   const updateSpecialArray = useCallback(
     (newArray: SpecialItem[]) => {
-      onEditChange('special', newArray);
+      // Cast to handle 'special' field which exists on CharacterWithSpecial
+      (onEditChange as (field: string, value: unknown) => void)('special', newArray);
     },
     [onEditChange]
   );

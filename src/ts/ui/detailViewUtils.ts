@@ -7,7 +7,7 @@ import CONFIG from '@/ts/config.js';
 import { createTokensZip } from '@/ts/export/index.js';
 import { TokenGenerator } from '@/ts/generation/index.js';
 import type { Character, GenerationOptions, Team, Token } from '@/ts/types/index.js';
-import { downloadFile, logger, sanitizeFilename } from '@/ts/utils/index.js';
+import { downloadFile, getTokenBlob, logger, sanitizeFilename } from '@/ts/utils/index.js';
 
 // Create child logger for detail view operations
 const detailLogger = logger.child('DetailView');
@@ -20,12 +20,7 @@ export async function regenerateSingleToken(
   _originalCharacter: Character,
   generationOptions: GenerationOptions
 ): Promise<HTMLCanvasElement> {
-  // Extract transparentBackground from pngSettings for TokenGenerator
-  const generatorOptions = {
-    ...generationOptions,
-    transparentBackground: generationOptions.pngSettings?.transparentBackground ?? false,
-  };
-  const generator = new TokenGenerator(generatorOptions);
+  const generator = new TokenGenerator(generationOptions);
 
   try {
     const canvas = await generator.generateCharacterToken(editedCharacter);
@@ -48,12 +43,8 @@ export async function regenerateCharacterAndReminders(
   generationOptions: GenerationOptions,
   imageOverride?: string
 ): Promise<{ characterToken: Token; reminderTokens: Token[] }> {
-  const generatorOptions = {
-    ...generationOptions,
-    transparentBackground: generationOptions.pngSettings?.transparentBackground ?? false,
-  };
-  const generator = new TokenGenerator(generatorOptions);
-  const dpi = generationOptions.dpi ?? CONFIG.PDF.DPI;
+  const generator = new TokenGenerator(generationOptions);
+  const dpi = CONFIG.PDF.DPI;
 
   try {
     // Generate character token (with optional image override for variant preview)
@@ -209,7 +200,6 @@ export async function downloadCharacterTokensAsZip(
   characterToken: Token,
   reminderTokens: Token[],
   characterName: string,
-  pngSettings?: { embedMetadata: boolean; transparentBackground: boolean },
   characterData?: Character,
   progressCallback?: (current: number, total: number) => void
 ): Promise<void> {
@@ -229,10 +219,8 @@ export async function downloadCharacterTokensAsZip(
         saveRemindersSeparately: false,
         metaTokenFolder: false,
         includeScriptJson: !!characterJson,
-        compressionLevel: 'normal',
       },
-      characterJson, // scriptJson - we'll use this for character JSON
-      pngSettings // pngSettings for metadata embedding
+      characterJson
     );
 
     // Download as ZIP
@@ -246,23 +234,9 @@ export async function downloadCharacterTokensAsZip(
 /**
  * Download only the character token as a PNG file
  */
-export async function downloadCharacterTokenOnly(
-  characterToken: Token,
-  characterName: string,
-  _pngSettings?: { embedMetadata: boolean; transparentBackground: boolean }
-): Promise<void> {
+export function downloadCharacterTokenOnly(characterToken: Token, characterName: string): void {
   try {
-    const canvas = characterToken.canvas;
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Failed to create blob from canvas'));
-        }
-      }, 'image/png');
-    });
-
+    const blob = getTokenBlob(characterToken);
     const filename = `${sanitizeFilename(characterName)}.png`;
     downloadFile(blob, filename);
   } catch (error) {
@@ -276,8 +250,7 @@ export async function downloadCharacterTokenOnly(
  */
 export async function downloadReminderTokensOnly(
   reminderTokens: Token[],
-  characterName: string,
-  pngSettings?: { embedMetadata: boolean; transparentBackground: boolean }
+  characterName: string
 ): Promise<void> {
   if (reminderTokens.length === 0) {
     throw new Error('No reminder tokens to download');
@@ -285,19 +258,11 @@ export async function downloadReminderTokensOnly(
 
   try {
     // Use the existing createTokensZip function
-    const blob = await createTokensZip(
-      reminderTokens,
-      null,
-      {
-        saveInTeamFolders: false,
-        saveRemindersSeparately: false,
-        metaTokenFolder: false,
-        includeScriptJson: false,
-        compressionLevel: 'normal',
-      },
-      undefined, // scriptJson
-      pngSettings // pngSettings for metadata embedding
-    );
+    const blob = await createTokensZip(reminderTokens, null, {
+      saveInTeamFolders: false,
+      saveRemindersSeparately: false,
+      metaTokenFolder: false,
+    });
 
     // Download as ZIP
     downloadFile(blob, `${characterName}_reminders.zip`);

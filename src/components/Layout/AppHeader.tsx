@@ -1,3 +1,4 @@
+import { ThemeSelector } from '@/components/Layout/ThemeSelector';
 import { SaveAsNewProjectButton } from '@/components/Shared/Assets/SaveAsNewProjectButton';
 import { AutoSaveIndicator } from '@/components/Shared/Feedback/AutoSaveIndicator';
 import styles from '@/styles/components/layout/Header.module.css';
@@ -51,6 +52,7 @@ export function AppHeader({
         </div>
       </div>
       <div className={styles.headerRight}>
+        <ThemeSelector />
         <button
           type="button"
           className={styles.iconButton}
@@ -123,7 +125,7 @@ export function AppHeader({
           <span className={styles.srOnly}>Open Script Tool</span>
         </a>
         <a
-          href="https://github.com/Phauks/Clocktower_Token_Generator"
+          href="https://github.com/Phauks/Grimbound"
           target="_blank"
           rel="noopener noreferrer"
           className={styles.iconButton}

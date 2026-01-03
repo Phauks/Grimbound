@@ -15,9 +15,11 @@
 
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useDataSync } from '@/contexts/DataSyncContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character, DecorativeOverrides } from '@/ts/types/index.js';
+import { ensureUniqueId, generateStableUuid, getOtherCharacterIds } from '@/ts/utils/index.js';
 import { CharacterDecorativesPanel } from './CharacterDecorativesPanel';
 import {
   AlmanacTabContent,
@@ -62,6 +64,7 @@ export const TokenEditor = memo(function TokenEditor({
   // Access metadata store from context
   const { getMetadata, setMetadata, generationOptions, characters } = useTokenContext();
   const { getCharacters, isInitialized } = useDataSync();
+  const { addToast } = useToast();
   const charUuid = character.uuid || '';
   const metadata = getMetadata(charUuid);
   const decoratives = metadata.decoratives || {};
@@ -98,10 +101,50 @@ export const TokenEditor = memo(function TokenEditor({
     [charUuid, setMetadata]
   );
 
-  // Convert official character to custom
-  const handleConvertToCustom = useCallback(() => {
-    onEditChange('source', 'custom');
-  }, [onEditChange]);
+  // Convert official character to custom with unique ID handling
+  const handleConvertToCustom = useCallback(async () => {
+    if (!onReplaceCharacter) {
+      // Fallback to simple source change if replace not available
+      onEditChange('source', 'custom');
+      return;
+    }
+
+    // Get other character IDs to check for collisions
+    const otherIds = getOtherCharacterIds(characters, character.uuid);
+
+    // Ensure unique ID
+    const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(character.id, otherIds);
+
+    // Generate new UUID based on the (possibly new) ID
+    const newUuid = await generateStableUuid(uniqueId, character.name);
+
+    // Create the custom version with unique ID
+    const customCharacter: Character = {
+      ...character,
+      id: uniqueId,
+      uuid: newUuid,
+      source: 'custom',
+    };
+
+    // Replace the character
+    onReplaceCharacter(customCharacter);
+
+    // Set metadata - break ID link since we're now custom
+    setMetadata(newUuid, {
+      ...metadata,
+      idLinkedToName: false,
+    });
+
+    // Show toast notification
+    if (wasRenamed) {
+      addToast(
+        `Converted to custom. ID renamed from '${originalId}' to '${uniqueId}' to avoid conflict.`,
+        'info'
+      );
+    } else {
+      addToast(`Converted '${character.name}' to custom character.`, 'success');
+    }
+  }, [character, characters, metadata, onEditChange, onReplaceCharacter, setMetadata, addToast]);
 
   return (
     <div className={styles.editor}>
@@ -138,48 +181,7 @@ export const TokenEditor = memo(function TokenEditor({
           </button>
         </div>
 
-        {/* Official Character Banner */}
-        {isOfficial && (
-          <div
-            className={styles.officialBanner}
-            title="This is an official character. Editing is disabled to preserve the original data."
-          >
-            <div className={styles.officialLeft}>
-              <span className={styles.officialBadge}>Official</span>
-              <a
-                href={`https://wiki.bloodontheclocktower.com/${encodeURIComponent(character.name)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.wikiLink}
-                title="View on Wiki"
-              >
-                <span className={styles.srOnly}>View on Wiki</span>
-                <svg
-                  className={styles.wikiIcon}
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  width="16"
-                  height="16"
-                  aria-hidden="true"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-                </svg>
-              </a>
-            </div>
-            <div className={styles.officialActions}>
-              <button
-                type="button"
-                className={styles.convertButton}
-                onClick={handleConvertToCustom}
-                title="Create a custom copy that can be edited"
-              >
-                Convert to Custom
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Content */}
+        {/* Tab Content - Banner rendered inside each tab for sticky scroll behavior */}
         {activeTab === 'info' && (
           <GameplayTabContent
             character={character}
@@ -195,6 +197,7 @@ export const TokenEditor = memo(function TokenEditor({
             officialCharacters={officialCharacters}
             onPreviewJinx={onPreviewJinx}
             previewedJinxIndex={previewedJinxIndex}
+            onConvertToCustom={handleConvertToCustom}
           />
         )}
 
@@ -203,12 +206,12 @@ export const TokenEditor = memo(function TokenEditor({
             character={character}
             isOfficial={isOfficial}
             onEditChange={onEditChange}
+            onConvertToCustom={handleConvertToCustom}
           />
         )}
 
         {activeTab === 'decoratives' && (
           <CharacterDecorativesPanel
-            character={character}
             decoratives={decoratives}
             generationOptions={generationOptions}
             onDecorativesChange={handleDecorativesChange}
@@ -225,6 +228,7 @@ export const TokenEditor = memo(function TokenEditor({
               idLinkedToName: isIdLinked,
               decoratives,
             }}
+            onConvertToCustom={handleConvertToCustom}
           />
         )}
       </div>

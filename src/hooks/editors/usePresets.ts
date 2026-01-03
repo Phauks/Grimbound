@@ -1,18 +1,24 @@
 /**
  * usePresets Hook
  *
- * Manages preset configurations for token generation options.
- * Handles built-in presets and custom user-created presets.
+ * Manages the two-tier preset system:
+ * - Global presets: Stored in localStorage, available across all projects
+ * - Local presets: Stored in ProjectState, travel with project exports/imports
  *
  * @module hooks/editors/usePresets
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useProjectContext } from '@/contexts/ProjectContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { getPreset } from '@/ts/generation/presets.js';
-import type { GenerationOptions, PresetName } from '@/ts/types/index.js';
 import {
-  generateUuid,
+  createPreset,
+  duplicatePreset,
+  getDefaultOptions,
+  isValidPreset,
+} from '@/ts/generation/presets.js';
+import type { GenerationOptions, Preset, PresetTier, PresetWithTier } from '@/ts/types/index.js';
+import {
   getStorageItem,
   logger,
   STORAGE_KEYS,
@@ -20,229 +26,387 @@ import {
   setStorageItem,
 } from '@/ts/utils/index.js';
 
-export interface CustomPreset {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  settings: GenerationOptions;
+// Re-export types for consumers
+export type { Preset, PresetTier, PresetWithTier };
+
+// ============================================================================
+// Storage Helpers
+// ============================================================================
+
+function loadGlobalPresets(): Preset[] {
+  try {
+    const data = getStorageItem(STORAGE_KEYS.GLOBAL_PRESETS);
+    if (!data) return [];
+
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return [];
+
+    // Filter to only valid presets
+    return parsed.filter(isValidPreset);
+  } catch {
+    return [];
+  }
 }
 
-/**
- * Helper to save presets to localStorage
- * Centralizes the localStorage.setItem call to avoid duplication
- */
-function savePresetsToStorage(presets: CustomPreset[]): void {
-  setStorageItem(STORAGE_KEYS.CUSTOM_PRESETS, JSON.stringify(presets));
+function saveGlobalPresets(presets: Preset[]): void {
+  setStorageItem(STORAGE_KEYS.GLOBAL_PRESETS, JSON.stringify(presets));
 }
+
+// ============================================================================
+// Hook Implementation
+// ============================================================================
 
 export function usePresets() {
   const { updateGenerationOptions, generationOptions } = useTokenContext();
+  const { currentProject, setCurrentProject, setIsDirty } = useProjectContext();
 
-  const applyPreset = useCallback(
-    (presetName: PresetName) => {
+  // ========================================================================
+  // Global Presets (localStorage)
+  // ========================================================================
+
+  const getGlobalPresets = useCallback((): Preset[] => loadGlobalPresets(), []);
+
+  const saveGlobalPreset = useCallback(
+    (name: string, description: string, icon: string): Preset => {
       try {
-        const preset = getPreset(presetName);
-        if (preset) {
-          updateGenerationOptions(preset.settings);
-          return presetName;
-        }
-      } catch (err) {
-        logger.error('usePresets', `Failed to apply preset ${presetName}:`, err);
+        const presets = loadGlobalPresets();
+        const newPreset = createPreset(name, description, icon, generationOptions);
+        presets.push(newPreset);
+        saveGlobalPresets(presets);
+        logger.info('usePresets', `Saved global preset: ${name}`);
+        return newPreset;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to save global preset', error);
+        throw error;
       }
-      return null;
     },
-    [updateGenerationOptions]
+    [generationOptions]
   );
 
-  const getCustomPresets = useCallback((): CustomPreset[] => {
+  const deleteGlobalPreset = useCallback((presetId: string): void => {
     try {
-      const data = getStorageItem(STORAGE_KEYS.CUSTOM_PRESETS);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
+      const presets = loadGlobalPresets();
+      const filtered = presets.filter((p) => p.id !== presetId);
+      saveGlobalPresets(filtered);
+      logger.info('usePresets', `Deleted global preset: ${presetId}`);
+    } catch (error) {
+      logger.error('usePresets', 'Failed to delete global preset', error);
+      throw error;
     }
   }, []);
 
-  const setDefaultPreset = useCallback((presetId: string) => {
-    try {
-      setStorageItem(STORAGE_KEYS.DEFAULT_PRESET, presetId);
-    } catch (err) {
-      logger.error('usePresets', 'Failed to set default preset:', err);
-    }
-  }, []);
+  const updateGlobalPresetSettings = useCallback(
+    (presetId: string): boolean => {
+      try {
+        const presets = loadGlobalPresets();
+        const index = presets.findIndex((p) => p.id === presetId);
+        if (index === -1) return false;
 
-  const getDefaultPresetId = useCallback(
-    (): string => getStorageItem(STORAGE_KEYS.DEFAULT_PRESET) || 'classic',
+        presets[index] = {
+          ...presets[index],
+          settings: { ...generationOptions },
+          updatedAt: Date.now(),
+        };
+        saveGlobalPresets(presets);
+        logger.info('usePresets', `Updated global preset settings: ${presetId}`);
+        return true;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to update global preset', error);
+        return false;
+      }
+    },
+    [generationOptions]
+  );
+
+  const editGlobalPreset = useCallback(
+    (presetId: string, name: string, icon: string, description?: string): boolean => {
+      try {
+        const presets = loadGlobalPresets();
+        const index = presets.findIndex((p) => p.id === presetId);
+        if (index === -1) return false;
+
+        presets[index] = {
+          ...presets[index],
+          name,
+          icon,
+          ...(description !== undefined && { description }),
+          updatedAt: Date.now(),
+        };
+        saveGlobalPresets(presets);
+        return true;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to edit global preset', error);
+        return false;
+      }
+    },
     []
   );
 
-  const saveCustomPreset = useCallback(
-    (name: string, description: string, icon: string) => {
+  const reorderGlobalPresets = useCallback((fromIndex: number, toIndex: number): boolean => {
+    try {
+      const presets = loadGlobalPresets();
+      if (
+        fromIndex < 0 ||
+        fromIndex >= presets.length ||
+        toIndex < 0 ||
+        toIndex >= presets.length
+      ) {
+        return false;
+      }
+      const [removed] = presets.splice(fromIndex, 1);
+      presets.splice(toIndex, 0, removed);
+      saveGlobalPresets(presets);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to reorder global presets', error);
+      return false;
+    }
+  }, []);
+
+  // ========================================================================
+  // Local Presets (Project State)
+  // ========================================================================
+
+  const updateProjectPresets = useCallback(
+    (newPresets: Preset[]) => {
+      if (!currentProject) return;
+
+      const updatedProject = {
+        ...currentProject,
+        state: {
+          ...currentProject.state,
+          presets: newPresets,
+        },
+        stats: {
+          ...currentProject.stats,
+          presetCount: newPresets.length,
+        },
+      };
+
+      setCurrentProject(updatedProject);
+      setIsDirty(true);
+    },
+    [currentProject, setCurrentProject, setIsDirty]
+  );
+
+  const getLocalPresets = useCallback(
+    (): Preset[] => currentProject?.state.presets ?? [],
+    [currentProject]
+  );
+
+  const saveLocalPreset = useCallback(
+    (name: string, description: string, icon: string): Preset | null => {
+      if (!currentProject) {
+        logger.warn('usePresets', 'Cannot save local preset: no active project');
+        return null;
+      }
+
       try {
-        const presets = getCustomPresets();
-        const customPreset: CustomPreset = {
-          id: `custom_${generateUuid()}`,
-          name,
-          description,
-          icon,
-          settings: generationOptions,
+        const newPreset = createPreset(name, description, icon, generationOptions);
+        const currentPresets = currentProject.state.presets ?? [];
+        updateProjectPresets([...currentPresets, newPreset]);
+        logger.info('usePresets', `Saved local preset: ${name}`);
+        return newPreset;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to save local preset', error);
+        throw error;
+      }
+    },
+    [currentProject, generationOptions, updateProjectPresets]
+  );
+
+  const deleteLocalPreset = useCallback(
+    (presetId: string): void => {
+      if (!currentProject) return;
+
+      try {
+        const currentPresets = currentProject.state.presets ?? [];
+        const filtered = currentPresets.filter((p) => p.id !== presetId);
+        updateProjectPresets(filtered);
+        logger.info('usePresets', `Deleted local preset: ${presetId}`);
+      } catch (error) {
+        logger.error('usePresets', 'Failed to delete local preset', error);
+        throw error;
+      }
+    },
+    [currentProject, updateProjectPresets]
+  );
+
+  const updateLocalPresetSettings = useCallback(
+    (presetId: string): boolean => {
+      if (!currentProject) return false;
+
+      try {
+        const currentPresets = currentProject.state.presets ?? [];
+        const index = currentPresets.findIndex((p) => p.id === presetId);
+        if (index === -1) return false;
+
+        const updatedPresets = [...currentPresets];
+        updatedPresets[index] = {
+          ...updatedPresets[index],
+          settings: { ...generationOptions },
+          updatedAt: Date.now(),
         };
-        presets.push(customPreset);
-        savePresetsToStorage(presets);
-        return customPreset;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to save custom preset:', err);
-        throw err;
+        updateProjectPresets(updatedPresets);
+        logger.info('usePresets', `Updated local preset settings: ${presetId}`);
+        return true;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to update local preset', error);
+        return false;
       }
     },
-    [generationOptions, getCustomPresets]
+    [currentProject, generationOptions, updateProjectPresets]
   );
 
-  const deleteCustomPreset = useCallback(
-    (presetId: string) => {
-      try {
-        const presets = getCustomPresets();
-        const filtered = presets.filter((p: CustomPreset) => p.id !== presetId);
-        savePresetsToStorage(filtered);
+  const editLocalPreset = useCallback(
+    (presetId: string, name: string, icon: string, description?: string): boolean => {
+      if (!currentProject) return false;
 
-        // If deleted preset was default, reset to classic
-        if (getDefaultPresetId() === presetId) {
-          setDefaultPreset('classic');
+      try {
+        const currentPresets = currentProject.state.presets ?? [];
+        const index = currentPresets.findIndex((p) => p.id === presetId);
+        if (index === -1) return false;
+
+        const updatedPresets = [...currentPresets];
+        updatedPresets[index] = {
+          ...updatedPresets[index],
+          name,
+          icon,
+          ...(description !== undefined && { description }),
+          updatedAt: Date.now(),
+        };
+        updateProjectPresets(updatedPresets);
+        return true;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to edit local preset', error);
+        return false;
+      }
+    },
+    [currentProject, updateProjectPresets]
+  );
+
+  const reorderLocalPresets = useCallback(
+    (fromIndex: number, toIndex: number): boolean => {
+      if (!currentProject) return false;
+
+      try {
+        const currentPresets = [...(currentProject.state.presets ?? [])];
+        if (
+          fromIndex < 0 ||
+          fromIndex >= currentPresets.length ||
+          toIndex < 0 ||
+          toIndex >= currentPresets.length
+        ) {
+          return false;
         }
-      } catch (err) {
-        logger.error('usePresets', 'Failed to delete custom preset:', err);
-        throw err;
+        const [removed] = currentPresets.splice(fromIndex, 1);
+        currentPresets.splice(toIndex, 0, removed);
+        updateProjectPresets(currentPresets);
+        return true;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to reorder local presets', error);
+        return false;
       }
     },
-    [getCustomPresets, getDefaultPresetId, setDefaultPreset]
+    [currentProject, updateProjectPresets]
   );
 
-  const applyCustomPreset = useCallback(
-    (preset: CustomPreset) => {
-      try {
-        updateGenerationOptions(preset.settings);
-        return preset.id;
-      } catch (err) {
-        logger.error('usePresets', `Failed to apply custom preset ${preset.name}:`, err);
+  // ========================================================================
+  // Cross-Tier Operations
+  // ========================================================================
+
+  const copyToLocal = useCallback(
+    (preset: Preset): Preset | null => {
+      if (!currentProject) {
+        logger.warn('usePresets', 'Cannot copy to local: no active project');
+        return null;
       }
-      return null;
+
+      try {
+        const copy = duplicatePreset(preset, '');
+        const currentPresets = currentProject.state.presets ?? [];
+        updateProjectPresets([...currentPresets, copy]);
+        logger.info('usePresets', `Copied preset to local: ${copy.name}`);
+        return copy;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to copy preset to local', error);
+        throw error;
+      }
+    },
+    [currentProject, updateProjectPresets]
+  );
+
+  const copyToGlobal = useCallback((preset: Preset): Preset => {
+    try {
+      const copy = duplicatePreset(preset, '');
+      const presets = loadGlobalPresets();
+      presets.push(copy);
+      saveGlobalPresets(presets);
+      logger.info('usePresets', `Copied preset to global: ${copy.name}`);
+      return copy;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to copy preset to global', error);
+      throw error;
+    }
+  }, []);
+
+  const duplicateGlobalPreset = useCallback((preset: Preset): Preset => {
+    const copy = duplicatePreset(preset);
+    const presets = loadGlobalPresets();
+    presets.push(copy);
+    saveGlobalPresets(presets);
+    return copy;
+  }, []);
+
+  const duplicateLocalPreset = useCallback(
+    (preset: Preset): Preset | null => {
+      if (!currentProject) return null;
+
+      const copy = duplicatePreset(preset);
+      const currentPresets = currentProject.state.presets ?? [];
+      updateProjectPresets([...currentPresets, copy]);
+      return copy;
+    },
+    [currentProject, updateProjectPresets]
+  );
+
+  // ========================================================================
+  // Apply & Reset
+  // ========================================================================
+
+  const applyPreset = useCallback(
+    (preset: Preset): void => {
+      updateGenerationOptions(preset.settings);
+      logger.debug('usePresets', `Applied preset: ${preset.name}`);
     },
     [updateGenerationOptions]
   );
 
-  const updateCustomPreset = useCallback(
-    (presetId: string) => {
-      try {
-        const presets = getCustomPresets();
-        const index = presets.findIndex((p: CustomPreset) => p.id === presetId);
-        if (index !== -1) {
-          presets[index].settings = generationOptions;
-          savePresetsToStorage(presets);
-          return true;
-        }
-        return false;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to update custom preset:', err);
-        return false;
-      }
-    },
-    [generationOptions, getCustomPresets]
-  );
+  const resetToDefaults = useCallback((): void => {
+    updateGenerationOptions(getDefaultOptions());
+    logger.info('usePresets', 'Reset to default options');
+  }, [updateGenerationOptions]);
 
-  const duplicateCustomPreset = useCallback(
-    (preset: CustomPreset) => {
-      try {
-        const presets = getCustomPresets();
-        const newPreset: CustomPreset = {
-          id: `custom_${generateUuid()}`,
-          name: `${preset.name} (Copy)`,
-          description: preset.description,
-          icon: preset.icon,
-          settings: { ...preset.settings },
-        };
-        presets.push(newPreset);
-        savePresetsToStorage(presets);
-        return newPreset;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to duplicate preset:', err);
-        throw err;
-      }
-    },
-    [getCustomPresets]
-  );
+  // ========================================================================
+  // Combined View
+  // ========================================================================
 
-  const duplicateBuiltInPreset = useCallback(
-    (presetName: PresetName) => {
-      try {
-        const builtInPreset = getPreset(presetName);
-        const presets = getCustomPresets();
-        const newPreset: CustomPreset = {
-          id: `custom_${generateUuid()}`,
-          name: `${builtInPreset.name} (Copy)`,
-          description: builtInPreset.description,
-          icon: builtInPreset.icon,
-          settings: { ...builtInPreset.settings } as GenerationOptions,
-        };
-        presets.push(newPreset);
-        savePresetsToStorage(presets);
-        return newPreset;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to duplicate built-in preset:', err);
-        throw err;
-      }
-    },
-    [getCustomPresets]
-  );
+  const globalPresets = useMemo(() => getGlobalPresets(), [getGlobalPresets]);
+  const localPresets = useMemo(() => getLocalPresets(), [getLocalPresets]);
 
-  const editPreset = useCallback(
-    (presetId: string, name: string, icon: string, description?: string) => {
-      try {
-        const presets = getCustomPresets();
-        const index = presets.findIndex((p: CustomPreset) => p.id === presetId);
-        if (index !== -1) {
-          presets[index].name = name;
-          presets[index].icon = icon;
-          if (description !== undefined) {
-            presets[index].description = description;
-          }
-          savePresetsToStorage(presets);
-          return true;
-        }
-        return false;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to edit preset:', err);
-        return false;
-      }
-    },
-    [getCustomPresets]
-  );
+  const getAllPresets = useCallback((): PresetWithTier[] => {
+    const global = getGlobalPresets().map(
+      (p): PresetWithTier => ({ ...p, tier: 'global' as const })
+    );
+    const local = getLocalPresets().map((p): PresetWithTier => ({ ...p, tier: 'local' as const }));
+    return [...global, ...local];
+  }, [getGlobalPresets, getLocalPresets]);
 
-  const loadDefaultPreset = useCallback(() => {
-    try {
-      const defaultPresetId = getDefaultPresetId();
+  // ========================================================================
+  // Export/Import
+  // ========================================================================
 
-      // Check if it's a built-in preset
-      if (['classic', 'fullbloom', 'minimal'].includes(defaultPresetId)) {
-        return applyPreset(defaultPresetId as PresetName);
-      }
-
-      // Check custom presets
-      const presets = getCustomPresets();
-      const preset = presets.find((p: CustomPreset) => p.id === defaultPresetId);
-      if (preset) {
-        return applyCustomPreset(preset);
-      }
-
-      // Fallback to classic
-      return applyPreset('classic');
-    } catch (err) {
-      logger.error('usePresets', 'Failed to load default preset:', err);
-      return null;
-    }
-  }, [applyPreset, applyCustomPreset, getCustomPresets, getDefaultPresetId]);
-
-  const exportPreset = useCallback((preset: CustomPreset) => {
+  const exportPreset = useCallback((preset: Preset): void => {
     try {
       const dataStr = JSON.stringify(preset, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
@@ -252,88 +416,93 @@ export function usePresets() {
       a.download = `${sanitizeFilename(preset.name)}_preset.json`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      logger.error('usePresets', 'Failed to export preset:', err);
-      throw err;
+      logger.info('usePresets', `Exported preset: ${preset.name}`);
+    } catch (error) {
+      logger.error('usePresets', 'Failed to export preset', error);
+      throw error;
     }
   }, []);
 
   const importPreset = useCallback(
-    (file: File): Promise<CustomPreset> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const content = e.target?.result as string;
-            const imported = JSON.parse(content) as CustomPreset;
-
-            // Validate the imported preset has required fields
-            if (!(imported.name && imported.settings)) {
-              throw new Error('Invalid preset file: missing required fields');
-            }
-
-            // Create new preset with fresh ID
-            const presets = getCustomPresets();
-            const newPreset: CustomPreset = {
-              id: `custom_${generateUuid()}`,
-              name: imported.name,
-              description: imported.description || '',
-              icon: imported.icon || '📥',
-              settings: imported.settings,
-            };
-            presets.push(newPreset);
-            savePresetsToStorage(presets);
-            resolve(newPreset);
-          } catch (err) {
-            reject(err);
-          }
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsText(file);
-      });
-    },
-    [getCustomPresets]
-  );
-
-  const reorderPresets = useCallback(
-    (fromIndex: number, toIndex: number) => {
+    async (file: File, tier: PresetTier): Promise<Preset> => {
       try {
-        const presets = getCustomPresets();
-        if (
-          fromIndex < 0 ||
-          fromIndex >= presets.length ||
-          toIndex < 0 ||
-          toIndex >= presets.length
-        ) {
-          return false;
+        const content = await file.text();
+        const imported = JSON.parse(content) as Record<string, unknown>;
+
+        if (!(imported.name && imported.settings)) {
+          throw new Error('Invalid preset file: missing required fields');
         }
-        const [removed] = presets.splice(fromIndex, 1);
-        presets.splice(toIndex, 0, removed);
-        savePresetsToStorage(presets);
-        return true;
-      } catch (err) {
-        logger.error('usePresets', 'Failed to reorder presets:', err);
-        return false;
+
+        const newPreset = createPreset(
+          String(imported.name),
+          String(imported.description ?? ''),
+          String(imported.icon ?? '📥'),
+          imported.settings as GenerationOptions
+        );
+
+        if (tier === 'global') {
+          const presets = loadGlobalPresets();
+          presets.push(newPreset);
+          saveGlobalPresets(presets);
+        } else {
+          if (!currentProject) {
+            throw new Error('Cannot import to local: no active project');
+          }
+          const currentPresets = currentProject.state.presets ?? [];
+          updateProjectPresets([...currentPresets, newPreset]);
+        }
+
+        logger.info('usePresets', `Imported preset: ${newPreset.name} to ${tier}`);
+        return newPreset;
+      } catch (error) {
+        logger.error('usePresets', 'Failed to import preset', error);
+        throw error;
       }
     },
-    [getCustomPresets]
+    [currentProject, updateProjectPresets]
   );
 
+  // ========================================================================
+  // Return API
+  // ========================================================================
+
   return {
+    // Global preset operations
+    getGlobalPresets,
+    saveGlobalPreset,
+    deleteGlobalPreset,
+    updateGlobalPresetSettings,
+    editGlobalPreset,
+    reorderGlobalPresets,
+    duplicateGlobalPreset,
+
+    // Local preset operations
+    getLocalPresets,
+    saveLocalPreset,
+    deleteLocalPreset,
+    updateLocalPresetSettings,
+    editLocalPreset,
+    reorderLocalPresets,
+    duplicateLocalPreset,
+
+    // Cross-tier operations
+    copyToLocal,
+    copyToGlobal,
+
+    // Apply & reset
     applyPreset,
-    saveCustomPreset,
-    deleteCustomPreset,
-    getCustomPresets,
-    applyCustomPreset,
-    updateCustomPreset,
-    duplicateCustomPreset,
-    duplicateBuiltInPreset,
-    editPreset,
-    setDefaultPreset,
-    getDefaultPresetId,
-    loadDefaultPreset,
+    resetToDefaults,
+
+    // Combined view
+    getAllPresets,
+    globalPresets,
+    localPresets,
+
+    // Export/Import
     exportPreset,
     importPreset,
-    reorderPresets,
+
+    // Utility
+    hasActiveProject: currentProject !== null,
   };
 }

@@ -48,7 +48,13 @@
 // MAIN RENDERER
 // ============================================================================
 
-export { renderBackground, renderTexturePreview } from './BackgroundRenderer.js';
+export {
+  type FrameModeInfo,
+  getFrameModeInfo,
+  isFrameModeActive,
+  renderBackground,
+  renderTexturePreview,
+} from './BackgroundRenderer.js';
 
 // ============================================================================
 // EFFECTS

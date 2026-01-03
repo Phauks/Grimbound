@@ -53,9 +53,9 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
   shouldTrigger(context: PreRenderContext): boolean {
     return (
       context.type === 'characters-hover' &&
-      context.characters !== null &&
+      context.characters !== undefined &&
       context.characters.length > 0 &&
-      context.generationOptions !== null
+      context.generationOptions !== undefined
     );
   }
 
@@ -245,7 +245,6 @@ export class CharactersPreRenderStrategy implements IPreRenderStrategy {
       characterBackgroundType: options.characterBackgroundType,
       characterNameFont: options.characterNameFont,
       characterNameColor: options.characterNameColor,
-      dpi: options.dpi,
       // Note: Omitting generateImageVariants, tokenCount as they don't affect individual token appearance
     };
 

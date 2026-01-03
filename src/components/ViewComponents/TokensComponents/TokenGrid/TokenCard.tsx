@@ -6,18 +6,6 @@ import styles from '@/styles/components/tokens/TokenCard.module.css';
 import { TEAM_LABELS } from '@/ts/config.js';
 import type { Team, Token } from '@/ts/types/index.js';
 
-/** Type for requestIdleCallback (non-standard but widely supported) */
-interface IdleDeadline {
-  readonly didTimeout: boolean;
-  timeRemaining(): number;
-}
-interface WindowWithIdleCallback {
-  requestIdleCallback: (
-    callback: (deadline: IdleDeadline) => void,
-    options?: { timeout?: number }
-  ) => number;
-}
-
 // Module-level cache for data URLs - persists across tab switches
 // Key: token filename, Value: data URL
 const dataUrlCache = new Map<string, string>();
@@ -45,62 +33,43 @@ export function clearDataUrlCache(): void {
   dataUrlCache.clear();
 }
 
-// Pre-render data URLs for ALL tokens in background chunks
-// Uses requestIdleCallback to avoid blocking the UI
+// Pre-render data URLs for ALL tokens synchronously during generation
+// This ensures cache is populated before TokenGrid renders
 let isPreRenderingGallery = false;
-let preRenderIndex = 0;
 
-export function preRenderGalleryTokens(tokens: Token[], _maxTokens?: number): void {
-  if (isPreRenderingGallery) return;
-  if (tokens.length === 0) return;
+// Cache version counter - increments when pre-render completes to trigger re-renders
+let cacheVersion = 0;
+export function getCacheVersion(): number {
+  return cacheVersion;
+}
+
+export function preRenderGalleryTokens(tokens: Token[], onComplete?: () => void): void {
+  if (isPreRenderingGallery || tokens.length === 0) return;
 
   isPreRenderingGallery = true;
-  preRenderIndex = 0;
 
-  const TOKENS_PER_CHUNK = 5; // Process 5 tokens per idle callback
-
-  const processChunk = (deadline?: IdleDeadline) => {
-    // Process tokens while we have idle time (or at least 1 token per callback)
-    let processed = 0;
-    const hasTimeRemaining = () =>
-      deadline ? deadline.timeRemaining() > 10 : processed < TOKENS_PER_CHUNK;
-
-    while (preRenderIndex < tokens.length && hasTimeRemaining()) {
-      const token = tokens[preRenderIndex];
-      preRenderIndex++;
-
-      if (!token.canvas) continue;
-      if (dataUrlCache.has(token.filename)) continue;
-
-      // Encode and cache (uses WebP if supported for faster encoding)
+  // Tokens now have pre-encoded dataUrl from TokenFactory
+  // Just populate the cache with the existing dataUrls
+  for (const token of tokens) {
+    if (dataUrlCache.has(token.filename)) continue;
+    // Use pre-encoded dataUrl if available, otherwise encode canvas (fallback)
+    if (token.dataUrl) {
+      dataUrlCache.set(token.filename, token.dataUrl);
+    } else if (token.canvas && token.canvas.width > 1) {
       dataUrlCache.set(token.filename, encodeCanvas(token.canvas));
-      processed++;
     }
-
-    // Continue if more tokens remain
-    if (preRenderIndex < tokens.length) {
-      if ('requestIdleCallback' in window) {
-        (window as WindowWithIdleCallback).requestIdleCallback(processChunk, { timeout: 200 });
-      } else {
-        setTimeout(() => processChunk(), 16); // ~60fps timing
-      }
-    } else {
-      isPreRenderingGallery = false;
-    }
-  };
-
-  // Start processing
-  if ('requestIdleCallback' in window) {
-    (window as WindowWithIdleCallback).requestIdleCallback(processChunk, { timeout: 100 });
-  } else {
-    setTimeout(() => processChunk(), 0);
   }
+
+  isPreRenderingGallery = false;
+  cacheVersion++;
+  onComplete?.();
 }
 
 interface TokenCardProps {
   token: Token;
   count?: number;
   variants?: Token[]; // Array of variant tokens for cycling
+  cacheVersion?: number; // Triggers re-render when cache is updated
   onCardClick?: (token: Token) => void;
   onSetAsExample?: (token: Token) => void;
   onDelete?: (token: Token) => void;
@@ -132,6 +101,7 @@ function arePropsEqual(prevProps: TokenCardProps, nextProps: TokenCardProps): bo
     prevProps.token.filename === nextProps.token.filename &&
     prevProps.count === nextProps.count &&
     prevProps.variants?.length === nextProps.variants?.length &&
+    prevProps.cacheVersion === nextProps.cacheVersion &&
     prevProps.onCardClick === nextProps.onCardClick &&
     prevProps.onSetAsExample === nextProps.onSetAsExample &&
     prevProps.onDelete === nextProps.onDelete &&
@@ -145,6 +115,7 @@ function TokenCardComponent({
   token,
   count = 1,
   variants = [],
+  cacheVersion: _cacheVersion, // Used by memo comparison to trigger re-render
   onCardClick,
   onSetAsExample,
   onDelete,
@@ -176,21 +147,26 @@ function TokenCardComponent({
     triggerOnce: true,
   });
 
-  // Generate data URL from canvas only when visible (lazy encoding)
-  // Uses cache to avoid re-encoding on tab switches
+  // Get data URL from token (pre-encoded) or cache
+  // Canvas encoding is now done in TokenFactory, so this is just cache lookup
   const imageDataUrl = useMemo(() => {
     // Return cached value immediately if available
     if (cachedDataUrl) return cachedDataUrl;
 
-    // Only encode when visible and not cached
-    if (!(displayToken.canvas && isVisible)) return null;
+    // Use pre-encoded dataUrl from token if available
+    if (displayToken.dataUrl) {
+      dataUrlCache.set(displayToken.filename, displayToken.dataUrl);
+      return displayToken.dataUrl;
+    }
 
-    // Uses WebP if supported for faster encoding (~3-4x faster than PNG)
+    // Only encode when visible and not cached (legacy fallback)
+    if (!(displayToken.canvas && displayToken.canvas.width > 1 && isVisible)) return null;
+
+    // Fallback: encode on-demand (shouldn't happen with new TokenFactory)
     const dataUrl = encodeCanvas(displayToken.canvas);
-    // Store in cache for future tab switches
     dataUrlCache.set(displayToken.filename, dataUrl);
     return dataUrl;
-  }, [displayToken.canvas, displayToken.filename, isVisible, cachedDataUrl]);
+  }, [displayToken.dataUrl, displayToken.canvas, displayToken.filename, isVisible, cachedDataUrl]);
 
   useEffect(() => {
     // If we have cached data or newly generated data, mark as rendered
@@ -344,11 +320,12 @@ function TokenCardComponent({
         )}
         <div className={styles.canvasContainer}>
           {/* Show skeleton until image is fully loaded for smooth transition */}
-          {!(isVisible && isImageLoaded) && <div className={styles.skeleton} />}
+          {/* If cached, render immediately without waiting for visibility */}
+          {!((cachedDataUrl || isVisible) && isImageLoaded) && <div className={styles.skeleton} />}
           {isVisible && isLoading && !imageDataUrl && (
             <div className={styles.loading}>Loading...</div>
           )}
-          {isVisible && imageDataUrl && (
+          {(cachedDataUrl || isVisible) && imageDataUrl && (
             <img
               src={imageDataUrl}
               alt={displayToken.name}

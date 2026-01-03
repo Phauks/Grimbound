@@ -85,7 +85,7 @@ export const CONFIG: Config = {
     PAGE_HEIGHT: 11, // inches
     DPI: 300,
     MARGIN: 0.375, // inches (Avery 94500 left/right margin)
-    IMAGE_QUALITY: 0.9, // JPEG quality (0.0-1.0, default 90%)
+    IMAGE_QUALITY: 0.92, // JPEG quality (0.0-1.0) - matches night order PDF
     DEFAULT_TEMPLATE: 'avery-94500' as const, // Default to Avery 94500 for character tokens
   },
 
@@ -159,7 +159,7 @@ export const CONFIG: Config = {
 
   // API Endpoints
   API: {
-    CORS_PROXY: 'https://cors-header-proxy.infiniteinstants.com/?', // Cloudflare Workers CORS proxy
+    CORS_PROXY: 'https://cors-header-proxy.grimbound.com/?', // Cloudflare Workers CORS proxy
   },
 
   // Google Fonts API Configuration

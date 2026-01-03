@@ -16,7 +16,16 @@
  * @module components/Shared/FontSelector
  */
 
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useFonts } from '@/contexts/FontContext';
 import styles from '@/styles/components/shared/FontSelector.module.css';
@@ -89,7 +98,7 @@ export const FontSelector = memo(function FontSelector({
   showTabs = true,
   showSearch = true,
 }: FontSelectorProps) {
-  const { fonts, isLoading, loadFont, uploadFont } = useFonts();
+  const { fonts, isLoading, loadFont, uploadFont, searchFonts } = useFonts();
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SourceTab>('all');
@@ -97,6 +106,8 @@ export const FontSelector = memo(function FontSelector({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [searchResults, setSearchResults] = useState<FontDefinition[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -104,9 +115,33 @@ export const FontSelector = memo(function FontSelector({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Search the full Google Fonts catalog when user types
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await searchFonts(searchQuery);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 200); // Debounce search
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, searchFonts]);
+
   // Filter fonts based on sources, categories, active tab, and search
   const filteredFonts = useMemo(() => {
-    let result = fonts;
+    // Use search results if searching, otherwise use loaded fonts
+    let result = searchQuery.trim() ? searchResults : fonts;
 
     // Filter by source (props take precedence, then active tab)
     if (sources && sources.length > 0) {
@@ -120,16 +155,8 @@ export const FontSelector = memo(function FontSelector({
       result = result.filter((f) => categories.includes(f.category));
     }
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (f) => f.name.toLowerCase().includes(query) || f.family.toLowerCase().includes(query)
-      );
-    }
-
     return result;
-  }, [fonts, sources, categories, activeTab, searchQuery]);
+  }, [fonts, searchResults, searchQuery, sources, categories, activeTab]);
 
   // Group fonts by category
   const groupedFonts = useMemo(() => {
@@ -142,7 +169,7 @@ export const FontSelector = memo(function FontSelector({
     return groups;
   }, [filteredFonts]);
 
-  // Flattened list for keyboard navigation
+  // Flattened list for keyboard navigation (all fonts)
   const flatFontList = useMemo(() => {
     const result: FontDefinition[] = [];
     for (const [, fonts] of groupedFonts) {
@@ -150,6 +177,15 @@ export const FontSelector = memo(function FontSelector({
     }
     return result;
   }, [groupedFonts]);
+
+  // Pre-compute index map for O(1) lookup (avoids O(n²) findIndex in render)
+  const fontIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    flatFontList.forEach((font, index) => {
+      map.set(font.id, index);
+    });
+    return map;
+  }, [flatFontList]);
 
   // Find selected font
   const selectedFont = useMemo(() => fonts.find((f) => f.family === value), [fonts, value]);
@@ -228,6 +264,14 @@ export const FontSelector = memo(function FontSelector({
         if (font.status !== 'loaded') {
           await loadFont(font.family);
         }
+
+        // Ensure the font is truly ready for canvas rendering
+        // The loadFont call may resolve before the browser has the font ready
+        await document.fonts.ready;
+
+        // Double-check with document.fonts.load to ensure this specific font is loaded
+        await document.fonts.load(`400 16px "${font.family}"`);
+
         onChange(font.family);
         setIsOpen(false);
         setFocusedIndex(-1);
@@ -316,12 +360,15 @@ export const FontSelector = memo(function FontSelector({
     [disabled, isOpen, focusedIndex, flatFontList, value, handleSelect]
   );
 
-  // Toggle dropdown
+  // Toggle dropdown - use startTransition to prevent blocking
   const handleToggle = () => {
     if (disabled) return;
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      setFocusedIndex(flatFontList.findIndex((f) => f.family === value));
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    if (newIsOpen) {
+      startTransition(() => {
+        setFocusedIndex(flatFontList.findIndex((f) => f.family === value));
+      });
     }
   };
 
@@ -365,8 +412,6 @@ export const FontSelector = memo(function FontSelector({
       zIndex: 10000,
     };
 
-    let flatIndex = 0;
-
     const dropdown = (
       <div
         ref={dropdownRef}
@@ -408,7 +453,7 @@ export const FontSelector = memo(function FontSelector({
 
         {/* Font List */}
         <div className={styles.fontList}>
-          {isLoading ? (
+          {isLoading || isSearching ? (
             <div className={styles.loadingState}>Loading fonts...</div>
           ) : groupedFonts.size === 0 ? (
             <div className={styles.emptyState}>
@@ -419,7 +464,7 @@ export const FontSelector = memo(function FontSelector({
               <div key={category} className={styles.category}>
                 <div className={styles.categoryHeader}>{category}</div>
                 {categoryFonts.map((font) => {
-                  const currentIndex = flatIndex++;
+                  const currentIndex = fontIndexMap.get(font.id) ?? -1;
                   const isSelected = font.family === value;
                   const isFocused = currentIndex === focusedIndex;
 

@@ -25,6 +25,8 @@ interface JsonTabContentProps {
     idLinkedToName: boolean;
     decoratives?: DecorativeOverrides;
   };
+  /** Callback to convert official character to custom */
+  onConvertToCustom?: () => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export const JsonTabContent = memo(function JsonTabContent({
   onReplaceCharacter,
   charUuid,
   metadata,
+  onConvertToCustom,
 }: JsonTabContentProps) {
   const [subTab, setSubTab] = useState<JsonSubTab>('character');
 
@@ -78,115 +81,133 @@ export const JsonTabContent = memo(function JsonTabContent({
   }, [metadataContent]);
 
   return (
-    <div className={styles.jsonTabContent}>
-      {/* Sub-tabs */}
-      <div className={styles.jsonSubTabs}>
-        <button
-          type="button"
-          className={`${styles.jsonSubTab} ${subTab === 'character' ? styles.active : ''}`}
-          onClick={() => setSubTab('character')}
+    <div className={`${styles.jsonTabContent} ${isOfficial ? styles.disabled : ''}`}>
+      {/* Official Character Banner - fixed above scroll area */}
+      {isOfficial && (
+        <div
+          className={styles.officialBanner}
+          title="This is an official character. Editing is disabled to preserve the original data."
         >
-          Character
-        </button>
-        <button
-          type="button"
-          className={`${styles.jsonSubTab} ${subTab === 'metadata' ? styles.active : ''}`}
-          onClick={() => setSubTab('metadata')}
-        >
-          Metadata
-        </button>
-      </div>
-
-      {/* Character JSON Sub-tab */}
-      {subTab === 'character' && (
-        <>
-          <div className={styles.jsonHeader}>
-            <p className={styles.jsonDescription}>
-              {isOfficial
-                ? 'View the character data. Official characters cannot be edited via JSON.'
-                : 'Edit the raw JSON data. Changes are applied after a short delay.'}
-            </p>
-            <div className={styles.jsonButtons}>
-              <button
-                type="button"
-                className={styles.btnIcon}
-                onClick={characterJson.format}
-                title="Format JSON"
+          <div className={styles.officialLeft}>
+            <span className={styles.officialBadge}>Official</span>
+            <a
+              href={`https://wiki.bloodontheclocktower.com/${encodeURIComponent(character.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.wikiLink}
+              title="View on Wiki"
+            >
+              <span className={styles.srOnly}>View on Wiki</span>
+              <svg
+                className={styles.wikiIcon}
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="16"
+                height="16"
+                aria-hidden="true"
               >
-                ✨
-              </button>
-              <button
-                type="button"
-                className={styles.btnIcon}
-                onClick={() => characterJson.copy()}
-                title="Copy to clipboard"
-              >
-                📋
-              </button>
-              <button
-                type="button"
-                className={styles.btnIcon}
-                onClick={() => characterJson.download(`${character.id || 'character'}.json`)}
-                title="Download as file"
-              >
-                ⬇️
-              </button>
-            </div>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+              </svg>
+            </a>
           </div>
-
-          <div className={styles.jsonEditorWrapper}>
-            <CodeMirrorEditor
-              value={characterJson.text}
-              onChange={characterJson.onChange}
-              disabled={isOfficial}
-              placeholder="Enter character JSON..."
-            />
-          </div>
-
-          {characterJson.error && <div className={styles.jsonError}>{characterJson.error}</div>}
-        </>
-      )}
-
-      {/* Metadata Sub-tab */}
-      {subTab === 'metadata' && (
-        <div className={styles.metadataView}>
-          <div className={styles.jsonHeader}>
-            <p className={styles.jsonDescription}>
-              Internal metadata for this character. UUID and linked settings are managed by the
-              editor.
-            </p>
-            <div className={styles.jsonButtons}>
-              <button
-                type="button"
-                className={styles.btnIcon}
-                onClick={handleCopyMetadata}
-                title="Copy metadata"
-              >
-                📋
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.metadataContent}>
-            <div className={styles.metadataField}>
-              <span className={styles.metadataLabel}>UUID</span>
-              <code>{charUuid}</code>
-            </div>
-            <div className={styles.metadataField}>
-              <span className={styles.metadataLabel}>ID Linked to Name</span>
-              <code>{metadata.idLinkedToName ? 'true' : 'false'}</code>
-            </div>
-            {metadata.decoratives && Object.keys(metadata.decoratives).length > 0 && (
-              <div className={styles.metadataField}>
-                <span className={styles.metadataLabel}>Decorative Overrides</span>
-                <pre className={styles.metadataJson}>
-                  {JSON.stringify(metadata.decoratives, null, 2)}
-                </pre>
-              </div>
-            )}
+          <div className={styles.officialActions}>
+            <button
+              type="button"
+              className={styles.convertButton}
+              onClick={onConvertToCustom}
+              title="Create a custom copy that can be edited"
+            >
+              Convert to Custom
+            </button>
           </div>
         </div>
       )}
+
+      {/* Content body */}
+      <div className={styles.jsonTabContentBody}>
+        {/* Sub-tabs */}
+        <div className={styles.jsonSubTabs}>
+          <button
+            type="button"
+            className={`${styles.jsonSubTab} ${subTab === 'character' ? styles.active : ''}`}
+            onClick={() => setSubTab('character')}
+          >
+            Character
+          </button>
+          <button
+            type="button"
+            className={`${styles.jsonSubTab} ${subTab === 'metadata' ? styles.active : ''}`}
+            onClick={() => setSubTab('metadata')}
+          >
+            Metadata
+          </button>
+        </div>
+
+        {/* Character JSON Sub-tab */}
+        {subTab === 'character' && (
+          <>
+            <div className={styles.jsonHeader}>
+              <p className={styles.jsonDescription}>
+                {isOfficial
+                  ? 'View the character data. Official characters cannot be edited via JSON.'
+                  : 'Edit the raw JSON data. Changes are applied after a short delay.'}
+              </p>
+            </div>
+
+            <div className={styles.jsonEditorWrapper}>
+              <CodeMirrorEditor
+                value={characterJson.text}
+                onChange={characterJson.onChange}
+                disabled={isOfficial}
+                placeholder="Enter character JSON..."
+              />
+            </div>
+
+            {characterJson.error && <div className={styles.jsonError}>{characterJson.error}</div>}
+          </>
+        )}
+
+        {/* Metadata Sub-tab */}
+        {subTab === 'metadata' && (
+          <div className={styles.metadataView}>
+            <div className={styles.jsonHeader}>
+              <p className={styles.jsonDescription}>
+                Internal metadata for this character. UUID and linked settings are managed by the
+                editor.
+              </p>
+              <div className={styles.jsonButtons}>
+                <button
+                  type="button"
+                  className={styles.btnIcon}
+                  onClick={handleCopyMetadata}
+                  title="Copy metadata"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.metadataContent}>
+              <div className={styles.metadataField}>
+                <span className={styles.metadataLabel}>UUID</span>
+                <code>{charUuid}</code>
+              </div>
+              <div className={styles.metadataField}>
+                <span className={styles.metadataLabel}>ID Linked to Name</span>
+                <code>{metadata.idLinkedToName ? 'true' : 'false'}</code>
+              </div>
+              {metadata.decoratives && Object.keys(metadata.decoratives).length > 0 && (
+                <div className={styles.metadataField}>
+                  <span className={styles.metadataLabel}>Decorative Overrides</span>
+                  <pre className={styles.metadataJson}>
+                    {JSON.stringify(metadata.decoratives, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 });

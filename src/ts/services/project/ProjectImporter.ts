@@ -13,6 +13,8 @@
 
 import JSZip from 'jszip';
 import { CONFIG } from '@/ts/config.js';
+import { isValidPreset } from '@/ts/generation/presets.js';
+import type { Preset } from '@/ts/types/index.js';
 import type {
   CustomIconMetadata,
   Project,
@@ -71,6 +73,9 @@ export class ProjectImporter implements IProjectImporter {
     // Load custom icons
     const customIcons = await this.loadCustomIcons(zip, projectData.state.customIcons);
 
+    // Validate and filter presets (graceful handling of malformed data)
+    const validPresets = this.validatePresets(projectData.state.presets);
+
     // Generate new UUID for imported project
     const importedProject: Project = {
       ...projectData,
@@ -81,6 +86,11 @@ export class ProjectImporter implements IProjectImporter {
       state: {
         ...projectData.state,
         customIcons,
+        presets: validPresets,
+      },
+      stats: {
+        ...projectData.stats,
+        presetCount: validPresets.length,
       },
     };
 
@@ -268,6 +278,32 @@ export class ProjectImporter implements IProjectImporter {
     }
 
     return loadedIcons;
+  }
+
+  /**
+   * Validate and filter presets during import
+   * Gracefully handles malformed or missing preset data
+   */
+  private validatePresets(presets: unknown): Preset[] {
+    if (!Array.isArray(presets)) {
+      return [];
+    }
+
+    const validPresets = presets.filter((preset) => {
+      if (!isValidPreset(preset)) {
+        importLogger.warn('Skipping invalid preset during import', preset);
+        return false;
+      }
+      return true;
+    });
+
+    if (validPresets.length !== presets.length) {
+      importLogger.info(
+        `Imported ${validPresets.length} of ${presets.length} presets (${presets.length - validPresets.length} invalid)`
+      );
+    }
+
+    return validPresets as Preset[];
   }
 
   /**

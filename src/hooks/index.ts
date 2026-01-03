@@ -59,7 +59,9 @@ export {
 // Editor Hooks
 // ============================================================================
 export {
-  type CustomPreset,
+  type Preset,
+  type PresetTier,
+  type PresetWithTier,
   type UseCodeMirrorEditorOptions,
   type UseCodeMirrorEditorResult,
   type UseJsonEditorOptions,

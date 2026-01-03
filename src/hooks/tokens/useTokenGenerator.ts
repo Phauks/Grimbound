@@ -1,9 +1,13 @@
 import { useCallback, useRef } from 'react';
-import { clearDataUrlCache } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
+import {
+  clearDataUrlCache,
+  preRenderGalleryTokens,
+} from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { simpleHash } from '@/ts/cache/utils/hashUtils.js';
 import { isMetaToken } from '@/ts/export/zipExporter.js';
 import {
+  calculateTokenCountsByType,
   generateAllTokens,
   generateCharacterTokens,
   generateMeta,
@@ -123,19 +127,8 @@ export function useTokenGenerator() {
 
   const generateTokens = useCallback(
     async (externalProgressCallback?: ProgressCallback) => {
-      // Log the call with stack trace to identify caller
-      // biome-ignore lint/suspicious/useErrorMessage: Error used only for stack trace capture
-      const stack = new Error().stack?.split('\n').slice(2, 5).join('\n') || 'unknown';
-      logger.warn('useTokenGenerator', 'generateTokens called', {
-        isGenerating: isGeneratingRef.current,
-        caller: stack,
-      });
-
-      // Prevent concurrent generation - this stops infinite loops
-      if (isGeneratingRef.current) {
-        logger.debug('useTokenGenerator', 'Generation already in progress, skipping');
-        return;
-      }
+      // Prevent concurrent generation
+      if (isGeneratingRef.current) return;
 
       // Filter to only enabled characters
       const enabledCharacters = getEnabledCharacters();
@@ -152,14 +145,21 @@ export function useTokenGenerator() {
       isGeneratingRef.current = true;
 
       try {
+        // Pre-calculate token counts for accurate progress display
+        const tokenCounts = calculateTokenCountsByType(
+          enabledCharacters,
+          generationOptions,
+          scriptMeta || null
+        );
+
         setIsLoading(true);
         setError(null);
         setGenerationProgress({
           phase: 'meta',
-          character: { current: 0, total: 0 },
-          reminder: { current: 0, total: 0 },
-          meta: { current: 0, total: 0 },
-          overall: { current: 0, total: 0 },
+          character: { current: 0, total: tokenCounts.character },
+          reminder: { current: 0, total: tokenCounts.reminder },
+          meta: { current: 0, total: tokenCounts.meta },
+          overall: { current: 0, total: tokenCounts.total },
         });
 
         // Reset tokens array for new generation
@@ -185,17 +185,18 @@ export function useTokenGenerator() {
 
         // Final update to ensure all tokens are shown
         flushBatchedTokens();
+
+        // Pre-render all tokens to dataURLs while overlay is still showing
+        // This prevents lag when switching to Tokens tab later
+        preRenderGalleryTokens(tokensRef.current);
+
         setLastGeneratedJsonHash(simpleHash(jsonInput));
         setError(null);
       } catch (err) {
-        if (isAbortError(err)) {
-          logger.debug('useTokenGenerator', 'Token generation was cancelled');
-          return;
-        }
+        if (isAbortError(err)) return;
         setError(extractErrorMessage(err));
         logger.error('useTokenGenerator', 'Token generation error:', err);
       } finally {
-        logger.warn('useTokenGenerator', 'Generation completing, releasing lock');
         setIsLoading(false);
         setGenerationProgress(null);
         abortControllerRef.current = null;
@@ -233,13 +234,8 @@ export function useTokenGenerator() {
    */
   const regenerateByType = useCallback(
     async (typeFilter: TokenTypeFilter, externalProgressCallback?: ProgressCallback) => {
-      logger.info('useTokenGenerator', `Regenerating ${typeFilter} tokens only`);
-
       // Prevent concurrent generation
-      if (isGeneratingRef.current) {
-        logger.debug('useTokenGenerator', 'Generation already in progress, skipping');
-        return;
-      }
+      if (isGeneratingRef.current) return;
 
       const enabledCharacters = getEnabledCharacters();
       if (enabledCharacters.length === 0) {
@@ -255,14 +251,27 @@ export function useTokenGenerator() {
       isGeneratingRef.current = true;
 
       try {
+        // Pre-calculate token counts for accurate progress display
+        const fullCounts = calculateTokenCountsByType(
+          enabledCharacters,
+          generationOptions,
+          scriptMeta || null
+        );
+        const typeTotal =
+          typeFilter === 'character'
+            ? fullCounts.character
+            : typeFilter === 'reminder'
+              ? fullCounts.reminder
+              : fullCounts.meta;
+
         setIsLoading(true);
         setError(null);
         setGenerationProgress({
           phase: typeFilter as GenerationProgress['phase'],
-          character: { current: 0, total: 0 },
-          reminder: { current: 0, total: 0 },
-          meta: { current: 0, total: 0 },
-          overall: { current: 0, total: 0 },
+          character: { current: 0, total: typeFilter === 'character' ? fullCounts.character : 0 },
+          reminder: { current: 0, total: typeFilter === 'reminder' ? fullCounts.reminder : 0 },
+          meta: { current: 0, total: typeFilter === 'meta' ? fullCounts.meta : 0 },
+          overall: { current: 0, total: typeTotal },
         });
 
         // Keep existing tokens that don't match the filter
@@ -292,17 +301,17 @@ export function useTokenGenerator() {
 
         // Final update to ensure all tokens are shown
         flushBatchedTokens();
+
+        // Pre-render all tokens to dataURLs while overlay is still showing
+        preRenderGalleryTokens(tokensRef.current);
+
         setLastGeneratedJsonHash(simpleHash(jsonInput));
         setError(null);
       } catch (err) {
-        if (isAbortError(err)) {
-          logger.debug('useTokenGenerator', 'Token generation was cancelled');
-          return;
-        }
+        if (isAbortError(err)) return;
         setError(extractErrorMessage(err));
         logger.error('useTokenGenerator', 'Token generation error:', err);
       } finally {
-        logger.info('useTokenGenerator', `Finished regenerating ${typeFilter} tokens`);
         setIsLoading(false);
         setGenerationProgress(null);
         abortControllerRef.current = null;

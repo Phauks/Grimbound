@@ -37,6 +37,8 @@ interface SortableImageUrlRowProps {
   onRemove: (index: number) => void;
   /** Whether this is the last remaining item */
   isLastItem: boolean;
+  /** Handle browse assets button click (optional) */
+  onBrowseAssets?: (index: number) => void;
 }
 
 export const SortableImageUrlRow = memo(function SortableImageUrlRow({
@@ -52,6 +54,7 @@ export const SortableImageUrlRow = memo(function SortableImageUrlRow({
   onPreviewClick,
   onRemove,
   isLastItem,
+  onBrowseAssets,
 }: SortableImageUrlRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -114,6 +117,18 @@ export const SortableImageUrlRow = memo(function SortableImageUrlRow({
         onBlur={onBlur}
         placeholder="URL to character image"
       />
+
+      {onBrowseAssets && (
+        <button
+          type="button"
+          className={styles.btnIcon}
+          onClick={() => onBrowseAssets(index)}
+          disabled={disabled}
+          title={disabled ? 'Official character - cannot edit' : 'Browse assets'}
+        >
+          📁
+        </button>
+      )}
 
       <button
         type="button"

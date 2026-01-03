@@ -82,7 +82,7 @@ export class FontRegistry implements IFontRegistry {
     // Load fonts from all providers in parallel
     const [builtIn, google, custom] = await Promise.all([
       this.builtInProvider.getAvailableFonts(),
-      this.googleProvider.getPopularFonts(50), // Start with popular fonts
+      this.googleProvider.getAvailableFonts(),
       this.customProvider.getAvailableFonts(),
     ]);
 

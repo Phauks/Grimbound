@@ -190,6 +190,9 @@ export function TokenProvider({ children }: TokenProviderProps) {
       newMap.set(uuid, { ...existing, enabled });
       return newMap;
     });
+    // Reset hash to trigger regeneration check on next tokens view
+    // Don't clear tokens - only newly-enabled characters without tokens will be generated
+    setLastGeneratedJsonHash(null);
   }, []);
 
   const setAllCharactersEnabled = useCallback(
@@ -203,6 +206,8 @@ export function TokenProvider({ children }: TokenProviderProps) {
         }
         return newMap;
       });
+      // Reset hash to trigger regeneration check on next tokens view
+      setLastGeneratedJsonHash(null);
     },
     [characters]
   );

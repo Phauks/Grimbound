@@ -191,6 +191,11 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       return;
     }
 
+    // Skip if we have user modifications - don't overwrite their changes!
+    if (isDirty) {
+      return;
+    }
+
     // Skip if no characters yet
     if (characters.length === 0) {
       // Reset when characters are cleared
@@ -224,7 +229,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       hasInitializedRef.current = true;
       lastCharacterCountRef.current = characters.length;
     }
-  }, [characters, tokenScriptMeta, initialScriptData, initializeFromScript]);
+  }, [characters, tokenScriptMeta, initialScriptData, initializeFromScript, isDirty]);
 
   /**
    * Move an entry to a new position

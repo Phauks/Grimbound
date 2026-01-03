@@ -7,11 +7,20 @@
  * @module components/Shared/Selectors/FontSettings/FontSelectionColumn
  */
 
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SourceTab, ViewMode } from '@/hooks/fonts/useFontFiltering';
 import styles from '@/styles/components/shared/FontDrawer.module.css';
 import type { FontCategory, FontDefinition } from '@/ts/types/fonts.js';
 import { FontGridItem, FontListItem } from './FontItem';
+
+// ============================================================================
+// Progressive Loading Constants
+// ============================================================================
+
+/** Initial number of fonts to render (fast initial load) */
+const INITIAL_RENDER_COUNT = 50;
+/** Number of fonts to add on each scroll batch */
+const BATCH_SIZE = 50;
 
 // ============================================================================
 // Constants
@@ -105,6 +114,55 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
   onUpload,
   fileInputRef,
 }: FontSelectionColumnProps) {
+  // Progressive loading state - only render visible fonts for performance
+  const [renderCount, setRenderCount] = useState(INITIAL_RENDER_COUNT);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  // Create a stable filter key that changes when any filter changes
+  const filterKey = useMemo(
+    () =>
+      `${searchQuery}|${activeSource}|${Array.from(activeCategories).sort().join(',')}|${viewMode}`,
+    [searchQuery, activeSource, activeCategories, viewMode]
+  );
+
+  // Track previous filter key to detect changes
+  const prevFilterKeyRef = useRef(filterKey);
+
+  // Reset render count when filters change (using ref comparison to satisfy biome)
+  useEffect(() => {
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+      setRenderCount(INITIAL_RENDER_COUNT);
+      // Scroll to top when filters change
+      listContainerRef.current?.scrollTo(0, 0);
+    }
+  }, [filterKey]);
+
+  // Load more fonts when scrolling near the bottom
+  const handleScroll = useCallback(() => {
+    const container = listContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    // Load more when within 200px of bottom
+    if (scrollHeight - scrollTop - clientHeight < 200) {
+      setRenderCount((prev) => Math.min(prev + BATCH_SIZE, filteredFonts.length));
+    }
+  }, [filteredFonts.length]);
+
+  // Attach scroll listener
+  useEffect(() => {
+    const container = listContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Slice fonts for progressive rendering
+  const visibleFonts = filteredFonts.slice(0, renderCount);
+  const hasMoreFonts = renderCount < filteredFonts.length;
+
   return (
     <div className={`${styles.column} ${styles.fontSelectionColumn}`}>
       <div className={styles.sectionHeader}>Font Family</div>
@@ -191,7 +249,7 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
       )}
 
       {/* Font List/Grid */}
-      <div className={styles.fontListContainer}>
+      <div ref={listContainerRef} className={styles.fontListContainer}>
         {isLoading ? (
           <div className={styles.loadingState}>Loading fonts...</div>
         ) : filteredFonts.length === 0 ? (
@@ -207,25 +265,44 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
           </div>
         ) : viewMode === 'list' ? (
           <div className={styles.fontList}>
-            {Array.from(groupedFonts.entries()).map(([category, categoryFonts]) => (
-              <div key={category}>
-                <div className={styles.categoryHeader}>{category}</div>
-                {categoryFonts.map((font) => (
-                  <FontListItem
-                    key={font.id}
-                    font={font}
-                    isSelected={font.family === selectedFontFamily}
-                    isLoading={loadingFonts.has(font.family)}
-                    onSelect={onFontSelect}
-                    onHover={onFontHover}
-                  />
-                ))}
-              </div>
-            ))}
+            {/* Progressive rendering: slice groupedFonts by tracking cumulative count */}
+            {(() => {
+              let rendered = 0;
+              const elements: React.ReactNode[] = [];
+
+              for (const [category, categoryFonts] of groupedFonts.entries()) {
+                if (rendered >= renderCount) break;
+
+                const fontsToShow = categoryFonts.slice(0, renderCount - rendered);
+                rendered += fontsToShow.length;
+
+                elements.push(
+                  <div key={category}>
+                    <div className={styles.categoryHeader}>{category}</div>
+                    {fontsToShow.map((font) => (
+                      <FontListItem
+                        key={font.id}
+                        font={font}
+                        isSelected={font.family === selectedFontFamily}
+                        isLoading={loadingFonts.has(font.family)}
+                        onSelect={onFontSelect}
+                        onHover={onFontHover}
+                      />
+                    ))}
+                  </div>
+                );
+              }
+
+              return elements;
+            })()}
+            {/* Load more indicator */}
+            {hasMoreFonts && (
+              <div className={styles.loadMoreSentinel}>Scroll for more fonts...</div>
+            )}
           </div>
         ) : (
           <div className={styles.fontGrid}>
-            {filteredFonts.map((font) => (
+            {visibleFonts.map((font) => (
               <FontGridItem
                 key={font.id}
                 font={font}
@@ -235,6 +312,10 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
                 onHover={onFontHover}
               />
             ))}
+            {/* Load more indicator */}
+            {hasMoreFonts && (
+              <div className={styles.loadMoreSentinel}>Scroll for more fonts...</div>
+            )}
           </div>
         )}
       </div>

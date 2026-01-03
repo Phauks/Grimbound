@@ -1,5 +1,20 @@
+/**
+ * MetaEditor Component
+ *
+ * Editor for script metadata (_meta entry) including:
+ * - Script name, version, author
+ * - Logo and almanac URLs
+ * - Bootlegger entries
+ * - Background image URL
+ * - Raw JSON editor
+ *
+ * @module components/CharactersComponents/MetaEditor
+ */
+
 import { type RefCallback, useCallback, useEffect, useRef, useState } from 'react';
 import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
+import { useControlledField } from '@/hooks/ui/useControlledField';
+import { useControlledFields } from '@/hooks/ui/useControlledFields';
 import styles from '@/styles/components/characterEditor/MetaEditor.module.css';
 import type { ScriptMeta } from '@/ts/types/index.js';
 
@@ -34,23 +49,79 @@ export function MetaEditor({
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
 
-  // Local state for inputs
-  const [localName, setLocalName] = useState(meta.name || '');
-  const [localVersion, setLocalVersion] = useState(meta.version || '');
-  const [localAuthor, setLocalAuthor] = useState(meta.author || '');
-  const [localLogo, setLocalLogo] = useState(meta.logo || '');
-  const [localAlmanac, setLocalAlmanac] = useState(meta.almanac || '');
-  const [localBackground, setLocalBackground] = useState(meta.background || '');
-  const [_localSynopsis, setLocalSynopsis] = useState(meta.synopsis || '');
-  const [_localOverview, setLocalOverview] = useState(meta.overview || '');
-  const [_localChangelog, setLocalChangelog] = useState(meta.changelog || '');
+  // ============================================
+  // Controlled Fields for simple string inputs
+  // ============================================
 
-  // Bootlegger state
+  const { fields: infoFields } = useControlledFields({
+    values: {
+      name: meta.name || '',
+      version: meta.version || '',
+      author: meta.author || '',
+      logo: meta.logo || '',
+      almanac: meta.almanac || '',
+    },
+    onChange: (field, value) => onMetaChange({ ...meta, [field]: value }),
+    debounceMs: 500,
+  });
+
+  const background = useControlledField({
+    value: meta.background || '',
+    onChange: (value) => onMetaChange({ ...meta, background: value }),
+    debounceMs: 500,
+  });
+
+  // ============================================
+  // Bootlegger Array State (special handling)
+  // ============================================
+
   const [localBootlegger, setLocalBootlegger] = useState<string[]>(meta.bootlegger || []);
   const [draggedBootleggerIndex, setDraggedBootleggerIndex] = useState<number | null>(null);
   const [dragOverBootleggerIndex, setDragOverBootleggerIndex] = useState<number | null>(null);
 
-  // JSON state - strip internal fields for display
+  // Track last sent bootlegger to avoid resetting on our own updates
+  const lastSentBootleggerRef = useRef<string>(JSON.stringify(meta.bootlegger || []));
+  const bootleggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync bootlegger from props only when external change
+  useEffect(() => {
+    const bootleggerKey = JSON.stringify(meta.bootlegger || []);
+    if (bootleggerKey !== lastSentBootleggerRef.current) {
+      setLocalBootlegger(meta.bootlegger || []);
+      lastSentBootleggerRef.current = bootleggerKey;
+    }
+  }, [meta.bootlegger]);
+
+  // Cleanup bootlegger timer
+  useEffect(
+    () => () => {
+      if (bootleggerTimerRef.current) clearTimeout(bootleggerTimerRef.current);
+    },
+    []
+  );
+
+  const updateBootlegger = useCallback(
+    (newEntries: string[], immediate = false) => {
+      setLocalBootlegger(newEntries);
+      lastSentBootleggerRef.current = JSON.stringify(newEntries);
+
+      if (immediate) {
+        onMetaChange({ ...meta, bootlegger: newEntries });
+      } else {
+        if (bootleggerTimerRef.current) clearTimeout(bootleggerTimerRef.current);
+        bootleggerTimerRef.current = setTimeout(() => {
+          bootleggerTimerRef.current = null;
+          onMetaChange({ ...meta, bootlegger: newEntries });
+        }, 500);
+      }
+    },
+    [meta, onMetaChange]
+  );
+
+  // ============================================
+  // JSON Editor State
+  // ============================================
+
   const getExportableMeta = useCallback((m: ScriptMeta) => {
     const { ...rest } = m;
     return rest;
@@ -58,22 +129,70 @@ export function MetaEditor({
 
   const [jsonText, setJsonText] = useState(() => JSON.stringify(getExportableMeta(meta), null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
-
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const jsonDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditingJsonRef = useRef(false);
 
-  // Auto-expand textarea refs
+  // Sync JSON text from props when not editing
+  useEffect(() => {
+    if (!isEditingJsonRef.current) {
+      setJsonText(JSON.stringify(getExportableMeta(meta), null, 2));
+      setJsonError(null);
+    }
+  }, [meta, getExportableMeta]);
+
+  // Cleanup JSON timer
+  useEffect(
+    () => () => {
+      if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
+    },
+    []
+  );
+
+  const handleJsonChange = useCallback(
+    (newText: string) => {
+      setJsonText(newText);
+      isEditingJsonRef.current = true;
+
+      if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
+
+      jsonDebounceTimerRef.current = setTimeout(() => {
+        try {
+          const parsed = JSON.parse(newText);
+          setJsonError(null);
+          onMetaChange({ ...parsed, id: '_meta' });
+          setTimeout(() => {
+            isEditingJsonRef.current = false;
+          }, 100);
+        } catch (err) {
+          setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
+        }
+      }, 500);
+    },
+    [onMetaChange]
+  );
+
+  const handleFormatJson = useCallback(() => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      setJsonText(JSON.stringify(parsed, null, 2));
+      setJsonError(null);
+    } catch (err) {
+      setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
+    }
+  }, [jsonText]);
+
+  // ============================================
+  // Auto-resize Textareas
+  // ============================================
+
   const textareaRefs = useRef<Set<HTMLTextAreaElement>>(new Set());
 
-  // Utility function to resize a single textarea to fit its content
   const resizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
     if (!textarea) return;
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, []);
 
-  // Callback ref to register textareas for auto-resize
   const registerTextareaRef: RefCallback<HTMLTextAreaElement> = useCallback(
     (element) => {
       if (element) {
@@ -84,7 +203,6 @@ export function MetaEditor({
     [resizeTextarea]
   );
 
-  // Handler for textarea input that also auto-resizes
   const handleTextareaInput = useCallback(
     (e: React.FormEvent<HTMLTextAreaElement>) => {
       resizeTextarea(e.currentTarget);
@@ -92,16 +210,21 @@ export function MetaEditor({
     [resizeTextarea]
   );
 
-  // Resize all textareas when bootlegger entries change
+  // Resize all textareas when bootlegger count changes
+  const bootleggerCount = localBootlegger.length;
   useEffect(() => {
-    requestAnimationFrame(() => {
-      textareaRefs.current.forEach((textarea) => {
-        resizeTextarea(textarea);
+    // Trigger resize when bootlegger entries are added/removed
+    if (bootleggerCount >= 0) {
+      requestAnimationFrame(() => {
+        textareaRefs.current.forEach(resizeTextarea);
       });
-    });
-  }, [resizeTextarea]);
+    }
+  }, [bootleggerCount, resizeTextarea]);
 
-  // Close download menu on click outside
+  // ============================================
+  // Download Menu
+  // ============================================
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
@@ -112,76 +235,9 @@ export function MetaEditor({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync when meta changes externally
-  useEffect(() => {
-    const m = scriptMeta || DEFAULT_META;
-    setLocalName(m.name || '');
-    setLocalVersion(m.version || '');
-    setLocalAuthor(m.author || '');
-    setLocalLogo(m.logo || '');
-    setLocalAlmanac(m.almanac || '');
-    setLocalBackground(m.background || '');
-    setLocalSynopsis(m.synopsis || '');
-    setLocalOverview(m.overview || '');
-    setLocalChangelog(m.changelog || '');
-    setLocalBootlegger(m.bootlegger || []);
-  }, [scriptMeta]);
-
-  useEffect(() => {
-    if (!isEditingJsonRef.current) {
-      const m = scriptMeta || DEFAULT_META;
-      setJsonText(JSON.stringify(getExportableMeta(m), null, 2));
-      setJsonError(null);
-    }
-  }, [scriptMeta, getExportableMeta]);
-
-  const debouncedUpdate = useCallback(
-    (field: keyof ScriptMeta | string, value: unknown, delay = 500) => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => {
-        onMetaChange({ ...meta, [field]: value } as ScriptMeta);
-      }, delay);
-    },
-    [meta, onMetaChange]
-  );
-
-  useEffect(
-    () => () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
-    },
-    []
-  );
-
-  const handleJsonChange = (newText: string) => {
-    setJsonText(newText);
-    isEditingJsonRef.current = true;
-
-    if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
-
-    jsonDebounceTimerRef.current = setTimeout(() => {
-      try {
-        const parsed = JSON.parse(newText);
-        setJsonError(null);
-        onMetaChange({ ...parsed, id: '_meta' });
-        setTimeout(() => {
-          isEditingJsonRef.current = false;
-        }, 100);
-      } catch (err) {
-        setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
-      }
-    }, 500);
-  };
-
-  const handleFormatJson = () => {
-    try {
-      const parsed = JSON.parse(jsonText);
-      setJsonText(JSON.stringify(parsed, null, 2));
-      setJsonError(null);
-    } catch (err) {
-      setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
-    }
-  };
+  // ============================================
+  // Render
+  // ============================================
 
   return (
     <div className={styles.editor}>
@@ -289,11 +345,9 @@ export function MetaEditor({
               <input
                 id="meta-name"
                 type="text"
-                value={localName}
-                onChange={(e) => {
-                  setLocalName(e.target.value);
-                  debouncedUpdate('name', e.target.value);
-                }}
+                value={infoFields.name.localValue}
+                onChange={(e) => infoFields.name.handleChange(e.target.value)}
+                onBlur={infoFields.name.handleBlur}
                 placeholder="Enter script name..."
               />
             </div>
@@ -303,11 +357,9 @@ export function MetaEditor({
               <input
                 id="meta-version"
                 type="text"
-                value={localVersion}
-                onChange={(e) => {
-                  setLocalVersion(e.target.value);
-                  debouncedUpdate('version', e.target.value);
-                }}
+                value={infoFields.version.localValue}
+                onChange={(e) => infoFields.version.handleChange(e.target.value)}
+                onBlur={infoFields.version.handleBlur}
                 placeholder="e.g. 1.0.0"
               />
             </div>
@@ -317,11 +369,9 @@ export function MetaEditor({
               <input
                 id="meta-author"
                 type="text"
-                value={localAuthor}
-                onChange={(e) => {
-                  setLocalAuthor(e.target.value);
-                  debouncedUpdate('author', e.target.value);
-                }}
+                value={infoFields.author.localValue}
+                onChange={(e) => infoFields.author.handleChange(e.target.value)}
+                onBlur={infoFields.author.handleBlur}
                 placeholder="Enter author name..."
               />
             </div>
@@ -331,11 +381,9 @@ export function MetaEditor({
               <input
                 id="meta-logo"
                 type="url"
-                value={localLogo}
-                onChange={(e) => {
-                  setLocalLogo(e.target.value);
-                  debouncedUpdate('logo', e.target.value);
-                }}
+                value={infoFields.logo.localValue}
+                onChange={(e) => infoFields.logo.handleChange(e.target.value)}
+                onBlur={infoFields.logo.handleBlur}
                 placeholder="https://..."
               />
             </div>
@@ -345,11 +393,9 @@ export function MetaEditor({
               <input
                 id="meta-almanac"
                 type="url"
-                value={localAlmanac}
-                onChange={(e) => {
-                  setLocalAlmanac(e.target.value);
-                  debouncedUpdate('almanac', e.target.value);
-                }}
+                value={infoFields.almanac.localValue}
+                onChange={(e) => infoFields.almanac.handleChange(e.target.value)}
+                onBlur={infoFields.almanac.handleBlur}
                 placeholder="https://..."
               />
             </div>
@@ -397,8 +443,7 @@ export function MetaEditor({
                           const newEntries = [...localBootlegger];
                           const [removed] = newEntries.splice(draggedBootleggerIndex, 1);
                           newEntries.splice(index, 0, removed);
-                          setLocalBootlegger(newEntries);
-                          onMetaChange({ ...meta, bootlegger: newEntries });
+                          updateBootlegger(newEntries, true);
                         }
                         setDraggedBootleggerIndex(null);
                         setDragOverBootleggerIndex(null);
@@ -413,8 +458,7 @@ export function MetaEditor({
                         onChange={(e) => {
                           const newEntries = [...localBootlegger];
                           newEntries[index] = e.target.value;
-                          setLocalBootlegger(newEntries);
-                          debouncedUpdate('bootlegger', newEntries);
+                          updateBootlegger(newEntries);
                         }}
                         onInput={handleTextareaInput}
                         placeholder="Enter ability text..."
@@ -426,8 +470,7 @@ export function MetaEditor({
                         className={`${styles.btnIcon} ${styles.btnDanger}`}
                         onClick={() => {
                           const newEntries = localBootlegger.filter((_, i) => i !== index);
-                          setLocalBootlegger(newEntries);
-                          onMetaChange({ ...meta, bootlegger: newEntries });
+                          updateBootlegger(newEntries, true);
                         }}
                         title="Remove entry"
                       >
@@ -441,9 +484,7 @@ export function MetaEditor({
                 type="button"
                 className={`${styles.btnSecondary} ${styles.btnSm}`}
                 onClick={() => {
-                  const newEntries = [...localBootlegger, ''];
-                  setLocalBootlegger(newEntries);
-                  onMetaChange({ ...meta, bootlegger: newEntries });
+                  updateBootlegger([...localBootlegger, ''], true);
                 }}
               >
                 + Add Bootlegger Entry
@@ -459,11 +500,9 @@ export function MetaEditor({
               <input
                 id="meta-background"
                 type="url"
-                value={localBackground}
-                onChange={(e) => {
-                  setLocalBackground(e.target.value);
-                  debouncedUpdate('background', e.target.value);
-                }}
+                value={background.localValue}
+                onChange={(e) => background.handleChange(e.target.value)}
+                onBlur={background.handleBlur}
                 placeholder="https://..."
               />
               <p className={styles.fieldHint}>Custom background image for the script</p>

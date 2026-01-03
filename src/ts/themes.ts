@@ -5,11 +5,20 @@
  * Team colors remain consistent across all themes for game clarity.
  */
 
+export type ThemeMode = 'dark' | 'light';
+
 export interface UITheme {
   id: string;
   name: string;
   description: string;
   icon: string;
+  mode: ThemeMode;
+  /** Core colors that can be customized by users */
+  coreColors: {
+    primary: string;
+    accent: string;
+    backgroundBase: string;
+  };
   variables: Record<string, string>;
 }
 
@@ -19,7 +28,9 @@ export type ThemeId =
   | 'saints-salvation'
   | 'quiet-night'
   | 'sinners-delight'
-  | 'star-blast';
+  | 'star-blast'
+  | 'dawns-light'
+  | 'angelic-grace';
 
 export const DEFAULT_THEME_ID: ThemeId = 'crimson-sun';
 
@@ -29,6 +40,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: 'Crimson Sun',
     description: 'The classic dark theme with warm crimson and gold accents',
     icon: '☀️',
+    mode: 'dark',
+    coreColors: {
+      primary: '#8b0000',
+      accent: '#c9a227',
+      backgroundBase: '#1a1a1a',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#1a1a1a',
@@ -46,6 +63,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#5c0000',
       '--color-primary-light': '#b30000',
       '--color-primary-subtle': 'rgba(139, 0, 0, 0.1)',
+      '--primary-rgb': '139, 0, 0',
       '--color-accent': '#c9a227',
       '--color-accent-light': '#e6c34a',
       '--color-accent-dark': '#a88620',
@@ -75,6 +93,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: "Puck's Purple",
     description: 'A mystical purple theme inspired by mischievous fae',
     icon: '🔮',
+    mode: 'dark',
+    coreColors: {
+      primary: '#6b2d8b',
+      accent: '#a855f7',
+      backgroundBase: '#1a1a2e',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#1a1a2e',
@@ -92,6 +116,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#4a1f5c',
       '--color-primary-light': '#8b3db0',
       '--color-primary-subtle': 'rgba(107, 45, 139, 0.1)',
+      '--primary-rgb': '107, 45, 139',
       '--color-accent': '#a855f7',
       '--color-accent-light': '#c084fc',
       '--color-accent-dark': '#7c3aed',
@@ -121,6 +146,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: "Saint's Salvation",
     description: 'A serene blue theme of divine protection',
     icon: '🕊️',
+    mode: 'dark',
+    coreColors: {
+      primary: '#1e40af',
+      accent: '#38bdf8',
+      backgroundBase: '#0f1729',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#0f1729',
@@ -138,6 +169,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#1e3a8a',
       '--color-primary-light': '#3b82f6',
       '--color-primary-subtle': 'rgba(30, 64, 175, 0.1)',
+      '--primary-rgb': '30, 64, 175',
       '--color-accent': '#38bdf8',
       '--color-accent-light': '#7dd3fc',
       '--color-accent-dark': '#0ea5e9',
@@ -167,6 +199,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: 'Quiet Night',
     description: 'A deep black theme for the darkest hours',
     icon: '🌙',
+    mode: 'dark',
+    coreColors: {
+      primary: '#4a4a4a',
+      accent: '#888888',
+      backgroundBase: '#0a0a0a',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#0a0a0a',
@@ -184,6 +222,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#3a3a3a',
       '--color-primary-light': '#5a5a5a',
       '--color-primary-subtle': 'rgba(74, 74, 74, 0.1)',
+      '--primary-rgb': '74, 74, 74',
       '--color-accent': '#888888',
       '--color-accent-light': '#aaaaaa',
       '--color-accent-dark': '#666666',
@@ -213,6 +252,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: "Sinner's Delight",
     description: 'A fiery red theme of temptation and danger',
     icon: '😈',
+    mode: 'dark',
+    coreColors: {
+      primary: '#b91c1c',
+      accent: '#f87171',
+      backgroundBase: '#1a0a0a',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#1a0a0a',
@@ -230,6 +275,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#991b1b',
       '--color-primary-light': '#dc2626',
       '--color-primary-subtle': 'rgba(185, 28, 28, 0.1)',
+      '--primary-rgb': '185, 28, 28',
       '--color-accent': '#f87171',
       '--color-accent-light': '#fca5a5',
       '--color-accent-dark': '#ef4444',
@@ -259,6 +305,12 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
     name: 'Star Blast',
     description: 'A radiant yellow theme of celestial power',
     icon: '⭐',
+    mode: 'dark',
+    coreColors: {
+      primary: '#a16207',
+      accent: '#facc15',
+      backgroundBase: '#1a1708',
+    },
     variables: {
       // Background Colors
       '--bg-main': '#1a1708',
@@ -276,6 +328,7 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--color-primary-dark': '#854d0e',
       '--color-primary-light': '#ca8a04',
       '--color-primary-subtle': 'rgba(161, 98, 7, 0.1)',
+      '--primary-rgb': '161, 98, 7',
       '--color-accent': '#facc15',
       '--color-accent-light': '#fde047',
       '--color-accent-dark': '#eab308',
@@ -299,6 +352,116 @@ export const UI_THEMES: Record<ThemeId, UITheme> = {
       '--cm-json-null': '#f59e0b',
     },
   },
+
+  // ============================================================================
+  // LIGHT THEMES
+  // ============================================================================
+
+  'dawns-light': {
+    id: 'dawns-light',
+    name: "Dawn's Light",
+    description: 'A warm light theme of the first morning',
+    icon: '🌅',
+    mode: 'light',
+    coreColors: {
+      primary: '#8b4513',
+      accent: '#b8860b',
+      backgroundBase: '#faf8f5',
+    },
+    variables: {
+      // Background Colors
+      '--bg-main': '#faf8f5',
+      '--bg-primary': '#faf8f5',
+      '--bg-panel': '#ffffff',
+      '--bg-card': '#f5f3ef',
+      '--bg-input': '#ffffff',
+      '--bg-hover': '#f0ede8',
+      '--bg-tertiary': '#f8f6f2',
+      '--bg-secondary': '#fdfcfa',
+      '--color-background': '#faf8f5',
+
+      // Brand/Accent Colors
+      '--color-primary': '#8b4513',
+      '--color-primary-dark': '#6b3410',
+      '--color-primary-light': '#a0522d',
+      '--color-primary-subtle': 'rgba(139, 69, 19, 0.1)',
+      '--primary-rgb': '139, 69, 19',
+      '--color-accent': '#b8860b',
+      '--color-accent-light': '#daa520',
+      '--color-accent-dark': '#996b08',
+      '--accent-rgb': '184, 134, 11',
+
+      // Text Colors
+      '--text-primary': '#2d2a26',
+      '--text-secondary': '#5a5650',
+      '--text-muted': '#8a857a',
+      '--text-disabled': '#b0aa9f',
+
+      // Border Colors
+      '--border-color': '#d8d4cc',
+      '--border-color-light': '#e8e4dc',
+
+      // CodeMirror JSON Syntax Colors (warm, readable on light)
+      '--cm-json-key': '#6b3410',
+      '--cm-json-string': '#8b4513',
+      '--cm-json-number': '#996b08',
+      '--cm-json-boolean': '#a0522d',
+      '--cm-json-null': '#b8860b',
+    },
+  },
+
+  'angelic-grace': {
+    id: 'angelic-grace',
+    name: 'Angelic Grace',
+    description: 'A clean light theme of divine serenity',
+    icon: '👼',
+    mode: 'light',
+    coreColors: {
+      primary: '#1e40af',
+      accent: '#3b82f6',
+      backgroundBase: '#f8fafc',
+    },
+    variables: {
+      // Background Colors
+      '--bg-main': '#f8fafc',
+      '--bg-primary': '#f8fafc',
+      '--bg-panel': '#ffffff',
+      '--bg-card': '#f1f5f9',
+      '--bg-input': '#ffffff',
+      '--bg-hover': '#e2e8f0',
+      '--bg-tertiary': '#f4f7fa',
+      '--bg-secondary': '#fafbfc',
+      '--color-background': '#f8fafc',
+
+      // Brand/Accent Colors
+      '--color-primary': '#1e40af',
+      '--color-primary-dark': '#1e3a8a',
+      '--color-primary-light': '#3b82f6',
+      '--color-primary-subtle': 'rgba(30, 64, 175, 0.1)',
+      '--primary-rgb': '30, 64, 175',
+      '--color-accent': '#3b82f6',
+      '--color-accent-light': '#60a5fa',
+      '--color-accent-dark': '#2563eb',
+      '--accent-rgb': '59, 130, 246',
+
+      // Text Colors
+      '--text-primary': '#1e293b',
+      '--text-secondary': '#475569',
+      '--text-muted': '#94a3b8',
+      '--text-disabled': '#cbd5e1',
+
+      // Border Colors
+      '--border-color': '#e2e8f0',
+      '--border-color-light': '#f1f5f9',
+
+      // CodeMirror JSON Syntax Colors (blue-tinted for light mode)
+      '--cm-json-key': '#1e40af',
+      '--cm-json-string': '#0369a1',
+      '--cm-json-number': '#0e7490',
+      '--cm-json-boolean': '#2563eb',
+      '--cm-json-null': '#3b82f6',
+    },
+  },
 };
 
 /**
@@ -320,4 +483,25 @@ export function getTheme(id: string): UITheme {
  */
 export function isValidThemeId(id: string): id is ThemeId {
   return id in UI_THEMES;
+}
+
+/**
+ * Get theme IDs filtered by mode
+ */
+export function getThemeIdsByMode(mode: ThemeMode): ThemeId[] {
+  return getThemeIds().filter((id) => UI_THEMES[id].mode === mode);
+}
+
+/**
+ * Get all dark theme IDs
+ */
+export function getDarkThemeIds(): ThemeId[] {
+  return getThemeIdsByMode('dark');
+}
+
+/**
+ * Get all light theme IDs
+ */
+export function getLightThemeIds(): ThemeId[] {
+  return getThemeIdsByMode('light');
 }

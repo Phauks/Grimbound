@@ -1,0 +1,205 @@
+/**
+ * ThemeSelector Styles
+ *
+ * Styles for the header theme selector popover component.
+ */
+
+/* ============================================================================
+   Container & Trigger
+   ============================================================================ */
+
+.container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ============================================================================
+   Panel
+   ============================================================================ */
+
+.panel {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: panelFadeIn 0.15s ease-out;
+}
+
+.panelUpward {
+  transform-origin: bottom left;
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panelTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   Theme Grid
+   ============================================================================ */
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+}
+
+.themeSwatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: var(--spacing-xs);
+  background-color: var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.themeSwatch:hover {
+  background-color: var(--bg-hover);
+  transform: scale(1.05);
+}
+
+.themeSwatchSelected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.3);
+}
+
+.swatchColors {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--spacing-xs);
+}
+
+.swatchBg {
+  flex: 2;
+}
+
+.swatchPrimary {
+  flex: 1;
+}
+
+.swatchAccent {
+  flex: 1;
+}
+
+.swatchIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ============================================================================
+   Customization Section
+   ============================================================================ */
+
+.customization {
+  border-top: 1px solid var(--border-color);
+}
+
+.customizeToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.customizeToggle:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.chevronDown,
+.chevronUp {
+  transition: transform 0.2s ease;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.customizeBadge {
+  margin-left: auto;
+  padding: 2px 6px;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-sm);
+  color: var(--bg-main);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.customizeContent {
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+  background-color: var(--bg-secondary);
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+}
+
+.colorLabel {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.resetButton {
+  display: block;
+  width: 100%;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.resetButton:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-color-light);
+}

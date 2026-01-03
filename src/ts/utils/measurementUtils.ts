@@ -182,19 +182,13 @@ export function convertConfigToDisplayUnit(
   step: number;
   defaultValue: number;
 } {
+  const decimals = DECIMAL_PLACES[displayUnit];
   return {
-    min: Number(
-      fromCanonicalInches(config.minInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
-    ),
-    max: Number(
-      fromCanonicalInches(config.maxInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
-    ),
-    step: Number(
-      fromCanonicalInches(config.stepInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
-    ),
-    defaultValue: Number(
-      fromCanonicalInches(config.defaultInches, displayUnit).toFixed(DECIMAL_PLACES[displayUnit])
-    ),
+    min: Number(fromCanonicalInches(config.minInches, displayUnit).toFixed(decimals)),
+    max: Number(fromCanonicalInches(config.maxInches, displayUnit).toFixed(decimals)),
+    // Keep step at full precision to ensure slider can reach min/max exactly
+    step: fromCanonicalInches(config.stepInches, displayUnit),
+    defaultValue: Number(fromCanonicalInches(config.defaultInches, displayUnit).toFixed(decimals)),
   };
 }
 
@@ -232,13 +226,14 @@ export const PDF_OFFSET_CONFIG: MeasurementConfig = {
 
 /**
  * Configuration for print bleed controls
- * Range: 0" to 0.125" (1/8") in 1/32" steps
+ * Range: 0" to 0.125" (1/8") in 0.025" steps
+ * 6 stops: 0, 0.025, 0.050, 0.075, 0.100, 0.125
  * Extends edge colors outward for clean cutting
  */
 export const BLEED_CONFIG: MeasurementConfig = {
   minInches: 0,
   maxInches: 0.125,
-  stepInches: STEP_SIZES.MEDIUM,
+  stepInches: 0.025,
   defaultInches: 0.125,
   label: 'Print Bleed',
   ariaLabel: 'Print Bleed Margin',

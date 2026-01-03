@@ -6,13 +6,15 @@
  */
 
 .sheet {
-  width: 100%;
-  height: 100%;
+  /* Fixed reference dimensions for WYSIWYG scaling */
+  /* Parent ScaledPage applies transform: scale() for responsive sizing */
+  width: 680px;
+  height: 880px; /* 680 * (11/8.5) = 880px for letter aspect ratio */
   display: flex;
   flex-direction: column;
   padding: 0.25in 0.15in 0.2in 0.15in; /* Reduced margins: top, left/right much smaller */
   box-sizing: border-box;
-  overflow: visible; /* Changed from hidden - scaling ensures content fits */
+  overflow: hidden; /* Clip to fixed dimensions */
   /* Default background if no props provided */
   background-color: #f4edd9;
 
@@ -133,9 +135,11 @@
 /* Print styles */
 @media print {
   .sheet {
-    padding: 0.5in;
+    /* Override fixed dimensions for print - fill the page */
+    width: 100%;
     height: auto;
     min-height: 100vh;
+    padding: 0.5in;
     overflow: visible;
   }
 

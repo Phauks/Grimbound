@@ -17,11 +17,15 @@ import type { BackgroundStyle } from './backgroundEffects.js';
 export * from './fonts.js';
 // Measurement system types
 export * from './measurement.js';
+// Preset types (global and local presets)
+export * from './presets.js';
 // Project management types
 export * from './project.js';
 
 import type { MeasurementUnit } from './measurement.js';
 
+// Constants re-exports
+export { TokenType, type TokenTypeValue } from '@/ts/constants.js';
 // UI Theme types
 export type { ThemeId, UITheme } from '@/ts/themes.js';
 export { DEFAULT_THEME_ID, getTheme, getThemeIds, isValidThemeId, UI_THEMES } from '@/ts/themes.js';
@@ -165,11 +169,12 @@ export interface DecorativeOverrides {
   abilityTextFontSpacing?: number;
   abilityTextShadow?: number;
 
-  // Setup overlay settings (from AdditionalOptionsPanel)
+  // Setup overlay settings (from DecorativesSettingsSelector)
   hideSetupOverlay?: boolean;
   setupStyle?: string;
+  setupPlacement?: SetupPlacement;
 
-  // Accent settings (from AdditionalOptionsPanel)
+  // Accent settings (from DecorativesSettingsSelector)
   accentEnabled?: boolean;
   accentGeneration?: string;
   maximumAccents?: number;
@@ -375,9 +380,6 @@ export interface ZipExportOptions {
   compressionLevel: CompressionLevel;
 }
 
-// DPI type
-export type DPIOption = 300 | 600;
-
 // Custom preset structure
 export interface CustomPreset {
   id: string; // "custom_" + timestamp
@@ -390,7 +392,7 @@ export interface CustomPreset {
 /**
  * Icon settings for image positioning
  * Note: offsetX and offsetY are stored in INCHES (canonical unit)
- * and converted to pixels during rendering using DPI
+ * and converted to pixels during rendering
  */
 export interface IconSettings {
   /** Scale multiplier (1.0 = 100%) */
@@ -434,6 +436,9 @@ export const DEFAULT_TOKEN_SETTINGS_LINK: TokenSettingsLink = {
 // Bootlegger icon type options
 export type BootleggerIconType = 'bootlegger' | 'script';
 
+// Setup overlay placement options
+export type SetupPlacement = 'left' | 'right';
+
 // Generation options (subset of TokenConfig)
 export interface GenerationOptions {
   displayAbilityText: boolean;
@@ -452,6 +457,8 @@ export interface GenerationOptions {
   autoGenerateReminderVariants?: boolean;
   autoGenerateTeams?: AutoGenerateTeam[]; // Which teams to generate variants for
   setupStyle: string;
+  /** Placement of setup overlay: 'left' or 'right' (default) */
+  setupPlacement?: SetupPlacement;
   reminderBackground: string;
   reminderBackgroundImage?: string;
   reminderBackgroundType?: 'color' | 'image';
@@ -490,7 +497,6 @@ export interface GenerationOptions {
   enableLeftAccent?: boolean;
   enableRightAccent?: boolean;
   sideAccentProbability?: number;
-  dpi?: DPIOption;
   fontSpacing?: FontSpacingOptions;
   textShadow?: TextShadowOptions;
   fontSizes?: FontSizeOptions;
@@ -498,12 +504,9 @@ export interface GenerationOptions {
   textStrokeColors?: TextStrokeColorOptions;
   textStrokeWidths?: TextStrokeWidthOptions;
   textLocations?: TextLocationOptions;
-  pngSettings?: PngExportOptions;
-  zipSettings?: ZipExportOptions;
   pdfPadding?: number;
   pdfXOffset?: number;
   pdfYOffset?: number;
-  pdfImageQuality?: number; // JPEG quality for PDF images (0.0-1.0)
   pdfBleed?: number; // Bleed in inches for cutting margin (default 1/8" = 0.125)
   iconSettings?: IconSettingsOptions; // Icon positioning per token type
   logoUrl?: string; // Custom logo URL for meta tokens
@@ -525,7 +528,17 @@ export interface Token {
   name: string;
   filename: string;
   team: Team | string;
-  canvas: HTMLCanvasElement;
+  /**
+   * Canvas element - may be undefined after dataUrl is extracted.
+   * For memory efficiency, canvas is cleared after encoding to dataUrl.
+   * Use getTokenCanvas() helper to recreate canvas from dataUrl when needed.
+   */
+  canvas?: HTMLCanvasElement;
+  /**
+   * Pre-encoded data URL for display and export.
+   * This is the primary image source - canvas is cleared after encoding.
+   */
+  dataUrl?: string;
   diameter: number; // Original diameter before DPI scaling
   hasReminders?: boolean;
   reminderCount?: number;
@@ -569,12 +582,10 @@ export interface AveryTemplate {
 export interface PDFOptions {
   pageWidth: number; // Page width in inches
   pageHeight: number; // Page height in inches
-  dpi: number; // Dots per inch (resolution)
   margin: number; // Page margin in inches (deprecated, use template)
   tokenPadding: number; // Padding between tokens in inches (deprecated, use template gap)
   xOffset: number; // Horizontal offset in inches (fine-tuning)
   yOffset: number; // Vertical offset in inches (fine-tuning)
-  imageQuality: number; // JPEG quality: 0.0-1.0 (0.90 = 90% quality)
   template?: AveryTemplateId; // Avery template to use for layout
   bleed?: number; // Bleed in inches for cutting margin (extends edge colors)
 }
@@ -983,27 +994,7 @@ export type TeamColors = Record<Team, string>;
 // Team labels
 export type TeamLabels = Record<Team, string>;
 
-// Preset configurations
-export type PresetName = 'classic' | 'fullbloom' | 'minimal';
-
-export interface PresetConfig {
-  name: string;
-  description: string;
-  icon: string;
-  settings: Partial<GenerationOptions> & {
-    // Additional preset-specific settings
-    characterBackground?: string;
-    setupStyle?: string;
-    reminderBackground?: string;
-    characterNameFont?: string;
-    characterReminderFont?: string;
-    displayAbilityText?: boolean;
-    tokenCount?: boolean;
-    scriptNameToken?: boolean;
-    almanacToken?: boolean;
-    pandemoniumToken?: boolean;
-  };
-}
+// Note: Preset types are now in ./presets.ts (Preset, PresetTier, PresetWithTier)
 
 // Declare global JSZip and QRCode
 declare global {

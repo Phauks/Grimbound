@@ -344,8 +344,10 @@ testContainer.registerInstance(ServiceTokens.ProjectDatabase, mockDatabase);
 |------|------------|
 | `src/ts/services/project/IProjectService.ts` | `IProjectService`, `IProjectDatabase`, `IProjectExporter`, `IProjectImporter` |
 | `src/ts/services/upload/IUploadServices.ts` | `IFileValidationService`, `IImageProcessingService`, `IAssetStorageService`, `IFileUploadService` |
+| `src/ts/services/fonts/IFontServices.ts` | `IFontProvider`, `IFontRegistry` |
 | `src/ts/sync/ISyncServices.ts` | `IGitHubReleaseClient`, `IStorageManager`, `IPackageExtractor`, `IDataSyncService` |
 | `src/ts/generation/TokenImageRenderer.ts` | `IImageCache` |
+| `src/ts/cache/ICacheManager.ts` | `ICacheManager` |
 
 ### DI Best Practices
 
@@ -558,4 +560,4 @@ import { createCanvas, drawCurvedText } from '@/ts/canvas/index.js';
 
 ---
 
-*Last updated: 2025-12-20*
+*Last updated: 2025-12-31*

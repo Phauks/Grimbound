@@ -123,7 +123,9 @@ export function ProjectEditor({
   const [error, setError] = useState<string | null>(null);
 
   // Optional fields hook
+  // Destructure resetFromProject separately - it's stable (empty deps) and used in effect
   const optionalFields = useOptionalFields();
+  const { resetFromProject } = optionalFields;
 
   // Local state for meta editing
   const [localMeta, setLocalMeta] = useState<ScriptMeta>({ id: '_meta' as const });
@@ -141,7 +143,11 @@ export function ProjectEditor({
   const isCompareMode = selectedVersion !== null;
 
   // Token generation hook
-  const { displayTokens, isGenerating: isGeneratingPreview } = useProjectTokens({
+  const {
+    displayTokens,
+    isGenerating: isGeneratingPreview,
+    generationProgress,
+  } = useProjectTokens({
     project,
     isActiveProject,
     displayMode,
@@ -180,6 +186,7 @@ export function ProjectEditor({
   );
 
   // Update local state when project changes
+  // Note: resetFromProject is stable (empty deps), so it won't cause re-renders
   useEffect(() => {
     if (project) {
       containerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
@@ -190,9 +197,9 @@ export function ProjectEditor({
       setIsEditingMeta(false);
       setSelectedVersion(null);
       setLocalMeta(project.state.scriptMeta || { id: '_meta' as const });
-      optionalFields.resetFromProject(project);
+      resetFromProject(project);
     }
-  }, [project, optionalFields]);
+  }, [project, resetFromProject]);
 
   // ============================================================================
   // Event Handlers
@@ -409,6 +416,7 @@ export function ProjectEditor({
           selectionSummary={selectionSummary}
           projectJsonString={projectJsonString}
           isGeneratingPreview={isGeneratingPreview}
+          generationProgress={generationProgress}
           // List view settings
           listViewSettings={listViewSettings}
           setListViewSettings={setListViewSettings}

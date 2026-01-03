@@ -13,8 +13,19 @@ import { useCharacterImageResolver } from '@/hooks';
 import styles from '@/styles/components/projects/CharacterGridView.module.css';
 import { TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team, Token } from '@/ts/types/index.js';
-import { logger } from '@/ts/utils/logger.js';
 import { getTeamStyleClass } from '@/ts/utils/teamUtils.js';
+
+/**
+ * Extract data URL from token (prefers dataUrl, falls back to canvas)
+ */
+function getTokenDataUrl(token: Token | undefined): string | null {
+  if (!token) return null;
+  if (token.dataUrl) return token.dataUrl;
+  if (token.canvas && token.canvas.width > 1) {
+    return token.canvas.toDataURL('image/png');
+  }
+  return null;
+}
 
 interface CharacterGridViewProps {
   characters: Character[];
@@ -151,23 +162,11 @@ export function CharacterGridView({ characters, tokens }: CharacterGridViewProps
       if (variants.length === 0 || !char.uuid) return;
 
       for (const token of variants) {
-        if (!(token?.canvas && token.filename)) continue;
-        // Skip if already loaded
-        if (imageDataUrls.has(token.filename)) continue;
+        if (!token?.filename || imageDataUrls.has(token.filename)) continue;
 
-        try {
-          const dataUrl = token.canvas.toDataURL('image/png');
-          setImageDataUrls((prev) => {
-            const next = new Map(prev);
-            next.set(token.filename, dataUrl);
-            return next;
-          });
-        } catch (error) {
-          logger.error(
-            'CharacterGridView',
-            `Failed to generate data URL for token: ${token.name}`,
-            error
-          );
+        const dataUrl = getTokenDataUrl(token);
+        if (dataUrl) {
+          setImageDataUrls((prev) => new Map(prev).set(token.filename, dataUrl));
         }
       }
     };

@@ -21,7 +21,7 @@ import { useDrawerState } from '@/hooks';
 import styles from '@/styles/components/shared/DecorativesSettingsSelector.module.css';
 import drawerStyles from '@/styles/components/shared/SettingsDrawer.module.css';
 import { CONFIG } from '@/ts/config';
-import type { GenerationOptions } from '@/ts/types/index';
+import type { GenerationOptions, SetupPlacement } from '@/ts/types/index';
 import { InfoSection, PreviewBox, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -41,6 +41,7 @@ interface DecorativeSettings {
   // Setup
   setupStyle: string;
   setupEnabled: boolean;
+  setupPlacement: SetupPlacement;
   // Accents
   accentGeneration: string;
   accentEnabled: boolean;
@@ -71,7 +72,7 @@ const ArcSlotControl = memo(function ArcSlotControl({
   maxAccents,
   onSlotsChange,
   onMaxAccentsChange,
-  minSlots = 3,
+  minSlots = 0,
   maxSlots = 15,
 }: ArcSlotControlProps) {
   const handleSlotClick = (index: number) => {
@@ -520,6 +521,7 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
     () => ({
       setupStyle: generationOptions.setupStyle || 'setup_flower_1',
       setupEnabled: generationOptions.setupStyle !== 'none',
+      setupPlacement: generationOptions.setupPlacement ?? 'right',
       accentGeneration: generationOptions.accentGeneration || 'classic',
       accentEnabled: generationOptions.accentEnabled !== false,
       maximumAccents: generationOptions.maximumAccents ?? 5,
@@ -532,6 +534,7 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
     }),
     [
       generationOptions.setupStyle,
+      generationOptions.setupPlacement,
       generationOptions.accentGeneration,
       generationOptions.accentEnabled,
       generationOptions.maximumAccents,
@@ -553,6 +556,7 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
     () => ({
       setupStyle: 'setup_flower_1',
       setupEnabled: true,
+      setupPlacement: 'right',
       accentGeneration: 'classic',
       accentEnabled: true,
       maximumAccents: 5,
@@ -570,12 +574,12 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
   const drawerCloseRef = useRef<(() => void) | undefined>(undefined);
   const onWillOpen = useCoordinatedPanel('decoratives-settings', () => drawerCloseRef.current);
 
-  // Drawer state with correct API
-  const drawer = useDrawerState<DecorativeSettings>({
-    value: currentSettings,
-    onChange: (value: DecorativeSettings) => {
+  // Handler to convert DecorativeSettings to GenerationOptions
+  const handleSettingsChange = useCallback(
+    (value: DecorativeSettings) => {
       onOptionChange({
         setupStyle: value.setupEnabled ? value.setupStyle : 'none',
+        setupPlacement: value.setupPlacement,
         accentGeneration: value.accentGeneration,
         accentEnabled: value.accentEnabled,
         maximumAccents: value.maximumAccents,
@@ -587,6 +591,14 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
         sideAccentProbability: value.sideAccentProbability,
       });
     },
+    [onOptionChange]
+  );
+
+  // Drawer state with correct API
+  const drawer = useDrawerState<DecorativeSettings>({
+    value: currentSettings,
+    onChange: handleSettingsChange,
+    onPreviewChange: handleSettingsChange, // Enable live preview updates
     defaultValue: defaultSettings,
     onWillOpen,
   });
@@ -717,6 +729,29 @@ export const DecorativesSettingsSelector = memo(function DecorativesSettingsSele
               />
             )}
           </div>
+
+          {/* Setup Placement Sub-option */}
+          {displaySettings.setupEnabled && (
+            <div className={styles.settingGroup}>
+              <div className={styles.settingGroupLabel}>Placement</div>
+              <div className={styles.buttonGroup}>
+                <button
+                  type="button"
+                  className={`${styles.styleButton} ${displaySettings.setupPlacement === 'left' ? styles.styleButtonActive : ''}`}
+                  onClick={() => drawer.updatePendingField('setupPlacement', 'left')}
+                >
+                  Left
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.styleButton} ${displaySettings.setupPlacement === 'right' ? styles.styleButtonActive : ''}`}
+                  onClick={() => drawer.updatePendingField('setupPlacement', 'right')}
+                >
+                  Right
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Divider */}
           <div className={styles.columnDivider} />

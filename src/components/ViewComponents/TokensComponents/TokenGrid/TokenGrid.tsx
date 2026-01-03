@@ -6,9 +6,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useStudioNavigation, useTokenDeletion, useTokenGrouping } from '@/hooks';
 import styles from '@/styles/components/tokens/TokenGrid.module.css';
-import { buildTokenMetadata, embedPngMetadata } from '@/ts/export/pngMetadata';
 import type { Token } from '@/ts/types/index.js';
-import { canvasToBlob, downloadFile } from '@/ts/utils/imageUtils';
+import { downloadFile, getTokenBlob } from '@/ts/utils/imageUtils';
 import { logger } from '@/ts/utils/logger';
 import {
   getStorageItem,
@@ -39,6 +38,8 @@ interface TokenGridProps {
   onTokenClick?: (token: Token) => void;
   /** Tab change handler - for navigating to Studio */
   onTabChange?: (tab: TabType) => void;
+  /** Cache version - triggers re-render of TokenCards when cache is updated */
+  cacheVersion?: number;
 }
 
 export function TokenGrid({
@@ -46,6 +47,7 @@ export function TokenGrid({
   readOnly = false,
   onTokenClick,
   onTabChange,
+  cacheVersion,
 }: TokenGridProps) {
   const {
     isLoading,
@@ -57,7 +59,6 @@ export function TokenGrid({
     setExampleCharacterToken,
     setExampleMetaToken,
     updateGenerationOptions,
-    generationOptions,
     setMetadata,
     getMetadata,
     generationProgress,
@@ -115,16 +116,9 @@ export function TokenGrid({
 
   // Download single token as PNG
   const handleDownloadToken = useCallback(
-    async (token: Token) => {
+    (token: Token) => {
       try {
-        let blob = await canvasToBlob(token.canvas);
-
-        // Embed metadata if enabled in settings
-        if (generationOptions.pngSettings?.embedMetadata) {
-          const metadata = buildTokenMetadata(token);
-          blob = await embedPngMetadata(blob, metadata);
-        }
-
+        const blob = getTokenBlob(token);
         const filename = `${token.filename}.png`;
         downloadFile(blob, filename);
         addToast(`Downloaded ${token.name}`, 'success');
@@ -133,7 +127,7 @@ export function TokenGrid({
         addToast('Failed to download token', 'error');
       }
     },
-    [generationOptions.pngSettings, addToast]
+    [addToast]
   );
 
   // Clear decorative overrides for a token's character
@@ -197,6 +191,12 @@ export function TokenGrid({
     setStorageItem(STORAGE_KEYS.TOKEN_SECTION_META_OPEN, String(isOpen));
   }, []);
 
+  // Show loading overlay first - before empty state check
+  // This prevents brief flash of "No tokens" message when generation starts
+  if (!propTokens && isLoading && generationProgress) {
+    return <GenerationProgressOverlay progress={generationProgress} />;
+  }
+
   // For readOnly mode with prop tokens, skip loading/error states
   if (!propTokens && allTokens.length === 0) {
     return (
@@ -204,10 +204,6 @@ export function TokenGrid({
         <p>No tokens generated yet. Upload or paste a JSON script to get started.</p>
       </div>
     );
-  }
-
-  if (!propTokens && isLoading && generationProgress) {
-    return <GenerationProgressOverlay progress={generationProgress} />;
   }
 
   if (!propTokens && error) {
@@ -236,6 +232,7 @@ export function TokenGrid({
                     token={group.token}
                     count={group.count}
                     variants={group.variants}
+                    cacheVersion={cacheVersion}
                     onCardClick={readOnly ? undefined : onTokenClick}
                     onSetAsExample={readOnly ? undefined : handleSetAsExample}
                     onDelete={readOnly ? undefined : deletion.handleDeleteRequest}
@@ -264,6 +261,7 @@ export function TokenGrid({
                     token={group.token}
                     count={group.count}
                     variants={group.variants}
+                    cacheVersion={cacheVersion}
                     onCardClick={readOnly ? undefined : onTokenClick}
                     onSetAsExample={readOnly ? undefined : handleSetAsExample}
                     onDelete={readOnly ? undefined : deletion.handleDeleteRequest}
@@ -287,6 +285,7 @@ export function TokenGrid({
                     token={group.token}
                     count={group.count}
                     variants={group.variants}
+                    cacheVersion={cacheVersion}
                     onCardClick={readOnly ? undefined : onTokenClick}
                     onSetAsExample={readOnly ? undefined : handleSetAsExample}
                     onDelete={readOnly ? undefined : deletion.handleDeleteRequest}

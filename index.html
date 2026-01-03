@@ -7,13 +7,13 @@
     <meta name="description" content="Grimbound - Create custom tokens for Blood on the Clocktower board game. Design, customize, and export character tokens, reminders, and night order sheets.">
 
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#6C3BAA">
+    <meta name="theme-color" content="#8b0000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Grimbound">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Grimbound">
-    <meta name="msapplication-TileColor" content="#6C3BAA">
+    <meta name="msapplication-TileColor" content="#8b0000">
     <meta name="msapplication-tap-highlight" content="no">
 
     <!-- Icons (relative paths - Vite will add base path during build) -->
@@ -25,7 +25,113 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <!-- Loading state shown before React mounts -->
+        <!-- React will replace this content when it renders -->
+        <div data-loading-state style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            color: #f5f5f5;
+            font-family: system-ui, -apple-system, sans-serif;
+        ">
+            <div style="
+                width: 48px;
+                height: 48px;
+                border: 3px solid #404040;
+                border-top-color: #8b0000;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            "></div>
+            <p style="margin-top: 1rem; color: #b0b0b0;">Loading Grimbound...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
+    </div>
     <script type="module" src="./src/main.tsx"></script>
+    <!-- Fallback error handler for script/module errors before React loads -->
+    <script>
+        window.addEventListener('error', function(e) {
+            var root = document.getElementById('root');
+            // Only show error UI if loading state is still visible (React hasn't mounted yet)
+            if (!root || !root.querySelector('[data-loading-state]')) return;
+
+            // Handle both:
+            // 1. Script/CSS loading failures (e.target is SCRIPT or LINK)
+            // 2. Module evaluation errors like SyntaxError, missing exports (e.target is null/window)
+            var isLoadError = e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK');
+            var isModuleError = !e.target || e.target === window;
+
+            if (isLoadError || isModuleError) {
+                var errorMessage = isLoadError
+                    ? 'A required resource could not be loaded. This may be due to a network issue.'
+                    : (e.message || 'An error occurred while loading the application.');
+
+                // Escape HTML in error message to prevent XSS
+                var escaped = errorMessage.replace(/[&<>"']/g, function(m) {
+                    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+                });
+
+                root.innerHTML = '\
+                    <div style="\
+                        display: flex;\
+                        flex-direction: column;\
+                        align-items: center;\
+                        justify-content: center;\
+                        min-height: 100vh;\
+                        padding: 2rem;\
+                        background: #1a1a1a;\
+                        color: #f5f5f5;\
+                        font-family: system-ui, -apple-system, sans-serif;\
+                        text-align: center;\
+                    ">\
+                        <div style="\
+                            background: rgba(231, 76, 60, 0.1);\
+                            border: 1px solid #e74c3c;\
+                            border-radius: 8px;\
+                            padding: 2rem;\
+                            max-width: 500px;\
+                        ">\
+                            <h1 style="color: #ff6b6b; margin: 0 0 1rem 0; font-size: 1.5rem;">\
+                                Something went wrong\
+                            </h1>\
+                            <p style="color: #b0b0b0; margin: 0 0 1rem 0; font-size: 0.9rem; word-break: break-word;">\
+                                ' + escaped + '\
+                            </p>\
+                            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">\
+                                <button onclick="navigator.clipboard.writeText(\'' + escaped.replace(/'/g, "\\'") + '\').then(function(){this.textContent=\'Copied!\';setTimeout(function(){this.textContent=\'Copy Error\';}.bind(this),2000);}.bind(this))" style="\
+                                    background: transparent;\
+                                    color: #b0b0b0;\
+                                    border: 1px solid #404040;\
+                                    padding: 0.75rem 1.5rem;\
+                                    border-radius: 6px;\
+                                    cursor: pointer;\
+                                    font-size: 1rem;\
+                                ">Copy Error</button>\
+                                <button onclick="location.reload()" style="\
+                                    background: #8b0000;\
+                                    color: white;\
+                                    border: none;\
+                                    padding: 0.75rem 1.5rem;\
+                                    border-radius: 6px;\
+                                    cursor: pointer;\
+                                    font-size: 1rem;\
+                                ">Reload Page</button>\
+                            </div>\
+                        </div>\
+                        <p style="color: #808080; margin-top: 1rem; font-size: 0.8rem;">\
+                            Check the browser console for more details\
+                        </p>\
+                    </div>\
+                ';
+            }
+        }, true);
+    </script>
 </body>
 </html>

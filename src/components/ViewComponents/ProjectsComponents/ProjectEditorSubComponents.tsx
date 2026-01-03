@@ -8,11 +8,13 @@
  * @module components/ViewComponents/ProjectsComponents/ProjectEditorSubComponents
  */
 
-import { memo } from 'react';
-import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
+import { memo, useCallback } from 'react';
+import { GenerationProgressOverlay } from '@/components/Shared/Feedback/GenerationProgressOverlay';
+import { CodeMirrorEditor } from '@/components/Shared/Json/CodeMirrorEditor';
 import { Button } from '@/components/Shared/UI/Button';
 import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
 import { TokenPreviewRow } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenPreviewRow';
+import { useToast } from '@/contexts/ToastContext';
 import {
   type DisplayMode,
   OPTIONAL_FIELDS_CONFIG,
@@ -21,7 +23,13 @@ import {
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/projects/ProjectEditor.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
-import type { Character, CharacterMetadata, ScriptMeta, Token } from '@/ts/types/index.js';
+import type {
+  Character,
+  CharacterMetadata,
+  GenerationProgress,
+  ScriptMeta,
+  Token,
+} from '@/ts/types/index.js';
 import type { Project, ProjectVersion } from '@/ts/types/project.js';
 import { CharacterListView } from './CharacterListView';
 import { VersionCompareView } from './VersionCompareView';
@@ -97,7 +105,7 @@ interface DisplayModeToggleProps {
   onModeChange: (mode: DisplayMode) => void;
 }
 
-/** Toggle between tokens, list, and JSON display modes */
+/** Toggle between list, tokens, and JSON display modes */
 export const DisplayModeToggle = memo(function DisplayModeToggle({
   displayMode,
   onModeChange,
@@ -107,19 +115,19 @@ export const DisplayModeToggle = memo(function DisplayModeToggle({
       <span className={styles.viewToggleLabel}>View:</span>
       <button
         type="button"
-        className={`${styles.viewToggleButton} ${displayMode === 'tokens' ? styles.viewToggleActive : ''}`}
-        onClick={() => onModeChange('tokens')}
-        title="View as tokens"
-      >
-        Tokens
-      </button>
-      <button
-        type="button"
         className={`${styles.viewToggleButton} ${displayMode === 'list' ? styles.viewToggleActive : ''}`}
         onClick={() => onModeChange('list')}
         title="View as list"
       >
         List
+      </button>
+      <button
+        type="button"
+        className={`${styles.viewToggleButton} ${displayMode === 'tokens' ? styles.viewToggleActive : ''}`}
+        onClick={() => onModeChange('tokens')}
+        title="View as tokens"
+      >
+        Tokens
       </button>
       <button
         type="button"
@@ -636,6 +644,65 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
 });
 
 // ============================================================================
+// ReadOnlyJsonDisplay Component
+// ============================================================================
+
+interface ReadOnlyJsonDisplayProps {
+  value: string;
+}
+
+/** Read-only JSON display with copy button */
+const ReadOnlyJsonDisplay = memo(function ReadOnlyJsonDisplay({ value }: ReadOnlyJsonDisplayProps) {
+  const { addToast } = useToast();
+
+  const handleCopy = useCallback(async () => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      addToast('JSON copied to clipboard', 'success');
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      addToast('JSON copied to clipboard', 'success');
+    }
+  }, [value, addToast]);
+
+  return (
+    <div className={styles.jsonViewContainer}>
+      <div className={styles.jsonViewHeader}>
+        <span className={styles.jsonViewLabel}>Script JSON (read-only)</span>
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={handleCopy}
+          disabled={!value}
+          title="Copy JSON to clipboard"
+        >
+          Copy JSON
+        </Button>
+      </div>
+      <div className={styles.jsonEditorWrapper}>
+        <CodeMirrorEditor
+          value={value}
+          onChange={() => {}}
+          disabled={true}
+          minHeight="100%"
+          placeholder="No project data"
+          showInfoIndicator={false}
+        />
+      </div>
+    </div>
+  );
+});
+
+// ============================================================================
 // CharactersSection Component
 // ============================================================================
 
@@ -648,6 +715,7 @@ interface CharactersSectionProps {
   selectionSummary: { enabled: number; disabled: number; total: number };
   projectJsonString: string;
   isGeneratingPreview: boolean;
+  generationProgress: GenerationProgress | null;
   listViewSettings: ListViewSettings;
   setListViewSettings: (settings: ListViewSettings) => void;
   showListSettings: boolean;
@@ -668,6 +736,7 @@ export const CharactersSection = memo(function CharactersSection({
   selectionSummary,
   projectJsonString,
   isGeneratingPreview,
+  generationProgress,
   listViewSettings,
   setListViewSettings,
   showListSettings,
@@ -682,7 +751,15 @@ export const CharactersSection = memo(function CharactersSection({
       <DisplayModeToggle displayMode={displayMode} onModeChange={setDisplayMode} />
 
       {displayMode === 'tokens' &&
-        (isGeneratingPreview ? <LoadingState /> : <TokenGrid tokens={displayTokens} readOnly />)}
+        (isGeneratingPreview ? (
+          generationProgress ? (
+            <GenerationProgressOverlay progress={generationProgress} />
+          ) : (
+            <LoadingState />
+          )
+        ) : (
+          <TokenGrid tokens={displayTokens} readOnly />
+        ))}
 
       {displayMode === 'list' && (
         <div className={viewStyles.characterSelectionSection}>
@@ -744,17 +821,7 @@ export const CharactersSection = memo(function CharactersSection({
         </div>
       )}
 
-      {displayMode === 'json' && (
-        <div className={styles.jsonViewContainer}>
-          <JsonEditorPanel
-            value={projectJsonString}
-            onChange={() => {}}
-            disabled={true}
-            minHeight="400px"
-            placeholder="No project data"
-          />
-        </div>
-      )}
+      {displayMode === 'json' && <ReadOnlyJsonDisplay value={projectJsonString} />}
     </div>
   );
 });
@@ -789,6 +856,7 @@ interface OverviewTabProps {
   selectionSummary: { enabled: number; disabled: number; total: number };
   projectJsonString: string;
   isGeneratingPreview: boolean;
+  generationProgress: GenerationProgress | null;
   // List view settings
   listViewSettings: ListViewSettings;
   setListViewSettings: (settings: ListViewSettings) => void;
@@ -838,6 +906,7 @@ export const OverviewTab = memo(function OverviewTab({
   selectionSummary,
   projectJsonString,
   isGeneratingPreview,
+  generationProgress,
   listViewSettings,
   setListViewSettings,
   showListSettings,
@@ -955,6 +1024,7 @@ export const OverviewTab = memo(function OverviewTab({
           selectionSummary={selectionSummary}
           projectJsonString={projectJsonString}
           isGeneratingPreview={isGeneratingPreview}
+          generationProgress={generationProgress}
           listViewSettings={listViewSettings}
           setListViewSettings={setListViewSettings}
           showListSettings={showListSettings}

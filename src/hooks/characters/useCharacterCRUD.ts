@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { createCharacterTemplate, isIdLinkedToName } from '@/ts/data/characterUtils.js';
 import type { Character, CharacterMetadata, GenerationOptions, Token } from '@/ts/types/index.js';
 import { regenerateCharacterAndReminders } from '@/ts/ui/detailViewUtils.js';
+import { ensureUniqueId } from '@/ts/utils/idUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { generateStableUuid } from '@/ts/utils/nameGenerator.js';
 
@@ -113,7 +114,21 @@ interface CreateCharacterContext {
 
 /** Create and add a new character */
 async function createAndAddCharacter(ctx: CreateCharacterContext): Promise<Character> {
-  const newCharacter = await createCharacterTemplate();
+  let newCharacter = await createCharacterTemplate();
+
+  // Ensure unique ID across all characters
+  const existingIds = ctx.characters.map((c) => c.id);
+  const { id: uniqueId, wasRenamed } = ensureUniqueId(newCharacter.id, existingIds);
+
+  if (wasRenamed) {
+    // Regenerate UUID with the unique ID
+    const newUuid = await generateStableUuid(uniqueId, newCharacter.name);
+    newCharacter = {
+      ...newCharacter,
+      id: uniqueId,
+      uuid: newUuid,
+    };
+  }
 
   // Initialize metadata
   ctx.setMetadata(getRequiredUuid(newCharacter), {
@@ -300,8 +315,14 @@ export function useCharacterCRUD({
       if (!charToDuplicate) return;
 
       try {
-        const newId = `${charToDuplicate.id}_copy_${Date.now()}`;
+        // Generate base ID for duplicate
+        const baseId = `${charToDuplicate.id}_copy`;
         const newName = `${charToDuplicate.name} (Copy)`;
+
+        // Ensure unique ID across all characters
+        const existingIds = characters.map((c) => c.id);
+        const { id: newId } = ensureUniqueId(baseId, existingIds);
+
         const newUuid = await generateStableUuid(newId, newName);
         const newCharacter: Character = {
           ...JSON.parse(JSON.stringify(charToDuplicate)),

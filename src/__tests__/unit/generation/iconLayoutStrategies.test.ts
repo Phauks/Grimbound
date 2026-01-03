@@ -13,7 +13,6 @@ import {
 function createLayoutContext(overrides: Partial<LayoutContext> = {}): LayoutContext {
   return {
     diameter: 300,
-    dpi: 300,
     iconScale: 1.0,
     iconOffsetX: 0,
     iconOffsetY: 0,
@@ -103,20 +102,6 @@ describe('iconLayoutStrategies', () => {
       // Base offset should center the icon
       const expectedBaseOffsetX = (300 - result.size) / 2;
       expect(result.position.x).toBeCloseTo(expectedBaseOffsetX, 2);
-    });
-
-    it('should handle different DPI values', () => {
-      const strategy = new CharacterWithAbilityTextLayout(50, 40);
-      const context1 = createLayoutContext({ dpi: 300, iconOffsetX: 0.1 });
-      const context2 = createLayoutContext({ dpi: 600, iconOffsetX: 0.1 });
-
-      const result1 = strategy.calculate(context1);
-      const result2 = strategy.calculate(context2);
-
-      // At 300 DPI, 0.1 inches = 30 pixels offset
-      // At 600 DPI, 0.1 inches = 60 pixels offset
-      // The difference should be 30 pixels
-      expect(Math.abs(result2.position.x - result1.position.x)).toBeCloseTo(30, 2);
     });
 
     it('should handle small available height gracefully', () => {

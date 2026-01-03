@@ -28,8 +28,8 @@ export const MARGIN_SIDE = 0.15; // Left/right margins
 /** Header height (title + script info + border) in inches - compact */
 export const HEADER_HEIGHT = 0.4;
 
-/** Footer reserved space in inches (for safety margin) */
-export const FOOTER_HEIGHT = 0.15;
+/** Footer reserved space in inches (matches CSS bottom padding in NightSheet.module.css) */
+export const FOOTER_HEIGHT = 0.2;
 
 /** Calculate available content height */
 export const AVAILABLE_HEIGHT = PAGE_HEIGHT - MARGIN - FOOTER_HEIGHT - HEADER_HEIGHT;
@@ -294,4 +294,116 @@ export function getScaleWarning(config: ScaleConfig): string | null {
     return `⚠️ ${config.entryCount} entries scaled to minimum size (${formatScalePercentage(config.scaleFactor)}). Consider splitting into multiple scripts for better readability.`;
   }
   return null;
+}
+
+// ============================================================================
+// Pagination (Multi-Page Support)
+// ============================================================================
+
+/**
+ * Result of paginating entries
+ */
+export interface PaginatedEntries {
+  /** Array of entry arrays, one per page */
+  pages: NightOrderEntry[][];
+  /** Total number of pages */
+  pageCount: number;
+  /** Entries per page (approximate, varies by ability text length) */
+  entriesPerPage: number;
+}
+
+/**
+ * Calculate how many entries fit on a single page at full scale
+ *
+ * Uses the baseline dimensions without scaling to determine capacity.
+ * Takes into account variable entry heights based on ability text length.
+ *
+ * @returns Approximate number of entries that fit per page
+ */
+export function calculateEntriesPerPage(): number {
+  // Calculate average entry height at full scale
+  // Assume average ability text of ~100 chars (roughly 2 lines)
+  const averageAbilityLength = 100;
+  const charsPerLine = 60;
+  const estimatedLines = Math.ceil(averageAbilityLength / charsPerLine);
+  const extraLineHeight = ((estimatedLines - 1) * (BASELINE_ABILITY_FONT_SIZE * 1.4)) / 72;
+
+  const averageEntryHeight = BASELINE_ENTRY_HEIGHT + extraLineHeight + BASELINE_ENTRY_SPACING;
+
+  // Calculate how many fit in available height
+  return Math.floor(AVAILABLE_HEIGHT / averageEntryHeight);
+}
+
+/**
+ * Paginate entries into multiple pages at full scale (no scaling)
+ *
+ * Splits entries intelligently based on actual height calculations,
+ * ensuring each page fits within the available height.
+ *
+ * @param entries - All entries to paginate
+ * @returns Paginated entries with page information
+ */
+export function paginateEntries(entries: NightOrderEntry[]): PaginatedEntries {
+  if (entries.length === 0) {
+    return { pages: [], pageCount: 0, entriesPerPage: 0 };
+  }
+
+  const pages: NightOrderEntry[][] = [];
+  let currentPage: NightOrderEntry[] = [];
+  let currentHeight = 0;
+
+  for (const entry of entries) {
+    const entryHeight = estimateEntryHeight(entry, MAX_SCALE_FACTOR);
+    const heightWithSpacing = entryHeight + BASELINE_ENTRY_SPACING;
+
+    // Check if adding this entry would exceed page capacity
+    if (currentHeight + heightWithSpacing > AVAILABLE_HEIGHT && currentPage.length > 0) {
+      // Start a new page
+      pages.push(currentPage);
+      currentPage = [];
+      currentHeight = 0;
+    }
+
+    currentPage.push(entry);
+    currentHeight += heightWithSpacing;
+  }
+
+  // Don't forget the last page
+  if (currentPage.length > 0) {
+    pages.push(currentPage);
+  }
+
+  const entriesPerPage = pages.length > 0 ? Math.ceil(entries.length / pages.length) : 0;
+
+  return {
+    pages,
+    pageCount: pages.length,
+    entriesPerPage,
+  };
+}
+
+/**
+ * Get scale config for a single page (always full scale for pagination mode)
+ *
+ * Used when rendering individual pages in multi-page mode.
+ * Returns full scale config since pagination handles overflow.
+ *
+ * @param entries - Entries for this single page
+ * @returns Scale configuration at full scale
+ */
+export function getFullScaleConfig(entries: NightOrderEntry[]): ScaleConfig {
+  const totalHeight = calculateTotalHeight(entries, MAX_SCALE_FACTOR);
+
+  return {
+    scaleFactor: MAX_SCALE_FACTOR,
+    entryHeight: BASELINE_ENTRY_HEIGHT,
+    iconSize: BASELINE_ICON_SIZE,
+    nameFontSize: BASELINE_NAME_FONT_SIZE,
+    abilityFontSize: BASELINE_ABILITY_FONT_SIZE,
+    entrySpacing: BASELINE_ENTRY_SPACING,
+    headerFontSize: BASELINE_HEADER_FONT,
+    isMinimumScale: false,
+    totalHeight,
+    entryCount: entries.length,
+  };
 }

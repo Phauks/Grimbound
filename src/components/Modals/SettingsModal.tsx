@@ -1,20 +1,18 @@
 /**
  * Settings Modal
  *
- * Global application settings including DPI, theme, sync, and data management.
- * Migrated to use unified Modal and Button components.
+ * Global application settings including sync and data management.
+ * Theme selection has moved to the header ThemeSelector component.
  */
 
 import { useEffect, useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
 import { useDataSync } from '@/contexts/DataSyncContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { storageManager } from '@/ts/sync/index.js';
-import { getThemeIds, UI_THEMES } from '@/ts/themes';
-import type { DPIOption, MeasurementUnit } from '@/ts/types/index';
+import type { MeasurementUnit } from '@/ts/types/index';
 import { logger } from '@/ts/utils/logger.js';
 import styles from './SettingsModal.module.css';
 
@@ -27,7 +25,6 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsModalProps) {
   const { addToast } = useToast();
   const { generationOptions, updateGenerationOptions } = useTokenContext();
-  const { currentThemeId, setTheme } = useTheme();
   const { status: syncStatus, isInitialized: isSyncInitialized } = useDataSync();
   const [autoSync, setAutoSync] = useState(true);
 
@@ -75,28 +72,6 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
         {/* Left Column - General Settings */}
         <div className={styles.columnLeft}>
           <div className={styles.optionGroup}>
-            <label className={styles.label} htmlFor="dpiSetting">
-              Image Quality (DPI)
-            </label>
-            <div className={styles.selectWrapper}>
-              <select
-                id="dpiSetting"
-                className={styles.select}
-                value={generationOptions.dpi}
-                onChange={(e) =>
-                  updateGenerationOptions({ dpi: parseInt(e.target.value, 10) as DPIOption })
-                }
-              >
-                <option value="300">300 DPI (Standard)</option>
-                <option value="600">600 DPI (High Quality)</option>
-              </select>
-              <span className={styles.helpText}>
-                Higher DPI creates larger, more detailed token images
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.optionGroup}>
             <label className={styles.label} htmlFor="measurementUnit">
               Measurement Units
             </label>
@@ -114,32 +89,6 @@ export function SettingsModal({ isOpen, onClose, onOpenSyncDetails }: SettingsMo
               </select>
               <span className={styles.helpText}>
                 Choose your preferred unit for offset and dimension measurements
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.optionGroup}>
-            <label className={styles.label} htmlFor="colorSchema">
-              Color Theme
-            </label>
-            <div className={styles.selectWrapper}>
-              <select
-                id="colorSchema"
-                className={styles.select}
-                value={currentThemeId}
-                onChange={(e) => setTheme(e.target.value)}
-              >
-                {getThemeIds().map((themeId) => {
-                  const theme = UI_THEMES[themeId];
-                  return (
-                    <option key={themeId} value={themeId}>
-                      {theme.icon} {theme.name}
-                    </option>
-                  );
-                })}
-              </select>
-              <span className={styles.helpText}>
-                Choose a color theme for the application interface
               </span>
             </div>
           </div>

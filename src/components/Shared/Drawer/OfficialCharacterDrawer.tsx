@@ -20,6 +20,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SearchHighlight } from '@/components/Shared/UI/SearchHighlight';
 import { useDataSync } from '@/contexts/DataSyncContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useOfficialCharacterImages } from '@/hooks/sync/useOfficialCharacterImages';
 import { useCharacterFiltering } from '@/hooks/ui/useCharacterFiltering';
@@ -27,6 +28,7 @@ import { useDrawerAnimation } from '@/hooks/ui/useDrawerAnimation';
 import { useModalBehavior } from '@/hooks/ui/useModalBehavior';
 import styles from '@/styles/components/shared/OfficialCharacterDrawer.module.css';
 import type { Character, Team } from '@/ts/types/index.js';
+import { ensureUniqueId } from '@/ts/utils/idUtils.js';
 import { charactersToJson } from '@/ts/utils/jsonUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { generateStableUuid } from '@/ts/utils/nameGenerator';
@@ -108,13 +110,6 @@ const CharacterRow = memo(function CharacterRow({
       className={`${styles.characterRow} ${isOnScript ? styles.characterRowSelected : ''}`}
       onClick={onToggle}
     >
-      <input
-        type="checkbox"
-        className={styles.checkbox}
-        checked={isOnScript}
-        onChange={onToggle}
-        onClick={(e) => e.stopPropagation()}
-      />
       <div
         className={`${styles.characterIcon} ${isOnScript ? styles.characterIconSelected : ''}`}
         style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
@@ -203,7 +198,8 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
 }: OfficialCharacterDrawerProps) {
   // Context
   const { getCharacters, getCharacterImage, isInitialized } = useDataSync();
-  const { characters, setCharacters, setJsonInput, scriptMeta } = useTokenContext();
+  const { characters, setCharacters, setJsonInput, scriptMeta, setMetadata } = useTokenContext();
+  const { addToast } = useToast();
 
   // Drawer animation lifecycle
   const { shouldRender } = useDrawerAnimation({ isOpen });
@@ -297,21 +293,70 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
         // Remove from script
         updated = characters.filter((c) => c.id !== officialChar.id);
       } else {
-        // Add to script
-        const uuid = await generateStableUuid(officialChar.id, officialChar.name);
-        const newChar: Character = {
-          ...officialChar,
-          uuid,
-          source: 'official',
-        };
-        updated = [...characters, newChar];
+        // Add to script - check for collision with existing custom character
+        const existingCustom = characters.find(
+          (c) => c.id === officialChar.id && c.source === 'custom'
+        );
+
+        if (existingCustom) {
+          // Collision detected - rename the existing custom character
+          const otherIds = characters
+            .filter((c) => c.uuid !== existingCustom.uuid)
+            .map((c) => c.id);
+
+          // Add the official ID we're about to use
+          otherIds.push(officialChar.id);
+
+          // Get unique ID for the custom character
+          const { id: uniqueId } = ensureUniqueId(existingCustom.id, otherIds);
+
+          // Generate new UUID for renamed custom character
+          const newCustomUuid = await generateStableUuid(uniqueId, existingCustom.name);
+
+          // Create renamed custom character
+          const renamedCustom: Character = {
+            ...existingCustom,
+            id: uniqueId,
+            uuid: newCustomUuid,
+          };
+
+          // Update metadata for renamed character - break ID link
+          setMetadata(newCustomUuid, { idLinkedToName: false });
+
+          // Create the official character
+          const officialUuid = await generateStableUuid(officialChar.id, officialChar.name);
+          const newOfficial: Character = {
+            ...officialChar,
+            uuid: officialUuid,
+            source: 'official',
+          };
+
+          // Replace custom with renamed version, add official
+          updated = characters.map((c) => (c.uuid === existingCustom.uuid ? renamedCustom : c));
+          updated.push(newOfficial);
+
+          // Show toast
+          addToast(
+            `Renamed custom '${existingCustom.id}' to '${uniqueId}' to add official character`,
+            'info'
+          );
+        } else {
+          // No collision - add normally
+          const uuid = await generateStableUuid(officialChar.id, officialChar.name);
+          const newChar: Character = {
+            ...officialChar,
+            uuid,
+            source: 'official',
+          };
+          updated = [...characters, newChar];
+        }
       }
 
       // Update state
       setCharacters(updated);
       setJsonInput(charactersToJson(updated, scriptMeta));
     },
-    [characters, onScriptIds, setCharacters, setJsonInput, scriptMeta]
+    [characters, onScriptIds, setCharacters, setJsonInput, scriptMeta, setMetadata, addToast]
   );
 
   // Toggle individual team expansion

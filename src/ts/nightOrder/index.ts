@@ -4,16 +4,14 @@
  * Exports all night order related types, utilities, and constants.
  */
 
-// Font loading utilities
-export type { FontSet } from './fontLoader.js';
+// PDF Export using Hybrid mode (Snapdom + pdf-lib text overlay) - Faster
 export {
-  clearFontCache,
-  getCachedFontCount,
-  loadFonts,
-  preloadFonts,
-} from './fontLoader.js';
+  downloadNightOrderPdfHybrid,
+  generateNightOrderPdfHybrid,
+  getNightOrderPdfBlobHybrid,
+} from './hybridPdfExporter.js';
 // Layout & Scaling
-export type { ScaleConfig } from './nightOrderLayout.js';
+export type { PaginatedEntries, ScaleConfig } from './nightOrderLayout.js';
 export {
   AVAILABLE_HEIGHT,
   BASELINE_ABILITY_FONT_SIZE,
@@ -22,10 +20,12 @@ export {
   BASELINE_HEADER_FONT,
   BASELINE_ICON_SIZE,
   BASELINE_NAME_FONT_SIZE,
+  calculateEntriesPerPage,
   calculateScaleConfig,
   estimateEntryHeight,
   FOOTER_HEIGHT,
   formatScalePercentage,
+  getFullScaleConfig,
   getScaleWarning,
   HEADER_HEIGHT,
   inchesToPoints,
@@ -35,19 +35,20 @@ export {
   MIN_SCALE_FACTOR,
   PAGE_HEIGHT,
   PAGE_WIDTH,
+  paginateEntries,
   pointsToInches,
 } from './nightOrderLayout.js';
-// PDF Export using pdf-lib (fast, native OTF support)
+// PDF Export using Snapdom (true WYSIWYG) - Legacy mode
 export type {
   ExportPhase,
   NightOrderPdfOptions,
   ProgressCallback,
-} from './nightOrderPdfLib.js';
+} from './nightOrderPdfExporter.js';
 export {
   downloadNightOrderPdf,
   generateNightOrderPdf,
   getNightOrderPdfBlob,
-} from './nightOrderPdfLib.js';
+} from './nightOrderPdfExporter.js';
 // Sync utilities
 export {
   buildInitialNightOrderArray,
@@ -87,6 +88,17 @@ export {
   preRenderNightOrder,
   shouldShowEntry,
 } from './nightOrderUtils.js';
+// Night Sheet Renderer (for direct canvas capture)
+export {
+  areFontsWarmed,
+  getFontWarmingStatus,
+  preloadSnapdom,
+  type RenderOptions,
+  type RenderResult,
+  renderNightSheetToCanvas,
+  warmDefaultNightSheetFonts,
+  warmFonts,
+} from './nightSheetRenderer.js';
 // Special entries
 export {
   DAWN_ENTRY,
@@ -101,3 +113,6 @@ export {
   MINION_INFO_ENTRY,
   SPECIAL_ENTRIES,
 } from './specialEntries.js';
+// Text extraction for hybrid mode
+export type { ExtractedText, TextExtractionResult } from './textExtractor.js';
+export { extractTextFromContainer, scaleTextPositions } from './textExtractor.js';

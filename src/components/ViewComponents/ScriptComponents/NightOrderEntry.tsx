@@ -222,16 +222,18 @@ export function NightOrderEntry({
 
       {/* Character/Special icon */}
       <div className={styles.iconContainer}>
-        <img
-          src={resolvedImageUrl}
-          alt={entry.name}
-          className={styles.icon}
-          onError={(e) => {
-            // Fallback for missing images
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-          }}
-        />
+        {resolvedImageUrl && (
+          <img
+            src={resolvedImageUrl}
+            alt={entry.name}
+            className={styles.icon}
+            onError={(e) => {
+              // Fallback for missing images
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
+        )}
       </div>
 
       {/* Content: Name and ability */}

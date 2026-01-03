@@ -3,7 +3,6 @@
  * Canvas Utilities - Reusable canvas helper functions
  */
 
-import CONFIG from '@/ts/config.js';
 import { ABILITY_TEXT_SHADOW, DEFAULT_COLORS, TEXT_SHADOW } from '@/ts/constants.js';
 
 /**
@@ -25,28 +24,15 @@ export interface CanvasContext {
 }
 
 /**
- * Options for canvas creation
- */
-export interface CanvasOptions {
-  /** DPI setting (default: 300). Higher values create larger canvases with scaling. */
-  dpi?: number;
-}
-
-/**
  * Create a canvas element with high-quality rendering settings
- * @param diameter - Canvas width and height in pixels (at base 300 DPI)
- * @param options - Optional canvas creation options
+ * @param diameter - Canvas width and height in pixels
  * @returns Canvas element and 2D context
  * @throws Error if canvas context cannot be obtained
  */
-export function createCanvas(diameter: number, options: CanvasOptions = {}): CanvasContext {
-  const { dpi = CONFIG.PDF.DPI } = options;
-  const dpiScale = dpi / CONFIG.PDF.DPI;
-  const scaledDiameter = Math.floor(diameter * dpiScale);
-
+export function createCanvas(diameter: number): CanvasContext {
   const canvas = document.createElement('canvas');
-  canvas.width = scaledDiameter;
-  canvas.height = scaledDiameter;
+  canvas.width = diameter;
+  canvas.height = diameter;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) {
@@ -56,11 +42,6 @@ export function createCanvas(diameter: number, options: CanvasOptions = {}): Can
   // Enable high-quality rendering
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-
-  // Apply DPI scaling so drawing coordinates remain consistent
-  if (dpiScale !== 1) {
-    ctx.scale(dpiScale, dpiScale);
-  }
 
   const radius = diameter / 2;
   const center: Point = { x: radius, y: radius };
