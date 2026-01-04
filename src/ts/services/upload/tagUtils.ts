@@ -25,6 +25,9 @@ export const TYPE_TAGS = [
   'setup',
   'accent',
   'logo',
+  'studio-icon',
+  'studio-logo',
+  'studio-project',
 ] as const;
 
 export type TypeTagValue = (typeof TYPE_TAGS)[number];
@@ -189,6 +192,9 @@ export const getTypeLabel = (type: TypeTagValue): string => {
     setup: 'Setup',
     accent: 'Accent',
     logo: 'Logo',
+    'studio-icon': 'Studio Icon',
+    'studio-logo': 'Studio Logo',
+    'studio-project': 'Studio Project',
   };
   return labels[type] || type;
 };

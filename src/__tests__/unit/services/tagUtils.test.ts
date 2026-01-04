@@ -142,6 +142,9 @@ describe('tagUtils', () => {
       expect(TYPE_TAGS).toContain('setup');
       expect(TYPE_TAGS).toContain('accent');
       expect(TYPE_TAGS).toContain('logo');
+      expect(TYPE_TAGS).toContain('studio-icon');
+      expect(TYPE_TAGS).toContain('studio-logo');
+      expect(TYPE_TAGS).toContain('studio-project');
     });
 
     it('should have expected TEAM_TAGS', () => {
