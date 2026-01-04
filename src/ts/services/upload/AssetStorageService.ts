@@ -7,16 +7,15 @@
  * @module services/upload/AssetStorageService
  */
 
-import type { Collection } from 'dexie';
 import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService.js';
 import { projectDb } from '@/ts/db/projectDb.js';
 import { logger } from '@/ts/utils/logger.js';
 import { ASSET_ZIP_PATHS } from './constants.js';
 import { imageProcessingService } from './ImageProcessingService.js';
+import { getTypeFromTags } from './tagUtils.js';
 import type {
   AssetFilter,
   AssetMetadata,
-  AssetType,
   AssetWithUrl,
   DBAsset,
   ExportableAsset,
@@ -32,7 +31,10 @@ import type {
 export interface CreateAssetData {
   /** Optional ID for restore operations - if not provided, one will be generated */
   id?: string;
-  type: AssetType;
+  /** Tags for categorization (must include one type:* tag) */
+  tags: string[];
+  /** Folder path (null = root) */
+  folder?: string | null;
   projectId: string | null;
   blob: Blob;
   thumbnail: Blob;
@@ -125,7 +127,8 @@ export class AssetStorageService {
     const id = data.id ?? crypto.randomUUID();
     const asset: DBAsset = {
       id,
-      type: data.type,
+      tags: data.tags,
+      folder: data.folder ?? null,
       projectId: data.projectId,
       blob: data.blob,
       thumbnail: data.thumbnail,
@@ -269,11 +272,11 @@ export class AssetStorageService {
 
   /**
    * Get all assets matching a filter.
-   * Optimized to use compound indexes for maximum performance.
+   * Optimized to use indexed queries where possible.
    *
    * Query optimization:
-   * - type + projectId → Uses compound index [type+projectId] (5-10x faster)
-   * - type only → Uses simple index 'type'
+   * - folder + projectId → Uses compound index [folder+projectId]
+   * - tags → Uses multi-entry index '*tags'
    * - projectId only → Uses simple index 'projectId'
    * - linkedTo → Uses multi-entry index '*linkedTo'
    *
@@ -281,119 +284,200 @@ export class AssetStorageService {
    * @returns Filtered assets
    */
   async list(filter: AssetFilter = {}): Promise<DBAsset[]> {
-    let collection: Collection<DBAsset, string>;
-    let results: DBAsset[];
+    // Execute indexed query based on filter
+    let results = await this.executeIndexedQuery(filter);
 
-    // OPTIMIZATION: Use compound index when both type and projectId are provided (non-null)
-    if (
-      filter.type &&
-      filter.projectId !== undefined &&
-      filter.projectId !== 'all' &&
-      filter.projectId !== null
-    ) {
-      const types = Array.isArray(filter.type) ? filter.type : [filter.type];
-      const projectIdVal = filter.projectId; // Now guaranteed to be string
+    // Apply post-filters (search, orphaned, starred)
+    results = this.applyPostFilters(results, filter);
 
-      // Use compound index [type+projectId] for optimal performance
-      if (types.length === 1) {
-        // Single type - use compound index directly
-        collection = projectDb.assets.where('[type+projectId]').equals([types[0], projectIdVal]);
-        results = await collection.toArray();
-      } else {
-        // Multiple types - query each type+projectId combination and merge
-        const promises = types.map((type) =>
-          projectDb.assets.where('[type+projectId]').equals([type, projectIdVal]).toArray()
-        );
-        const resultArrays = await Promise.all(promises);
-        results = resultArrays.flat();
-      }
-    }
-    // OPTIMIZATION: Use type index when only type is provided (or projectId is null for global)
-    else if (filter.type) {
-      const types = Array.isArray(filter.type) ? filter.type : [filter.type];
-      collection = projectDb.assets.where('type').anyOf(types);
-      results = await collection.toArray();
+    // Apply sorting or recent limit
+    results = this.applySortingAndLimit(results, filter);
 
-      // Apply project filter manually if needed
-      if (filter.projectId !== undefined && filter.projectId !== 'all') {
-        results = results.filter((a) => a.projectId === filter.projectId);
-      }
+    // Apply pagination
+    return this.applyPagination(results, filter);
+  }
+
+  /**
+   * Execute the optimal indexed query based on filter parameters
+   */
+  private async executeIndexedQuery(filter: AssetFilter): Promise<DBAsset[]> {
+    // OPTIMIZATION: Use compound index when both folder and projectId are provided (non-null)
+    if (this.canUseCompoundIndex(filter)) {
+      return projectDb.assets
+        .where('[folder+projectId]')
+        .equals([filter.folder, filter.projectId as string])
+        .toArray();
     }
-    // OPTIMIZATION: Use projectId index when only projectId is provided (non-null string)
-    else if (
-      filter.projectId !== undefined &&
-      filter.projectId !== 'all' &&
-      filter.projectId !== null
-    ) {
-      collection = projectDb.assets.where('projectId').equals(filter.projectId);
-      results = await collection.toArray();
+
+    // Use tags multi-entry index when tags are provided
+    if (filter.tags && filter.tags.length > 0) {
+      return this.queryByTags(filter);
     }
+
+    // Use folder index when folder is provided (but not tags)
+    if (filter.folder !== undefined && filter.folder !== 'all') {
+      return this.queryByFolder(filter);
+    }
+
+    // Use projectId index when only projectId is provided (non-null string)
+    if (filter.projectId !== undefined && filter.projectId !== 'all' && filter.projectId !== null) {
+      return projectDb.assets.where('projectId').equals(filter.projectId).toArray();
+    }
+
     // Handle projectId = null (global assets) - filter manually
-    else if (filter.projectId === null) {
-      collection = projectDb.assets.toCollection();
-      results = (await collection.toArray()).filter((a: DBAsset) => a.projectId === null);
+    if (filter.projectId === null) {
+      const all = await projectDb.assets.toArray();
+      return all.filter((a) => a.projectId === null);
     }
+
     // Fallback: No indexed filters, get all
-    else {
-      collection = projectDb.assets.toCollection();
-      results = await collection.toArray();
+    return projectDb.assets.toArray();
+  }
+
+  /**
+   * Check if we can use the compound index [folder+projectId]
+   */
+  private canUseCompoundIndex(filter: AssetFilter): boolean {
+    return (
+      filter.folder !== undefined &&
+      filter.folder !== 'all' &&
+      filter.projectId !== undefined &&
+      filter.projectId !== 'all' &&
+      filter.projectId !== null
+    );
+  }
+
+  /**
+   * Query using tags multi-entry index with additional filtering
+   */
+  private async queryByTags(filter: AssetFilter): Promise<DBAsset[]> {
+    const tags = filter.tags ?? [];
+    const [firstTag, ...remainingTags] = tags;
+
+    let results = await projectDb.assets.where('tags').equals(firstTag).toArray();
+
+    // Apply remaining tags as filters (AND logic)
+    for (const tag of remainingTags) {
+      results = results.filter((a) => a.tags.includes(tag));
     }
+
+    // Apply folder filter if provided
+    if (filter.folder !== undefined && filter.folder !== 'all') {
+      results = results.filter((a) => a.folder === filter.folder);
+    }
+
+    // Apply project filter if needed
+    if (filter.projectId !== undefined && filter.projectId !== 'all') {
+      results = results.filter((a) => a.projectId === filter.projectId);
+    }
+
+    return results;
+  }
+
+  /**
+   * Query using folder index with optional project filtering
+   */
+  private async queryByFolder(filter: AssetFilter): Promise<DBAsset[]> {
+    const folder = filter.folder ?? null;
+    let results = await projectDb.assets.where('folder').equals(folder).toArray();
+
+    // Apply project filter if needed
+    if (filter.projectId !== undefined && filter.projectId !== 'all') {
+      results = results.filter((a) => a.projectId === filter.projectId);
+    }
+
+    return results;
+  }
+
+  /**
+   * Apply post-query filters (search, orphaned, starred)
+   */
+  private applyPostFilters(results: DBAsset[], filter: AssetFilter): DBAsset[] {
+    let filtered = results;
 
     // Apply search filter
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
-      results = results.filter((a) => a.metadata.filename.toLowerCase().includes(searchLower));
+      filtered = filtered.filter((a) => a.metadata.filename.toLowerCase().includes(searchLower));
     }
 
     // Apply orphaned filter
     if (filter.orphanedOnly) {
-      results = results.filter((a) => a.linkedTo.length === 0);
+      filtered = filtered.filter((a) => a.linkedTo.length === 0);
+    }
+
+    // Apply starred filter
+    if (filter.starredOnly) {
+      filtered = filtered.filter((a) => a.tags.includes('starred'));
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Apply sorting or recent limit to results
+   */
+  private applySortingAndLimit(results: DBAsset[], filter: AssetFilter): DBAsset[] {
+    // Apply recent limit (get N most recently used)
+    if (filter.recentLimit !== undefined && filter.recentLimit > 0) {
+      return results
+        .filter((a) => a.lastUsedAt !== null && a.lastUsedAt !== undefined)
+        .sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0))
+        .slice(0, filter.recentLimit);
     }
 
     // Apply sorting
-    const sortBy = filter.sortBy ?? 'uploadedAt';
-    const sortDir = filter.sortDirection ?? 'desc';
-    results.sort((a, b) => {
-      let aVal: string | number | undefined;
-      let bVal: string | number | undefined;
+    return this.sortResults(results, filter.sortBy ?? 'uploadedAt', filter.sortDirection ?? 'desc');
+  }
 
-      switch (sortBy) {
-        case 'filename':
-          aVal = a.metadata.filename.toLowerCase();
-          bVal = b.metadata.filename.toLowerCase();
-          break;
-        case 'size':
-          aVal = a.metadata.size;
-          bVal = b.metadata.size;
-          break;
-        case 'type':
-          aVal = a.type;
-          bVal = b.type;
-          break;
-        case 'lastUsedAt':
-          aVal = a.lastUsedAt ?? 0; // Never used assets go to the end
-          bVal = b.lastUsedAt ?? 0;
-          break;
-        case 'usageCount':
-          aVal = a.usageCount ?? 0; // Never used assets go to the end
-          bVal = b.usageCount ?? 0;
-          break;
-        default:
-          aVal = a.metadata.uploadedAt;
-          bVal = b.metadata.uploadedAt;
-      }
+  /**
+   * Sort results by specified field and direction
+   */
+  private sortResults(
+    results: DBAsset[],
+    sortBy: NonNullable<AssetFilter['sortBy']>,
+    sortDir: NonNullable<AssetFilter['sortDirection']>
+  ): DBAsset[] {
+    return [...results].sort((a, b) => {
+      const aVal = this.getSortValue(a, sortBy);
+      const bVal = this.getSortValue(b, sortBy);
 
       if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
+  }
 
-    // Apply pagination
+  /**
+   * Get the value to sort by for an asset
+   */
+  private getSortValue(
+    asset: DBAsset,
+    sortBy: NonNullable<AssetFilter['sortBy']>
+  ): string | number {
+    switch (sortBy) {
+      case 'filename':
+        return asset.metadata.filename.toLowerCase();
+      case 'size':
+        return asset.metadata.size;
+      case 'lastUsedAt':
+        return asset.lastUsedAt ?? 0;
+      case 'usageCount':
+        return asset.usageCount ?? 0;
+      default:
+        return asset.metadata.uploadedAt;
+    }
+  }
+
+  /**
+   * Apply pagination to results
+   */
+  private applyPagination(results: DBAsset[], filter: AssetFilter): DBAsset[] {
     const offset = filter.offset ?? 0;
     const limit = filter.limit ?? Infinity;
 
     if (offset > 0 || limit < Infinity) {
-      results = results.slice(offset, offset + limit);
+      return results.slice(offset, offset + limit);
     }
 
     return results;
@@ -424,13 +508,14 @@ export class AssetStorageService {
   }
 
   /**
-   * Get assets by type
+   * Get assets by type tag
    *
-   * @param type - Asset type
-   * @returns Assets of that type
+   * @param typeTag - Type tag value (e.g., 'icon', 'token-background')
+   * @returns Assets with that type tag
    */
-  async getByType(type: AssetType): Promise<DBAsset[]> {
-    return projectDb.assets.where('type').equals(type).toArray();
+  async getByType(typeTag: string): Promise<DBAsset[]> {
+    const fullTag = typeTag.startsWith('type:') ? typeTag : `type:${typeTag}`;
+    return projectDb.assets.where('tags').equals(fullTag).toArray();
   }
 
   /**
@@ -539,16 +624,18 @@ export class AssetStorageService {
    *
    * @param characterId - Character ID
    * @param newAssetId - New asset ID (or null to unlink all)
-   * @param assetType - Type of asset being linked
+   * @param typeTag - Type tag value (e.g., 'icon', 'token-background') or full tag ('type:icon')
    */
   async replaceCharacterLink(
     characterId: string,
     newAssetId: string | null,
-    assetType: AssetType
+    typeTag: string
   ): Promise<void> {
+    const fullTag = typeTag.startsWith('type:') ? typeTag : `type:${typeTag}`;
+
     // Find and unlink all existing assets of this type for this character
     const existingAssets = await this.getByCharacter(characterId);
-    const assetsOfType = existingAssets.filter((a) => a.type === assetType);
+    const assetsOfType = existingAssets.filter((a) => a.tags.includes(fullTag));
 
     for (const asset of assetsOfType) {
       await this.unlinkFromCharacter(asset.id, characterId);
@@ -894,7 +981,8 @@ export class AssetStorageService {
   private toExportable(assets: DBAsset[]): ExportableAsset[] {
     return assets.map((asset) => ({
       id: asset.id,
-      type: asset.type,
+      tags: asset.tags,
+      folder: asset.folder,
       filename: this.generateExportFilename(asset),
       blob: asset.blob,
       metadata: asset.metadata,
@@ -925,7 +1013,7 @@ export class AssetStorageService {
     try {
       // Get all asset IDs first (lightweight query - just IDs, no blobs)
       const allAssets = await this.list({
-        type: 'character-icon',
+        tags: ['type:icon'],
         projectId,
       });
 
@@ -946,7 +1034,8 @@ export class AssetStorageService {
         // Yield as exportable asset
         yield {
           id: asset.id,
-          type: asset.type,
+          tags: asset.tags,
+          folder: asset.folder,
           filename: this.generateExportFilename(asset),
           blob: asset.blob,
           metadata: asset.metadata,
@@ -965,7 +1054,9 @@ export class AssetStorageService {
    * Generate a unique filename for export
    */
   private generateExportFilename(asset: DBAsset): string {
-    const path = ASSET_ZIP_PATHS[asset.type];
+    // Get type from tags and map to zip path
+    const type = getTypeFromTags(asset.tags) ?? 'icon';
+    const path = ASSET_ZIP_PATHS[type] ?? 'assets/';
     // Include ID prefix to ensure uniqueness
     const shortId = asset.id.split('-')[0];
     return `${path}${shortId}_${asset.metadata.filename}`;
@@ -985,28 +1076,28 @@ export class AssetStorageService {
     count: number;
     totalSize: number;
     totalSizeMB: number;
-    byType: Record<AssetType, { count: number; size: number }>;
+    byType: Record<string, { count: number; size: number }>;
   }> {
     const assets = await this.list(filter);
 
-    const byType: Record<AssetType, { count: number; size: number }> = {
-      'character-icon': { count: 0, size: 0 },
+    const byType: Record<string, { count: number; size: number }> = {
+      icon: { count: 0, size: 0 },
       'token-background': { count: 0, size: 0 },
       'script-background': { count: 0, size: 0 },
-      'setup-overlay': { count: 0, size: 0 },
+      setup: { count: 0, size: 0 },
       accent: { count: 0, size: 0 },
       logo: { count: 0, size: 0 },
-      'studio-icon': { count: 0, size: 0 },
-      'studio-logo': { count: 0, size: 0 },
-      'studio-project': { count: 0, size: 0 },
     };
 
     let totalSize = 0;
     for (const asset of assets) {
       const size = asset.metadata.size + (asset.thumbnail?.size ?? 0);
       totalSize += size;
-      byType[asset.type].count++;
-      byType[asset.type].size += size;
+      const type = getTypeFromTags(asset.tags) ?? 'icon';
+      if (byType[type]) {
+        byType[type].count++;
+        byType[type].size += size;
+      }
     }
 
     return {
