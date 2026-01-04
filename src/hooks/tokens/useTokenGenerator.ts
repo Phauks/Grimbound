@@ -144,6 +144,17 @@ export function useTokenGenerator() {
 
       isGeneratingRef.current = true;
 
+      // Set loading states immediately so overlay shows before calculations
+      setIsLoading(true);
+      setError(null);
+      setGenerationProgress({
+        phase: 'meta',
+        character: { current: 0, total: 0 },
+        reminder: { current: 0, total: 0 },
+        meta: { current: 0, total: 0 },
+        overall: { current: 0, total: 0 },
+      });
+
       try {
         // Pre-calculate token counts for accurate progress display
         const tokenCounts = calculateTokenCountsByType(
@@ -152,8 +163,7 @@ export function useTokenGenerator() {
           scriptMeta || null
         );
 
-        setIsLoading(true);
-        setError(null);
+        // Update progress with accurate counts
         setGenerationProgress({
           phase: 'meta',
           character: { current: 0, total: tokenCounts.character },
@@ -250,6 +260,17 @@ export function useTokenGenerator() {
 
       isGeneratingRef.current = true;
 
+      // Set loading states immediately so overlay shows before calculations
+      setIsLoading(true);
+      setError(null);
+      setGenerationProgress({
+        phase: typeFilter as GenerationProgress['phase'],
+        character: { current: 0, total: 0 },
+        reminder: { current: 0, total: 0 },
+        meta: { current: 0, total: 0 },
+        overall: { current: 0, total: 0 },
+      });
+
       try {
         // Pre-calculate token counts for accurate progress display
         const fullCounts = calculateTokenCountsByType(
@@ -264,8 +285,7 @@ export function useTokenGenerator() {
               ? fullCounts.reminder
               : fullCounts.meta;
 
-        setIsLoading(true);
-        setError(null);
+        // Update progress with accurate counts
         setGenerationProgress({
           phase: typeFilter as GenerationProgress['phase'],
           character: { current: 0, total: typeFilter === 'character' ? fullCounts.character : 0 },

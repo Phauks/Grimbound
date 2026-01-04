@@ -34,7 +34,8 @@
     "validate": "npm-run-all lint test build",
     "preview": "vite preview",
     "clean:all": "npm-run-all clean clean:coverage",
-    "clean:coverage": "rimraf coverage"
+    "clean:coverage": "rimraf coverage",
+    "prepare": "husky"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.1",
@@ -46,6 +47,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@lezer/highlight": "^1.2.3",
     "@pdf-lib/fontkit": "^1.1.1",
+    "@tanstack/react-virtual": "^3.13.16",
     "@types/pako": "^2.0.4",
     "@zumer/snapdom": "^2.0.1",
     "codemirror": "^6.0.2",
@@ -76,8 +78,10 @@
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
     "fake-indexeddb": "^6.2.5",
+    "husky": "^9.1.7",
     "jest-canvas-mock": "^2.5.2",
     "jsdom": "^27.3.0",
+    "lint-staged": "^16.2.7",
     "npm-run-all2": "^8.0.4",
     "playwright": "^1.57.0",
     "react-docgen-typescript": "^2.4.0",
@@ -95,5 +99,13 @@
     "token-generator",
     "board-game"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "src/**/*.css": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
+  }
 }
