@@ -168,6 +168,56 @@ export class ProjectDatabase extends Dexie {
           'Asset types migrated: setup-flower → setup-overlay, leaf → accent'
         );
       });
+
+    // Define schema version 8 (replace AssetType with tags, add folders)
+    // This is a major schema change that replaces the `type` field with `tags` array
+    // and adds a `folder` field for hierarchical organization.
+    this.version(8)
+      .stores({
+        projects: 'id, name, lastModifiedAt, lastAccessedAt, *tags',
+        autoSaveSnapshots: 'id, projectId, timestamp',
+        // NEW schema: tags (multi-entry), folder, compound [folder+projectId]
+        // Removed: type, [type+projectId]
+        assets:
+          'id, *tags, folder, projectId, [folder+projectId], *linkedTo, uploadedAt, contentHash, lastUsedAt, usageCount',
+        projectVersions: 'id, projectId, [projectId+versionMajor+versionMinor], createdAt',
+        customIcons: 'id, characterId, projectId, [characterId+projectId]',
+      })
+      .upgrade(async (tx) => {
+        // Migrate AssetType to tags array with type:* prefix
+        const typeToTagMap: Record<string, string> = {
+          'character-icon': 'type:icon',
+          'studio-icon': 'type:icon',
+          'token-background': 'type:token-background',
+          'script-background': 'type:script-background',
+          'setup-overlay': 'type:setup',
+          accent: 'type:accent',
+          logo: 'type:logo',
+          'studio-logo': 'type:logo',
+          'studio-project': 'type:icon', // Studio projects become icons
+        };
+
+        const assets = tx.table('assets');
+        await assets.toCollection().modify((asset: Record<string, unknown>) => {
+          // Get the type tag from the old type field
+          const oldType = asset.type as string;
+          const typeTag = typeToTagMap[oldType] || 'type:icon';
+
+          // Create tags array with the type tag
+          asset.tags = [typeTag];
+
+          // Set folder to null (root) for all existing assets
+          asset.folder = null;
+
+          // Remove the old type field
+          delete asset.type;
+        });
+
+        logger.info(
+          'ProjectDb',
+          'Schema v8 migration complete: AssetType → tags, added folder field'
+        );
+      });
   }
 
   // ==========================================================================

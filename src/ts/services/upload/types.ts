@@ -7,10 +7,13 @@
  */
 
 // ============================================================================
-// Asset Types
+// Asset Types (DEPRECATED - use tags instead)
 // ============================================================================
 
 /**
+ * @deprecated Use tags with type:* prefix instead
+ * Kept for migration compatibility only
+ *
  * Types of assets that can be uploaded and managed
  */
 export type AssetType =
@@ -23,6 +26,11 @@ export type AssetType =
   | 'studio-icon' // Custom icon created in Studio
   | 'studio-logo' // Script logo created in Studio
   | 'studio-project'; // Complete Studio project (multi-layer)
+
+/**
+ * @deprecated Alias for AssetType - kept for migration compatibility
+ */
+export type LegacyAssetType = AssetType;
 
 /**
  * Source of how an asset was added to the system
@@ -61,8 +69,22 @@ export interface AssetMetadata {
 export interface DBAsset {
   /** Unique identifier (UUID) */
   id: string;
-  /** Type of asset */
-  type: AssetType;
+
+  /**
+   * Tags for categorization (replaces type field)
+   * - Must include exactly one `type:*` tag
+   * - May include zero or more `team:*` tags
+   * - May include `starred` reserved tag
+   * - May include user-defined tags
+   */
+  tags: string[];
+
+  /**
+   * Folder path for organization (null = root)
+   * Examples: "Characters", "Characters/Townsfolk", "Backgrounds/Evil"
+   */
+  folder: string | null;
+
   /** Project ID (null = global library) */
   projectId: string | null;
   /** Primary image data as Blob */
@@ -103,6 +125,25 @@ export interface AssetWithUrl extends DBAsset {
  * Configuration for file upload operations
  */
 export interface UploadConfig {
+  /** Tags to apply (must include one type:* tag) */
+  tags: string[];
+  /** Project ID to associate with (null for global) */
+  projectId?: string | null;
+  /** Folder to place asset in (null = root) */
+  folder?: string | null;
+  /** Character ID to link to (optional) */
+  characterId?: string;
+  /** Progress callback (0-100) */
+  onProgress?: (progress: number) => void;
+  /** Skip image processing (use original) */
+  skipProcessing?: boolean;
+}
+
+/**
+ * @deprecated Use UploadConfig with tags instead
+ * Kept for migration compatibility
+ */
+export interface LegacyUploadConfig {
   /** Type of asset being uploaded */
   assetType: AssetType;
   /** Project ID to associate with (null for global) */
@@ -223,16 +264,22 @@ export type UploadOutcome = UploadResult | UploadError;
  * Filter options for asset queries
  */
 export interface AssetFilter {
-  /** Filter by asset type */
-  type?: AssetType | AssetType[];
+  /** Filter by tags (AND logic - asset must have all specified tags) */
+  tags?: string[];
+  /** Filter by folder (null = root, 'all' = any folder) */
+  folder?: string | null | 'all';
   /** Filter by project scope */
   projectId?: string | null | 'all';
   /** Search by filename */
   search?: string;
   /** Filter orphaned assets only */
   orphanedOnly?: boolean;
+  /** Filter starred only */
+  starredOnly?: boolean;
+  /** Filter recent only (limit to N most recent) */
+  recentLimit?: number;
   /** Sort field */
-  sortBy?: 'uploadedAt' | 'filename' | 'size' | 'type' | 'lastUsedAt' | 'usageCount';
+  sortBy?: 'uploadedAt' | 'filename' | 'size' | 'lastUsedAt' | 'usageCount';
   /** Sort direction */
   sortDirection?: 'asc' | 'desc';
   /** Pagination: Maximum number of results to return */
@@ -257,10 +304,12 @@ export interface AssetManagerOptions {
  * Options for the useFileUpload hook
  */
 export interface UseFileUploadConfig {
-  /** Asset type for uploads */
-  assetType: AssetType;
+  /** Tags to apply to uploaded assets (must include one type:* tag) */
+  tags: string[];
   /** Project ID to associate with */
   projectId?: string | null;
+  /** Folder to place assets in */
+  folder?: string | null;
   /** Character ID to link to */
   characterId?: string;
   /** Allow multiple file selection */
@@ -281,8 +330,10 @@ export interface UseFileUploadConfig {
 export interface ExportableAsset {
   /** Original asset ID */
   id: string;
-  /** Asset type */
-  type: AssetType;
+  /** Asset tags */
+  tags: string[];
+  /** Asset folder */
+  folder: string | null;
   /** Filename for ZIP */
   filename: string;
   /** Blob data */
@@ -297,8 +348,10 @@ export interface ExportableAsset {
 export interface AssetReference {
   /** Asset ID */
   id: string;
-  /** Type of asset */
-  type: AssetType;
+  /** Asset tags */
+  tags: string[];
+  /** Asset folder */
+  folder: string | null;
   /** Path in ZIP file */
   zipPath: string;
   /** Original filename */
