@@ -1,16 +1,13 @@
 /**
- * Night Sheet Renderer
+ * Night Sheet Hybrid Renderer
  *
- * Renders a NightSheetPrintable React component offscreen and captures
- * it as a canvas using Snapdom for true WYSIWYG PDF export.
- *
- * This module handles:
- * - Offscreen container creation at DPI-correct dimensions
- * - React component mounting and rendering
- * - Image URL pre-resolution for all entries
- * - Font loading and waiting
- * - Snapdom capture with hi-DPI support
- * - Cleanup of resources
+ * Renders a NightSheetPrintable React component for hybrid PDF export.
+ * This renderer:
+ * 1. Renders the component normally (visible text)
+ * 2. Extracts text positions from the DOM
+ * 3. Hides text using clip-path (preserves layout, works with any background)
+ * 4. Captures with Snapdom (no font embedding)
+ * 5. Returns both canvas and text positions for pdf-lib overlay
  */
 
 import { createRoot } from 'react-dom/client';
@@ -22,18 +19,23 @@ import {
 import CONFIG from '@/ts/config.js';
 import type { ScriptMeta } from '@/ts/types/index.js';
 import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
-import { loadImage } from '@/ts/utils/imageUtils.js';
+import { applyCorsProxy, loadImage } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import type { NightOrderEntry } from './nightOrderTypes.js';
+import {
+  type ExtractedText,
+  extractTextFromContainer,
+  scaleTextPositions,
+} from './textExtractor.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface RenderOptions {
+export interface HybridRenderOptions {
   /** Night type ('first' or 'other') */
   nightType: NightSheetType;
-  /** Night order entries */
+  /** Night order entries for this page */
   entries: NightOrderEntry[];
   /** Script metadata */
   scriptMeta: ScriptMeta | null;
@@ -41,15 +43,21 @@ export interface RenderOptions {
   background: NightSheetBackground;
   /** Abort signal for cancellation */
   signal?: AbortSignal;
+  /** Current page number (1-based) for multi-page exports */
+  pageNumber?: number;
+  /** Total number of pages for this night type */
+  totalPages?: number;
 }
 
-export interface RenderResult {
-  /** Captured canvas */
+export interface HybridRenderResult {
+  /** Captured canvas (without text) */
   canvas: HTMLCanvasElement;
-  /** Width in pixels */
-  width: number;
-  /** Height in pixels */
-  height: number;
+  /** Extracted text positions (scaled to PDF dimensions) */
+  texts: ExtractedText[];
+  /** Container width used for scaling */
+  containerWidth: number;
+  /** Container height used for scaling */
+  containerHeight: number;
 }
 
 // ============================================================================
@@ -60,192 +68,33 @@ export interface RenderResult {
 const PAGE_WIDTH_INCHES = 8.5;
 const PAGE_HEIGHT_INCHES = 11;
 
-/**
- * UI preview container width from NightOrderView.module.css
- * The UI uses max-width: 680px for the page preview.
- * To match WYSIWYG, we must render at the same dimensions.
- */
+/** UI preview container width (must match NightOrderView.module.css) */
 const UI_PREVIEW_WIDTH = 680;
+
+/** Letter page size in points */
+const PAGE_WIDTH_PT = PAGE_WIDTH_INCHES * 72;
+const PAGE_HEIGHT_PT = PAGE_HEIGHT_INCHES * 72;
 
 /** Timeout for image loading (ms) */
 const IMAGE_LOAD_TIMEOUT = 15000;
 
-/** Cached Snapdom import to avoid repeated dynamic imports */
+/** Cached Snapdom import */
 let snapdomModule: typeof import('@zumer/snapdom') | null = null;
-
-/** Promise lock to prevent concurrent preload calls (React StrictMode calls effects twice) */
-let preloadPromise: Promise<void> | null = null;
-
-/** Set of font families that have been warmed for Snapdom embedding */
-const warmedFonts = new Set<string>();
-
-/** Promise lock for font warming (one at a time) */
-let fontWarmPromise: Promise<void> | null = null;
-
-/**
- * Pre-load Snapdom module for faster captures.
- */
-export async function preloadSnapdom(): Promise<void> {
-  // Return existing promise if already loading (prevents duplicate work in StrictMode)
-  if (preloadPromise) {
-    logger.debug('NightSheetRenderer', 'Preload already in progress, waiting...');
-    return preloadPromise;
-  }
-
-  // Already loaded
-  if (snapdomModule) {
-    logger.debug('NightSheetRenderer', 'Snapdom module already cached');
-    return;
-  }
-
-  // Start loading with promise lock
-  preloadPromise = (async () => {
-    const startTime = performance.now();
-    logger.info('NightSheetRenderer', 'Loading Snapdom module...');
-
-    try {
-      snapdomModule = await import('@zumer/snapdom');
-      logger.info(
-        'NightSheetRenderer',
-        `Snapdom module loaded in ${(performance.now() - startTime).toFixed(0)}ms`
-      );
-    } finally {
-      preloadPromise = null;
-    }
-  })();
-
-  return preloadPromise;
-}
-
-/**
- * Warm Snapdom's font cache for specific font families.
- *
- * Snapdom's embedFonts option is slow on first use (~13s) because it needs to
- * find, fetch, and encode font files as base64. By warming fonts when the user
- * selects them (not when they export), we shift the delay to a less critical moment.
- *
- * @param fonts - Array of font family names to warm
- * @returns Promise that resolves when warming is complete
- */
-export async function warmFonts(fonts: string[]): Promise<void> {
-  // Filter out already-warmed fonts
-  const fontsToWarm = fonts.filter((f) => !warmedFonts.has(f));
-
-  if (fontsToWarm.length === 0) {
-    logger.debug('NightSheetRenderer', 'All fonts already warmed', { fonts });
-    return;
-  }
-
-  // Wait for any in-progress warming
-  if (fontWarmPromise) {
-    logger.debug('NightSheetRenderer', 'Font warming in progress, waiting...');
-    await fontWarmPromise;
-    // Check again after waiting - fonts may have been warmed
-    const stillNeedWarming = fontsToWarm.filter((f) => !warmedFonts.has(f));
-    if (stillNeedWarming.length === 0) {
-      return;
-    }
-  }
-
-  // Ensure Snapdom is loaded
-  await preloadSnapdom();
-  if (!snapdomModule) {
-    logger.warn('NightSheetRenderer', 'Cannot warm fonts - Snapdom not loaded');
-    return;
-  }
-
-  // Start warming with promise lock
-  fontWarmPromise = (async () => {
-    const startTime = performance.now();
-    const fontFamily = fontsToWarm.join(', ');
-
-    logger.info('NightSheetRenderer', `Warming fonts: ${fontsToWarm.join(', ')}...`);
-
-    // Create a minimal element with all fonts to warm
-    const dummy = document.createElement('div');
-    dummy.style.position = 'fixed';
-    dummy.style.left = '-9999px';
-    dummy.style.width = '10px';
-    dummy.style.height = '10px';
-    dummy.style.fontFamily = fontFamily;
-    dummy.textContent = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    document.body.appendChild(dummy);
-
-    try {
-      // This forces Snapdom to process and cache the fonts
-      await snapdomModule.snapdom(dummy, { scale: 1, embedFonts: true });
-
-      // Mark fonts as warmed
-      for (const font of fontsToWarm) {
-        warmedFonts.add(font);
-      }
-
-      logger.info(
-        'NightSheetRenderer',
-        `Fonts warmed in ${(performance.now() - startTime).toFixed(0)}ms`,
-        { fonts: fontsToWarm }
-      );
-    } catch (error) {
-      logger.warn('NightSheetRenderer', 'Font warming failed', error);
-    } finally {
-      dummy.remove();
-      fontWarmPromise = null;
-    }
-  })();
-
-  return fontWarmPromise;
-}
-
-/**
- * Warm the default night sheet fonts.
- * Call this when user navigates to the night order view.
- */
-export function warmDefaultNightSheetFonts(): void {
-  // Fire and forget - don't await, let it run in background
-  warmFonts(['Dumbledor', 'Goudy Old Style', 'TradeGothic', 'TradeGothicBold']).catch(() => {
-    // Ignore errors - this is just pre-warming
-  });
-}
-
-/**
- * Check if fonts are warmed (useful for UI feedback)
- */
-export function areFontsWarmed(fonts: string[]): boolean {
-  return fonts.every((f) => warmedFonts.has(f));
-}
-
-/**
- * Get the current font warming status
- */
-export function getFontWarmingStatus(): { isWarming: boolean; warmedFonts: string[] } {
-  return {
-    isWarming: fontWarmPromise !== null,
-    warmedFonts: Array.from(warmedFonts),
-  };
-}
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 /**
- * Create an offscreen container at UI preview dimensions.
- *
- * Strategy for true WYSIWYG:
- * - Render at EXACT UI preview dimensions (680px wide, letter aspect ratio)
- * - Snapdom scales up to target DPI during capture
- * - This ensures PDF matches UI exactly - same icon sizes, same text wrapping
+ * Create an offscreen container at UI preview dimensions
  */
 function createOffscreenContainer(): HTMLDivElement {
   const container = document.createElement('div');
 
-  // Position off-screen but still rendered (Snapdom needs visible elements)
   container.style.position = 'fixed';
   container.style.left = '-9999px';
   container.style.top = '0';
 
-  // Use EXACT UI preview dimensions for true WYSIWYG
-  // UI uses max-width: 680px with letter aspect ratio (8.5/11)
   const width = UI_PREVIEW_WIDTH;
   const height = Math.round(width * (PAGE_HEIGHT_INCHES / PAGE_WIDTH_INCHES));
 
@@ -261,10 +110,6 @@ function createOffscreenContainer(): HTMLDivElement {
 
 /**
  * Convert an image to a data URL for CORS-safe embedding
- *
- * This is necessary because Snapdom renders to canvas, which requires
- * images to be loaded with CORS headers. By converting to data URLs,
- * we ensure the images can be safely rendered regardless of source.
  */
 async function imageToDataUrl(img: HTMLImageElement): Promise<string> {
   const canvas = document.createElement('canvas');
@@ -277,58 +122,48 @@ async function imageToDataUrl(img: HTMLImageElement): Promise<string> {
 }
 
 /**
- * Pre-resolve and load all character image URLs as data URLs
- *
- * This function:
- * 1. Resolves image URLs via SSOT (handles asset refs, sync storage, etc.)
- * 2. Loads images with CORS handling (auto-falls back to proxy)
- * 3. Converts to data URLs for CORS-safe Snapdom rendering
+ * Resolve script logo URL through CORS proxy and convert to data URL
+ */
+async function resolveScriptLogo(logoUrl: string | undefined): Promise<string | undefined> {
+  if (!logoUrl) return undefined;
+
+  try {
+    // Apply CORS proxy for external URLs
+    const proxiedUrl = applyCorsProxy(logoUrl);
+    const img = await loadImage(proxiedUrl);
+    return await imageToDataUrl(img);
+  } catch (error) {
+    logger.warn('HybridRenderer', `Failed to load script logo: ${logoUrl}`, error);
+    return undefined;
+  }
+}
+
+/**
+ * Pre-resolve all character image URLs as data URLs
  */
 async function preResolveImageUrls(
   entries: NightOrderEntry[],
   signal?: AbortSignal
 ): Promise<Map<string, string>> {
   const resolvedUrls = new Map<string, string>();
-  const startTime = performance.now();
-  let successCount = 0;
-  let failCount = 0;
 
-  // Resolve and load images in parallel
   const resolvePromises = entries.map(async (entry) => {
     if (signal?.aborted) return;
 
     try {
-      // Step 1: Resolve URL via SSOT (handles asset:, sync storage, external)
       const result = await resolveCharacterImageUrl(entry.image, entry.id, {
-        logContext: 'NightSheetRenderer',
+        logContext: 'HybridRenderer',
       });
-
-      // Step 2: Load image with CORS handling (auto proxy fallback)
       const img = await loadImage(result.url);
-
-      // Step 3: Convert to data URL for CORS-safe canvas rendering
       const dataUrl = await imageToDataUrl(img);
       resolvedUrls.set(entry.id, dataUrl);
-      successCount++;
     } catch (error) {
-      failCount++;
-      logger.warn('NightSheetRenderer', `Failed to load image for ${entry.name}`, error);
-      // Keep original URL as fallback (may still fail in canvas but at least visible)
+      logger.warn('HybridRenderer', `Failed to load image for ${entry.name}`, error);
       resolvedUrls.set(entry.id, entry.image);
     }
   });
 
   await Promise.all(resolvePromises);
-
-  logger.info(
-    'NightSheetRenderer',
-    `Pre-resolved ${entries.length} images in ${(performance.now() - startTime).toFixed(0)}ms`,
-    {
-      success: successCount,
-      failed: failCount,
-    }
-  );
-
   return resolvedUrls;
 }
 
@@ -339,7 +174,6 @@ async function waitForImages(container: HTMLElement, signal?: AbortSignal): Prom
   const images = container.querySelectorAll('img');
 
   const loadPromises = Array.from(images).map((img) => {
-    // Already loaded
     if (img.complete && img.naturalWidth > 0) {
       return Promise.resolve();
     }
@@ -358,20 +192,17 @@ async function waitForImages(container: HTMLElement, signal?: AbortSignal): Prom
 
       const onError = () => {
         cleanup();
-        // Don't fail on image error - just continue
         resolve();
       };
 
       img.addEventListener('load', onLoad);
       img.addEventListener('error', onError);
 
-      // Timeout for slow images
       const timeout = setTimeout(() => {
         cleanup();
         resolve();
       }, IMAGE_LOAD_TIMEOUT);
 
-      // Handle abort
       if (signal) {
         signal.addEventListener(
           'abort',
@@ -392,17 +223,15 @@ async function waitForImages(container: HTMLElement, signal?: AbortSignal): Prom
  * Wait for fonts to be ready
  */
 async function waitForFonts(): Promise<void> {
-  // Wait for document fonts to be ready
   await document.fonts.ready;
 
-  // Additionally try to load specific fonts we need
   const fontFamilies = ['Dumbledor', 'Goudy Old Style', 'TradeGothic', 'TradeGothicBold'];
 
   const fontPromises = fontFamilies.map(async (family) => {
     try {
       await document.fonts.load(`1rem "${family}"`);
     } catch {
-      // Font might not exist, that's OK
+      // Font might not exist
     }
   });
 
@@ -410,39 +239,67 @@ async function waitForFonts(): Promise<void> {
 }
 
 /**
- * Capture container with Snapdom, scaling to target DPI.
- *
- * Container is at UI preview dimensions (680×880).
- * Snapdom scales up to target PDF dimensions (2550×3300 at 300 DPI).
+ * Capture container with Snapdom WITHOUT font embedding
  */
 async function captureWithSnapdom(
   element: HTMLElement,
   targetDpi: number
 ): Promise<HTMLCanvasElement> {
-  // Use cached module or import if not yet loaded
   if (!snapdomModule) {
     snapdomModule = await import('@zumer/snapdom');
   }
   const { snapdom } = snapdomModule;
 
-  // Calculate scale factor to reach target DPI dimensions
-  // UI preview: 680px wide
-  // Target: 8.5" × targetDpi = 2550px at 300 DPI
   const targetWidth = PAGE_WIDTH_INCHES * targetDpi;
   const scaleFactor = targetWidth / UI_PREVIEW_WIDTH;
 
-  // Capture with scaling for print quality
-  // Snapdom renders at the scaled resolution, so text/images are sharp
+  // Capture WITHOUT font embedding - this is the fast path
   const result = await snapdom(element, {
     scale: scaleFactor,
-    // Must embed fonts for correct rendering in SVG → Canvas conversion
-    embedFonts: true,
+    embedFonts: false, // Key: no base64 font encoding
   });
 
-  // Convert to canvas
-  const canvas = await result.toCanvas();
+  return await result.toCanvas();
+}
 
-  return canvas;
+/**
+ * Hide all text in container using clip-path.
+ *
+ * clip-path: inset(100%) makes elements invisible while preserving their
+ * layout dimensions. This works regardless of background (solid, gradient, image).
+ *
+ * Returns a cleanup function to restore original styles.
+ */
+function hideTextWithClipPath(container: HTMLElement): () => void {
+  const originalStyles: Array<{ element: HTMLElement; clipPath: string }> = [];
+
+  // Find all text-containing elements and apply clip-path
+  const textElements = container.querySelectorAll(
+    'h1, h2, h3, h4, h5, h6, p, span, strong, em, div[class*="name"], div[class*="ability"], div[class*="title"], div[class*="scriptName"]'
+  );
+
+  for (const element of textElements) {
+    const htmlElement = element as HTMLElement;
+    // Only hide elements that directly contain text (not just wrappers)
+    const hasDirectText = Array.from(htmlElement.childNodes).some(
+      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+    );
+
+    if (hasDirectText || htmlElement.tagName === 'SPAN' || htmlElement.tagName === 'STRONG') {
+      originalStyles.push({
+        element: htmlElement,
+        clipPath: htmlElement.style.clipPath,
+      });
+      htmlElement.style.clipPath = 'inset(100%)';
+    }
+  }
+
+  // Return cleanup function
+  return () => {
+    for (const { element, clipPath } of originalStyles) {
+      element.style.clipPath = clipPath;
+    }
+  };
 }
 
 // ============================================================================
@@ -450,43 +307,66 @@ async function captureWithSnapdom(
 // ============================================================================
 
 /**
- * Render a night sheet to canvas using Snapdom
+ * Render a night sheet for hybrid PDF export
  *
- * @param options - Render options including entries and background
- * @returns Canvas element with the rendered night sheet
+ * This function:
+ * 1. Renders the React component with visible text
+ * 2. Extracts text positions from the DOM
+ * 3. Hides text using clip-path (preserves layout, works with any background)
+ * 4. Captures with Snapdom (no font embedding)
+ * 5. Returns canvas + text positions for pdf-lib overlay
  */
-export async function renderNightSheetToCanvas(options: RenderOptions): Promise<RenderResult> {
-  const { nightType, entries, scriptMeta, background, signal } = options;
+export async function renderNightSheetForHybrid(
+  options: HybridRenderOptions
+): Promise<HybridRenderResult> {
+  const { nightType, entries, scriptMeta, background, signal, pageNumber, totalPages } = options;
 
-  // Check for abort before starting
   if (signal?.aborted) {
     throw new DOMException('Render aborted', 'AbortError');
   }
 
-  logger.info('NightSheetRenderer', `Rendering ${nightType} night at ${CONFIG.PDF.DPI} DPI`, {
+  logger.info('HybridRenderer', `Rendering ${nightType} night for hybrid export`, {
     entryCount: entries.length,
+    pageNumber,
+    totalPages,
   });
 
   const startTime = performance.now();
   const timings: Record<string, number> = {};
 
-  // Step 1: Pre-resolve all image URLs (parallel)
+  // Step 1: Pre-resolve all image URLs and script logo (in parallel)
   const resolveStart = performance.now();
-  const resolvedImageUrls = await preResolveImageUrls(entries, signal);
+  const [resolvedImageUrls, resolvedLogoUrl] = await Promise.all([
+    preResolveImageUrls(entries, signal),
+    resolveScriptLogo(scriptMeta?.logo),
+  ]);
   timings.imageResolve = performance.now() - resolveStart;
 
   if (signal?.aborted) {
     throw new DOMException('Render aborted', 'AbortError');
   }
 
-  // Step 2: Create offscreen container at UI preview dimensions
+  // Step 2: Create offscreen container
   const container = createOffscreenContainer();
 
   try {
-    // Step 3: Render React component into container
+    // Step 3: Render with visible text for position extraction
     const renderStart = performance.now();
     const root = createRoot(container);
 
+    // Helper to wait for render
+    const waitForRender = async () => {
+      const maxWaitMs = 500;
+      const waitStart = performance.now();
+      while (performance.now() - waitStart < maxWaitMs) {
+        if (container.querySelector('[data-night-type]')) {
+          break;
+        }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+    };
+
+    // Render with visible text
     root.render(
       <NightSheetPrintable
         type={nightType}
@@ -494,22 +374,13 @@ export async function renderNightSheetToCanvas(options: RenderOptions): Promise<
         scriptMeta={scriptMeta}
         background={background}
         resolvedImageUrls={resolvedImageUrls}
+        pageNumber={pageNumber}
+        totalPages={totalPages}
+        resolvedLogoUrl={resolvedLogoUrl}
       />
     );
 
-    // Poll for React to render content (fast when ready, handles race condition)
-    const maxWaitMs = 500;
-    const waitStart = performance.now();
-
-    while (performance.now() - waitStart < maxWaitMs) {
-      // Check if React has rendered the sheet
-      if (container.querySelector('[data-night-type]')) {
-        break;
-      }
-      // Wait one frame and check again
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
-
+    await waitForRender();
     timings.reactRender = performance.now() - renderStart;
 
     if (signal?.aborted) {
@@ -517,13 +388,11 @@ export async function renderNightSheetToCanvas(options: RenderOptions): Promise<
       throw new DOMException('Render aborted', 'AbortError');
     }
 
-    // Final verification
     if (!container.querySelector('[data-night-type]')) {
-      logger.error('NightSheetRenderer', 'React failed to render within timeout');
       throw new Error('React component failed to render');
     }
 
-    // Step 4: Wait for fonts and images to load (parallel)
+    // Step 4: Wait for fonts and images
     const loadStart = performance.now();
     await Promise.all([waitForFonts(), waitForImages(container, signal)]);
     timings.assetLoad = performance.now() - loadStart;
@@ -533,25 +402,40 @@ export async function renderNightSheetToCanvas(options: RenderOptions): Promise<
       throw new DOMException('Render aborted', 'AbortError');
     }
 
-    // Step 5: Capture with Snapdom (scales up to target DPI)
+    // Step 5: Extract text positions from the rendered component
+    const extractStart = performance.now();
+    const extractionResult = extractTextFromContainer(container);
+    timings.textExtract = performance.now() - extractStart;
+
+    // Step 6: Hide text using clip-path (preserves layout, works with any background)
+    hideTextWithClipPath(container);
+
+    if (signal?.aborted) {
+      root.unmount();
+      throw new DOMException('Render aborted', 'AbortError');
+    }
+
+    // Step 7: Capture with Snapdom (text hidden but layout preserved)
     const captureStart = performance.now();
     const canvas = await captureWithSnapdom(container, CONFIG.PDF.DPI);
     timings.snapdomCapture = performance.now() - captureStart;
 
-    // Step 6: Cleanup React
-    root.unmount();
+    // Step 8: Scale text positions to PDF dimensions
+    const scaledResult = scaleTextPositions(extractionResult, PAGE_WIDTH_PT, PAGE_HEIGHT_PT);
 
     const endTime = performance.now();
     logger.info(
-      'NightSheetRenderer',
+      'HybridRenderer',
       `Captured ${nightType} night in ${(endTime - startTime).toFixed(0)}ms`,
       {
         width: canvas.width,
         height: canvas.height,
+        textElements: scaledResult.texts.length,
         timings: {
           imageResolve: `${timings.imageResolve.toFixed(0)}ms`,
           reactRender: `${timings.reactRender.toFixed(0)}ms`,
           assetLoad: `${timings.assetLoad.toFixed(0)}ms`,
+          textExtract: `${timings.textExtract.toFixed(0)}ms`,
           snapdomCapture: `${timings.snapdomCapture.toFixed(0)}ms`,
         },
       }
@@ -559,8 +443,9 @@ export async function renderNightSheetToCanvas(options: RenderOptions): Promise<
 
     return {
       canvas,
-      width: canvas.width,
-      height: canvas.height,
+      texts: scaledResult.texts,
+      containerWidth: scaledResult.containerWidth,
+      containerHeight: scaledResult.containerHeight,
     };
   } finally {
     // Always cleanup container
