@@ -12,7 +12,7 @@
  * @module hooks/ui/useControlledField
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ============================================
 // Types
@@ -87,7 +87,12 @@ export function useControlledField<T>({
   // Track if we have uncommitted changes
   const isDirtyRef = useRef(false);
 
-  // Sync from props only when the change came from external source
+  // Sync from external prop changes only (NECESSARY for controlled inputs)
+  // This effect distinguishes between:
+  // 1. External changes: value differs from what we last sent → sync to local
+  // 2. Our changes propagated back: value equals what we sent → ignore (no-op)
+  // This prevents cursor position issues in text inputs where React would
+  // otherwise reset the input value mid-typing.
   useEffect(() => {
     if (!isEqual(value, lastSentValueRef.current)) {
       setLocalValue(value);
@@ -107,31 +112,28 @@ export function useControlledField<T>({
   );
 
   // Handle value change with debounce
-  const handleChange = useCallback(
-    (newValue: T) => {
-      if (disabled) return;
+  const handleChange = (newValue: T) => {
+    if (disabled) return;
 
-      setLocalValue(newValue);
-      lastSentValueRef.current = newValue;
-      isDirtyRef.current = true;
+    setLocalValue(newValue);
+    lastSentValueRef.current = newValue;
+    isDirtyRef.current = true;
 
-      // Cancel any pending update
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+    // Cancel any pending update
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
 
-      // Schedule debounced commit
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
-        isDirtyRef.current = false;
-        onChange(newValue);
-      }, debounceMs);
-    },
-    [disabled, onChange, debounceMs]
-  );
+    // Schedule debounced commit
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      isDirtyRef.current = false;
+      onChange(newValue);
+    }, debounceMs);
+  };
 
   // Immediately commit on blur
-  const handleBlur = useCallback(() => {
+  const handleBlur = () => {
     if (disabled) return;
 
     // Cancel pending debounce
@@ -144,14 +146,14 @@ export function useControlledField<T>({
     lastSentValueRef.current = localValue;
     isDirtyRef.current = false;
     onChange(localValue);
-  }, [disabled, localValue, onChange]);
+  };
 
   // Force sync from prop (rarely needed)
-  const forceSync = useCallback(() => {
+  const forceSync = () => {
     setLocalValue(value);
     lastSentValueRef.current = value;
     isDirtyRef.current = false;
-  }, [value]);
+  };
 
   return {
     localValue,
@@ -161,5 +163,3 @@ export function useControlledField<T>({
     forceSync,
   };
 }
-
-export default useControlledField;
