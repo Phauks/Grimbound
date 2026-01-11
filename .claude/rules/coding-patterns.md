@@ -4,6 +4,152 @@
 
 ---
 
+## React Compiler (Automatic Memoization)
+
+**This codebase uses React Compiler (`babel-plugin-react-compiler`) for automatic memoization.**
+
+### What This Means
+
+- **DO NOT use `useCallback`** - The compiler handles function memoization automatically
+- **DO NOT use `useMemo`** - The compiler handles value memoization automatically
+- **DO NOT use `React.memo`** - The compiler handles component memoization automatically
+- **DO NOT use `forwardRef`** - React 19 supports ref as a regular prop
+
+### Exception: useEffect Dependencies
+
+**KEEP `useCallback`** only when the function is used as a dependency in `useEffect`:
+
+```typescript
+// KEEP - callback is in useEffect deps
+const loadData = useCallback(async () => {
+  const result = await fetchData();
+  setData(result);
+}, [fetchData]);
+
+useEffect(() => {
+  loadData();
+}, [loadData]); // loadData is a dependency
+
+// REMOVE - callback is NOT in useEffect deps
+const handleClick = () => {  // No useCallback needed
+  doSomething();
+};
+```
+
+### ref-as-prop Pattern (React 19)
+
+```typescript
+// OLD: forwardRef pattern
+const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
+  return <input ref={ref} {...props} />;
+});
+
+// NEW: ref as regular prop
+interface InputProps {
+  ref?: React.Ref<HTMLInputElement>;
+  // ... other props
+}
+
+function Input({ ref, ...props }: InputProps) {
+  return <input ref={ref} {...props} />;
+}
+```
+
+### Verification
+
+The React Compiler is configured in `vite.config.ts`:
+```typescript
+react({
+  babel: {
+    plugins: ['babel-plugin-react-compiler'],
+  },
+}),
+```
+
+Run `npx vite build` to verify - successful build with no compiler errors confirms it's working.
+
+---
+
+## useEffect Guidelines
+
+### When to Use useEffect
+
+✅ **Appropriate uses:**
+- External subscriptions (event listeners, WebSocket, BroadcastChannel)
+- Data fetching (async operations)
+- DOM measurements that need layout
+- Timer cleanup (setTimeout/setInterval cleanup)
+- Third-party library integration
+
+❌ **Avoid useEffect for:**
+- Derived state (use `useMemo` or compute during render)
+- Resetting state when props change (use `key` prop or event handlers)
+- Transforming data for rendering (compute in render)
+- Effect chains (one effect triggers another via state)
+
+### Patterns
+
+**localStorage Initialization:**
+```typescript
+// BAD: Empty-dep effect
+const [value, setValue] = useState(null);
+useEffect(() => {
+  setValue(localStorage.getItem('key'));
+}, []);
+
+// GOOD: useState initializer
+const [value, setValue] = useState(() => localStorage.getItem('key'));
+```
+
+**Derived State:**
+```typescript
+// BAD: Effect to compute derived value
+const [fullName, setFullName] = useState('');
+useEffect(() => {
+  setFullName(`${firstName} ${lastName}`);
+}, [firstName, lastName]);
+
+// GOOD: Compute during render
+const fullName = `${firstName} ${lastName}`;
+// Or with useMemo if expensive
+const fullName = useMemo(() => expensiveComputation(firstName, lastName), [firstName, lastName]);
+```
+
+**Effect Chains:**
+```typescript
+// BAD: Effect chain (one effect triggers another)
+useEffect(() => {
+  setIsDirty(true);
+  incrementVersion(); // Triggers another effect!
+}, [state]);
+
+useEffect(() => {
+  if (isDirty) save();
+}, [isDirty, version]);
+
+// GOOD: Single unified effect
+useEffect(() => {
+  if (stateChanged(state, previousState)) {
+    scheduleSave();
+  }
+}, [state]);
+```
+
+**Prop Sync in Controlled Inputs:**
+```typescript
+// NECESSARY: Sync external prop to local state for controlled inputs
+// This is appropriate because we need to distinguish:
+// 1. External changes: value differs from what we last sent → sync to local
+// 2. Our changes propagated back: value equals what we sent → ignore
+useEffect(() => {
+  if (value !== lastSentValue.current) {
+    setLocalValue(value);
+  }
+}, [value]);
+```
+
+---
+
 ## Core Programming Principles
 
 ### DRY (Don't Repeat Yourself)
@@ -310,32 +456,6 @@ export function MyComponent() {
 <ServiceProvider overrides={{ projectService: mockProjectService }}>
   <ComponentUnderTest />
 </ServiceProvider>
-```
-
-### Service Container (Optional)
-
-For complex scenarios, use the lightweight `ServiceContainer`:
-
-```typescript
-import { ServiceContainer, ServiceTokens } from '@/ts/services/ServiceContainer.js';
-
-// Create container
-const container = new ServiceContainer();
-
-// Register services
-container.registerSingleton(ServiceTokens.ProjectDatabase, () => new ProjectDatabaseService());
-container.register(ServiceTokens.ProjectService, (c) =>
-  new ProjectService({
-    database: c.resolve(ServiceTokens.ProjectDatabase),
-  })
-);
-
-// Resolve with dependencies
-const projectService = container.resolve<IProjectService>(ServiceTokens.ProjectService);
-
-// Create scoped container for testing
-const testContainer = container.createScope();
-testContainer.registerInstance(ServiceTokens.ProjectDatabase, mockDatabase);
 ```
 
 ### Available Interface Files
