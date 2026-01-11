@@ -7,7 +7,7 @@
  * @module hooks/autosave/useAutoSaveTelemetry
  */
 
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import { logger } from '@/ts/utils/index.js';
 import { STORAGE_KEYS } from '@/ts/utils/storageKeys.js';
 
@@ -130,7 +130,7 @@ export function useAutoSaveTelemetry(): UseAutoSaveTelemetryReturn {
   // Load telemetry once on mount
   const telemetryRef = useRef<AutoSaveTelemetry>(loadTelemetry());
 
-  const recordSaveAttempt = useCallback((success: boolean, durationMs: number) => {
+  const recordSaveAttempt = (success: boolean, durationMs: number) => {
     const current = telemetryRef.current;
 
     const updated: AutoSaveTelemetry = {
@@ -149,14 +149,11 @@ export function useAutoSaveTelemetry(): UseAutoSaveTelemetryReturn {
 
     telemetryRef.current = updated;
     saveTelemetry(updated);
-  }, []);
+  };
 
-  const getStats = useCallback(
-    (): AutoSaveTelemetryStats => computeTelemetryStats(telemetryRef.current),
-    []
-  );
+  const getStats = (): AutoSaveTelemetryStats => computeTelemetryStats(telemetryRef.current);
 
-  const reset = useCallback(() => {
+  const reset = () => {
     const fresh: AutoSaveTelemetry = {
       totalSaves: 0,
       totalErrors: 0,
@@ -169,7 +166,7 @@ export function useAutoSaveTelemetry(): UseAutoSaveTelemetryReturn {
     telemetryRef.current = fresh;
     saveTelemetry(fresh);
     logger.info('AutoSaveTelemetry', 'Telemetry reset');
-  }, []);
+  };
 
   return {
     recordSaveAttempt,
@@ -177,5 +174,3 @@ export function useAutoSaveTelemetry(): UseAutoSaveTelemetryReturn {
     reset,
   };
 }
-
-export default useAutoSaveTelemetry;

@@ -7,7 +7,7 @@
  * @module hooks/autosave/useAutoSavePreference
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/ts/utils/index.js';
 import { getStorageItem, STORAGE_KEYS, setStorageItem } from '@/ts/utils/storageKeys.js';
 
@@ -52,11 +52,11 @@ export function useAutoSavePreference() {
   /**
    * Toggle auto-save enabled/disabled state
    */
-  const toggleAutoSave = useCallback((enabled: boolean) => {
+  const toggleAutoSave = (enabled: boolean) => {
     setIsEnabled(enabled);
     setStorageItem(STORAGE_KEYS.AUTO_SAVE_ENABLED, String(enabled));
     logger.info('AutoSavePreference', `Auto-save ${enabled ? 'enabled' : 'disabled'} by user`);
-  }, []);
+  };
 
   return {
     isEnabled,
