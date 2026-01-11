@@ -228,12 +228,6 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
     }
   }, [hasConflict, hasShownWarning, currentProject, conflictingTabCount]);
 
-  // Reset warning flag when project changes
-  useEffect(() => {
-    setHasShownWarning(false);
-    setShowConflictWarning(false);
-  }, []);
-
   // Create debounced save - only created once!
   const debouncedSaveRef = useRef<DebouncedFunction<() => Promise<void>> | null>(null);
 
@@ -296,7 +290,7 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
   }, [enabled, currentProject?.id, isDirty, changeVersion, currentProject]); // changeVersion ensures effect runs on every change!
 
   // Return saveNow for manual saves (e.g., from AutoSaveIndicator)
-  const saveNow = useCallback(async () => {
+  const saveNow = async () => {
     if (!currentProject) {
       logger.warn('AutoSaveTrigger', 'saveNow called but no project');
       return;
@@ -304,17 +298,17 @@ export function useAutoSaveTrigger(enabled: boolean = true) {
 
     logger.info('AutoSaveTrigger', 'Manual save triggered');
     await saveProject();
-  }, [currentProject, saveProject]);
+  };
 
-  const handleConflictContinue = useCallback(() => {
+  const handleConflictContinue = () => {
     logger.info('AutoSaveTrigger', 'User chose to continue despite conflict');
     setShowConflictWarning(false);
-  }, []);
+  };
 
-  const handleConflictClose = useCallback(() => {
+  const handleConflictClose = () => {
     logger.info('AutoSaveTrigger', 'User acknowledged conflict warning');
     setShowConflictWarning(false);
-  }, []);
+  };
 
   return {
     saveNow,
