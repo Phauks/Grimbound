@@ -391,12 +391,12 @@ export async function resolveCharacterImages(
 
   // Prepare resolution tasks
   const resolutionTasks = characters
-    .filter((char) => char.uuid)
+    .filter((char) => char?.uuid && char?.id) // Defensive: require both uuid and id
     .map(async (char) => {
       // Get image URL from character or fallback to official data
       let imageUrl = getFirstImageUrl(char.image as string | string[] | undefined);
 
-      if (!imageUrl && officialCharMap) {
+      if (!imageUrl && officialCharMap && char.id) {
         const officialChar = officialCharMap.get(char.id.toLowerCase());
         if (officialChar) {
           imageUrl = getFirstImageUrl(officialChar.image as string | string[] | undefined);

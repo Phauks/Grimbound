@@ -405,7 +405,7 @@
   border-left: 4px solid #cc0000;
 }
 
-.presetButton[data-team="traveler"] {
+.presetButton[data-team="traveller"] {
   border-left: 4px solid #3b5998;
   border-right: 4px solid #cc0000;
 }

@@ -3,6 +3,8 @@
  * Constants - Design values and magic numbers extracted for maintainability
  */
 
+import type { Character } from './types/index.js';
+
 // ============================================================================
 // TOKEN TYPE CONSTANTS - Type-safe token type definitions
 // ============================================================================
@@ -162,54 +164,37 @@ export const TOKEN_COUNT_BADGE = {
  * Accent decoration configuration for token generation
  * Uses accent assets dynamically positioned around the token edge
  */
+/**
+ * Accent layout configuration for deterministic accent placement
+ *
+ * Accents are functional game indicators:
+ * - Top accents: Number of reminder tokens to add to the Grimoire
+ * - Left accent: Character acts on first night
+ * - Right accent: Character acts on other nights
+ */
 export const ACCENT_LAYOUT = {
-  /** Arc configuration for top accents (in degrees, centered at top) */
-  ARC: {
-    /** Default arc span in degrees (e.g., 120 = 60deg left to 60deg right of top) */
-    DEFAULT_SPAN: 120,
-    /** Maximum configurable arc span */
-    MAX_SPAN: 180,
-    /** Minimum configurable arc span */
-    MIN_SPAN: 30,
-  },
-  /** Number of potential accent positions along the arc */
-  SLOTS: {
-    DEFAULT: 7,
-    MIN: 3,
-    MAX: 15,
-  },
-  /** Left and right side accent configuration */
+  /** Default radial offset for all accents (as ratio of radius, 0.5-1.0) */
+  DEFAULT_RADIAL_OFFSET: 0.88,
+  /** Left and right side accent configuration (night order indicators) */
   SIDE_ACCENTS: {
-    /** How far from center (as ratio of radius) */
-    RADIAL_OFFSET: 0.88,
-    /** Scale relative to diameter */
-    SCALE: 0.3,
-    /** Rotation in degrees (positive = clockwise) - accents point outward */
-    LEFT_ROTATION: -90,
-    RIGHT_ROTATION: 90,
+    /** Scale relative to diameter (same as top accents for consistency) */
+    SCALE: 0.22,
   },
-  /** Arc accent configuration */
-  ARC_ACCENTS: {
-    /** How far from center accents are placed (as ratio of radius) */
-    RADIAL_OFFSET: 0.78,
+  /** Top accent configuration (reminder count indicators) */
+  TOP_ACCENTS: {
     /** Scale relative to diameter */
     SCALE: 0.22,
+    /** Angular spacing between adjacent top accents (in degrees) - clustered at apex */
+    SPACING_DEGREES: 18,
+    /** Maximum number of top accents to display */
+    MAX_COUNT: 5,
   },
   /** Asset configuration */
   ASSETS: {
     /** Base path for accent/leaves folder (relative to CONFIG.ASSETS.ACCENTS) */
     ACCENTS_PATH: 'leaves/',
-    /** Filename prefix for accent variants (leaf_1.webp, leaf_2.webp, etc.) */
+    /** Filename prefix for accent variants (leaf_1.webp) */
     ACCENT_FILENAME: 'leaf',
-    /** Number of accent variants available */
-    DEFAULT_VARIANTS: 1,
-    MIN_VARIANTS: 1,
-    MAX_VARIANTS: 10,
-  },
-  /** Default generation settings */
-  DEFAULTS: {
-    MAX_ACCENTS: 5,
-    PROBABILITY: 30,
   },
 } as const;
 
@@ -257,17 +242,7 @@ export const TEAM_COLORS = {
     hue: 0,
     saturationBoost: 1.15,
   },
-  /** Traveler - Split color (left blue, right red) representing dual allegiance */
-  traveler: {
-    hex: '#808080', // Gray for preview (actual color is split)
-    hue: 0, // Not used for split colors
-    saturationBoost: 1.0,
-    split: {
-      left: { hex: '#3B5998', hue: 220 }, // Blue (Good/Townsfolk)
-      right: { hex: '#CC0000', hue: 0 }, // Red (Evil/Demon)
-    },
-  },
-  /** Traveller - Alias for traveler (British spelling) */
+  /** Traveller - Split color (left blue, right red) representing dual allegiance */
   traveller: {
     hex: '#808080',
     hue: 0,
@@ -324,8 +299,7 @@ export const TEAM_LABELS = {
   outsider: 'Outsider',
   minion: 'Minion',
   demon: 'Demon',
-  traveler: 'Traveler',
-  traveller: 'Traveller', // British spelling alias
+  traveller: 'Traveller',
   fabled: 'Fabled',
   loric: 'Loric',
   meta: 'Meta',
@@ -503,14 +477,24 @@ export const BLEED_ALGORITHM = {
 } as const;
 
 // ============================================================================
-// FALLBACK CHARACTER - Used for preview when no characters are loaded
+// DEFAULT SAMPLE CHARACTER - Used for preview when no characters are loaded
 // ============================================================================
 
 /**
- * ID of the official character to use for fallback previews.
- * This character is fetched from synced data when available.
+ * Default sample character shown in token previews when no script is loaded.
+ * Uses the app's favicon as the character icon.
  */
-export const FALLBACK_PREVIEW_CHARACTER_ID = 'washerwoman';
+export const DEFAULT_SAMPLE_CHARACTER: Character = {
+  id: 'grimbound',
+  name: 'Grimbound',
+  team: 'fabled',
+  ability: 'At the end of the first night, the storyteller dies.',
+  image: '/images/favicon.svg',
+  reminders: ['RIP'],
+  setup: true,
+  firstNight: 1,
+  otherNight: 1,
+};
 
 // ============================================================================
 // EXPORT DEFAULT - For convenience imports
@@ -539,5 +523,5 @@ export default {
   TOKEN_PREVIEW,
   PDF_POINTS_PER_INCH,
   BLEED_ALGORITHM,
-  FALLBACK_PREVIEW_CHARACTER_ID,
+  DEFAULT_SAMPLE_CHARACTER,
 };

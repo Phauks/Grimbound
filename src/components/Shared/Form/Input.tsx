@@ -5,7 +5,7 @@
  * Supports standard HTML input attributes plus custom styling options.
  */
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -23,57 +23,51 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   fullWidth?: boolean;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      size = 'medium',
-      error = false,
-      errorMessage,
-      leftIcon,
-      rightIcon,
-      fullWidth = false,
-      className,
-      disabled,
-      ...props
-    },
-    ref
-  ) => {
-    const inputClasses = [
-      styles.input,
-      styles[`input${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error && styles.inputError,
-      disabled && styles.inputDisabled,
-      leftIcon && styles.inputWithLeftIcon,
-      rightIcon && styles.inputWithRightIcon,
-      fullWidth && styles.fullWidth,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+export function Input({
+  size = 'medium',
+  error = false,
+  errorMessage,
+  leftIcon,
+  rightIcon,
+  fullWidth = false,
+  className,
+  disabled,
+  ref,
+  ...props
+}: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
+  const inputClasses = [
+    styles.input,
+    styles[`input${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error && styles.inputError,
+    disabled && styles.inputDisabled,
+    leftIcon && styles.inputWithLeftIcon,
+    rightIcon && styles.inputWithRightIcon,
+    fullWidth && styles.fullWidth,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-    const wrapperClasses = [styles.inputWrapper, fullWidth && styles.fullWidth]
-      .filter(Boolean)
-      .join(' ');
+  const wrapperClasses = [styles.inputWrapper, fullWidth && styles.fullWidth]
+    .filter(Boolean)
+    .join(' ');
 
-    return (
-      <div className={wrapperClasses}>
-        <div className={styles.inputContainer}>
-          {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
-          <input
-            ref={ref}
-            className={inputClasses}
-            disabled={disabled}
-            aria-invalid={error}
-            {...props}
-          />
-          {rightIcon && (
-            <span className={`${styles.inputIcon} ${styles.inputIconRight}`}>{rightIcon}</span>
-          )}
-        </div>
-        {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
+  return (
+    <div className={wrapperClasses}>
+      <div className={styles.inputContainer}>
+        {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
+        <input
+          ref={ref}
+          className={inputClasses}
+          disabled={disabled}
+          aria-invalid={error}
+          {...props}
+        />
+        {rightIcon && (
+          <span className={`${styles.inputIcon} ${styles.inputIconRight}`}>{rightIcon}</span>
+        )}
       </div>
-    );
-  }
-);
-
-Input.displayName = 'Input';
+      {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
+    </div>
+  );
+}

@@ -73,8 +73,28 @@
                     ? 'A required resource could not be loaded. This may be due to a network issue.'
                     : (e.message || 'An error occurred while loading the application.');
 
+                // Build full error with location info for module errors
+                var fullError = errorMessage;
+                if (!isLoadError && e.filename) {
+                    // Extract just the path from the URL (remove origin)
+                    var filePath = e.filename;
+                    try {
+                        var url = new URL(e.filename);
+                        filePath = url.pathname;
+                    } catch (ignored) {}
+                    // Add location: (at filename.ts:line:col)
+                    if (e.lineno) {
+                        fullError += ' (at ' + filePath + ':' + e.lineno;
+                        if (e.colno) fullError += ':' + e.colno;
+                        fullError += ')';
+                    }
+                }
+
+                // Store raw error for clipboard (unescaped)
+                window.__loadError = fullError;
+
                 // Escape HTML in error message to prevent XSS
-                var escaped = errorMessage.replace(/[&<>"']/g, function(m) {
+                var escaped = fullError.replace(/[&<>"']/g, function(m) {
                     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
                 });
 
@@ -96,16 +116,16 @@
                             border: 1px solid #e74c3c;\
                             border-radius: 8px;\
                             padding: 2rem;\
-                            max-width: 500px;\
+                            max-width: 600px;\
                         ">\
                             <h1 style="color: #ff6b6b; margin: 0 0 1rem 0; font-size: 1.5rem;">\
                                 Something went wrong\
                             </h1>\
-                            <p style="color: #b0b0b0; margin: 0 0 1rem 0; font-size: 0.9rem; word-break: break-word;">\
+                            <p id="error-message" style="color: #b0b0b0; margin: 0 0 1rem 0; font-size: 0.9rem; word-break: break-word; font-family: monospace;">\
                                 ' + escaped + '\
                             </p>\
                             <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">\
-                                <button onclick="navigator.clipboard.writeText(\'' + escaped.replace(/'/g, "\\'") + '\').then(function(){this.textContent=\'Copied!\';setTimeout(function(){this.textContent=\'Copy Error\';}.bind(this),2000);}.bind(this))" style="\
+                                <button id="copy-error-btn" style="\
                                     background: transparent;\
                                     color: #b0b0b0;\
                                     border: 1px solid #404040;\
@@ -130,6 +150,18 @@
                         </p>\
                     </div>\
                 ';
+
+                // Attach copy handler after DOM is updated
+                var copyBtn = document.getElementById('copy-error-btn');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', function() {
+                        var btn = this;
+                        navigator.clipboard.writeText(window.__loadError || fullError).then(function() {
+                            btn.textContent = 'Copied!';
+                            setTimeout(function() { btn.textContent = 'Copy Error'; }, 2000);
+                        });
+                    });
+                }
             }
         }, true);
     </script>

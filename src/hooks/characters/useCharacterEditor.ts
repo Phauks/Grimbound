@@ -248,48 +248,42 @@ export function useCharacterEditor({
   }, [setJsonInput, setCharacters]);
 
   // Handle single field edit
-  const handleEditChange = useCallback(
-    <K extends keyof Character>(field: K, value: Character[K]) => {
-      setEditedCharacter((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          [field]: value,
-        };
-      });
-      setIsDirty(true);
+  const handleEditChange = <K extends keyof Character>(field: K, value: Character[K]) => {
+    setEditedCharacter((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+    setIsDirty(true);
 
-      // Invalidate cache for this character since it changed
-      if (onCacheInvalidate && selectedCharacterUuid) {
-        onCacheInvalidate(selectedCharacterUuid);
-      }
-    },
-    [onCacheInvalidate, selectedCharacterUuid]
-  );
+    // Invalidate cache for this character since it changed
+    if (onCacheInvalidate && selectedCharacterUuid) {
+      onCacheInvalidate(selectedCharacterUuid);
+    }
+  };
 
   // Handle full character replacement
-  const handleReplaceCharacter = useCallback(
-    (newCharacter: Character) => {
-      setEditedCharacter(newCharacter);
-      setIsDirty(true);
+  const handleReplaceCharacter = (newCharacter: Character) => {
+    setEditedCharacter(newCharacter);
+    setIsDirty(true);
 
-      // Invalidate cache
-      if (onCacheInvalidate && newCharacter.uuid) {
-        onCacheInvalidate(newCharacter.uuid);
-      }
-    },
-    [onCacheInvalidate]
-  );
+    // Invalidate cache
+    if (onCacheInvalidate && newCharacter.uuid) {
+      onCacheInvalidate(newCharacter.uuid);
+    }
+  };
 
   // Reset editor to a new character (for external selection changes)
-  const resetToCharacter = useCallback((uuid: string) => {
+  const resetToCharacter = (uuid: string) => {
     const char = charactersRef.current.find((c) => c.uuid === uuid);
     if (char) {
       setEditedCharacter(JSON.parse(JSON.stringify(char)));
       setIsDirty(false);
       originalCharacterUuidRef.current = uuid;
     }
-  }, []);
+  };
 
   return {
     editedCharacter,
@@ -300,5 +294,3 @@ export function useCharacterEditor({
     originalCharacterUuid: originalCharacterUuidRef.current,
   };
 }
-
-export default useCharacterEditor;

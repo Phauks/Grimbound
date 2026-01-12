@@ -15,14 +15,14 @@
  * clip-path on the DOM after text extraction.
  */
 
-import { useMemo } from 'react';
 import entryStyles from '@/styles/components/script/NightOrderEntry.module.css';
 import styles from '@/styles/components/script/NightSheet.module.css';
 import { calculateScaleConfig } from '@/ts/nightOrder/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import { getTeamColor, parseAbilityText } from '@/ts/nightOrder/nightOrderUtils.js';
+import { getBackgroundImageStyles } from '@/ts/scriptPdf/utils.js';
+import type { BackgroundStyle } from '@/ts/types/backgroundEffects.js';
 import type { ScriptMeta } from '@/ts/types/index.js';
-import type { NightSheetBackground } from './NightOrderView';
 
 export type NightSheetType = 'first' | 'other';
 
@@ -30,7 +30,10 @@ interface NightSheetPrintableProps {
   type: NightSheetType;
   entries: NightOrderEntryType[];
   scriptMeta: ScriptMeta | null;
-  background: NightSheetBackground;
+  /** Background style configuration */
+  background: BackgroundStyle;
+  /** Resolved background image URL (if using image background) */
+  resolvedBackgroundUrl?: string | null;
   /** Pre-resolved image URLs (characterId -> resolved URL) */
   resolvedImageUrls: Map<string, string>;
   /** Current page number (1-based) for multi-page exports */
@@ -49,18 +52,10 @@ function getSheetTitle(type: NightSheetType): string {
 }
 
 /**
- * Generate SVG noise texture for paper effect
- */
-function getNoiseTextureSvg(opacity: number): string {
-  const encodedOpacity = opacity.toFixed(2);
-  return `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='${encodedOpacity}'/%3E%3C/svg%3E")`;
-}
-
-/**
  * Render ability text with bold reminder tokens and circle indicators
  */
 function AbilityTextPrintable({ text }: { text: string }) {
-  const segments = useMemo(() => parseAbilityText(text), [text]);
+  const segments = parseAbilityText(text);
 
   return (
     <span className={entryStyles.abilityText}>
@@ -140,6 +135,7 @@ export function NightSheetPrintable({
   entries,
   scriptMeta,
   background,
+  resolvedBackgroundUrl,
   resolvedImageUrls,
   pageNumber,
   totalPages,
@@ -157,39 +153,38 @@ export function NightSheetPrintable({
   const scriptLogo = resolvedLogoUrl || scriptMeta?.logo;
 
   // Calculate dynamic scaling to fit all entries on one page
-  const scaleConfig = useMemo(() => calculateScaleConfig(entries), [entries]);
+  const scaleConfig = calculateScaleConfig(entries);
+
+  // Get background styles (image or solid/gradient from BackgroundStyle)
+  const backgroundStyles = getBackgroundImageStyles(background, resolvedBackgroundUrl);
 
   // Build dynamic style with CSS custom properties for scaling
   // The component fills its container (which is sized for screen display)
   // Snapdom scales up to target DPI during capture
-  const sheetStyle = useMemo(() => {
-    const style: React.CSSProperties = {
-      // Fill the container (container is sized at screen dimensions)
-      width: '100%',
-      height: '100%',
-      // Background customization
-      backgroundColor: background.baseColor,
-      // CSS custom properties for dynamic scaling
-      '--scale-factor': scaleConfig.scaleFactor,
-      '--entry-height': `${scaleConfig.entryHeight}in`,
-      '--icon-size': `${scaleConfig.iconSize}in`,
-      '--name-font-size': `${scaleConfig.nameFontSize}pt`,
-      '--ability-font-size': `${scaleConfig.abilityFontSize}pt`,
-      '--entry-spacing': `${scaleConfig.entrySpacing}in`,
-      '--header-font-size': `${scaleConfig.headerFontSize}rem`,
-      // Ensure crisp rendering
-      imageRendering: 'auto',
-      fontSmooth: 'always',
-      WebkitFontSmoothing: 'antialiased',
-      MozOsxFontSmoothing: 'grayscale',
-    } as React.CSSProperties;
-
-    if (background.showTexture) {
-      style.backgroundImage = getNoiseTextureSvg(background.textureOpacity);
-    }
-
-    return style;
-  }, [background, scaleConfig]);
+  const sheetStyle: React.CSSProperties = {
+    // Fill the container (container is sized at screen dimensions)
+    width: '100%',
+    height: '100%',
+    // Background customization (image or solid color)
+    ...backgroundStyles,
+    // Fallback for styled backgrounds - use solidColor when not using image
+    ...(background.sourceType !== 'image' && {
+      backgroundColor: background.solidColor,
+    }),
+    // CSS custom properties for dynamic scaling
+    '--scale-factor': scaleConfig.scaleFactor,
+    '--entry-height': `${scaleConfig.entryHeight}in`,
+    '--icon-size': `${scaleConfig.iconSize}in`,
+    '--name-font-size': `${scaleConfig.nameFontSize}pt`,
+    '--ability-font-size': `${scaleConfig.abilityFontSize}pt`,
+    '--entry-spacing': `${scaleConfig.entrySpacing}in`,
+    '--header-font-size': `${scaleConfig.headerFontSize}rem`,
+    // Ensure crisp rendering
+    imageRendering: 'auto',
+    fontSmooth: 'always',
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+  } as React.CSSProperties;
 
   // Render entries list
   const renderEntries = () => {

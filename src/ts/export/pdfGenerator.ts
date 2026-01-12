@@ -489,5 +489,3 @@ export class PDFGenerator {
     return new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
   }
 }
-
-export default { PDFGenerator };

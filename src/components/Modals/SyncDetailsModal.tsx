@@ -74,7 +74,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     }
   }, [isOpen, isInitialized, loadCacheStats]);
 
-  const handleCheckForUpdates = useCallback(async () => {
+  const handleCheckForUpdates = async () => {
     try {
       setIsChecking(true);
       const hasUpdate = await checkForUpdates();
@@ -87,9 +87,9 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } finally {
       setIsChecking(false);
     }
-  }, [checkForUpdates]);
+  };
 
-  const handleDownloadUpdate = useCallback(async () => {
+  const handleDownloadUpdate = async () => {
     try {
       setIsDownloading(true);
       await downloadUpdate();
@@ -101,9 +101,9 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } finally {
       setIsDownloading(false);
     }
-  }, [downloadUpdate, loadCacheStats]);
+  };
 
-  const handleClearCache = useCallback(async () => {
+  const handleClearCache = async () => {
     if (
       !confirm(
         'Are you sure you want to clear the cache? This will re-download all character data.'
@@ -123,7 +123,7 @@ export function SyncDetailsModal({ isOpen, onClose }: SyncDetailsModalProps) {
     } finally {
       setIsClearing(false);
     }
-  }, [clearCacheAndResync, loadCacheStats]);
+  };
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';

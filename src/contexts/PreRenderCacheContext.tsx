@@ -3,7 +3,7 @@
  * Provides cache manager instance to all components via context.
  */
 
-import { createContext, type ReactNode, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import {
   CacheLogger,
   type CharactersPreRenderEntry,
@@ -38,7 +38,8 @@ export interface PreRenderCacheProviderProps {
  * Wrap your app with this to enable pre-rendering caching.
  */
 export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps) {
-  const manager = useMemo(() => {
+  // Create manager instance (React Compiler handles memoization)
+  const manager = (() => {
     const mgr = new PreRenderCacheManager();
 
     // ===== Tokens Cache =====
@@ -127,7 +128,7 @@ export function PreRenderCacheProvider({ children }: PreRenderCacheProviderProps
     );
 
     return mgr;
-  }, []);
+  })();
 
   return (
     <PreRenderCacheContext.Provider value={manager}>{children}</PreRenderCacheContext.Provider>

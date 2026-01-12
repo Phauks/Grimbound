@@ -8,7 +8,6 @@
  * @module components/ViewComponents/ProjectsComponents/ProjectEditorSubComponents
  */
 
-import { memo, useCallback } from 'react';
 import { GenerationProgressOverlay } from '@/components/Shared/Feedback/GenerationProgressOverlay';
 import { CodeMirrorEditor } from '@/components/Shared/Json/CodeMirrorEditor';
 import { Button } from '@/components/Shared/UI/Button';
@@ -65,10 +64,7 @@ interface TabNavigationProps {
 }
 
 /** Tab navigation for Overview, Versions, Settings */
-export const TabNavigation = memo(function TabNavigation({
-  activeTab,
-  onTabChange,
-}: TabNavigationProps) {
+export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className={styles.tabNavigation}>
       <button
@@ -94,7 +90,7 @@ export const TabNavigation = memo(function TabNavigation({
       </button>
     </div>
   );
-});
+}
 
 // ============================================================================
 // DisplayModeToggle Component
@@ -106,10 +102,7 @@ interface DisplayModeToggleProps {
 }
 
 /** Toggle between list, tokens, and JSON display modes */
-export const DisplayModeToggle = memo(function DisplayModeToggle({
-  displayMode,
-  onModeChange,
-}: DisplayModeToggleProps) {
+export function DisplayModeToggle({ displayMode, onModeChange }: DisplayModeToggleProps) {
   return (
     <div className={styles.viewToggle}>
       <span className={styles.viewToggleLabel}>View:</span>
@@ -139,7 +132,7 @@ export const DisplayModeToggle = memo(function DisplayModeToggle({
       </button>
     </div>
   );
-});
+}
 
 // ============================================================================
 // ListSettingsPopover Component
@@ -151,10 +144,7 @@ interface ListSettingsPopoverProps {
 }
 
 /** Popover for configuring list view columns */
-export const ListSettingsPopover = memo(function ListSettingsPopover({
-  settings,
-  onSettingsChange,
-}: ListSettingsPopoverProps) {
+export function ListSettingsPopover({ settings, onSettingsChange }: ListSettingsPopoverProps) {
   const handleChange =
     (key: keyof ListViewSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
       onSettingsChange({ ...settings, [key]: e.target.checked });
@@ -199,7 +189,7 @@ export const ListSettingsPopover = memo(function ListSettingsPopover({
       </label>
     </div>
   );
-});
+}
 
 // ============================================================================
 // EmptyState Component
@@ -213,7 +203,7 @@ interface EmptyStateProps {
 }
 
 /** Empty state when no project is selected */
-export const EmptyState = memo(function EmptyState({
+export function EmptyState({
   onCreateProject,
   onImportProject,
   onLoadLastProject,
@@ -240,7 +230,7 @@ export const EmptyState = memo(function EmptyState({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // SettingsTab Component
@@ -252,15 +242,17 @@ interface SettingsTabProps {
   onExport: (project: Project) => void;
   onDuplicate: (project: Project) => void;
   onDelete: () => void;
+  onImportProject?: () => void;
 }
 
 /** Settings tab content with project actions and danger zone */
-export const SettingsTab = memo(function SettingsTab({
+export function SettingsTab({
   project,
   isActiveProject,
   onExport,
   onDuplicate,
   onDelete,
+  onImportProject,
 }: SettingsTabProps) {
   return (
     <div className={styles.settingsContainer}>
@@ -269,6 +261,9 @@ export const SettingsTab = memo(function SettingsTab({
         <div className={styles.settingsActions}>
           <button type="button" onClick={() => onExport(project)} className={styles.settingsButton}>
             Export Project
+          </button>
+          <button type="button" onClick={onImportProject} className={styles.settingsButton}>
+            Import Project
           </button>
           <button
             type="button"
@@ -306,7 +301,7 @@ export const SettingsTab = memo(function SettingsTab({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // LoadingState Component
@@ -317,16 +312,14 @@ interface LoadingStateProps {
 }
 
 /** Loading state with spinner */
-export const LoadingState = memo(function LoadingState({
-  message = 'Generating token preview...',
-}: LoadingStateProps) {
+export function LoadingState({ message = 'Generating token preview...' }: LoadingStateProps) {
   return (
     <div className={styles.loadingState}>
       <div className={styles.spinner} />
       <p>{message}</p>
     </div>
   );
-});
+}
 
 // ============================================================================
 // ProjectSettingsBox Component
@@ -347,7 +340,7 @@ interface ProjectSettingsBoxProps {
 }
 
 /** Project settings form box */
-export const ProjectSettingsBox = memo(function ProjectSettingsBox({
+export function ProjectSettingsBox({
   isEditing,
   setIsEditing,
   isLoading,
@@ -506,7 +499,7 @@ export const ProjectSettingsBox = memo(function ProjectSettingsBox({
       {error && <div className={styles.error}>{error}</div>}
     </div>
   );
-});
+}
 
 // ============================================================================
 // ScriptMetaBox Component
@@ -523,7 +516,7 @@ interface ScriptMetaBoxProps {
 }
 
 /** Script meta settings form box */
-export const ScriptMetaBox = memo(function ScriptMetaBox({
+export function ScriptMetaBox({
   isEditing,
   setIsEditing,
   isLoading,
@@ -641,7 +634,7 @@ export const ScriptMetaBox = memo(function ScriptMetaBox({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // ReadOnlyJsonDisplay Component
@@ -652,10 +645,10 @@ interface ReadOnlyJsonDisplayProps {
 }
 
 /** Read-only JSON display with copy button */
-const ReadOnlyJsonDisplay = memo(function ReadOnlyJsonDisplay({ value }: ReadOnlyJsonDisplayProps) {
+function ReadOnlyJsonDisplay({ value }: ReadOnlyJsonDisplayProps) {
   const { addToast } = useToast();
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
@@ -672,7 +665,7 @@ const ReadOnlyJsonDisplay = memo(function ReadOnlyJsonDisplay({ value }: ReadOnl
       document.body.removeChild(textarea);
       addToast('JSON copied to clipboard', 'success');
     }
-  }, [value, addToast]);
+  };
 
   return (
     <div className={styles.jsonViewContainer}>
@@ -700,7 +693,7 @@ const ReadOnlyJsonDisplay = memo(function ReadOnlyJsonDisplay({ value }: ReadOnl
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // CharactersSection Component
@@ -727,7 +720,7 @@ interface CharactersSectionProps {
 }
 
 /** Characters section with display mode toggle and content */
-export const CharactersSection = memo(function CharactersSection({
+export function CharactersSection({
   displayMode,
   setDisplayMode,
   displayTokens,
@@ -824,7 +817,7 @@ export const CharactersSection = memo(function CharactersSection({
       {displayMode === 'json' && <ReadOnlyJsonDisplay value={projectJsonString} />}
     </div>
   );
-});
+}
 
 // ============================================================================
 // OverviewTab Component
@@ -882,7 +875,7 @@ interface OverviewTabProps {
 }
 
 /** Overview tab content */
-export const OverviewTab = memo(function OverviewTab({
+export function OverviewTab({
   project,
   isActiveProject,
   isLoading,
@@ -1037,4 +1030,4 @@ export const OverviewTab = memo(function OverviewTab({
       )}
     </>
   );
-});
+}

@@ -23,7 +23,6 @@
  * ```
  */
 
-import { useCallback, useMemo } from 'react';
 import type { MeasurementConfig, MeasurementUnit } from '@/ts/types/measurement';
 import {
   convertConfigToDisplayUnit,
@@ -67,26 +66,20 @@ export function MeasurementSlider({
   className,
 }: MeasurementSliderProps) {
   // Convert config bounds and step to display unit
-  const displayConfig = useMemo(
-    () => convertConfigToDisplayUnit(config, displayUnit),
-    [config, displayUnit]
-  );
+  const displayConfig = convertConfigToDisplayUnit(config, displayUnit);
 
   // Convert canonical inches value to display unit value
-  const displayValue = useMemo(() => {
+  const displayValue = (() => {
     const converted = fromCanonicalInches(value, displayUnit);
     const decimals = DECIMAL_PLACES[displayUnit];
     return Number(converted.toFixed(decimals));
-  }, [value, displayUnit]);
+  })();
 
   // Handle slider change: convert from display unit back to inches
-  const handleChange = useCallback(
-    (newDisplayValue: number) => {
-      const canonicalInches = toCanonicalInches(newDisplayValue, displayUnit);
-      onChange(canonicalInches);
-    },
-    [displayUnit, onChange]
-  );
+  const handleChange = (newDisplayValue: number) => {
+    const canonicalInches = toCanonicalInches(newDisplayValue, displayUnit);
+    onChange(canonicalInches);
+  };
 
   // Get the unit suffix for display
   const unitSuffix = getUnitSuffix(displayUnit);

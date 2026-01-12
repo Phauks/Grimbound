@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import {
   DEFAULT_THEME_ID,
   getDarkThemeIds,
@@ -205,40 +205,31 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const darkThemeIds = getDarkThemeIds();
   const lightThemeIds = getLightThemeIds();
 
-  // Apply theme on mount and when theme or overrides change
+  // Apply theme CSS variables on mount and when theme or overrides change
+  // This is a DOM side effect and must remain as useEffect
   useEffect(() => {
     applyThemeVariables(baseTheme, overrides);
   }, [baseTheme, overrides]);
 
-  // Save theme preference when it changes
-  useEffect(() => {
-    setStorageItem(STORAGE_KEYS.THEME, currentThemeId);
-  }, [currentThemeId]);
+  const setTheme = (themeId: string) => {
+    // Validate the theme exists (either built-in or custom)
+    const isBuiltIn = isValidThemeId(themeId);
+    const isCustom = customThemes.some((t) => t.id === themeId);
 
-  // Save overrides when they change
-  useEffect(() => {
-    saveOverrides(overrides);
-  }, [overrides]);
+    if (isBuiltIn || isCustom) {
+      setCurrentThemeId(themeId);
+      setStorageItem(STORAGE_KEYS.THEME, themeId);
+      // Clear overrides when switching themes
+      setOverrides({});
+      saveOverrides({});
+    } else {
+      logger.warn('ThemeContext', `Theme "${themeId}" not found, falling back to default`);
+      setCurrentThemeId(DEFAULT_THEME_ID);
+      setStorageItem(STORAGE_KEYS.THEME, DEFAULT_THEME_ID);
+    }
+  };
 
-  const setTheme = useCallback(
-    (themeId: string) => {
-      // Validate the theme exists (either built-in or custom)
-      const isBuiltIn = isValidThemeId(themeId);
-      const isCustom = customThemes.some((t) => t.id === themeId);
-
-      if (isBuiltIn || isCustom) {
-        setCurrentThemeId(themeId);
-        // Clear overrides when switching themes
-        setOverrides({});
-      } else {
-        logger.warn('ThemeContext', `Theme "${themeId}" not found, falling back to default`);
-        setCurrentThemeId(DEFAULT_THEME_ID);
-      }
-    },
-    [customThemes]
-  );
-
-  const setOverride = useCallback((key: keyof ThemeOverrides, value: string | undefined) => {
+  const setOverride = (key: keyof ThemeOverrides, value: string | undefined) => {
     setOverrides((prev) => {
       const updated = { ...prev };
       if (value === undefined) {
@@ -246,15 +237,18 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       } else {
         updated[key] = value;
       }
+      // Persist to localStorage in the setter (no separate effect needed)
+      saveOverrides(updated);
       return updated;
     });
-  }, []);
+  };
 
-  const clearOverrides = useCallback(() => {
+  const clearOverrides = () => {
     setOverrides({});
-  }, []);
+    saveOverrides({});
+  };
 
-  const addCustomTheme = useCallback((theme: Omit<CustomTheme, 'isCustom'>) => {
+  const addCustomTheme = (theme: Omit<CustomTheme, 'isCustom'>) => {
     const newTheme: CustomTheme = {
       ...theme,
       isCustom: true,
@@ -264,36 +258,33 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       saveCustomThemes(updated);
       return updated;
     });
-  }, []);
+  };
 
-  const updateCustomTheme = useCallback(
-    (themeId: string, updates: Partial<Omit<CustomTheme, 'id' | 'isCustom'>>) => {
-      setCustomThemes((prev) => {
-        const updated = prev.map((theme) =>
-          theme.id === themeId ? { ...theme, ...updates } : theme
-        );
-        saveCustomThemes(updated);
-        return updated;
-      });
-    },
-    []
-  );
+  const updateCustomTheme = (
+    themeId: string,
+    updates: Partial<Omit<CustomTheme, 'id' | 'isCustom'>>
+  ) => {
+    setCustomThemes((prev) => {
+      const updated = prev.map((theme) =>
+        theme.id === themeId ? { ...theme, ...updates } : theme
+      );
+      saveCustomThemes(updated);
+      return updated;
+    });
+  };
 
-  const removeCustomTheme = useCallback(
-    (themeId: string) => {
-      setCustomThemes((prev) => {
-        const updated = prev.filter((theme) => theme.id !== themeId);
-        saveCustomThemes(updated);
-        return updated;
-      });
+  const removeCustomTheme = (themeId: string) => {
+    setCustomThemes((prev) => {
+      const updated = prev.filter((theme) => theme.id !== themeId);
+      saveCustomThemes(updated);
+      return updated;
+    });
 
-      // If removing the active theme, switch to default
-      if (currentThemeId === themeId) {
-        setCurrentThemeId(DEFAULT_THEME_ID);
-      }
-    },
-    [currentThemeId]
-  );
+    // If removing the active theme, switch to default
+    if (currentThemeId === themeId) {
+      setCurrentThemeId(DEFAULT_THEME_ID);
+    }
+  };
 
   const value: ThemeContextValue = {
     currentThemeId,

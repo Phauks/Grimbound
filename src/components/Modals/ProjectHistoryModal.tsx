@@ -11,14 +11,19 @@
  * - Restore functionality for both versions and snapshots
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
 import { useToast } from '@/contexts/ToastContext';
 import { useProjects } from '@/hooks';
 import styles from '@/styles/components/modals/ProjectHistoryModal.module.css';
 import { projectDb } from '@/ts/db/projectDb';
-import type { AutoSaveSnapshot, Project, ProjectVersion } from '@/ts/types/project';
+import type {
+  AutoSaveSnapshot,
+  DBAutoSaveSnapshot,
+  Project,
+  ProjectVersion,
+} from '@/ts/types/project';
 import { logger } from '@/ts/utils/logger';
 import { calculateProjectDiff, getDiffSummary } from '@/ts/utils/projectDiff';
 
@@ -44,10 +49,10 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
   const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
 
-  // Load auto-save snapshots from database
-  const loadAutoSaveSnapshots = useCallback(
-    async (projectId: string): Promise<AutoSaveSnapshot[]> => {
-      const dbSnapshots = await projectDb.autoSaveSnapshots
+  const loadHistory = useCallback(async () => {
+    // Load auto-save snapshots from database
+    const loadAutoSaveSnapshots = async (projectId: string): Promise<AutoSaveSnapshot[]> => {
+      const dbSnapshots: DBAutoSaveSnapshot[] = await projectDb.autoSaveSnapshots
         .where('projectId')
         .equals(projectId)
         .reverse()
@@ -59,11 +64,8 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
         timestamp: snap.timestamp,
         stateSnapshot: JSON.parse(snap.stateJson),
       }));
-    },
-    []
-  );
+    };
 
-  const loadHistory = useCallback(async () => {
     try {
       setIsLoading(true);
       logger.info('ProjectHistoryModal', 'Loading history', { projectId: project.id });
@@ -85,7 +87,7 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
     } finally {
       setIsLoading(false);
     }
-  }, [project.id, addToast, loadAutoSaveSnapshots]);
+  }, [project.id, addToast]);
 
   // Load history on mount
   useEffect(() => {
@@ -95,7 +97,7 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
   }, [isOpen, loadHistory]);
 
   // Combine and sort timeline items, filtered by active tab
-  const timeline = useMemo(() => {
+  const timeline = (() => {
     const items: TimelineItem[] = [];
 
     // Filter based on active tab
@@ -111,10 +113,10 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
     }
 
     return items.sort((a, b) => b.timestamp - a.timestamp);
-  }, [versions, snapshots, activeTab]);
+  })();
 
   // Calculate diff for selected item
-  const selectedDiff = useMemo(() => {
+  const selectedDiff = (() => {
     if (!selectedItem) return null;
 
     const itemState =
@@ -123,7 +125,7 @@ export function ProjectHistoryModal({ isOpen, onClose, project }: ProjectHistory
         : selectedItem.data.stateSnapshot;
 
     return calculateProjectDiff(itemState, project.state);
-  }, [selectedItem, project.state]);
+  })();
 
   const handleRestore = async (item: TimelineItem) => {
     const itemType = item.type === 'version' ? 'version' : 'snapshot';

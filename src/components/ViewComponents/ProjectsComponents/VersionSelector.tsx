@@ -8,7 +8,7 @@
  * to show a data diff between the current state and the selected version.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/projects/VersionSelector.module.css';
 import { projectDb } from '@/ts/db/projectDb';
 import type { Project, ProjectVersion } from '@/ts/types/project';
@@ -97,30 +97,24 @@ export function VersionSelector({
     };
   }, [isOpen]);
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = () => {
     if (!disabled) {
       setIsOpen((prev) => !prev);
     }
-  }, [disabled]);
+  };
 
-  const handleSelect = useCallback(
-    (version: ProjectVersion | null) => {
-      onVersionSelect(version);
+  const handleSelect = (version: ProjectVersion | null) => {
+    onVersionSelect(version);
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
       setIsOpen(false);
-    },
-    [onVersionSelect]
-  );
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      } else if (event.key === 'Enter' || event.key === ' ') {
-        handleToggle();
-      }
-    },
-    [handleToggle]
-  );
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      handleToggle();
+    }
+  };
 
   // Display label for the selector
   const displayLabel = selectedVersion ? `v${selectedVersion.versionNumber}` : 'Current';

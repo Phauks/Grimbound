@@ -52,10 +52,10 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
     colors: { primary: TEAM_COLORS.demon.hex },
   },
   {
-    id: 'traveler',
-    name: 'traveler',
-    displayName: 'Traveler',
-    colors: { primary: TEAM_COLORS.traveler.hex },
+    id: 'traveller',
+    name: 'traveller',
+    displayName: 'Traveller',
+    colors: { primary: TEAM_COLORS.traveller.hex },
   },
   {
     id: 'fabled',

@@ -16,8 +16,9 @@
  * @module components/Shared/Drawer/SettingsDrawer
  */
 
-import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useDraggablePosition } from '@/hooks/ui/useDraggablePosition';
 import styles from '@/styles/components/shared/SettingsDrawer.module.css';
 
 // ============================================================================
@@ -52,25 +53,48 @@ export interface SettingsDrawerProps {
 // ============================================================================
 
 /**
- * Calculate drawer position based on the preview row element.
- * Drawer matches preview row width for visual alignment.
+ * Calculate drawer position based on anchor elements.
+ * Tries multiple selectors in order:
+ * 1. [data-preview-row] - TokensView preview row (position below)
+ * 2. [data-settings-anchor] - General anchor element (position below)
+ * 3. [data-left-panel] - Left sidebar (position to the right)
  */
 function getDrawerPosition(): { top: number; left: number; right: number } {
+  // Try preview row first (TokensView)
   const previewRow = document.querySelector('[data-preview-row]');
-
-  // Default fallbacks if preview row not found
-  let top = 200;
-  let left = 320;
-  let right = 16;
-
   if (previewRow) {
     const rect = previewRow.getBoundingClientRect();
-    top = rect.bottom + 8; // 8px gap below preview row
-    left = rect.left;
-    right = window.innerWidth - rect.right;
+    return {
+      top: rect.bottom + 8, // 8px gap below preview row
+      left: rect.left,
+      right: window.innerWidth - rect.right,
+    };
   }
 
-  return { top, left, right };
+  // Try general anchor element
+  const anchor = document.querySelector('[data-settings-anchor]');
+  if (anchor) {
+    const rect = anchor.getBoundingClientRect();
+    return {
+      top: rect.bottom + 8,
+      left: rect.left,
+      right: window.innerWidth - rect.right,
+    };
+  }
+
+  // Try left panel (NightOrderView/ScriptView layout)
+  const leftPanel = document.querySelector('[data-left-panel]');
+  if (leftPanel) {
+    const rect = leftPanel.getBoundingClientRect();
+    return {
+      top: 56, // Below header
+      left: rect.right + 16, // 16px gap to the right of sidebar
+      right: 16,
+    };
+  }
+
+  // Default fallbacks
+  return { top: 200, left: 320, right: 16 };
 }
 
 // ============================================================================
@@ -142,14 +166,11 @@ function useDrawerCloseHandlers(isOpen: boolean, onClose: () => void) {
   }, [isOpen, onClose]);
 
   // Click outside handler
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return { handleOverlayClick };
 }
@@ -200,7 +221,7 @@ function useDrawerAccessibility(
 // Component
 // ============================================================================
 
-export const SettingsDrawer = memo(function SettingsDrawer({
+export function SettingsDrawer({
   isOpen,
   onClose,
   onApply,
@@ -216,19 +237,51 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   // Use consolidated behavior hooks
   const shouldRender = useDrawerAnimation(isOpen);
-  const position = useDrawerPosition(isOpen);
+  const defaultPosition = useDrawerPosition(isOpen);
   const { handleOverlayClick } = useDrawerCloseHandlers(isOpen, onClose);
   useDrawerAccessibility(isOpen, drawerRef, initialFocusSelector);
+
+  // Draggable and resizable position hook
+  const {
+    dragState,
+    isDragging,
+    isResizing,
+    dragHandleProps,
+    getResizeHandleProps,
+    resetPosition,
+  } = useDraggablePosition({
+    enabled: isOpen,
+    minWidth: 650, // Ensure title, tabs, and buttons all fit
+    minHeight: 150, // Keep header and some content visible
+  });
+
+  // Reset dragged position when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      resetPosition();
+    }
+  }, [isOpen, resetPosition]);
 
   // Early return if not rendering
   if (!shouldRender) return null;
 
-  // Drawer styles with CSS custom properties
-  const drawerStyle: React.CSSProperties = {
-    '--drawer-top': `${position.top}px`,
-    '--drawer-left': `${position.left}px`,
-    '--drawer-right': `${position.right}px`,
-  } as React.CSSProperties;
+  // Use dragged position/size if available, otherwise use default CSS positioning
+  const drawerStyle: React.CSSProperties = dragState
+    ? {
+        position: 'fixed',
+        top: dragState.position.y,
+        left: dragState.position.x,
+        width: dragState.size.width,
+        height: dragState.size.height,
+        right: 'auto',
+      }
+    : ({
+        '--drawer-top': `${defaultPosition.top}px`,
+        '--drawer-left': `${defaultPosition.left}px`,
+        '--drawer-right': `${defaultPosition.right}px`,
+      } as React.CSSProperties);
+
+  const isInteracting = isDragging || isResizing;
 
   const drawerContent = (
     <>
@@ -242,14 +295,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       {/* Drawer */}
       <div
         ref={drawerRef}
-        className={`${styles.drawer} ${isOpen ? styles.drawerOpen : ''}`}
+        data-draggable-drawer
+        className={`${styles.drawer} ${isOpen ? styles.drawerOpen : ''} ${isInteracting ? styles.drawerDragging : ''}`}
         style={drawerStyle}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel ?? title}
       >
-        {/* Header */}
-        <div className={styles.drawerHeader}>
+        {/* Header - Drag Handle */}
+        <div className={`${styles.drawerHeader} ${styles.dragHandle}`} {...dragHandleProps}>
           <div className={styles.headerLeft}>
             <h2 className={styles.drawerTitle}>
               {titleIcon && <span className={styles.drawerTitleIcon}>{titleIcon}</span>}
@@ -276,11 +330,20 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
         {/* Content */}
         <div className={styles.drawerContent}>{children}</div>
+
+        {/* Resize handles - all edges */}
+        <div className={styles.resizeHandleTop} {...getResizeHandleProps('top')} />
+        <div className={styles.resizeHandleRight} {...getResizeHandleProps('right')} />
+        <div className={styles.resizeHandleBottom} {...getResizeHandleProps('bottom')} />
+        <div className={styles.resizeHandleLeft} {...getResizeHandleProps('left')} />
+        {/* Resize handles - all corners */}
+        <div className={styles.resizeHandleTopLeft} {...getResizeHandleProps('top-left')} />
+        <div className={styles.resizeHandleTopRight} {...getResizeHandleProps('top-right')} />
+        <div className={styles.resizeHandleBottomLeft} {...getResizeHandleProps('bottom-left')} />
+        <div className={styles.resizeHandleBottomRight} {...getResizeHandleProps('bottom-right')} />
       </div>
     </>
   );
 
   return createPortal(drawerContent, document.body);
-});
-
-export default SettingsDrawer;
+}

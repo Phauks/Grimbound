@@ -7,9 +7,13 @@
  * @module hooks/assets/useAssetOperations
  */
 
-import { useCallback } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
-import type { AssetType, AssetWithUrl } from '@/ts/services/upload/index.js';
+import type { AssetWithUrl } from '@/ts/services/upload/index.js';
+import {
+  getTypeFromTags,
+  replaceTypeTag,
+  type TypeTagValue,
+} from '@/ts/services/upload/tagUtils.js';
 
 // ============================================================================
 // Types
@@ -30,7 +34,7 @@ export interface UseAssetOperationsReturn {
   /** Duplicate an asset */
   handleDuplicate: (id: string) => Promise<void>;
   /** Reclassify an asset to a different type */
-  handleReclassify: (id: string, newType: AssetType) => Promise<void>;
+  handleReclassify: (id: string, newType: TypeTagValue) => void;
 }
 
 // ============================================================================
@@ -47,76 +51,74 @@ export function useAssetOperations(options: UseAssetOperationsOptions): UseAsset
   const assetStorageService = useAssetStorageService();
 
   // Handle rename
-  const handleRename = useCallback(
-    async (id: string) => {
-      const asset = assets.find((a) => a.id === id);
-      if (!asset) return;
+  const handleRename = async (id: string) => {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset) return;
 
-      const newName = window.prompt('Enter new name:', asset.metadata.filename);
-      if (newName?.trim() && newName !== asset.metadata.filename) {
-        await assetStorageService.update(id, {
-          metadata: { ...asset.metadata, filename: newName.trim() },
-        });
-        await refresh();
-      }
-    },
-    [assetStorageService, assets, refresh]
-  );
-
-  // Handle download
-  const handleDownload = useCallback(
-    async (id: string) => {
-      const asset = await assetStorageService.getById(id);
-      if (!asset) return;
-
-      const url = URL.createObjectURL(asset.blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = asset.metadata.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    },
-    [assetStorageService]
-  );
-
-  // Handle duplicate
-  const handleDuplicate = useCallback(
-    async (id: string) => {
-      const asset = await assetStorageService.getById(id);
-      if (!asset) return;
-
-      // Create a copy with a new name
-      const nameParts = asset.metadata.filename.split('.');
-      const ext = nameParts.length > 1 ? `.${nameParts.pop()}` : '';
-      const baseName = nameParts.join('.');
-      const newName = `${baseName} (copy)${ext}`;
-
-      await assetStorageService.save({
-        type: asset.type,
-        projectId: asset.projectId,
-        blob: asset.blob,
-        thumbnail: asset.thumbnail,
-        metadata: { ...asset.metadata, filename: newName, uploadedAt: Date.now() },
-        linkedTo: [],
+    const newName = window.prompt('Enter new name:', asset.metadata.filename);
+    if (newName?.trim() && newName !== asset.metadata.filename) {
+      await assetStorageService.update(id, {
+        metadata: { ...asset.metadata, filename: newName.trim() },
       });
       await refresh();
-    },
-    [assetStorageService, refresh]
-  );
+    }
+  };
 
-  // Handle reclassify (change asset type)
-  const handleReclassify = useCallback(
-    async (id: string, newType: AssetType) => {
+  // Handle download
+  const handleDownload = async (id: string) => {
+    const asset = await assetStorageService.getById(id);
+    if (!asset) return;
+
+    const url = URL.createObjectURL(asset.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = asset.metadata.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Handle duplicate
+  const handleDuplicate = async (id: string) => {
+    const asset = await assetStorageService.getById(id);
+    if (!asset) return;
+
+    // Create a copy with a new name
+    const nameParts = asset.metadata.filename.split('.');
+    const ext = nameParts.length > 1 ? `.${nameParts.pop()}` : '';
+    const baseName = nameParts.join('.');
+    const newName = `${baseName} (copy)${ext}`;
+
+    await assetStorageService.save({
+      tags: asset.tags,
+      folder: asset.folder,
+      projectId: asset.projectId,
+      blob: asset.blob,
+      thumbnail: asset.thumbnail,
+      metadata: { ...asset.metadata, filename: newName, uploadedAt: Date.now() },
+      linkedTo: [],
+    });
+    await refresh();
+  };
+
+  // Handle reclassify (change asset type tag)
+  const handleReclassify = (id: string, newType: TypeTagValue) => {
+    // Find asset and update its type tag
+    const doReclassify = async () => {
       const asset = await assetStorageService.getById(id);
-      if (!asset || asset.type === newType) return;
+      if (!asset) return;
 
-      await assetStorageService.update(id, { type: newType });
+      const currentType = getTypeFromTags(asset.tags);
+      if (currentType === newType) return;
+
+      const newTags = replaceTypeTag(asset.tags, newType);
+      await assetStorageService.update(id, { tags: newTags });
       await refresh();
-    },
-    [assetStorageService, refresh]
-  );
+    };
+
+    doReclassify();
+  };
 
   return {
     handleRename,
@@ -125,5 +127,3 @@ export function useAssetOperations(options: UseAssetOperationsOptions): UseAsset
     handleReclassify,
   };
 }
-
-export default useAssetOperations;

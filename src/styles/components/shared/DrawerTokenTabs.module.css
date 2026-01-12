@@ -13,6 +13,8 @@
   background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
   border-radius: 6px;
   padding: 3px 6px;
+  /* Don't shrink tabs when drawer is narrow */
+  flex-shrink: 0;
 }
 
 /* Each group of related tabs */

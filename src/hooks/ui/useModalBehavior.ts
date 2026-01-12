@@ -11,9 +11,9 @@
  * @module hooks/ui/useModalBehavior
  */
 
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
-interface UseModalBehaviorOptions {
+export interface UseModalBehaviorOptions {
   /** Whether the modal is currently open */
   isOpen: boolean;
   /** Callback to close the modal */
@@ -26,7 +26,7 @@ interface UseModalBehaviorOptions {
   preventClose?: boolean;
 }
 
-interface UseModalBehaviorReturn {
+export interface UseModalBehaviorReturn {
   /** Click handler for backdrop element */
   handleBackdropClick: (e: React.MouseEvent) => void;
 }
@@ -99,17 +99,12 @@ export function useModalBehavior({
   }, [isOpen]);
 
   // Backdrop click handler
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      // Only close if clicking directly on the backdrop (not its children)
-      if (e.target === e.currentTarget && closeOnBackdrop && !preventClose) {
-        onClose();
-      }
-    },
-    [onClose, closeOnBackdrop, preventClose]
-  );
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if clicking directly on the backdrop (not its children)
+    if (e.target === e.currentTarget && closeOnBackdrop && !preventClose) {
+      onClose();
+    }
+  };
 
   return { handleBackdropClick };
 }
-
-export default useModalBehavior;

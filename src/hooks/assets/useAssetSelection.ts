@@ -7,10 +7,10 @@
  * @module hooks/assets/useAssetSelection
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { getBuiltInAssets } from '@/ts/constants/builtInAssets.js';
 import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
-import type { AssetType } from '@/ts/services/upload/index.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 
 // ============================================================================
 // Types
@@ -32,9 +32,9 @@ export interface UseAssetSelectionOptions {
   /** Label for the None option */
   noneLabel?: string;
   /** Active tab for filtering built-in assets */
-  activeTab: AssetType | 'all';
+  activeTab: TypeTagValue | 'all';
   /** Initial asset type filter (for determining which built-ins to show) */
-  initialAssetType?: AssetType;
+  initialAssetType?: TypeTagValue;
   /** Callback when an asset is selected and applied */
   onSelectAsset?: (assetId: string) => void;
   /** Callback to close the modal */
@@ -80,20 +80,20 @@ export function useAssetSelection(options: UseAssetSelectionOptions): UseAssetSe
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // Get built-in assets for the current filter type
-  const builtInAssets = useMemo(() => {
+  const builtInAssets = ((): ReturnType<typeof getBuiltInAssets> => {
     if (!(selectionMode && includeBuiltIn)) return [];
     const filterType = activeTab === 'all' ? initialAssetType : activeTab;
     if (!filterType) return [];
     return getBuiltInAssets(filterType);
-  }, [selectionMode, includeBuiltIn, activeTab, initialAssetType]);
+  })();
 
   // Toggle selection for an asset
-  const toggleAssetSelection = useCallback((id: string) => {
+  const toggleAssetSelection = (id: string) => {
     setSelectedAssetId((prev) => (prev === id ? null : id));
-  }, []);
+  };
 
   // Handle apply button click (selection mode)
-  const handleApply = useCallback(() => {
+  const handleApply = () => {
     if (onSelectAsset) {
       if (selectedAssetId === 'none') {
         // "None" was selected
@@ -107,7 +107,7 @@ export function useAssetSelection(options: UseAssetSelectionOptions): UseAssetSe
       }
       onClose();
     }
-  }, [selectedAssetId, onSelectAsset, onClose]);
+  };
 
   const isApplyDisabled = !selectedAssetId;
 
@@ -121,5 +121,3 @@ export function useAssetSelection(options: UseAssetSelectionOptions): UseAssetSe
     noneLabel,
   };
 }
-
-export default useAssetSelection;

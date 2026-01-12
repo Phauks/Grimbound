@@ -7,21 +7,22 @@
  * @module components/Shared/FileDropzone
  */
 
-import { useCallback } from 'react';
 import { useFileValidationService } from '@/contexts/ServiceContext';
 import { useFileUpload } from '@/hooks';
 import styles from '@/styles/components/shared/FileDropzone.module.css';
-import { ASSET_TYPE_LABELS, type AssetType } from '@/ts/services/upload/index.js';
+import { getTypeFromTags, getTypeLabel } from '@/ts/services/upload/tagUtils.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface FileDropzoneProps {
-  /** Type of asset being uploaded */
-  assetType: AssetType;
+  /** Tags to apply (must include one type:* tag) */
+  tags: string[];
   /** Project ID to associate uploads with (null for global) */
   projectId?: string | null;
+  /** Folder to place assets in */
+  folder?: string | null;
   /** Character ID to link uploads to */
   characterId?: string;
   /** Allow multiple file selection */
@@ -47,8 +48,9 @@ export interface FileDropzoneProps {
 // ============================================================================
 
 export function FileDropzone({
-  assetType,
+  tags,
   projectId,
+  folder,
   characterId,
   multiple = false,
   onUploadComplete,
@@ -64,8 +66,9 @@ export function FileDropzone({
 
   // Use the unified file upload hook
   const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker } = useFileUpload({
-    assetType,
+    tags,
     projectId,
+    folder,
     characterId,
     multiple,
     onComplete: (uploadResults: { success: boolean; assetId?: string }[]) => {
@@ -79,27 +82,26 @@ export function FileDropzone({
     onError,
   });
 
-  // Get allowed file description
-  const allowedDescription = fileValidationService.getAllowedFilesDescription(assetType);
-  const defaultLabel = `Upload ${ASSET_TYPE_LABELS[assetType]}`;
+  // Get allowed file description and label from tags
+  const assetType = getTypeFromTags(tags);
+  const allowedDescription =
+    tags.length > 0 ? fileValidationService.getAllowedFilesDescription(tags) : 'Images';
+  const defaultLabel = assetType ? `Upload ${getTypeLabel(assetType)}` : 'Upload File';
 
   // Handle click
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (!(disabled || isUploading)) {
       openFilePicker();
     }
-  }, [disabled, isUploading, openFilePicker]);
+  };
 
   // Handle keyboard
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isUploading) {
-        e.preventDefault();
-        openFilePicker();
-      }
-    },
-    [disabled, isUploading, openFilePicker]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isUploading) {
+      e.preventDefault();
+      openFilePicker();
+    }
+  };
 
   // Build class names
   const containerClasses = [
@@ -168,5 +170,3 @@ export function FileDropzone({
     </div>
   );
 }
-
-export default FileDropzone;

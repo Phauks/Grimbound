@@ -1,9 +1,10 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(({ mode: _mode }) => ({
+export default defineConfig(({ mode }) => ({
   root: '.',
   publicDir: 'assets',
   // Deploy to root domain (grimbound.com via Cloudflare Pages)
@@ -16,7 +17,19 @@ export default defineConfig(({ mode: _mode }) => ({
   },
 
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+    // Bundle analyzer - run with: npm run build:analyze
+    mode === 'analyze' &&
+      visualizer({
+        filename: 'dist/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['fonts/**/*', 'images/**/*', 'scripts/**/*'],

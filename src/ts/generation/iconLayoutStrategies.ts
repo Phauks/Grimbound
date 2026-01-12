@@ -297,11 +297,3 @@ export const IconLayoutStrategyFactory = {
     }
   },
 };
-
-export default {
-  IconLayoutStrategyFactory,
-  CharacterWithAbilityTextLayout,
-  CharacterWithoutAbilityTextLayout,
-  ReminderTokenLayout,
-  MetaTokenLayout,
-};

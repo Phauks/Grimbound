@@ -10,7 +10,7 @@
  * @module components/Shared/Controls/DrawerTokenTabs
  */
 
-import { Fragment, memo } from 'react';
+import { Fragment } from 'react';
 import styles from '@/styles/components/shared/DrawerTokenTabs.module.css';
 import { SettingsLinkToggle } from './SettingsLinkToggle';
 
@@ -38,11 +38,7 @@ export interface DrawerTokenTabsProps {
   onTabChange: (tabId: string) => void;
 }
 
-export const DrawerTokenTabs = memo(function DrawerTokenTabs({
-  groups,
-  activeTab,
-  onTabChange,
-}: DrawerTokenTabsProps) {
+export function DrawerTokenTabs({ groups, activeTab, onTabChange }: DrawerTokenTabsProps) {
   return (
     <div className={styles.tokenTypeTabs}>
       {groups.map((group) => (
@@ -71,6 +67,4 @@ export const DrawerTokenTabs = memo(function DrawerTokenTabs({
       ))}
     </div>
   );
-});
-
-export default DrawerTokenTabs;
+}

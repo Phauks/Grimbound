@@ -11,8 +11,12 @@ import type { PanelWidth, ViewLayoutPanelProps } from './types';
 
 /**
  * Get the CSS class for a given width configuration
+ * Returns empty string when resizable (uses inline styles instead)
  */
-function getWidthClass(width: PanelWidth | undefined): string {
+function getWidthClass(width: PanelWidth | undefined, isResizable: boolean): string {
+  // When resizable, width is controlled via inline styles
+  if (isResizable) return '';
+
   switch (width) {
     case 'left':
       return styles.widthLeft;
@@ -38,6 +42,22 @@ function getWidthClass(width: PanelWidth | undefined): string {
  *   <SidebarContent />
  * </ViewLayout.Panel>
  * ```
+ *
+ * @example Resizable sidebar (controlled)
+ * ```tsx
+ * const { width, isDragging, handleProps } = useResizableSidebar();
+ *
+ * <ViewLayout.Panel
+ *   position="left"
+ *   resizable
+ *   resizableWidth={width}
+ *   isResizing={isDragging}
+ *   onWidthChange={handleProps.onMouseDown}
+ *   scrollable
+ * >
+ *   <SidebarContent />
+ * </ViewLayout.Panel>
+ * ```
  */
 export function ViewLayoutPanel({
   position,
@@ -47,10 +67,17 @@ export function ViewLayoutPanel({
   className,
   'aria-label': ariaLabel,
   'data-testid': testId,
+  resizable = false,
+  onWidthChange,
+  resizableWidth,
+  isResizing = false,
 }: ViewLayoutPanelProps) {
   // Determine if this is a sidebar (fixed width) or main content (flex)
   const isSidebar = position === 'left' || (position === 'right' && width !== 'flex');
   const isCenter = position === 'center' || (position === 'right' && width === 'flex');
+
+  // Only left sidebars can be resizable
+  const canResize = resizable && position === 'left';
 
   // Build class list
   const panelClasses = cn(
@@ -61,8 +88,8 @@ export function ViewLayoutPanel({
     // Position-specific borders
     position === 'left' && styles.sidebarLeft,
     position === 'right' && isSidebar && styles.sidebarRight,
-    // Width variant
-    getWidthClass(width),
+    // Width variant (skip if resizable - uses inline styles)
+    getWidthClass(width, canResize),
     // Scrollable with hidden scrollbar
     scrollable && styles.panelScrollable,
     scrollable && styles.hiddenScrollbar,
@@ -70,23 +97,46 @@ export function ViewLayoutPanel({
     className
   );
 
-  // Handle custom numeric width
-  const inlineStyle =
-    typeof width === 'number'
-      ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }
-      : undefined;
+  // Handle width - resizable takes precedence, then numeric, then CSS class
+  const getInlineStyle = (): React.CSSProperties | undefined => {
+    if (canResize && resizableWidth !== undefined) {
+      return {
+        width: `${resizableWidth}px`,
+        minWidth: '250px', // Enforce minimum
+        maxWidth: '450px', // Enforce maximum
+      };
+    }
+    if (typeof width === 'number') {
+      return { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` };
+    }
+    return undefined;
+  };
 
   // Use semantic element for sidebars
   const Element = isSidebar ? 'aside' : 'div';
 
+  // Generate data attribute for drawer positioning
+  const panelDataAttr = position === 'left' ? { 'data-left-panel': true } : undefined;
+
+  // Resize handle for left sidebar
+  const resizeHandle = canResize ? (
+    <div
+      className={cn(styles.resizeHandle, styles.resizeHandleRight, isResizing && styles.dragging)}
+      onMouseDown={onWidthChange}
+      aria-hidden="true"
+    />
+  ) : null;
+
   return (
     <Element
       className={panelClasses}
-      style={inlineStyle}
+      style={getInlineStyle()}
       aria-label={ariaLabel}
       data-testid={testId}
+      {...panelDataAttr}
     >
       {children}
+      {resizeHandle}
     </Element>
   );
 }

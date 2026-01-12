@@ -16,7 +16,18 @@ import {
   ImageProcessingService,
   type ProcessingOptions,
 } from '@/ts/services/upload/ImageProcessingService';
-import type { AssetType } from '@/ts/services/upload/types';
+
+// ============================================================================
+// Tag Helpers
+// ============================================================================
+
+const tags = {
+  icon: ['type:icon'],
+  tokenBackground: ['type:token-background'],
+  scriptBackground: ['type:script-background'],
+  setup: ['type:setup'],
+  accent: ['type:accent'],
+};
 
 // ============================================================================
 // Mock Canvas API
@@ -293,7 +304,7 @@ describe('ImageProcessingService', () => {
     it('should process an image with default options', async () => {
       const file = createMockFile('test.png');
 
-      const result = await service.process(file, 'character-icon');
+      const result = await service.process(file, tags.icon);
 
       expect(result.blob).toBeInstanceOf(Blob);
       expect(result.thumbnail).toBeInstanceOf(Blob);
@@ -304,7 +315,7 @@ describe('ImageProcessingService', () => {
     it('should update filename extension based on output format', async () => {
       const file = createMockFile('original.png');
 
-      const result = await service.process(file, 'character-icon');
+      const result = await service.process(file, tags.icon);
 
       expect(result.metadata.filename).toBe('original.webp');
     });
@@ -313,7 +324,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png', 'image/png');
       const options: ProcessingOptions = { skipConversion: true };
 
-      const result = await service.process(file, 'character-icon', options);
+      const result = await service.process(file, tags.icon, options);
 
       expect(result.metadata.mimeType).toBe('image/png');
       expect(result.metadata.filename).toBe('test.png');
@@ -323,7 +334,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png');
       const options: ProcessingOptions = { targetWidth: 100, targetHeight: 100 };
 
-      const result = await service.process(file, 'character-icon', options);
+      const result = await service.process(file, tags.icon, options);
 
       // Verify metadata reflects the target dimensions
       expect(result.metadata.width).toBe(100);
@@ -334,7 +345,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png');
       const options: ProcessingOptions = { thumbnailSize: 32 };
 
-      await service.process(file, 'character-icon', options);
+      await service.process(file, tags.icon, options);
 
       // First call is for main image, second is for thumbnail
       expect(mockCanvas.getContext).toHaveBeenCalled();
@@ -344,9 +355,17 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png');
       const options: ProcessingOptions = { quality: 0.5 };
 
-      await service.process(file, 'character-icon', options);
+      await service.process(file, tags.icon, options);
 
       expect(mockCanvas.toBlob).toHaveBeenCalled();
+    });
+
+    it('should throw for invalid tags', async () => {
+      const file = createMockFile('test.png');
+
+      await expect(service.process(file, ['homebrew'])).rejects.toThrow(
+        'Invalid tags: missing or invalid type:* tag'
+      );
     });
   });
 
@@ -494,7 +513,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png');
       const options: ProcessingOptions = { skipResize: true };
 
-      const result = await service.process(file, 'character-icon', options);
+      const result = await service.process(file, tags.icon, options);
 
       // Metadata should reflect original dimensions
       expect(result.metadata.width).toBe(originalWidth);
@@ -506,7 +525,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('test.png');
       const options: ProcessingOptions = { targetWidth: 512, targetHeight: 512 };
 
-      await service.process(file, 'character-icon', options);
+      await service.process(file, tags.icon, options);
 
       // Should be scaled down to max dimensions
       expect(mockCanvas.width).toBeLessThanOrEqual(512);
@@ -522,7 +541,7 @@ describe('ImageProcessingService', () => {
     it('should update extension to .webp for webp format', async () => {
       const file = createMockFile('image.png');
 
-      const result = await service.process(file, 'character-icon');
+      const result = await service.process(file, tags.icon);
 
       expect(result.metadata.filename).toBe('image.webp');
     });
@@ -531,7 +550,7 @@ describe('ImageProcessingService', () => {
       const file = createMockFile('image.png');
       const options: ProcessingOptions = { outputFormat: 'image/jpeg' };
 
-      const result = await service.process(file, 'character-icon', options);
+      const result = await service.process(file, tags.icon, options);
 
       expect(result.metadata.filename).toBe('image.jpg');
     });
@@ -539,7 +558,7 @@ describe('ImageProcessingService', () => {
     it('should handle filenames without extension', async () => {
       const file = createMockFile('imagefile');
 
-      const result = await service.process(file, 'character-icon');
+      const result = await service.process(file, tags.icon);
 
       expect(result.metadata.filename).toBe('imagefile.webp');
     });
@@ -547,7 +566,7 @@ describe('ImageProcessingService', () => {
     it('should handle filenames with multiple dots', async () => {
       const file = createMockFile('my.image.file.png');
 
-      const result = await service.process(file, 'character-icon');
+      const result = await service.process(file, tags.icon);
 
       expect(result.metadata.filename).toBe('my.image.file.webp');
     });
@@ -565,7 +584,7 @@ describe('ImageProcessingService', () => {
 
       const file = createMockFile('test.png');
 
-      await expect(service.process(file, 'character-icon')).rejects.toThrow(
+      await expect(service.process(file, tags.icon)).rejects.toThrow(
         'Failed to create blob from canvas'
       );
     });
@@ -576,18 +595,18 @@ describe('ImageProcessingService', () => {
   // --------------------------------------------------------------------------
 
   describe('Asset Type Configs', () => {
-    const assetTypes: AssetType[] = [
-      'character-icon',
-      'token-background',
-      'script-background',
-      'setup-overlay',
-      'accent',
+    const tagsList = [
+      { name: 'icon', tags: ['type:icon'] },
+      { name: 'token-background', tags: ['type:token-background'] },
+      { name: 'script-background', tags: ['type:script-background'] },
+      { name: 'setup', tags: ['type:setup'] },
+      { name: 'accent', tags: ['type:accent'] },
     ];
 
-    it.each(assetTypes)('should process %s asset type', async (assetType) => {
+    it.each(tagsList)('should process $name asset type', async ({ tags: assetTags }) => {
       const file = createMockFile('test.png');
 
-      const result = await service.process(file, assetType);
+      const result = await service.process(file, assetTags);
 
       expect(result.blob).toBeInstanceOf(Blob);
       expect(result.thumbnail).toBeInstanceOf(Blob);

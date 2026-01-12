@@ -5,7 +5,7 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
@@ -30,12 +30,16 @@ export function DeleteProjectModal({
   const { addToast } = useToast();
   const [error, setError] = useState<string | null>(null);
 
-  // Reset error when modal opens
-  useEffect(() => {
+  // Track previous isOpen for render-time comparison (React's recommended pattern)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  // Reset error during render when modal opens (faster than useEffect)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setError(null);
     }
-  }, [isOpen]);
+  }
 
   const handleDelete = async () => {
     if (!project) return;

@@ -4,7 +4,7 @@
  * Simple modal for naming assets when saving.
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/studio/Studio.module.css';
 import { cn } from '@/ts/utils/classNames.js';
 
@@ -16,13 +16,7 @@ export interface SaveModalProps {
   onCancel: () => void;
 }
 
-export const SaveModal = memo(function SaveModal({
-  isOpen,
-  saveAsNew,
-  initialName,
-  onSave,
-  onCancel,
-}: SaveModalProps) {
+export function SaveModal({ isOpen, saveAsNew, initialName, onSave, onCancel }: SaveModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(initialName);
 
@@ -35,19 +29,16 @@ export const SaveModal = memo(function SaveModal({
     }
   }, [isOpen, initialName]);
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = () => {
     if (name.trim()) {
       onSave(name.trim());
     }
-  }, [name, onSave]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') handleConfirm();
-      if (e.key === 'Escape') onCancel();
-    },
-    [handleConfirm, onCancel]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleConfirm();
+    if (e.key === 'Escape') onCancel();
+  };
 
   if (!isOpen) return null;
 
@@ -99,4 +90,4 @@ export const SaveModal = memo(function SaveModal({
       </div>
     </div>
   );
-});
+}

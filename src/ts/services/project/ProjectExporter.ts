@@ -108,7 +108,7 @@ export class ProjectExporter implements IProjectExporter {
     // Determine if we should use streaming (for large projects)
     const STREAMING_THRESHOLD = 50; // Use streaming for 50+ assets
     const assetCount = opts.includeAssets
-      ? await this.assetStorage.count({ type: 'character-icon', projectId: project.id })
+      ? await this.assetStorage.count({ tags: ['type:icon'], projectId: project.id })
       : 0;
     const useStreaming = assetCount >= STREAMING_THRESHOLD;
 
@@ -120,7 +120,7 @@ export class ProjectExporter implements IProjectExporter {
     } else if (opts.includeAssets && useStreaming) {
       // Large projects: fetch lightweight metadata only
       projectAssets = await this.assetStorage.list({
-        type: 'character-icon',
+        tags: ['type:icon'],
         projectId: project.id,
       });
       if (!opts.includeUnusedAssets) {
@@ -200,9 +200,9 @@ export class ProjectExporter implements IProjectExporter {
    */
   private async fetchProjectAssets(projectId: string, includeUnused: boolean): Promise<DBAsset[]> {
     try {
-      // Fetch all character-icon assets for this project
+      // Fetch all icon assets for this project
       const assets = await this.assetStorage.list({
-        type: 'character-icon',
+        tags: ['type:icon'],
         projectId,
       });
 

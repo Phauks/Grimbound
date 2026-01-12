@@ -86,6 +86,20 @@ export function validateFolderPath(path: string): FolderValidationResult {
 // ============================================================================
 
 /**
+ * Normalize a folder path (trim, remove leading/trailing slashes)
+ */
+export function normalizePath(path: string): string {
+  return path.trim().replace(/^\/+|\/+$/g, '');
+}
+
+/**
+ * Join path segments together
+ */
+export function joinPath(...segments: string[]): string {
+  return segments.filter(Boolean).join('/');
+}
+
+/**
  * Get the parent folder path
  * @returns Parent path or null if at root level
  */
@@ -123,7 +137,7 @@ export function getAllFolderPaths<T extends AssetWithFolder>(assets: T[]): strin
  * Check if a path is a subfolder of another path
  */
 export function isSubfolderOf(path: string, parentPath: string): boolean {
-  return path.startsWith(parentPath + '/');
+  return path.startsWith(`${parentPath}/`);
 }
 
 // ============================================================================
@@ -171,7 +185,7 @@ export function deriveFolderTree<T extends AssetWithFolder>(assets: T[]): Folder
   for (const [path, node] of nodes) {
     const parentPath = getParentFolder(path);
     if (parentPath && nodes.has(parentPath)) {
-      nodes.get(parentPath)!.children.push(node);
+      nodes.get(parentPath)?.children.push(node);
     } else {
       roots.push(node);
     }

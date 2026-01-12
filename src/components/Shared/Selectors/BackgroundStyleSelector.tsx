@@ -12,7 +12,7 @@
  * @module components/Shared/BackgroundStyleSelector
  */
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { BackgroundDrawer } from '@/components/Shared/Drawer';
@@ -88,11 +88,7 @@ export interface BackgroundStyleSelectorProps {
  * Self-contained thumbnail for image selection in the drawer
  * Resolves image URLs internally via useBackgroundImageUrl hook
  */
-const DrawerImageThumbnail = memo(function DrawerImageThumbnail({
-  imageUrl,
-}: {
-  imageUrl: string | undefined;
-}) {
+function DrawerImageThumbnail({ imageUrl }: { imageUrl: string | undefined }) {
   const { resolvedUrl } = useBackgroundImageUrl({ imageUrl });
 
   return (
@@ -101,7 +97,7 @@ const DrawerImageThumbnail = memo(function DrawerImageThumbnail({
       style={resolvedUrl ? { backgroundImage: `url(${resolvedUrl})` } : undefined}
     />
   );
-});
+}
 
 // ============================================================================
 // Main Component
@@ -114,7 +110,7 @@ const DEFAULT_ALL_BACKGROUND_STYLES: AllBackgroundStyles = {
   meta: DEFAULT_BACKGROUND_STYLE,
 };
 
-export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
+export function BackgroundStyleSelector({
   generationOptions,
   onOptionChange,
   size = 'medium',
@@ -134,7 +130,7 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
   const lastTextureRef = useRef<TextureType>('marble');
 
   // Build AllBackgroundStyles from generationOptions (self-contained extraction)
-  const currentStyles: AllBackgroundStyles = useMemo(() => {
+  const currentStyles: AllBackgroundStyles = ((): AllBackgroundStyles => {
     const charStyle = generationOptions.characterBackgroundStyle || DEFAULT_BACKGROUND_STYLE;
     const remStyle = generationOptions.reminderBackgroundStyle || DEFAULT_BACKGROUND_STYLE;
     const metaStyle = generationOptions.metaBackgroundStyle || DEFAULT_BACKGROUND_STYLE;
@@ -165,19 +161,16 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
         light: { ...DEFAULT_LIGHT_CONFIG, ...metaStyle?.light },
       },
     };
-  }, [generationOptions]);
+  })();
 
   // Convert AllBackgroundStyles changes to GenerationOptions updates
-  const handleStylesChange = useCallback(
-    (styles: AllBackgroundStyles) => {
-      onOptionChange({
-        characterBackgroundStyle: styles.character,
-        reminderBackgroundStyle: styles.reminder,
-        metaBackgroundStyle: styles.meta,
-      });
-    },
-    [onOptionChange]
-  );
+  const handleStylesChange = (styles: AllBackgroundStyles) => {
+    onOptionChange({
+      characterBackgroundStyle: styles.character,
+      reminderBackgroundStyle: styles.reminder,
+      metaBackgroundStyle: styles.meta,
+    });
+  };
 
   // Ref to access drawer close function for coordination
   const drawerCloseRef = useRef<(() => void) | undefined>(undefined);
@@ -203,105 +196,75 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
 
   // Helper to update just the active token type's style
   // When linked and editing Character or Meta, syncs both
-  const updateActiveStyle = useCallback(
-    (updates: Partial<BackgroundStyle>) => {
-      const newActiveStyle = {
-        ...drawer.pendingValue[activeTokenType],
-        ...updates,
-      };
+  const updateActiveStyle = (updates: Partial<BackgroundStyle>) => {
+    const newActiveStyle = {
+      ...drawer.pendingValue[activeTokenType],
+      ...updates,
+    };
 
-      // When linked and editing Character or Meta, sync both
-      if (isLinked && activeTokenType !== 'reminder') {
-        drawer.updatePending({
-          ...drawer.pendingValue,
-          character: newActiveStyle,
-          meta: newActiveStyle,
-        });
-      } else {
-        drawer.updatePending({
-          ...drawer.pendingValue,
-          [activeTokenType]: newActiveStyle,
-        });
-      }
-    },
-    [drawer, activeTokenType, isLinked]
-  );
-
-  // Update handlers that modify pending value for active token type
-  const handleSourceTypeChange = useCallback(
-    (sourceType: BackgroundSourceType) => {
-      updateActiveStyle({ sourceType });
-    },
-    [updateActiveStyle]
-  );
-
-  const _handleModeChange = useCallback(
-    (mode: BackgroundBaseMode) => {
-      updateActiveStyle({ mode });
-    },
-    [updateActiveStyle]
-  );
-
-  const handleSolidColorChange = useCallback(
-    (solidColor: string) => {
-      updateActiveStyle({ solidColor });
-    },
-    [updateActiveStyle]
-  );
-
-  const handleGradientChange = useCallback(
-    (gradient: GradientConfig) => {
-      updateActiveStyle({ gradient });
-    },
-    [updateActiveStyle]
-  );
-
-  const handleTextureChange = useCallback(
-    (texture: TextureConfig) => {
-      updateActiveStyle({ texture });
-    },
-    [updateActiveStyle]
-  );
-
-  const handleEffectsChange = useCallback(
-    (effects: EffectsConfig) => {
-      updateActiveStyle({ effects });
-    },
-    [updateActiveStyle]
-  );
-
-  const handleLightChange = useCallback(
-    (light: LightConfig) => {
-      updateActiveStyle({ light });
-    },
-    [updateActiveStyle]
-  );
-
-  const _handlePresetSelect = useCallback(
-    (style: BackgroundStyle) => {
+    // When linked and editing Character or Meta, sync both
+    if (isLinked && activeTokenType !== 'reminder') {
       drawer.updatePending({
         ...drawer.pendingValue,
-        [activeTokenType]: style,
+        character: newActiveStyle,
+        meta: newActiveStyle,
       });
-    },
-    [drawer, activeTokenType]
-  );
+    } else {
+      drawer.updatePending({
+        ...drawer.pendingValue,
+        [activeTokenType]: newActiveStyle,
+      });
+    }
+  };
+
+  // Update handlers that modify pending value for active token type
+  const handleSourceTypeChange = (sourceType: BackgroundSourceType) => {
+    updateActiveStyle({ sourceType });
+  };
+
+  const _handleModeChange = (mode: BackgroundBaseMode) => {
+    updateActiveStyle({ mode });
+  };
+
+  const handleSolidColorChange = (solidColor: string) => {
+    updateActiveStyle({ solidColor });
+  };
+
+  const handleGradientChange = (gradient: GradientConfig) => {
+    updateActiveStyle({ gradient });
+  };
+
+  const handleTextureChange = (texture: TextureConfig) => {
+    updateActiveStyle({ texture });
+  };
+
+  const handleEffectsChange = (effects: EffectsConfig) => {
+    updateActiveStyle({ effects });
+  };
+
+  const handleLightChange = (light: LightConfig) => {
+    updateActiveStyle({ light });
+  };
+
+  const _handlePresetSelect = (style: BackgroundStyle) => {
+    drawer.updatePending({
+      ...drawer.pendingValue,
+      [activeTokenType]: style,
+    });
+  };
 
   // Handle opening image selection modal
-  const handleOpenImageModal = useCallback(() => {
+  const handleOpenImageModal = () => {
     setIsImageModalOpen(true);
-  }, []);
+  };
 
   // Handle image selection from modal
-  const handleImageSelect = useCallback(
-    (assetId: string) => {
-      // Store the asset reference (asset:uuid format) as imageUrl
-      // Also set sourceType to 'image' so the Image tab becomes active
-      updateActiveStyle({ sourceType: 'image', imageUrl: assetId });
-      setIsImageModalOpen(false);
-    },
-    [updateActiveStyle]
-  );
+  const handleImageSelect = (assetId: string) => {
+    // Store the asset reference (asset:uuid format) as imageUrl
+    // Also set sourceType to 'image' so the Image tab becomes active
+    updateActiveStyle({ sourceType: 'image', imageUrl: assetId });
+    setIsImageModalOpen(false);
+  };
 
   // Render Color/Image mode tabs
   const renderModeTabs = () => (
@@ -911,6 +874,4 @@ export const BackgroundStyleSelector = memo(function BackgroundStyleSelector({
       )}
     </>
   );
-});
-
-export default BackgroundStyleSelector;
+}

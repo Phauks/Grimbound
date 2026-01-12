@@ -13,7 +13,6 @@
  * @module components/Shared/Controls/SettingsLinkToggle
  */
 
-import { memo, useCallback } from 'react';
 import styles from '@/styles/components/shared/SettingsLinkToggle.module.css';
 
 export interface SettingsLinkToggleProps {
@@ -68,7 +67,7 @@ const UnlinkIcon = () => (
   </svg>
 );
 
-export const SettingsLinkToggle = memo(function SettingsLinkToggle({
+export function SettingsLinkToggle({
   isLinked,
   onToggle,
   ariaLabel = 'Link Character and Meta settings',
@@ -76,21 +75,18 @@ export const SettingsLinkToggle = memo(function SettingsLinkToggle({
   disabled = false,
   size = 'medium',
 }: SettingsLinkToggleProps) {
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (!disabled) {
       onToggle();
     }
-  }, [disabled, onToggle]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
-        e.preventDefault();
-        onToggle();
-      }
-    },
-    [disabled, onToggle]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+      e.preventDefault();
+      onToggle();
+    }
+  };
 
   const tooltipText =
     tooltip || (isLinked ? 'Unlink Character and Meta' : 'Link Character and Meta');
@@ -109,6 +105,4 @@ export const SettingsLinkToggle = memo(function SettingsLinkToggle({
       {isLinked ? <LinkIcon /> : <UnlinkIcon />}
     </button>
   );
-});
-
-export default SettingsLinkToggle;
+}

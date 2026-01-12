@@ -7,7 +7,6 @@
  * @module hooks/ui/useFilters
  */
 
-import { useCallback, useMemo } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 
 // Type for filter keys that have string array values
@@ -16,7 +15,7 @@ type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders' | 'origin';
 export function useFilters() {
   const { filters, updateFilters } = useTokenContext();
 
-  const resetFilters = useCallback(() => {
+  const resetFilters = () => {
     updateFilters({
       teams: [],
       tokenTypes: [],
@@ -24,31 +23,31 @@ export function useFilters() {
       reminders: [],
       origin: [],
     });
-  }, [updateFilters]);
+  };
 
   /**
    * Factory function to create toggle handlers for filter arrays
    * Reduces boilerplate by generalizing the toggle pattern
    */
-  const createToggleHandler = useCallback(
+  const createToggleHandler =
     <K extends FilterKey>(key: K) =>
-      (value: string) => {
-        const current = filters[key];
-        if (current.includes(value)) {
-          updateFilters({ [key]: current.filter((v) => v !== value) } as Partial<typeof filters>);
-        } else {
-          updateFilters({ [key]: [...current, value] } as Partial<typeof filters>);
-        }
-      },
-    [filters, updateFilters]
-  );
+    (value: string) => {
+      const current = filters[key];
+      if (current.includes(value)) {
+        updateFilters({
+          [key]: current.filter((v) => v !== value),
+        } as Partial<typeof filters>);
+      } else {
+        updateFilters({ [key]: [...current, value] } as Partial<typeof filters>);
+      }
+    };
 
-  // Memoize toggle handlers to maintain referential stability
-  const toggleTeam = useMemo(() => createToggleHandler('teams'), [createToggleHandler]);
-  const toggleTokenType = useMemo(() => createToggleHandler('tokenTypes'), [createToggleHandler]);
-  const toggleDisplay = useMemo(() => createToggleHandler('display'), [createToggleHandler]);
-  const toggleReminders = useMemo(() => createToggleHandler('reminders'), [createToggleHandler]);
-  const toggleOrigin = useMemo(() => createToggleHandler('origin'), [createToggleHandler]);
+  // Create toggle handlers
+  const toggleTeam = createToggleHandler('teams');
+  const toggleTokenType = createToggleHandler('tokenTypes');
+  const toggleDisplay = createToggleHandler('display');
+  const toggleReminders = createToggleHandler('reminders');
+  const toggleOrigin = createToggleHandler('origin');
 
   return {
     resetFilters,

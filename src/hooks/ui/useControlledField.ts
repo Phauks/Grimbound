@@ -9,6 +9,9 @@
  * This centralizes the pattern of local state + debounce + lastSentRef
  * to prevent race conditions that cause cursor position issues.
  *
+ * Uses React's "adjusting state during render" pattern instead of useEffect
+ * for synchronous prop-to-state sync (faster, no extra render cycle).
+ *
  * @module hooks/ui/useControlledField
  */
 
@@ -78,6 +81,9 @@ export function useControlledField<T>({
   // Local state for the input
   const [localValue, setLocalValue] = useState<T>(value);
 
+  // Track previous prop value for render-time comparison (React's recommended pattern)
+  const [prevValue, setPrevValue] = useState<T>(value);
+
   // Track the last value we sent to parent to avoid resetting on our own updates
   const lastSentValueRef = useRef<T>(value);
 
@@ -87,19 +93,20 @@ export function useControlledField<T>({
   // Track if we have uncommitted changes
   const isDirtyRef = useRef(false);
 
-  // Sync from external prop changes only (NECESSARY for controlled inputs)
-  // This effect distinguishes between:
+  // Sync from external prop changes during render (React's "adjusting state" pattern)
+  // This is synchronous and faster than useEffect (no extra render cycle).
+  // Distinguishes between:
   // 1. External changes: value differs from what we last sent → sync to local
   // 2. Our changes propagated back: value equals what we sent → ignore (no-op)
-  // This prevents cursor position issues in text inputs where React would
-  // otherwise reset the input value mid-typing.
-  useEffect(() => {
+  if (!isEqual(value, prevValue)) {
+    setPrevValue(value);
+    // Only sync if this is an external change (not our own update reflected back)
     if (!isEqual(value, lastSentValueRef.current)) {
       setLocalValue(value);
       lastSentValueRef.current = value;
       isDirtyRef.current = false;
     }
-  }, [value, isEqual]);
+  }
 
   // Cleanup timer on unmount
   useEffect(

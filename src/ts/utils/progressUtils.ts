@@ -66,10 +66,3 @@ export function getProgressPercentage(state: ProgressState): number {
   if (state.total === 0) return 100;
   return Math.round((state.processed / state.total) * 100);
 }
-
-export default {
-  createProgressState,
-  updateProgress,
-  resetProgress,
-  getProgressPercentage,
-};

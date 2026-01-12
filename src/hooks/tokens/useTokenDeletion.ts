@@ -5,7 +5,7 @@
  * Extracted from TokenGrid component to follow Single Responsibility Principle.
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import type { Character, GenerationOptions, Token } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -67,51 +67,48 @@ export function useTokenDeletion({
   /**
    * Handle deletion request - may delete immediately or show confirmation
    */
-  const handleDeleteRequest = useCallback(
-    (token: Token) => {
-      logger.debug('useTokenDeletion', 'Delete requested', { type: token.type, name: token.name });
+  const handleDeleteRequest = (token: Token) => {
+    logger.debug('useTokenDeletion', 'Delete requested', { type: token.type, name: token.name });
 
-      // Meta tokens can be deleted immediately without confirmation
-      if (
-        token.type === 'script-name' ||
-        token.type === 'almanac' ||
-        token.type === 'pandemonium' ||
-        token.type === 'bootlegger'
-      ) {
-        // Disable the corresponding option
-        if (token.type === 'script-name') {
-          updateGenerationOptions({ scriptNameToken: false });
-        } else if (token.type === 'almanac') {
-          updateGenerationOptions({ almanacToken: false });
-        } else if (token.type === 'pandemonium') {
-          updateGenerationOptions({ pandemoniumToken: false });
-        } else if (token.type === 'bootlegger') {
-          updateGenerationOptions({ generateBootleggerRules: false });
-        }
-
-        // Delete the token immediately
-        setTokens(tokens.filter((t: Token) => t.filename !== token.filename));
-
-        logger.info('useTokenDeletion', 'Meta token deleted', {
-          type: token.type,
-          name: token.name,
-        });
-      } else {
-        // For character and reminder tokens, show confirmation modal
-        setTokenToDelete(token);
-        logger.debug('useTokenDeletion', 'Confirmation required', {
-          type: token.type,
-          name: token.name,
-        });
+    // Meta tokens can be deleted immediately without confirmation
+    if (
+      token.type === 'script-name' ||
+      token.type === 'almanac' ||
+      token.type === 'pandemonium' ||
+      token.type === 'bootlegger'
+    ) {
+      // Disable the corresponding option
+      if (token.type === 'script-name') {
+        updateGenerationOptions({ scriptNameToken: false });
+      } else if (token.type === 'almanac') {
+        updateGenerationOptions({ almanacToken: false });
+      } else if (token.type === 'pandemonium') {
+        updateGenerationOptions({ pandemoniumToken: false });
+      } else if (token.type === 'bootlegger') {
+        updateGenerationOptions({ generateBootleggerRules: false });
       }
-    },
-    [tokens, setTokens, updateGenerationOptions]
-  );
+
+      // Delete the token immediately
+      setTokens(tokens.filter((t: Token) => t.filename !== token.filename));
+
+      logger.info('useTokenDeletion', 'Meta token deleted', {
+        type: token.type,
+        name: token.name,
+      });
+    } else {
+      // For character and reminder tokens, show confirmation modal
+      setTokenToDelete(token);
+      logger.debug('useTokenDeletion', 'Confirmation required', {
+        type: token.type,
+        name: token.name,
+      });
+    }
+  };
 
   /**
    * Confirm and execute the deletion
    */
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = () => {
     if (!tokenToDelete) return;
 
     logger.info('useTokenDeletion', 'Deletion confirmed', {
@@ -148,12 +145,12 @@ export function useTokenDeletion({
     }
 
     setTokenToDelete(null);
-  }, [tokenToDelete, tokens, characters, setTokens, setCharacters]);
+  };
 
   /**
    * Cancel the deletion
    */
-  const cancelDelete = useCallback(() => {
+  const cancelDelete = () => {
     if (tokenToDelete) {
       logger.debug('useTokenDeletion', 'Deletion cancelled', {
         type: tokenToDelete.type,
@@ -161,7 +158,7 @@ export function useTokenDeletion({
       });
     }
     setTokenToDelete(null);
-  }, [tokenToDelete]);
+  };
 
   return {
     tokenToDelete,
@@ -170,5 +167,3 @@ export function useTokenDeletion({
     cancelDelete,
   };
 }
-
-export default useTokenDeletion;

@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
 import {
   InfoSection,
@@ -17,6 +17,7 @@ import { CharacterListView } from '@/components/ViewComponents/ProjectsComponent
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useExpandablePanel, useExportDownloads } from '@/hooks';
+import { useResizableSidebar } from '@/hooks/ui';
 import downloadStyles from '@/styles/components/export/DownloadComponents.module.css';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
@@ -50,6 +51,9 @@ export function ExportView() {
   } = useExportDownloads();
   const { addToast } = useToast();
 
+  // Resizable sidebar
+  const { width: sidebarWidth, isDragging, handleProps } = useResizableSidebar();
+
   // List view column visibility settings
   const [listViewSettings, setListViewSettings] = useState({
     showAbility: true,
@@ -60,42 +64,30 @@ export function ExportView() {
   const [showListSettings, setShowListSettings] = useState(false);
 
   // Character toggle handlers
-  const handleCharacterToggle = useCallback(
-    (uuid: string, enabled: boolean) => {
-      setCharacterEnabled(uuid, enabled);
-    },
-    [setCharacterEnabled]
-  );
+  const handleCharacterToggle = (uuid: string, enabled: boolean) => {
+    setCharacterEnabled(uuid, enabled);
+  };
 
-  const handleToggleAllCharacters = useCallback(
-    (enabled: boolean) => {
-      setAllCharactersEnabled(enabled);
-      addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
-    },
-    [setAllCharactersEnabled, addToast]
-  );
+  const handleToggleAllCharacters = (enabled: boolean) => {
+    setAllCharactersEnabled(enabled);
+    addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
+  };
 
   // Current PDF settings from context
-  const currentPdfSettings: PdfSettings = useMemo(
-    () => ({
-      xOffset: generationOptions.pdfXOffset ?? 0,
-      yOffset: generationOptions.pdfYOffset ?? 0,
-      bleed: generationOptions.pdfBleed ?? 0.125,
-    }),
-    [generationOptions.pdfXOffset, generationOptions.pdfYOffset, generationOptions.pdfBleed]
-  );
+  const currentPdfSettings: PdfSettings = {
+    xOffset: generationOptions.pdfXOffset ?? 0,
+    yOffset: generationOptions.pdfYOffset ?? 0,
+    bleed: generationOptions.pdfBleed ?? 0.125,
+  };
 
   // PDF panel handler
-  const handlePdfChange = useCallback(
-    (settings: PdfSettings) => {
-      updateGenerationOptions({
-        pdfXOffset: settings.xOffset,
-        pdfYOffset: settings.yOffset,
-        pdfBleed: settings.bleed,
-      });
-    },
-    [updateGenerationOptions]
-  );
+  const handlePdfChange = (settings: PdfSettings) => {
+    updateGenerationOptions({
+      pdfXOffset: settings.xOffset,
+      pdfYOffset: settings.yOffset,
+      pdfBleed: settings.bleed,
+    });
+  };
 
   // Use expandable panel hook for PDF settings
   const pdfPanel = useExpandablePanel<PdfSettings>({
@@ -181,12 +173,19 @@ export function ExportView() {
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Export" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Export" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <ViewLayout variant="2-panel">
-        {/* Left Sidebar - Export Settings */}
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        {/* Left Sidebar - Export Settings (Resizable) */}
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isDragging}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <div className={layoutStyles.panelContent}>
             {/* Token Print Sheet */}
             <SettingsSelectorBase

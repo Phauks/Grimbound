@@ -79,3 +79,35 @@ export {
   type UseAssetOperationsReturn,
   useAssetOperations,
 } from './useAssetOperations.js';
+
+// ============================================================================
+// Asset Tags (Tag-based categorization)
+// ============================================================================
+
+export {
+  type TagAnalysis,
+  type UseAssetTagsOptions,
+  type UseAssetTagsReturn,
+  useAssetTags,
+} from './useAssetTags.js';
+
+// ============================================================================
+// Asset Folders (Folder organization)
+// ============================================================================
+
+export {
+  type UseAssetFoldersOptions,
+  type UseAssetFoldersReturn,
+  useAssetFolders,
+} from './useAssetFolders.js';
+
+// ============================================================================
+// Virtual Asset Grid (Virtualized grid for large collections)
+// ============================================================================
+
+export {
+  type UseVirtualAssetGridOptions,
+  type UseVirtualAssetGridReturn,
+  useVirtualAssetGrid,
+  type VirtualGridItem,
+} from './useVirtualAssetGrid.js';

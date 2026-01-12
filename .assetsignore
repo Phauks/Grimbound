@@ -1,0 +1,43 @@
+# Node modules
+**/node_modules
+
+# Git
+**/.git
+
+# macOS
+**/.DS_Store
+
+# Source maps (optional - remove if you want source maps in production)
+# **/*.map
+
+# Source files (not needed in deployed assets)
+**/src
+
+# Documentation
+**/docs
+**/CLAUDE.md
+**/README.md
+**/CHANGELOG.md
+**/ROADMAP.md
+
+# Claude Code configuration
+**/.claude
+
+# GitHub workflows
+**/.github
+
+# Test files
+**/__tests__
+**/coverage
+**/playwright-report
+
+# Development config
+**/tsconfig.json
+**/vite.config.ts
+**/biome.json
+**/knip.json
+**/.husky
+
+# Storybook
+**/.storybook
+**/storybook-static

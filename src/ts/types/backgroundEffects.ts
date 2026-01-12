@@ -201,6 +201,37 @@ export interface EffectsConfig {
 export type BackgroundSourceType = 'styled' | 'image';
 
 /**
+ * Image fit modes for rectangular backgrounds (Script PDFs)
+ *
+ * - cover: Fill area completely, crop overflow (default)
+ * - contain: Fit entire image, may show white space
+ * - stretch: Stretch to fill exactly, may distort
+ * - tile: Repeat image in grid pattern
+ * - original: Use original size, centered
+ */
+export type ImageFitMode = 'cover' | 'contain' | 'stretch' | 'tile' | 'original';
+
+/**
+ * Image fit mode option for UI dropdowns
+ */
+export interface ImageFitModeOption {
+  value: ImageFitMode;
+  label: string;
+  description: string;
+}
+
+/**
+ * Available image fit modes for UI
+ */
+export const IMAGE_FIT_MODE_OPTIONS: ImageFitModeOption[] = [
+  { value: 'cover', label: 'Cover', description: 'Fill area, crop overflow' },
+  { value: 'contain', label: 'Contain', description: 'Fit inside, show white space' },
+  { value: 'stretch', label: 'Stretch', description: 'Fill exactly, may distort' },
+  { value: 'tile', label: 'Tile', description: 'Repeat in grid pattern' },
+  { value: 'original', label: 'Original', description: 'Original size, centered' },
+];
+
+/**
  * Complete background style configuration
  *
  * Unified configuration for both styled (procedural) and image-based backgrounds.
@@ -241,6 +272,12 @@ export interface BackgroundStyle {
   imageOffsetX?: number;
   /** Image Y offset as percentage of token size (-1 to 1, 0 = centered) */
   imageOffsetY?: number;
+
+  // Image fit options (for rectangular backgrounds like Script PDFs)
+  /** How image fits rectangular bounds (default: 'cover') */
+  imageFitMode?: ImageFitMode;
+  /** Tile scale multiplier when imageFitMode is 'tile' (0.1 to 4.0, default 1.0) */
+  tileScale?: number;
 }
 
 // ============================================================================
@@ -314,6 +351,9 @@ export const DEFAULT_BACKGROUND_STYLE: BackgroundStyle = {
   texture: DEFAULT_TEXTURE_CONFIG,
   effects: DEFAULT_EFFECTS_CONFIG,
   light: DEFAULT_LIGHT_CONFIG,
+  // Image fit defaults (for Script PDFs)
+  imageFitMode: 'cover',
+  tileScale: 1.0,
 };
 
 // ============================================================================

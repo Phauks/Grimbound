@@ -224,5 +224,3 @@ export function ScriptMessagesBar({
     </div>
   );
 }
-
-export default ScriptMessagesBar;

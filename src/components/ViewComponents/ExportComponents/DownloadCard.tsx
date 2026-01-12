@@ -83,5 +83,3 @@ export function DownloadCard({
     </button>
   );
 }
-
-export default DownloadCard;

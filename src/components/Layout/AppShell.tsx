@@ -5,7 +5,7 @@
  * Acts as the container for all sub-tabs (Projects, JSON, Tokens, Characters, Script, Export, Studio).
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { CharactersView } from '@/components/Views/CharactersView';
 import { ExportView } from '@/components/Views/ExportView';
 import { JsonView } from '@/components/Views/JsonView';
@@ -35,15 +35,15 @@ export function AppShell() {
   const { currentProject } = useProjects();
   const { tokens, characters } = useTokenContext();
 
-  const handleTokenClick = useCallback((token: Token) => {
+  const handleTokenClick = (token: Token) => {
     setSelectedTokenForCustomize(token);
     setCreateNewCharacter(false);
     // Clear last selected character when explicitly clicking a token (explicit navigation)
     setLastSelectedCharacterUuid(undefined);
     setActiveTab('characters');
-  }, []);
+  };
 
-  const handleTabChange = useCallback((tab: TabType) => {
+  const handleTabChange = (tab: TabType) => {
     // Reset createNewCharacter when manually changing tabs
     if (tab !== 'characters') {
       setCreateNewCharacter(false);
@@ -55,41 +55,38 @@ export function AppShell() {
       setCreateNewCharacter(false);
     }
     setActiveTab(tab);
-  }, []);
+  };
 
   // Handle "Edit Character" from night order context menu
-  const handleEditCharacter = useCallback(
-    (characterId: string) => {
-      // Find the character by ID
-      const character = characters.find((c) => c.id === characterId);
-      if (!character) {
-        logger.warn('AppShell', `Character not found: ${characterId}`);
-        return;
-      }
+  const handleEditCharacter = (characterId: string) => {
+    // Find the character by ID
+    const character = characters.find((c) => c.id === characterId);
+    if (!character) {
+      logger.warn('AppShell', `Character not found: ${characterId}`);
+      return;
+    }
 
-      // Find the matching token by character name (character tokens have type 'character')
-      const token = tokens.find(
-        (t) => t.type === 'character' && t.name.toLowerCase() === character.name.toLowerCase()
-      );
+    // Find the matching token by character name (character tokens have type 'character')
+    const token = tokens.find(
+      (t) => t.type === 'character' && t.name.toLowerCase() === character.name.toLowerCase()
+    );
 
-      if (token) {
-        // Use existing handleTokenClick pattern
-        setSelectedTokenForCustomize(token);
-        setCreateNewCharacter(false);
-        // Clear last selected character when explicitly navigating to a character
-        setLastSelectedCharacterUuid(undefined);
-        setActiveTab('characters');
-      } else {
-        logger.warn('AppShell', `Token not found for character: ${character.name}`);
-      }
-    },
-    [characters, tokens]
-  );
+    if (token) {
+      // Use existing handleTokenClick pattern
+      setSelectedTokenForCustomize(token);
+      setCreateNewCharacter(false);
+      // Clear last selected character when explicitly navigating to a character
+      setLastSelectedCharacterUuid(undefined);
+      setActiveTab('characters');
+    } else {
+      logger.warn('AppShell', `Token not found for character: ${character.name}`);
+    }
+  };
 
   // Handle character selection changes from CustomizeView
-  const handleCharacterSelect = useCallback((characterUuid: string) => {
+  const handleCharacterSelect = (characterUuid: string) => {
     setLastSelectedCharacterUuid(characterUuid);
-  }, []);
+  };
 
   const renderActiveView = () => {
     switch (activeTab) {

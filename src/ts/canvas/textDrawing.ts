@@ -498,12 +498,3 @@ export function drawQROverlayText(
 
   ctx.restore();
 }
-
-export default {
-  drawCurvedText,
-  drawCenteredWrappedText,
-  drawTwoLineCenteredText,
-  drawAbilityText,
-  drawQROverlayText,
-  applyConfigurableShadow,
-};

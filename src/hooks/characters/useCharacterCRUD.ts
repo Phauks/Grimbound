@@ -230,7 +230,7 @@ export function useCharacterCRUD({
   ]);
 
   // Add a new character
-  const handleAddCharacter = useCallback(async () => {
+  const handleAddCharacter = async () => {
     try {
       const newCharacter = await createAndAddCharacter(getContext());
       const uuid = getRequiredUuid(newCharacter);
@@ -242,165 +242,135 @@ export function useCharacterCRUD({
       logger.error('useCharacterCRUD', 'Failed to add character', error);
       addToast('Failed to create character', 'error');
     }
-  }, [getContext, setSelectedCharacterUuid, setEditedCharacter, onCharacterCreated, addToast]);
+  };
 
   // Delete a character
-  const handleDeleteCharacter = useCallback(
-    (characterId?: string) => {
-      // If no characterId provided, delete the currently selected character
-      const charToDelete = characterId
-        ? characters.find((c) => c.id === characterId)
-        : characters.find((c) => c.uuid === selectedCharacterUuid);
+  const handleDeleteCharacter = (characterId?: string) => {
+    // If no characterId provided, delete the currently selected character
+    const charToDelete = characterId
+      ? characters.find((c) => c.id === characterId)
+      : characters.find((c) => c.uuid === selectedCharacterUuid);
 
-      if (!charToDelete) return;
+    if (!charToDelete) return;
 
-      // Delete metadata for this character
-      if (charToDelete.uuid) {
-        deleteMetadata(charToDelete.uuid);
+    // Delete metadata for this character
+    if (charToDelete.uuid) {
+      deleteMetadata(charToDelete.uuid);
+    }
+
+    const updatedCharacters = characters.filter((c) => c.uuid !== charToDelete.uuid);
+    setCharacters(updatedCharacters);
+
+    // Filter tokens by UUID
+    const updatedTokens = tokens.filter((t) => t.parentUuid !== charToDelete.uuid);
+    setTokens(updatedTokens);
+
+    // Update JSON
+    try {
+      const parsed = JSON.parse(jsonInput);
+      if (Array.isArray(parsed)) {
+        const updatedParsed = parsed.filter((item: Character | string) => {
+          if (typeof item === 'string') return item !== charToDelete.id;
+          if (typeof item === 'object') return item.id !== charToDelete.id;
+          return true;
+        });
+        setJsonInput(JSON.stringify(updatedParsed, null, 2));
+      }
+    } catch (e) {
+      logger.error('useCharacterCRUD', 'Failed to update JSON', e);
+    }
+
+    // If we deleted the selected character, select another one
+    if (charToDelete.uuid === selectedCharacterUuid) {
+      if (updatedCharacters.length > 0) {
+        setSelectedCharacterUuid(updatedCharacters[0].uuid || '');
+      } else {
+        setSelectedCharacterUuid('');
+        setEditedCharacter(null);
+      }
+    }
+
+    addToast(`Deleted ${charToDelete.name}`, 'success');
+  };
+
+  // Duplicate a character
+  const handleDuplicateCharacter = async (characterId: string) => {
+    const charToDuplicate = characters.find((c) => c.id === characterId);
+    if (!charToDuplicate) return;
+
+    try {
+      // Generate base ID for duplicate
+      const baseId = `${charToDuplicate.id}_copy`;
+      const newName = `${charToDuplicate.name} (Copy)`;
+
+      // Ensure unique ID across all characters
+      const existingIds = characters.map((c) => c.id);
+      const { id: newId } = ensureUniqueId(baseId, existingIds);
+
+      const newUuid = await generateStableUuid(newId, newName);
+      const newCharacter: Character = {
+        ...JSON.parse(JSON.stringify(charToDuplicate)),
+        id: newId,
+        name: newName,
+        uuid: newUuid,
+        source: 'custom', // Duplicates are always custom
+      };
+
+      // Copy metadata from original character, but verify idLinkedToName
+      if (charToDuplicate.uuid) {
+        const originalMetadata = getMetadata(charToDuplicate.uuid);
+        setMetadata(newUuid, {
+          ...originalMetadata,
+          idLinkedToName: isIdLinkedToName(newCharacter),
+        });
+      } else {
+        setMetadata(newUuid, { idLinkedToName: isIdLinkedToName(newCharacter) });
       }
 
-      const updatedCharacters = characters.filter((c) => c.uuid !== charToDelete.uuid);
+      const charIndex = characters.findIndex((c) => c.id === characterId);
+      const updatedCharacters = [...characters];
+      updatedCharacters.splice(charIndex + 1, 0, newCharacter);
       setCharacters(updatedCharacters);
-
-      // Filter tokens by UUID
-      const updatedTokens = tokens.filter((t) => t.parentUuid !== charToDelete.uuid);
-      setTokens(updatedTokens);
 
       // Update JSON
       try {
         const parsed = JSON.parse(jsonInput);
         if (Array.isArray(parsed)) {
-          const updatedParsed = parsed.filter((item: Character | string) => {
-            if (typeof item === 'string') return item !== charToDelete.id;
-            if (typeof item === 'object') return item.id !== charToDelete.id;
-            return true;
+          const jsonIndex = parsed.findIndex((item: Character | string) => {
+            if (typeof item === 'string') return item === characterId;
+            if (typeof item === 'object') return item.id === characterId;
+            return false;
           });
-          setJsonInput(JSON.stringify(updatedParsed, null, 2));
+          if (jsonIndex !== -1) {
+            parsed.splice(jsonIndex + 1, 0, newCharacter);
+            setJsonInput(JSON.stringify(parsed, null, 2));
+          }
         }
       } catch (e) {
         logger.error('useCharacterCRUD', 'Failed to update JSON', e);
       }
 
-      // If we deleted the selected character, select another one
-      if (charToDelete.uuid === selectedCharacterUuid) {
-        if (updatedCharacters.length > 0) {
-          setSelectedCharacterUuid(updatedCharacters[0].uuid || '');
-        } else {
-          setSelectedCharacterUuid('');
-          setEditedCharacter(null);
-        }
-      }
+      setSelectedCharacterUuid(newUuid);
+      addToast(`Duplicated ${charToDuplicate.name}`, 'success');
 
-      addToast(`Deleted ${charToDelete.name}`, 'success');
-    },
-    [
-      characters,
-      tokens,
-      jsonInput,
-      selectedCharacterUuid,
-      setCharacters,
-      setTokens,
-      setJsonInput,
-      deleteMetadata,
-      setSelectedCharacterUuid,
-      setEditedCharacter,
-      addToast,
-    ]
-  );
-
-  // Duplicate a character
-  const handleDuplicateCharacter = useCallback(
-    async (characterId: string) => {
-      const charToDuplicate = characters.find((c) => c.id === characterId);
-      if (!charToDuplicate) return;
-
-      try {
-        // Generate base ID for duplicate
-        const baseId = `${charToDuplicate.id}_copy`;
-        const newName = `${charToDuplicate.name} (Copy)`;
-
-        // Ensure unique ID across all characters
-        const existingIds = characters.map((c) => c.id);
-        const { id: newId } = ensureUniqueId(baseId, existingIds);
-
-        const newUuid = await generateStableUuid(newId, newName);
-        const newCharacter: Character = {
-          ...JSON.parse(JSON.stringify(charToDuplicate)),
-          id: newId,
-          name: newName,
-          uuid: newUuid,
-          source: 'custom', // Duplicates are always custom
-        };
-
-        // Copy metadata from original character, but verify idLinkedToName
-        if (charToDuplicate.uuid) {
-          const originalMetadata = getMetadata(charToDuplicate.uuid);
-          setMetadata(newUuid, {
-            ...originalMetadata,
-            idLinkedToName: isIdLinkedToName(newCharacter),
-          });
-        } else {
-          setMetadata(newUuid, { idLinkedToName: isIdLinkedToName(newCharacter) });
-        }
-
-        const charIndex = characters.findIndex((c) => c.id === characterId);
-        const updatedCharacters = [...characters];
-        updatedCharacters.splice(charIndex + 1, 0, newCharacter);
-        setCharacters(updatedCharacters);
-
-        // Update JSON
-        try {
-          const parsed = JSON.parse(jsonInput);
-          if (Array.isArray(parsed)) {
-            const jsonIndex = parsed.findIndex((item: Character | string) => {
-              if (typeof item === 'string') return item === characterId;
-              if (typeof item === 'object') return item.id === characterId;
-              return false;
-            });
-            if (jsonIndex !== -1) {
-              parsed.splice(jsonIndex + 1, 0, newCharacter);
-              setJsonInput(JSON.stringify(parsed, null, 2));
-            }
-          }
-        } catch (e) {
-          logger.error('useCharacterCRUD', 'Failed to update JSON', e);
-        }
-
-        setSelectedCharacterUuid(newUuid);
-        addToast(`Duplicated ${charToDuplicate.name}`, 'success');
-
-        // Generate tokens for the duplicated character
-        regenerateCharacterAndReminders(newCharacter, generationOptions)
-          .then(({ characterToken, reminderTokens: newReminderTokens }) => {
-            const updatedTokens = [...tokens, characterToken, ...newReminderTokens];
-            setTokens(updatedTokens);
-          })
-          .catch((error) => {
-            logger.error(
-              'useCharacterCRUD',
-              'Failed to generate tokens for duplicated character',
-              error
-            );
-          });
-      } catch (error) {
-        logger.error('useCharacterCRUD', 'Failed to duplicate character', error);
-        addToast('Failed to duplicate character', 'error');
-      }
-    },
-    [
-      characters,
-      tokens,
-      jsonInput,
-      generationOptions,
-      setCharacters,
-      setTokens,
-      setJsonInput,
-      setMetadata,
-      getMetadata,
-      setSelectedCharacterUuid,
-      addToast,
-    ]
-  );
+      // Generate tokens for the duplicated character
+      regenerateCharacterAndReminders(newCharacter, generationOptions)
+        .then(({ characterToken, reminderTokens: newReminderTokens }) => {
+          const updatedTokens = [...tokens, characterToken, ...newReminderTokens];
+          setTokens(updatedTokens);
+        })
+        .catch((error) => {
+          logger.error(
+            'useCharacterCRUD',
+            'Failed to generate tokens for duplicated character',
+            error
+          );
+        });
+    } catch (error) {
+      logger.error('useCharacterCRUD', 'Failed to duplicate character', error);
+      addToast('Failed to duplicate character', 'error');
+    }
+  };
 
   return {
     handleAddCharacter,
@@ -408,5 +378,3 @@ export function useCharacterCRUD({
     handleDuplicateCharacter,
   };
 }
-
-export default useCharacterCRUD;

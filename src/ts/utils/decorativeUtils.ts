@@ -80,24 +80,18 @@ function buildAccentSettings(
   GenerationOptions,
   | 'accentEnabled'
   | 'accentGeneration'
-  | 'maximumAccents'
-  | 'accentPopulationProbability'
-  | 'accentArcSpan'
-  | 'accentSlots'
-  | 'enableLeftAccent'
-  | 'enableRightAccent'
-  | 'sideAccentProbability'
+  | 'accentRadialOffset'
+  | 'accentRotate180'
+  | 'accentFlip'
+  | 'accentLayer'
 > {
   return {
     accentEnabled: d.accentEnabled ?? g.accentEnabled,
     accentGeneration: d.accentGeneration ?? g.accentGeneration,
-    maximumAccents: d.maximumAccents ?? g.maximumAccents,
-    accentPopulationProbability: d.accentPopulationProbability ?? g.accentPopulationProbability,
-    accentArcSpan: d.accentArcSpan ?? g.accentArcSpan,
-    accentSlots: d.accentSlots ?? g.accentSlots,
-    enableLeftAccent: d.enableLeftAccent ?? g.enableLeftAccent,
-    enableRightAccent: d.enableRightAccent ?? g.enableRightAccent,
-    sideAccentProbability: d.sideAccentProbability ?? g.sideAccentProbability,
+    accentRadialOffset: d.accentRadialOffset ?? g.accentRadialOffset,
+    accentRotate180: d.accentRotate180 ?? g.accentRotate180,
+    accentFlip: d.accentFlip ?? g.accentFlip,
+    accentLayer: d.accentLayer ?? g.accentLayer,
   };
 }
 
@@ -160,17 +154,17 @@ export function createEffectiveOptions(
 /**
  * Keys that map from DecorativeOverrides to GenerationOptions for accent settings.
  * Used for mapping partial GenerationOptions updates back to DecorativeOverrides.
+ *
+ * Note: Accents are now deterministic based on character data, so only
+ * accentEnabled, accentGeneration, accentRadialOffset, accentRotate180, accentFlip, and accentLayer are configurable.
  */
 export const ACCENT_DECORATIVE_KEYS = [
   'accentEnabled',
   'accentGeneration',
-  'maximumAccents',
-  'accentPopulationProbability',
-  'accentArcSpan',
-  'accentSlots',
-  'enableLeftAccent',
-  'enableRightAccent',
-  'sideAccentProbability',
+  'accentRadialOffset',
+  'accentRotate180',
+  'accentFlip',
+  'accentLayer',
 ] as const;
 
 /**

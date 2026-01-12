@@ -17,6 +17,8 @@
 
 ### Exception: useEffect Dependencies
 
+**React Compiler cannot change `useEffect` dependency arrays.** When a value is explicitly listed as a dependency, it must have a stable reference to avoid infinite loops.
+
 **KEEP `useCallback`** only when the function is used as a dependency in `useEffect`:
 
 ```typescript
@@ -35,6 +37,26 @@ const handleClick = () => {  // No useCallback needed
   doSomething();
 };
 ```
+
+**KEEP `useMemo`** only when the computed value is used as a dependency in `useEffect`:
+
+```typescript
+// KEEP - computed array is in useEffect deps
+const enrichedItems = useMemo(
+  () => items.map(item => ({ ...item, extra: compute(item) })),
+  [items]
+);
+
+useEffect(() => {
+  processItems(enrichedItems);
+}, [enrichedItems]); // enrichedItems is a dependency
+
+// REMOVE - computed value is NOT in useEffect deps
+const filteredItems = items.filter(i => i.active); // No useMemo needed
+return <List items={filteredItems} />;
+```
+
+**Why this matters:** Arrays/objects created via `.map()`, `.filter()`, `new Map()`, etc. are NEW references every render. If used as `useEffect` dependencies without `useMemo`, the effect runs every render → setState → re-render → **infinite loop**.
 
 ### ref-as-prop Pattern (React 19)
 
@@ -84,6 +106,7 @@ Run `npx vite build` to verify - successful build with no compiler errors confir
 ❌ **Avoid useEffect for:**
 - Derived state (use `useMemo` or compute during render)
 - Resetting state when props change (use `key` prop or event handlers)
+- **Prop sync** (use state-during-render pattern - see below)
 - Transforming data for rendering (compute in render)
 - Effect chains (one effect triggers another via state)
 
@@ -135,18 +158,46 @@ useEffect(() => {
 }, [state]);
 ```
 
-**Prop Sync in Controlled Inputs:**
+**Prop Sync - State During Render (PREFERRED):**
 ```typescript
-// NECESSARY: Sync external prop to local state for controlled inputs
-// This is appropriate because we need to distinguish:
-// 1. External changes: value differs from what we last sent → sync to local
-// 2. Our changes propagated back: value equals what we sent → ignore
-useEffect(() => {
-  if (value !== lastSentValue.current) {
+// PREFERRED: React's "adjusting state during render" pattern
+// Faster than useEffect (synchronous, no extra render cycle)
+// This is the officially recommended React pattern for prop sync
+
+// Track previous value for comparison
+const [prevValue, setPrevValue] = useState<T>(value);
+
+// Sync during render - NOT in useEffect
+if (value !== prevValue) {
+  setPrevValue(value);
+  // Only sync if this is an external change (not our own update reflected back)
+  if (value !== lastSentValueRef.current) {
     setLocalValue(value);
+    lastSentValueRef.current = value;
   }
-}, [value]);
+}
+
+// For object values, use JSON comparison:
+const [prevValueJson, setPrevValueJson] = useState(() => JSON.stringify(value));
+const valueJson = JSON.stringify(value);
+
+if (valueJson !== prevValueJson) {
+  setPrevValueJson(valueJson);
+  setPendingValue(value);
+}
 ```
+
+**Why state-during-render is better than useEffect for prop sync:**
+- **Faster**: Synchronous update, no extra render cycle
+- **Simpler**: No dependency array concerns
+- **Official**: React's recommended pattern per "You Might Not Need an Effect"
+- **Predictable**: State is consistent within the same render
+
+**Real examples in codebase:**
+- `useControlledField.ts` - Single controlled input with debouncing
+- `useControlledFields.ts` - Multiple controlled inputs
+- `useExpandablePanel.ts` - Panel state management
+- `UnifiedSettingsBox.tsx` - Settings selector state
 
 ---
 
@@ -680,4 +731,4 @@ import { createCanvas, drawCurvedText } from '@/ts/canvas/index.js';
 
 ---
 
-*Last updated: 2025-12-31*
+*Last updated: 2026-01-12*

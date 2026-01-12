@@ -37,15 +37,9 @@ function createMockGenerationOptions(
       reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
       meta: { scale: 1.0, offsetX: 0, offsetY: 0 },
     },
+    // Accent settings (now deterministic based on character data)
     accentEnabled: true,
-    accentGeneration: 'random',
-    maximumAccents: 3,
-    accentPopulationProbability: 0.5,
-    accentArcSpan: 90,
-    accentSlots: [true, true, true],
-    enableLeftAccent: true,
-    enableRightAccent: true,
-    sideAccentProbability: 0.3,
+    accentGeneration: 'classic',
     ...overrides,
   } as GenerationOptions;
 }
@@ -224,15 +218,13 @@ describe('decorativeUtils', () => {
       const decoratives: DecorativeOverrides = {
         useCustomSettings: true,
         accentEnabled: false,
-        maximumAccents: 5,
-        accentPopulationProbability: 0.8,
+        accentGeneration: 'autumn',
       };
 
       const result = createEffectiveOptions(globalOptions, decoratives);
 
       expect(result.accentEnabled).toBe(false);
-      expect(result.maximumAccents).toBe(5);
-      expect(result.accentPopulationProbability).toBe(0.8);
+      expect(result.accentGeneration).toBe('autumn');
     });
 
     it('should use defaults when neither decorative nor global provides values', () => {
@@ -256,19 +248,17 @@ describe('decorativeUtils', () => {
 
   describe('ACCENT_DECORATIVE_KEYS', () => {
     it('should contain all accent-related keys', () => {
+      // Accents are now deterministic based on character data
+      // Only accentEnabled and accentGeneration are configurable
       expect(ACCENT_DECORATIVE_KEYS).toContain('accentEnabled');
       expect(ACCENT_DECORATIVE_KEYS).toContain('accentGeneration');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('maximumAccents');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('accentPopulationProbability');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('accentArcSpan');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('accentSlots');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('enableLeftAccent');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('enableRightAccent');
-      expect(ACCENT_DECORATIVE_KEYS).toContain('sideAccentProbability');
     });
 
-    it('should have 9 keys total', () => {
-      expect(ACCENT_DECORATIVE_KEYS).toHaveLength(9);
+    it('should have exactly 2 keys (deterministic accent system)', () => {
+      // Old randomization options removed:
+      // - maximumAccents, accentPopulationProbability, accentArcSpan
+      // - accentSlots, enableLeftAccent, enableRightAccent, sideAccentProbability
+      expect(ACCENT_DECORATIVE_KEYS).toHaveLength(2);
     });
   });
 
@@ -285,61 +275,32 @@ describe('decorativeUtils', () => {
       expect(result.accentEnabled).toBe(false);
     });
 
-    it('should map maximumAccents', () => {
-      const result = mapAccentOptionsToDecorative({ maximumAccents: 7 });
+    it('should map accentGeneration', () => {
+      const result = mapAccentOptionsToDecorative({ accentGeneration: 'autumn' });
 
-      expect(result.maximumAccents).toBe(7);
+      expect(result.accentGeneration).toBe('autumn');
     });
 
-    it('should map multiple accent options', () => {
+    it('should map both accent options', () => {
       const result = mapAccentOptionsToDecorative({
         accentEnabled: true,
-        maximumAccents: 5,
-        accentPopulationProbability: 0.6,
-        enableLeftAccent: false,
+        accentGeneration: 'classic',
       });
 
       expect(result.accentEnabled).toBe(true);
-      expect(result.maximumAccents).toBe(5);
-      expect(result.accentPopulationProbability).toBe(0.6);
-      expect(result.enableLeftAccent).toBe(false);
+      expect(result.accentGeneration).toBe('classic');
     });
 
     it('should ignore non-accent keys', () => {
       const result = mapAccentOptionsToDecorative({
         displayAbilityText: true,
         characterNameFont: 'Arial',
-        maximumAccents: 3,
+        accentGeneration: 'classic',
       } as Partial<GenerationOptions>);
 
-      expect(result.maximumAccents).toBe(3);
+      expect(result.accentGeneration).toBe('classic');
       expect('displayAbilityText' in result).toBe(false);
       expect('characterNameFont' in result).toBe(false);
-    });
-
-    it('should map accentSlots array', () => {
-      const slots = [true, false, true];
-      const result = mapAccentOptionsToDecorative({ accentSlots: slots });
-
-      expect(result.accentSlots).toEqual(slots);
-    });
-
-    it('should map sideAccentProbability', () => {
-      const result = mapAccentOptionsToDecorative({ sideAccentProbability: 0.4 });
-
-      expect(result.sideAccentProbability).toBe(0.4);
-    });
-
-    it('should map accentArcSpan', () => {
-      const result = mapAccentOptionsToDecorative({ accentArcSpan: 120 });
-
-      expect(result.accentArcSpan).toBe(120);
-    });
-
-    it('should map accentGeneration', () => {
-      const result = mapAccentOptionsToDecorative({ accentGeneration: 'fixed' });
-
-      expect(result.accentGeneration).toBe('fixed');
     });
   });
 });

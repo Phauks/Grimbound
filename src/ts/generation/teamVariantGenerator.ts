@@ -50,7 +50,7 @@ export const TEAM_VARIANT_CONFIG: TeamVariantConfig[] = [
   { targetTeam: 'minion', displayName: TEAM_LABELS.minion, color: TEAM_COLORS.minion.hex },
   { targetTeam: 'demon', displayName: TEAM_LABELS.demon, color: TEAM_COLORS.demon.hex },
   { targetTeam: 'fabled', displayName: TEAM_LABELS.fabled, color: TEAM_COLORS.fabled.hex },
-  { targetTeam: 'traveller', displayName: TEAM_LABELS.traveler, color: TEAM_COLORS.traveler.hex },
+  { targetTeam: 'traveller', displayName: TEAM_LABELS.traveller, color: TEAM_COLORS.traveller.hex },
   { targetTeam: 'loric', displayName: TEAM_LABELS.loric, color: TEAM_COLORS.loric.hex },
 ];
 
@@ -59,10 +59,9 @@ export const TEAM_VARIANT_CONFIG: TeamVariantConfig[] = [
 // ============================================================================
 
 /**
- * Normalize team name to handle aliases (e.g., 'traveler' -> 'traveller')
+ * Normalize team name to Team type
  */
 function normalizeTeam(team: Team | string): Team {
-  if (team === 'traveler') return 'traveller';
   return team as Team;
 }
 
@@ -99,14 +98,14 @@ export function getTeamsToGenerate(
  */
 export function applyTeamRecolor(imageData: ImageData, targetTeam: AutoGenerateTeam): ImageData {
   // Find the preset for this team
-  const preset = TEAM_COLOR_PRESETS.find((p) => p.id === targetTeam || p.id === 'traveler');
+  const preset = TEAM_COLOR_PRESETS.find((p) => p.id === targetTeam);
 
   if (!preset) {
     logger.warn('TeamVariantGenerator', `No preset found for team: ${targetTeam}`);
     return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
   }
 
-  // Handle traveler's split colors specially
+  // Handle traveller's split colors specially
   if (targetTeam === 'traveller' && preset.split) {
     return replaceIconColorSplit(imageData, preset.split, {
       saturationBoost: preset.saturationBoost,

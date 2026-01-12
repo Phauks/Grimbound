@@ -332,12 +332,3 @@ export function validateRequiredFields<T extends Record<string, unknown>>(
     throw error;
   }
 }
-
-export default {
-  handleHookError,
-  clearHookError,
-  handleAsyncOperation,
-  retryOperation,
-  guardAgainstUndefined,
-  validateRequiredFields,
-};

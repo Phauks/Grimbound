@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import styles from '@/styles/components/layout/TabNavigation.module.css';
 import { type PreRenderableTab, tabPreRenderService } from '@/ts/cache/index.js';
@@ -30,23 +29,20 @@ export function TabNavigation({
   const _hasScript = jsonInput.trim() !== '';
 
   // Pre-render data when hovering over tabs (unified service)
-  const handleTabHover = useCallback(
-    (tabId: EditorTab) => {
-      // Only pre-render for supported tabs with data
-      const preRenderableTabs: PreRenderableTab[] = ['characters', 'tokens', 'script'];
-      if (!preRenderableTabs.includes(tabId as PreRenderableTab)) return;
-      if (characters.length === 0 && tokens.length === 0) return;
+  const handleTabHover = (tabId: EditorTab) => {
+    // Only pre-render for supported tabs with data
+    const preRenderableTabs: PreRenderableTab[] = ['characters', 'tokens', 'script'];
+    if (!preRenderableTabs.includes(tabId as PreRenderableTab)) return;
+    if (characters.length === 0 && tokens.length === 0) return;
 
-      tabPreRenderService.preRenderTab(tabId as PreRenderableTab, {
-        characters,
-        tokens,
-        scriptMeta,
-        generationOptions,
-        lastSelectedCharacterUuid,
-      });
-    },
-    [characters, scriptMeta, generationOptions, tokens, lastSelectedCharacterUuid]
-  );
+    tabPreRenderService.preRenderTab(tabId as PreRenderableTab, {
+      characters,
+      tokens,
+      scriptMeta,
+      generationOptions,
+      lastSelectedCharacterUuid,
+    });
+  };
 
   const tabs: { id: EditorTab; label: string; disabled?: boolean }[] = [
     { id: 'projects', label: 'Projects' },

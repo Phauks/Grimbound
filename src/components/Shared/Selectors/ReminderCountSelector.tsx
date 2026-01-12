@@ -9,7 +9,6 @@
  * @module components/Shared/ReminderCountSelector
  */
 
-import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
@@ -41,13 +40,7 @@ interface PendingCountSettings {
 // Preview Component
 // ============================================================================
 
-const CountPreview = memo(function CountPreview({
-  style,
-  isEnabled,
-}: {
-  style: ReminderCountStyle;
-  isEnabled: boolean;
-}) {
+function CountPreview({ style, isEnabled }: { style: ReminderCountStyle; isEnabled: boolean }) {
   const previewText = style === 'roman' ? 'III' : '3';
 
   return (
@@ -55,13 +48,13 @@ const CountPreview = memo(function CountPreview({
       <span className={styles.previewIcon}>{previewText}</span>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const ReminderCountSelector = memo(function ReminderCountSelector({
+export function ReminderCountSelector({
   generationOptions,
   onOptionChange,
   size = 'medium',
@@ -82,22 +75,16 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
     uniformLayout,
   };
 
-  const handleToggle = useCallback(
-    (enabled: boolean) => {
-      onOptionChange({ tokenCount: enabled });
-    },
-    [onOptionChange]
-  );
+  const handleToggle = (enabled: boolean) => {
+    onOptionChange({ tokenCount: enabled });
+  };
 
-  const handlePanelChange = useCallback(
-    (settings: PendingCountSettings) => {
-      onOptionChange({
-        reminderCountStyle: settings.style,
-        reminderCountUniformLayout: settings.uniformLayout,
-      });
-    },
-    [onOptionChange]
-  );
+  const handlePanelChange = (settings: PendingCountSettings) => {
+    onOptionChange({
+      reminderCountStyle: settings.style,
+      reminderCountUniformLayout: settings.uniformLayout,
+    });
+  };
 
   const panel = useExpandablePanel<PendingCountSettings>({
     value: currentSettings,
@@ -245,6 +232,4 @@ export const ReminderCountSelector = memo(function ReminderCountSelector({
       {renderPanel()}
     </SettingsSelectorBase>
   );
-});
-
-export default ReminderCountSelector;
+}

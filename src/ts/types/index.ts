@@ -175,15 +175,20 @@ export interface DecorativeOverrides {
   setupPlacement?: SetupPlacement;
 
   // Accent settings (from DecorativesSettingsSelector)
+  // Accents are now deterministic based on character data:
+  // - Top accents: number of reminders
+  // - Left accent: character acts on first night
+  // - Right accent: character acts on other nights
   accentEnabled?: boolean;
   accentGeneration?: string;
-  maximumAccents?: number;
-  accentPopulationProbability?: number;
-  accentArcSpan?: number;
-  accentSlots?: number;
-  enableLeftAccent?: boolean;
-  enableRightAccent?: boolean;
-  sideAccentProbability?: number;
+  /** How far from center accents are placed (0.5-1.0, default 0.88) */
+  accentRadialOffset?: number;
+  /** Rotate accent images 180 degrees */
+  accentRotate180?: boolean;
+  /** Flip accent images horizontally */
+  accentFlip?: boolean;
+  /** Whether accents are drawn under or over the character icon (default: 'over') */
+  accentLayer?: 'under' | 'over';
 }
 
 // Internal metadata stored separately from character JSON
@@ -279,8 +284,6 @@ export interface TokenConfig {
 
   // Style Options
   accentGeneration: string;
-  maximumAccents: number;
-  accentPopulationProbability: number;
   setupStyle: string;
   reminderBackground: string;
   characterBackground: string;
@@ -488,15 +491,17 @@ export interface GenerationOptions {
   pandemoniumToken: boolean;
   jinxTokens?: boolean; // Generate special tokens for character jinx interactions
   jinxIconSpacing?: number; // Distance of jinx icons from center (0 = default, positive = further apart)
+  // Accent settings - now deterministic based on character data
   accentGeneration?: string;
   accentEnabled?: boolean; // Whether accents are enabled
-  maximumAccents?: number;
-  accentPopulationProbability?: number;
-  accentArcSpan?: number;
-  accentSlots?: number;
-  enableLeftAccent?: boolean;
-  enableRightAccent?: boolean;
-  sideAccentProbability?: number;
+  /** How far from center accents are placed (0.5-1.0, default 0.88). Lower = closer to center */
+  accentRadialOffset?: number;
+  /** Rotate accent images 180 degrees */
+  accentRotate180?: boolean;
+  /** Flip accent images horizontally */
+  accentFlip?: boolean;
+  /** Whether accents are drawn under or over the character icon (default: 'over') */
+  accentLayer?: 'under' | 'over';
   fontSpacing?: FontSpacingOptions;
   textShadow?: TextShadowOptions;
   fontSizes?: FontSizeOptions;
@@ -789,10 +794,6 @@ export interface Config {
   };
   STYLE: {
     ACCENT_GENERATION: string;
-    MAXIMUM_ACCENTS: number;
-    ACCENT_POPULATION_PROBABILITY: number;
-    ACCENT_ARC_SPAN: number;
-    ACCENT_SLOTS: number;
     SETUP_STYLE: string;
     REMINDER_BACKGROUND: string;
     CHARACTER_BACKGROUND: string;
@@ -863,6 +864,7 @@ export interface Config {
     IMAGES: string;
     CHARACTER_BACKGROUNDS: string;
     SETUP_OVERLAYS: string;
+    SCRIPT_BACKGROUNDS: string;
     ACCENTS: string;
   };
   EXAMPLE_SCRIPTS: string[];
@@ -923,8 +925,6 @@ export interface UIElements {
   abilityTextColor: HTMLInputElement | null;
   reminderTextColor: HTMLInputElement | null;
   accentGeneration: HTMLSelectElement | null;
-  maximumAccents: HTMLInputElement | null;
-  accentPopulationProbability: HTMLInputElement | null;
 
   // PDF Options
   tokenPadding: HTMLInputElement | null;

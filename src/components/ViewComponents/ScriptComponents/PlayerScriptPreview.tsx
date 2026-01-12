@@ -1,0 +1,699 @@
+/**
+ * PlayerScriptPreview Component
+ *
+ * Interactive preview of the player script PDF with drag-and-drop character reordering.
+ * Shows both front page (roles) and backing sheet side by side at a scaled size.
+ */
+
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useEffect, useState } from 'react';
+import { useScriptPdf } from '@/contexts/ScriptPdfContext';
+import { usePlayerScriptOrder } from '@/hooks/scripts/usePlayerScriptOrder';
+import nightOrderStyles from '@/styles/components/script/NightOrderView.module.css';
+import styles from '@/styles/components/script/PlayerScriptPreview.module.css';
+import { tabPreRenderService } from '@/ts/cache/index.js';
+import { TEAM_COLORS, TEAM_LABELS } from '@/ts/scriptPdf/constants.js';
+import { PlayerCountTable } from '@/ts/scriptPdf/playerScript/PlayerCountTable.js';
+import type { JinxIconInfo } from '@/ts/scriptPdf/playerScript/PlayerScriptEntry';
+import type {
+  NightOrderIcon,
+  PlayerScriptCharacter,
+  PlayerScriptJinx,
+} from '@/ts/scriptPdf/types.js';
+import { extractActiveJinxes, SCRIPT_TEAM_ORDER } from '@/ts/scriptPdf/utils.js';
+import type { ScriptMeta, Team } from '@/ts/types/index.js';
+import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
+import { ScaledPage } from './ScaledPage';
+import { SortablePlayerScriptEntry } from './SortablePlayerScriptEntry';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface PlayerScriptPreviewProps {
+  /** Characters to display */
+  characters: PlayerScriptCharacter[];
+  /** Script metadata */
+  scriptMeta: ScriptMeta | null;
+  /** Map of character IDs to resolved image URLs */
+  imageUrls: Map<string, string>;
+  /** Logo URL for backing sheet (if using logo mode) */
+  logoUrl?: string;
+  /** Whether drag-and-drop reordering is enabled */
+  enableReordering?: boolean;
+  /** Pre-computed first night order icons (optional - if not provided, won't show night order) */
+  firstNightIcons?: NightOrderIcon[];
+  /** Pre-computed other night order icons (optional - if not provided, won't show night order) */
+  otherNightIcons?: NightOrderIcon[];
+}
+
+// ============================================================================
+// SUBCOMPONENTS
+// ============================================================================
+
+interface TeamSectionPreviewProps {
+  team: Team;
+  characters: PlayerScriptCharacter[];
+  imageUrls: Map<string, string>;
+  jinxes: PlayerScriptJinx[];
+  showJinxIconsInline: boolean;
+  twoColumn: boolean;
+  enableDragDrop: boolean;
+  itemIds: string[];
+  /** Handler for DndContext onDragStart */
+  onDragStart: (event: { active: { id: string | number } }) => void;
+  /** Handler for DndContext onDragEnd */
+  onDragEnd: (event: DragEndEvent) => void;
+  /** Handler for DndContext onDragCancel */
+  onDragCancel: () => void;
+  /** Whether any item is being dragged */
+  isDragging: boolean;
+  /** Icon scale multiplier */
+  iconScale: number;
+}
+
+function TeamSectionPreview({
+  team,
+  characters,
+  imageUrls,
+  jinxes,
+  showJinxIconsInline,
+  twoColumn,
+  enableDragDrop,
+  itemIds,
+  onDragStart,
+  onDragEnd,
+  onDragCancel,
+  isDragging,
+  iconScale,
+}: TeamSectionPreviewProps) {
+  // Configure dnd-kit sensors for this team
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  if (characters.length === 0) return null;
+
+  const teamLabel = TEAM_LABELS[team] || team.toUpperCase();
+  const teamColor = TEAM_COLORS[team] || '#888';
+
+  // Compute jinx icons for each character
+  const getJinxIconsForCharacter = (characterId: string): JinxIconInfo[] => {
+    if (!showJinxIconsInline) return [];
+    const icons: JinxIconInfo[] = [];
+    for (const jinx of jinxes) {
+      if (jinx.char1.id === characterId) {
+        // This character is jinxed with char2
+        icons.push({
+          id: jinx.char2.id,
+          imageUrl: imageUrls.get(jinx.char2.id) || jinx.char2.image,
+          name: jinx.char2.name,
+        });
+      } else if (jinx.char2.id === characterId) {
+        // This character is jinxed with char1
+        icons.push({
+          id: jinx.char1.id,
+          imageUrl: imageUrls.get(jinx.char1.id) || jinx.char1.image,
+          name: jinx.char1.name,
+        });
+      }
+    }
+    return icons;
+  };
+
+  return (
+    <div className={`${styles.teamSection} ${isDragging ? styles.dragging : ''}`}>
+      {/* Vertical team label */}
+      <div className={styles.teamLabel} style={{ color: teamColor }} title={teamLabel}>
+        {teamLabel.split('').map((letter, i) => (
+          <span key={`${team}-${i}-${letter}`} className={styles.teamLetter}>
+            {letter}
+          </span>
+        ))}
+      </div>
+
+      {/* Character grid with isolated DndContext per team */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={onDragCancel}
+      >
+        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+          <div
+            className={`${styles.characterGrid} ${twoColumn ? styles.twoColumn : ''}`}
+            style={
+              twoColumn
+                ? ({ '--row-count': Math.ceil(characters.length / 2) } as React.CSSProperties)
+                : undefined
+            }
+          >
+            {characters.map((char) => (
+              <SortablePlayerScriptEntry
+                key={char.id}
+                character={char}
+                imageUrl={imageUrls.get(char.id) || char.image}
+                twoColumn={twoColumn}
+                jinxIcons={getJinxIconsForCharacter(char.id)}
+                enableDragDrop={enableDragDrop}
+                iconScale={iconScale}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export function PlayerScriptPreview({
+  characters,
+  scriptMeta,
+  imageUrls,
+  logoUrl,
+  enableReordering = true,
+  firstNightIcons = [],
+  otherNightIcons = [],
+}: PlayerScriptPreviewProps) {
+  const { settings, updateSettings } = useScriptPdf();
+  const ps = settings.playerScript;
+  const bs = settings.backingSheet;
+  const background = ps.background;
+  const backingBackground = bs.background;
+
+  // Use player script-specific icon scale
+  const playerScriptIconScale = ps.iconScale;
+  // Backing sheet has its own icon scale
+  const backingSheetIconScale = bs.iconScale;
+
+  // Backing sheet icon scale style - for CSS transform-based scaling
+  const backingIconScaleStyle = { '--icon-scale': backingSheetIconScale } as React.CSSProperties;
+
+  // Build bootlegger data from scriptMeta.bootlegger
+  // Can be either character IDs (look up) or rule text strings (display directly)
+  const bootleggerData: {
+    characters: PlayerScriptCharacter[];
+    rules: string[];
+  } = (() => {
+    if (!scriptMeta?.bootlegger || scriptMeta.bootlegger.length === 0) {
+      return { characters: [], rules: [] };
+    }
+
+    const bootleggerChars: PlayerScriptCharacter[] = [];
+    const bootleggerRules: string[] = [];
+
+    for (const entry of scriptMeta.bootlegger) {
+      // If it contains spaces or is longer than typical ID, treat as rule text
+      if (entry.includes(' ') || entry.length > 30) {
+        bootleggerRules.push(entry);
+      } else {
+        // Try to look up as character ID
+        const char = characters.find((c) => c.id.toLowerCase() === entry.toLowerCase());
+        if (char) {
+          bootleggerChars.push(char);
+        } else {
+          // Couldn't find character, treat as rule text
+          bootleggerRules.push(entry);
+        }
+      }
+    }
+
+    return { characters: bootleggerChars, rules: bootleggerRules };
+  })();
+
+  // Build background style from settings (for front page)
+  const backgroundStyle: React.CSSProperties = (() => {
+    const baseStyle: React.CSSProperties = {};
+
+    // Apply background
+    if (background.mode === 'gradient') {
+      const { type, colorStart, colorEnd, rotation } = background.gradient;
+      let gradientCss: string;
+      switch (type) {
+        case 'radial':
+          gradientCss = `radial-gradient(circle, ${colorStart}, ${colorEnd})`;
+          break;
+        case 'conic':
+          gradientCss = `conic-gradient(from ${rotation}deg, ${colorStart}, ${colorEnd})`;
+          break;
+        default:
+          gradientCss = `linear-gradient(${rotation}deg, ${colorStart}, ${colorEnd})`;
+      }
+      baseStyle.background = gradientCss;
+    } else {
+      baseStyle.backgroundColor = background.solidColor;
+    }
+
+    // Apply margins (padding on the page content)
+    if (ps.margins) {
+      baseStyle.padding = `${ps.margins.top}in ${ps.margins.right}in ${ps.margins.bottom}in ${ps.margins.left}in`;
+    }
+
+    return baseStyle;
+  })();
+
+  // Build background style for backing sheet (can be different from front)
+  const backingBackgroundStyle: React.CSSProperties = (() => {
+    const baseStyle: React.CSSProperties = {};
+
+    // Apply background
+    if (backingBackground.mode === 'gradient') {
+      const { type, colorStart, colorEnd, rotation } = backingBackground.gradient;
+      let gradientCss: string;
+      switch (type) {
+        case 'radial':
+          gradientCss = `radial-gradient(circle, ${colorStart}, ${colorEnd})`;
+          break;
+        case 'conic':
+          gradientCss = `conic-gradient(from ${rotation}deg, ${colorStart}, ${colorEnd})`;
+          break;
+        default:
+          gradientCss = `linear-gradient(${rotation}deg, ${colorStart}, ${colorEnd})`;
+      }
+      baseStyle.background = gradientCss;
+    } else {
+      baseStyle.backgroundColor = backingBackground.solidColor;
+    }
+
+    // Apply margins (padding on the page content)
+    if (bs.margins) {
+      baseStyle.padding = `${bs.margins.top}in ${bs.margins.right}in ${bs.margins.bottom}in ${bs.margins.left}in`;
+    }
+
+    return baseStyle;
+  })();
+
+  // Handle order changes
+  const handleOrderChange = (newOrder: string[]) => {
+    updateSettings({
+      playerScript: {
+        customOrder: newOrder.length > 0 ? newOrder : undefined,
+      },
+    });
+  };
+
+  // Use the player script order hook
+  const {
+    charactersByTeam,
+    fabled,
+    travellers,
+    teamItemIds,
+    isDragging,
+    onDragStart,
+    onDragEnd,
+    onDragCancel,
+    resetToSAO,
+    hasCustomOrder,
+  } = usePlayerScriptOrder({
+    characters,
+    customOrder: ps.customOrder,
+    onOrderChange: handleOrderChange,
+  });
+
+  // Extract jinxes and night order (now controlled by backing sheet settings)
+  const jinxes = bs.showJinxes ? extractActiveJinxes(characters) : [];
+
+  // Use pre-computed night order icons from props
+  const nightOrderIcons = bs.showNightOrderOnBack
+    ? { firstNight: firstNightIcons, otherNight: otherNightIcons }
+    : { firstNight: [] as NightOrderIcon[], otherNight: [] as NightOrderIcon[] };
+
+  // Determine column layout
+  const totalMainChars = Array.from(charactersByTeam.values()).reduce(
+    (sum, chars) => sum + chars.length,
+    0
+  );
+  const twoColumn = ps.columns === 2 || (ps.columns === 'auto' && totalMainChars > 16);
+
+  return (
+    <div className={styles.previewContainer}>
+      {/* Pages Container - Vertical stack like Night Order */}
+      <div className={`${nightOrderStyles.sheetsContainer} ${isDragging ? styles.dragging : ''}`}>
+        {/* Front Page */}
+        <div className={nightOrderStyles.pageWrapper}>
+          <ScaledPage>
+            <div className={styles.pageContent} style={backgroundStyle}>
+              {/* SAO Reset Button - floats in top right of script page */}
+              {hasCustomOrder && (
+                <button
+                  type="button"
+                  className={styles.saoResetButton}
+                  onClick={resetToSAO}
+                  title="Reset to Standard Almanac Order"
+                >
+                  Reset to SAO
+                </button>
+              )}
+
+              {/* Header */}
+              <div
+                className={`${styles.header} ${ps.titleStyle === 'compact' ? styles.headerCompact : ''}`}
+              >
+                <h1
+                  className={`${styles.scriptName} ${ps.titleStyle === 'compact' ? styles.scriptNameCompact : ''}`}
+                >
+                  {scriptMeta?.name || 'Untitled Script'}
+                </h1>
+                {(ps.showAuthor || ps.showVersion) &&
+                  (scriptMeta?.author || scriptMeta?.version) && (
+                    <p
+                      className={`${styles.author} ${ps.titleStyle === 'compact' ? styles.authorCompact : ''}`}
+                    >
+                      {ps.showAuthor && scriptMeta?.author && `by ${scriptMeta.author}`}
+                      {ps.showAuthor &&
+                        scriptMeta?.author &&
+                        ps.showVersion &&
+                        scriptMeta?.version &&
+                        ' • '}
+                      {ps.showVersion && scriptMeta?.version && `v${scriptMeta.version}`}
+                    </p>
+                  )}
+              </div>
+
+              {/* Team Sections */}
+              <div className={styles.teamSections}>
+                {SCRIPT_TEAM_ORDER.map((team) => {
+                  const teamChars = charactersByTeam.get(team) || [];
+                  const itemIds = (teamItemIds.get(team) || []) as string[];
+                  return (
+                    <TeamSectionPreview
+                      key={team}
+                      team={team}
+                      characters={teamChars}
+                      imageUrls={imageUrls}
+                      jinxes={jinxes}
+                      showJinxIconsInline={ps.showJinxIconsInline}
+                      twoColumn={twoColumn}
+                      enableDragDrop={enableReordering}
+                      itemIds={itemIds}
+                      onDragStart={onDragStart}
+                      onDragEnd={onDragEnd}
+                      onDragCancel={onDragCancel}
+                      isDragging={isDragging}
+                      iconScale={playerScriptIconScale}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              <div className={styles.footer}>
+                <span className={styles.footerNote}>*Not the first night</span>
+                <span className={styles.footerCopyright}>© bloodontheclocktower.com</span>
+              </div>
+            </div>
+          </ScaledPage>
+        </div>
+
+        {/* Backing Sheet - Always included with player script */}
+        <div className={nightOrderStyles.pageWrapper}>
+          <ScaledPage>
+            <div className={styles.pageContent} style={backingBackgroundStyle}>
+              {/* Night Order Icons - Show all with wrapping */}
+              {bs.showNightOrderOnBack && (
+                <div className={styles.nightOrderBar}>
+                  <div className={styles.nightOrderRow}>
+                    <span className={styles.nightOrderLabel}>First Night:</span>
+                    <div className={styles.nightOrderIcons}>
+                      {nightOrderIcons.firstNight.map((icon) => (
+                        <div key={`first-${icon.id}`} className={styles.nightOrderIconWrapper}>
+                          <ResolvedImage
+                            characterId={icon.id}
+                            fallbackUrl={icon.image}
+                            alt={icon.name || icon.id}
+                            title={icon.name}
+                            className={styles.nightOrderIcon}
+                            style={backingIconScaleStyle}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.nightOrderRow}>
+                    <span className={styles.nightOrderLabel}>Other Nights:</span>
+                    <div className={styles.nightOrderIcons}>
+                      {nightOrderIcons.otherNight.map((icon) => (
+                        <div key={`other-${icon.id}`} className={styles.nightOrderIconWrapper}>
+                          <ResolvedImage
+                            characterId={icon.id}
+                            fallbackUrl={icon.image}
+                            alt={icon.name || icon.id}
+                            title={icon.name}
+                            className={styles.nightOrderIcon}
+                            style={backingIconScaleStyle}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Center Content */}
+              <div className={styles.centerContent}>
+                {bs.backingContent === 'logo' && logoUrl && (
+                  <img src={logoUrl} alt="Script Logo" className={styles.logo} />
+                )}
+                {bs.backingContent === 'name' && (
+                  <h1 className={styles.backingScriptName}>
+                    {scriptMeta?.name || 'Untitled Script'}
+                  </h1>
+                )}
+
+                {/* Jinxes */}
+                {bs.showJinxes && jinxes.length > 0 && (
+                  <div className={styles.jinxSection}>
+                    <h3 className={styles.sectionLabel}>Jinxes</h3>
+                    {jinxes.map((jinx) => (
+                      <JinxEntry
+                        key={`${jinx.char1.id}-${jinx.char2.id}`}
+                        jinx={jinx}
+                        iconScaleStyle={backingIconScaleStyle}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Fabled */}
+                {bs.showFabled && fabled.length > 0 && (
+                  <div className={styles.fabledSection}>
+                    <h3 className={styles.sectionLabel}>Fabled</h3>
+                    {fabled.map((char) => (
+                      <div key={char.id} className={styles.fabledEntry}>
+                        <div className={styles.fabledIconWrapper}>
+                          <ResolvedImage
+                            characterId={char.id}
+                            fallbackUrl={char.image}
+                            alt={char.name}
+                            className={styles.fabledIcon}
+                            style={backingIconScaleStyle}
+                          />
+                        </div>
+                        <div>
+                          <span className={styles.fabledName} style={{ color: TEAM_COLORS.fabled }}>
+                            {char.name}
+                          </span>
+                          <p className={styles.fabledAbility}>{char.ability}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Travellers */}
+                {bs.showTravellers && travellers.length > 0 && (
+                  <div className={styles.travellersSection}>
+                    <h3 className={styles.sectionLabel}>Travellers</h3>
+                    {travellers.map((char) => (
+                      <div key={char.id} className={styles.travellerEntry}>
+                        <div className={styles.travellerIconWrapper}>
+                          <ResolvedImage
+                            characterId={char.id}
+                            fallbackUrl={char.image}
+                            alt={char.name}
+                            className={styles.travellerIcon}
+                            style={backingIconScaleStyle}
+                          />
+                        </div>
+                        <div>
+                          <span className={styles.travellerName}>{char.name}</span>
+                          <p className={styles.travellerAbility}>{char.ability}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Bootlegger */}
+                {bs.showBootlegger &&
+                  (bootleggerData.characters.length > 0 || bootleggerData.rules.length > 0) && (
+                    <div className={styles.bootleggerSection}>
+                      <h3 className={styles.sectionLabel}>Bootlegger</h3>
+                      {/* Character-based bootlegger entries (with icons) */}
+                      {bootleggerData.characters.map((char) => (
+                        <div key={char.id} className={styles.bootleggerEntry}>
+                          <div className={styles.bootleggerIconWrapper}>
+                            <ResolvedImage
+                              characterId={char.id}
+                              fallbackUrl={char.image}
+                              alt={char.name}
+                              className={styles.bootleggerIcon}
+                              style={backingIconScaleStyle}
+                            />
+                          </div>
+                          <div>
+                            <span className={styles.bootleggerName}>{char.name}</span>
+                            <p className={styles.bootleggerAbility}>{char.ability}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Rule text entries (with bootlegger icon) */}
+                      {bootleggerData.rules.map((rule) => (
+                        <div key={rule} className={styles.bootleggerEntry}>
+                          <div className={styles.bootleggerIconWrapper}>
+                            <ResolvedImage
+                              characterId="bootlegger"
+                              fallbackUrl="/images/icons/bootlegger.webp"
+                              alt="Bootlegger"
+                              className={styles.bootleggerIcon}
+                              style={backingIconScaleStyle}
+                            />
+                          </div>
+                          <p className={styles.bootleggerAbility}>{rule}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+
+              {/* Player Count Table */}
+              {bs.showPlayerCountOnBack && <PlayerCountTable />}
+            </div>
+          </ScaledPage>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+/**
+ * Image component that resolves URLs using SSOT utility
+ * Same pattern as NightOrderEntry for consistent image loading
+ */
+interface ResolvedImageProps {
+  characterId: string;
+  fallbackUrl: string;
+  alt: string;
+  className?: string;
+  title?: string;
+  style?: React.CSSProperties;
+}
+
+function ResolvedImage({
+  characterId,
+  fallbackUrl,
+  alt,
+  className,
+  title,
+  style,
+}: ResolvedImageProps) {
+  // Check for pre-cached image URL first
+  const cachedImageUrl = tabPreRenderService.getCachedCharacterImageUrl(characterId);
+  // Start with cached URL, then fallback URL, so we always have something to render
+  const [resolvedUrl, setResolvedUrl] = useState<string>(cachedImageUrl || fallbackUrl);
+
+  useEffect(() => {
+    if (cachedImageUrl) {
+      setResolvedUrl(cachedImageUrl);
+      return;
+    }
+
+    // Start with fallback to ensure image is visible
+    setResolvedUrl(fallbackUrl);
+
+    let cancelled = false;
+    const blobUrls: string[] = [];
+
+    resolveCharacterImageUrl(fallbackUrl, characterId, { logContext: 'PlayerScriptPreview' })
+      .then((result) => {
+        if (!cancelled) {
+          if (result.blobUrl) blobUrls.push(result.blobUrl);
+          setResolvedUrl(result.url);
+        }
+      })
+      .catch(() => {
+        // Already showing fallback, no action needed
+      });
+
+    return () => {
+      cancelled = true;
+      for (const url of blobUrls) URL.revokeObjectURL(url);
+    };
+  }, [fallbackUrl, characterId, cachedImageUrl]);
+
+  if (!resolvedUrl) return null;
+  return <img src={resolvedUrl} alt={alt} className={className} title={title} style={style} />;
+}
+
+interface JinxEntryProps {
+  jinx: PlayerScriptJinx;
+  /** Icon scale style object with --icon-scale CSS variable */
+  iconScaleStyle: React.CSSProperties;
+}
+
+function JinxEntry({ jinx, iconScaleStyle }: JinxEntryProps) {
+  return (
+    <div className={styles.jinxEntry}>
+      <div className={styles.jinxIcons}>
+        <div className={styles.jinxIconWrapper}>
+          <ResolvedImage
+            characterId={jinx.char1.id}
+            fallbackUrl={jinx.char1.image}
+            alt={jinx.char1.name}
+            className={styles.jinxIcon}
+            style={iconScaleStyle}
+          />
+        </div>
+        <div className={styles.jinxIconWrapper}>
+          <ResolvedImage
+            characterId={jinx.char2.id}
+            fallbackUrl={jinx.char2.image}
+            alt={jinx.char2.name}
+            className={styles.jinxIcon}
+            style={iconScaleStyle}
+          />
+        </div>
+      </div>
+      <p className={styles.jinxText}>{jinx.reason}</p>
+    </div>
+  );
+}

@@ -9,7 +9,7 @@
 
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
-interface UseIntersectionObserverOptions {
+export interface UseIntersectionObserverOptions {
   /** Threshold for triggering visibility (0-1) */
   threshold?: number;
   /** Margin around the root element */
@@ -20,7 +20,7 @@ interface UseIntersectionObserverOptions {
   root?: Element | null;
 }
 
-interface UseIntersectionObserverReturn<T extends Element> {
+export interface UseIntersectionObserverReturn<T extends Element> {
   ref: RefObject<T | null>;
   isVisible: boolean;
 }
@@ -90,5 +90,3 @@ export function useIntersectionObserver<T extends Element = HTMLDivElement>(
 
   return { ref, isVisible };
 }
-
-export default useIntersectionObserver;

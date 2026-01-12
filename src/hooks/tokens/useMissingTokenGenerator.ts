@@ -3,7 +3,7 @@
  * Useful for automatically filling in missing tokens when navigating to TokensView.
  */
 
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import { preRenderGalleryTokens } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenCard';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { simpleHash } from '@/ts/cache/utils/hashUtils.js';
@@ -68,7 +68,7 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
    * 2. There's no character token with its UUID as parentUuid
    * 3. Tokens haven't already been generated for this JSON content
    */
-  const getMissingCharacters = useCallback((): Character[] => {
+  const getMissingCharacters = (): Character[] => {
     // If tokens were already generated for this exact JSON content, return empty
     // This prevents duplicate generation on navigation between views
     const currentHash = simpleHash(jsonInput);
@@ -89,21 +89,18 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
 
     // Find enabled characters without tokens
     return enabledChars.filter((char) => !characterUuidsWithTokens.has(char.uuid));
-  }, [tokens, getEnabledCharacters, jsonInput, lastGeneratedJsonHash]);
+  };
 
   /**
    * Check if there are characters without tokens
    */
-  const hasMissingTokens = useCallback(
-    (): boolean => getMissingCharacters().length > 0,
-    [getMissingCharacters]
-  );
+  const hasMissingTokens = (): boolean => getMissingCharacters().length > 0;
 
   /**
    * Generate tokens for characters that don't have them yet.
    * Appends to existing tokens rather than replacing them.
    */
-  const generateMissingTokens = useCallback(async (): Promise<number> => {
+  const generateMissingTokens = async (): Promise<number> => {
     // Skip if already loading (prevents double generation in React StrictMode)
     // isLoading is from context and persists across component remounts
     if (isLoading) {
@@ -152,7 +149,7 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
       // This snapshot is used by all callbacks to avoid stale closure issues
       const existingTokens = [...tokens];
 
-      // Incremental token callback - appends to existing tokens as they're generated
+      // Incremental token callback - appends to existing tokens as they's generated
       const tokenCallback: TokenCallback = (token: Token) => {
         newTokensRef.current = [...newTokensRef.current, token];
         // Set state with captured existing tokens + accumulated new tokens
@@ -207,27 +204,16 @@ export function useMissingTokenGenerator(): UseMissingTokenGeneratorResult {
       setGenerationProgress(null);
       abortControllerRef.current = null;
     }
-  }, [
-    getMissingCharacters,
-    tokens,
-    generationOptions,
-    jsonInput,
-    isLoading,
-    setTokens,
-    setLastGeneratedJsonHash,
-    setIsLoading,
-    setError,
-    setGenerationProgress,
-  ]);
+  };
 
   /**
    * Cancel any in-progress generation
    */
-  const cancelGeneration = useCallback(() => {
+  const cancelGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-  }, []);
+  };
 
   return {
     generateMissingTokens,

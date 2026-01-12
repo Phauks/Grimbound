@@ -9,7 +9,6 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { memo } from 'react';
 import type { GroupedReminder } from '@/hooks';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 
@@ -32,7 +31,7 @@ interface SortableReminderRowProps {
   onRemove: (text: string) => void;
 }
 
-export const SortableReminderRow = memo(function SortableReminderRow({
+export function SortableReminderRow({
   id,
   reminder,
   index: _index,
@@ -120,6 +119,4 @@ export const SortableReminderRow = memo(function SortableReminderRow({
       </button>
     </div>
   );
-});
-
-export default SortableReminderRow;
+}

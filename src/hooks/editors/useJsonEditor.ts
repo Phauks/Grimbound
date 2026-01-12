@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDebouncedCallback } from '@/hooks/ui/useDebouncedCallback';
 import { logger } from '@/ts/utils/logger.js';
 
 export interface UseJsonEditorOptions<T> {
@@ -93,7 +94,10 @@ export function useJsonEditor<T extends object>({
   const [error, setError] = useState<string | null>(null);
 
   const isEditingRef = useRef(false);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Store latest data in ref for applyParsed
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   // Sync from external data when not editing
   useEffect(() => {
@@ -103,64 +107,44 @@ export function useJsonEditor<T extends object>({
     }
   }, [data, getDisplayData]);
 
-  // Cleanup on unmount
-  useEffect(
-    () => () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+  const applyParsed = (parsed: Record<string, unknown>) => {
+    // Preserve specified fields from original data
+    const result = { ...parsed };
+    for (const field of preserveFields) {
+      if (field in dataRef.current) {
+        result[field as string] = dataRef.current[field];
       }
-    },
-    []
-  );
-
-  const applyParsed = useCallback(
-    (parsed: Record<string, unknown>) => {
-      // Preserve specified fields from original data
-      const result = { ...parsed };
-      for (const field of preserveFields) {
-        if (field in data) {
-          result[field as string] = data[field];
-        }
-      }
-      onApply(result as Partial<T>);
-    },
-    [data, preserveFields, onApply]
-  );
-
-  const onChange = useCallback(
-    (newText: string) => {
-      setText(newText);
-      isEditingRef.current = true;
-
-      // Clear existing timer
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      // Debounce parsing and applying
-      debounceTimerRef.current = setTimeout(() => {
-        try {
-          const parsed = JSON.parse(newText);
-          setError(null);
-          applyParsed(parsed);
-
-          // After applying, allow sync again with small delay
-          setTimeout(() => {
-            isEditingRef.current = false;
-          }, 100);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Invalid JSON');
-        }
-      }, debounceMs);
-    },
-    [applyParsed, debounceMs]
-  );
-
-  const onBlur = useCallback(() => {
-    // Clear debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
     }
+    onApply(result as Partial<T>);
+  };
+
+  // Debounced parsing and applying
+  const { debouncedFn: debouncedParse, cancel: cancelDebounce } = useDebouncedCallback(
+    (textToParse: string) => {
+      try {
+        const parsed = JSON.parse(textToParse);
+        setError(null);
+        applyParsed(parsed);
+
+        // After applying, allow sync again with small delay
+        setTimeout(() => {
+          isEditingRef.current = false;
+        }, 100);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Invalid JSON');
+      }
+    },
+    { delay: debounceMs }
+  );
+
+  const onChange = (newText: string) => {
+    setText(newText);
+    isEditingRef.current = true;
+    debouncedParse(newText);
+  };
+
+  const onBlur = () => {
+    cancelDebounce();
 
     try {
       const parsed = JSON.parse(text);
@@ -172,9 +156,9 @@ export function useJsonEditor<T extends object>({
 
     // Allow syncing again
     isEditingRef.current = false;
-  }, [text, applyParsed]);
+  };
 
-  const format = useCallback(() => {
+  const format = () => {
     try {
       const parsed = JSON.parse(text);
       setText(JSON.stringify(parsed, null, 2));
@@ -182,36 +166,33 @@ export function useJsonEditor<T extends object>({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Cannot format: Invalid JSON');
     }
-  }, [text]);
+  };
 
-  const copy = useCallback(async () => {
+  const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
       logger.error('useJsonEditor', 'Failed to copy to clipboard', err);
     }
-  }, [text]);
+  };
 
-  const download = useCallback(
-    (filename: string) => {
-      const blob = new Blob([text], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename.endsWith('.json') ? filename : `${filename}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    },
-    [text]
-  );
+  const download = (filename: string) => {
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-  const syncFromData = useCallback(() => {
+  const syncFromData = () => {
     setText(JSON.stringify(getDisplayData(data), null, 2));
     setError(null);
     isEditingRef.current = false;
-  }, [data, getDisplayData]);
+  };
 
   return {
     text,
@@ -225,5 +206,3 @@ export function useJsonEditor<T extends object>({
     syncFromData,
   };
 }
-
-export default useJsonEditor;

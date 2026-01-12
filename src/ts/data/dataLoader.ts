@@ -76,12 +76,3 @@ export async function loadJsonFile(file: File): Promise<ScriptEntry[]> {
     reader.readAsText(file);
   });
 }
-
-// ============================================================================
-// Default Export
-// ============================================================================
-
-export default {
-  loadExampleScript,
-  loadJsonFile,
-};

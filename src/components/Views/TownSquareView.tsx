@@ -1,11 +1,11 @@
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import styles from '@/styles/components/views/Views.module.css';
 
 export function TownSquareView() {
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Town Square" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Town Square" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <div className={styles.townSquareView}>

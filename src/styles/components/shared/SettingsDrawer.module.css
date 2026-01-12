@@ -45,8 +45,10 @@
     opacity 0.15s ease,
     transform 0.15s ease;
 
-  /* NO scrolling */
-  overflow: visible;
+  /* Flex layout for header + scrollable content */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .drawerOpen {
@@ -54,11 +56,20 @@
   transform: translateY(0);
 }
 
+/* When actively dragging - disable transitions for smooth movement */
+.drawerDragging {
+  transition: none;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
 /* ============================================================================
    Drawer Header - Compact
    ============================================================================ */
 
 .drawerHeader {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -66,6 +77,16 @@
   background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
   border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 10px 10px 0 0;
+  /* Don't shrink header when drawer is resized */
+  flex-shrink: 0;
+  /* Clip content instead of overlapping when too narrow */
+  overflow: hidden;
+}
+
+/* Drag handle styling */
+.dragHandle {
+  user-select: none;
+  touch-action: none;
 }
 
 /* Left side of header: title + token type tabs */
@@ -73,6 +94,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  /* Allow this container to shrink, but children control their own shrinking */
+  min-width: 0;
+  flex: 1;
 }
 
 .drawerTitle {
@@ -83,6 +107,9 @@
   font-weight: 600;
   color: var(--text-primary, #f0f0f0);
   margin: 0;
+  /* Keep title fully visible - no truncation */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .drawerTitleIcon {
@@ -97,6 +124,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  /* Don't shrink buttons when drawer is narrow */
+  flex-shrink: 0;
 }
 
 .resetButton,
@@ -150,7 +179,10 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
   padding: 0;
-  overflow: hidden;
+  /* Fill remaining space and scroll when content overflows */
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* Each column */
@@ -249,4 +281,82 @@
 .select:focus {
   outline: none;
   border-color: var(--color-accent, #8b5cf6);
+}
+
+/* ============================================================================
+   Resize Handles - All edges and corners
+   ============================================================================ */
+
+/* Edge handles */
+.resizeHandleTop {
+  position: absolute;
+  top: -4px;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resizeHandleRight {
+  position: absolute;
+  top: 16px;
+  right: -4px;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.resizeHandleBottom {
+  position: absolute;
+  bottom: -4px;
+  left: 16px;
+  right: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resizeHandleLeft {
+  position: absolute;
+  top: 16px;
+  left: -4px;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+/* Corner handles */
+.resizeHandleTopLeft {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+}
+
+.resizeHandleTopRight {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+}
+
+.resizeHandleBottomLeft {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+}
+
+.resizeHandleBottomRight {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
 }

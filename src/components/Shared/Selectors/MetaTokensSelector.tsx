@@ -10,7 +10,6 @@
  * @module components/Shared/MetaTokensSelector
  */
 
-import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
@@ -37,7 +36,7 @@ interface PendingMetaSettings {
 // Preview Component
 // ============================================================================
 
-const MetaPreview = memo(function MetaPreview({ enabledCount }: { enabledCount: number }) {
+function MetaPreview({ enabledCount }: { enabledCount: number }) {
   return (
     <div
       className={`${styles.previewContainer} ${enabledCount === 0 ? styles.previewDisabled : ''}`}
@@ -46,13 +45,13 @@ const MetaPreview = memo(function MetaPreview({ enabledCount }: { enabledCount: 
       {enabledCount > 0 && <span className={styles.previewBadge}>{enabledCount}</span>}
     </div>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const MetaTokensSelector = memo(function MetaTokensSelector({
+export function MetaTokensSelector({
   generationOptions,
   onOptionChange,
   size = 'medium',
@@ -75,26 +74,20 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
   const enabledCount = countEnabled(currentSettings);
   const isEnabled = enabledCount > 0;
 
-  const handleToggle = useCallback(
-    (enabled: boolean) => {
-      onOptionChange({
-        pandemoniumToken: enabled,
-        scriptNameToken: enabled,
-      });
-    },
-    [onOptionChange]
-  );
+  const handleToggle = (enabled: boolean) => {
+    onOptionChange({
+      pandemoniumToken: enabled,
+      scriptNameToken: enabled,
+    });
+  };
 
-  const handlePanelChange = useCallback(
-    (settings: PendingMetaSettings) => {
-      onOptionChange({
-        pandemoniumToken: settings.pandemonium,
-        scriptNameToken: settings.scriptName,
-        hideScriptNameAuthor: !settings.showAuthor,
-      });
-    },
-    [onOptionChange]
-  );
+  const handlePanelChange = (settings: PendingMetaSettings) => {
+    onOptionChange({
+      pandemoniumToken: settings.pandemonium,
+      scriptNameToken: settings.scriptName,
+      hideScriptNameAuthor: !settings.showAuthor,
+    });
+  };
 
   const panel = useExpandablePanel<PendingMetaSettings>({
     value: currentSettings,
@@ -234,6 +227,4 @@ export const MetaTokensSelector = memo(function MetaTokensSelector({
       {renderPanel()}
     </SettingsSelectorBase>
   );
-});
-
-export default MetaTokensSelector;
+}

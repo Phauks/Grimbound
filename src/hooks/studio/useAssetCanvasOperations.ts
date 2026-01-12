@@ -11,7 +11,7 @@
  * @module hooks/studio/useAssetCanvasOperations
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
 import {
   addIconBorder,
@@ -130,9 +130,9 @@ export function useAssetCanvasOperations({
 
   /**
    * Render the canvas by applying all effects to the original.
-   * This is memoized and recalculates when original or effects change.
+   * Recalculates when original or effects change.
    */
-  const currentCanvas = useMemo(() => {
+  const currentCanvas = ((): HTMLCanvasElement | null => {
     if (!originalCanvas) return null;
 
     try {
@@ -198,164 +198,147 @@ export function useAssetCanvasOperations({
       logger.error('AssetCanvasOperations', 'Failed to render canvas', err);
       return cloneCanvas(originalCanvas);
     }
-  }, [originalCanvas, effects]);
+  })();
 
   // ============================================================================
   // Actions
   // ============================================================================
 
-  const loadFromFile = useCallback(
-    async (file: File | Blob) => {
-      onLoadStart?.();
+  const loadFromFile = async (file: File | Blob) => {
+    onLoadStart?.();
 
-      try {
-        const canvas = await loadImageToCanvas(file);
+    try {
+      const canvas = await loadImageToCanvas(file);
 
-        setOriginalCanvas(canvas);
-        setLoadedAssetId(null);
-        setLoadedAssetName(file instanceof File ? file.name : 'Imported Image');
-        onEffectsReset?.();
+      setOriginalCanvas(canvas);
+      setLoadedAssetId(null);
+      setLoadedAssetName(file instanceof File ? file.name : 'Imported Image');
+      onEffectsReset?.();
 
-        logger.info('AssetCanvasOperations', 'Loaded image from file');
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load image';
-        onError?.(message);
-        logger.error('AssetCanvasOperations', 'Failed to load image', err);
-      } finally {
-        onLoadEnd?.();
-      }
-    },
-    [onLoadStart, onLoadEnd, onError, onEffectsReset]
-  );
+      logger.info('AssetCanvasOperations', 'Loaded image from file');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load image';
+      onError?.(message);
+      logger.error('AssetCanvasOperations', 'Failed to load image', err);
+    } finally {
+      onLoadEnd?.();
+    }
+  };
 
-  const loadFromAsset = useCallback(
-    async (assetId: string, assetName?: string) => {
-      onLoadStart?.();
+  const loadFromAsset = async (assetId: string, assetName?: string) => {
+    onLoadStart?.();
 
-      try {
-        const url = await assetStorageService.getAssetUrl(assetId);
-        if (!url) {
-          throw new Error('Asset not found');
-        }
-
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const canvas = await loadImageToCanvas(blob);
-
-        setOriginalCanvas(canvas);
-        setLoadedAssetId(assetId);
-        setLoadedAssetName(assetName || 'Asset');
-        onEffectsReset?.();
-
-        logger.info('AssetCanvasOperations', `Loaded asset: ${assetId}`);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load asset';
-        onError?.(message);
-        logger.error('AssetCanvasOperations', 'Failed to load asset', err);
-      } finally {
-        onLoadEnd?.();
-      }
-    },
-    [assetStorageService, onLoadStart, onLoadEnd, onError, onEffectsReset]
-  );
-
-  const save = useCallback(
-    async (name: string, overwrite: boolean = false): Promise<string> => {
-      if (!currentCanvas) {
-        throw new Error('No image to save');
+    try {
+      const url = await assetStorageService.getAssetUrl(assetId);
+      if (!url) {
+        throw new Error('Asset not found');
       }
 
-      onProcessStart?.('Saving...');
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const canvas = await loadImageToCanvas(blob);
 
-      try {
-        // Convert canvas to blob
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          currentCanvas.toBlob(
-            (b) => {
-              if (b) resolve(b);
-              else reject(new Error('Failed to convert canvas to blob'));
-            },
-            'image/png',
-            1.0
-          );
+      setOriginalCanvas(canvas);
+      setLoadedAssetId(assetId);
+      setLoadedAssetName(assetName || 'Asset');
+      onEffectsReset?.();
+
+      logger.info('AssetCanvasOperations', `Loaded asset: ${assetId}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load asset';
+      onError?.(message);
+      logger.error('AssetCanvasOperations', 'Failed to load asset', err);
+    } finally {
+      onLoadEnd?.();
+    }
+  };
+
+  const save = async (name: string, overwrite: boolean = false): Promise<string> => {
+    if (!currentCanvas) {
+      throw new Error('No image to save');
+    }
+
+    onProcessStart?.('Saving...');
+
+    try {
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        currentCanvas.toBlob(
+          (b) => {
+            if (b) resolve(b);
+            else reject(new Error('Failed to convert canvas to blob'));
+          },
+          'image/png',
+          1.0
+        );
+      });
+
+      // Generate thumbnail
+      const thumbnailBlob = await generateThumbnail(currentCanvas, 128);
+
+      let assetId: string;
+
+      if (overwrite && loadedAssetId) {
+        // Update existing asset
+        await assetStorageService.update(loadedAssetId, {
+          blob,
+          thumbnail: thumbnailBlob,
+          metadata: {
+            filename: `${sanitizeFilename(name)}.png`,
+            mimeType: 'image/png',
+            size: blob.size,
+            width: currentCanvas.width,
+            height: currentCanvas.height,
+            uploadedAt: Date.now(),
+            editedAt: Date.now(),
+            sourceType: 'editor',
+          },
         });
-
-        // Generate thumbnail
-        const thumbnailBlob = await generateThumbnail(currentCanvas, 128);
-
-        let assetId: string;
-
-        if (overwrite && loadedAssetId) {
-          // Update existing asset
-          await assetStorageService.update(loadedAssetId, {
-            blob,
-            thumbnail: thumbnailBlob,
-            metadata: {
-              filename: `${sanitizeFilename(name)}.png`,
-              mimeType: 'image/png',
-              size: blob.size,
-              width: currentCanvas.width,
-              height: currentCanvas.height,
-              uploadedAt: Date.now(),
-              editedAt: Date.now(),
-              sourceType: 'editor',
-            },
-          });
-          assetId = loadedAssetId;
-          logger.info('AssetCanvasOperations', `Updated asset: ${assetId}`);
-        } else {
-          // Save as new asset
-          assetId = await assetStorageService.save({
-            type: 'character-icon',
-            projectId: null,
-            blob,
-            thumbnail: thumbnailBlob,
-            metadata: {
-              filename: `${sanitizeFilename(name)}.png`,
-              mimeType: 'image/png',
-              size: blob.size,
-              width: currentCanvas.width,
-              height: currentCanvas.height,
-              uploadedAt: Date.now(),
-              sourceType: 'editor',
-            },
-          });
-          logger.info('AssetCanvasOperations', `Saved new asset: ${assetId}`);
-        }
-
-        // After saving, the saved version becomes the new "original"
-        // and we reset effects since they're now baked in
-        setOriginalCanvas(cloneCanvas(currentCanvas));
-        setLoadedAssetId(assetId);
-        setLoadedAssetName(name);
-        onEffectsReset?.();
-
-        return assetId;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to save';
-        onError?.(message);
-        logger.error('AssetCanvasOperations', 'Failed to save', err);
-        throw err;
-      } finally {
-        onProcessEnd?.();
+        assetId = loadedAssetId;
+        logger.info('AssetCanvasOperations', `Updated asset: ${assetId}`);
+      } else {
+        // Save as new asset
+        assetId = await assetStorageService.save({
+          tags: ['type:studio-icon'],
+          projectId: null,
+          blob,
+          thumbnail: thumbnailBlob,
+          metadata: {
+            filename: `${sanitizeFilename(name)}.png`,
+            mimeType: 'image/png',
+            size: blob.size,
+            width: currentCanvas.width,
+            height: currentCanvas.height,
+            uploadedAt: Date.now(),
+            sourceType: 'editor',
+          },
+        });
+        logger.info('AssetCanvasOperations', `Saved new asset: ${assetId}`);
       }
-    },
-    [
-      currentCanvas,
-      loadedAssetId,
-      assetStorageService,
-      onProcessStart,
-      onProcessEnd,
-      onError,
-      onEffectsReset,
-    ]
-  );
 
-  const clear = useCallback(() => {
+      // After saving, the saved version becomes the new "original"
+      // and we reset effects since they're now baked in
+      setOriginalCanvas(cloneCanvas(currentCanvas));
+      setLoadedAssetId(assetId);
+      setLoadedAssetName(name);
+      onEffectsReset?.();
+
+      return assetId;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save';
+      onError?.(message);
+      logger.error('AssetCanvasOperations', 'Failed to save', err);
+      throw err;
+    } finally {
+      onProcessEnd?.();
+    }
+  };
+
+  const clear = () => {
     setOriginalCanvas(null);
     setLoadedAssetId(null);
     setLoadedAssetName(null);
-  }, []);
+  };
 
   // ============================================================================
   // Return
@@ -375,5 +358,3 @@ export function useAssetCanvasOperations({
     clear,
   };
 }
-
-export default useAssetCanvasOperations;

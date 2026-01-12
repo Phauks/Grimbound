@@ -3,7 +3,6 @@ import {
   addTagToAll,
   analyzeSelectionTags,
   removeTagFromAll,
-  type TagAnalysis,
 } from '@/ts/services/upload/batchTagUtils.js';
 
 // Mock asset type with tags field

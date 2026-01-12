@@ -5,7 +5,7 @@
  * Supports standard HTML checkbox attributes plus custom styling options.
  */
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode, Ref } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 
 export interface CheckboxProps
@@ -22,64 +22,58 @@ export interface CheckboxProps
   indeterminate?: boolean;
 }
 
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  (
-    {
-      size = 'medium',
-      label,
-      description,
-      error = false,
-      indeterminate = false,
-      className,
-      disabled,
-      id,
-      ...props
-    },
-    ref
-  ) => {
-    const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+export function Checkbox({
+  size = 'medium',
+  label,
+  description,
+  error = false,
+  indeterminate = false,
+  className,
+  disabled,
+  id,
+  ref,
+  ...props
+}: CheckboxProps & { ref?: Ref<HTMLInputElement> }) {
+  const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
-    const wrapperClasses = [styles.checkboxWrapper, disabled && styles.checkboxDisabled, className]
-      .filter(Boolean)
-      .join(' ');
+  const wrapperClasses = [styles.checkboxWrapper, disabled && styles.checkboxDisabled, className]
+    .filter(Boolean)
+    .join(' ');
 
-    const checkboxClasses = [
-      styles.checkbox,
-      styles[`checkbox${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error && styles.checkboxError,
-    ]
-      .filter(Boolean)
-      .join(' ');
+  const checkboxClasses = [
+    styles.checkbox,
+    styles[`checkbox${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error && styles.checkboxError,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-    return (
-      <label className={wrapperClasses} htmlFor={checkboxId}>
-        <input
-          ref={(node) => {
-            if (node) {
-              node.indeterminate = indeterminate;
-            }
-            if (typeof ref === 'function') {
-              ref(node);
-            } else if (ref) {
-              ref.current = node;
-            }
-          }}
-          type="checkbox"
-          id={checkboxId}
-          className={checkboxClasses}
-          disabled={disabled}
-          aria-invalid={error}
-          {...props}
-        />
-        {(label || description) && (
-          <div className={styles.checkboxContent}>
-            {label && <span className={styles.checkboxLabel}>{label}</span>}
-            {description && <span className={styles.checkboxDescription}>{description}</span>}
-          </div>
-        )}
-      </label>
-    );
-  }
-);
-
-Checkbox.displayName = 'Checkbox';
+  return (
+    <label className={wrapperClasses} htmlFor={checkboxId}>
+      <input
+        ref={(node) => {
+          if (node) {
+            node.indeterminate = indeterminate;
+          }
+          if (typeof ref === 'function') {
+            ref(node);
+          } else if (ref) {
+            ref.current = node;
+          }
+        }}
+        type="checkbox"
+        id={checkboxId}
+        className={checkboxClasses}
+        disabled={disabled}
+        aria-invalid={error}
+        {...props}
+      />
+      {(label || description) && (
+        <div className={styles.checkboxContent}>
+          {label && <span className={styles.checkboxLabel}>{label}</span>}
+          {description && <span className={styles.checkboxDescription}>{description}</span>}
+        </div>
+      )}
+    </label>
+  );
+}

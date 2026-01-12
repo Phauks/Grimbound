@@ -93,7 +93,7 @@ export function useCharacterDownloads({
   const charData = editedCharacter || selectedCharacter;
 
   // Download all tokens as ZIP
-  const handleDownloadAll = useCallback(async () => {
+  const handleDownloadAll = async () => {
     if (!displayCharacterToken) return;
 
     setIsDownloading(true);
@@ -111,7 +111,7 @@ export function useCharacterDownloads({
     } finally {
       setIsDownloading(false);
     }
-  }, [displayCharacterToken, displayReminderTokens, selectedCharacter, charData, addToast]);
+  };
 
   // Download character token only
   const handleDownloadCharacter = useCallback(() => {
@@ -269,5 +269,3 @@ export function useCharacterDownloads({
     isDownloading,
   };
 }
-
-export default useCharacterDownloads;

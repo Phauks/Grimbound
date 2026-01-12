@@ -25,6 +25,7 @@ import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 import { assetStorageService } from './AssetStorageService.js';
+import { getTypeFromTags } from './tagUtils.js';
 import type { DBAsset } from './types.js';
 
 /**
@@ -162,7 +163,8 @@ export class AssetArchiveService {
 
         // Track stats
         totalBytes += asset.metadata.size;
-        assetTypeCounts[asset.type] = (assetTypeCounts[asset.type] || 0) + 1;
+        const assetType = getTypeFromTags(asset.tags) ?? 'icon';
+        assetTypeCounts[assetType] = (assetTypeCounts[assetType] || 0) + 1;
       }
 
       // Create manifest
@@ -182,7 +184,8 @@ export class AssetArchiveService {
       // Add asset metadata
       const metadata = validAssets.map((asset) => ({
         id: asset.id,
-        type: asset.type,
+        tags: asset.tags,
+        folder: asset.folder,
         projectId: asset.projectId,
         metadata: asset.metadata,
         linkedTo: asset.linkedTo,
@@ -341,11 +344,12 @@ export class AssetArchiveService {
         };
       }
 
-      if (!(assetMeta.type && assetMeta.metadata)) {
+      // Validate required fields
+      if (!assetMeta.tags || assetMeta.tags.length === 0 || !assetMeta.metadata) {
         return {
           restored: false,
           skipped: false,
-          error: `Missing type or metadata for asset ${assetMeta.id}`,
+          error: `Missing tags or metadata for asset ${assetMeta.id}`,
         };
       }
 
@@ -354,7 +358,8 @@ export class AssetArchiveService {
 
       await assetStorageService.save({
         id: assetMeta.id,
-        type: assetMeta.type,
+        tags: assetMeta.tags,
+        folder: assetMeta.folder ?? null,
         projectId: options.projectId ?? assetMeta.projectId ?? null,
         blob: assetBlob,
         thumbnail: thumbnailBlob,

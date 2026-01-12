@@ -207,15 +207,20 @@ export interface TokenGeneratorOptions {
   abilityTextFont: string;
   abilityTextColor: string;
   reminderTextColor: string;
+  // Accent settings - now deterministic based on character data:
+  // - Top accents: number of reminders
+  // - Left accent: character acts on first night
+  // - Right accent: character acts on other nights
   accentGeneration: string;
   accentEnabled: boolean;
-  maximumAccents: number;
-  accentPopulationProbability: number;
-  accentArcSpan: number;
-  accentSlots: number;
-  enableLeftAccent: boolean;
-  enableRightAccent: boolean;
-  sideAccentProbability: number;
+  /** How far from center accents are placed (0.5-1.0, default 0.88). Lower = closer to center */
+  accentRadialOffset?: number;
+  /** Rotate accent images 180 degrees */
+  accentRotate180?: boolean;
+  /** Flip accent images horizontally */
+  accentFlip?: boolean;
+  /** Whether accents are drawn under or over the character icon (default: 'over') */
+  accentLayer?: 'under' | 'over';
   transparentBackground: boolean;
   fontSpacing: {
     characterName: number;
@@ -278,13 +283,6 @@ export const DEFAULT_TOKEN_OPTIONS: TokenGeneratorOptions = {
   reminderTextColor: CONFIG.STYLE.REMINDER_TEXT_COLOR,
   accentGeneration: CONFIG.STYLE.ACCENT_GENERATION,
   accentEnabled: true,
-  maximumAccents: CONFIG.STYLE.MAXIMUM_ACCENTS,
-  accentPopulationProbability: CONFIG.STYLE.ACCENT_POPULATION_PROBABILITY,
-  accentArcSpan: CONFIG.STYLE.ACCENT_ARC_SPAN,
-  accentSlots: CONFIG.STYLE.ACCENT_SLOTS,
-  enableLeftAccent: true,
-  enableRightAccent: true,
-  sideAccentProbability: 50, // Side accents have 50% probability by default
   transparentBackground: false,
   fontSpacing: {
     characterName: CONFIG.FONT_SPACING.CHARACTER_NAME,
@@ -431,12 +429,9 @@ export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   abilityTextColor: CONFIG.STYLE.ABILITY_TEXT_COLOR,
   reminderTextColor: CONFIG.STYLE.REMINDER_TEXT_COLOR,
 
-  // Accent settings
+  // Accent settings - deterministic based on character data
   accentGeneration: CONFIG.STYLE.ACCENT_GENERATION,
-  maximumAccents: 0, // Off by default for cleaner tokens
-  accentPopulationProbability: CONFIG.STYLE.ACCENT_POPULATION_PROBABILITY,
-  accentArcSpan: CONFIG.STYLE.ACCENT_ARC_SPAN,
-  accentSlots: CONFIG.STYLE.ACCENT_SLOTS,
+  accentEnabled: true, // Enable accents by default
 
   // Font spacing (0 = normal spacing)
   fontSpacing: {

@@ -449,5 +449,3 @@ export class TokenTextRenderer {
     logger.debug('TokenTextRenderer', 'Drew ALMANAC label');
   }
 }
-
-export default TokenTextRenderer;

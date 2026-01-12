@@ -11,10 +11,11 @@
  * @module components/CharactersComponents/MetaEditor
  */
 
-import { type RefCallback, useCallback, useEffect, useRef, useState } from 'react';
+import { type RefCallback, useEffect, useRef, useState } from 'react';
 import { JsonEditorPanel } from '@/components/Shared/Json/JsonEditorPanel';
 import { useControlledField } from '@/hooks/ui/useControlledField';
 import { useControlledFields } from '@/hooks/ui/useControlledFields';
+import { useDebouncedCallback } from '@/hooks/ui/useDebouncedCallback';
 import styles from '@/styles/components/characterEditor/MetaEditor.module.css';
 import type { ScriptMeta } from '@/ts/types/index.js';
 
@@ -33,6 +34,18 @@ const DEFAULT_META: ScriptMeta = {
   author: '',
   almanac: '',
   logo: '',
+};
+
+// Helper functions moved outside component to avoid dependency issues
+const getExportableMeta = (m: ScriptMeta) => {
+  const { ...rest } = m;
+  return rest;
+};
+
+const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  textarea.style.height = `${textarea.scrollHeight}px`;
 };
 
 export function MetaEditor({
@@ -100,36 +113,27 @@ export function MetaEditor({
     []
   );
 
-  const updateBootlegger = useCallback(
-    (newEntries: string[], immediate = false) => {
-      setLocalBootlegger(newEntries);
-      lastSentBootleggerRef.current = JSON.stringify(newEntries);
+  const updateBootlegger = (newEntries: string[], immediate = false) => {
+    setLocalBootlegger(newEntries);
+    lastSentBootleggerRef.current = JSON.stringify(newEntries);
 
-      if (immediate) {
+    if (immediate) {
+      onMetaChange({ ...meta, bootlegger: newEntries });
+    } else {
+      if (bootleggerTimerRef.current) clearTimeout(bootleggerTimerRef.current);
+      bootleggerTimerRef.current = setTimeout(() => {
+        bootleggerTimerRef.current = null;
         onMetaChange({ ...meta, bootlegger: newEntries });
-      } else {
-        if (bootleggerTimerRef.current) clearTimeout(bootleggerTimerRef.current);
-        bootleggerTimerRef.current = setTimeout(() => {
-          bootleggerTimerRef.current = null;
-          onMetaChange({ ...meta, bootlegger: newEntries });
-        }, 500);
-      }
-    },
-    [meta, onMetaChange]
-  );
+      }, 500);
+    }
+  };
 
   // ============================================
   // JSON Editor State
   // ============================================
 
-  const getExportableMeta = useCallback((m: ScriptMeta) => {
-    const { ...rest } = m;
-    return rest;
-  }, []);
-
   const [jsonText, setJsonText] = useState(() => JSON.stringify(getExportableMeta(meta), null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const jsonDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditingJsonRef = useRef(false);
 
   // Sync JSON text from props when not editing
@@ -138,40 +142,32 @@ export function MetaEditor({
       setJsonText(JSON.stringify(getExportableMeta(meta), null, 2));
       setJsonError(null);
     }
-  }, [meta, getExportableMeta]);
+  }, [meta]);
 
-  // Cleanup JSON timer
-  useEffect(
-    () => () => {
-      if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
+  // Debounced JSON parsing
+  const { debouncedFn: debouncedParseJson } = useDebouncedCallback(
+    (textToParse: string) => {
+      try {
+        const parsed = JSON.parse(textToParse);
+        setJsonError(null);
+        onMetaChange({ ...parsed, id: '_meta' });
+        setTimeout(() => {
+          isEditingJsonRef.current = false;
+        }, 100);
+      } catch (err) {
+        setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
+      }
     },
-    []
+    { delay: 500 }
   );
 
-  const handleJsonChange = useCallback(
-    (newText: string) => {
-      setJsonText(newText);
-      isEditingJsonRef.current = true;
+  const handleJsonChange = (newText: string) => {
+    setJsonText(newText);
+    isEditingJsonRef.current = true;
+    debouncedParseJson(newText);
+  };
 
-      if (jsonDebounceTimerRef.current) clearTimeout(jsonDebounceTimerRef.current);
-
-      jsonDebounceTimerRef.current = setTimeout(() => {
-        try {
-          const parsed = JSON.parse(newText);
-          setJsonError(null);
-          onMetaChange({ ...parsed, id: '_meta' });
-          setTimeout(() => {
-            isEditingJsonRef.current = false;
-          }, 100);
-        } catch (err) {
-          setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
-        }
-      }, 500);
-    },
-    [onMetaChange]
-  );
-
-  const handleFormatJson = useCallback(() => {
+  const handleFormatJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
       setJsonText(JSON.stringify(parsed, null, 2));
@@ -179,7 +175,7 @@ export function MetaEditor({
     } catch (err) {
       setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
     }
-  }, [jsonText]);
+  };
 
   // ============================================
   // Auto-resize Textareas
@@ -187,28 +183,16 @@ export function MetaEditor({
 
   const textareaRefs = useRef<Set<HTMLTextAreaElement>>(new Set());
 
-  const resizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
+  const registerTextareaRef: RefCallback<HTMLTextAreaElement> = (element) => {
+    if (element) {
+      textareaRefs.current.add(element);
+      requestAnimationFrame(() => resizeTextarea(element));
+    }
+  };
 
-  const registerTextareaRef: RefCallback<HTMLTextAreaElement> = useCallback(
-    (element) => {
-      if (element) {
-        textareaRefs.current.add(element);
-        requestAnimationFrame(() => resizeTextarea(element));
-      }
-    },
-    [resizeTextarea]
-  );
-
-  const handleTextareaInput = useCallback(
-    (e: React.FormEvent<HTMLTextAreaElement>) => {
-      resizeTextarea(e.currentTarget);
-    },
-    [resizeTextarea]
-  );
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    resizeTextarea(e.currentTarget);
+  };
 
   // Resize all textareas when bootlegger count changes
   const bootleggerCount = localBootlegger.length;
@@ -219,7 +203,7 @@ export function MetaEditor({
         textareaRefs.current.forEach(resizeTextarea);
       });
     }
-  }, [bootleggerCount, resizeTextarea]);
+  }, [bootleggerCount]);
 
   // ============================================
   // Download Menu

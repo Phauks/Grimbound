@@ -11,7 +11,7 @@
  * @module components/Shared/Drawer/QRCodeDrawer
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import styles from '@/styles/components/shared/QRCodeSettingsSelector.module.css';
@@ -286,7 +286,7 @@ interface ColorSectionProps {
   compact?: boolean;
 }
 
-const ColorSection = memo(function ColorSection({
+function ColorSection({
   label,
   styleOptions,
   styleValue,
@@ -383,7 +383,7 @@ const ColorSection = memo(function ColorSection({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Panel Section Components
@@ -397,10 +397,7 @@ interface PanelSectionProps {
 /**
  * Left Panel - Token Options (almanac toggle, labels)
  */
-const TokenOptionsPanel = memo(function TokenOptionsPanel({
-  pendingValue,
-  updateField,
-}: PanelSectionProps) {
+function TokenOptionsPanel({ pendingValue, updateField }: PanelSectionProps) {
   return (
     <div className={drawerStyles.column}>
       <div className={drawerStyles.sectionHeader}>Token Options</div>
@@ -438,15 +435,12 @@ const TokenOptionsPanel = memo(function TokenOptionsPanel({
       </label>
     </div>
   );
-});
+}
 
 /**
  * Middle Panel - QR Styling (dots, corner squares, corner dots)
  */
-const QRStylingPanel = memo(function QRStylingPanel({
-  pendingValue,
-  updateField,
-}: PanelSectionProps) {
+function QRStylingPanel({ pendingValue, updateField }: PanelSectionProps) {
   return (
     <div className={drawerStyles.column}>
       {/* Dots Section */}
@@ -511,15 +505,12 @@ const QRStylingPanel = memo(function QRStylingPanel({
       />
     </div>
   );
-});
+}
 
 /**
  * Right Panel - Background & Image Options
  */
-const BackgroundImagePanel = memo(function BackgroundImagePanel({
-  pendingValue,
-  updateField,
-}: PanelSectionProps) {
+function BackgroundImagePanel({ pendingValue, updateField }: PanelSectionProps) {
   return (
     <div className={drawerStyles.column}>
       {/* Background Section */}
@@ -669,26 +660,22 @@ const BackgroundImagePanel = memo(function BackgroundImagePanel({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export const QRCodeDrawer = memo(function QRCodeDrawer({
+export function QRCodeDrawer({
   isOpen,
   onClose,
   generationOptions,
   onOptionChange,
 }: QRCodeDrawerProps) {
   // Create initial settings from generation options
-  const initialSettings = useMemo(
-    () =>
-      createSettingsFromOptions(
-        generationOptions.qrCodeOptions,
-        generationOptions.almanacToken !== false
-      ),
-    [generationOptions.qrCodeOptions, generationOptions.almanacToken]
+  const initialSettings = createSettingsFromOptions(
+    generationOptions.qrCodeOptions,
+    generationOptions.almanacToken !== false
   );
 
   // Internal pending state
@@ -702,26 +689,26 @@ export const QRCodeDrawer = memo(function QRCodeDrawer({
   }, [isOpen, initialSettings]);
 
   // Update a single field in pending settings
-  const updateField = useCallback(
-    <K extends keyof PendingQRSettings>(field: K, value: PendingQRSettings[K]) => {
-      setPendingSettings((prev) => ({ ...prev, [field]: value }));
-    },
-    []
-  );
+  const updateField = <K extends keyof PendingQRSettings>(
+    field: K,
+    value: PendingQRSettings[K]
+  ) => {
+    setPendingSettings((prev) => ({ ...prev, [field]: value }));
+  };
 
   // Apply changes and close
-  const handleApply = useCallback(() => {
+  const handleApply = () => {
     onOptionChange({
       almanacToken: pendingSettings.almanac,
       qrCodeOptions: settingsToQROptions(pendingSettings),
     });
     onClose();
-  }, [onOptionChange, onClose, pendingSettings]);
+  };
 
   // Reset to defaults
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     setPendingSettings(DEFAULT_QR_SETTINGS);
-  }, []);
+  };
 
   // QR icon for title (decorative, aria-hidden)
   const qrTitleIcon = (
@@ -757,6 +744,4 @@ export const QRCodeDrawer = memo(function QRCodeDrawer({
       <BackgroundImagePanel pendingValue={pendingSettings} updateField={updateField} />
     </SettingsDrawer>
   );
-});
-
-export default QRCodeDrawer;
+}

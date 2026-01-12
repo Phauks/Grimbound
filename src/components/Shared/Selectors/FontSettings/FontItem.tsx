@@ -7,7 +7,6 @@
  * @module components/Shared/Selectors/FontSettings/FontItem
  */
 
-import { memo } from 'react';
 import styles from '@/styles/components/shared/FontDrawer.module.css';
 import type { FontDefinition } from '@/ts/types/fonts.js';
 
@@ -32,13 +31,7 @@ export interface FontItemProps {
 // FontListItem Component
 // ============================================================================
 
-export const FontListItem = memo(function FontListItem({
-  font,
-  isSelected,
-  isLoading,
-  onSelect,
-  onHover,
-}: FontItemProps) {
+export function FontListItem({ font, isSelected, isLoading, onSelect, onHover }: FontItemProps) {
   const showFontPreview = font.status === 'loaded' && !isLoading;
 
   return (
@@ -64,19 +57,13 @@ export const FontListItem = memo(function FontListItem({
       {isSelected && <span className={styles.fontListCheck}>✓</span>}
     </button>
   );
-});
+}
 
 // ============================================================================
 // FontGridItem Component
 // ============================================================================
 
-export const FontGridItem = memo(function FontGridItem({
-  font,
-  isSelected,
-  isLoading,
-  onSelect,
-  onHover,
-}: FontItemProps) {
+export function FontGridItem({ font, isSelected, isLoading, onSelect, onHover }: FontItemProps) {
   const showFontPreview = font.status === 'loaded' && !isLoading;
 
   return (
@@ -95,4 +82,4 @@ export const FontGridItem = memo(function FontGridItem({
       <span className={styles.fontGridName}>{font.name}</span>
     </button>
   );
-});
+}

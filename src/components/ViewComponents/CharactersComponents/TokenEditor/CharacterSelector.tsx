@@ -9,7 +9,7 @@
  * @module components/CharactersComponents/TokenEditor/CharacterSelector
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character } from '@/ts/types/index.js';
 
@@ -139,7 +139,7 @@ interface CharacterOptionProps {
   onMouseEnter: () => void;
 }
 
-const CharacterOption = memo(function CharacterOption({
+function CharacterOption({
   character,
   isSelected,
   isHighlighted,
@@ -165,7 +165,7 @@ const CharacterOption = memo(function CharacterOption({
       )}
     </button>
   );
-});
+}
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -175,7 +175,7 @@ function capitalize(str: string): string {
 // Main Component
 // ============================================================================
 
-export const CharacterSelector = memo(function CharacterSelector({
+export function CharacterSelector({
   value,
   onChange,
   scriptCharacters,
@@ -193,22 +193,21 @@ export const CharacterSelector = memo(function CharacterSelector({
   const listRef = useRef<HTMLDivElement>(null);
 
   // Get display name for the current value
-  const displayValue = useMemo(
-    () => getDisplayName(value, scriptCharacters, officialCharacters),
-    [value, scriptCharacters, officialCharacters]
-  );
+  const displayValue = getDisplayName(value, scriptCharacters, officialCharacters);
 
   // Group and filter characters based on search
-  const { script, official } = useMemo(
-    () => groupCharacters(scriptCharacters, officialCharacters, excludeId, searchTerm),
-    [scriptCharacters, officialCharacters, excludeId, searchTerm]
+  const { script, official } = groupCharacters(
+    scriptCharacters,
+    officialCharacters,
+    excludeId,
+    searchTerm
   );
 
   // Flat list for keyboard navigation
-  const flatList = useMemo(() => [...script, ...official], [script, official]);
+  const flatList = [...script, ...official];
 
   // Determine if we should show custom option
-  const showCustomOption = useMemo(() => {
+  const showCustomOption = (() => {
     if (!searchTerm.trim()) return false;
     const normalizedSearch = searchTerm.toLowerCase().trim();
     // Only show custom option if search term doesn't match any existing character
@@ -219,7 +218,7 @@ export const CharacterSelector = memo(function CharacterSelector({
       (c) => c.id.toLowerCase() === normalizedSearch || c.name.toLowerCase() === normalizedSearch
     );
     return !(existsInScript || existsInOfficial);
-  }, [searchTerm, scriptCharacters, officialCharacters]);
+  })();
 
   // Handle click outside to close
   useEffect(() => {
@@ -235,99 +234,93 @@ export const CharacterSelector = memo(function CharacterSelector({
   }, []);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (disabled) return;
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled) return;
 
-      switch (event.key) {
-        case 'ArrowDown':
-          event.preventDefault();
-          if (isOpen) {
-            const maxIndex = flatList.length + (showCustomOption ? 1 : 0) - 1;
-            setHighlightedIndex((prev) => Math.min(prev + 1, maxIndex));
-          } else {
-            setIsOpen(true);
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (isOpen) {
+          const maxIndex = flatList.length + (showCustomOption ? 1 : 0) - 1;
+          setHighlightedIndex((prev) => Math.min(prev + 1, maxIndex));
+        } else {
+          setIsOpen(true);
+        }
+        break;
+
+      case 'ArrowUp':
+        event.preventDefault();
+        setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+        break;
+
+      case 'Enter':
+        event.preventDefault();
+        if (isOpen) {
+          if (highlightedIndex < flatList.length) {
+            onChange(flatList[highlightedIndex].id);
+          } else if (showCustomOption) {
+            onChange(searchTerm.trim());
           }
-          break;
-
-        case 'ArrowUp':
-          event.preventDefault();
-          setHighlightedIndex((prev) => Math.max(prev - 1, 0));
-          break;
-
-        case 'Enter':
-          event.preventDefault();
-          if (isOpen) {
-            if (highlightedIndex < flatList.length) {
-              onChange(flatList[highlightedIndex].id);
-            } else if (showCustomOption) {
-              onChange(searchTerm.trim());
-            }
-            setIsOpen(false);
-            setSearchTerm('');
-          } else {
-            setIsOpen(true);
-          }
-          break;
-
-        case 'Escape':
-          event.preventDefault();
           setIsOpen(false);
           setSearchTerm('');
-          break;
+        } else {
+          setIsOpen(true);
+        }
+        break;
 
-        case 'Tab':
-          setIsOpen(false);
-          setSearchTerm('');
-          break;
+      case 'Escape':
+        event.preventDefault();
+        setIsOpen(false);
+        setSearchTerm('');
+        break;
 
-        default:
-          // Allow other keys to pass through
-          break;
-      }
-    },
-    [disabled, isOpen, flatList, showCustomOption, highlightedIndex, onChange, searchTerm]
-  );
+      case 'Tab':
+        setIsOpen(false);
+        setSearchTerm('');
+        break;
 
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchTerm(event.target.value);
-      setHighlightedIndex(0);
-      if (!isOpen) setIsOpen(true);
-    },
-    [isOpen]
-  );
+      default:
+        // Allow other keys to pass through
+        break;
+    }
+  };
 
-  const handleInputFocus = useCallback(() => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setHighlightedIndex(0);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  const handleInputFocus = () => {
     if (!disabled) {
       setIsOpen(true);
     }
-  }, [disabled]);
+  };
 
-  const handleSelectCharacter = useCallback(
-    (characterId: string) => {
-      onChange(characterId);
-      setIsOpen(false);
-      setSearchTerm('');
-      inputRef.current?.blur();
-    },
-    [onChange]
-  );
+  const handleSelectCharacter = (characterId: string) => {
+    onChange(characterId);
+    setIsOpen(false);
+    setSearchTerm('');
+    inputRef.current?.blur();
+  };
 
-  const handleSelectCustom = useCallback(() => {
+  const handleSelectCustom = () => {
     if (searchTerm.trim()) {
       onChange(searchTerm.trim());
       setIsOpen(false);
       setSearchTerm('');
       inputRef.current?.blur();
     }
-  }, [onChange, searchTerm]);
+  };
 
-  // Reset highlighted index when search term changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally reset on searchTerm change
-  useEffect(() => {
+  // Track previous searchTerm for render-time comparison (React's recommended pattern)
+  const [prevSearchTerm, setPrevSearchTerm] = useState(searchTerm);
+
+  // Reset highlighted index during render when search term changes (faster than useEffect)
+  if (searchTerm !== prevSearchTerm) {
+    setPrevSearchTerm(searchTerm);
     setHighlightedIndex(0);
-  }, [searchTerm]);
+  }
 
   // Scroll highlighted item into view when it changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally scroll on highlightedIndex change
@@ -431,6 +424,4 @@ export const CharacterSelector = memo(function CharacterSelector({
       )}
     </div>
   );
-});
-
-export default CharacterSelector;
+}

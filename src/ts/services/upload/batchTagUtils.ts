@@ -6,7 +6,7 @@
  * @module services/upload/batchTagUtils
  */
 
-import { addTag, removeTag } from './tagUtils.js';
+import { addTag, removeTag, replaceTypeTag, type TypeTagValue } from './tagUtils.js';
 
 // ============================================================================
 // Types
@@ -114,4 +114,18 @@ export function unstarAll<T extends AssetWithTags>(assets: T[]): T[] {
  */
 export function countStarred<T extends AssetWithTags>(assets: T[]): number {
   return assets.filter((a) => a.tags.includes('starred')).length;
+}
+
+/**
+ * Reclassify all assets to a new type (change type:* tag)
+ * @returns New array with updated assets (does not mutate)
+ */
+export function reclassifyTypeAll<T extends AssetWithTags>(
+  assets: T[],
+  newType: TypeTagValue
+): T[] {
+  return assets.map((asset) => ({
+    ...asset,
+    tags: replaceTypeTag(asset.tags, newType),
+  }));
 }

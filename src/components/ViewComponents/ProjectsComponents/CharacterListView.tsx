@@ -9,7 +9,7 @@
  * Designed for quick scanning of script contents.
  */
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCharacterImageResolver } from '@/hooks';
 import styles from '@/styles/components/projects/CharacterListView.module.css';
 import { getTeamHexColor, TEAM_LABELS } from '@/ts/config.js';
@@ -179,11 +179,7 @@ interface SelectionHeaderProps {
 }
 
 /** Header with selection summary and bulk action buttons */
-const SelectionHeader = memo(function SelectionHeader({
-  summary,
-  onToggleAll,
-  headerActions,
-}: SelectionHeaderProps) {
+function SelectionHeader({ summary, onToggleAll, headerActions }: SelectionHeaderProps) {
   return (
     <div className={styles.selectionHeader}>
       <span className={styles.selectionSummary}>
@@ -212,7 +208,7 @@ const SelectionHeader = memo(function SelectionHeader({
       )}
     </div>
   );
-});
+}
 
 interface CharacterIconProps {
   character: CharacterRowData;
@@ -223,7 +219,7 @@ interface CharacterIconProps {
 }
 
 /** Character icon with optional selection toggle */
-const CharacterIcon = memo(function CharacterIcon({
+function CharacterIcon({
   character,
   iconUrl,
   isLoading,
@@ -283,7 +279,7 @@ const CharacterIcon = memo(function CharacterIcon({
       )}
     </button>
   );
-});
+}
 
 interface CharacterInfoProps {
   character: CharacterRowData;
@@ -291,7 +287,7 @@ interface CharacterInfoProps {
 }
 
 /** Character info section (ability, reminders, etc.) */
-const CharacterInfo = memo(function CharacterInfo({ character, visibility }: CharacterInfoProps) {
+function CharacterInfo({ character, visibility }: CharacterInfoProps) {
   const hasContent =
     (visibility.showAbility && character.ability) ||
     (visibility.showFirstNightReminder && character.firstNightReminder) ||
@@ -345,7 +341,7 @@ const CharacterInfo = memo(function CharacterInfo({ character, visibility }: Cha
       {!hasContent && <div className={styles.noContent}>—</div>}
     </div>
   );
-});
+}
 
 interface CharacterRowProps {
   character: CharacterRowData;
@@ -356,13 +352,7 @@ interface CharacterRowProps {
 }
 
 /** Single character row with icon, name, and info */
-const CharacterRow = memo(function CharacterRow({
-  character,
-  iconUrl,
-  isLoading,
-  visibility,
-  selection,
-}: CharacterRowProps) {
+function CharacterRow({ character, iconUrl, isLoading, visibility, selection }: CharacterRowProps) {
   const isEnabled = selection.metadata
     ? isCharacterEnabled(character.uuid, selection.metadata)
     : true;
@@ -392,7 +382,7 @@ const CharacterRow = memo(function CharacterRow({
       <CharacterInfo character={character} visibility={visibility} />
     </div>
   );
-});
+}
 
 interface TeamSectionProps {
   team: Team;
@@ -406,7 +396,7 @@ interface TeamSectionProps {
 }
 
 /** Collapsible team section with header and character list */
-const TeamSection = memo(function TeamSection({
+function TeamSection({
   team,
   characters,
   resolvedUrls,
@@ -446,7 +436,7 @@ const TeamSection = memo(function TeamSection({
       )}
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main Component
@@ -469,6 +459,7 @@ export function CharacterListView({
   const [collapsedTeams, setCollapsedTeams] = useState<Set<Team>>(new Set());
 
   // Get characters from props or extract from tokens (backward compatibility)
+  // useMemo required: used as useEffect dependency in useCharacterImageResolver
   const characters = useMemo(() => {
     if (charactersProp && charactersProp.length > 0) {
       return charactersProp;
@@ -480,49 +471,39 @@ export function CharacterListView({
   const { resolvedUrls, isLoading } = useCharacterImageResolver({ characters });
 
   // Group characters by team
-  const groupedCharacters = useMemo(() => {
+  const groupedCharacters = (() => {
     const rows = toCharacterRows(characters);
     return groupByTeam(rows);
-  }, [characters]);
+  })();
 
   // Total character count
-  const totalCharacters = useMemo(
-    () => Array.from(groupedCharacters.values()).reduce((sum, chars) => sum + chars.length, 0),
-    [groupedCharacters]
+  const totalCharacters = Array.from(groupedCharacters.values()).reduce(
+    (sum, chars) => sum + chars.length,
+    0
   );
 
   // Selection summary for header
-  const selectionSummary = useMemo(
-    () =>
-      showSelection
-        ? calculateSelectionSummary(groupedCharacters, characterMetadata, totalCharacters)
-        : { enabled: totalCharacters, disabled: 0, total: totalCharacters },
-    [showSelection, groupedCharacters, characterMetadata, totalCharacters]
-  );
+  const selectionSummary = showSelection
+    ? calculateSelectionSummary(groupedCharacters, characterMetadata, totalCharacters)
+    : { enabled: totalCharacters, disabled: 0, total: totalCharacters };
 
-  // Memoized visibility config to prevent unnecessary re-renders
-  const visibility: InfoVisibility = useMemo(
-    () => ({
-      showAbility,
-      showFirstNightReminder,
-      showOtherNightReminder,
-      showReminders,
-    }),
-    [showAbility, showFirstNightReminder, showOtherNightReminder, showReminders]
-  );
+  // Visibility config
+  const visibility: InfoVisibility = {
+    showAbility,
+    showFirstNightReminder,
+    showOtherNightReminder,
+    showReminders,
+  };
 
-  // Memoized selection config
-  const selection: SelectionConfig = useMemo(
-    () => ({
-      enabled: showSelection,
-      metadata: characterMetadata,
-      onToggle: onToggleCharacter,
-    }),
-    [showSelection, characterMetadata, onToggleCharacter]
-  );
+  // Selection config
+  const selection: SelectionConfig = {
+    enabled: showSelection,
+    metadata: characterMetadata,
+    onToggle: onToggleCharacter,
+  };
 
   // Toggle team collapse state
-  const toggleTeamCollapse = useCallback((team: Team) => {
+  const toggleTeamCollapse = (team: Team) => {
     setCollapsedTeams((prev) => {
       const next = new Set(prev);
       if (next.has(team)) {
@@ -532,7 +513,7 @@ export function CharacterListView({
       }
       return next;
     });
-  }, []);
+  };
 
   // Empty state
   if (totalCharacters === 0) {

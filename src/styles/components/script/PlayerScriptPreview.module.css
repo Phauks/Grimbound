@@ -1,0 +1,549 @@
+/**
+ * PlayerScriptPreview Styles
+ *
+ * Styles for the interactive player script preview with drag-and-drop support.
+ * Shows scaled-down versions of both pages side by side.
+ */
+
+/* ============================================================================
+   Container & Layout
+   ============================================================================ */
+
+.previewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  position: relative;
+}
+
+/* SAO Reset Button - floats in top right of the script page content */
+.saoResetButton {
+  position: absolute;
+  top: 0.2in;
+  right: 0.2in;
+  z-index: 10;
+  padding: 4px 8px;
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  font-weight: 500;
+  color: #333;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.saoResetButton:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.saoResetButton:active {
+  background: rgba(240, 240, 240, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================================
+   Pages Container (uses nightOrderStyles.sheetsContainer now)
+   ============================================================================ */
+
+.dragging {
+  user-select: none;
+}
+
+/* Page content - matches NightSheet.module.css .sheet exactly */
+.pageContent {
+  /* Fixed reference dimensions for WYSIWYG scaling */
+  /* Parent ScaledPage applies transform: scale() for responsive sizing */
+  position: relative; /* For absolute positioning of SAO reset button */
+  width: 680px;
+  height: 880px; /* 680 * (11/8.5) = 880px for letter aspect ratio */
+  display: flex;
+  flex-direction: column;
+  padding: 0.3in 0.25in; /* Slightly more padding for player script content */
+  box-sizing: border-box;
+  overflow: hidden; /* Clip to fixed dimensions */
+  /* Default background */
+  background-color: #f4edd9;
+}
+
+/* ============================================================================
+   Header Section
+   ============================================================================ */
+
+.header {
+  text-align: center;
+  margin-bottom: 0.12in;
+  flex-shrink: 0;
+}
+
+/* Compact header - single row layout with title and author/version inline */
+.headerCompact {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0.15in; /* Space between title and author/version */
+  text-align: left;
+  margin-bottom: 0.08in;
+}
+
+.scriptName {
+  font-family: "Dumbledor", "Georgia", serif;
+  font-size: 28pt;
+  font-weight: normal;
+  color: #1a1a2e;
+  margin: 0;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Compact title - smaller, left-aligned */
+.scriptNameCompact {
+  font-size: 18pt;
+  flex-shrink: 0;
+}
+
+.author {
+  font-family: "Goudy Old Style", "Georgia", serif;
+  font-size: 11pt;
+  font-style: italic;
+  color: #666;
+  margin: 0.04in 0 0 0;
+}
+
+/* Compact author - inline with title */
+.authorCompact {
+  font-size: 9pt;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   Team Sections
+   ============================================================================ */
+
+.teamSections {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1in;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.teamSection {
+  flex: 0 0 auto; /* Don't grow or shrink - size to content only */
+  display: flex;
+  gap: 0.06in;
+  min-height: 0;
+  padding-top: 0.08in;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.teamSection:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.teamLabel {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.15in;
+  flex-shrink: 0;
+}
+
+.teamLetter {
+  display: block;
+}
+
+.characterGrid {
+  flex: 1;
+  align-self: start; /* Don't stretch to fill parent height */
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: auto;
+  gap: 0.03in;
+  align-items: start;
+  align-content: start;
+}
+
+.characterGrid.twoColumn {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--row-count, 7), auto);
+  gap: 0.03in 0.1in;
+}
+
+/* ============================================================================
+   Jinx & Fabled Sections
+   ============================================================================ */
+
+.jinxSection,
+.fabledSection,
+.travellersSection,
+.bootleggerSection {
+  margin-top: 0.1in;
+  padding-top: 0.06in;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: left;
+  width: 100%;
+}
+
+.sectionLabel {
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 8pt;
+  font-weight: bold;
+  color: #666;
+  margin: 0 0 0.04in 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.jinxEntry {
+  display: flex;
+  align-items: center; /* Center text vertically with icons */
+  gap: 0.06in;
+  margin-bottom: 0.04in;
+}
+
+.jinxIcons {
+  display: flex;
+  gap: 0.02in;
+  flex-shrink: 0;
+}
+
+/* Jinx icon wrapper for scale-in-place behavior */
+.jinxIconWrapper {
+  width: 0.25in;
+  height: 0.25in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.jinxIcon {
+  width: 0.25in;
+  height: 0.25in;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
+}
+
+.jinxText {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  color: #333;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.fabledEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.06in;
+  margin-bottom: 0.04in;
+  text-align: left;
+}
+
+/* Fabled icon wrapper for scale-in-place behavior */
+.fabledIconWrapper {
+  width: 0.3in;
+  height: 0.3in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fabledIcon {
+  width: 0.3in;
+  height: 0.3in;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
+}
+
+.fabledName {
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 9pt;
+  font-weight: bold;
+  display: block;
+  text-align: left;
+}
+
+.fabledAbility {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  color: #333;
+  margin: 0.02in 0 0 0;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* ============================================================================
+   Traveller Section (Recommended Travellers)
+   ============================================================================ */
+
+.travellerEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.06in;
+  margin-bottom: 0.04in;
+  text-align: left;
+}
+
+/* Traveller icon wrapper for scale-in-place behavior */
+.travellerIconWrapper {
+  width: 0.3in;
+  height: 0.3in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.travellerIcon {
+  width: 0.3in;
+  height: 0.3in;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
+}
+
+.travellerName {
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 9pt;
+  font-weight: bold;
+  display: block;
+  text-align: left;
+  color: #9370db; /* Medium purple for travellers */
+}
+
+.travellerAbility {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  color: #333;
+  margin: 0.02in 0 0 0;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* ============================================================================
+   Bootlegger Section (Custom Abilities from Script Meta)
+   ============================================================================ */
+
+.bootleggerEntry {
+  display: flex;
+  align-items: center; /* Center text vertically with icon */
+  gap: 0.06in;
+  margin-bottom: 0.04in;
+  text-align: left;
+}
+
+/* Bootlegger icon wrapper for scale-in-place behavior */
+.bootleggerIconWrapper {
+  width: 0.3in;
+  height: 0.3in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bootleggerIcon {
+  width: 0.3in;
+  height: 0.3in;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
+}
+
+.bootleggerName {
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 9pt;
+  font-weight: bold;
+  display: block;
+  text-align: left;
+  color: #8b4513; /* Saddle brown for bootlegger */
+}
+
+.bootleggerAbility {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 7pt;
+  color: #333;
+  margin: 0.02in 0 0 0;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* ============================================================================
+   Footer
+   ============================================================================ */
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 6pt;
+  color: #666;
+  margin-top: auto;
+  padding-top: 0.06in;
+  flex-shrink: 0;
+}
+
+.footerNote {
+  grid-column: 2;
+  text-align: center;
+}
+
+.footerCopyright {
+  grid-column: 3;
+  text-align: right;
+  font-size: 5pt;
+  color: #999;
+}
+
+/* ============================================================================
+   Backing Sheet Specific
+   ============================================================================ */
+
+.nightOrderBar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.06in;
+  padding-bottom: 0.1in;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.1in;
+  flex-shrink: 0;
+}
+
+.nightOrderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.08in;
+}
+
+.nightOrderLabel {
+  font-family: "Trade Gothic Bold", "Helvetica Neue", sans-serif;
+  font-size: 8pt;
+  color: #666;
+  font-weight: bold;
+  width: 0.8in;
+  flex-shrink: 0;
+}
+
+.nightOrderIcons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1; /* Fill available width, then wrap naturally */
+  gap: 0.02in; /* Consistent spacing between icons */
+}
+
+/* Night order icon wrapper for scale-in-place behavior */
+.nightOrderIconWrapper {
+  width: 0.28in;
+  height: 0.28in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nightOrderIcon {
+  width: 0.28in;
+  height: 0.28in;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
+}
+
+.moreIndicator {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 8pt;
+  color: #888;
+}
+
+.centerContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.logo {
+  max-width: 80%;
+  max-height: 3in;
+  object-fit: contain;
+}
+
+.backingScriptName {
+  font-family: "Dumbledor", "Georgia", serif;
+  font-size: 36pt;
+  font-weight: normal;
+  color: #1a1a2e;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.playerCountPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15in;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.playerCountPlaceholder span {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 10pt;
+  color: #666;
+}
+
+.placeholderSubtext {
+  font-family: "Trade Gothic", "Helvetica Neue", sans-serif;
+  font-size: 8pt;
+  color: #888;
+}
+
+/* ============================================================================
+   Responsive Adjustments
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .controls {
+    flex-wrap: wrap;
+  }
+}

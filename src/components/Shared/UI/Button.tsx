@@ -22,7 +22,7 @@
  * ```
  */
 
-import { type ButtonHTMLAttributes, forwardRef, type ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import styles from '@/styles/components/shared/Button.module.css';
 import { cn } from '@/ts/utils';
 
@@ -64,73 +64,64 @@ const sizeClasses: Record<ButtonSize, string> = {
   large: styles.sizeLarge,
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      variant = 'secondary',
-      size = 'medium',
-      icon,
-      iconPosition = 'left',
-      isIconOnly = false,
-      fullWidth = false,
-      loading = false,
-      loadingText,
-      className,
-      children,
-      disabled,
-      ...props
-    },
-    ref
-  ) => {
-    const classes = cn(
-      styles.button,
-      variantClasses[variant],
-      sizeClasses[size],
-      isIconOnly && styles.iconOnly,
-      fullWidth && styles.fullWidth,
-      loading && styles.loading,
-      className
-    );
+export function Button({
+  variant = 'secondary',
+  size = 'medium',
+  icon,
+  iconPosition = 'left',
+  isIconOnly = false,
+  fullWidth = false,
+  loading = false,
+  loadingText,
+  className,
+  children,
+  disabled,
+  ref,
+  ...props
+}: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {
+  const classes = cn(
+    styles.button,
+    variantClasses[variant],
+    sizeClasses[size],
+    isIconOnly && styles.iconOnly,
+    fullWidth && styles.fullWidth,
+    loading && styles.loading,
+    className
+  );
 
-    // Determine what content to show
-    const showLoadingText = loading && loadingText;
-    const displayContent = showLoadingText ? loadingText : children;
+  // Determine what content to show
+  const showLoadingText = loading && loadingText;
+  const displayContent = showLoadingText ? loadingText : children;
 
-    return (
-      <button
-        ref={ref}
-        className={classes}
-        disabled={disabled || loading}
-        aria-busy={loading}
-        {...props}
-      >
-        {/* Loading spinner */}
-        {loading && <span className={styles.spinner} aria-hidden="true" />}
+  return (
+    <button
+      ref={ref}
+      className={classes}
+      disabled={disabled || loading}
+      aria-busy={loading}
+      {...props}
+    >
+      {/* Loading spinner */}
+      {loading && <span className={styles.spinner} aria-hidden="true" />}
 
-        {/* Icon (hidden during loading unless no loading text) */}
-        {icon && !loading && (
-          <span
-            className={cn(
-              styles.icon,
-              iconPosition === 'left' ? styles.iconLeft : styles.iconRight
-            )}
-          >
-            {icon}
-          </span>
-        )}
+      {/* Icon (hidden during loading unless no loading text) */}
+      {icon && !loading && (
+        <span
+          className={cn(styles.icon, iconPosition === 'left' ? styles.iconLeft : styles.iconRight)}
+        >
+          {icon}
+        </span>
+      )}
 
-        {/* Button text content */}
-        {displayContent && (
-          <span className={loading && !loadingText ? styles.hiddenContent : undefined}>
-            {displayContent}
-          </span>
-        )}
-      </button>
-    );
-  }
-);
-
-Button.displayName = 'Button';
+      {/* Button text content */}
+      {displayContent && (
+        <span className={loading && !loadingText ? styles.hiddenContent : undefined}>
+          {displayContent}
+        </span>
+      )}
+    </button>
+  );
+}
 
 // ============================================
 // Toggle Button Variant
@@ -141,15 +132,16 @@ interface ToggleButtonProps extends ButtonProps {
   active?: boolean;
 }
 
-export const ToggleButton = forwardRef<HTMLButtonElement, ToggleButtonProps>(
-  ({ active = false, className, ...props }, ref) => {
-    const classes = cn(styles.toggle, active && styles.active, className);
+export function ToggleButton({
+  active = false,
+  className,
+  ref,
+  ...props
+}: ToggleButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {
+  const classes = cn(styles.toggle, active && styles.active, className);
 
-    return <button ref={ref} className={classes} aria-pressed={active} {...props} />;
-  }
-);
-
-ToggleButton.displayName = 'ToggleButton';
+  return <button ref={ref} className={classes} aria-pressed={active} {...props} />;
+}
 
 // ============================================
 // Button Group

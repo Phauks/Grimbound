@@ -7,14 +7,14 @@
  * @module hooks/assets/useAssetPreviewGenerator
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDataSync } from '@/contexts/DataSyncContext.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext.js';
-import { FALLBACK_PREVIEW_CHARACTER_ID } from '@/ts/constants.js';
+import { hashGenerationOptions } from '@/ts/cache/index.js';
+import { DEFAULT_SAMPLE_CHARACTER } from '@/ts/constants.js';
 import { getBestPreviewCharacter } from '@/ts/data/characterUtils.js';
 import { TokenGenerator } from '@/ts/generation/index.js';
 import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
-import type { AssetType } from '@/ts/services/upload/index.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 import { DEFAULT_BACKGROUND_STYLE } from '@/ts/types/backgroundEffects.js';
 import type {
   BackgroundStyle,
@@ -47,22 +47,20 @@ function resolveAssetValue(selectedAssetId: string | null): string | null {
 async function generateTokenCanvas(
   generator: TokenGenerator,
   previewTokenType: PreviewTokenType,
-  sampleCharacter: Character | null,
+  sampleCharacter: Character,
   sampleReminderText: string,
   scriptMeta: ScriptMeta | null
-): Promise<HTMLCanvasElement | null> {
+): Promise<HTMLCanvasElement> {
   switch (previewTokenType) {
     case 'reminder':
-      return sampleCharacter
-        ? generator.generateReminderToken(sampleCharacter, sampleReminderText)
-        : null;
+      return generator.generateReminderToken(sampleCharacter, sampleReminderText);
     case 'meta':
       return generator.generateScriptNameToken(
         scriptMeta?.name || 'Custom Script',
         scriptMeta?.author
       );
     default:
-      return sampleCharacter ? generator.generateCharacterToken(sampleCharacter) : null;
+      return generator.generateCharacterToken(sampleCharacter);
   }
 }
 
@@ -79,9 +77,9 @@ export interface UseAssetPreviewGeneratorOptions {
   /** Which token type to show in preview (defaults to 'character') */
   previewTokenType?: PreviewTokenType;
   /** Current asset type filter */
-  assetType?: AssetType | 'all';
+  assetType?: TypeTagValue | 'all';
   /** Initial asset type filter (for fallback) */
-  initialAssetType?: AssetType;
+  initialAssetType?: TypeTagValue;
   /** Selected asset ID (null, 'none', 'builtin:*', or user asset ID) */
   selectedAssetId: string | null;
   /** Debounce delay in ms (default: 150) */
@@ -95,8 +93,8 @@ export interface UseAssetPreviewGeneratorReturn {
   isGenerating: boolean;
   /** Whether preview panel should be shown */
   showPreviewPanel: boolean;
-  /** Character used for preview */
-  sampleCharacter: Character | null;
+  /** Character used for preview (always available - defaults to Grimbound) */
+  sampleCharacter: Character;
   /** Reminder text used for reminder token preview */
   sampleReminderText: string;
 }
@@ -130,30 +128,8 @@ export function useAssetPreviewGenerator(
   // Get character data from context for preview
   const { characters, scriptMeta, exampleCharacterToken } = useTokenContext();
 
-  // Get official character data for fallback preview
-  const { getCharacter, isInitialized: isSyncInitialized } = useDataSync();
-  const [officialFallbackCharacter, setOfficialFallbackCharacter] = useState<Character | null>(
-    null
-  );
-
-  // Fetch the official fallback character from synced data
-  useEffect(() => {
-    if (!isSyncInitialized) return;
-
-    let mounted = true;
-    getCharacter(FALLBACK_PREVIEW_CHARACTER_ID).then((character) => {
-      if (mounted && character) {
-        setOfficialFallbackCharacter(character);
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [getCharacter, isSyncInitialized]);
-
   // Get the character for preview - prioritize example token, then best preview candidate
-  const sampleCharacter = useMemo((): Character | null => {
+  const sampleCharacter = ((): Character => {
     // If there's an example token set, use its character data
     if (exampleCharacterToken?.characterData) {
       return exampleCharacterToken.characterData;
@@ -162,17 +138,35 @@ export function useAssetPreviewGenerator(
     const bestPreview = getBestPreviewCharacter(characters);
     if (bestPreview) return bestPreview;
 
-    // Use official character from synced data (null if not yet loaded)
-    return officialFallbackCharacter;
-  }, [characters, exampleCharacterToken, officialFallbackCharacter]);
+    // Use default sample character (always available)
+    return DEFAULT_SAMPLE_CHARACTER;
+  })();
 
   // Sample reminder text for reminder token preview
-  const sampleReminderText = useMemo(() => {
-    if (sampleCharacter?.reminders && sampleCharacter.reminders.length > 0) {
-      return sampleCharacter.reminders[0];
-    }
-    return 'Reminder';
-  }, [sampleCharacter]);
+  const sampleReminderText =
+    sampleCharacter?.reminders && sampleCharacter.reminders.length > 0
+      ? sampleCharacter.reminders[0]
+      : 'Reminder';
+
+  // Compute stable hashes for dependency comparison (prevents infinite loops)
+  // Objects created every render would cause effects to run infinitely
+  const generationOptionsHash = generationOptions ? hashGenerationOptions(generationOptions) : '';
+  const scriptMetaJson = scriptMeta ? JSON.stringify(scriptMeta) : '';
+
+  // Store objects in refs for use inside effects without triggering re-runs
+  const generationOptionsRef = useRef(generationOptions);
+  generationOptionsRef.current = generationOptions;
+
+  const sampleCharacterRef = useRef(sampleCharacter);
+  sampleCharacterRef.current = sampleCharacter;
+
+  const scriptMetaRef = useRef(scriptMeta);
+  scriptMetaRef.current = scriptMeta;
+
+  // Track previous values to detect actual changes
+  const prevGenerationOptionsHashRef = useRef(generationOptionsHash);
+  const prevSampleCharacterUuidRef = useRef(sampleCharacter?.uuid);
+  const prevScriptMetaJsonRef = useRef(scriptMetaJson);
 
   // Map asset type to generation option property based on preview token type
   const getPreviewOptions = useCallback(
@@ -201,7 +195,7 @@ export function useAssetPreviewGenerator(
 
       // Handle other asset types
       switch (effectiveAssetType) {
-        case 'setup-overlay':
+        case 'setup':
           return { setupStyle: assetValue };
         case 'accent':
           return { accentGeneration: assetValue };
@@ -219,14 +213,25 @@ export function useAssetPreviewGenerator(
 
   // Generate preview when modal opens or selection changes
   useEffect(() => {
-    // Skip if no generation options provided
-    if (!generationOptions) {
-      setPreviewUrl(null);
-      return;
+    const currentGenerationOptions = generationOptionsRef.current;
+    const currentSampleCharacter = sampleCharacterRef.current;
+    const currentScriptMeta = scriptMetaRef.current;
+    const currentCharacterUuid = sampleCharacter?.uuid;
+
+    // Reference hash values to satisfy exhaustive-deps (they trigger the effect)
+    // Update prev refs - comparison ensures hashes are "used" in the effect
+    if (prevGenerationOptionsHashRef.current !== generationOptionsHash) {
+      prevGenerationOptionsHashRef.current = generationOptionsHash;
+    }
+    if (prevSampleCharacterUuidRef.current !== currentCharacterUuid) {
+      prevSampleCharacterUuidRef.current = currentCharacterUuid;
+    }
+    if (prevScriptMetaJsonRef.current !== scriptMetaJson) {
+      prevScriptMetaJsonRef.current = scriptMetaJson;
     }
 
-    // Skip character/reminder preview if no sample character available
-    if (!sampleCharacter && previewTokenType !== 'meta') {
+    // Skip if no generation options provided
+    if (!currentGenerationOptions) {
       setPreviewUrl(null);
       return;
     }
@@ -243,9 +248,9 @@ export function useAssetPreviewGenerator(
 
         // Merge preview options with generation options
         const previewOptions = {
-          ...generationOptions,
+          ...currentGenerationOptions,
           ...(assetValue ? getPreviewOptions(assetValue) : {}),
-          logoUrl: scriptMeta?.logo,
+          logoUrl: currentScriptMeta?.logo,
         };
 
         const generator = new TokenGenerator(previewOptions);
@@ -254,9 +259,9 @@ export function useAssetPreviewGenerator(
         const canvas = await generateTokenCanvas(
           generator,
           previewTokenType,
-          sampleCharacter,
+          currentSampleCharacter,
           sampleReminderText,
-          scriptMeta
+          currentScriptMeta
         );
 
         // Only update if this is still the current generation
@@ -280,10 +285,10 @@ export function useAssetPreviewGenerator(
     return () => clearTimeout(timeout);
   }, [
     selectedAssetId,
-    generationOptions,
-    sampleCharacter,
+    generationOptionsHash,
+    sampleCharacter?.uuid,
     sampleReminderText,
-    scriptMeta,
+    scriptMetaJson,
     getPreviewOptions,
     previewTokenType,
     debounceMs,
@@ -300,5 +305,3 @@ export function useAssetPreviewGenerator(
     sampleReminderText,
   };
 }
-
-export default useAssetPreviewGenerator;

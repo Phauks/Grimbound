@@ -277,3 +277,16 @@ export const TAG_TYPE_ICONS: Record<TypeTagValue, string> = {
   'studio-logo': '🎭',
   'studio-project': '📦',
 };
+
+/**
+ * User-facing asset type tabs (excludes internal studio-* types)
+ * Used for type filters, reclassify menus, and upload type selection
+ */
+export const USER_TYPE_TABS: TypeTagValue[] = [
+  'icon',
+  'token-background',
+  'script-background',
+  'setup',
+  'accent',
+  'logo',
+];

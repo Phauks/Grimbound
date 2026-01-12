@@ -167,5 +167,3 @@ export function useCharacterOperations({
     handleChangeTeam: metadata.handleChangeTeam,
   };
 }
-
-export default useCharacterOperations;

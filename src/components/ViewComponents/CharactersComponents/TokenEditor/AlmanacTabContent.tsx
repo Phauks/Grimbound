@@ -11,7 +11,7 @@
  * @module components/CharactersComponents/TokenEditor/AlmanacTabContent
  */
 
-import { memo, type RefCallback, useCallback, useEffect, useRef } from 'react';
+import { type RefCallback, useEffect, useRef } from 'react';
 import { useControlledFields } from '@/hooks/ui/useControlledFields';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character } from '@/ts/types/index.js';
@@ -80,7 +80,7 @@ interface AlmanacFieldProps {
   onInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
 }
 
-const AlmanacField = memo(function AlmanacField({
+function AlmanacField({
   config,
   value,
   disabled,
@@ -106,9 +106,9 @@ const AlmanacField = memo(function AlmanacField({
       />
     </div>
   );
-});
+}
 
-export const AlmanacTabContent = memo(function AlmanacTabContent({
+export function AlmanacTabContent({
   character,
   isOfficial,
   onEditChange,
@@ -131,28 +131,22 @@ export const AlmanacTabContent = memo(function AlmanacTabContent({
   // Auto-resize textareas
   const textareaRefs = useRef<Set<HTMLTextAreaElement>>(new Set());
 
-  const resizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
+  const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
     if (!textarea) return;
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
-  }, []);
+  };
 
-  const registerTextareaRef: RefCallback<HTMLTextAreaElement> = useCallback(
-    (element) => {
-      if (element) {
-        textareaRefs.current.add(element);
-        requestAnimationFrame(() => resizeTextarea(element));
-      }
-    },
-    [resizeTextarea]
-  );
+  const registerTextareaRef: RefCallback<HTMLTextAreaElement> = (element) => {
+    if (element) {
+      textareaRefs.current.add(element);
+      requestAnimationFrame(() => resizeTextarea(element));
+    }
+  };
 
-  const handleTextareaInput = useCallback(
-    (e: React.FormEvent<HTMLTextAreaElement>) => {
-      resizeTextarea(e.currentTarget);
-    },
-    [resizeTextarea]
-  );
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    resizeTextarea(e.currentTarget);
+  };
 
   // Resize textareas when character changes (using uuid as trigger)
   const characterUuid = character.uuid;
@@ -225,6 +219,4 @@ export const AlmanacTabContent = memo(function AlmanacTabContent({
       </div>
     </div>
   );
-});
-
-export default AlmanacTabContent;
+}

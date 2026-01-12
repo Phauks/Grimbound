@@ -16,7 +16,12 @@ export {
 export { useProjects } from './useProjects.js';
 export {
   type DisplayMode,
+  type GenerateAllTokensFn,
+  type UseProjectTokensDeps,
+  type UseProjectTokensLogger,
   type UseProjectTokensOptions,
   type UseProjectTokensResult,
+  type UseProjectTokensWithDepsOptions,
   useProjectTokens,
 } from './useProjectTokens.js';
+export { useProjectTokensWithDeps } from './useProjectTokensWithDeps.js';

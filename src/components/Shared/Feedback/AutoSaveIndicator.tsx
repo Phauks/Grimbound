@@ -9,7 +9,7 @@
  * - Manual "Save Now" button
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import styles from '@/styles/components/shared/AutoSaveIndicator.module.css';
@@ -23,28 +23,27 @@ export function AutoSaveIndicator() {
   // Determine if auto-save is enabled (has active project)
   const isAutoSaveEnabled = !!currentProject;
 
-  const getStatusInfo = useCallback(
-    (status: AutoSaveStatus): { label: string; icon: string; color: string } => {
-      if (!isAutoSaveEnabled) {
-        return { label: 'No Project', icon: '⚠', color: 'warning' };
-      }
+  const getStatusInfo = (
+    status: AutoSaveStatus
+  ): { label: string; icon: string; color: string } => {
+    if (!isAutoSaveEnabled) {
+      return { label: 'No Project', icon: '⚠', color: 'warning' };
+    }
 
-      switch (status.state) {
-        case 'saving':
-          return { label: 'Saving...', icon: '⟳', color: 'info' };
-        case 'saved':
-          return { label: 'Saved', icon: '✓', color: 'success' };
-        case 'error':
-          return { label: 'Error', icon: '!', color: 'error' };
-        default:
-          if (status.isDirty) {
-            return { label: 'Unsaved', icon: '●', color: 'warning' };
-          }
-          return { label: 'Idle', icon: '○', color: 'idle' };
-      }
-    },
-    [isAutoSaveEnabled]
-  );
+    switch (status.state) {
+      case 'saving':
+        return { label: 'Saving...', icon: '⟳', color: 'info' };
+      case 'saved':
+        return { label: 'Saved', icon: '✓', color: 'success' };
+      case 'error':
+        return { label: 'Error', icon: '!', color: 'error' };
+      default:
+        if (status.isDirty) {
+          return { label: 'Unsaved', icon: '●', color: 'warning' };
+        }
+        return { label: 'Idle', icon: '○', color: 'idle' };
+    }
+  };
 
   const statusInfo = getStatusInfo(autoSaveStatus);
 

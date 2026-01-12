@@ -5,7 +5,7 @@
  * Uses SettingsSelectorBase pattern for consistent UI with other settings.
  */
 
-import { memo, useCallback, useMemo } from 'react';
+import type React from 'react';
 import { createPortal } from 'react-dom';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
@@ -32,7 +32,7 @@ export interface BorderSettingsProps {
 }
 
 /** Render border panel content in portal */
-const BorderPanelContent = memo(function BorderPanelContent({
+function BorderPanelContent({
   panelRef,
   panelPosition,
   borderWidth,
@@ -108,9 +108,9 @@ const BorderPanelContent = memo(function BorderPanelContent({
     </div>,
     document.body
   );
-});
+}
 
-export const BorderSettings = memo(function BorderSettings({
+export function BorderSettings({
   enabled,
   borderWidth,
   borderColor,
@@ -119,10 +119,7 @@ export const BorderSettings = memo(function BorderSettings({
   onColorChange,
   disabled = false,
 }: BorderSettingsProps) {
-  const panelValue = useMemo(
-    () => ({ width: borderWidth, color: borderColor }),
-    [borderWidth, borderColor]
-  );
+  const panelValue = { width: borderWidth, color: borderColor };
 
   const { isExpanded, panelPosition, containerRef, panelRef, toggle, close, handleKeyDown } =
     useExpandablePanel({
@@ -135,10 +132,10 @@ export const BorderSettings = memo(function BorderSettings({
 
   const summaryText = enabled ? `${borderWidth}px` : 'None';
 
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     onWidthChange(STUDIO_DEFAULTS.BORDER_WIDTH);
     onColorChange(STUDIO_DEFAULTS.BORDER_COLOR);
-  }, [onWidthChange, onColorChange]);
+  };
 
   const borderPreviewStyle: React.CSSProperties = enabled
     ? { border: `${Math.min(borderWidth, 4)}px solid ${borderColor}` }
@@ -180,4 +177,4 @@ export const BorderSettings = memo(function BorderSettings({
       )}
     </SettingsSelectorBase>
   );
-});
+}

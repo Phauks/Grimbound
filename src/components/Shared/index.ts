@@ -16,12 +16,14 @@ export {
   type ErrorBoundaryProps,
   type FallbackRenderProps,
 } from './Feedback/ErrorBoundary';
+export { GenerationProgressOverlay } from './Feedback/GenerationProgressOverlay';
 export { StorageWarning } from './Feedback/StorageWarning';
 export { SyncProgressBar } from './Feedback/SyncProgressBar';
 export { SyncStatusIndicator } from './Feedback/SyncStatusIndicator';
 export {
-  ViewErrorFallback,
-  type ViewErrorFallbackProps,
+  type ErrorDisplayVariant,
+  UnifiedErrorDisplay,
+  type UnifiedErrorDisplayProps,
 } from './Feedback/ViewErrorFallback';
 // Form Components
 export {

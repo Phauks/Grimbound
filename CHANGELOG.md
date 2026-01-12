@@ -19,6 +19,25 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 ## [Unreleased]
 
 ### Changed
+- **React Compiler Migration**: Enabled React Compiler for automatic memoization
+  - Installed `babel-plugin-react-compiler` for automatic optimization
+  - Removed manual `useCallback`, `useMemo`, and `React.memo` wrappers
+  - Converted `forwardRef` components to use ref-as-prop pattern (React 19)
+  - React Compiler now handles all memoization decisions automatically
+  - Reduced boilerplate while maintaining performance
+- **Accent System Refactor**: Accents are now deterministic game indicators instead of decorative randomization
+  - Top accents: Display number of reminder tokens (1-5)
+  - Left accent: Indicates character acts on first night
+  - Right accent: Indicates character acts on other nights
+  - Removed: Arc slot controls, probability settings, randomization
+  - Simplified DecorativesSettingsSelector to show only style selection and enable toggle
+  - Updated constants, types, and generation pipeline to pass character data
+- **Build Tooling Upgrades**: Modernized build pipeline for 2025 best practices
+  - Replaced `@vitejs/plugin-react` with `@vitejs/plugin-react-swc` for 20x faster HMR
+  - Updated TypeScript from 5.7.0 to 5.9.3
+  - Added bundle analyzer (`rollup-plugin-visualizer`) - run `npm run build:analyze`
+  - Added dead code detection (`knip`) - run `npm run knip`
+
 - **Project Rebrand**: Renamed from "Clocktower Token Generator" to "Grimbound"
   - New domain: grimbound.com (via Cloudflare Pages)
   - Updated all documentation, UI, and configuration files
@@ -48,6 +67,21 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
   - Rule files are loaded by Claude Code contextually when relevant
 
 ### Added
+- **Player Script PDF Export**: Generate printable player-facing script PDFs
+  - Front page with character abilities organized by team (Townsfolk, Outsiders, Minions, Demons)
+  - Fabled characters section (optional)
+  - Active jinxes section showing character interactions
+  - Player count reference table
+  - Backing sheet with night order icons for First Night and Other Nights
+  - Background customization (color presets, paper texture)
+  - Integration with ScriptPdfContext for settings persistence
+  - New files: `playerScriptRenderer.tsx`, `playerScriptPdfExporter.ts`, `usePlayerScriptExport.ts`
+  - Download available from Script tab via Downloads drawer
+- **Night Order PDF Improvements**: Simplified and optimized night order PDF export
+  - Removed legacy PDF export mode (ADR-010: Hybrid-Only PDF Export)
+  - Single optimized export path using pdf-lib text overlay
+  - Removed experimental "Fast PDF export" toggle from UI
+  - Font embedding handled by pdf-lib (no Snapdom font warming needed)
 - **Per-Character Decoratives Panel**: Comprehensive per-character styling overrides in the Decoratives tab
   - Master toggle to enable/disable custom settings (vs global defaults)
   - Background style selector (same component as global Options panel)
@@ -102,6 +136,9 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - **onChange signature**: JsonEditorPanel now receives string directly instead of ChangeEvent
 
 ### Removed
+- `src/ts/nightOrder/nightOrderPdfExporter.ts` (legacy) - Replaced by hybrid exporter as primary
+- `src/ts/nightOrder/nightSheetRenderer.tsx` (legacy) - Font warming no longer needed
+- Legacy PDF export mode toggle in NightOrderView - Now uses single optimized path
 - `src/ts/ui/jsonHighlighter.ts` - Replaced by CodeMirror 6 language support
 - `src/components/ViewComponents/JsonComponents/JsonHighlight.tsx` - Replaced by CodeMirror
 - `src/components/Shared/Json/VirtualizedJsonHighlight.tsx` - CodeMirror handles large files natively
@@ -113,6 +150,16 @@ This project uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - **Character image flash in night order**: Fixed images showing placeholder before loading by preloading and caching resolved URLs
   - NightOrderEntry now checks `tabPreRenderService.getCachedCharacterImageUrl()` before async resolution
   - Images display instantly when cached from tab hover pre-rendering
+
+### Future Considerations
+- **CSS Container Queries**: Adopt container queries for component-based responsive design
+  - Enable truly reusable components that adapt to their container size, not viewport
+  - Particularly useful for TokenGrid, modals, and sidebar components
+  - Browser support now at 95%+ (Chrome 105+, Firefox 110+, Safari 16+)
+- **React Compiler**: Automatic memoization when SWC support is available
+  - Would eliminate need for manual useMemo/useCallback/React.memo
+  - Currently requires Babel (conflicts with SWC performance gains)
+  - Monitor for SWC plugin development
 
 ## [0.3.0] - 2025-12-05
 

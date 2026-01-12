@@ -7,10 +7,10 @@
  * Uses standard 2-panel ViewLayout matching other views.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import {
   BorderSettings,
   SaveModal,
@@ -19,6 +19,7 @@ import {
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useAssetEditor } from '@/hooks/studio/useAssetEditor';
+import { useResizableSidebar } from '@/hooks/ui';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/studio/Studio.module.css';
 import { STUDIO_DEFAULTS } from '@/ts/constants.js';
@@ -53,6 +54,9 @@ export function StudioView() {
     presets,
   } = useAssetEditor();
 
+  // Resizable sidebar
+  const { width: sidebarWidth, isDragging: isResizing, handleProps } = useResizableSidebar();
+
   // UI state
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [saveModalState, setSaveModalState] = useState<{ open: boolean; asNew: boolean }>({
@@ -64,13 +68,20 @@ export function StudioView() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync border UI state with current border options
-  useEffect(() => {
+  // Track previous borderOptions for render-time comparison (React's recommended pattern)
+  const [prevBorderOptionsJson, setPrevBorderOptionsJson] = useState(() =>
+    JSON.stringify(borderOptions)
+  );
+
+  // Sync border UI state during render when borderOptions changes (faster than useEffect)
+  const borderOptionsJson = JSON.stringify(borderOptions);
+  if (borderOptionsJson !== prevBorderOptionsJson) {
+    setPrevBorderOptionsJson(borderOptionsJson);
     if (borderOptions) {
       setBorderWidth(borderOptions.width);
       setBorderColor(borderOptions.color);
     }
-  }, [borderOptions]);
+  }
 
   // Derived state
   const hasImage = currentCanvas !== null;
@@ -78,10 +89,7 @@ export function StudioView() {
   const isBorderEnabled = borderOptions !== null;
 
   // Generate preview URL from canvas
-  const previewUrl = useMemo(() => {
-    if (!currentCanvas) return null;
-    return currentCanvas.toDataURL('image/png');
-  }, [currentCanvas]);
+  const previewUrl = currentCanvas ? currentCanvas.toDataURL('image/png') : null;
 
   // Check for pending navigation operations
   useEffect(() => {
@@ -132,133 +140,104 @@ export function StudioView() {
   }, [isProcessing, loadFromFile]);
 
   // Drag & drop handlers
-  const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      if (!isProcessing) setIsDragging(true);
-    },
-    [isProcessing]
-  );
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isProcessing) setIsDragging(true);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      if (isProcessing) return;
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (isProcessing) return;
 
-      const file = e.dataTransfer.files[0];
-      if (file?.type.startsWith('image/')) {
-        await loadFromFile(file);
-      }
-    },
-    [isProcessing, loadFromFile]
-  );
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith('image/')) {
+      await loadFromFile(file);
+    }
+  };
 
   // File input handler
-  const handleFileInputChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        await loadFromFile(file);
-        e.target.value = '';
-      }
-    },
-    [loadFromFile]
-  );
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await loadFromFile(file);
+      e.target.value = '';
+    }
+  };
 
-  const openFileDialog = useCallback(() => fileInputRef.current?.click(), []);
+  const openFileDialog = () => fileInputRef.current?.click();
 
   // Handle asset selection from modal
-  const handleAssetSelect = useCallback(
-    async (assetIdOrRef: string) => {
-      setShowAssetModal(false);
-      if (assetIdOrRef === 'none') return;
+  const handleAssetSelect = async (assetIdOrRef: string) => {
+    setShowAssetModal(false);
+    if (assetIdOrRef === 'none') return;
 
-      try {
-        const assetId = isAssetReference(assetIdOrRef)
-          ? extractAssetId(assetIdOrRef)
-          : assetIdOrRef;
-        const asset = await assetStorageService.getById(assetId);
-        const assetName = asset?.metadata?.filename || 'Asset';
-        await loadFromAsset(assetId, assetName);
-      } catch (err) {
-        logger.error('StudioView', 'Failed to load selected asset', err);
-      }
-    },
-    [assetStorageService, loadFromAsset]
-  );
+    try {
+      const assetId = isAssetReference(assetIdOrRef) ? extractAssetId(assetIdOrRef) : assetIdOrRef;
+      const asset = await assetStorageService.getById(assetId);
+      const assetName = asset?.metadata?.filename || 'Asset';
+      await loadFromAsset(assetId, assetName);
+    } catch (err) {
+      logger.error('StudioView', 'Failed to load selected asset', err);
+    }
+  };
 
   // Team color handlers
-  const handleTeamColorToggle = useCallback(
-    (enabled: boolean) => {
-      if (!enabled) applyTeamColor(null);
-    },
-    [applyTeamColor]
-  );
+  const handleTeamColorToggle = (enabled: boolean) => {
+    if (!enabled) applyTeamColor(null);
+  };
 
   // Border handlers
-  const handleBorderToggle = useCallback(
-    (enabled: boolean) => {
-      if (enabled) {
-        applyBorder({ width: borderWidth, color: borderColor });
-      } else {
-        removeBorder();
-      }
-    },
-    [borderWidth, borderColor, applyBorder, removeBorder]
-  );
+  const handleBorderToggle = (enabled: boolean) => {
+    if (enabled) {
+      applyBorder({ width: borderWidth, color: borderColor });
+    } else {
+      removeBorder();
+    }
+  };
 
-  const handleBorderWidthChange = useCallback(
-    (newWidth: number) => {
-      setBorderWidth(newWidth);
-      if (borderOptions) applyBorder({ width: newWidth, color: borderColor }, true);
-    },
-    [borderOptions, borderColor, applyBorder]
-  );
+  const handleBorderWidthChange = (newWidth: number) => {
+    setBorderWidth(newWidth);
+    if (borderOptions) applyBorder({ width: newWidth, color: borderColor }, true);
+  };
 
-  const handleBorderColorChange = useCallback(
-    (newColor: string) => {
-      setBorderColor(newColor);
-      if (borderOptions) applyBorder({ width: borderWidth, color: newColor }, true);
-    },
-    [borderOptions, borderWidth, applyBorder]
-  );
+  const handleBorderColorChange = (newColor: string) => {
+    setBorderColor(newColor);
+    if (borderOptions) applyBorder({ width: borderWidth, color: newColor }, true);
+  };
 
   // Save handlers
-  const handleSaveClick = useCallback((asNew: boolean) => {
+  const handleSaveClick = (asNew: boolean) => {
     setSaveModalState({ open: true, asNew });
-  }, []);
+  };
 
-  const handleSaveConfirm = useCallback(
-    async (name: string) => {
-      try {
-        await save(name, !saveModalState.asNew);
-        setSaveModalState({ open: false, asNew: false });
-      } catch {
-        // Error is handled in the hook
-      }
-    },
-    [save, saveModalState.asNew]
-  );
+  const handleSaveConfirm = async (name: string) => {
+    try {
+      await save(name, !saveModalState.asNew);
+      setSaveModalState({ open: false, asNew: false });
+    } catch {
+      // Error is handled in the hook
+    }
+  };
 
-  const handleSaveCancel = useCallback(() => {
+  const handleSaveCancel = () => {
     setSaveModalState({ open: false, asNew: false });
-  }, []);
+  };
 
-  const initialSaveName = useMemo(() => {
+  const initialSaveName = (() => {
     if (!loadedAssetName) return '';
     return saveModalState.asNew ? `${loadedAssetName}_edited` : loadedAssetName;
-  }, [loadedAssetName, saveModalState.asNew]);
+  })();
 
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Studio" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Studio" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <input
@@ -270,8 +249,15 @@ export function StudioView() {
       />
 
       <ViewLayout variant="2-panel">
-        {/* Left Sidebar - Tools */}
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        {/* Left Sidebar - Tools (Resizable) */}
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isResizing}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <div className={layoutStyles.panelContent}>
             {/* Image Section - Load/Save */}
             <div className={styles.imageSection}>
@@ -423,7 +409,7 @@ export function StudioView() {
           isOpen={showAssetModal}
           onClose={() => setShowAssetModal(false)}
           projectId={undefined}
-          initialAssetType="character-icon"
+          initialAssetType="icon"
           selectionMode={true}
           onSelectAsset={handleAssetSelect}
           generationOptions={generationOptions}

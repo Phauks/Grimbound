@@ -38,5 +38,3 @@ export class ImageCacheAdapter implements IImageCache {
  * Default image cache adapter instance
  */
 export const defaultImageCache = new ImageCacheAdapter();
-
-export default ImageCacheAdapter;

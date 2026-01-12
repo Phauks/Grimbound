@@ -10,7 +10,6 @@
  * @module hooks/characters/useCharacterMetadata
  */
 
-import { useCallback } from 'react';
 import type { Character, GenerationOptions, Team, Token } from '@/ts/types/index.js';
 import { regenerateCharacterAndReminders, updateCharacterInJson } from '@/ts/ui/detailViewUtils.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -64,62 +63,46 @@ export function useCharacterMetadata({
   addToast,
 }: UseCharacterMetadataOptions): UseCharacterMetadataResult {
   // Change a character's team
-  const handleChangeTeam = useCallback(
-    (characterId: string, newTeam: Team) => {
-      const char = characters.find((c) => c.id === characterId);
-      if (!char) return;
+  const handleChangeTeam = (characterId: string, newTeam: Team) => {
+    const char = characters.find((c) => c.id === characterId);
+    if (!char) return;
 
-      const updatedChar = { ...char, team: newTeam };
-      const updatedCharacters = characters.map((c) => (c.id === characterId ? updatedChar : c));
-      setCharacters(updatedCharacters);
+    const updatedChar = { ...char, team: newTeam };
+    const updatedCharacters = characters.map((c) => (c.id === characterId ? updatedChar : c));
+    setCharacters(updatedCharacters);
 
-      // Update JSON
-      try {
-        const updatedJson = updateCharacterInJson(jsonInput, characterId, updatedChar);
-        setJsonInput(updatedJson);
-      } catch (e) {
-        logger.error('useCharacterMetadata', 'Failed to update JSON', e);
-      }
+    // Update JSON
+    try {
+      const updatedJson = updateCharacterInJson(jsonInput, characterId, updatedChar);
+      setJsonInput(updatedJson);
+    } catch (e) {
+      logger.error('useCharacterMetadata', 'Failed to update JSON', e);
+    }
 
-      // Regenerate tokens for this character
-      regenerateCharacterAndReminders(updatedChar, generationOptions)
-        .then(({ characterToken, reminderTokens: newReminderTokens }) => {
-          const updatedTokens = tokens.filter((t) => {
-            if (t.type === 'character' && t.name === char.name) return false;
-            if (t.type === 'reminder' && t.parentCharacter === char.name) return false;
-            return true;
-          });
-          updatedTokens.push(characterToken, ...newReminderTokens);
-          setTokens(updatedTokens);
-        })
-        .catch((error) => {
-          logger.error('useCharacterMetadata', 'Failed to regenerate tokens', error);
+    // Regenerate tokens for this character
+    regenerateCharacterAndReminders(updatedChar, generationOptions)
+      .then(({ characterToken, reminderTokens: newReminderTokens }) => {
+        const updatedTokens = tokens.filter((t) => {
+          if (t.type === 'character' && t.name === char.name) return false;
+          if (t.type === 'reminder' && t.parentCharacter === char.name) return false;
+          return true;
         });
+        updatedTokens.push(characterToken, ...newReminderTokens);
+        setTokens(updatedTokens);
+      })
+      .catch((error) => {
+        logger.error('useCharacterMetadata', 'Failed to regenerate tokens', error);
+      });
 
-      // If this was the selected character (by UUID), update its edited state
-      if (char.uuid === selectedCharacterUuid) {
-        setEditedCharacter({ ...char, team: newTeam });
-      }
+    // If this was the selected character (by UUID), update its edited state
+    if (char.uuid === selectedCharacterUuid) {
+      setEditedCharacter({ ...char, team: newTeam });
+    }
 
-      addToast(`Moved ${char.name} to ${newTeam}`, 'success');
-    },
-    [
-      characters,
-      tokens,
-      jsonInput,
-      generationOptions,
-      selectedCharacterUuid,
-      setCharacters,
-      setTokens,
-      setJsonInput,
-      setEditedCharacter,
-      addToast,
-    ]
-  );
+    addToast(`Moved ${char.name} to ${newTeam}`, 'success');
+  };
 
   return {
     handleChangeTeam,
   };
 }
-
-export default useCharacterMetadata;

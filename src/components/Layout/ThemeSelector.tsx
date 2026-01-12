@@ -9,7 +9,7 @@
  * @module components/Layout/ThemeSelector
  */
 
-import { memo, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import { type ThemeOverrides, useTheme } from '@/contexts/ThemeContext';
@@ -28,7 +28,7 @@ interface ThemeSwatchProps {
   onClick: () => void;
 }
 
-const ThemeSwatch = memo(function ThemeSwatch({ theme, isSelected, onClick }: ThemeSwatchProps) {
+function ThemeSwatch({ theme, isSelected, onClick }: ThemeSwatchProps) {
   // Use core colors for the swatch preview
   const { primary, accent, backgroundBase } = theme.coreColors;
 
@@ -49,7 +49,7 @@ const ThemeSwatch = memo(function ThemeSwatch({ theme, isSelected, onClick }: Th
       <span className={styles.swatchIcon}>{theme.icon}</span>
     </button>
   );
-});
+}
 
 // ============================================================================
 // Customization Section Component
@@ -63,7 +63,7 @@ interface CustomizationSectionProps {
   hasOverrides: boolean;
 }
 
-const CustomizationSection = memo(function CustomizationSection({
+function CustomizationSection({
   overrides,
   defaultColors,
   onOverrideChange,
@@ -138,13 +138,13 @@ const CustomizationSection = memo(function CustomizationSection({
       )}
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main ThemeSelector Component
 // ============================================================================
 
-export const ThemeSelector = memo(function ThemeSelector() {
+export function ThemeSelector() {
   const {
     currentThemeId,
     currentTheme,
@@ -171,12 +171,9 @@ export const ThemeSelector = memo(function ThemeSelector() {
   });
 
   // Handle theme selection
-  const handleThemeSelect = useCallback(
-    (themeId: ThemeId) => {
-      setTheme(themeId);
-    },
-    [setTheme]
-  );
+  const handleThemeSelect = (themeId: ThemeId) => {
+    setTheme(themeId);
+  };
 
   // Render the panel content
   const renderPanel = () => {
@@ -263,6 +260,4 @@ export const ThemeSelector = memo(function ThemeSelector() {
       {renderPanel()}
     </div>
   );
-});
-
-export default ThemeSelector;
+}

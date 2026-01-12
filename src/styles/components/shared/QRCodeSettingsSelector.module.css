@@ -229,4 +229,6 @@
 
 .rotationControl {
   margin-left: auto;
+  flex: 1;
+  min-width: 0;
 }

@@ -7,7 +7,7 @@
  * @module hooks/export/useExportDownloads
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { DownloadItem } from '@/contexts/DownloadsContext';
 import { useNightOrder } from '@/contexts/NightOrderContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -60,43 +60,32 @@ export function useExportDownloads(): UseExportDownloadsResult {
   const [executingId, setExecutingId] = useState<string | null>(null);
 
   // Get enabled characters for filtering
-  const enabledCharacters = useMemo(() => getEnabledCharacters(), [getEnabledCharacters]);
-  const enabledCharacterUuids = useMemo(
-    () => new Set(enabledCharacters.map((c) => c.uuid)),
-    [enabledCharacters]
-  );
+  const enabledCharacters = getEnabledCharacters();
+  const enabledCharacterUuids = new Set(enabledCharacters.map((c) => c.uuid));
 
   // Filter tokens by enabled characters
-  const enabledTokens = useMemo(() => {
-    return tokens.filter((t) => {
-      // Meta tokens are always included
-      if (isMetaToken(t)) return true;
+  const enabledTokens = tokens.filter((t) => {
+    // Meta tokens are always included
+    if (isMetaToken(t)) return true;
 
-      // Character tokens: check if the character is enabled via characterData.uuid
-      if (t.type === 'character' && t.characterData?.uuid) {
-        return enabledCharacterUuids.has(t.characterData.uuid);
-      }
+    // Character tokens: check if the character is enabled via characterData.uuid
+    if (t.type === 'character' && t.characterData?.uuid) {
+      return enabledCharacterUuids.has(t.characterData.uuid);
+    }
 
-      // Reminder tokens: check if parent character is enabled
-      if (t.type === 'reminder' && t.parentUuid) {
-        return enabledCharacterUuids.has(t.parentUuid);
-      }
+    // Reminder tokens: check if parent character is enabled
+    if (t.type === 'reminder' && t.parentUuid) {
+      return enabledCharacterUuids.has(t.parentUuid);
+    }
 
-      // Include tokens without UUID tracking (shouldn't happen, but safe fallback)
-      return true;
-    });
-  }, [tokens, enabledCharacterUuids]);
+    // Include tokens without UUID tracking (shouldn't happen, but safe fallback)
+    return true;
+  });
 
   // Filter tokens by type (using enabled tokens)
-  const characterTokens = useMemo(
-    () => enabledTokens.filter((t) => t.type === 'character'),
-    [enabledTokens]
-  );
-  const reminderTokens = useMemo(
-    () => enabledTokens.filter((t) => t.type === 'reminder'),
-    [enabledTokens]
-  );
-  const metaTokens = useMemo(() => enabledTokens.filter((t) => isMetaToken(t)), [enabledTokens]);
+  const characterTokens = enabledTokens.filter((t) => t.type === 'character');
+  const reminderTokens = enabledTokens.filter((t) => t.type === 'reminder');
+  const metaTokens = enabledTokens.filter((t) => isMetaToken(t));
 
   const hasTokens = enabledTokens.length > 0;
   const hasCharacters = enabledCharacters.length > 0;
@@ -104,7 +93,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
     (firstNight?.entries.length ?? 0) > 0 || (otherNight?.entries.length ?? 0) > 0;
 
   // Download handlers for token sets
-  const handleDownloadCharacterTokens = useCallback(async () => {
+  const handleDownloadCharacterTokens = async () => {
     if (characterTokens.length === 0) return;
     try {
       const blob = await createTokensZip(characterTokens, null, {
@@ -115,9 +104,9 @@ export function useExportDownloads(): UseExportDownloadsResult {
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download character tokens', error);
     }
-  }, [characterTokens]);
+  };
 
-  const handleDownloadReminderTokens = useCallback(async () => {
+  const handleDownloadReminderTokens = async () => {
     if (reminderTokens.length === 0) return;
     try {
       const blob = await createTokensZip(reminderTokens, null, {
@@ -128,9 +117,9 @@ export function useExportDownloads(): UseExportDownloadsResult {
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download reminder tokens', error);
     }
-  }, [reminderTokens]);
+  };
 
-  const handleDownloadMetaTokens = useCallback(async () => {
+  const handleDownloadMetaTokens = async () => {
     if (metaTokens.length === 0) return;
     try {
       const blob = await createTokensZip(metaTokens, null, {
@@ -142,10 +131,10 @@ export function useExportDownloads(): UseExportDownloadsResult {
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download meta tokens', error);
     }
-  }, [metaTokens]);
+  };
 
   // Night Order PDF handler
-  const handleDownloadNightOrder = useCallback(async () => {
+  const handleDownloadNightOrder = async () => {
     if (!(hasNightOrder && firstNight && otherNight)) return;
     try {
       const filename = scriptMeta?.name
@@ -161,10 +150,10 @@ export function useExportDownloads(): UseExportDownloadsResult {
     } catch (error) {
       logger.error('useExportDownloads', 'Failed to download night order PDF', error);
     }
-  }, [firstNight, otherNight, scriptMeta, hasNightOrder]);
+  };
 
   // Official Script Share Link handler - downloads a URL shortcut file
-  const handleDownloadScriptShareLink = useCallback(() => {
+  const handleDownloadScriptShareLink = () => {
     if (!hasCharacters) {
       logger.warn('useExportDownloads', 'No characters to export to script tool');
       return;
@@ -175,7 +164,9 @@ export function useExportDownloads(): UseExportDownloadsResult {
     // Create .url shortcut file content (Windows Internet Shortcut format)
     // Windows requires CRLF line endings for .url files to work properly
     const urlFileContent = `[InternetShortcut]\r\nURL=${url}\r\n`;
-    const blob = new Blob([urlFileContent], { type: 'application/internet-shortcut' });
+    const blob = new Blob([urlFileContent], {
+      type: 'application/internet-shortcut',
+    });
 
     // Generate filename from script name or default
     const scriptName = scriptMeta?.name
@@ -188,188 +179,154 @@ export function useExportDownloads(): UseExportDownloadsResult {
       hasMeta: !!scriptMeta,
     });
     downloadFile(blob, filename);
-  }, [enabledCharacters, scriptMeta, hasCharacters]);
+  };
 
   // Build all downloads with categories
-  const downloads = useMemo<DownloadItem[]>(() => {
-    const items: DownloadItem[] = [];
+  const downloads: DownloadItem[] = [];
 
-    // === FEATURED DOWNLOADS ===
+  // === FEATURED DOWNLOADS ===
 
-    // Token Print Sheet (PDF) - Featured
-    items.push({
-      id: 'pdf-print-sheet',
-      icon: '🖨️',
-      label: 'Token Print Sheet',
-      description: hasTokens ? 'PDF for Avery labels' : 'Generate tokens first',
-      action: downloadPdf,
-      disabled: !hasTokens || isExporting,
-      disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
-      category: 'tokens',
-      featured: true,
-      sourceView: 'export',
-    });
+  // Token Print Sheet (PDF) - Featured
+  downloads.push({
+    id: 'pdf-print-sheet',
+    icon: '🖨️',
+    label: 'Token Print Sheet',
+    description: hasTokens ? 'PDF for Avery labels' : 'Generate tokens first',
+    action: downloadPdf,
+    disabled: !hasTokens || isExporting,
+    disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
+    category: 'tokens',
+    featured: true,
+    sourceView: 'export',
+  });
 
-    // Night Order PDF - Featured
-    items.push({
-      id: 'night-order-pdf',
-      icon: '🌙',
-      label: 'Night Order',
-      description: scriptMeta?.name || 'First & Other nights',
-      action: handleDownloadNightOrder,
-      disabled: !hasNightOrder,
-      disabledReason: 'Load a script first',
-      category: 'script',
-      featured: true,
-      sourceView: 'export',
-    });
+  // Night Order PDF - Featured
+  downloads.push({
+    id: 'night-order-pdf',
+    icon: '🌙',
+    label: 'Night Order',
+    description: scriptMeta?.name || 'First & Other nights',
+    action: handleDownloadNightOrder,
+    disabled: !hasNightOrder,
+    disabledReason: 'Load a script first',
+    category: 'script',
+    featured: true,
+    sourceView: 'export',
+  });
 
-    // Player Script - Featured (Coming Soon)
-    items.push({
-      id: 'player-script',
-      icon: '📜',
-      label: 'Player Script',
-      description: 'Coming Soon',
-      action: () => {},
-      disabled: true,
-      disabledReason: 'Coming soon',
-      category: 'script',
-      featured: true,
-      sourceView: 'export',
-    });
+  // Player Script - Featured (Coming Soon)
+  downloads.push({
+    id: 'player-script',
+    icon: '📜',
+    label: 'Player Script',
+    description: 'Coming Soon',
+    action: () => {},
+    disabled: true,
+    disabledReason: 'Coming soon',
+    category: 'script',
+    featured: true,
+    sourceView: 'export',
+  });
 
-    // === JSON DOWNLOADS ===
+  // === JSON DOWNLOADS ===
 
-    // Script JSON
-    items.push({
-      id: 'script-json',
-      icon: '📋',
-      label: 'Script JSON',
-      description: scriptMeta?.name || 'Current script',
-      action: downloadJson,
-      disabled: !jsonInput?.trim() || isExporting,
-      disabledReason: jsonInput?.trim() ? 'Export in progress' : 'No script data',
-      category: 'json',
-      sourceView: 'export',
-    });
+  // Script JSON
+  downloads.push({
+    id: 'script-json',
+    icon: '📋',
+    label: 'Script JSON',
+    description: scriptMeta?.name || 'Current script',
+    action: downloadJson,
+    disabled: !jsonInput?.trim() || isExporting,
+    disabledReason: jsonInput?.trim() ? 'Export in progress' : 'No script data',
+    category: 'json',
+    sourceView: 'export',
+  });
 
-    // === TOKEN DOWNLOADS ===
+  // === TOKEN DOWNLOADS ===
 
-    // Character Tokens
-    items.push({
-      id: 'character-tokens',
-      icon: '🎭',
-      label: 'Character Tokens',
-      description:
-        characterTokens.length > 0
-          ? `${characterTokens.length} tokens (ZIP)`
-          : 'No character tokens',
-      action: handleDownloadCharacterTokens,
-      getBlob: () => tokensToBundleData(characterTokens),
-      disabled: characterTokens.length === 0,
-      disabledReason: 'No character tokens generated',
-      category: 'tokens',
-      sourceView: 'export',
-    });
+  // Character Tokens
+  downloads.push({
+    id: 'character-tokens',
+    icon: '🎭',
+    label: 'Character Tokens',
+    description:
+      characterTokens.length > 0 ? `${characterTokens.length} tokens (ZIP)` : 'No character tokens',
+    action: handleDownloadCharacterTokens,
+    getBlob: () => tokensToBundleData(characterTokens),
+    disabled: characterTokens.length === 0,
+    disabledReason: 'No character tokens generated',
+    category: 'tokens',
+    sourceView: 'export',
+  });
 
-    // Reminder Tokens
-    items.push({
-      id: 'reminder-tokens',
-      icon: '🔔',
-      label: 'Reminder Tokens',
-      description:
-        reminderTokens.length > 0 ? `${reminderTokens.length} tokens (ZIP)` : 'No reminder tokens',
-      action: handleDownloadReminderTokens,
-      getBlob: () => tokensToBundleData(reminderTokens),
-      disabled: reminderTokens.length === 0,
-      disabledReason: 'No reminder tokens generated',
-      category: 'tokens',
-      sourceView: 'export',
-    });
+  // Reminder Tokens
+  downloads.push({
+    id: 'reminder-tokens',
+    icon: '🔔',
+    label: 'Reminder Tokens',
+    description:
+      reminderTokens.length > 0 ? `${reminderTokens.length} tokens (ZIP)` : 'No reminder tokens',
+    action: handleDownloadReminderTokens,
+    getBlob: () => tokensToBundleData(reminderTokens),
+    disabled: reminderTokens.length === 0,
+    disabledReason: 'No reminder tokens generated',
+    category: 'tokens',
+    sourceView: 'export',
+  });
 
-    // Meta Tokens
-    items.push({
-      id: 'meta-tokens',
-      icon: '🔖',
-      label: 'Meta Tokens',
-      description: metaTokens.length > 0 ? `${metaTokens.length} tokens (ZIP)` : 'No meta tokens',
-      action: handleDownloadMetaTokens,
-      getBlob: () => tokensToBundleData(metaTokens),
-      disabled: metaTokens.length === 0,
-      disabledReason: 'No meta tokens generated',
-      category: 'tokens',
-      sourceView: 'export',
-    });
+  // Meta Tokens
+  downloads.push({
+    id: 'meta-tokens',
+    icon: '🔖',
+    label: 'Meta Tokens',
+    description: metaTokens.length > 0 ? `${metaTokens.length} tokens (ZIP)` : 'No meta tokens',
+    action: handleDownloadMetaTokens,
+    getBlob: () => tokensToBundleData(metaTokens),
+    disabled: metaTokens.length === 0,
+    disabledReason: 'No meta tokens generated',
+    category: 'tokens',
+    sourceView: 'export',
+  });
 
-    // Token Print Sheet (PDF) - Also in Tokens section
-    items.push({
-      id: 'token-print-sheet',
-      icon: '🖨️',
-      label: 'Token Print Sheet',
-      description: hasTokens ? `${tokens.length} tokens (PDF)` : 'Generate tokens first',
-      action: downloadPdf,
-      disabled: !hasTokens || isExporting,
-      disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
-      category: 'tokens',
-      sourceView: 'export',
-    });
+  // Token Print Sheet (PDF) - Also in Tokens section
+  downloads.push({
+    id: 'token-print-sheet',
+    icon: '🖨️',
+    label: 'Token Print Sheet',
+    description: hasTokens ? `${tokens.length} tokens (PDF)` : 'Generate tokens first',
+    action: downloadPdf,
+    disabled: !hasTokens || isExporting,
+    disabledReason: hasTokens ? 'Export in progress' : 'Generate tokens first',
+    category: 'tokens',
+    sourceView: 'export',
+  });
 
-    // === SCRIPT DOWNLOADS ===
+  // === SCRIPT DOWNLOADS ===
 
-    // Official Script Share Link (URL shortcut)
-    items.push({
-      id: 'script-share-link',
-      icon: '🔗',
-      label: 'Official Script Share Link',
-      description: hasCharacters
-        ? `Download shortcut to official tool (${enabledCharacters.length} characters)`
-        : 'No characters in script',
-      action: handleDownloadScriptShareLink,
-      disabled: !hasCharacters,
-      disabledReason: hasCharacters ? undefined : 'Add characters to your script first',
-      category: 'script',
-      sourceView: 'export',
-    });
-
-    return items;
-  }, [
-    hasTokens,
-    hasCharacters,
-    hasNightOrder,
-    characterTokens,
-    reminderTokens,
-    metaTokens,
-    enabledCharacters,
-    scriptMeta,
-    jsonInput,
-    isExporting,
-    downloadPdf,
-    downloadJson,
-    handleDownloadCharacterTokens,
-    handleDownloadReminderTokens,
-    handleDownloadMetaTokens,
-    handleDownloadNightOrder,
-    handleDownloadScriptShareLink,
-    tokens.length,
-  ]);
+  // Official Script Share Link (URL shortcut)
+  downloads.push({
+    id: 'script-share-link',
+    icon: '🔗',
+    label: 'Official Script Share Link',
+    description: hasCharacters
+      ? `Download shortcut to official tool (${enabledCharacters.length} characters)`
+      : 'No characters in script',
+    action: handleDownloadScriptShareLink,
+    disabled: !hasCharacters,
+    disabledReason: hasCharacters ? undefined : 'Add characters to your script first',
+    category: 'script',
+    sourceView: 'export',
+  });
 
   // Filter downloads by category
-  const featuredDownloads = useMemo(() => downloads.filter((d) => d.featured), [downloads]);
-
-  const jsonDownloads = useMemo(() => downloads.filter((d) => d.category === 'json'), [downloads]);
-
-  const tokenDownloads = useMemo(
-    () => downloads.filter((d) => d.category === 'tokens' && !d.featured),
-    [downloads]
-  );
-
-  const scriptDownloads = useMemo(
-    () => downloads.filter((d) => d.category === 'script'),
-    [downloads]
-  );
+  const featuredDownloads = downloads.filter((d) => d.featured);
+  const jsonDownloads = downloads.filter((d) => d.category === 'json');
+  const tokenDownloads = downloads.filter((d) => d.category === 'tokens' && !d.featured);
+  const scriptDownloads = downloads.filter((d) => d.category === 'script');
 
   // Execute download with loading state
-  const executeDownload = useCallback(async (item: DownloadItem) => {
+  const executeDownload = async (item: DownloadItem) => {
     if (item.disabled) return;
 
     try {
@@ -378,7 +335,7 @@ export function useExportDownloads(): UseExportDownloadsResult {
     } finally {
       setExecutingId(null);
     }
-  }, []);
+  };
 
   return {
     downloads,
@@ -390,5 +347,3 @@ export function useExportDownloads(): UseExportDownloadsResult {
     executeDownload,
   };
 }
-
-export default useExportDownloads;

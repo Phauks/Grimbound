@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu, useIntersectionObserver } from '@/hooks';
@@ -85,37 +85,16 @@ const teamClassMap: Record<string, string> = {
   minion: styles.teamMinion,
   demon: styles.teamDemon,
   traveller: styles.teamTraveller,
-  traveler: styles.teamTraveller,
   fabled: styles.teamFabled,
   loric: styles.teamLoric,
   meta: styles.teamMeta,
 };
 
-/**
- * Custom comparison function for React.memo
- * Only re-render if the token's filename changes (indicates a new/different token)
- * or if the onCardClick handler changes
- */
-function arePropsEqual(prevProps: TokenCardProps, nextProps: TokenCardProps): boolean {
-  return (
-    prevProps.token.filename === nextProps.token.filename &&
-    prevProps.count === nextProps.count &&
-    prevProps.variants?.length === nextProps.variants?.length &&
-    prevProps.cacheVersion === nextProps.cacheVersion &&
-    prevProps.onCardClick === nextProps.onCardClick &&
-    prevProps.onSetAsExample === nextProps.onSetAsExample &&
-    prevProps.onDelete === nextProps.onDelete &&
-    prevProps.onEditInStudio === nextProps.onEditInStudio &&
-    prevProps.onDownload === nextProps.onDownload &&
-    prevProps.onClearOverrides === nextProps.onClearOverrides
-  );
-}
-
-function TokenCardComponent({
+export function TokenCard({
   token,
   count = 1,
   variants = [],
-  cacheVersion: _cacheVersion, // Used by memo comparison to trigger re-render
+  cacheVersion: _cacheVersion, // Triggers re-render when cache is updated
   onCardClick,
   onSetAsExample,
   onDelete,
@@ -149,7 +128,7 @@ function TokenCardComponent({
 
   // Get data URL from token (pre-encoded) or cache
   // Canvas encoding is now done in TokenFactory, so this is just cache lookup
-  const imageDataUrl = useMemo(() => {
+  const imageDataUrl = (() => {
     // Return cached value immediately if available
     if (cachedDataUrl) return cachedDataUrl;
 
@@ -166,7 +145,7 @@ function TokenCardComponent({
     const dataUrl = encodeCanvas(displayToken.canvas);
     dataUrlCache.set(displayToken.filename, dataUrl);
     return dataUrl;
-  }, [displayToken.dataUrl, displayToken.canvas, displayToken.filename, isVisible, cachedDataUrl]);
+  })();
 
   useEffect(() => {
     // If we have cached data or newly generated data, mark as rendered
@@ -214,7 +193,7 @@ function TokenCardComponent({
   };
 
   // Build context menu items
-  const contextMenuItems: ContextMenuItem[] = useMemo(() => {
+  const contextMenuItems: ContextMenuItem[] = (() => {
     const items: ContextMenuItem[] = [];
 
     // Download token as PNG
@@ -261,7 +240,7 @@ function TokenCardComponent({
     }
 
     return items;
-  }, [onSetAsExample, onDelete, onEditInStudio, onDownload, onClearOverrides, displayToken]);
+  })();
 
   // Get team display name for character, reminder, and meta tokens
   const getTeamDisplay = () => {
@@ -390,9 +369,3 @@ function TokenCardComponent({
     </>
   );
 }
-
-/**
- * Memoized TokenCard component
- * Prevents re-renders when parent re-renders but token hasn't changed
- */
-export const TokenCard = memo(TokenCardComponent, arePropsEqual);

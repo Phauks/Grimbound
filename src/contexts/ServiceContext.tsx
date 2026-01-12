@@ -7,7 +7,7 @@
  * @module contexts/ServiceContext
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 // Import service interfaces
 import type {
@@ -85,18 +85,15 @@ interface ServiceProviderProps {
  * ```
  */
 export function ServiceProvider({ children, overrides = {} }: ServiceProviderProps) {
-  const services = useMemo<ServiceRegistry>(
-    () => ({
-      // Default to singleton instances, allow overrides
-      projectService: overrides.projectService ?? projectService,
-      projectDatabaseService: overrides.projectDatabaseService ?? projectDatabaseService,
-      assetStorageService: overrides.assetStorageService ?? assetStorageService,
-      fileUploadService: overrides.fileUploadService ?? fileUploadService,
-      fileValidationService: overrides.fileValidationService ?? fileValidationService,
-      dataSyncService: overrides.dataSyncService ?? dataSyncService,
-    }),
-    [overrides]
-  );
+  const services: ServiceRegistry = {
+    // Default to singleton instances, allow overrides
+    projectService: overrides.projectService ?? projectService,
+    projectDatabaseService: overrides.projectDatabaseService ?? projectDatabaseService,
+    assetStorageService: overrides.assetStorageService ?? assetStorageService,
+    fileUploadService: overrides.fileUploadService ?? fileUploadService,
+    fileValidationService: overrides.fileValidationService ?? fileValidationService,
+    dataSyncService: overrides.dataSyncService ?? dataSyncService,
+  };
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;
 }
@@ -179,10 +176,7 @@ export function useDataSyncService(): IDataSyncService {
  */
 export function useProjectExporter(): () => IProjectExporter {
   const assetStorageService = useAssetStorageService();
-  return useCallback(
-    () => new ProjectExporter({ assetStorage: assetStorageService }),
-    [assetStorageService]
-  );
+  return () => new ProjectExporter({ assetStorage: assetStorageService });
 }
 
 /**
@@ -200,5 +194,5 @@ export function useProjectExporter(): () => IProjectExporter {
  * ```
  */
 export function useProjectImporter(): () => IProjectImporter {
-  return useCallback(() => new ProjectImporter(), []);
+  return () => new ProjectImporter();
 }

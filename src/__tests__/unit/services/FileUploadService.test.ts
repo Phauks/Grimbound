@@ -19,12 +19,18 @@ import type {
   IFileValidationService,
   IImageProcessingService,
 } from '@/ts/services/upload/IUploadServices';
-import type {
-  AssetType,
-  DBAsset,
-  UploadConfig,
-  ValidationResult,
-} from '@/ts/services/upload/types';
+import type { DBAsset, UploadConfig, ValidationResult } from '@/ts/services/upload/types';
+
+// ============================================================================
+// Tag Helpers
+// ============================================================================
+
+const tags = {
+  icon: ['type:icon'],
+  tokenBackground: ['type:token-background'],
+  setup: ['type:setup'],
+  logo: ['type:logo'],
+};
 
 // ============================================================================
 // Test Helpers
@@ -43,7 +49,8 @@ const createMockBlob = (type: string = 'image/png'): Blob => new Blob(['test con
 
 const createMockDBAsset = (overrides: Partial<DBAsset> = {}): DBAsset => ({
   id: 'asset-123',
-  type: 'character-icon',
+  tags: ['type:icon'],
+  folder: null,
   projectId: null,
   blob: createMockBlob(),
   thumbnail: createMockBlob(),
@@ -142,7 +149,7 @@ const createMockStorageService = (): IAssetStorageService => ({
 });
 
 const createUploadConfig = (overrides: Partial<UploadConfig> = {}): UploadConfig => ({
-  assetType: 'character-icon',
+  tags: ['type:icon'],
   ...overrides,
 });
 
@@ -213,7 +220,7 @@ describe('FileUploadService', () => {
 
       await service.upload(file, config);
 
-      expect(mockValidation.validate).toHaveBeenCalledWith(file, 'character-icon');
+      expect(mockValidation.validate).toHaveBeenCalledWith(file, tags.icon);
     });
 
     it('should process file after validation', async () => {
@@ -222,7 +229,7 @@ describe('FileUploadService', () => {
 
       await service.upload(file, config);
 
-      expect(mockProcessing.process).toHaveBeenCalledWith(file, 'character-icon');
+      expect(mockProcessing.process).toHaveBeenCalledWith(file, tags.icon);
     });
 
     it('should save processed file to storage', async () => {
@@ -607,15 +614,15 @@ describe('FileUploadService', () => {
 
   describe('getAcceptString', () => {
     it('should return comma-separated MIME types', () => {
-      const result = service.getAcceptString('character-icon');
+      const result = service.getAcceptString(tags.icon);
 
       expect(result).toBe('image/png,image/jpeg,image/webp');
     });
 
-    it('should call fileValidation.getConfig', () => {
-      service.getAcceptString('token-background');
+    it('should return image/* for invalid tags', () => {
+      const result = service.getAcceptString(['invalid']);
 
-      expect(mockValidation.getConfig).toHaveBeenCalledWith('token-background');
+      expect(result).toBe('image/*');
     });
   });
 
@@ -627,7 +634,7 @@ describe('FileUploadService', () => {
     it('should return true for allowed MIME type', () => {
       const file = createMockFile('test.png', 'image/png');
 
-      const result = service.isValidFileType(file, 'character-icon');
+      const result = service.isValidFileType(file, tags.icon);
 
       expect(result).toBe(true);
     });
@@ -635,7 +642,7 @@ describe('FileUploadService', () => {
     it('should return false for disallowed MIME type', () => {
       const file = createMockFile('test.bmp', 'image/bmp');
 
-      const result = service.isValidFileType(file, 'character-icon');
+      const result = service.isValidFileType(file, tags.icon);
 
       expect(result).toBe(false);
     });
@@ -689,22 +696,17 @@ describe('FileUploadService', () => {
     });
 
     it('should handle different asset types', async () => {
-      const assetTypes: AssetType[] = [
-        'character-icon',
-        'token-background',
-        'setup-overlay',
-        'logo',
-      ];
+      const tagsList = [tags.icon, tags.tokenBackground, tags.setup, tags.logo];
 
-      for (const assetType of assetTypes) {
+      for (const assetTags of tagsList) {
         vi.clearAllMocks();
         const file = createMockFile();
-        const config = createUploadConfig({ assetType });
+        const config = createUploadConfig({ tags: assetTags });
 
         await service.upload(file, config);
 
-        expect(mockValidation.validate).toHaveBeenCalledWith(file, assetType);
-        expect(mockProcessing.process).toHaveBeenCalledWith(file, assetType);
+        expect(mockValidation.validate).toHaveBeenCalledWith(file, assetTags);
+        expect(mockProcessing.process).toHaveBeenCalledWith(file, assetTags);
       }
     });
 

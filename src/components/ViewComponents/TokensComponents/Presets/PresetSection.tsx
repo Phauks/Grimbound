@@ -11,7 +11,7 @@
  * - Reset to defaults button
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
 import { useToast } from '@/contexts/ToastContext';
 import { type Preset, type PresetTier, usePresets } from '@/hooks/editors/usePresets';
@@ -99,361 +99,255 @@ export function PresetSection({ onPresetsChange }: PresetSectionProps) {
   // Confirmation Dialog Helpers
   // ========================================================================
 
-  const showConfirm = useCallback((title: string, message: string, onConfirm: () => void) => {
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
     setConfirmModal({ isOpen: true, title, message, onConfirm });
-  }, []);
+  };
 
-  const closeConfirm = useCallback(() => {
+  const closeConfirm = () => {
     setConfirmModal(null);
-  }, []);
+  };
 
   // ========================================================================
   // Apply & Reset Handlers
   // ========================================================================
 
-  const handleApplyPreset = useCallback(
-    (preset: Preset) => {
-      applyPreset(preset);
-      setActivePresetId(preset.id);
-      setActivePresetMenu(null);
-    },
-    [applyPreset]
-  );
+  const handleApplyPreset = (preset: Preset) => {
+    applyPreset(preset);
+    setActivePresetId(preset.id);
+    setActivePresetMenu(null);
+  };
 
-  const handleResetToDefaults = useCallback(() => {
+  const handleResetToDefaults = () => {
     resetToDefaults();
     setActivePresetId(null);
     addToast('Reset to default settings', 'success');
-  }, [resetToDefaults, addToast]);
+  };
 
   // ========================================================================
   // Global Preset Handlers
   // ========================================================================
 
-  const handleSaveGlobalPreset = useCallback(
-    (name: string, icon: string, description: string) => {
+  const handleSaveGlobalPreset = (name: string, icon: string, description: string) => {
+    try {
+      const newPreset = saveGlobalPreset(name, description, icon);
+      setSaveModalState({ isOpen: false, tier: 'global' });
+      setActivePresetId(newPreset.id);
+      onPresetsChange?.();
+      addToast(`Preset "${name}" saved to Global`, 'success');
+    } catch {
+      addToast('Failed to save preset', 'error');
+    }
+  };
+
+  const handleDeleteGlobalPreset = (presetId: string) => {
+    setActivePresetMenu(null);
+    showConfirm('Delete Preset', 'Are you sure you want to delete this preset?', () => {
       try {
-        const newPreset = saveGlobalPreset(name, description, icon);
-        setSaveModalState({ isOpen: false, tier: 'global' });
-        setActivePresetId(newPreset.id);
+        deleteGlobalPreset(presetId);
+        if (activePresetId === presetId) setActivePresetId(null);
         onPresetsChange?.();
-        addToast(`Preset "${name}" saved to Global`, 'success');
+        addToast('Preset deleted', 'success');
       } catch {
-        addToast('Failed to save preset', 'error');
+        addToast('Failed to delete preset', 'error');
       }
-    },
-    [saveGlobalPreset, onPresetsChange, addToast]
-  );
+      closeConfirm();
+    });
+  };
 
-  const handleDeleteGlobalPreset = useCallback(
-    (presetId: string) => {
-      setActivePresetMenu(null);
-      showConfirm('Delete Preset', 'Are you sure you want to delete this preset?', () => {
-        try {
-          deleteGlobalPreset(presetId);
-          if (activePresetId === presetId) setActivePresetId(null);
-          onPresetsChange?.();
-          addToast('Preset deleted', 'success');
-        } catch {
-          addToast('Failed to delete preset', 'error');
-        }
-        closeConfirm();
-      });
-    },
-    [deleteGlobalPreset, activePresetId, showConfirm, closeConfirm, onPresetsChange, addToast]
-  );
-
-  const handleUpdateGlobalPreset = useCallback(
-    (presetId: string) => {
-      setActivePresetMenu(null);
-      showConfirm('Update Preset', 'Update this preset with current settings?', () => {
-        try {
-          updateGlobalPresetSettings(presetId);
-          onPresetsChange?.();
-          addToast('Preset updated', 'success');
-        } catch {
-          addToast('Failed to update preset', 'error');
-        }
-        closeConfirm();
-      });
-    },
-    [updateGlobalPresetSettings, showConfirm, closeConfirm, onPresetsChange, addToast]
-  );
-
-  // ========================================================================
-  // Local Preset Handlers
-  // ========================================================================
-
-  const handleSaveLocalPreset = useCallback(
-    (name: string, icon: string, description: string) => {
+  const handleUpdateGlobalPreset = (presetId: string) => {
+    setActivePresetMenu(null);
+    showConfirm('Update Preset', 'Update this preset with current settings?', () => {
       try {
-        const newPreset = saveLocalPreset(name, description, icon);
-        if (newPreset) {
-          setSaveModalState({ isOpen: false, tier: 'local' });
-          setActivePresetId(newPreset.id);
-          onPresetsChange?.();
-          addToast(`Preset "${name}" saved to Project`, 'success');
-        } else {
-          addToast('No active project to save preset to', 'error');
-        }
-      } catch {
-        addToast('Failed to save preset', 'error');
-      }
-    },
-    [saveLocalPreset, onPresetsChange, addToast]
-  );
-
-  const handleDeleteLocalPreset = useCallback(
-    (presetId: string) => {
-      setActivePresetMenu(null);
-      showConfirm('Delete Preset', 'Are you sure you want to delete this preset?', () => {
-        try {
-          deleteLocalPreset(presetId);
-          if (activePresetId === presetId) setActivePresetId(null);
-          onPresetsChange?.();
-          addToast('Preset deleted', 'success');
-        } catch {
-          addToast('Failed to delete preset', 'error');
-        }
-        closeConfirm();
-      });
-    },
-    [deleteLocalPreset, activePresetId, showConfirm, closeConfirm, onPresetsChange, addToast]
-  );
-
-  const handleUpdateLocalPreset = useCallback(
-    (presetId: string) => {
-      setActivePresetMenu(null);
-      showConfirm('Update Preset', 'Update this preset with current settings?', () => {
-        try {
-          updateLocalPresetSettings(presetId);
-          onPresetsChange?.();
-          addToast('Preset updated', 'success');
-        } catch {
-          addToast('Failed to update preset', 'error');
-        }
-        closeConfirm();
-      });
-    },
-    [updateLocalPresetSettings, showConfirm, closeConfirm, onPresetsChange, addToast]
-  );
-
-  // ========================================================================
-  // Edit Preset Handler (shared)
-  // ========================================================================
-
-  const handleEditPreset = useCallback(
-    (name: string, icon: string, description: string) => {
-      if (!editingPreset) return;
-
-      try {
-        if (editingPreset.tier === 'global') {
-          editGlobalPreset(editingPreset.preset.id, name, icon, description);
-        } else {
-          editLocalPreset(editingPreset.preset.id, name, icon, description);
-        }
-        setEditingPreset(null);
+        updateGlobalPresetSettings(presetId);
         onPresetsChange?.();
         addToast('Preset updated', 'success');
       } catch {
         addToast('Failed to update preset', 'error');
       }
-    },
-    [editingPreset, editGlobalPreset, editLocalPreset, onPresetsChange, addToast]
-  );
+      closeConfirm();
+    });
+  };
+
+  // ========================================================================
+  // Local Preset Handlers
+  // ========================================================================
+
+  const handleSaveLocalPreset = (name: string, icon: string, description: string) => {
+    try {
+      const newPreset = saveLocalPreset(name, description, icon);
+      if (newPreset) {
+        setSaveModalState({ isOpen: false, tier: 'local' });
+        setActivePresetId(newPreset.id);
+        onPresetsChange?.();
+        addToast(`Preset "${name}" saved to Project`, 'success');
+      } else {
+        addToast('No active project to save preset to', 'error');
+      }
+    } catch {
+      addToast('Failed to save preset', 'error');
+    }
+  };
+
+  const handleDeleteLocalPreset = (presetId: string) => {
+    setActivePresetMenu(null);
+    showConfirm('Delete Preset', 'Are you sure you want to delete this preset?', () => {
+      try {
+        deleteLocalPreset(presetId);
+        if (activePresetId === presetId) setActivePresetId(null);
+        onPresetsChange?.();
+        addToast('Preset deleted', 'success');
+      } catch {
+        addToast('Failed to delete preset', 'error');
+      }
+      closeConfirm();
+    });
+  };
+
+  const handleUpdateLocalPreset = (presetId: string) => {
+    setActivePresetMenu(null);
+    showConfirm('Update Preset', 'Update this preset with current settings?', () => {
+      try {
+        updateLocalPresetSettings(presetId);
+        onPresetsChange?.();
+        addToast('Preset updated', 'success');
+      } catch {
+        addToast('Failed to update preset', 'error');
+      }
+      closeConfirm();
+    });
+  };
+
+  // ========================================================================
+  // Edit Preset Handler (shared)
+  // ========================================================================
+
+  const handleEditPreset = (name: string, icon: string, description: string) => {
+    if (!editingPreset) return;
+
+    try {
+      if (editingPreset.tier === 'global') {
+        editGlobalPreset(editingPreset.preset.id, name, icon, description);
+      } else {
+        editLocalPreset(editingPreset.preset.id, name, icon, description);
+      }
+      setEditingPreset(null);
+      onPresetsChange?.();
+      addToast('Preset updated', 'success');
+    } catch {
+      addToast('Failed to update preset', 'error');
+    }
+  };
 
   // ========================================================================
   // Duplicate & Export Handlers
   // ========================================================================
 
-  const handleDuplicateGlobal = useCallback(
-    (preset: Preset) => {
-      try {
-        const newPreset = duplicateGlobalPreset(preset);
+  const handleDuplicateGlobal = (preset: Preset) => {
+    try {
+      const newPreset = duplicateGlobalPreset(preset);
+      setActivePresetMenu(null);
+      setActivePresetId(newPreset.id);
+      onPresetsChange?.();
+      addToast('Preset duplicated', 'success');
+    } catch {
+      addToast('Failed to duplicate preset', 'error');
+    }
+  };
+
+  const handleDuplicateLocal = (preset: Preset) => {
+    try {
+      const newPreset = duplicateLocalPreset(preset);
+      if (newPreset) {
         setActivePresetMenu(null);
         setActivePresetId(newPreset.id);
         onPresetsChange?.();
         addToast('Preset duplicated', 'success');
-      } catch {
-        addToast('Failed to duplicate preset', 'error');
       }
-    },
-    [duplicateGlobalPreset, onPresetsChange, addToast]
-  );
+    } catch {
+      addToast('Failed to duplicate preset', 'error');
+    }
+  };
 
-  const handleDuplicateLocal = useCallback(
-    (preset: Preset) => {
-      try {
-        const newPreset = duplicateLocalPreset(preset);
-        if (newPreset) {
-          setActivePresetMenu(null);
-          setActivePresetId(newPreset.id);
-          onPresetsChange?.();
-          addToast('Preset duplicated', 'success');
-        }
-      } catch {
-        addToast('Failed to duplicate preset', 'error');
-      }
-    },
-    [duplicateLocalPreset, onPresetsChange, addToast]
-  );
-
-  const handleExport = useCallback(
-    (preset: Preset) => {
-      try {
-        exportPreset(preset);
-        setActivePresetMenu(null);
-        addToast(`Preset "${preset.name}" exported`, 'success');
-      } catch {
-        addToast('Failed to export preset', 'error');
-      }
-    },
-    [exportPreset, addToast]
-  );
+  const handleExport = (preset: Preset) => {
+    try {
+      exportPreset(preset);
+      setActivePresetMenu(null);
+      addToast(`Preset "${preset.name}" exported`, 'success');
+    } catch {
+      addToast('Failed to export preset', 'error');
+    }
+  };
 
   // ========================================================================
   // Cross-Tier Copy Handlers
   // ========================================================================
 
-  const handleCopyToLocal = useCallback(
-    (preset: Preset) => {
-      try {
-        const copied = copyToLocal(preset);
-        if (copied) {
-          setActivePresetMenu(null);
-          onPresetsChange?.();
-          addToast(`"${preset.name}" copied to Project`, 'success');
-        } else {
-          addToast('No active project', 'error');
-        }
-      } catch {
-        addToast('Failed to copy preset', 'error');
-      }
-    },
-    [copyToLocal, onPresetsChange, addToast]
-  );
-
-  const handleCopyToGlobal = useCallback(
-    (preset: Preset) => {
-      try {
-        copyToGlobal(preset);
+  const handleCopyToLocal = (preset: Preset) => {
+    try {
+      const copied = copyToLocal(preset);
+      if (copied) {
         setActivePresetMenu(null);
         onPresetsChange?.();
-        addToast(`"${preset.name}" copied to Global`, 'success');
-      } catch {
-        addToast('Failed to copy preset', 'error');
+        addToast(`"${preset.name}" copied to Project`, 'success');
+      } else {
+        addToast('No active project', 'error');
       }
-    },
-    [copyToGlobal, onPresetsChange, addToast]
-  );
+    } catch {
+      addToast('Failed to copy preset', 'error');
+    }
+  };
+
+  const handleCopyToGlobal = (preset: Preset) => {
+    try {
+      copyToGlobal(preset);
+      setActivePresetMenu(null);
+      onPresetsChange?.();
+      addToast(`"${preset.name}" copied to Global`, 'success');
+    } catch {
+      addToast('Failed to copy preset', 'error');
+    }
+  };
 
   // ========================================================================
   // Drag and Drop Handlers
   // ========================================================================
 
-  const handleDragStart = useCallback((e: React.DragEvent, tier: PresetTier, index: number) => {
+  const handleDragStart = (e: React.DragEvent, tier: PresetTier, index: number) => {
     setDragState({ tier, index });
     e.dataTransfer.effectAllowed = 'copyMove';
     e.dataTransfer.setData('text/plain', JSON.stringify({ tier, index }));
-  }, []);
+  };
 
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, tier: PresetTier, index: number) => {
-      e.preventDefault();
-      // Show copy effect when dragging between tiers, move within same tier
-      e.dataTransfer.dropEffect = dragState?.tier !== tier ? 'copy' : 'move';
-      setDropTarget({ tier, index });
-    },
-    [dragState]
-  );
+  const handleDragOver = (e: React.DragEvent, tier: PresetTier, index: number) => {
+    e.preventDefault();
+    // Show copy effect when dragging between tiers, move within same tier
+    e.dataTransfer.dropEffect = dragState?.tier !== tier ? 'copy' : 'move';
+    setDropTarget({ tier, index });
+  };
 
-  const handleDragLeave = useCallback(() => {
+  const handleDragLeave = () => {
     setDropTarget(null);
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, targetTier: PresetTier, targetIndex: number) => {
-      e.preventDefault();
+  const handleDrop = (e: React.DragEvent, targetTier: PresetTier, targetIndex: number) => {
+    e.preventDefault();
 
-      if (!dragState) return;
+    if (!dragState) return;
 
-      const { tier: sourceTier, index: sourceIndex } = dragState;
+    const { tier: sourceTier, index: sourceIndex } = dragState;
 
-      // Same tier - reorder
-      if (sourceTier === targetTier) {
-        if (sourceIndex !== targetIndex) {
-          if (targetTier === 'global') {
-            reorderGlobalPresets(sourceIndex, targetIndex);
-          } else {
-            reorderLocalPresets(sourceIndex, targetIndex);
-          }
-          onPresetsChange?.();
+    // Same tier - reorder
+    if (sourceTier === targetTier) {
+      if (sourceIndex !== targetIndex) {
+        if (targetTier === 'global') {
+          reorderGlobalPresets(sourceIndex, targetIndex);
+        } else {
+          reorderLocalPresets(sourceIndex, targetIndex);
         }
-      } else {
-        // Different tier - copy
-        const sourcePresets = sourceTier === 'global' ? globalPresets : localPresets;
-        const preset = sourcePresets[sourceIndex];
-
-        if (preset) {
-          if (targetTier === 'local') {
-            handleCopyToLocal(preset);
-          } else {
-            handleCopyToGlobal(preset);
-          }
-        }
+        onPresetsChange?.();
       }
-
-      setDragState(null);
-      setDropTarget(null);
-    },
-    [
-      dragState,
-      globalPresets,
-      localPresets,
-      reorderGlobalPresets,
-      reorderLocalPresets,
-      handleCopyToLocal,
-      handleCopyToGlobal,
-      onPresetsChange,
-    ]
-  );
-
-  const handleDragEnd = useCallback(() => {
-    setDragState(null);
-    setDropTarget(null);
-    setContainerDropTarget(null);
-  }, []);
-
-  // Container-level drag handlers for dropping anywhere in the section
-  const handleContainerDragOver = useCallback(
-    (e: React.DragEvent, tier: PresetTier) => {
-      // Only handle cross-tier drops
-      if (!dragState || dragState.tier === tier) return;
-
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
-      setContainerDropTarget(tier);
-    },
-    [dragState]
-  );
-
-  const handleContainerDragLeave = useCallback((e: React.DragEvent) => {
-    // Only clear if leaving the container (not entering a child)
-    const relatedTarget = e.relatedTarget as Node | null;
-    const currentTarget = e.currentTarget as Node;
-    if (!(relatedTarget && currentTarget.contains(relatedTarget))) {
-      setContainerDropTarget(null);
-    }
-  }, []);
-
-  const handleContainerDrop = useCallback(
-    (e: React.DragEvent, targetTier: PresetTier) => {
-      // Only handle cross-tier drops
-      if (!dragState || dragState.tier === targetTier) return;
-
-      e.preventDefault();
-
-      const { tier: sourceTier, index: sourceIndex } = dragState;
+    } else {
+      // Different tier - copy
       const sourcePresets = sourceTier === 'global' ? globalPresets : localPresets;
       const preset = sourcePresets[sourceIndex];
 
@@ -464,34 +358,77 @@ export function PresetSection({ onPresetsChange }: PresetSectionProps) {
           handleCopyToGlobal(preset);
         }
       }
+    }
 
-      setDragState(null);
-      setDropTarget(null);
+    setDragState(null);
+    setDropTarget(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragState(null);
+    setDropTarget(null);
+    setContainerDropTarget(null);
+  };
+
+  // Container-level drag handlers for dropping anywhere in the section
+  const handleContainerDragOver = (e: React.DragEvent, tier: PresetTier) => {
+    // Only handle cross-tier drops
+    if (!dragState || dragState.tier === tier) return;
+
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setContainerDropTarget(tier);
+  };
+
+  const handleContainerDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the container (not entering a child)
+    const relatedTarget = e.relatedTarget as Node | null;
+    const currentTarget = e.currentTarget as Node;
+    if (!(relatedTarget && currentTarget.contains(relatedTarget))) {
       setContainerDropTarget(null);
-    },
-    [dragState, globalPresets, localPresets, handleCopyToLocal, handleCopyToGlobal]
-  );
+    }
+  };
+
+  const handleContainerDrop = (e: React.DragEvent, targetTier: PresetTier) => {
+    // Only handle cross-tier drops
+    if (!dragState || dragState.tier === targetTier) return;
+
+    e.preventDefault();
+
+    const { tier: sourceTier, index: sourceIndex } = dragState;
+    const sourcePresets = sourceTier === 'global' ? globalPresets : localPresets;
+    const preset = sourcePresets[sourceIndex];
+
+    if (preset) {
+      if (targetTier === 'local') {
+        handleCopyToLocal(preset);
+      } else {
+        handleCopyToGlobal(preset);
+      }
+    }
+
+    setDragState(null);
+    setDropTarget(null);
+    setContainerDropTarget(null);
+  };
 
   // ========================================================================
   // Import Handler
   // ========================================================================
 
-  const handleImport = useCallback(
-    async (file: File) => {
-      try {
-        const newPreset = await importPreset(file, saveModalState.tier);
-        setSaveModalState({ isOpen: false, tier: 'global' });
-        setActivePresetId(newPreset.id);
-        onPresetsChange?.();
-        addToast(`Preset "${newPreset.name}" imported`, 'success');
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Invalid preset file';
-        addToast(message, 'error');
-        throw err;
-      }
-    },
-    [importPreset, saveModalState.tier, onPresetsChange, addToast]
-  );
+  const handleImport = async (file: File) => {
+    try {
+      const newPreset = await importPreset(file, saveModalState.tier);
+      setSaveModalState({ isOpen: false, tier: 'global' });
+      setActivePresetId(newPreset.id);
+      onPresetsChange?.();
+      addToast(`Preset "${newPreset.name}" imported`, 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid preset file';
+      addToast(message, 'error');
+      throw err;
+    }
+  };
 
   // ========================================================================
   // Menu Items Builders

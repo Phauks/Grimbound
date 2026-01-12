@@ -16,7 +16,6 @@
  * @module hooks/studio/useAssetEditor
  */
 
-import { useCallback } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext.js';
 import type { BorderOptions, TeamColorPreset } from '@/ts/studio/index.js';
 import { useAssetCanvasOperations } from './useAssetCanvasOperations.js';
@@ -96,58 +95,49 @@ export function useAssetEditor(): UseAssetEditorResult {
 
   // Update effect state's hasImage based on canvas
   // This is done by wrapping effect methods to check canvas state
-  const applyTeamColor = useCallback(
-    (preset: TeamColorPreset | null) => {
-      if (!canvasOps.originalCanvas) {
-        uiState.setError('No image loaded');
-        return;
-      }
-      effectState.applyTeamColor(preset);
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyTeamColor = (preset: TeamColorPreset | null) => {
+    if (!canvasOps.originalCanvas) {
+      uiState.setError('No image loaded');
+      return;
+    }
+    effectState.applyTeamColor(preset);
+  };
 
-  const applyCustomColor = useCallback(
-    (hexColor: string) => {
-      if (!canvasOps.originalCanvas) {
-        uiState.setError('No image loaded');
-        return;
-      }
-      effectState.applyCustomColor(hexColor);
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyCustomColor = (hexColor: string) => {
+    if (!canvasOps.originalCanvas) {
+      uiState.setError('No image loaded');
+      return;
+    }
+    effectState.applyCustomColor(hexColor);
+  };
 
-  const applyBorder = useCallback(
-    (options: Partial<BorderOptions>, skipUndo?: boolean) => {
-      if (!canvasOps.originalCanvas) {
-        uiState.setError('No image loaded');
-        return;
-      }
-      effectState.applyBorder(options, skipUndo);
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyBorder = (options: Partial<BorderOptions>, skipUndo?: boolean) => {
+    if (!canvasOps.originalCanvas) {
+      uiState.setError('No image loaded');
+      return;
+    }
+    effectState.applyBorder(options, skipUndo);
+  };
 
-  const invertColors = useCallback(() => {
+  const invertColors = () => {
     if (!canvasOps.originalCanvas) {
       uiState.setError('No image loaded');
       return;
     }
     effectState.invertColors();
-  }, [canvasOps.originalCanvas, effectState, uiState]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     if (canvasOps.originalCanvas) {
       effectState.reset();
     }
-  }, [canvasOps.originalCanvas, effectState]);
+  };
 
-  const clear = useCallback(() => {
+  const clear = () => {
     canvasOps.clear();
     effectState.clear();
     uiState.reset();
-  }, [canvasOps, effectState, uiState]);
+  };
 
   // ============================================================================
   // Return
@@ -191,5 +181,3 @@ export function useAssetEditor(): UseAssetEditorResult {
     presets: effectState.presets,
   };
 }
-
-export default useAssetEditor;

@@ -6,7 +6,7 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
@@ -38,94 +38,85 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Process and validate file
-  const processFile = useCallback(
-    async (file: File) => {
-      setSelectedFile(file);
-      setError(null);
-      setIsValidating(true);
-      setPreview(null);
+  const processFile = async (file: File) => {
+    setSelectedFile(file);
+    setError(null);
+    setIsValidating(true);
+    setPreview(null);
 
-      try {
-        const importer = createImporter();
+    try {
+      const importer = createImporter();
 
-        // Validate ZIP
-        const validation = await importer.validateZip(file);
+      // Validate ZIP
+      const validation = await importer.validateZip(file);
 
-        if (!validation.valid) {
-          setError(validation.errors.join(', '));
-          setIsValidating(false);
-          return;
-        }
-
-        // Show warnings if any
-        if (validation.warnings && validation.warnings.length > 0) {
-          logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });
-        }
-
-        // Generate preview
-        const previewData = await importer.previewZip(file);
-        setPreview(previewData);
+      if (!validation.valid) {
+        setError(validation.errors.join(', '));
         setIsValidating(false);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to validate file';
-        setError(errorMessage);
-        setIsValidating(false);
+        return;
       }
-    },
-    [createImporter]
-  );
+
+      // Show warnings if any
+      if (validation.warnings && validation.warnings.length > 0) {
+        logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });
+      }
+
+      // Generate preview
+      const previewData = await importer.previewZip(file);
+      setPreview(previewData);
+      setIsValidating(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to validate file';
+      setError(errorMessage);
+      setIsValidating(false);
+    }
+  };
 
   // Handle file drop
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        await processFile(files[0]);
-      }
-    },
-    [processFile]
-  );
-
-  // Handle file selection
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        await processFile(files[0]);
-      }
-    },
-    [processFile]
-  );
-
-  // Handle drag events
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-  }, []);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      await processFile(files[0]);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await processFile(files[0]);
+    }
+  };
+
+  // Handle drag events
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
 
   // Handle click to browse
-  const handleBrowseClick = useCallback(() => {
+  const handleBrowseClick = () => {
     fileInputRef.current?.click();
-  }, []);
+  };
 
   // Reset and close
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     if (!isImporting) {
       setSelectedFile(null);
       setPreview(null);
@@ -137,10 +128,10 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       }
       onClose();
     }
-  }, [isImporting, onClose]);
+  };
 
   // Handle import
-  const handleImport = useCallback(async () => {
+  const handleImport = async () => {
     if (!selectedFile) return;
 
     setIsImporting(true);
@@ -172,7 +163,7 @@ export function ImportProjectModal({ isOpen, onClose, onImport }: ImportProjectM
       setIsImporting(false);
       setProgress(0);
     }
-  }, [selectedFile, onImport, handleClose, createImporter]);
+  };
 
   const footerContent =
     selectedFile && preview ? (

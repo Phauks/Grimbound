@@ -9,7 +9,7 @@
  * - Listens to sync events and updates state
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { dataSyncService, type SyncEvent } from '@/ts/sync/index.js';
 import type { Character, SyncStatus } from '@/ts/types/index.js';
 import { clearIconUrlCache, prewarmIconCache } from '@/ts/utils/characterImageResolver.js';
@@ -139,38 +139,33 @@ export function DataSyncProvider({ children }: DataSyncProviderProps) {
   }, []);
 
   // Character data operations
-  const getCharacters = useCallback(async () => dataSyncService.getCharacters(), []);
+  const getCharacters = async () => dataSyncService.getCharacters();
 
-  const getCharacter = useCallback(async (id: string) => dataSyncService.getCharacter(id), []);
+  const getCharacter = async (id: string) => dataSyncService.getCharacter(id);
 
-  const searchCharacters = useCallback(
-    async (query: string) => dataSyncService.searchCharacters(query),
-    []
-  );
+  const searchCharacters = async (query: string) => dataSyncService.searchCharacters(query);
 
-  const getCharacterImage = useCallback(
-    async (characterId: string) => dataSyncService.getCharacterImage(characterId),
-    []
-  );
+  const getCharacterImage = async (characterId: string) =>
+    dataSyncService.getCharacterImage(characterId);
 
   // Sync operations
-  const checkForUpdates = useCallback(async () => dataSyncService.checkForUpdates(), []);
+  const checkForUpdates = async () => dataSyncService.checkForUpdates();
 
-  const downloadUpdate = useCallback(async () => {
+  const downloadUpdate = async () => {
     await dataSyncService.downloadAndInstall();
-  }, []);
+  };
 
-  const clearCacheAndResync = useCallback(async () => {
+  const clearCacheAndResync = async () => {
     await dataSyncService.clearCacheAndResync();
-  }, []);
+  };
 
   // Event subscription for components that need real-time updates
-  const subscribeToEvents = useCallback((listener: (event: SyncEvent) => void) => {
+  const subscribeToEvents = (listener: (event: SyncEvent) => void) => {
     dataSyncService.addEventListener(listener);
     return () => {
       dataSyncService.removeEventListener(listener);
     };
-  }, []);
+  };
 
   const value: DataSyncContextType = {
     status,

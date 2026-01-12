@@ -216,21 +216,3 @@ export const ORGANIC_CELLS_TEXTURE = {
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
-
-export default {
-  // Effects
-  VIGNETTE_EFFECT,
-  INNER_GLOW_EFFECT,
-  BORDER_EFFECT,
-  // Textures
-  NOISE_NORMALIZATION,
-  MARBLE_TEXTURE,
-  CLOUDS_TEXTURE,
-  WATERCOLOR_TEXTURE,
-  PARCHMENT_TEXTURE,
-  LINEN_TEXTURE,
-  WOOD_GRAIN_TEXTURE,
-  BRUSHED_METAL_TEXTURE,
-  SILK_FLOW_TEXTURE,
-  ORGANIC_CELLS_TEXTURE,
-};

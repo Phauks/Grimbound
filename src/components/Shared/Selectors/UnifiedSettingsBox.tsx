@@ -17,9 +17,7 @@
 
 import {
   type CSSProperties,
-  memo,
   type ReactNode,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -153,16 +151,20 @@ function UnifiedSettingsBoxInner<T>({
   const [pendingValue, setPendingValue] = useState<T>(value);
   const [panelPosition, setPanelPosition] = useState<PanelPosition | null>(null);
 
+  // Track previous value for render-time comparison (React's recommended pattern)
+  const [prevValueJson, setPrevValueJson] = useState(() => JSON.stringify(value));
+
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const originalValueRef = useRef<T>(value);
 
-  // Sync pending value when value prop changes (and not expanded)
-  useEffect(() => {
-    if (!isExpanded) {
-      setPendingValue(value);
-    }
-  }, [value, isExpanded]);
+  // Sync pending value during render when value prop changes (and not expanded)
+  // Uses React's "adjusting state during render" pattern - faster than useEffect
+  const valueJson = JSON.stringify(value);
+  if (!isExpanded && valueJson !== prevValueJson) {
+    setPrevValueJson(valueJson);
+    setPendingValue(value);
+  }
 
   // Calculate panel position when opening
   useLayoutEffect(() => {
@@ -182,63 +184,47 @@ function UnifiedSettingsBoxInner<T>({
     }
   }, [isExpanded, panelHeight, minPanelWidth]);
 
-  // Close when clicking outside
+  // Close when clicking outside or scrolling (consolidated into single effect)
   useEffect(() => {
+    if (!isExpanded) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const isInContainer = containerRef.current?.contains(target);
       const isInPanel = panelRef.current?.contains(target);
 
       if (!(isInContainer || isInPanel)) {
-        if (isExpanded) {
-          onChange(pendingValue);
-        }
-        setIsExpanded(false);
-      }
-    };
-
-    if (isExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isExpanded, pendingValue, onChange]);
-
-  // Close on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isExpanded) {
         onChange(pendingValue);
         setIsExpanded(false);
       }
     };
 
-    if (isExpanded) {
-      window.addEventListener('scroll', handleScroll, true);
-    }
+    const handleScroll = () => {
+      onChange(pendingValue);
+      setIsExpanded(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
 
     return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll, true);
     };
   }, [isExpanded, pendingValue, onChange]);
 
   // Keyboard handling
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        const original = originalValueRef.current;
-        setPendingValue(original);
-        onPreviewChange?.(original);
-        setIsExpanded(false);
-      } else if (event.key === 'Enter' && isExpanded) {
-        onChange(pendingValue);
-        setIsExpanded(false);
-      }
-    },
-    [isExpanded, pendingValue, onChange, onPreviewChange]
-  );
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      const original = originalValueRef.current;
+      setPendingValue(original);
+      onPreviewChange?.(original);
+      setIsExpanded(false);
+    } else if (event.key === 'Enter' && isExpanded) {
+      onChange(pendingValue);
+      setIsExpanded(false);
+    }
+  };
 
   // Toggle expansion
   const handleToggle = () => {
@@ -254,23 +240,17 @@ function UnifiedSettingsBoxInner<T>({
   };
 
   // Update entire value
-  const updateValue = useCallback(
-    (newValue: T) => {
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [onPreviewChange]
-  );
+  const updateValue = (newValue: T) => {
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Update a single field (for object values)
-  const updateField = useCallback(
-    <K extends keyof T>(key: K, fieldValue: T[K]) => {
-      const newValue = { ...pendingValue, [key]: fieldValue } as T;
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [pendingValue, onPreviewChange]
-  );
+  const updateField = <K extends keyof T>(key: K, fieldValue: T[K]) => {
+    const newValue = { ...pendingValue, [key]: fieldValue } as T;
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Reset to defaults
   const handleReset = () => {
@@ -415,7 +395,5 @@ function UnifiedSettingsBoxInner<T>({
   );
 }
 
-// Memoized export with generic support
-export const UnifiedSettingsBox = memo(UnifiedSettingsBoxInner) as typeof UnifiedSettingsBoxInner;
-
-export default UnifiedSettingsBox;
+// Export with generic support
+export const UnifiedSettingsBox = UnifiedSettingsBoxInner;

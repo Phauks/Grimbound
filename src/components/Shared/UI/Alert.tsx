@@ -68,5 +68,3 @@ export function Alert({ variant = 'info', title, children, className, icon, styl
     </div>
   );
 }
-
-export default Alert;

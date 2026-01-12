@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { hashArray } from '@/ts/cache/index.js';
 import type { Character } from '@/ts/types/index.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -56,9 +57,35 @@ export function useOfficialCharacterImages({
   const [isLoading, setIsLoading] = useState(true);
   const blobUrlsRef = useRef<string[]>([]);
 
+  // Compute stable hash for dependency comparison (prevents infinite loops)
+  // Array references change on every render even with same content
+  const charactersHash = hashArray(characters, (c) => c.id);
+
+  // Track previous hash to detect actual changes
+  const prevCharactersHashRef = useRef(charactersHash);
+
+  // Store characters in ref for use inside effect without triggering re-runs
+  const charactersRef = useRef(characters);
+  charactersRef.current = characters;
+
   useEffect(() => {
-    if (!isActive || characters.length === 0) {
+    const currentCharacters = charactersRef.current;
+
+    // If not active, we're done (nothing to do)
+    if (!isActive) {
       setIsLoading(false);
+      return;
+    }
+
+    // Skip if characters hash hasn't changed (satisfies exhaustive-deps)
+    if (prevCharactersHashRef.current === charactersHash && currentCharacters.length > 0) {
+      return;
+    }
+    prevCharactersHashRef.current = charactersHash;
+
+    // If active but no characters yet, stay in loading state
+    // This prevents a flash when characters are being loaded by the parent
+    if (currentCharacters.length === 0) {
       return;
     }
 
@@ -70,8 +97,8 @@ export function useOfficialCharacterImages({
       const newBlobUrls: string[] = [];
 
       // Load images in batches for smoother UX
-      for (let i = 0; i < characters.length; i += IMAGE_BATCH_SIZE) {
-        const batch = characters.slice(i, i + IMAGE_BATCH_SIZE);
+      for (let i = 0; i < currentCharacters.length; i += IMAGE_BATCH_SIZE) {
+        const batch = currentCharacters.slice(i, i + IMAGE_BATCH_SIZE);
         await Promise.all(
           batch.map(async (char) => {
             try {
@@ -99,7 +126,7 @@ export function useOfficialCharacterImages({
 
       logger.debug(
         'useOfficialCharacterImages',
-        `Loaded ${characters.length} characters, ${newBlobUrls.length} images`
+        `Loaded ${currentCharacters.length} characters, ${newBlobUrls.length} images`
       );
 
       if (isMounted) {
@@ -117,9 +144,7 @@ export function useOfficialCharacterImages({
       });
       blobUrlsRef.current = [];
     };
-  }, [isActive, characters, getCharacterImage]);
+  }, [isActive, charactersHash, getCharacterImage]);
 
   return { imageUrls, isLoading };
 }
-
-export default useOfficialCharacterImages;

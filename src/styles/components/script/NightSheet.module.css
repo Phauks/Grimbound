@@ -94,6 +94,7 @@
   overflow: visible; /* Changed from hidden - scaling ensures content fits */
   display: flex;
   flex-direction: column;
+  gap: var(--entry-spacing, 0.02in); /* Use computed spacing from scale config */
 }
 
 /* Empty state */

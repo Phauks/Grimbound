@@ -138,5 +138,3 @@ export function useCharacterSearch(options: UseCharacterSearchOptions): UseChara
     searchTerms: queryInfo.terms,
   };
 }
-
-export default useCharacterSearch;

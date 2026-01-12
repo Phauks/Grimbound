@@ -328,5 +328,3 @@ export class PackageExtractor {
 
 // Export singleton instance
 export const packageExtractor = new PackageExtractor();
-
-export default packageExtractor;

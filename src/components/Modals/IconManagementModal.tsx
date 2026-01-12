@@ -6,7 +6,7 @@
  * Migrated to use unified Modal and Button components.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { IconUploader } from '@/components/Shared/Controls/IconUploader';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
@@ -38,16 +38,16 @@ export function IconManagementModal({
   const [showOnlyCustom, setShowOnlyCustom] = useState(false);
 
   // Create map of character IDs to custom icons
-  const iconMap = useMemo(() => {
+  const iconMap = (() => {
     const map = new Map<string, CustomIconMetadata>();
     customIcons.forEach((icon) => {
       map.set(icon.characterId, icon);
     });
     return map;
-  }, [customIcons]);
+  })();
 
   // Filter characters
-  const filteredCharacters = useMemo(() => {
+  const filteredCharacters = (() => {
     let filtered = characters;
 
     // Filter by search
@@ -62,51 +62,48 @@ export function IconManagementModal({
     }
 
     return filtered;
-  }, [characters, searchQuery, showOnlyCustom, iconMap]);
+  })();
 
   // Handle icon upload/update
-  const handleIconUpdate = useCallback(
-    (character: Character, dataUrl: string | null) => {
-      const updatedIcons = [...customIcons];
-      const existingIndex = updatedIcons.findIndex((icon) => icon.characterId === character.id);
+  const handleIconUpdate = (character: Character, dataUrl: string | null) => {
+    const updatedIcons = [...customIcons];
+    const existingIndex = updatedIcons.findIndex((icon) => icon.characterId === character.id);
 
-      if (dataUrl) {
-        const iconData: CustomIconMetadata = {
-          characterId: character.id,
-          characterName: character.name,
-          filename: `${character.id}.webp`,
-          source: 'uploaded',
-          dataUrl,
-          storedInIndexedDB: false,
-          lastModified: Date.now(),
-          fileSize: Math.round(dataUrl.length * 0.75), // Rough estimate
-          mimeType: 'image/webp',
-        };
+    if (dataUrl) {
+      const iconData: CustomIconMetadata = {
+        characterId: character.id,
+        characterName: character.name,
+        filename: `${character.id}.webp`,
+        source: 'uploaded',
+        dataUrl,
+        storedInIndexedDB: false,
+        lastModified: Date.now(),
+        fileSize: Math.round(dataUrl.length * 0.75), // Rough estimate
+        mimeType: 'image/webp',
+      };
 
-        if (existingIndex >= 0) {
-          updatedIcons[existingIndex] = iconData;
-        } else {
-          updatedIcons.push(iconData);
-        }
-      } else if (existingIndex >= 0) {
-        // Remove icon
-        updatedIcons.splice(existingIndex, 1);
+      if (existingIndex >= 0) {
+        updatedIcons[existingIndex] = iconData;
+      } else {
+        updatedIcons.push(iconData);
       }
+    } else if (existingIndex >= 0) {
+      // Remove icon
+      updatedIcons.splice(existingIndex, 1);
+    }
 
-      onUpdateIcons(updatedIcons);
-    },
-    [customIcons, onUpdateIcons]
-  );
+    onUpdateIcons(updatedIcons);
+  };
 
   // Stats
-  const stats = useMemo(() => {
+  const stats = (() => {
     const totalSize = customIcons.reduce((sum, icon) => sum + (icon.fileSize || 0), 0);
     return {
       count: customIcons.length,
       totalCharacters: characters.length,
       totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2),
     };
-  }, [customIcons, characters]);
+  })();
 
   return (
     <Modal

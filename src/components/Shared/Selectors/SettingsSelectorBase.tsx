@@ -12,7 +12,6 @@
  * @module components/Shared/SettingsSelectorBase
  */
 
-import { forwardRef, memo } from 'react';
 import styles from '@/styles/components/shared/SettingsSelectorBase.module.css';
 
 // ============================================================================
@@ -48,86 +47,84 @@ export interface SettingsSelectorBaseProps {
   children?: React.ReactNode;
   /** Inline children rendered inside the container (e.g., sub-options like sliders) */
   inlineChildren?: React.ReactNode;
+  /** Ref for the container element (React 19 pattern) */
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const SettingsSelectorBase = memo(
-  forwardRef<HTMLDivElement, SettingsSelectorBaseProps>(function SettingsSelectorBase(
-    {
-      preview,
-      info,
-      headerSlot,
-      actionLabel = 'Customize',
-      onAction,
-      isExpanded = false,
-      disabled = false,
-      visuallyDisabled = false,
-      size = 'medium',
-      ariaLabel,
-      onKeyDown,
-      className,
-      children,
-      inlineChildren,
-    },
-    ref
-  ) {
-    // CSS class construction
-    const containerClasses = [
-      styles.container,
-      size === 'small' && styles.compact,
-      size === 'large' && styles.large,
-      disabled && styles.disabled,
-      visuallyDisabled && styles.visuallyDisabled,
-      isExpanded && styles.expanded,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+export function SettingsSelectorBase({
+  preview,
+  info,
+  headerSlot,
+  actionLabel = 'Customize',
+  onAction,
+  isExpanded = false,
+  disabled = false,
+  visuallyDisabled = false,
+  size = 'medium',
+  ariaLabel,
+  onKeyDown,
+  className,
+  children,
+  inlineChildren,
+  ref,
+}: SettingsSelectorBaseProps) {
+  // CSS class construction
+  const containerClasses = [
+    styles.container,
+    size === 'small' && styles.compact,
+    size === 'large' && styles.large,
+    disabled && styles.disabled,
+    visuallyDisabled && styles.visuallyDisabled,
+    isExpanded && styles.expanded,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-    return (
-      <>
-        <section
-          ref={ref}
-          className={containerClasses}
-          onKeyDown={onKeyDown}
-          aria-label={ariaLabel}
-          aria-disabled={disabled || visuallyDisabled}
-        >
-          {/* Preview Section */}
-          <div className={styles.preview}>{preview}</div>
+  return (
+    <>
+      <section
+        ref={ref}
+        className={containerClasses}
+        onKeyDown={onKeyDown}
+        aria-label={ariaLabel}
+        aria-disabled={disabled || visuallyDisabled}
+      >
+        {/* Preview Section */}
+        <div className={styles.preview}>{preview}</div>
 
-          {/* Info Section */}
-          <div className={styles.info}>{info}</div>
+        {/* Info Section */}
+        <div className={styles.info}>{info}</div>
 
-          {/* Action Column (headerSlot + button stacked vertically) */}
-          <div className={styles.actionColumn}>
-            {/* Header Slot (e.g., toggles) */}
-            {headerSlot}
+        {/* Action Column (headerSlot + button stacked vertically) */}
+        <div className={styles.actionColumn}>
+          {/* Header Slot (e.g., toggles) */}
+          {headerSlot}
 
-            {/* Action Button */}
-            <button
-              type="button"
-              className={styles.actionButton}
-              onClick={onAction}
-              disabled={disabled}
-            >
-              {isExpanded ? 'Done' : actionLabel}
-            </button>
-          </div>
+          {/* Action Button */}
+          <button
+            type="button"
+            className={styles.actionButton}
+            onClick={onAction}
+            disabled={disabled}
+          >
+            {isExpanded ? 'Done' : actionLabel}
+          </button>
+        </div>
 
-          {/* Inline Children (sub-options like sliders) */}
-          {inlineChildren}
-        </section>
+        {/* Inline Children (sub-options like sliders) */}
+        {inlineChildren}
+      </section>
 
-        {/* Children (portal panels, etc.) */}
-        {children}
-      </>
-    );
-  })
-);
+      {/* Children (portal panels, etc.) */}
+      {children}
+    </>
+  );
+}
 
 // ============================================================================
 // Sub-components for composition
@@ -141,7 +138,7 @@ export interface PreviewBoxProps {
   className?: string;
 }
 
-export const PreviewBox = memo(function PreviewBox({
+export function PreviewBox({
   children,
   shape = 'circle',
   size = 'medium',
@@ -157,7 +154,7 @@ export const PreviewBox = memo(function PreviewBox({
     .join(' ');
 
   return <div className={classes}>{children}</div>;
-});
+}
 
 /** Info section with primary label and optional summary */
 export interface InfoSectionProps {
@@ -166,18 +163,14 @@ export interface InfoSectionProps {
   className?: string;
 }
 
-export const InfoSection = memo(function InfoSection({
-  label,
-  summary,
-  className,
-}: InfoSectionProps) {
+export function InfoSection({ label, summary, className }: InfoSectionProps) {
   return (
     <div className={`${styles.infoSection} ${className || ''}`}>
       <span className={styles.primaryLabel}>{label}</span>
       {summary && <span className={styles.summary}>{summary}</span>}
     </div>
   );
-});
+}
 
 /** Toggle button group for headerSlot */
 export interface ToggleOption {
@@ -194,7 +187,7 @@ export interface ToggleGroupProps {
   className?: string;
 }
 
-export const ToggleGroup = memo(function ToggleGroup({
+export function ToggleGroup({
   options,
   value,
   onChange,
@@ -217,7 +210,7 @@ export const ToggleGroup = memo(function ToggleGroup({
       ))}
     </div>
   );
-});
+}
 
 /** Enabled/Disabled toggle for sections that can be turned off */
 export interface EnableToggleProps {
@@ -229,7 +222,7 @@ export interface EnableToggleProps {
   className?: string;
 }
 
-export const EnableToggle = memo(function EnableToggle({
+export function EnableToggle({
   enabled,
   onChange,
   enabledLabel = 'On',
@@ -259,6 +252,4 @@ export const EnableToggle = memo(function EnableToggle({
       </button>
     </div>
   );
-});
-
-export default SettingsSelectorBase;
+}

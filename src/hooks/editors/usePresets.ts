@@ -8,7 +8,6 @@
  * @module hooks/editors/usePresets
  */
 
-import { useCallback, useMemo } from 'react';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import {
@@ -64,26 +63,23 @@ export function usePresets() {
   // Global Presets (localStorage)
   // ========================================================================
 
-  const getGlobalPresets = useCallback((): Preset[] => loadGlobalPresets(), []);
+  const getGlobalPresets = (): Preset[] => loadGlobalPresets();
 
-  const saveGlobalPreset = useCallback(
-    (name: string, description: string, icon: string): Preset => {
-      try {
-        const presets = loadGlobalPresets();
-        const newPreset = createPreset(name, description, icon, generationOptions);
-        presets.push(newPreset);
-        saveGlobalPresets(presets);
-        logger.info('usePresets', `Saved global preset: ${name}`);
-        return newPreset;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to save global preset', error);
-        throw error;
-      }
-    },
-    [generationOptions]
-  );
+  const saveGlobalPreset = (name: string, description: string, icon: string): Preset => {
+    try {
+      const presets = loadGlobalPresets();
+      const newPreset = createPreset(name, description, icon, generationOptions);
+      presets.push(newPreset);
+      saveGlobalPresets(presets);
+      logger.info('usePresets', `Saved global preset: ${name}`);
+      return newPreset;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to save global preset', error);
+      throw error;
+    }
+  };
 
-  const deleteGlobalPreset = useCallback((presetId: string): void => {
+  const deleteGlobalPreset = (presetId: string): void => {
     try {
       const presets = loadGlobalPresets();
       const filtered = presets.filter((p) => p.id !== presetId);
@@ -93,56 +89,55 @@ export function usePresets() {
       logger.error('usePresets', 'Failed to delete global preset', error);
       throw error;
     }
-  }, []);
+  };
 
-  const updateGlobalPresetSettings = useCallback(
-    (presetId: string): boolean => {
-      try {
-        const presets = loadGlobalPresets();
-        const index = presets.findIndex((p) => p.id === presetId);
-        if (index === -1) return false;
+  const updateGlobalPresetSettings = (presetId: string): boolean => {
+    try {
+      const presets = loadGlobalPresets();
+      const index = presets.findIndex((p) => p.id === presetId);
+      if (index === -1) return false;
 
-        presets[index] = {
-          ...presets[index],
-          settings: { ...generationOptions },
-          updatedAt: Date.now(),
-        };
-        saveGlobalPresets(presets);
-        logger.info('usePresets', `Updated global preset settings: ${presetId}`);
-        return true;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to update global preset', error);
-        return false;
-      }
-    },
-    [generationOptions]
-  );
+      presets[index] = {
+        ...presets[index],
+        settings: { ...generationOptions },
+        updatedAt: Date.now(),
+      };
+      saveGlobalPresets(presets);
+      logger.info('usePresets', `Updated global preset settings: ${presetId}`);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to update global preset', error);
+      return false;
+    }
+  };
 
-  const editGlobalPreset = useCallback(
-    (presetId: string, name: string, icon: string, description?: string): boolean => {
-      try {
-        const presets = loadGlobalPresets();
-        const index = presets.findIndex((p) => p.id === presetId);
-        if (index === -1) return false;
+  const editGlobalPreset = (
+    presetId: string,
+    name: string,
+    icon: string,
+    description?: string
+  ): boolean => {
+    try {
+      const presets = loadGlobalPresets();
+      const index = presets.findIndex((p) => p.id === presetId);
+      if (index === -1) return false;
 
-        presets[index] = {
-          ...presets[index],
-          name,
-          icon,
-          ...(description !== undefined && { description }),
-          updatedAt: Date.now(),
-        };
-        saveGlobalPresets(presets);
-        return true;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to edit global preset', error);
-        return false;
-      }
-    },
-    []
-  );
+      presets[index] = {
+        ...presets[index],
+        name,
+        icon,
+        ...(description !== undefined && { description }),
+        updatedAt: Date.now(),
+      };
+      saveGlobalPresets(presets);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to edit global preset', error);
+      return false;
+    }
+  };
 
-  const reorderGlobalPresets = useCallback((fromIndex: number, toIndex: number): boolean => {
+  const reorderGlobalPresets = (fromIndex: number, toIndex: number): boolean => {
     try {
       const presets = loadGlobalPresets();
       if (
@@ -161,182 +156,163 @@ export function usePresets() {
       logger.error('usePresets', 'Failed to reorder global presets', error);
       return false;
     }
-  }, []);
+  };
 
   // ========================================================================
   // Local Presets (Project State)
   // ========================================================================
 
-  const updateProjectPresets = useCallback(
-    (newPresets: Preset[]) => {
-      if (!currentProject) return;
+  const updateProjectPresets = (newPresets: Preset[]) => {
+    if (!currentProject) return;
 
-      const updatedProject = {
-        ...currentProject,
-        state: {
-          ...currentProject.state,
-          presets: newPresets,
-        },
-        stats: {
-          ...currentProject.stats,
-          presetCount: newPresets.length,
-        },
+    const updatedProject = {
+      ...currentProject,
+      state: {
+        ...currentProject.state,
+        presets: newPresets,
+      },
+      stats: {
+        ...currentProject.stats,
+        presetCount: newPresets.length,
+      },
+    };
+
+    setCurrentProject(updatedProject);
+    setIsDirty(true);
+  };
+
+  const getLocalPresets = (): Preset[] => currentProject?.state.presets ?? [];
+
+  const saveLocalPreset = (name: string, description: string, icon: string): Preset | null => {
+    if (!currentProject) {
+      logger.warn('usePresets', 'Cannot save local preset: no active project');
+      return null;
+    }
+
+    try {
+      const newPreset = createPreset(name, description, icon, generationOptions);
+      const currentPresets = currentProject.state.presets ?? [];
+      updateProjectPresets([...currentPresets, newPreset]);
+      logger.info('usePresets', `Saved local preset: ${name}`);
+      return newPreset;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to save local preset', error);
+      throw error;
+    }
+  };
+
+  const deleteLocalPreset = (presetId: string): void => {
+    if (!currentProject) return;
+
+    try {
+      const currentPresets = currentProject.state.presets ?? [];
+      const filtered = currentPresets.filter((p) => p.id !== presetId);
+      updateProjectPresets(filtered);
+      logger.info('usePresets', `Deleted local preset: ${presetId}`);
+    } catch (error) {
+      logger.error('usePresets', 'Failed to delete local preset', error);
+      throw error;
+    }
+  };
+
+  const updateLocalPresetSettings = (presetId: string): boolean => {
+    if (!currentProject) return false;
+
+    try {
+      const currentPresets = currentProject.state.presets ?? [];
+      const index = currentPresets.findIndex((p) => p.id === presetId);
+      if (index === -1) return false;
+
+      const updatedPresets = [...currentPresets];
+      updatedPresets[index] = {
+        ...updatedPresets[index],
+        settings: { ...generationOptions },
+        updatedAt: Date.now(),
       };
+      updateProjectPresets(updatedPresets);
+      logger.info('usePresets', `Updated local preset settings: ${presetId}`);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to update local preset', error);
+      return false;
+    }
+  };
 
-      setCurrentProject(updatedProject);
-      setIsDirty(true);
-    },
-    [currentProject, setCurrentProject, setIsDirty]
-  );
+  const editLocalPreset = (
+    presetId: string,
+    name: string,
+    icon: string,
+    description?: string
+  ): boolean => {
+    if (!currentProject) return false;
 
-  const getLocalPresets = useCallback(
-    (): Preset[] => currentProject?.state.presets ?? [],
-    [currentProject]
-  );
+    try {
+      const currentPresets = currentProject.state.presets ?? [];
+      const index = currentPresets.findIndex((p) => p.id === presetId);
+      if (index === -1) return false;
 
-  const saveLocalPreset = useCallback(
-    (name: string, description: string, icon: string): Preset | null => {
-      if (!currentProject) {
-        logger.warn('usePresets', 'Cannot save local preset: no active project');
-        return null;
-      }
+      const updatedPresets = [...currentPresets];
+      updatedPresets[index] = {
+        ...updatedPresets[index],
+        name,
+        icon,
+        ...(description !== undefined && { description }),
+        updatedAt: Date.now(),
+      };
+      updateProjectPresets(updatedPresets);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to edit local preset', error);
+      return false;
+    }
+  };
 
-      try {
-        const newPreset = createPreset(name, description, icon, generationOptions);
-        const currentPresets = currentProject.state.presets ?? [];
-        updateProjectPresets([...currentPresets, newPreset]);
-        logger.info('usePresets', `Saved local preset: ${name}`);
-        return newPreset;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to save local preset', error);
-        throw error;
-      }
-    },
-    [currentProject, generationOptions, updateProjectPresets]
-  );
+  const reorderLocalPresets = (fromIndex: number, toIndex: number): boolean => {
+    if (!currentProject) return false;
 
-  const deleteLocalPreset = useCallback(
-    (presetId: string): void => {
-      if (!currentProject) return;
-
-      try {
-        const currentPresets = currentProject.state.presets ?? [];
-        const filtered = currentPresets.filter((p) => p.id !== presetId);
-        updateProjectPresets(filtered);
-        logger.info('usePresets', `Deleted local preset: ${presetId}`);
-      } catch (error) {
-        logger.error('usePresets', 'Failed to delete local preset', error);
-        throw error;
-      }
-    },
-    [currentProject, updateProjectPresets]
-  );
-
-  const updateLocalPresetSettings = useCallback(
-    (presetId: string): boolean => {
-      if (!currentProject) return false;
-
-      try {
-        const currentPresets = currentProject.state.presets ?? [];
-        const index = currentPresets.findIndex((p) => p.id === presetId);
-        if (index === -1) return false;
-
-        const updatedPresets = [...currentPresets];
-        updatedPresets[index] = {
-          ...updatedPresets[index],
-          settings: { ...generationOptions },
-          updatedAt: Date.now(),
-        };
-        updateProjectPresets(updatedPresets);
-        logger.info('usePresets', `Updated local preset settings: ${presetId}`);
-        return true;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to update local preset', error);
+    try {
+      const currentPresets = [...(currentProject.state.presets ?? [])];
+      if (
+        fromIndex < 0 ||
+        fromIndex >= currentPresets.length ||
+        toIndex < 0 ||
+        toIndex >= currentPresets.length
+      ) {
         return false;
       }
-    },
-    [currentProject, generationOptions, updateProjectPresets]
-  );
-
-  const editLocalPreset = useCallback(
-    (presetId: string, name: string, icon: string, description?: string): boolean => {
-      if (!currentProject) return false;
-
-      try {
-        const currentPresets = currentProject.state.presets ?? [];
-        const index = currentPresets.findIndex((p) => p.id === presetId);
-        if (index === -1) return false;
-
-        const updatedPresets = [...currentPresets];
-        updatedPresets[index] = {
-          ...updatedPresets[index],
-          name,
-          icon,
-          ...(description !== undefined && { description }),
-          updatedAt: Date.now(),
-        };
-        updateProjectPresets(updatedPresets);
-        return true;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to edit local preset', error);
-        return false;
-      }
-    },
-    [currentProject, updateProjectPresets]
-  );
-
-  const reorderLocalPresets = useCallback(
-    (fromIndex: number, toIndex: number): boolean => {
-      if (!currentProject) return false;
-
-      try {
-        const currentPresets = [...(currentProject.state.presets ?? [])];
-        if (
-          fromIndex < 0 ||
-          fromIndex >= currentPresets.length ||
-          toIndex < 0 ||
-          toIndex >= currentPresets.length
-        ) {
-          return false;
-        }
-        const [removed] = currentPresets.splice(fromIndex, 1);
-        currentPresets.splice(toIndex, 0, removed);
-        updateProjectPresets(currentPresets);
-        return true;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to reorder local presets', error);
-        return false;
-      }
-    },
-    [currentProject, updateProjectPresets]
-  );
+      const [removed] = currentPresets.splice(fromIndex, 1);
+      currentPresets.splice(toIndex, 0, removed);
+      updateProjectPresets(currentPresets);
+      return true;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to reorder local presets', error);
+      return false;
+    }
+  };
 
   // ========================================================================
   // Cross-Tier Operations
   // ========================================================================
 
-  const copyToLocal = useCallback(
-    (preset: Preset): Preset | null => {
-      if (!currentProject) {
-        logger.warn('usePresets', 'Cannot copy to local: no active project');
-        return null;
-      }
+  const copyToLocal = (preset: Preset): Preset | null => {
+    if (!currentProject) {
+      logger.warn('usePresets', 'Cannot copy to local: no active project');
+      return null;
+    }
 
-      try {
-        const copy = duplicatePreset(preset, '');
-        const currentPresets = currentProject.state.presets ?? [];
-        updateProjectPresets([...currentPresets, copy]);
-        logger.info('usePresets', `Copied preset to local: ${copy.name}`);
-        return copy;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to copy preset to local', error);
-        throw error;
-      }
-    },
-    [currentProject, updateProjectPresets]
-  );
+    try {
+      const copy = duplicatePreset(preset, '');
+      const currentPresets = currentProject.state.presets ?? [];
+      updateProjectPresets([...currentPresets, copy]);
+      logger.info('usePresets', `Copied preset to local: ${copy.name}`);
+      return copy;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to copy preset to local', error);
+      throw error;
+    }
+  };
 
-  const copyToGlobal = useCallback((preset: Preset): Preset => {
+  const copyToGlobal = (preset: Preset): Preset => {
     try {
       const copy = duplicatePreset(preset, '');
       const presets = loadGlobalPresets();
@@ -348,65 +324,59 @@ export function usePresets() {
       logger.error('usePresets', 'Failed to copy preset to global', error);
       throw error;
     }
-  }, []);
+  };
 
-  const duplicateGlobalPreset = useCallback((preset: Preset): Preset => {
+  const duplicateGlobalPreset = (preset: Preset): Preset => {
     const copy = duplicatePreset(preset);
     const presets = loadGlobalPresets();
     presets.push(copy);
     saveGlobalPresets(presets);
     return copy;
-  }, []);
+  };
 
-  const duplicateLocalPreset = useCallback(
-    (preset: Preset): Preset | null => {
-      if (!currentProject) return null;
+  const duplicateLocalPreset = (preset: Preset): Preset | null => {
+    if (!currentProject) return null;
 
-      const copy = duplicatePreset(preset);
-      const currentPresets = currentProject.state.presets ?? [];
-      updateProjectPresets([...currentPresets, copy]);
-      return copy;
-    },
-    [currentProject, updateProjectPresets]
-  );
+    const copy = duplicatePreset(preset);
+    const currentPresets = currentProject.state.presets ?? [];
+    updateProjectPresets([...currentPresets, copy]);
+    return copy;
+  };
 
   // ========================================================================
   // Apply & Reset
   // ========================================================================
 
-  const applyPreset = useCallback(
-    (preset: Preset): void => {
-      updateGenerationOptions(preset.settings);
-      logger.debug('usePresets', `Applied preset: ${preset.name}`);
-    },
-    [updateGenerationOptions]
-  );
+  const applyPreset = (preset: Preset): void => {
+    updateGenerationOptions(preset.settings);
+    logger.debug('usePresets', `Applied preset: ${preset.name}`);
+  };
 
-  const resetToDefaults = useCallback((): void => {
+  const resetToDefaults = (): void => {
     updateGenerationOptions(getDefaultOptions());
     logger.info('usePresets', 'Reset to default options');
-  }, [updateGenerationOptions]);
+  };
 
   // ========================================================================
   // Combined View
   // ========================================================================
 
-  const globalPresets = useMemo(() => getGlobalPresets(), [getGlobalPresets]);
-  const localPresets = useMemo(() => getLocalPresets(), [getLocalPresets]);
+  const globalPresets = getGlobalPresets();
+  const localPresets = getLocalPresets();
 
-  const getAllPresets = useCallback((): PresetWithTier[] => {
+  const getAllPresets = (): PresetWithTier[] => {
     const global = getGlobalPresets().map(
       (p): PresetWithTier => ({ ...p, tier: 'global' as const })
     );
     const local = getLocalPresets().map((p): PresetWithTier => ({ ...p, tier: 'local' as const }));
     return [...global, ...local];
-  }, [getGlobalPresets, getLocalPresets]);
+  };
 
   // ========================================================================
   // Export/Import
   // ========================================================================
 
-  const exportPreset = useCallback((preset: Preset): void => {
+  const exportPreset = (preset: Preset): void => {
     try {
       const dataStr = JSON.stringify(preset, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
@@ -421,46 +391,43 @@ export function usePresets() {
       logger.error('usePresets', 'Failed to export preset', error);
       throw error;
     }
-  }, []);
+  };
 
-  const importPreset = useCallback(
-    async (file: File, tier: PresetTier): Promise<Preset> => {
-      try {
-        const content = await file.text();
-        const imported = JSON.parse(content) as Record<string, unknown>;
+  const importPreset = async (file: File, tier: PresetTier): Promise<Preset> => {
+    try {
+      const content = await file.text();
+      const imported = JSON.parse(content) as Record<string, unknown>;
 
-        if (!(imported.name && imported.settings)) {
-          throw new Error('Invalid preset file: missing required fields');
-        }
-
-        const newPreset = createPreset(
-          String(imported.name),
-          String(imported.description ?? ''),
-          String(imported.icon ?? '📥'),
-          imported.settings as GenerationOptions
-        );
-
-        if (tier === 'global') {
-          const presets = loadGlobalPresets();
-          presets.push(newPreset);
-          saveGlobalPresets(presets);
-        } else {
-          if (!currentProject) {
-            throw new Error('Cannot import to local: no active project');
-          }
-          const currentPresets = currentProject.state.presets ?? [];
-          updateProjectPresets([...currentPresets, newPreset]);
-        }
-
-        logger.info('usePresets', `Imported preset: ${newPreset.name} to ${tier}`);
-        return newPreset;
-      } catch (error) {
-        logger.error('usePresets', 'Failed to import preset', error);
-        throw error;
+      if (!(imported.name && imported.settings)) {
+        throw new Error('Invalid preset file: missing required fields');
       }
-    },
-    [currentProject, updateProjectPresets]
-  );
+
+      const newPreset = createPreset(
+        String(imported.name),
+        String(imported.description ?? ''),
+        String(imported.icon ?? '📥'),
+        imported.settings as GenerationOptions
+      );
+
+      if (tier === 'global') {
+        const presets = loadGlobalPresets();
+        presets.push(newPreset);
+        saveGlobalPresets(presets);
+      } else {
+        if (!currentProject) {
+          throw new Error('Cannot import to local: no active project');
+        }
+        const currentPresets = currentProject.state.presets ?? [];
+        updateProjectPresets([...currentPresets, newPreset]);
+      }
+
+      logger.info('usePresets', `Imported preset: ${newPreset.name} to ${tier}`);
+      return newPreset;
+    } catch (error) {
+      logger.error('usePresets', 'Failed to import preset', error);
+      throw error;
+    }
+  };
 
   // ========================================================================
   // Return API

@@ -8,6 +8,7 @@
  */
 
 import { assetStorageService } from './AssetStorageService.js';
+import { legacyTypeToTag } from './tagUtils.js';
 import type { AssetType, AssetWithUrl } from './types.js';
 
 // ============================================================================
@@ -93,7 +94,7 @@ export class AssetSuggestionService {
 
     // Fetch all assets of the specified type
     const assets = await assetStorageService.listWithUrls({
-      type: assetType,
+      tags: [legacyTypeToTag(assetType)],
       projectId: projectId === undefined ? 'all' : projectId,
     });
 
@@ -273,7 +274,7 @@ export class AssetSuggestionService {
     projectId?: string | null
   ): Promise<AssetWithUrl[]> {
     const assets = await assetStorageService.listWithUrls({
-      type: assetType,
+      tags: [legacyTypeToTag(assetType)],
       projectId: projectId === undefined ? 'all' : projectId,
       sortBy: 'usageCount',
       sortDirection: 'desc',
@@ -296,7 +297,7 @@ export class AssetSuggestionService {
     projectId?: string | null
   ): Promise<AssetWithUrl[]> {
     const assets = await assetStorageService.listWithUrls({
-      type: assetType,
+      tags: [legacyTypeToTag(assetType)],
       projectId: projectId === undefined ? 'all' : projectId,
       sortBy: 'lastUsedAt',
       sortDirection: 'desc',

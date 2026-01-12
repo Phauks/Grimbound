@@ -7,7 +7,6 @@
  * @module hooks/sync/useHasUnsavedWork
  */
 
-import { useMemo } from 'react';
 import { useProjectContext } from '@/contexts/ProjectContext.js';
 import { useTokenContext } from '@/contexts/TokenContext.js';
 
@@ -35,17 +34,15 @@ export function useHasUnsavedWork(): boolean {
   const { currentProject } = useProjectContext();
   const { jsonInput, characters, tokens } = useTokenContext();
 
-  return useMemo(() => {
-    // If there's already a project, no need to prompt
-    if (currentProject) {
-      return false;
-    }
+  // If there's already a project, no need to prompt
+  if (currentProject) {
+    return false;
+  }
 
-    // Has work if any of these conditions are met:
-    const hasJsonInput = jsonInput.trim() !== '';
-    const hasCharacters = characters.length > 0;
-    const hasTokens = tokens.length > 0;
+  // Has work if any of these conditions are met:
+  const hasJsonInput = jsonInput.trim() !== '';
+  const hasCharacters = characters.length > 0;
+  const hasTokens = tokens.length > 0;
 
-    return hasJsonInput || hasCharacters || hasTokens;
-  }, [currentProject, jsonInput, characters, tokens]);
+  return hasJsonInput || hasCharacters || hasTokens;
 }

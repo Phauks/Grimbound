@@ -8,15 +8,7 @@
  * @module contexts/PanelCoordinationContext
  */
 
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef } from 'react';
 
 interface PanelCoordinationContextType {
   /** Register a panel's close function. Returns an unregister function. */
@@ -30,25 +22,25 @@ const PanelCoordinationContext = createContext<PanelCoordinationContextType | nu
 export function PanelCoordinationProvider({ children }: { children: ReactNode }) {
   const panelsRef = useRef<Map<string, () => void>>(new Map());
 
-  const registerPanel = useCallback((id: string, closePanel: () => void) => {
+  const registerPanel = (id: string, closePanel: () => void) => {
     panelsRef.current.set(id, closePanel);
     return () => {
       panelsRef.current.delete(id);
     };
-  }, []);
+  };
 
-  const closeOtherPanels = useCallback((exceptId?: string) => {
+  const closeOtherPanels = (exceptId?: string) => {
     for (const [id, closePanel] of panelsRef.current) {
       if (id !== exceptId) {
         closePanel();
       }
     }
-  }, []);
+  };
 
-  const value = useMemo(
-    () => ({ registerPanel, closeOtherPanels }),
-    [registerPanel, closeOtherPanels]
-  );
+  const value: PanelCoordinationContextType = {
+    registerPanel,
+    closeOtherPanels,
+  };
 
   return (
     <PanelCoordinationContext.Provider value={value}>{children}</PanelCoordinationContext.Provider>
@@ -87,9 +79,9 @@ export function useCoordinatedPanel(
   }, [coordination, panelId]);
 
   // Return the onWillOpen callback that closes other panels
-  const onWillOpen = useCallback(() => {
+  const onWillOpen = () => {
     coordination?.closeOtherPanels(panelId);
-  }, [coordination, panelId]);
+  };
 
   return onWillOpen;
 }

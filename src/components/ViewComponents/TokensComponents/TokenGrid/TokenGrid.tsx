@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { TabType } from '@/components/Layout/TabNavigation';
 import { GenerationProgressOverlay } from '@/components/Shared/Feedback/GenerationProgressOverlay';
 import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
@@ -67,7 +67,7 @@ export function TokenGrid({
 
   // Derive current isOfficial and hasDecorativeOverrides from character state
   // This ensures tags update when character properties change without regeneration
-  const enrichedTokens = useMemo(() => {
+  const enrichedTokens = (() => {
     const tokensToEnrich = propTokens ?? contextTokens;
     return tokensToEnrich.map((token) => {
       // Only enrich tokens that have a parent character
@@ -96,57 +96,48 @@ export function TokenGrid({
         hasDecorativeOverrides: currentHasDecorativeOverrides,
       };
     });
-  }, [propTokens, contextTokens, characters, getMetadata]);
+  })();
 
   // Use enriched tokens for display
   const displayTokens = enrichedTokens;
   const allTokens = enrichedTokens;
 
-  const handleSetAsExample = useCallback(
-    (token: Token) => {
-      // Route meta tokens to the meta example slot, character/reminder to character slot
-      if (META_TOKEN_TYPES.has(token.type)) {
-        setExampleMetaToken(token);
-      } else {
-        setExampleCharacterToken(token);
-      }
-    },
-    [setExampleCharacterToken, setExampleMetaToken]
-  );
+  const handleSetAsExample = (token: Token) => {
+    // Route meta tokens to the meta example slot, character/reminder to character slot
+    if (META_TOKEN_TYPES.has(token.type)) {
+      setExampleMetaToken(token);
+    } else {
+      setExampleCharacterToken(token);
+    }
+  };
 
   // Download single token as PNG
-  const handleDownloadToken = useCallback(
-    (token: Token) => {
-      try {
-        const blob = getTokenBlob(token);
-        const filename = `${token.filename}.png`;
-        downloadFile(blob, filename);
-        addToast(`Downloaded ${token.name}`, 'success');
-      } catch (error) {
-        logger.error('TokenGrid', 'Failed to download token', error);
-        addToast('Failed to download token', 'error');
-      }
-    },
-    [addToast]
-  );
+  const handleDownloadToken = (token: Token) => {
+    try {
+      const blob = getTokenBlob(token);
+      const filename = `${token.filename}.png`;
+      downloadFile(blob, filename);
+      addToast(`Downloaded ${token.name}`, 'success');
+    } catch (error) {
+      logger.error('TokenGrid', 'Failed to download token', error);
+      addToast('Failed to download token', 'error');
+    }
+  };
 
   // Clear decorative overrides for a token's character
-  const handleClearOverrides = useCallback(
-    (token: Token) => {
-      if (!token.parentUuid) {
-        addToast('Cannot clear overrides: no character associated', 'error');
-        return;
-      }
+  const handleClearOverrides = (token: Token) => {
+    if (!token.parentUuid) {
+      addToast('Cannot clear overrides: no character associated', 'error');
+      return;
+    }
 
-      // Clear the decoratives by setting useCustomSettings to false
-      setMetadata(token.parentUuid, {
-        decoratives: { useCustomSettings: false },
-      });
+    // Clear the decoratives by setting useCustomSettings to false
+    setMetadata(token.parentUuid, {
+      decoratives: { useCustomSettings: false },
+    });
 
-      addToast(`Cleared overrides for ${token.name}. Regenerate tokens to see changes.`, 'success');
-    },
-    [setMetadata, addToast]
-  );
+    addToast(`Cleared overrides for ${token.name}. Regenerate tokens to see changes.`, 'success');
+  };
 
   // Use custom hooks for token management
   const deletion = useTokenDeletion({
@@ -173,27 +164,29 @@ export function TokenGrid({
   );
 
   // Handlers to toggle and persist section state using onToggle event
-  const handleCharactersToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+  const handleCharactersToggle = (e: React.ToggleEvent<HTMLDetailsElement>) => {
     const isOpen = e.currentTarget.open;
     setCharactersOpen(isOpen);
     setStorageItem(STORAGE_KEYS.TOKEN_SECTION_CHARACTERS_OPEN, String(isOpen));
-  }, []);
+  };
 
-  const handleRemindersToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+  const handleRemindersToggle = (e: React.ToggleEvent<HTMLDetailsElement>) => {
     const isOpen = e.currentTarget.open;
     setRemindersOpen(isOpen);
     setStorageItem(STORAGE_KEYS.TOKEN_SECTION_REMINDERS_OPEN, String(isOpen));
-  }, []);
+  };
 
-  const handleMetaToggle = useCallback((e: React.ToggleEvent<HTMLDetailsElement>) => {
+  const handleMetaToggle = (e: React.ToggleEvent<HTMLDetailsElement>) => {
     const isOpen = e.currentTarget.open;
     setMetaOpen(isOpen);
     setStorageItem(STORAGE_KEYS.TOKEN_SECTION_META_OPEN, String(isOpen));
-  }, []);
+  };
 
   // Show loading overlay first - before empty state check
   // This prevents brief flash of "No tokens" message when generation starts
-  if (!propTokens && isLoading && generationProgress) {
+  // Show overlay when generation is in progress and we're not in readOnly mode
+  // (readOnly is for external token display that doesn't care about context loading)
+  if (!readOnly && isLoading && generationProgress) {
     return <GenerationProgressOverlay progress={generationProgress} />;
   }
 

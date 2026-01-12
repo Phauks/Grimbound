@@ -11,7 +11,7 @@
  */
 
 import { useState } from 'react';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { NightOrderView } from '@/components/ViewComponents/ScriptComponents/NightOrderView';
 import type { ScriptSubTab } from '@/components/ViewComponents/ScriptComponents/ScriptTabNavigation';
 
@@ -26,7 +26,7 @@ export function ScriptView({ onEditCharacter }: ScriptViewProps) {
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Script" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Script" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       {activeSubTab === 'night-order' ? (

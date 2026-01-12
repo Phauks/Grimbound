@@ -306,6 +306,25 @@ export class TokenGenerator {
       hasAbilityText
     );
 
+    // Prepare accent data (used for both 'under' and 'over' layer modes)
+    const accentEnabled = this.options.accentEnabled !== false;
+    const characterData = accentEnabled
+      ? {
+          reminderCount: countReminders(character),
+          firstNight: Boolean(character.firstNight && character.firstNight > 0),
+          otherNight: Boolean(character.otherNight && character.otherNight > 0),
+        }
+      : null;
+    const shouldDrawAccents =
+      characterData &&
+      (characterData.reminderCount > 0 || characterData.firstNight || characterData.otherNight);
+    const accentLayer = this.options.accentLayer ?? 'over';
+
+    // Draw accents UNDER character icon (before character image)
+    if (shouldDrawAccents && accentLayer === 'under') {
+      await this.imageRenderer.drawAccents(ctx, diameter, characterData);
+    }
+
     // Calculate text layout if needed
     let abilityTextLayout: TextLayoutResult | undefined;
     if (abilityTextToDisplay) {
@@ -347,9 +366,9 @@ export class TokenGenerator {
       this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
     }
 
-    // Draw accents
-    if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
-      await this.imageRenderer.drawAccents(ctx, diameter);
+    // Draw accents OVER character icon (after character image, default mode)
+    if (shouldDrawAccents && accentLayer === 'over') {
+      await this.imageRenderer.drawAccents(ctx, diameter, characterData);
     }
 
     // Draw ability text (with adjusted Y position if badge is present)
@@ -663,10 +682,8 @@ export class TokenGenerator {
       this.applyFrameModeTransform(ctx, frameModeInfo, center.x);
     }
 
-    // Draw accents if enabled
-    if (this.options.accentEnabled !== false && this.options.maximumAccents > 0) {
-      await this.imageRenderer.drawAccents(ctx, diameter);
-    }
+    // Note: Bootlegger tokens don't have accents because they're not
+    // regular characters with night order data or specific reminder counts
 
     // Always draw ability text for bootlegger tokens
     if (hasAbilityText) {

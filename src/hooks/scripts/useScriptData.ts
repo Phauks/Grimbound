@@ -44,63 +44,50 @@ export function useScriptData() {
     }
   }, [officialData]);
 
-  const loadScript = useCallback(
-    async (jsonString: string) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setWarnings([]);
+  const loadScript = async (jsonString: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setWarnings([]);
 
-        // Validate JSON syntax
-        const validation = validateJson(jsonString);
-        if (!validation.valid) {
-          setError(validation.error || 'Invalid JSON');
-          return;
-        }
-
-        // Parse the script data with lenient validation
-        const parsed = JSON.parse(jsonString);
-        const { characters: scriptChars, warnings } = await validateAndParseScript(
-          parsed,
-          officialData
-        );
-
-        // Extract metadata if present
-        const meta = extractScriptMeta(parsed);
-
-        // Clear existing metadata when loading a new script
-        // (getMetadata will compute correct defaults based on character id/name)
-        clearAllMetadata();
-
-        // Reset the generated hash so new tokens will be generated for this script
-        setLastGeneratedJsonHash(null);
-
-        // Update state
-        setJsonInput(jsonString);
-        setCharacters(scriptChars);
-        setScriptMeta(meta);
-        setWarnings(warnings);
-        setError(null);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load script';
-        setError(errorMessage);
-        logger.error('useScriptData', 'Script loading error:', err);
-      } finally {
-        setIsLoading(false);
+      // Validate JSON syntax
+      const validation = validateJson(jsonString);
+      if (!validation.valid) {
+        setError(validation.error || 'Invalid JSON');
+        return;
       }
-    },
-    [
-      setJsonInput,
-      setCharacters,
-      setScriptMeta,
-      setError,
-      setIsLoading,
-      setWarnings,
-      officialData,
-      clearAllMetadata,
-      setLastGeneratedJsonHash,
-    ]
-  );
+
+      // Parse the script data with lenient validation
+      const parsed = JSON.parse(jsonString);
+      const { characters: scriptChars, warnings } = await validateAndParseScript(
+        parsed,
+        officialData
+      );
+
+      // Extract metadata if present
+      const meta = extractScriptMeta(parsed);
+
+      // Clear existing metadata when loading a new script
+      // (getMetadata will compute correct defaults based on character id/name)
+      clearAllMetadata();
+
+      // Reset the generated hash so new tokens will be generated for this script
+      setLastGeneratedJsonHash(null);
+
+      // Update state
+      setJsonInput(jsonString);
+      setCharacters(scriptChars);
+      setScriptMeta(meta);
+      setWarnings(warnings);
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load script';
+      setError(errorMessage);
+      logger.error('useScriptData', 'Script loading error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadOfficialData = useCallback(async () => {
     try {
@@ -147,52 +134,49 @@ export function useScriptData() {
    * Parse JSON string and update characters/warnings without setting jsonInput
    * Used for live editing - jsonInput is already set by the textarea
    */
-  const parseJson = useCallback(
-    async (jsonString: string) => {
-      // Handle empty input
-      if (!jsonString.trim()) {
-        setCharacters([]);
-        setScriptMeta(null);
-        setWarnings([]);
-        setError(null);
-        return;
-      }
+  const parseJson = async (jsonString: string) => {
+    // Handle empty input
+    if (!jsonString.trim()) {
+      setCharacters([]);
+      setScriptMeta(null);
+      setWarnings([]);
+      setError(null);
+      return;
+    }
 
-      // Validate JSON syntax
-      const validation = validateJson(jsonString);
-      if (!validation.valid) {
-        setError(validation.error || 'Invalid JSON');
-        return;
-      }
+    // Validate JSON syntax
+    const validation = validateJson(jsonString);
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid JSON');
+      return;
+    }
 
-      try {
-        // Parse the script data with lenient validation
-        const parsed = JSON.parse(jsonString);
-        const { characters: scriptChars, warnings } = await validateAndParseScript(
-          parsed,
-          officialData
-        );
+    try {
+      // Parse the script data with lenient validation
+      const parsed = JSON.parse(jsonString);
+      const { characters: scriptChars, warnings } = await validateAndParseScript(
+        parsed,
+        officialData
+      );
 
-        // Extract metadata if present
-        const meta = extractScriptMeta(parsed);
+      // Extract metadata if present
+      const meta = extractScriptMeta(parsed);
 
-        // Update state (but not jsonInput - it's already set)
-        setCharacters(scriptChars);
-        setScriptMeta(meta);
-        setWarnings(warnings);
-        setError(null);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to parse script';
-        setError(errorMessage);
-      }
-    },
-    [setCharacters, setScriptMeta, setError, setWarnings, officialData]
-  );
+      // Update state (but not jsonInput - it's already set)
+      setCharacters(scriptChars);
+      setScriptMeta(meta);
+      setWarnings(warnings);
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to parse script';
+      setError(errorMessage);
+    }
+  };
 
   /**
    * Clear all script data
    */
-  const clearScript = useCallback(() => {
+  const clearScript = () => {
     setJsonInput('');
     setCharacters([]);
     setTokens([]);
@@ -201,16 +185,7 @@ export function useScriptData() {
     setError(null);
     clearAllMetadata();
     setLastGeneratedJsonHash(null);
-  }, [
-    setJsonInput,
-    setCharacters,
-    setTokens,
-    setScriptMeta,
-    setWarnings,
-    setError,
-    clearAllMetadata,
-    setLastGeneratedJsonHash,
-  ]);
+  };
 
   /**
    * Central gateway for all script state updates
@@ -219,138 +194,131 @@ export function useScriptData() {
    * @param newJson - The new JSON content (empty string for clear)
    * @param source - Where the update came from (for logging/analytics)
    */
-  const updateScript = useCallback(
-    async (
-      newJson: string,
-      source:
-        | 'user-edit'
-        | 'format'
-        | 'sort'
-        | 'condense'
-        | 'add-meta'
-        | 'remove-underscores'
-        | 'remove-separators'
-        | 'upload'
-        | 'load-example'
-        | 'clear'
-        | 'undo'
-        | 'redo'
-        | 'fix-formats'
-    ) => {
-      logger.debug('ScriptData', 'Updating script via gateway', {
-        source,
-        jsonLength: newJson.length,
-        isEmpty: newJson === '',
-      });
+  const updateScript = async (
+    newJson: string,
+    source:
+      | 'user-edit'
+      | 'format'
+      | 'sort'
+      | 'condense'
+      | 'add-meta'
+      | 'remove-underscores'
+      | 'remove-separators'
+      | 'upload'
+      | 'load-example'
+      | 'clear'
+      | 'undo'
+      | 'redo'
+      | 'fix-formats'
+  ) => {
+    logger.debug('ScriptData', 'Updating script via gateway', {
+      source,
+      jsonLength: newJson.length,
+      isEmpty: newJson === '',
+    });
 
-      try {
-        if (source === 'clear') {
-          // Special case: clear all state
-          clearScript();
-          logger.debug('ScriptData', 'Script cleared successfully');
-        } else {
-          // Normal case: update JSON and reparse
-          await loadScript(newJson);
-          logger.debug('ScriptData', 'Script updated and parsed');
-        }
-
-        // Auto-save will trigger automatically via detector
-        // (detector watches jsonInput, characters, etc.)
-      } catch (error) {
-        logger.error('ScriptData', 'Failed to update script', { source, error });
-        throw error; // Re-throw so handlers can show user-friendly messages
+    try {
+      if (source === 'clear') {
+        // Special case: clear all state
+        clearScript();
+        logger.debug('ScriptData', 'Script cleared successfully');
+      } else {
+        // Normal case: update JSON and reparse
+        await loadScript(newJson);
+        logger.debug('ScriptData', 'Script updated and parsed');
       }
-    },
-    [clearScript, loadScript]
-  );
 
-  const loadExampleScriptByName = useCallback(
-    async (name: string) => {
-      try {
-        setIsLoading(true);
-        setError(null);
+      // Auto-save will trigger automatically via detector
+      // (detector watches jsonInput, characters, etc.)
+    } catch (error) {
+      logger.error('ScriptData', 'Failed to update script', { source, error });
+      throw error; // Re-throw so handlers can show user-friendly messages
+    }
+  };
 
-        const scriptJson = await loadExampleScript(name);
-        await updateScript(JSON.stringify(scriptJson, null, 2), 'load-example');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load example script';
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [updateScript, setIsLoading, setError]
-  );
+  const loadExampleScriptByName = async (name: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const scriptJson = await loadExampleScript(name);
+      await updateScript(JSON.stringify(scriptJson, null, 2), 'load-example');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load example script';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   /**
    * Add a _meta entry to the current script JSON
    * Creates a new _meta object with default properties (id, name, author, version)
    * Also generates firstNight and otherNight arrays based on character night order numbers
    */
-  const addMetaToScript = useCallback(
-    async (metaData: { name?: string; author?: string; version?: string } = {}) => {
-      if (!jsonInput.trim()) return;
+  const addMetaToScript = async (
+    metaData: { name?: string; author?: string; version?: string } = {}
+  ) => {
+    if (!jsonInput.trim()) return;
 
-      try {
-        const parsed = JSON.parse(jsonInput);
-        if (!Array.isArray(parsed)) return;
+    try {
+      const parsed = JSON.parse(jsonInput);
+      if (!Array.isArray(parsed)) return;
 
-        // Check if _meta already exists
-        const hasExistingMeta = parsed.some(
-          (entry: unknown) =>
-            typeof entry === 'object' &&
-            entry !== null &&
-            'id' in entry &&
-            (entry as { id: string }).id === '_meta'
-        );
-        if (hasExistingMeta) return;
+      // Check if _meta already exists
+      const hasExistingMeta = parsed.some(
+        (entry: unknown) =>
+          typeof entry === 'object' &&
+          entry !== null &&
+          'id' in entry &&
+          (entry as { id: string }).id === '_meta'
+      );
+      if (hasExistingMeta) return;
 
-        // Build night order arrays from TokenContext characters (already parsed with full data)
-        // These characters have the correct firstNight/otherNight numbers from official data
-        const firstNightOrder = buildInitialNightOrderArray(characters, 'first');
-        const otherNightOrder = buildInitialNightOrderArray(characters, 'other');
+      // Build night order arrays from TokenContext characters (already parsed with full data)
+      // These characters have the correct firstNight/otherNight numbers from official data
+      const firstNightOrder = buildInitialNightOrderArray(characters, 'first');
+      const otherNightOrder = buildInitialNightOrderArray(characters, 'other');
 
-        logger.debug('useScriptData', 'Building night order from characters', {
-          characterCount: characters.length,
-          withFirstNight: characters.filter((c) => c.firstNight && c.firstNight > 0).length,
-          withOtherNight: characters.filter((c) => c.otherNight && c.otherNight > 0).length,
-        });
+      logger.debug('useScriptData', 'Building night order from characters', {
+        characterCount: characters.length,
+        withFirstNight: characters.filter((c) => c.firstNight && c.firstNight > 0).length,
+        withOtherNight: characters.filter((c) => c.otherNight && c.otherNight > 0).length,
+      });
 
-        // Create new _meta entry with provided values or defaults, including night order
-        const newMeta: ScriptMeta = {
-          id: '_meta',
-          name: metaData.name || 'My Custom Script',
-          author: metaData.author || '',
-          version: metaData.version || '1.0.0',
-          firstNight: firstNightOrder,
-          otherNight: otherNightOrder,
-        };
+      // Create new _meta entry with provided values or defaults, including night order
+      const newMeta: ScriptMeta = {
+        id: '_meta',
+        name: metaData.name || 'My Custom Script',
+        author: metaData.author || '',
+        version: metaData.version || '1.0.0',
+        firstNight: firstNightOrder,
+        otherNight: otherNightOrder,
+      };
 
-        // Insert _meta at the beginning of the array
-        const updatedScript = [newMeta, ...parsed];
-        const updatedJson = JSON.stringify(updatedScript, null, 2);
+      // Insert _meta at the beginning of the array
+      const updatedScript = [newMeta, ...parsed];
+      const updatedJson = JSON.stringify(updatedScript, null, 2);
 
-        logger.info('useScriptData', 'Added _meta with night order arrays', {
-          firstNightCount: firstNightOrder.length,
-          otherNightCount: otherNightOrder.length,
-        });
+      logger.info('useScriptData', 'Added _meta with night order arrays', {
+        firstNightCount: firstNightOrder.length,
+        otherNightCount: otherNightOrder.length,
+      });
 
-        // Use gateway to trigger auto-save
-        await updateScript(updatedJson, 'add-meta');
-      } catch (err) {
-        logger.error('useScriptData', 'Failed to add _meta to script:', err);
-        setError('Failed to add metadata: Invalid JSON');
-      }
-    },
-    [jsonInput, characters, updateScript, setError]
-  );
+      // Use gateway to trigger auto-save
+      await updateScript(updatedJson, 'add-meta');
+    } catch (err) {
+      logger.error('useScriptData', 'Failed to add _meta to script:', err);
+      setError('Failed to add metadata: Invalid JSON');
+    }
+  };
 
   /**
    * Check if the script contains character IDs with underscores or hyphens that match official characters
    * Returns true only if an ID with separators removed would match an official character ID
    * (e.g., "fortune_teller" or "fortune-teller" -> "fortuneteller" matches official)
    */
-  const hasSeparatorsInIds = useCallback((): boolean => {
+  const hasSeparatorsInIds = (): boolean => {
     if (!jsonInput.trim()) return false;
     if (officialData.length === 0) return false;
 
@@ -394,13 +362,13 @@ export function useScriptData() {
     } catch {
       return false;
     }
-  }, [jsonInput, officialData]);
+  };
 
   /**
    * Remove underscores and hyphens from all character IDs in the script
    * Converts IDs like "fortune_teller" or "fortune-teller" to "fortuneteller" to match official character IDs
    */
-  const removeSeparatorsFromIds = useCallback(async () => {
+  const removeSeparatorsFromIds = async () => {
     if (!jsonInput.trim()) return;
 
     try {
@@ -430,7 +398,7 @@ export function useScriptData() {
       logger.error('useScriptData', 'Failed to remove separators from IDs:', err);
       setError('Failed to update IDs: Invalid JSON');
     }
-  }, [jsonInput, updateScript, setError]);
+  };
 
   return {
     loadScript,

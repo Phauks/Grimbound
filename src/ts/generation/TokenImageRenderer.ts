@@ -271,23 +271,37 @@ export class TokenImageRenderer {
   }
 
   /**
-   * Draw accents decoration
+   * Draw accents decoration based on character data
+   *
+   * Accents are functional game indicators:
+   * - Top accents: Number of reminder tokens
+   * - Left accent: Character acts on first night
+   * - Right accent: Character acts on other nights
+   *
+   * @param ctx - Canvas context
+   * @param diameter - Token diameter
+   * @param characterData - Character data for accent placement
    */
-  async drawAccents(ctx: CanvasRenderingContext2D, diameter: number): Promise<void> {
+  async drawAccents(
+    ctx: CanvasRenderingContext2D,
+    diameter: number,
+    characterData: { reminderCount: number; firstNight: boolean; otherNight: boolean }
+  ): Promise<void> {
     // Import dynamically to avoid circular dependencies
     const { drawAccents } = await import('../canvas/index.js');
     const accentOptions = {
-      maximumAccents: this.options.maximumAccents,
-      accentPopulationProbability: this.options.accentPopulationProbability,
       accentGeneration: this.options.accentGeneration,
-      accentArcSpan: this.options.accentArcSpan,
-      accentSlots: this.options.accentSlots,
-      enableLeftAccent: this.options.enableLeftAccent,
-      enableRightAccent: this.options.enableRightAccent,
-      sideAccentProbability: this.options.sideAccentProbability,
+      characterData,
+      radialOffset: this.options.accentRadialOffset,
+      rotate180: this.options.accentRotate180,
+      flip: this.options.accentFlip,
     };
     await drawAccents(ctx, diameter, accentOptions);
-    logger.debug('TokenImageRenderer', 'Drew accents', { maxAccents: this.options.maximumAccents });
+    logger.debug('TokenImageRenderer', 'Drew accents', {
+      reminderCount: characterData.reminderCount,
+      firstNight: characterData.firstNight,
+      otherNight: characterData.otherNight,
+    });
   }
 
   /**
@@ -494,5 +508,3 @@ export class TokenImageRenderer {
     }
   }
 }
-
-export default TokenImageRenderer;

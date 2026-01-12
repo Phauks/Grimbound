@@ -188,7 +188,7 @@ function getTeamIndex(team: Team | undefined): number {
  * Compare two characters according to SAO rules
  * @returns negative if a comes before b, positive if b comes before a, 0 if equal
  */
-function compareSAO(a: Character, b: Character): number {
+export function compareSAO(a: Character, b: Character): number {
   // 1. Sort by team
   const teamDiff = getTeamIndex(a.team) - getTeamIndex(b.team);
   if (teamDiff !== 0) return teamDiff;

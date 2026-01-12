@@ -7,7 +7,7 @@
  * @module contexts/DownloadsContext
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import type { BundleData } from '@/ts/export/zipExporter.js';
 
 // Re-export BundleData for consumers (SSOT is zipExporter)
@@ -89,10 +89,12 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [executingId, setExecutingId] = useState<string | null>(null);
 
+  // useCallback required: these functions are exposed in context and may be used as useEffect dependencies
   const openDrawer = useCallback(() => setIsOpen(true), []);
   const closeDrawer = useCallback(() => setIsOpen(false), []);
   const toggleDrawer = useCallback(() => setIsOpen((prev) => !prev), []);
 
+  // useCallback required: these functions are used as useEffect dependencies by consumers
   const setDownloads = useCallback((newDownloads: DownloadItem[]) => {
     setDownloadsState(newDownloads);
   }, []);
@@ -101,6 +103,7 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     setDownloadsState([]);
   }, []);
 
+  // useCallback required: exposed in context value
   const executeDownload = useCallback(async (item: DownloadItem) => {
     if (item.disabled) return;
 
@@ -112,17 +115,31 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const value: DownloadsContextValue = {
-    downloads,
-    isOpen,
-    openDrawer,
-    closeDrawer,
-    toggleDrawer,
-    setDownloads,
-    clearDownloads,
-    executingId,
-    executeDownload,
-  };
+  // useMemo required: context value object must be stable to prevent consumer re-renders
+  const value: DownloadsContextValue = useMemo(
+    () => ({
+      downloads,
+      isOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
+      setDownloads,
+      clearDownloads,
+      executingId,
+      executeDownload,
+    }),
+    [
+      downloads,
+      isOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
+      setDownloads,
+      clearDownloads,
+      executingId,
+      executeDownload,
+    ]
+  );
 
   return <DownloadsContext.Provider value={value}>{children}</DownloadsContext.Provider>;
 }

@@ -1,0 +1,311 @@
+/**
+ * AssetPreviewPanel Styles
+ *
+ * Right panel showing full preview and metadata for selected asset.
+ * Includes token preview, tags editing, and action buttons.
+ */
+
+/* Container */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 220px;
+  min-width: 200px;
+  background-color: var(--color-surface-secondary, #1a1a1e);
+  border-left: 1px solid var(--color-border, #333);
+  overflow: hidden;
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted, #888);
+  text-align: center;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+}
+
+/* Preview section */
+.previewSection {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #333);
+}
+
+.previewImage {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background-color: var(--color-surface, #2a2a2e);
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #333);
+}
+
+/* Token preview */
+.tokenPreview {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #333);
+}
+
+.tokenPreviewLabel {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #888);
+  margin-bottom: 0.5rem;
+}
+
+.tokenPreviewImage {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: radial-gradient(circle, var(--color-surface, #2a2a2e) 70%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* Metadata section */
+.metadataSection {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.filename {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #fff);
+  word-break: break-word;
+  margin-bottom: 0.75rem;
+}
+
+.metaList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.metaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.metaLabel {
+  color: var(--color-text-muted, #888);
+}
+
+.metaValue {
+  color: var(--color-text, #fff);
+}
+
+.metaType {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.metaTypeIcon {
+  font-size: 0.875rem;
+}
+
+/* Tags section */
+.tagsSection {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 0.75rem;
+}
+
+.tagsSectionTitle {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #888);
+  margin-bottom: 0.5rem;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background-color: var(--color-surface, #333);
+  border-radius: 3px;
+  font-size: 0.6875rem;
+  color: var(--color-text, #fff);
+}
+
+.tag.system {
+  background-color: var(--color-primary-dim, rgba(74, 158, 255, 0.2));
+}
+
+.tagRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  color: var(--color-text-muted, #888);
+  cursor: pointer;
+  font-size: 0.625rem;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tagRemove:hover {
+  color: var(--color-danger, #e53935);
+  background-color: rgba(229, 57, 53, 0.1);
+}
+
+.addTagInput {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tagInput {
+  flex: 1;
+  padding: 0.25rem 0.375rem;
+  background-color: var(--color-surface, #2a2a2e);
+  border: 1px solid var(--color-border, #444);
+  border-radius: 3px;
+  color: var(--color-text, #fff);
+  font-size: 0.75rem;
+}
+
+.tagInput:focus {
+  outline: none;
+  border-color: var(--color-primary, #4a9eff);
+}
+
+.tagInput::placeholder {
+  color: var(--color-text-muted, #888);
+}
+
+.addTagButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background-color: var(--color-primary, #4a9eff);
+  border: none;
+  border-radius: 3px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background-color 0.15s ease;
+}
+
+.addTagButton:hover {
+  background-color: var(--color-primary-hover, #3a8eef);
+}
+
+.addTagButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Star button */
+.starButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: var(--color-surface, #333);
+  border: 1px solid var(--color-border, #444);
+  border-radius: 4px;
+  color: var(--color-text, #fff);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.starButton:hover {
+  border-color: var(--color-warning, #ffb300);
+}
+
+.starButton.active {
+  border-color: var(--color-warning, #ffb300);
+  background-color: rgba(255, 179, 0, 0.15);
+}
+
+/* Actions section (for selection mode) */
+.actionsSection {
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border, #333);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.applyButton {
+  width: 100%;
+  padding: 0.625rem;
+  background-color: var(--color-primary, #4a9eff);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.applyButton:hover {
+  background-color: var(--color-primary-hover, #3a8eef);
+}
+
+.applyButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  width: 100%;
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-border, #444);
+  border-radius: 4px;
+  color: var(--color-text-muted, #888);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.cancelButton:hover {
+  border-color: var(--color-text-muted, #888);
+  color: var(--color-text, #fff);
+}

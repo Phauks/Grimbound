@@ -11,7 +11,6 @@ import { capitalize } from './stringUtils.js';
 
 /**
  * Map of team names to CSS class suffixes.
- * Includes common aliases (traveler/traveller).
  */
 export const TEAM_CLASS_MAP: Record<string, string> = {
   townsfolk: 'teamTownsfolk',
@@ -19,7 +18,6 @@ export const TEAM_CLASS_MAP: Record<string, string> = {
   minion: 'teamMinion',
   demon: 'teamDemon',
   traveller: 'teamTraveller',
-  traveler: 'teamTraveller',
   fabled: 'teamFabled',
   loric: 'teamLoric',
   meta: 'teamMeta',
@@ -49,14 +47,11 @@ export function getTeamStyleClass(
 }
 
 /**
- * Normalize team name to lowercase with consistent spelling.
- * Converts 'traveler' to 'traveller' for consistency.
+ * Normalize team name to lowercase.
  *
  * @param team - Team name to normalize
  * @returns Normalized team name
  */
 export function normalizeTeamName(team: string | undefined): string {
-  const teamLower = team?.toLowerCase() || 'townsfolk';
-  // Normalize traveler -> traveller for consistency
-  return teamLower === 'traveler' ? 'traveller' : teamLower;
+  return team?.toLowerCase() || 'townsfolk';
 }

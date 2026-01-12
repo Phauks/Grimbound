@@ -354,5 +354,3 @@ export class GitHubReleaseClient {
 
 // Export singleton instance
 export const githubReleaseClient = new GitHubReleaseClient();
-
-export default githubReleaseClient;

@@ -63,6 +63,14 @@ export interface ViewLayoutPanelProps {
   'aria-label'?: string;
   /** Test ID for testing purposes */
   'data-testid'?: string;
+  /** Enable resize handle for sidebar (left panels only) */
+  resizable?: boolean;
+  /** Mouse event handler for resize handle drag initiation */
+  onWidthChange?: (e: React.MouseEvent) => void;
+  /** Current width when using controlled mode with resizable */
+  resizableWidth?: number;
+  /** Whether resize is currently in progress */
+  isResizing?: boolean;
 }
 
 /**

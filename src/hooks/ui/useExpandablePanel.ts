@@ -8,7 +8,7 @@
  * @module hooks/ui/useExpandablePanel
  */
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -91,24 +91,20 @@ export function useExpandablePanel<T>({
   const [pendingValue, setPendingValue] = useState<T>(value);
   const [panelPosition, setPanelPosition] = useState<PanelPosition | null>(null);
 
+  // Track previous value for render-time comparison (React's recommended pattern)
+  const [prevValueJson, setPrevValueJson] = useState(() => JSON.stringify(value));
+
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const originalValueRef = useRef<T>(value);
 
-  // Sync pending value when external value changes (and not expanded)
-  // Use JSON comparison to avoid infinite loops from object reference changes
-  const valueStringRef = useRef<string>(JSON.stringify(value));
-
-  useEffect(() => {
-    if (!isExpanded) {
-      const newValueString = JSON.stringify(value);
-      // Only sync if value actually changed (not just reference)
-      if (valueStringRef.current !== newValueString) {
-        valueStringRef.current = newValueString;
-        setPendingValue(value);
-      }
-    }
-  }, [value, isExpanded]);
+  // Sync pending value during render when external value changes (and panel is closed)
+  // Uses React's "adjusting state during render" pattern - faster than useEffect
+  const valueJson = JSON.stringify(value);
+  if (!isExpanded && valueJson !== prevValueJson) {
+    setPrevValueJson(valueJson);
+    setPendingValue(value);
+  }
 
   // Calculate panel position when opening
   useLayoutEffect(() => {
@@ -129,8 +125,10 @@ export function useExpandablePanel<T>({
     }
   }, [isExpanded, panelHeight, minPanelWidth]);
 
-  // Close when clicking outside
+  // Close when clicking outside or scrolling (consolidated into single effect)
   useEffect(() => {
+    if (!isExpanded) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const isInContainer = containerRef.current?.contains(target);
@@ -143,7 +141,7 @@ export function useExpandablePanel<T>({
         targetElement.closest?.('[data-expandable-panel]') !== null ||
         targetElement.closest?.('[data-color-picker-panel]') !== null;
 
-      if (!(isInContainer || isInPanel || isInNestedPanel) && isExpanded) {
+      if (!(isInContainer || isInPanel || isInNestedPanel)) {
         if (autoApplyOnClose) {
           onChange(pendingValue);
         }
@@ -151,43 +149,30 @@ export function useExpandablePanel<T>({
       }
     };
 
-    if (isExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    const handleScroll = (event: Event) => {
+      // Don't close if scrolling inside the panel itself
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target)) {
+        return;
+      }
+
+      if (autoApplyOnClose) {
+        onChange(pendingValue);
+      }
+      setIsExpanded(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isExpanded, pendingValue, onChange, autoApplyOnClose]);
-
-  // Close on scroll (but not when scrolling inside the panel)
-  useEffect(() => {
-    const handleScroll = (event: Event) => {
-      if (isExpanded) {
-        // Don't close if scrolling inside the panel itself
-        const target = event.target as Node;
-        if (panelRef.current?.contains(target)) {
-          return;
-        }
-
-        if (autoApplyOnClose) {
-          onChange(pendingValue);
-        }
-        setIsExpanded(false);
-      }
-    };
-
-    if (isExpanded) {
-      window.addEventListener('scroll', handleScroll, true);
-    }
-
-    return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
   }, [isExpanded, pendingValue, onChange, autoApplyOnClose]);
 
   // Toggle panel
-  const toggle = useCallback(() => {
+  const toggle = () => {
     if (disabled) return;
 
     if (isExpanded) {
@@ -201,79 +186,67 @@ export function useExpandablePanel<T>({
       setPendingValue(value);
       setIsExpanded(true);
     }
-  }, [disabled, isExpanded, value, pendingValue, onChange, onWillOpen]);
+  };
 
   // Open panel
-  const open = useCallback(() => {
+  const open = () => {
     if (disabled || isExpanded) return;
     onWillOpen?.();
     originalValueRef.current = value;
     setPendingValue(value);
     setIsExpanded(true);
-  }, [disabled, isExpanded, value, onWillOpen]);
+  };
 
   // Close panel
-  const close = useCallback(() => {
+  const close = () => {
     if (!isExpanded) return;
     if (autoApplyOnClose) {
       onChange(pendingValue);
     }
     setIsExpanded(false);
-  }, [isExpanded, autoApplyOnClose, pendingValue, onChange]);
+  };
 
   // Update pending value
-  const updatePending = useCallback(
-    (newValue: T) => {
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [onPreviewChange]
-  );
+  const updatePending = (newValue: T) => {
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Update a single field of pending value (for object types)
-  const updatePendingField = useCallback(
-    <K extends keyof T>(key: K, fieldValue: T[K]) => {
-      const newValue = { ...pendingValue, [key]: fieldValue } as T;
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [pendingValue, onPreviewChange]
-  );
+  const updatePendingField = <K extends keyof T>(key: K, fieldValue: T[K]) => {
+    const newValue = { ...pendingValue, [key]: fieldValue } as T;
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Apply and close
-  const apply = useCallback(() => {
+  const apply = () => {
     onChange(pendingValue);
     setIsExpanded(false);
-  }, [pendingValue, onChange]);
+  };
 
   // Cancel and close
-  const cancel = useCallback(() => {
+  const cancel = () => {
     const original = originalValueRef.current;
     setPendingValue(original);
     onPreviewChange?.(original);
     setIsExpanded(false);
-  }, [onPreviewChange]);
+  };
 
   // Reset to default
-  const reset = useCallback(
-    (defaultValue: T) => {
-      setPendingValue(defaultValue);
-      onPreviewChange?.(defaultValue);
-    },
-    [onPreviewChange]
-  );
+  const reset = (defaultValue: T) => {
+    setPendingValue(defaultValue);
+    onPreviewChange?.(defaultValue);
+  };
 
   // Keyboard handler
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Escape' && isExpanded) {
-        cancel();
-      } else if (event.key === 'Enter' && isExpanded) {
-        apply();
-      }
-    },
-    [isExpanded, cancel, apply]
-  );
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape' && isExpanded) {
+      cancel();
+    } else if (event.key === 'Enter' && isExpanded) {
+      apply();
+    }
+  };
 
   // Check if there are unsaved changes
   const hasChanges = isExpanded && JSON.stringify(pendingValue) !== JSON.stringify(value);
@@ -296,5 +269,3 @@ export function useExpandablePanel<T>({
     hasChanges,
   };
 }
-
-export default useExpandablePanel;

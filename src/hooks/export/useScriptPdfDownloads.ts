@@ -11,7 +11,7 @@
  * @module hooks/export/useScriptPdfDownloads
  */
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import type { Character, ScriptMeta } from '@/ts/types/index';
 import { logger } from '@/ts/utils/logger.js';
@@ -45,7 +45,7 @@ export function useScriptPdfDownloads({ characters, scriptMeta }: UseScriptPdfDo
   const { setDownloads, clearDownloads } = useDownloadsContext();
 
   // Build the script data array for encoding
-  const scriptData = useMemo(() => {
+  const scriptData = (() => {
     if (!characters || characters.length === 0) {
       return [];
     }
@@ -55,7 +55,7 @@ export function useScriptPdfDownloads({ characters, scriptMeta }: UseScriptPdfDo
       return [scriptMeta, ...characters];
     }
     return characters;
-  }, [characters, scriptMeta]);
+  })();
 
   // Handler to open in official tool
   const handleOpenInOfficialTool = useCallback(() => {
@@ -74,16 +74,18 @@ export function useScriptPdfDownloads({ characters, scriptMeta }: UseScriptPdfDo
   }, [scriptData, characters.length, scriptMeta]);
 
   // Build download items
-  const downloads: DownloadItem[] = useMemo(() => {
-    const hasCharacters = characters && characters.length > 0;
+  const hasCharacters = characters && characters.length > 0;
+  const characterCount = characters?.length ?? 0;
 
-    return [
+  // Register/unregister downloads when content changes
+  useEffect(() => {
+    const downloads: DownloadItem[] = [
       {
         id: 'script-pdf-official',
         icon: '📜',
         label: 'Script PDF',
         description: hasCharacters
-          ? `Open in official BOTC Script Tool (${characters.length} characters)`
+          ? `Open in official BOTC Script Tool (${characterCount} characters)`
           : 'No characters in script',
         action: handleOpenInOfficialTool,
         disabled: !hasCharacters,
@@ -91,23 +93,8 @@ export function useScriptPdfDownloads({ characters, scriptMeta }: UseScriptPdfDo
         category: 'script',
         sourceView: 'script',
       },
-      // Future: Add custom print view option here
-      // {
-      //   id: 'script-pdf-custom',
-      //   icon: '🖨️',
-      //   label: 'Print Script',
-      //   description: 'Open print-optimized view with custom styling',
-      //   action: handleOpenCustomPrintView,
-      //   disabled: !hasCharacters,
-      //   category: 'script',
-      //   sourceView: 'script',
-      // },
     ];
-  }, [characters, handleOpenInOfficialTool]);
-
-  // Register/unregister downloads when component mounts/unmounts
-  useEffect(() => {
     setDownloads(downloads);
     return () => clearDownloads();
-  }, [downloads, setDownloads, clearDownloads]);
+  }, [hasCharacters, characterCount, handleOpenInOfficialTool, setDownloads, clearDownloads]);
 }

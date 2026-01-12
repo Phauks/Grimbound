@@ -6,7 +6,6 @@
  * @module components/CharactersComponents/TokenEditor/FormatWarning
  */
 
-import { memo } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { FormatIssue } from '@/ts/utils/textFormatAnalyzer';
 
@@ -23,11 +22,7 @@ interface FormatWarningProps {
  * Displays a warning banner with format issues and a fix button.
  * Only renders if there are issues to display.
  */
-export const FormatWarning = memo(function FormatWarning({
-  issues,
-  disabled,
-  onFix,
-}: FormatWarningProps) {
+export function FormatWarning({ issues, disabled, onFix }: FormatWarningProps) {
   if (issues.length === 0) return null;
 
   // Deduplicate issue descriptions
@@ -49,6 +44,4 @@ export const FormatWarning = memo(function FormatWarning({
       </button>
     </div>
   );
-});
-
-export default FormatWarning;
+}

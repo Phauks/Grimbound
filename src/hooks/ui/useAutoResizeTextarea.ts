@@ -94,5 +94,3 @@ export function useAutoResizeTextarea({
 
   return textareaRef;
 }
-
-export default useAutoResizeTextarea;

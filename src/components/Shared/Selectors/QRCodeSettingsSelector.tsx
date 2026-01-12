@@ -7,7 +7,7 @@
  * @module components/Shared/Selectors/QRCodeSettingsSelector
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeDrawer } from '@/components/Shared/Drawer/QRCodeDrawer';
 import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
 import styles from '@/styles/components/shared/QRCodeSettingsSelector.module.css';
@@ -31,7 +31,7 @@ export interface QRCodeSettingsSelectorProps {
 // Preview Component
 // ============================================================================
 
-const QRPreview = memo(function QRPreview({
+function QRPreview({
   colorStart,
   colorEnd,
   isEnabled,
@@ -62,13 +62,13 @@ const QRPreview = memo(function QRPreview({
       </svg>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
+export function QRCodeSettingsSelector({
   generationOptions,
   onOptionChange,
   size = 'medium',
@@ -92,14 +92,14 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
   }, []);
 
   // Handlers
-  const handleOpen = useCallback(() => {
+  const handleOpen = () => {
     onWillOpen?.();
     setIsOpen(true);
-  }, [onWillOpen]);
+  };
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsOpen(false);
-  }, []);
+  };
 
   return (
     <>
@@ -126,6 +126,4 @@ export const QRCodeSettingsSelector = memo(function QRCodeSettingsSelector({
       />
     </>
   );
-});
-
-export default QRCodeSettingsSelector;
+}

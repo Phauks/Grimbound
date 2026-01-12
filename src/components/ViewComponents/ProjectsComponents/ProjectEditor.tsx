@@ -12,7 +12,7 @@
  * Refactored to use extracted sub-components and hooks for maintainability.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { VersionsView } from '@/components/Views/VersionsView';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -20,7 +20,7 @@ import {
   type DisplayMode,
   useOptionalFields,
   useProjects,
-  useProjectTokens,
+  useProjectTokensWithDeps,
 } from '@/hooks/projects/index.js';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/projects/ProjectEditor.module.css';
@@ -147,7 +147,7 @@ export function ProjectEditor({
     displayTokens,
     isGenerating: isGeneratingPreview,
     generationProgress,
-  } = useProjectTokens({
+  } = useProjectTokensWithDeps({
     project,
     isActiveProject,
     displayMode,
@@ -156,34 +156,25 @@ export function ProjectEditor({
   });
 
   // Derived data for display
-  const displayCharacters = useMemo(() => {
+  const displayCharacters = (() => {
     if (isActiveProject) return contextCharacters;
     return project?.state.characters ?? [];
-  }, [isActiveProject, contextCharacters, project?.state.characters]);
+  })();
 
-  const projectCharacterMetadata = useMemo(() => {
+  const projectCharacterMetadata = (() => {
     if (isActiveProject) return contextCharacterMetadata;
     if (!project) return new Map<string, CharacterMetadata>();
     const record = project.state.characterMetadata || {};
     return new Map(Object.entries(record));
-  }, [isActiveProject, contextCharacterMetadata, project]);
+  })();
 
-  const selectionSummary = useMemo(() => {
+  const selectionSummary = (() => {
     if (isActiveProject) return contextSelectionSummary;
     if (!project) return { enabled: 0, disabled: 0, total: 0 };
     return getCharacterSelectionSummary(displayCharacters, projectCharacterMetadata);
-  }, [
-    isActiveProject,
-    contextSelectionSummary,
-    project,
-    displayCharacters,
-    projectCharacterMetadata,
-  ]);
+  })();
 
-  const projectJsonString = useMemo(
-    () => buildProjectJsonString(project, isActiveProject, jsonInput),
-    [project, isActiveProject, jsonInput]
-  );
+  const projectJsonString = buildProjectJsonString(project, isActiveProject, jsonInput);
 
   // Update local state when project changes
   // Note: resetFromProject is stable (empty deps), so it won't cause re-renders
@@ -291,80 +282,71 @@ export function ProjectEditor({
     onDelete(project);
   };
 
-  const handleVersionSelect = useCallback((version: ProjectVersion | null) => {
+  const handleVersionSelect = (version: ProjectVersion | null) => {
     setSelectedVersion(version);
-  }, []);
+  };
 
-  const handleExitCompare = useCallback(() => {
+  const handleExitCompare = () => {
     setSelectedVersion(null);
-  }, []);
+  };
 
-  const handleRestoreVersion = useCallback(
-    async (version: ProjectVersion) => {
-      if (!project) return;
+  const handleRestoreVersion = async (version: ProjectVersion) => {
+    if (!project) return;
 
-      if (
-        !confirm(
-          `Restore project to version ${version.versionNumber}? Your current state will be replaced.`
-        )
-      ) {
-        return;
+    if (
+      !confirm(
+        `Restore project to version ${version.versionNumber}? Your current state will be replaced.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsRestoringVersion(true);
+      await updateProject(project.id, { state: version.stateSnapshot });
+      addToast(`Restored to version ${version.versionNumber}`, 'success');
+      setSelectedVersion(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to restore version';
+      addToast(errorMessage, 'error');
+    } finally {
+      setIsRestoringVersion(false);
+    }
+  };
+
+  const handleCharacterToggle = (uuid: string, enabled: boolean) => {
+    if (isActiveProject) {
+      setCharacterEnabled(uuid, enabled);
+    } else if (project) {
+      const currentMetadata = project.state.characterMetadata || {};
+      const existingMeta = currentMetadata[uuid] || { idLinkedToName: true };
+      updateProject(project.id, {
+        state: {
+          ...project.state,
+          characterMetadata: { ...currentMetadata, [uuid]: { ...existingMeta, enabled } },
+        },
+      }).catch((err) => logger.warn('ProjectEditor', 'Failed to save:', err));
+    }
+  };
+
+  const handleToggleAllCharacters = (enabled: boolean) => {
+    if (isActiveProject) {
+      setAllCharactersEnabled(enabled);
+      addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
+    } else if (project) {
+      const currentMetadata = project.state.characterMetadata || {};
+      const updatedMetadata: Record<string, CharacterMetadata> = { ...currentMetadata };
+      for (const char of project.state.characters) {
+        const uuid = char.uuid || char.id;
+        const existingMeta = updatedMetadata[uuid] || { idLinkedToName: true };
+        updatedMetadata[uuid] = { ...existingMeta, enabled };
       }
-
-      try {
-        setIsRestoringVersion(true);
-        await updateProject(project.id, { state: version.stateSnapshot });
-        addToast(`Restored to version ${version.versionNumber}`, 'success');
-        setSelectedVersion(null);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to restore version';
-        addToast(errorMessage, 'error');
-      } finally {
-        setIsRestoringVersion(false);
-      }
-    },
-    [project, updateProject, addToast]
-  );
-
-  const handleCharacterToggle = useCallback(
-    (uuid: string, enabled: boolean) => {
-      if (isActiveProject) {
-        setCharacterEnabled(uuid, enabled);
-      } else if (project) {
-        const currentMetadata = project.state.characterMetadata || {};
-        const existingMeta = currentMetadata[uuid] || { idLinkedToName: true };
-        updateProject(project.id, {
-          state: {
-            ...project.state,
-            characterMetadata: { ...currentMetadata, [uuid]: { ...existingMeta, enabled } },
-          },
-        }).catch((err) => logger.warn('ProjectEditor', 'Failed to save:', err));
-      }
-    },
-    [isActiveProject, setCharacterEnabled, project, updateProject]
-  );
-
-  const handleToggleAllCharacters = useCallback(
-    (enabled: boolean) => {
-      if (isActiveProject) {
-        setAllCharactersEnabled(enabled);
-        addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
-      } else if (project) {
-        const currentMetadata = project.state.characterMetadata || {};
-        const updatedMetadata: Record<string, CharacterMetadata> = { ...currentMetadata };
-        for (const char of project.state.characters) {
-          const uuid = char.uuid || char.id;
-          const existingMeta = updatedMetadata[uuid] || { idLinkedToName: true };
-          updatedMetadata[uuid] = { ...existingMeta, enabled };
-        }
-        updateProject(project.id, {
-          state: { ...project.state, characterMetadata: updatedMetadata },
-        }).catch((err) => logger.warn('ProjectEditor', 'Failed to save:', err));
-        addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
-      }
-    },
-    [isActiveProject, setAllCharactersEnabled, project, updateProject, addToast]
-  );
+      updateProject(project.id, {
+        state: { ...project.state, characterMetadata: updatedMetadata },
+      }).catch((err) => logger.warn('ProjectEditor', 'Failed to save:', err));
+      addToast(enabled ? 'All characters enabled' : 'All characters disabled', 'success');
+    }
+  };
 
   // ============================================================================
   // Render
@@ -455,6 +437,7 @@ export function ProjectEditor({
           onExport={onExport}
           onDuplicate={onDuplicate}
           onDelete={handleDelete}
+          onImportProject={onImportProject}
         />
       )}
     </div>

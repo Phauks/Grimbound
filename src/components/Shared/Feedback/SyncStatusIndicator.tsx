@@ -9,7 +9,7 @@
  * - Clickable to open SyncDetailsModal
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import styles from '@/styles/components/shared/SyncStatusIndicator.module.css';
 import type { SyncState } from '@/ts/types/index.js';
@@ -22,29 +22,26 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
   const { status, isInitialized } = useDataSync();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const getStatusInfo = useCallback(
-    (state: SyncState): { label: string; icon: string; color: string } => {
-      switch (state) {
-        case 'success':
-          return { label: 'Synced', icon: '✓', color: 'success' };
-        case 'checking':
-          return { label: 'Checking', icon: '⟳', color: 'info' };
-        case 'downloading':
-          return { label: 'Downloading', icon: '↓', color: 'info' };
-        case 'extracting':
-          return { label: 'Installing', icon: '⚙', color: 'info' };
-        case 'error':
-          return { label: 'Error', icon: '!', color: 'error' };
-        default:
-          return { label: 'Offline', icon: '○', color: 'idle' };
-      }
-    },
-    []
-  );
+  const getStatusInfo = (state: SyncState): { label: string; icon: string; color: string } => {
+    switch (state) {
+      case 'success':
+        return { label: 'Synced', icon: '✓', color: 'success' };
+      case 'checking':
+        return { label: 'Checking', icon: '⟳', color: 'info' };
+      case 'downloading':
+        return { label: 'Downloading', icon: '↓', color: 'info' };
+      case 'extracting':
+        return { label: 'Installing', icon: '⚙', color: 'info' };
+      case 'error':
+        return { label: 'Error', icon: '!', color: 'error' };
+      default:
+        return { label: 'Offline', icon: '○', color: 'idle' };
+    }
+  };
 
   const statusInfo = getStatusInfo(status.state);
 
-  const getTooltipText = useCallback(() => {
+  const getTooltipText = () => {
     const lines: string[] = [];
 
     // Status
@@ -85,13 +82,13 @@ export function SyncStatusIndicator({ onDetailsClick }: SyncStatusIndicatorProps
     }
 
     return lines.join('\n');
-  }, [status, statusInfo.label]);
+  };
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (onDetailsClick) {
       onDetailsClick();
     }
-  }, [onDetailsClick]);
+  };
 
   if (!isInitialized) {
     return null; // Don't show until initialized

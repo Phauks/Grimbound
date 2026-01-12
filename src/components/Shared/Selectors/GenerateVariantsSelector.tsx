@@ -8,7 +8,6 @@
  * @module components/Shared/GenerateVariantsSelector
  */
 
-import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
@@ -68,10 +67,10 @@ const TEAM_OPTIONS: TeamOption[] = [
   { id: 'demon', label: 'Demon/Evil', color: TEAM_COLORS.demon.hex },
   {
     id: 'traveller',
-    label: TEAM_LABELS.traveler,
-    color: TEAM_COLORS.traveler.hex,
+    label: TEAM_LABELS.traveller,
+    color: TEAM_COLORS.traveller.hex,
     // Pull split colors from TEAM_COLORS constants (SSOT)
-    split: TEAM_COLORS.traveler.split,
+    split: TEAM_COLORS.traveller.split,
   },
   { id: 'fabled', label: TEAM_LABELS.fabled, color: TEAM_COLORS.fabled.hex },
   { id: 'loric', label: TEAM_LABELS.loric, color: TEAM_COLORS.loric.hex },
@@ -81,19 +80,19 @@ const TEAM_OPTIONS: TeamOption[] = [
 // Preview Component
 // ============================================================================
 
-const VariantPreview = memo(function VariantPreview({ isEnabled }: { isEnabled: boolean }) {
+function VariantPreview({ isEnabled }: { isEnabled: boolean }) {
   return (
     <div className={`${styles.previewContainer} ${isEnabled ? '' : styles.previewDisabled}`}>
       <span className={styles.previewIcon}>🎭</span>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
+export function GenerateVariantsSelector({
   generationOptions,
   onOptionChange,
   size = 'medium',
@@ -124,30 +123,24 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     autoGenerateTeams: autoTeams,
   };
 
-  const handleToggle = useCallback(
-    (enabled: boolean) => {
-      onOptionChange({
-        generateImageVariants: enabled,
-        generateReminderVariants: enabled,
-        autoGenerateCharacterVariants: enabled,
-        autoGenerateReminderVariants: enabled,
-      });
-    },
-    [onOptionChange]
-  );
+  const handleToggle = (enabled: boolean) => {
+    onOptionChange({
+      generateImageVariants: enabled,
+      generateReminderVariants: enabled,
+      autoGenerateCharacterVariants: enabled,
+      autoGenerateReminderVariants: enabled,
+    });
+  };
 
-  const handlePanelChange = useCallback(
-    (settings: PendingVariantSettings) => {
-      onOptionChange({
-        generateImageVariants: settings.characterVariants,
-        generateReminderVariants: settings.reminderVariants,
-        autoGenerateCharacterVariants: settings.autoGenerateCharacters,
-        autoGenerateReminderVariants: settings.autoGenerateReminders,
-        autoGenerateTeams: settings.autoGenerateTeams,
-      });
-    },
-    [onOptionChange]
-  );
+  const handlePanelChange = (settings: PendingVariantSettings) => {
+    onOptionChange({
+      generateImageVariants: settings.characterVariants,
+      generateReminderVariants: settings.reminderVariants,
+      autoGenerateCharacterVariants: settings.autoGenerateCharacters,
+      autoGenerateReminderVariants: settings.autoGenerateReminders,
+      autoGenerateTeams: settings.autoGenerateTeams,
+    });
+  };
 
   const panel = useExpandablePanel<PendingVariantSettings>({
     value: currentSettings,
@@ -166,16 +159,11 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
     autoGenerateTeams: [...DEFAULT_AUTO_GENERATE_TEAMS],
   };
 
-  const handleTeamToggle = useCallback(
-    (teamId: AutoGenerateTeam, checked: boolean) => {
-      const currentTeams = panel.pendingValue.autoGenerateTeams;
-      const newTeams = checked
-        ? [...currentTeams, teamId]
-        : currentTeams.filter((t) => t !== teamId);
-      panel.updatePendingField('autoGenerateTeams', newTeams);
-    },
-    [panel]
-  );
+  const handleTeamToggle = (teamId: AutoGenerateTeam, checked: boolean) => {
+    const currentTeams = panel.pendingValue.autoGenerateTeams;
+    const newTeams = checked ? [...currentTeams, teamId] : currentTeams.filter((t) => t !== teamId);
+    panel.updatePendingField('autoGenerateTeams', newTeams);
+  };
 
   const isAutoGenEnabled =
     panel.pendingValue.autoGenerateCharacters || panel.pendingValue.autoGenerateReminders;
@@ -334,6 +322,4 @@ export const GenerateVariantsSelector = memo(function GenerateVariantsSelector({
       {renderPanel()}
     </SettingsSelectorBase>
   );
-});
-
-export default GenerateVariantsSelector;
+}

@@ -6,7 +6,7 @@
  * @module hooks/ui/useUndoStack
  */
 
-import { useCallback, useReducer } from 'react';
+import { useReducer } from 'react';
 
 const MAX_HISTORY_SIZE = 50;
 
@@ -124,31 +124,31 @@ export function useUndoStack<T>(initialValue: T): UseUndoStackReturn<T> {
     future: [],
   });
 
-  const push = useCallback((value: T) => {
+  const push = (value: T) => {
     dispatch({ type: 'PUSH', payload: value });
-  }, []);
+  };
 
-  const undo = useCallback((): T | undefined => {
+  const undo = (): T | undefined => {
     if (state.past.length === 0) return undefined;
     const previous = state.past[state.past.length - 1];
     dispatch({ type: 'UNDO' });
     return previous;
-  }, [state.past]);
+  };
 
-  const redo = useCallback((): T | undefined => {
+  const redo = (): T | undefined => {
     if (state.future.length === 0) return undefined;
     const next = state.future[0];
     dispatch({ type: 'REDO' });
     return next;
-  }, [state.future]);
+  };
 
-  const clear = useCallback((value: T) => {
+  const clear = (value: T) => {
     dispatch({ type: 'CLEAR', payload: value });
-  }, []);
+  };
 
-  const set = useCallback((value: T) => {
+  const set = (value: T) => {
     dispatch({ type: 'SET', payload: value });
-  }, []);
+  };
 
   return {
     current: state.present,

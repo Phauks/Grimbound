@@ -8,7 +8,7 @@
  */
 
 import JSZip from 'jszip';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   type BundleData,
@@ -49,7 +49,7 @@ async function executeDownloadsFallback(items: DownloadItem[]): Promise<void> {
 /**
  * Individual download item card
  */
-const DownloadItemCard = memo(function DownloadItemCard({
+function DownloadItemCard({
   item,
   isExecuting,
   onExecute,
@@ -82,12 +82,12 @@ const DownloadItemCard = memo(function DownloadItemCard({
       </span>
     </button>
   );
-});
+}
 
 /**
  * Main Downloads Drawer component
  */
-export const DownloadsDrawer = memo(function DownloadsDrawer() {
+export function DownloadsDrawer() {
   const { downloads, isOpen, openDrawer, closeDrawer, executingId, executeDownload } =
     useDownloadsContext();
 
@@ -104,7 +104,7 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
   const hasMultipleDownloads = individualDownloads.length > 1;
 
   // Download All handler - creates a combined ZIP of all enabled downloads
-  const handleDownloadAll = useCallback(async () => {
+  const handleDownloadAll = async () => {
     if (!hasEnabledDownloads || isDownloadingAll) return;
 
     setIsDownloadingAll(true);
@@ -122,29 +122,29 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
     } finally {
       setIsDownloadingAll(false);
     }
-  }, [enabledDownloads, hasEnabledDownloads, isDownloadingAll]);
+  };
 
   // Clear any pending close timeout
-  const clearCloseTimeout = useCallback(() => {
+  const clearCloseTimeout = () => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
-  }, []);
+  };
 
   // Handle mouse enter - open immediately
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     clearCloseTimeout();
     openDrawer();
-  }, [openDrawer, clearCloseTimeout]);
+  };
 
   // Handle mouse leave - close after delay to prevent finicky behavior
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
     clearCloseTimeout();
     closeTimeoutRef.current = setTimeout(() => {
       closeDrawer();
     }, 300); // Longer delay for smoother UX
-  }, [closeDrawer, clearCloseTimeout]);
+  };
 
   // Cleanup timeout on unmount
   useEffect(() => () => clearCloseTimeout(), [clearCloseTimeout]);
@@ -163,12 +163,9 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeDrawer]);
 
-  const handleExecute = useCallback(
-    (item: DownloadItem) => {
-      executeDownload(item);
-    },
-    [executeDownload]
-  );
+  const handleExecute = (item: DownloadItem) => {
+    executeDownload(item);
+  };
 
   // Don't render if no downloads are registered (Projects, Studio, Export views)
   if (downloads.length === 0) return null;
@@ -265,6 +262,4 @@ export const DownloadsDrawer = memo(function DownloadsDrawer() {
   );
 
   return createPortal(drawerContent, document.body);
-});
-
-export default DownloadsDrawer;
+}

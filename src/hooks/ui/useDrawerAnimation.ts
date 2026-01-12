@@ -52,5 +52,3 @@ export function useDrawerAnimation({
 
   return { shouldRender };
 }
-
-export default useDrawerAnimation;

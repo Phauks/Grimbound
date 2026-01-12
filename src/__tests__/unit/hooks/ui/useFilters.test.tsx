@@ -256,11 +256,11 @@ describe('useFilters', () => {
       const { result } = renderHook(() => useFilters());
 
       act(() => {
-        result.current.toggleTeam('traveler');
+        result.current.toggleTeam('traveller');
       });
 
       expect(updateFilters).toHaveBeenCalledWith({
-        teams: ['townsfolk', 'evil', 'traveler'],
+        teams: ['townsfolk', 'evil', 'traveller'],
       });
     });
 
@@ -268,7 +268,7 @@ describe('useFilters', () => {
       const updateFilters = vi.fn();
       const mockContext = createMockTokenContext({
         filters: {
-          teams: ['townsfolk', 'evil', 'traveler'],
+          teams: ['townsfolk', 'evil', 'traveller'],
           tokenTypes: [],
           display: [],
           reminders: [],
@@ -286,7 +286,7 @@ describe('useFilters', () => {
       });
 
       expect(updateFilters).toHaveBeenCalledWith({
-        teams: ['townsfolk', 'traveler'],
+        teams: ['townsfolk', 'traveller'],
       });
     });
   });

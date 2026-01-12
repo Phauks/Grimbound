@@ -1273,7 +1273,7 @@ describe('AssetStorageService', () => {
 
       expect(stats.count).toBe(2);
       expect(stats.totalSize).toBeGreaterThan(0);
-      expect(stats.byType['icon'].count).toBe(1);
+      expect(stats.byType.icon.count).toBe(1);
       expect(stats.byType['token-background'].count).toBe(1);
     });
   });

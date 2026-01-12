@@ -12,7 +12,6 @@
  * @module hooks/scripts/useScriptTransformations
  */
 
-import { useCallback, useMemo } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import type { Character } from '@/ts/types/index.js';
 import {
@@ -77,13 +76,21 @@ function analyzeFormatIssues(characters: Character[]): FormatIssuesSummary | nul
     if (char.firstNightReminder) {
       const issues = analyzeReminderText(char.firstNightReminder);
       if (issues.length > 0) {
-        issuesFound.push({ characterName: char.name, field: 'firstNightReminder', issues });
+        issuesFound.push({
+          characterName: char.name,
+          field: 'firstNightReminder',
+          issues,
+        });
       }
     }
     if (char.otherNightReminder) {
       const issues = analyzeReminderText(char.otherNightReminder);
       if (issues.length > 0) {
-        issuesFound.push({ characterName: char.name, field: 'otherNightReminder', issues });
+        issuesFound.push({
+          characterName: char.name,
+          field: 'otherNightReminder',
+          issues,
+        });
       }
     }
   }
@@ -155,36 +162,31 @@ export function useScriptTransformations(
   const { updateScript } = useScriptData();
 
   // Trigger regeneration helper
-  const triggerRegenerate = useCallback(() => {
+  const triggerRegenerate = () => {
     onForceRegenerate?.();
-  }, [onForceRegenerate]);
+  };
 
-  // Memoized analysis: check if script is sorted by SAO
-  const isScriptSorted = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0) return true;
-    return isScriptJsonSortedBySAO(jsonInput, { officialData }) ?? true;
-  }, [jsonInput, characters.length, officialData]);
+  // Analysis: check if script is sorted by SAO
+  const isScriptSorted =
+    !jsonInput.trim() || characters.length === 0
+      ? true
+      : (isScriptJsonSortedBySAO(jsonInput, { officialData }) ?? true);
 
-  // Memoized analysis: check if JSON needs formatting
-  const needsFormatting = useMemo(() => {
-    if (characters.length === 0) return false;
-    return checkNeedsFormatting(jsonInput);
-  }, [jsonInput, characters.length]);
+  // Analysis: check if JSON needs formatting
+  const needsFormatting = characters.length === 0 ? false : checkNeedsFormatting(jsonInput);
 
-  // Memoized analysis: check for condensable character references
-  const hasCondensableRefs = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0 || officialData.length === 0) return false;
-    return hasCondensableReferences(jsonInput, officialData);
-  }, [jsonInput, characters.length, officialData]);
+  // Analysis: check for condensable character references
+  const hasCondensableRefs =
+    !jsonInput.trim() || characters.length === 0 || officialData.length === 0
+      ? false
+      : hasCondensableReferences(jsonInput, officialData);
 
-  // Memoized analysis: check for non-standard format issues in night reminders
-  const formatIssuesSummary = useMemo(() => {
-    if (!jsonInput.trim() || characters.length === 0) return null;
-    return analyzeFormatIssues(characters);
-  }, [jsonInput, characters]);
+  // Analysis: check for non-standard format issues in night reminders
+  const formatIssuesSummary =
+    !jsonInput.trim() || characters.length === 0 ? null : analyzeFormatIssues(characters);
 
   // Handler: Format JSON
-  const handleFormat = useCallback(async () => {
+  const handleFormat = async () => {
     try {
       const parsed = JSON.parse(jsonInput);
       const formatted = JSON.stringify(parsed, null, 2);
@@ -192,10 +194,10 @@ export function useScriptTransformations(
     } catch {
       setError('Cannot format: Invalid JSON');
     }
-  }, [jsonInput, updateScript, setError]);
+  };
 
   // Handler: Sort by SAO
-  const handleSort = useCallback(async () => {
+  const handleSort = async () => {
     try {
       const sorted = sortScriptJsonBySAO(jsonInput, { officialData });
       await updateScript(sorted, 'sort');
@@ -203,10 +205,10 @@ export function useScriptTransformations(
     } catch {
       setError('Cannot sort: Invalid JSON');
     }
-  }, [jsonInput, updateScript, setError, officialData, triggerRegenerate]);
+  };
 
   // Handler: Condense script references
-  const handleCondenseScript = useCallback(async () => {
+  const handleCondenseScript = async () => {
     try {
       const condensed = condenseScript(jsonInput, officialData);
       await updateScript(condensed, 'condense');
@@ -214,10 +216,10 @@ export function useScriptTransformations(
     } catch {
       setError('Cannot condense: Invalid JSON');
     }
-  }, [jsonInput, updateScript, setError, officialData, triggerRegenerate]);
+  };
 
   // Handler: Fix non-standard formats in night reminders
-  const handleFixFormats = useCallback(async () => {
+  const handleFixFormats = async () => {
     try {
       const parsed = JSON.parse(jsonInput);
       if (!Array.isArray(parsed)) {
@@ -259,7 +261,7 @@ export function useScriptTransformations(
     } catch {
       setError('Cannot fix formats: Invalid JSON');
     }
-  }, [jsonInput, updateScript, setError, triggerRegenerate]);
+  };
 
   return {
     // Analysis results
@@ -276,5 +278,3 @@ export function useScriptTransformations(
     triggerRegenerate,
   };
 }
-
-export default useScriptTransformations;

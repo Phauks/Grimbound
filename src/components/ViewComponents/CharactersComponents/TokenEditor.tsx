@@ -13,7 +13,7 @@
  * @module components/CharactersComponents/TokenEditor
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDataSync } from '@/contexts/DataSyncContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
@@ -51,7 +51,7 @@ interface TokenEditorProps {
  * - CharacterDecorativesPanel: Visual customization
  * - JsonTabContent: Raw JSON editing
  */
-export const TokenEditor = memo(function TokenEditor({
+export function TokenEditor({
   character,
   onEditChange,
   onReplaceCharacter,
@@ -82,27 +82,21 @@ export const TokenEditor = memo(function TokenEditor({
   const [activeTab, setActiveTab] = useState<TokenEditorTab>('info');
 
   // Handle decoratives changes
-  const handleDecorativesChange = useCallback(
-    (updates: Partial<DecorativeOverrides>) => {
-      if (charUuid) {
-        setMetadata(charUuid, { decoratives: { ...decoratives, ...updates } });
-      }
-    },
-    [charUuid, decoratives, setMetadata]
-  );
+  const handleDecorativesChange = (updates: Partial<DecorativeOverrides>) => {
+    if (charUuid) {
+      setMetadata(charUuid, { decoratives: { ...decoratives, ...updates } });
+    }
+  };
 
   // Handle ID link toggle
-  const handleIdLinkChange = useCallback(
-    (linked: boolean) => {
-      if (charUuid) {
-        setMetadata(charUuid, { idLinkedToName: linked });
-      }
-    },
-    [charUuid, setMetadata]
-  );
+  const handleIdLinkChange = (linked: boolean) => {
+    if (charUuid) {
+      setMetadata(charUuid, { idLinkedToName: linked });
+    }
+  };
 
   // Convert official character to custom with unique ID handling
-  const handleConvertToCustom = useCallback(async () => {
+  const handleConvertToCustom = async () => {
     if (!onReplaceCharacter) {
       // Fallback to simple source change if replace not available
       onEditChange('source', 'custom');
@@ -144,7 +138,7 @@ export const TokenEditor = memo(function TokenEditor({
     } else {
       addToast(`Converted '${character.name}' to custom character.`, 'success');
     }
-  }, [character, characters, metadata, onEditChange, onReplaceCharacter, setMetadata, addToast]);
+  };
 
   return (
     <div className={styles.editor}>
@@ -234,6 +228,4 @@ export const TokenEditor = memo(function TokenEditor({
       </div>
     </div>
   );
-});
-
-export default TokenEditor;
+}

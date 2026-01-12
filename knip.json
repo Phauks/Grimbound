@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "ignore": [
+    "coverage/**",
+    "src/__tests__/**",
+    "e2e/**",
+    "src/ts/config.ts"
+  ],
+  "ignoreBinaries": ["license-checker"],
+  "ignoreDependencies": ["react-docgen-typescript", "wrangler"],
+  "entry": [
+    "src/main.tsx",
+    "src/**/index.ts"
+  ]
+}

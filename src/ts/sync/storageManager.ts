@@ -579,5 +579,3 @@ export class StorageManager {
 
 // Export singleton instance
 export const storageManager = new StorageManager();
-
-export default storageManager;

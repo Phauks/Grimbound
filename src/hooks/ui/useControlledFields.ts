@@ -9,10 +9,13 @@
  * This is the multi-field version of useControlledField, useful for
  * forms with many similar text inputs.
  *
+ * Uses React's "adjusting state during render" pattern instead of useEffect
+ * for synchronous prop-to-state sync (faster, no extra render cycle).
+ *
  * @module hooks/ui/useControlledFields
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ============================================
 // Types
@@ -83,24 +86,36 @@ export function useControlledFields<T extends Record<string, string>>({
   // Local state for all fields
   const [localValues, setLocalValues] = useState<T>(values);
 
+  // Track previous values for render-time comparison (React's recommended pattern)
+  const [prevValuesJson, setPrevValuesJson] = useState(() => JSON.stringify(values));
+
   // Track last sent values per field to avoid resetting on our own updates
   const lastSentValuesRef = useRef<Record<string, string>>({});
 
   // Track timers per field for proper debounce cancellation
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // Sync from props only when changes came from external source
-  useEffect(() => {
-    const lastSent = lastSentValuesRef.current;
+  // Compute stable JSON string for comparison
+  const valuesJson = JSON.stringify(values);
 
+  // Sync from external prop changes during render (React's "adjusting state" pattern)
+  // This is synchronous and faster than useEffect (no extra render cycle).
+  // Distinguishes between:
+  // 1. External changes: propValue differs from what we last sent → sync
+  // 2. Our changes propagated back: propValue equals what we sent → ignore
+  if (valuesJson !== prevValuesJson) {
+    setPrevValuesJson(valuesJson);
+
+    const lastSent = lastSentValuesRef.current;
     for (const key of Object.keys(values)) {
       const propValue = values[key];
+      // Only sync if this is an external change (not our own update reflected back)
       if (propValue !== lastSent[key]) {
         setLocalValues((prev) => ({ ...prev, [key]: propValue }));
         lastSent[key] = propValue;
       }
     }
-  }, [values]);
+  }
 
   // Cleanup timers on unmount
   useEffect(
@@ -114,61 +129,55 @@ export function useControlledFields<T extends Record<string, string>>({
   );
 
   // Create change handler for a field
-  const createChangeHandler = useCallback(
-    (field: keyof T) => (value: string) => {
-      if (disabled) return;
+  const createChangeHandler = (field: keyof T) => (value: string) => {
+    if (disabled) return;
 
-      const fieldKey = field as string;
+    const fieldKey = field as string;
 
-      setLocalValues((prev) => ({ ...prev, [fieldKey]: value }));
-      lastSentValuesRef.current[fieldKey] = value;
+    setLocalValues((prev) => ({ ...prev, [fieldKey]: value }));
+    lastSentValuesRef.current[fieldKey] = value;
 
-      // Cancel any pending update for this field
-      const existingTimer = timersRef.current.get(fieldKey);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-      }
+    // Cancel any pending update for this field
+    const existingTimer = timersRef.current.get(fieldKey);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
 
-      // Schedule debounced commit
-      const timer = setTimeout(() => {
-        timersRef.current.delete(fieldKey);
-        onChange(field, value);
-      }, debounceMs);
+    // Schedule debounced commit
+    const timer = setTimeout(() => {
+      timersRef.current.delete(fieldKey);
+      onChange(field, value);
+    }, debounceMs);
 
-      timersRef.current.set(fieldKey, timer);
-    },
-    [disabled, onChange, debounceMs]
-  );
+    timersRef.current.set(fieldKey, timer);
+  };
 
   // Create blur handler for a field
-  const createBlurHandler = useCallback(
-    (field: keyof T) => () => {
-      if (disabled) return;
+  const createBlurHandler = (field: keyof T) => () => {
+    if (disabled) return;
 
-      const fieldKey = field as string;
+    const fieldKey = field as string;
 
-      // Cancel pending debounce for this field
-      const existingTimer = timersRef.current.get(fieldKey);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        timersRef.current.delete(fieldKey);
-      }
+    // Cancel pending debounce for this field
+    const existingTimer = timersRef.current.get(fieldKey);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      timersRef.current.delete(fieldKey);
+    }
 
-      // Commit immediately
-      const value = localValues[field];
-      lastSentValuesRef.current[fieldKey] = value;
-      onChange(field, value);
-    },
-    [disabled, localValues, onChange]
-  );
+    // Commit immediately
+    const value = localValues[field];
+    lastSentValuesRef.current[fieldKey] = value;
+    onChange(field, value);
+  };
 
   // Force sync all fields from props
-  const forceSync = useCallback(() => {
+  const forceSync = () => {
     setLocalValues(values);
     for (const key of Object.keys(values)) {
       lastSentValuesRef.current[key] = values[key];
     }
-  }, [values]);
+  };
 
   // Build fields object with handlers
   const fields = {} as { [K in keyof T]: FieldState };
@@ -187,5 +196,3 @@ export function useControlledFields<T extends Record<string, string>>({
     forceSync,
   };
 }
-
-export default useControlledFields;

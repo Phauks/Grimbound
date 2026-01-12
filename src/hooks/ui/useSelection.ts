@@ -7,7 +7,7 @@
  * @module hooks/ui/useSelection
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 // ============================================================================
 // Types
@@ -82,107 +82,83 @@ export function useSelection<T = unknown>(
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(initialSelection));
 
   // Notify on selection change
-  const updateSelection = useCallback(
-    (updater: (prev: Set<string>) => Set<string>) => {
-      setSelectedIds((prev) => {
-        const next = updater(prev);
-        onSelectionChange?.(next);
-        return next;
-      });
-    },
-    [onSelectionChange]
-  );
+  const updateSelection = (updater: (prev: Set<string>) => Set<string>) => {
+    setSelectedIds((prev) => {
+      const next = updater(prev);
+      onSelectionChange?.(next);
+      return next;
+    });
+  };
 
-  const toggleSelect = useCallback(
-    (id: string) => {
-      updateSelection((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          // Check max selection limit
-          if (maxSelection !== undefined && next.size >= maxSelection) {
-            return prev; // Don't add if at limit
-          }
-          next.add(id);
-        }
-        return next;
-      });
-    },
-    [updateSelection, maxSelection]
-  );
-
-  const select = useCallback(
-    (id: string) => {
-      updateSelection((prev) => {
-        if (prev.has(id)) return prev;
-        if (maxSelection !== undefined && prev.size >= maxSelection) {
-          return prev;
-        }
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-    },
-    [updateSelection, maxSelection]
-  );
-
-  const deselect = useCallback(
-    (id: string) => {
-      updateSelection((prev) => {
-        if (!prev.has(id)) return prev;
-        const next = new Set(prev);
+  const toggleSelect = (id: string) => {
+    updateSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
         next.delete(id);
-        return next;
-      });
-    },
-    [updateSelection]
-  );
+      } else {
+        // Check max selection limit
+        if (maxSelection !== undefined && next.size >= maxSelection) {
+          return prev; // Don't add if at limit
+        }
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
-  const selectAll = useCallback(
-    (allIds: string[]) => {
-      updateSelection(() => {
-        const idsToSelect = maxSelection !== undefined ? allIds.slice(0, maxSelection) : allIds;
-        return new Set(idsToSelect);
-      });
-    },
-    [updateSelection, maxSelection]
-  );
+  const select = (id: string) => {
+    updateSelection((prev) => {
+      if (prev.has(id)) return prev;
+      if (maxSelection !== undefined && prev.size >= maxSelection) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  };
 
-  const clearSelection = useCallback(() => {
+  const deselect = (id: string) => {
+    updateSelection((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const selectAll = (allIds: string[]) => {
+    updateSelection(() => {
+      const idsToSelect = maxSelection !== undefined ? allIds.slice(0, maxSelection) : allIds;
+      return new Set(idsToSelect);
+    });
+  };
+
+  const clearSelection = () => {
     updateSelection(() => new Set());
-  }, [updateSelection]);
+  };
 
-  const isSelected = useCallback((id: string) => selectedIds.has(id), [selectedIds]);
+  const isSelected = (id: string) => selectedIds.has(id);
 
-  const isAllSelected = useCallback(
-    (allIds: string[]) => {
-      if (allIds.length === 0) return false;
-      return allIds.every((id) => selectedIds.has(id));
-    },
-    [selectedIds]
-  );
+  const isAllSelected = (allIds: string[]) => {
+    if (allIds.length === 0) return false;
+    return allIds.every((id) => selectedIds.has(id));
+  };
 
-  const isPartiallySelected = useCallback(
-    (allIds: string[]) => {
-      if (allIds.length === 0) return false;
-      const selectedCount = allIds.filter((id) => selectedIds.has(id)).length;
-      return selectedCount > 0 && selectedCount < allIds.length;
-    },
-    [selectedIds]
-  );
+  const isPartiallySelected = (allIds: string[]) => {
+    if (allIds.length === 0) return false;
+    const selectedCount = allIds.filter((id) => selectedIds.has(id)).length;
+    return selectedCount > 0 && selectedCount < allIds.length;
+  };
 
-  const setSelection = useCallback(
-    (ids: string[]) => {
-      updateSelection(() => {
-        const idsToSelect = maxSelection !== undefined ? ids.slice(0, maxSelection) : ids;
-        return new Set(idsToSelect);
-      });
-    },
-    [updateSelection, maxSelection]
-  );
+  const setSelection = (ids: string[]) => {
+    updateSelection(() => {
+      const idsToSelect = maxSelection !== undefined ? ids.slice(0, maxSelection) : ids;
+      return new Set(idsToSelect);
+    });
+  };
 
-  const selectedCount = useMemo(() => selectedIds.size, [selectedIds]);
+  const selectedCount = selectedIds.size;
 
   return {
     selectedIds,
@@ -198,5 +174,3 @@ export function useSelection<T = unknown>(
     setSelection,
   };
 }
-
-export default useSelection;

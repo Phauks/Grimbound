@@ -21,11 +21,11 @@
  * ```
  */
 
-import { memo, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { useAssetPreview } from '@/hooks/useAssetPreview';
 import styles from '@/styles/components/shared/AssetPreviewSelector.module.css';
-import type { AssetType } from '@/ts/services/upload/types.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 
 // ============================================================================
@@ -41,7 +41,7 @@ export interface AssetPreviewSelectorProps {
   /** Called when selection changes */
   onChange: (value: string) => void;
   /** Asset type for filtering in modal */
-  assetType: AssetType;
+  assetType: TypeTagValue;
   /** Display label (shown next to preview) */
   label?: string;
   /** Preview shape */
@@ -79,7 +79,7 @@ interface AssetPreviewProps {
   isNone: boolean;
 }
 
-const AssetPreview = memo(function AssetPreview({
+function AssetPreview({
   previewUrl,
   assetLabel,
   shape,
@@ -109,13 +109,13 @@ const AssetPreview = memo(function AssetPreview({
       )}
     </div>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const AssetPreviewSelector = memo(function AssetPreviewSelector({
+export function AssetPreviewSelector({
   value,
   onChange,
   assetType,
@@ -147,17 +147,13 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
     fallbackLabel: label,
   });
 
-  // Stable callbacks
-  const handleOpenModal = useCallback(() => setIsModalOpen(true), []);
-  const handleCloseModal = useCallback(() => setIsModalOpen(false), []);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleSelectAsset = useCallback(
-    (selectedId: string) => {
-      onChange(selectedId);
-      setIsModalOpen(false);
-    },
-    [onChange]
-  );
+  const handleSelectAsset = (selectedId: string) => {
+    onChange(selectedId);
+    setIsModalOpen(false);
+  };
 
   return (
     <>
@@ -198,6 +194,4 @@ export const AssetPreviewSelector = memo(function AssetPreviewSelector({
       )}
     </>
   );
-});
-
-export default AssetPreviewSelector;
+}

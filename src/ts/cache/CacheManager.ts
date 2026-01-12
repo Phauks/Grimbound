@@ -525,5 +525,3 @@ const charactersCache = new LRUCacheAdapter<string, CharactersPreRenderEntry>({
   evictionPolicy: new LRUEvictionPolicy({ maxSize: 50 }),
 });
 cacheManager.registerStrategy(new CharactersPreRenderStrategy(charactersCache));
-
-export default cacheManager;

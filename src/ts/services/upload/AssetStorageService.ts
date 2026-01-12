@@ -10,7 +10,7 @@
 import { cacheInvalidationService } from '@/ts/cache/CacheInvalidationService.js';
 import { projectDb } from '@/ts/db/projectDb.js';
 import { logger } from '@/ts/utils/logger.js';
-import { ASSET_ZIP_PATHS } from './constants.js';
+import { TAG_ZIP_PATHS } from './constants.js';
 import { imageProcessingService } from './ImageProcessingService.js';
 import { getTypeFromTags } from './tagUtils.js';
 import type {
@@ -303,9 +303,10 @@ export class AssetStorageService {
   private async executeIndexedQuery(filter: AssetFilter): Promise<DBAsset[]> {
     // OPTIMIZATION: Use compound index when both folder and projectId are provided (non-null)
     if (this.canUseCompoundIndex(filter)) {
+      // canUseCompoundIndex guarantees both are non-null strings (not 'all' or undefined)
       return projectDb.assets
         .where('[folder+projectId]')
-        .equals([filter.folder, filter.projectId as string])
+        .equals([filter.folder as string, filter.projectId as string])
         .toArray();
     }
 
@@ -379,7 +380,15 @@ export class AssetStorageService {
    */
   private async queryByFolder(filter: AssetFilter): Promise<DBAsset[]> {
     const folder = filter.folder ?? null;
-    let results = await projectDb.assets.where('folder').equals(folder).toArray();
+
+    // Dexie's equals() doesn't accept null directly - filter manually for root folder
+    let results: DBAsset[];
+    if (folder === null) {
+      const all = await projectDb.assets.toArray();
+      results = all.filter((a) => a.folder === null);
+    } else {
+      results = await projectDb.assets.where('folder').equals(folder).toArray();
+    }
 
     // Apply project filter if needed
     if (filter.projectId !== undefined && filter.projectId !== 'all') {
@@ -1056,7 +1065,7 @@ export class AssetStorageService {
   private generateExportFilename(asset: DBAsset): string {
     // Get type from tags and map to zip path
     const type = getTypeFromTags(asset.tags) ?? 'icon';
-    const path = ASSET_ZIP_PATHS[type] ?? 'assets/';
+    const path = TAG_ZIP_PATHS[type] ?? 'assets/';
     // Include ID prefix to ensure uniqueness
     const shortId = asset.id.split('-')[0];
     return `${path}${shortId}_${asset.metadata.filename}`;

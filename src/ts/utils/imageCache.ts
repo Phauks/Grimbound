@@ -337,5 +337,3 @@ cacheInvalidationService.subscribe('global', () => {
   globalImageCache.clear();
   logger.info('ImageCache', 'Cleared all cached images (global invalidation)');
 });
-
-export default globalImageCache;

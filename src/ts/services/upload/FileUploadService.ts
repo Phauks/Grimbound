@@ -8,6 +8,7 @@
  */
 
 import { assetStorageService, type CreateAssetData } from './AssetStorageService.js';
+import { getConfigByTags } from './constants.js';
 import { fileValidationService } from './FileValidationService.js';
 import { imageProcessingService } from './ImageProcessingService.js';
 import type {
@@ -15,7 +16,7 @@ import type {
   IFileValidationService,
   IImageProcessingService,
 } from './IUploadServices.js';
-import type { AssetSourceType, AssetType, UploadConfig, UploadOutcome } from './types.js';
+import type { AssetSourceType, UploadConfig, UploadOutcome } from './types.js';
 
 // ============================================================================
 // Dependency Injection Types
@@ -76,7 +77,7 @@ export class FileUploadService {
    * Upload one or more files
    *
    * @param files - File or array of files to upload
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Array of upload results
    */
   async upload(files: File | File[], config: UploadConfig): Promise<UploadOutcome[]> {
@@ -118,7 +119,7 @@ export class FileUploadService {
    * Upload from clipboard event
    *
    * @param event - Clipboard event
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result or null if no image in clipboard
    */
   async uploadFromClipboard(
@@ -160,7 +161,7 @@ export class FileUploadService {
    * Upload from URL
    *
    * @param url - Image URL to download and upload
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result
    */
   async uploadFromUrl(url: string, config: UploadConfig): Promise<UploadOutcome> {
@@ -196,7 +197,7 @@ export class FileUploadService {
    *
    * @param blob - Blob to upload
    * @param filename - Filename to use
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result
    */
   async uploadFromBlob(blob: Blob, filename: string, config: UploadConfig): Promise<UploadOutcome> {
@@ -217,7 +218,7 @@ export class FileUploadService {
     sourceType: AssetSourceType
   ): Promise<UploadOutcome> {
     // 1. Validate the file
-    const validation = await this.fileValidation.validate(file, config.assetType);
+    const validation = await this.fileValidation.validate(file, config.tags);
 
     if (!validation.valid) {
       return {
@@ -252,7 +253,7 @@ export class FileUploadService {
       };
     } else {
       // Process the image
-      const processed = await this.imageProcessing.process(file, config.assetType);
+      const processed = await this.imageProcessing.process(file, config.tags);
       processedBlob = processed.blob;
       thumbnailBlob = processed.thumbnail;
       metadata = processed.metadata;
@@ -260,7 +261,8 @@ export class FileUploadService {
 
     // 3. Prepare asset data
     const assetData: CreateAssetData = {
-      type: config.assetType,
+      tags: config.tags,
+      folder: config.folder ?? null,
       projectId: config.projectId ?? null,
       blob: processedBlob,
       thumbnail: thumbnailBlob,
@@ -309,7 +311,7 @@ export class FileUploadService {
   /**
    * Create a file input and trigger file selection
    *
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @param multiple - Allow multiple file selection
    * @returns Promise that resolves with upload results
    */
@@ -318,7 +320,7 @@ export class FileUploadService {
       const input = document.createElement('input');
       input.type = 'file';
       input.multiple = multiple;
-      input.accept = this.getAcceptString(config.assetType);
+      input.accept = this.getAcceptString(config.tags);
 
       input.onchange = async () => {
         if (input.files && input.files.length > 0) {
@@ -340,19 +342,26 @@ export class FileUploadService {
   }
 
   /**
-   * Get accept string for file input based on asset type
+   * Get accept string for file input based on tags
+   *
+   * @param tags - Tags array (must include exactly one type:* tag)
+   * @returns Accept string for file input
    */
-  getAcceptString(assetType: AssetType): string {
-    const config = this.fileValidation.getConfig(assetType);
-    return config.allowedMimeTypes.join(',');
+  getAcceptString(tags: string[]): string {
+    const config = getConfigByTags(tags);
+    return config?.allowedMimeTypes.join(',') ?? 'image/*';
   }
 
   /**
-   * Check if a file type is valid for an asset type
+   * Check if a file type is valid for asset type (identified by tags)
+   *
+   * @param file - File to check
+   * @param tags - Tags array (must include exactly one type:* tag)
+   * @returns True if file type is valid
    */
-  isValidFileType(file: File, assetType: AssetType): boolean {
-    const config = this.fileValidation.getConfig(assetType);
-    return config.allowedMimeTypes.includes(file.type);
+  isValidFileType(file: File, tags: string[]): boolean {
+    const config = getConfigByTags(tags);
+    return config?.allowedMimeTypes.includes(file.type) ?? false;
   }
 }
 

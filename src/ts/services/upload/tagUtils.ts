@@ -11,6 +11,8 @@
  * @module services/upload/tagUtils
  */
 
+import type { AssetType } from './types.js';
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -224,3 +226,55 @@ export const createTypeTag = (type: TypeTagValue): string => `type:${type}`;
  * Create a team tag from a team value
  */
 export const createTeamTag = (team: TeamTagValue): string => `team:${team}`;
+
+/**
+ * Check if a tags array has any type:* tag
+ */
+export const hasTypeTag = (tags: string[]): boolean => tags.some((t) => t.startsWith('type:'));
+
+/**
+ * Replace the type:* tag in a tags array with a new type
+ * If no type:* tag exists, adds the new type tag
+ * @returns New array with the type tag replaced (does not mutate)
+ */
+export const replaceTypeTag = (tags: string[], newType: TypeTagValue): string[] => {
+  // Filter out old type tag and add new one
+  const withoutType = tags.filter((t) => !t.startsWith('type:'));
+  return [createTypeTag(newType), ...withoutType];
+};
+
+// ============================================================================
+// Legacy AssetType Migration Helpers
+// ============================================================================
+
+// Note: AssetType import is at top of file
+
+/**
+ * Map from legacy AssetType values to new TypeTagValue
+ * @deprecated Use TypeTagValue directly in new code
+ */
+const LEGACY_TYPE_MAP: Record<AssetType, TypeTagValue> = {
+  'character-icon': 'icon',
+  'token-background': 'token-background',
+  'script-background': 'script-background',
+  'setup-overlay': 'setup',
+  accent: 'accent',
+  logo: 'logo',
+  'studio-icon': 'studio-icon',
+  'studio-logo': 'studio-logo',
+  'studio-project': 'studio-project',
+};
+
+/**
+ * Convert legacy AssetType to TypeTagValue
+ * @deprecated Use TypeTagValue directly in new code
+ */
+export const legacyTypeToTagValue = (assetType: AssetType): TypeTagValue =>
+  LEGACY_TYPE_MAP[assetType];
+
+/**
+ * Convert legacy AssetType to type tag string (e.g., 'type:icon')
+ * @deprecated Use createTypeTag with TypeTagValue directly in new code
+ */
+export const legacyTypeToTag = (assetType: AssetType): string =>
+  createTypeTag(LEGACY_TYPE_MAP[assetType]);

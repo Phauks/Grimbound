@@ -5,11 +5,9 @@
  * Uses sidebar layout with print preview showing realistic 8.5" x 11" pages.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
-import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
+import { ScriptPdfDrawer } from '@/components/Shared/Drawer/ScriptPdfDrawer';
 import {
   EnableToggle,
   InfoSection,
@@ -19,56 +17,35 @@ import {
 import { Button } from '@/components/Shared/UI/Button';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import { useNightOrder } from '@/contexts/NightOrderContext';
+import { useScriptPdf } from '@/contexts/ScriptPdfContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useExpandablePanel } from '@/hooks';
+import { usePlayerScriptExport } from '@/hooks/scripts/usePlayerScriptExport.js';
+import { useScriptPdfDrawer } from '@/hooks/scripts/useScriptPdfDrawer.js';
+import { useResizableSidebar } from '@/hooks/ui';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/script/NightOrderView.module.css';
-import baseStyles from '@/styles/components/shared/SettingsSelectorBase.module.css';
-import { UI_DIMENSIONS } from '@/ts/constants.js';
-import { downloadNightOrderPdfHybrid } from '@/ts/nightOrder/hybridPdfExporter.js';
 import { paginateEntries } from '@/ts/nightOrder/nightOrderLayout.js';
 import { downloadNightOrderPdf, type ExportPhase } from '@/ts/nightOrder/nightOrderPdfExporter.js';
 import {
   syncNightOrderToJson,
   updateCharacterNightNumbers,
 } from '@/ts/nightOrder/nightOrderSync.js';
-import { warmDefaultNightSheetFonts } from '@/ts/nightOrder/nightSheetRenderer.js';
+import {
+  extractActiveJinxes,
+  extractNightOrderIcons,
+  toPlayerScriptCharacters,
+} from '@/ts/scriptPdf/utils.js';
 import { logger } from '@/ts/utils/logger.js';
 import {
   formatCharacterForOfficialTool,
   getOfficialScriptToolUrl,
 } from '@/ts/utils/scriptEncoder.js';
 import { NightSheet } from './NightSheet';
+import { PlayerScriptPreview } from './PlayerScriptPreview';
 import { ScaledPage } from './ScaledPage';
 import type { ScriptSubTab } from './ScriptTabNavigation';
 
-/**
- * Background customization options
- */
-export interface NightSheetBackground {
-  /** Base parchment color (hex) */
-  baseColor: string;
-  /** Whether to show paper texture */
-  showTexture: boolean;
-  /** Texture opacity (0-1) */
-  textureOpacity: number;
-}
-
-/** Default background settings */
-const DEFAULT_BACKGROUND: NightSheetBackground = {
-  baseColor: '#ffffff',
-  showTexture: true,
-  textureOpacity: 0.06,
-};
-
-/** Preset background options */
-const BACKGROUND_PRESETS = [
-  { name: 'Parchment', color: '#f4edd9' },
-  { name: 'Cream', color: '#fffef5' },
-  { name: 'Antique', color: '#ebe4d4' },
-  { name: 'White', color: '#ffffff' },
-  { name: 'Sepia', color: '#f5e6c8' },
-] as const;
+// NightSheetBackground type removed - now uses BackgroundStyle from settings
 
 interface NightOrderViewProps {
   /** Enable drag-and-drop reordering */
@@ -84,6 +61,7 @@ interface NightOrderViewProps {
 export function NightOrderView({ enableDragDrop = true, onEditCharacter }: NightOrderViewProps) {
   const { characters, scriptMeta, jsonInput, setJsonInput, setCharacters } = useTokenContext();
   const { setDownloads, clearDownloads } = useDownloadsContext();
+  const { width: sidebarWidth, isDragging, handleProps } = useResizableSidebar();
   const {
     firstNight,
     otherNight,
@@ -95,18 +73,71 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     moveEntry,
   } = useNightOrder();
 
+  // ScriptPDF settings drawer
+  const { settings } = useScriptPdf();
+  const drawer = useScriptPdfDrawer();
+
   // Generation state
   const [generateNightOrder, setGenerateNightOrder] = useState(true);
+  const [generatePlayerScript, setGeneratePlayerScript] = useState(true);
 
-  // Export mode: 'hybrid' (fast, pdf-lib fonts) or 'legacy' (Snapdom font embedding)
-  const [useHybridMode, setUseHybridMode] = useState(true);
+  // Get background directly from ScriptPdfContext settings
+  const background = settings.nightOrder.background;
 
-  // Background customization state
-  const [background, setBackground] = useState<NightSheetBackground>(DEFAULT_BACKGROUND);
+  // Derive icon scale from ScriptPdfContext settings (night order specific)
+  const nightOrderIconScale = settings.nightOrder.iconScale;
+
+  // Night order margins
+  const nightOrderMargins = settings.nightOrder.margins;
+
+  // Player script data (derived from characters and night order)
+  const playerScriptCharacters = toPlayerScriptCharacters(characters);
+  const playerScriptFabled = playerScriptCharacters.filter((c) => c.team === 'fabled');
+  const playerScriptMain = playerScriptCharacters.filter(
+    (c) => c.team !== 'fabled' && c.team !== 'traveller'
+  );
+  const playerScriptJinxes = extractActiveJinxes(characters);
+  const playerScriptFirstNight = extractNightOrderIcons(characters, 'first');
+  const playerScriptOtherNight = extractNightOrderIcons(characters, 'other');
+
+  // Player script export hook
+  const playerScriptExport = usePlayerScriptExport({
+    scriptMeta,
+    characters: playerScriptMain,
+    fabled: playerScriptFabled,
+    jinxes: playerScriptJinxes,
+    firstNight: playerScriptFirstNight,
+    otherNight: playerScriptOtherNight,
+  });
+
+  // Build image URL map for PlayerScriptPreview (uses character image directly for now)
+  const playerScriptImageUrls = (() => {
+    const urls = new Map<string, string>();
+    for (const char of playerScriptCharacters) {
+      urls.set(char.id, char.image);
+    }
+    return urls;
+  })();
 
   // Refs for PDF export (capture DOM elements)
   const firstNightRef = useRef<HTMLDivElement>(null);
   const otherNightRef = useRef<HTMLDivElement>(null);
+
+  // Refs for handleExportPDF to avoid object dependencies in useCallback
+  // This prevents the callback from recreating when these objects change reference
+  const exportDataRef = useRef({
+    displayMeta: null as typeof scriptMeta,
+    background,
+    firstNight,
+    otherNight,
+  });
+  // Update refs on each render
+  exportDataRef.current = {
+    displayMeta: nightOrderMeta || scriptMeta,
+    background,
+    firstNight,
+    otherNight,
+  };
 
   // Initialize night order when generation is toggled on
   // Note: NightOrderContext handles auto-init from TokenContext, so we only
@@ -118,11 +149,6 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       initializeFromScript(scriptData);
     }
   }, [generateNightOrder, characters, scriptMeta, initializeFromScript, isDirty]);
-
-  // Warm fonts in background on mount (makes first PDF export fast)
-  useEffect(() => {
-    warmDefaultNightSheetFonts();
-  }, []);
 
   // Use night order's script meta if available
   const displayMeta = nightOrderMeta || scriptMeta;
@@ -177,37 +203,28 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   ]);
 
   // Move handlers
-  const handleMoveFirstNight = useCallback(
-    (entryId: string, newIndex: number) => {
-      moveEntry('first', entryId, newIndex);
-    },
-    [moveEntry]
-  );
+  const handleMoveFirstNight = (entryId: string, newIndex: number) => {
+    moveEntry('first', entryId, newIndex);
+  };
 
-  const handleMoveOtherNight = useCallback(
-    (entryId: string, newIndex: number) => {
-      moveEntry('other', entryId, newIndex);
-    },
-    [moveEntry]
-  );
+  const handleMoveOtherNight = (entryId: string, newIndex: number) => {
+    moveEntry('other', entryId, newIndex);
+  };
 
   /**
    * Convert a character from official to custom.
    * Updates the character's source in TokenContext, which is the single source of truth.
    * The UI will automatically reflect this change via the characters array.
    */
-  const handleConvertToCustom = useCallback(
-    (characterId: string) => {
-      const updatedCharacters = characters.map((char) =>
-        char.id.toLowerCase() === characterId.toLowerCase()
-          ? { ...char, source: 'custom' as const }
-          : char
-      );
-      setCharacters(updatedCharacters);
-      logger.info('NightOrderView', `Converted character ${characterId} to custom`);
-    },
-    [characters, setCharacters]
-  );
+  const handleConvertToCustom = (characterId: string) => {
+    const updatedCharacters = characters.map((char) =>
+      char.id.toLowerCase() === characterId.toLowerCase()
+        ? { ...char, source: 'custom' as const }
+        : char
+    );
+    setCharacters(updatedCharacters);
+    logger.info('NightOrderView', `Converted character ${characterId} to custom`);
+  };
 
   // PDF export state
   const [isExporting, setIsExporting] = useState(false);
@@ -235,10 +252,12 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     }
   };
 
-  const _handleCancelExport = useCallback(() => {
+  const _handleCancelExport = () => {
     abortControllerRef.current?.abort();
-  }, []);
+  };
 
+  // useCallback required: used as useEffect dependency for downloads registration
+  // Uses exportDataRef to avoid object dependencies that would cause recreation
   const handleExportPDF = useCallback(async () => {
     if (isExporting) return;
 
@@ -249,16 +268,24 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
 
+    // Read current values from ref (avoids stale closure issues)
+    const {
+      displayMeta: meta,
+      background: bg,
+      firstNight: first,
+      otherNight: other,
+    } = exportDataRef.current;
+
     try {
-      const filename = displayMeta?.name
-        ? `${displayMeta.name.replace(/[^a-zA-Z0-9]/g, '_')}_night_order.pdf`
+      const filename = meta?.name
+        ? `${meta.name.replace(/[^a-zA-Z0-9]/g, '_')}_night_order.pdf`
         : 'night_order.pdf';
 
       const exportOptions = {
         includeFirstNight: true,
         includeOtherNight: true,
         showScriptName: true,
-        background,
+        background: bg,
         onProgress: (phase: ExportPhase, current: number, total: number) => {
           setExportPhase(phase);
           setExportProgress({ current, total });
@@ -266,26 +293,7 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
         signal: abortControllerRef.current.signal,
       };
 
-      // Use hybrid mode (fast, pdf-lib fonts) or legacy mode (Snapdom font embedding)
-      if (useHybridMode) {
-        logger.info('NightOrderView', 'Using hybrid PDF export mode');
-        await downloadNightOrderPdfHybrid(
-          firstNight,
-          otherNight,
-          displayMeta || null,
-          filename,
-          exportOptions
-        );
-      } else {
-        logger.info('NightOrderView', 'Using legacy PDF export mode');
-        await downloadNightOrderPdf(
-          firstNight,
-          otherNight,
-          displayMeta || null,
-          filename,
-          exportOptions
-        );
-      }
+      await downloadNightOrderPdf(first, other, meta || null, filename, exportOptions);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         logger.info('NightOrderView', 'PDF export cancelled');
@@ -298,10 +306,10 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
       setExportPhase(null);
       abortControllerRef.current = null;
     }
-  }, [displayMeta, isExporting, firstNight, otherNight, background, useHybridMode]);
+  }, [isExporting]);
 
   // Handler to open script in official BOTC Script Tool
-  const handleOpenInOfficialTool = useCallback(() => {
+  const handleOpenInOfficialTool = () => {
     // Build script data - always include meta
     const meta = scriptMeta || { id: '_meta', author: '', name: '' };
 
@@ -320,13 +328,29 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
     });
 
     window.open(url, '_blank');
-  }, [characters, scriptMeta]);
+  };
 
   // Register downloads for this view
   useEffect(() => {
     const hasNoData = firstNight.entries.length === 0 && otherNight.entries.length === 0;
+    const hasNoCharacters = playerScriptMain.length === 0;
 
     const downloads: DownloadItem[] = [
+      {
+        id: 'player-script-pdf',
+        icon: '📜',
+        label: 'Player Script PDF',
+        description: displayMeta?.name ? `${displayMeta.name} script` : 'Character abilities',
+        action: playerScriptExport.exportPdf,
+        disabled: hasNoCharacters || !generatePlayerScript || playerScriptExport.isExporting,
+        disabledReason: playerScriptExport.isExporting
+          ? 'Export in progress...'
+          : hasNoCharacters
+            ? 'Load a script first'
+            : 'Enable player script generation',
+        category: 'script',
+        sourceView: 'script',
+      },
       {
         id: 'night-order-pdf',
         icon: '🌙',
@@ -351,40 +375,34 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   }, [
     firstNight.entries.length,
     otherNight.entries.length,
-    displayMeta,
+    displayMeta?.name,
     generateNightOrder,
+    generatePlayerScript,
     isExporting,
     handleExportPDF,
+    playerScriptExport.exportPdf,
+    playerScriptExport.isExporting,
+    playerScriptMain.length,
     setDownloads,
     clearDownloads,
   ]);
 
-  // Background panel handler
-  const handleBackgroundChange = useCallback((settings: NightSheetBackground) => {
-    setBackground(settings);
-  }, []);
-
-  // Use expandable panel hook for background settings
-  const backgroundPanel = useExpandablePanel<NightSheetBackground>({
-    value: background,
-    onChange: handleBackgroundChange,
-    onPreviewChange: handleBackgroundChange,
-    panelHeight: 280,
-    minPanelWidth: UI_DIMENSIONS.MIN_PANEL_WIDTH,
-  });
-
-  // Get display settings (pending when editing, current otherwise)
-  const displayBackground = backgroundPanel.isExpanded ? backgroundPanel.pendingValue : background;
-
   // Paginate entries for UI preview (multi-page instead of scaling)
-  const firstNightPages = useMemo(() => paginateEntries(firstNight.entries), [firstNight.entries]);
-  const otherNightPages = useMemo(() => paginateEntries(otherNight.entries), [otherNight.entries]);
+  const firstNightPages = paginateEntries(firstNight.entries);
+  const otherNightPages = paginateEntries(otherNight.entries);
 
   // Loading state
   if (isLoading) {
     return (
       <ViewLayout variant="2-panel">
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isDragging}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <div className={styles.sidebarContent}>
             <div className={styles.loadingState}>
               <div className={styles.spinner} />
@@ -401,7 +419,14 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
   if (error) {
     return (
       <ViewLayout variant="2-panel">
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isDragging}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <div className={styles.sidebarContent}>
             <div className={styles.errorState}>
               <div className={styles.errorIcon}>⚠️</div>
@@ -416,126 +441,17 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
 
   const hasNoData = firstNight.entries.length === 0 && otherNight.entries.length === 0;
 
-  // Render Background Settings Panel
-  const renderBackgroundPanel = () => {
-    if (!(backgroundPanel.isExpanded && backgroundPanel.panelPosition)) return null;
-
-    const panelStyle: React.CSSProperties = {
-      position: 'fixed',
-      top: backgroundPanel.panelPosition.openUpward ? 'auto' : backgroundPanel.panelPosition.top,
-      bottom: backgroundPanel.panelPosition.openUpward
-        ? window.innerHeight - backgroundPanel.panelPosition.top
-        : 'auto',
-      left: backgroundPanel.panelPosition.left,
-      width: backgroundPanel.panelPosition.width,
-      zIndex: 10000,
-    };
-
-    return createPortal(
-      <div
-        ref={backgroundPanel.panelRef}
-        className={`${baseStyles.panel} ${backgroundPanel.panelPosition.openUpward ? baseStyles.panelUpward : ''}`}
-        style={panelStyle}
-      >
-        <div className={baseStyles.panelContent}>
-          {/* Color Presets */}
-          <div className={styles.settingGroup}>
-            <fieldset
-              className={styles.colorPresets}
-              style={{ border: 0, padding: 0, margin: 0, minInlineSize: 0 }}
-            >
-              <legend className={styles.settingLabel}>Color Preset</legend>
-              {BACKGROUND_PRESETS.map((preset) => (
-                <button
-                  key={preset.name}
-                  className={`${styles.colorPreset} ${backgroundPanel.pendingValue.baseColor === preset.color ? styles.active : ''}`}
-                  style={{ backgroundColor: preset.color }}
-                  onClick={() => backgroundPanel.updatePendingField('baseColor', preset.color)}
-                  title={preset.name}
-                  type="button"
-                />
-              ))}
-            </fieldset>
-          </div>
-
-          {/* Custom Color */}
-          <div className={styles.settingGroup}>
-            <ColorPreviewSelector
-              label="Custom Color"
-              value={backgroundPanel.pendingValue.baseColor}
-              onChange={(color) => backgroundPanel.updatePendingField('baseColor', color)}
-              onPreviewChange={(color) => backgroundPanel.updatePendingField('baseColor', color)}
-              size="small"
-            />
-          </div>
-
-          {/* Texture Toggle */}
-          <div className={styles.settingGroup}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={backgroundPanel.pendingValue.showTexture}
-                onChange={(e) =>
-                  backgroundPanel.updatePendingField('showTexture', e.target.checked)
-                }
-                className={styles.checkbox}
-              />
-              Show paper texture
-            </label>
-          </div>
-
-          {/* Texture Opacity */}
-          {backgroundPanel.pendingValue.showTexture && (
-            <EditableSlider
-              label="Texture Intensity"
-              value={backgroundPanel.pendingValue.textureOpacity * 100}
-              onChange={(value) =>
-                backgroundPanel.updatePendingField('textureOpacity', value / 100)
-              }
-              min={1}
-              max={15}
-              step={1}
-              defaultValue={6}
-              suffix="%"
-              ariaLabel="Texture intensity percentage"
-            />
-          )}
-        </div>
-
-        <div className={baseStyles.panelFooter}>
-          <button
-            type="button"
-            className={baseStyles.resetLink}
-            onClick={() => backgroundPanel.reset(DEFAULT_BACKGROUND)}
-          >
-            Reset
-          </button>
-          <div className={baseStyles.panelActions}>
-            <button
-              type="button"
-              className={baseStyles.cancelButton}
-              onClick={backgroundPanel.cancel}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={baseStyles.confirmButton}
-              onClick={backgroundPanel.apply}
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  };
-
   return (
     <ViewLayout variant="2-panel">
       {/* Sidebar */}
-      <ViewLayout.Panel position="left" width="left" scrollable>
+      <ViewLayout.Panel
+        position="left"
+        resizable
+        resizableWidth={sidebarWidth}
+        isResizing={isDragging}
+        onWidthChange={handleProps.onMouseDown}
+        scrollable
+      >
         <div className={layoutStyles.panelContent}>
           {/* Open in Official Tool */}
           <div className={styles.headerRow}>
@@ -549,158 +465,178 @@ export function NightOrderView({ enableDragDrop = true, onEditCharacter }: Night
             </Button>
           </div>
 
-          {/* Player Script (Coming Soon - Disabled) */}
+          {/* Player Script Toggle */}
           <SettingsSelectorBase
             preview={
               <PreviewBox shape="square" size="medium">
                 <span style={{ fontSize: '1.5rem' }}>📜</span>
               </PreviewBox>
             }
-            info={<InfoSection label="Player Script" summary="Coming Soon" />}
-            disabled
-            ariaLabel="Player script generation settings (coming soon)"
+            info={<InfoSection label="Player Script" />}
+            headerSlot={
+              <EnableToggle enabled={generatePlayerScript} onChange={setGeneratePlayerScript} />
+            }
+            actionLabel={generatePlayerScript ? 'Customize' : undefined}
+            onAction={generatePlayerScript ? () => drawer.open('playerScript') : undefined}
+            ariaLabel="Player script generation settings"
           />
 
-          {/* Night Order Toggle with Background Settings */}
+          {/* Backing Sheet Toggle */}
           <SettingsSelectorBase
-            ref={backgroundPanel.containerRef}
             preview={
               <PreviewBox shape="square" size="medium">
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: displayBackground.baseColor,
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>🌙</span>
-                </div>
+                <span style={{ fontSize: '1.5rem' }}>📋</span>
               </PreviewBox>
             }
-            info={
-              <InfoSection
-                label="Night Order"
-                summary={
-                  generateNightOrder
-                    ? `${displayBackground.baseColor}${displayBackground.showTexture ? ', Texture' : ''}`
-                    : 'Disabled'
-                }
+            info={<InfoSection label="Backing Sheet" />}
+            headerSlot={
+              <EnableToggle
+                enabled={settings.backingSheet.enabled}
+                onChange={(enabled) => {
+                  // Update backingSheet.enabled in context
+                  drawer.updatePending({ backingSheet: { enabled } });
+                  drawer.apply();
+                }}
               />
             }
+            actionLabel={settings.backingSheet.enabled ? 'Customize' : undefined}
+            onAction={settings.backingSheet.enabled ? () => drawer.open('backingSheet') : undefined}
+            ariaLabel="Backing sheet generation settings"
+          />
+
+          {/* Night Order Toggle */}
+          <SettingsSelectorBase
+            preview={
+              <PreviewBox shape="square" size="medium">
+                <span style={{ fontSize: '1.5rem' }}>🌙</span>
+              </PreviewBox>
+            }
+            info={<InfoSection label="Night Order" />}
             headerSlot={
               <EnableToggle enabled={generateNightOrder} onChange={setGenerateNightOrder} />
             }
             actionLabel={generateNightOrder ? 'Customize' : undefined}
-            onAction={generateNightOrder ? backgroundPanel.toggle : undefined}
-            isExpanded={backgroundPanel.isExpanded}
+            onAction={generateNightOrder ? () => drawer.open('nightOrder') : undefined}
             ariaLabel="Night order generation settings"
-            onKeyDown={backgroundPanel.handleKeyDown}
-          >
-            {renderBackgroundPanel()}
-          </SettingsSelectorBase>
-
-          {/* Export Mode Toggle */}
-          {generateNightOrder && (
-            <div className={styles.exportModeToggle}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={useHybridMode}
-                  onChange={(e) => setUseHybridMode(e.target.checked)}
-                  className={styles.checkbox}
-                />
-                <span>
-                  Fast PDF export
-                  <span className={styles.hint}> (experimental)</span>
-                </span>
-              </label>
-              <p className={styles.exportModeHint}>
-                {useHybridMode
-                  ? 'Uses optimized font rendering for faster exports'
-                  : 'Uses legacy mode with full font embedding (slower but more accurate)'}
-              </p>
-            </div>
-          )}
+          />
         </div>
       </ViewLayout.Panel>
 
       {/* Print Preview Area */}
       <ViewLayout.Panel position="right" width="flex" scrollable className={styles.previewArea}>
-        {generateNightOrder ? (
-          hasNoData ? (
+        {/* Empty state when nothing is enabled */}
+        {!(generatePlayerScript || generateNightOrder) && (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>📄</div>
+            <h3>No Preview Available</h3>
+            <p>Enable Player Script or Night Order in the sidebar to view the preview.</p>
+          </div>
+        )}
+
+        {/* Empty state when both enabled but no data */}
+        {(generatePlayerScript || generateNightOrder) &&
+          playerScriptCharacters.length === 0 &&
+          hasNoData && (
             <div className={styles.emptyState}>
-              <div className={styles.emptyIcon}>🌙</div>
-              <h3>No Night Order Available</h3>
-              <p>Load a script in the Editor tab to view the night order.</p>
+              <div className={styles.emptyIcon}>📄</div>
+              <h3>No Script Loaded</h3>
+              <p>Load a script in the Editor tab to view the preview.</p>
               <p className={styles.hint}>
-                The night order shows when each character wakes during the night phase.
+                The preview will show player script and night order sheets.
               </p>
             </div>
-          ) : (
-            <div className={styles.sheetsContainer}>
-              {/* First Night Pages (one or more) */}
-              {firstNightPages.pages.map((pageEntries, pageIndex) => (
-                <div
-                  key={`first-${pageEntries[0]?.id || pageIndex}`}
-                  className={styles.pageWrapper}
-                >
-                  <ScaledPage>
-                    <NightSheet
-                      ref={pageIndex === 0 ? firstNightRef : undefined}
-                      type="first"
-                      entries={pageEntries}
-                      characters={characters}
-                      scriptMeta={displayMeta}
-                      enableDragDrop={enableDragDrop && firstNightPages.pageCount === 1}
-                      onMoveEntry={handleMoveFirstNight}
-                      onToggleLock={handleConvertToCustom}
-                      background={displayBackground}
-                      onEditCharacter={onEditCharacter}
-                      pageNumber={pageIndex + 1}
-                      totalPages={firstNightPages.pageCount}
-                    />
-                  </ScaledPage>
-                </div>
-              ))}
+          )}
 
-              {/* Other Nights Pages (one or more) */}
-              {otherNightPages.pages.map((pageEntries, pageIndex) => (
-                <div
-                  key={`other-${pageEntries[0]?.id || pageIndex}`}
-                  className={styles.pageWrapper}
-                >
-                  <ScaledPage>
-                    <NightSheet
-                      ref={pageIndex === 0 ? otherNightRef : undefined}
-                      type="other"
-                      entries={pageEntries}
-                      characters={characters}
-                      scriptMeta={displayMeta}
-                      enableDragDrop={enableDragDrop && otherNightPages.pageCount === 1}
-                      onMoveEntry={handleMoveOtherNight}
-                      onToggleLock={handleConvertToCustom}
-                      background={displayBackground}
-                      onEditCharacter={onEditCharacter}
-                      pageNumber={pageIndex + 1}
-                      totalPages={otherNightPages.pageCount}
-                    />
-                  </ScaledPage>
-                </div>
-              ))}
-            </div>
-          )
-        ) : (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>🌙</div>
-            <h3>Night Order Generation Disabled</h3>
-            <p>Enable "Generate Night Order" in the Options section to view night order sheets.</p>
+        {/* Combined sheets container when we have content */}
+        {((generatePlayerScript && playerScriptCharacters.length > 0) ||
+          (generateNightOrder && !hasNoData)) && (
+          <div className={styles.sheetsContainer}>
+            {/* Player Script (first) */}
+            {generatePlayerScript && playerScriptCharacters.length > 0 && (
+              <PlayerScriptPreview
+                characters={playerScriptCharacters}
+                scriptMeta={displayMeta}
+                imageUrls={playerScriptImageUrls}
+                logoUrl={displayMeta?.logo}
+                enableReordering={enableDragDrop}
+                firstNightIcons={playerScriptFirstNight}
+                otherNightIcons={playerScriptOtherNight}
+              />
+            )}
+
+            {/* Night Order (second) */}
+            {generateNightOrder && !hasNoData && (
+              <>
+                {/* First Night Pages */}
+                {firstNightPages.pages.map((pageEntries, pageIndex) => (
+                  <div
+                    key={`first-${pageEntries[0]?.id || pageIndex}`}
+                    className={styles.pageWrapper}
+                  >
+                    <ScaledPage>
+                      <NightSheet
+                        ref={pageIndex === 0 ? firstNightRef : undefined}
+                        type="first"
+                        entries={pageEntries}
+                        characters={characters}
+                        scriptMeta={displayMeta}
+                        enableDragDrop={enableDragDrop && firstNightPages.pageCount === 1}
+                        onMoveEntry={handleMoveFirstNight}
+                        onToggleLock={handleConvertToCustom}
+                        background={background}
+                        onEditCharacter={onEditCharacter}
+                        pageNumber={pageIndex + 1}
+                        totalPages={firstNightPages.pageCount}
+                        iconScale={nightOrderIconScale}
+                        margins={nightOrderMargins}
+                      />
+                    </ScaledPage>
+                  </div>
+                ))}
+
+                {/* Other Nights Pages */}
+                {otherNightPages.pages.map((pageEntries, pageIndex) => (
+                  <div
+                    key={`other-${pageEntries[0]?.id || pageIndex}`}
+                    className={styles.pageWrapper}
+                  >
+                    <ScaledPage>
+                      <NightSheet
+                        ref={pageIndex === 0 ? otherNightRef : undefined}
+                        type="other"
+                        entries={pageEntries}
+                        characters={characters}
+                        scriptMeta={displayMeta}
+                        enableDragDrop={enableDragDrop && otherNightPages.pageCount === 1}
+                        onMoveEntry={handleMoveOtherNight}
+                        onToggleLock={handleConvertToCustom}
+                        background={background}
+                        onEditCharacter={onEditCharacter}
+                        pageNumber={pageIndex + 1}
+                        totalPages={otherNightPages.pageCount}
+                        iconScale={nightOrderIconScale}
+                        margins={nightOrderMargins}
+                      />
+                    </ScaledPage>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </ViewLayout.Panel>
+
+      {/* Settings Drawer */}
+      <ScriptPdfDrawer
+        isOpen={drawer.isOpen}
+        onClose={drawer.close}
+        onApply={drawer.apply}
+        onReset={drawer.reset}
+        activeTab={drawer.activeTab}
+        onTabChange={drawer.setActiveTab}
+        pendingSettings={drawer.pendingSettings}
+        updatePending={drawer.updatePending}
+      />
     </ViewLayout>
   );
 }

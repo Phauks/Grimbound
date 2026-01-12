@@ -8,13 +8,13 @@
  */
 
 import {
-  ASSET_TYPE_CONFIGS,
   DEFAULT_THUMBNAIL_SIZE,
+  getConfigByTags,
   PROCESSED_IMAGE_FORMAT,
   PROCESSED_IMAGE_QUALITY,
   THUMBNAIL_QUALITY,
 } from './constants.js';
-import type { AssetMetadata, AssetType, ProcessedImage } from './types.js';
+import type { AssetMetadata, ProcessedImage } from './types.js';
 
 // ============================================================================
 // Types
@@ -52,16 +52,19 @@ export class ImageProcessingService {
    * Process an image file for storage
    *
    * @param file - Original file
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @param options - Processing options
    * @returns Processed image with blob, thumbnail, and metadata
    */
   async process(
     file: File,
-    assetType: AssetType,
+    tags: string[],
     options: ProcessingOptions = {}
   ): Promise<ProcessedImage> {
-    const config = ASSET_TYPE_CONFIGS[assetType];
+    const config = getConfigByTags(tags);
+    if (!config) {
+      throw new Error('Invalid tags: missing or invalid type:* tag');
+    }
 
     // Load the image
     const img = await this.loadImage(file);

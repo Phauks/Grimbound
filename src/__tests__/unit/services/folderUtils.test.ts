@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   deriveFolderTree,
-  type FolderNode,
   getAllFolderPaths,
   getAssetsInFolder,
   getFolderName,
@@ -123,13 +122,13 @@ describe('folderUtils', () => {
 
       const chars = tree.find((n) => n.name === 'Characters');
       expect(chars).toBeDefined();
-      expect(chars!.assetCount).toBe(1); // Direct children only
-      expect(chars!.children).toHaveLength(2); // Townsfolk, Outsiders
+      expect(chars?.assetCount).toBe(1); // Direct children only
+      expect(chars?.children).toHaveLength(2); // Townsfolk, Outsiders
 
-      const townsfolk = chars!.children.find((n) => n.name === 'Townsfolk');
+      const townsfolk = chars?.children.find((n) => n.name === 'Townsfolk');
       expect(townsfolk).toBeDefined();
-      expect(townsfolk!.assetCount).toBe(2);
-      expect(townsfolk!.path).toBe('Characters/Townsfolk');
+      expect(townsfolk?.assetCount).toBe(2);
+      expect(townsfolk?.path).toBe('Characters/Townsfolk');
     });
 
     it('should return empty array for no folders', () => {

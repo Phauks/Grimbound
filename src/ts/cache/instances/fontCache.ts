@@ -251,10 +251,3 @@ export function clearFontCache(): void {
 export function getFontCacheStats() {
   return fontCache.getStats();
 }
-
-export default {
-  fontCache,
-  getCachedFont,
-  clearFontCache,
-  getFontCacheStats,
-};

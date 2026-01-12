@@ -60,11 +60,7 @@ export const CONFIG: Config = {
 
   // Style Defaults
   STYLE: {
-    ACCENT_GENERATION: 'classic',
-    MAXIMUM_ACCENTS: 5,
-    ACCENT_POPULATION_PROBABILITY: 30,
-    ACCENT_ARC_SPAN: 120,
-    ACCENT_SLOTS: 7,
+    ACCENT_GENERATION: 'classic', // Default accent style
     SETUP_STYLE: 'setup_flower_1',
     REMINDER_BACKGROUND: '#6C3BAA',
     CHARACTER_BACKGROUND: 'character_background_1',
@@ -179,6 +175,7 @@ export const CONFIG: Config = {
     IMAGES: `${import.meta.env.BASE_URL}images/`,
     CHARACTER_BACKGROUNDS: `${import.meta.env.BASE_URL}images/character_background/`,
     SETUP_OVERLAYS: `${import.meta.env.BASE_URL}images/setup_overlays/`,
+    SCRIPT_BACKGROUNDS: `${import.meta.env.BASE_URL}images/script_backgrounds/`,
     ACCENTS: `${import.meta.env.BASE_URL}images/`,
   },
 

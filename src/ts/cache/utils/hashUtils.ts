@@ -99,26 +99,89 @@ export function combineHashes(hashes: string[]): string {
  * Hash generation options into a cache key component.
  * Used to detect when options change and cached tokens are stale.
  *
- * Only hashes the options that affect visual token appearance.
+ * Hashes all options that affect visual token appearance.
  *
  * @param options - Generation options object
  * @returns Hash as base-36 string
  */
 export function hashGenerationOptions(options: GenerationOptions): string {
-  // Only hash options that affect visual appearance
+  // Hash all options that affect visual appearance
   const key = JSON.stringify({
+    // Basic display options
     displayAbilityText: options.displayAbilityText,
     generateBootleggerRules: options.generateBootleggerRules,
     tokenCount: options.tokenCount,
+    reminderCountStyle: options.reminderCountStyle,
+    reminderCountUniformLayout: options.reminderCountUniformLayout,
+
+    // Setup overlay
     setupStyle: options.setupStyle,
     setupPlacement: options.setupPlacement,
+
+    // Character background settings
     characterBackground: options.characterBackground,
+    characterBackgroundColor: options.characterBackgroundColor,
     characterBackgroundType: options.characterBackgroundType,
+    characterBackgroundStyle: options.characterBackgroundStyle,
+
+    // Reminder background settings
     reminderBackground: options.reminderBackground,
+    reminderBackgroundImage: options.reminderBackgroundImage,
     reminderBackgroundType: options.reminderBackgroundType,
+    reminderBackgroundStyle: options.reminderBackgroundStyle,
+
+    // Meta background settings
+    metaBackground: options.metaBackground,
+    metaBackgroundColor: options.metaBackgroundColor,
+    metaBackgroundType: options.metaBackgroundType,
+    metaBackgroundStyle: options.metaBackgroundStyle,
+
+    // Character fonts and colors
     characterNameFont: options.characterNameFont,
+    characterNameColor: options.characterNameColor,
     characterReminderFont: options.characterReminderFont,
+    reminderTextColor: options.reminderTextColor,
+    abilityTextFont: options.abilityTextFont,
+    abilityTextColor: options.abilityTextColor,
+
+    // Meta fonts and colors
+    metaNameFont: options.metaNameFont,
+    metaNameColor: options.metaNameColor,
+    metaTextFont: options.metaTextFont,
+    metaTextColor: options.metaTextColor,
+
+    // Font styling options
+    fontSpacing: options.fontSpacing,
+    textShadow: options.textShadow,
+    fontSizes: options.fontSizes,
+    textRenderStyles: options.textRenderStyles,
+    textStrokeColors: options.textStrokeColors,
+    textStrokeWidths: options.textStrokeWidths,
+    textLocations: options.textLocations,
+
+    // Icon settings
+    iconSettings: options.iconSettings,
+
+    // Accent settings (deterministic based on character data)
     accentGeneration: options.accentGeneration,
+    accentEnabled: options.accentEnabled,
+    accentRadialOffset: options.accentRadialOffset,
+    accentRotate180: options.accentRotate180,
+    accentFlip: options.accentFlip,
+    accentLayer: options.accentLayer,
+
+    // QR code options (for almanac token)
+    qrCodeOptions: options.qrCodeOptions,
+
+    // Meta token settings
+    hideScriptNameAuthor: options.hideScriptNameAuthor,
+    bootleggerIconType: options.bootleggerIconType,
+    bootleggerNormalizeIcons: options.bootleggerNormalizeIcons,
+    bootleggerHideName: options.bootleggerHideName,
+    jinxIconSpacing: options.jinxIconSpacing,
+
+    // Logo for meta tokens
+    logoUrl: options.logoUrl,
   });
   return simpleHash(key);
 }
