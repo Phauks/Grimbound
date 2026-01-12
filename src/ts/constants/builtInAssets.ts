@@ -9,6 +9,7 @@
 
 import { CONFIG } from '@/ts/config.js';
 import type { AssetType } from '@/ts/services/upload/types.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 
 // ============================================================================
 // Types
@@ -54,6 +55,20 @@ export const BUILT_IN_SETUP_OVERLAYS: BuiltInAsset[] = Array.from({ length: 7 },
 }));
 
 // ============================================================================
+// Built-in Script Backgrounds
+// ============================================================================
+
+export const BUILT_IN_SCRIPT_BACKGROUNDS: BuiltInAsset[] = [
+  {
+    id: 'script_background_1',
+    label: 'Script Background 1',
+    src: `${CONFIG.ASSETS.SCRIPT_BACKGROUNDS}script_background_1.webp`,
+    type: 'script-background' as AssetType,
+    source: 'builtin' as const,
+  },
+];
+
+// ============================================================================
 // Built-in Accent Styles
 // ============================================================================
 
@@ -73,13 +88,17 @@ export const BUILT_IN_ACCENTS: BuiltInAsset[] = [
 
 /**
  * Get all built-in assets of a specific type
+ * Accepts both legacy AssetType and new TypeTagValue
  */
-export function getBuiltInAssets(type: AssetType): BuiltInAsset[] {
+export function getBuiltInAssets(type: AssetType | TypeTagValue): BuiltInAsset[] {
   switch (type) {
     case 'token-background':
       return BUILT_IN_BACKGROUNDS;
     case 'setup-overlay':
+    case 'setup': // TypeTagValue
       return BUILT_IN_SETUP_OVERLAYS;
+    case 'script-background':
+      return BUILT_IN_SCRIPT_BACKGROUNDS;
     case 'accent':
       return BUILT_IN_ACCENTS;
     default:
@@ -89,24 +108,36 @@ export function getBuiltInAssets(type: AssetType): BuiltInAsset[] {
 
 /**
  * Check if a value represents a built-in asset
+ * Accepts both legacy AssetType and new TypeTagValue
  */
-export function isBuiltInAsset(value: string, type?: AssetType): boolean {
+export function isBuiltInAsset(value: string, type?: AssetType | TypeTagValue): boolean {
   if (!value || value === 'none') return false;
 
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
+    : [
+        ...BUILT_IN_BACKGROUNDS,
+        ...BUILT_IN_SETUP_OVERLAYS,
+        ...BUILT_IN_SCRIPT_BACKGROUNDS,
+        ...BUILT_IN_ACCENTS,
+      ];
 
   return checkAssets.some((asset) => asset.id === value);
 }
 
 /**
  * Get the file path for a built-in asset by its ID
+ * Accepts both legacy AssetType and new TypeTagValue
  */
-export function getBuiltInAssetPath(id: string, type?: AssetType): string | null {
+export function getBuiltInAssetPath(id: string, type?: AssetType | TypeTagValue): string | null {
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
+    : [
+        ...BUILT_IN_BACKGROUNDS,
+        ...BUILT_IN_SETUP_OVERLAYS,
+        ...BUILT_IN_SCRIPT_BACKGROUNDS,
+        ...BUILT_IN_ACCENTS,
+      ];
 
   const asset = checkAssets.find((a) => a.id === id);
   return asset?.src ?? null;
@@ -114,19 +145,26 @@ export function getBuiltInAssetPath(id: string, type?: AssetType): string | null
 
 /**
  * Get a built-in asset by its ID
+ * Accepts both legacy AssetType and new TypeTagValue
  */
-export function getBuiltInAsset(id: string, type?: AssetType): BuiltInAsset | null {
+export function getBuiltInAsset(id: string, type?: AssetType | TypeTagValue): BuiltInAsset | null {
   const checkAssets = type
     ? getBuiltInAssets(type)
-    : [...BUILT_IN_BACKGROUNDS, ...BUILT_IN_SETUP_OVERLAYS, ...BUILT_IN_ACCENTS];
+    : [
+        ...BUILT_IN_BACKGROUNDS,
+        ...BUILT_IN_SETUP_OVERLAYS,
+        ...BUILT_IN_SCRIPT_BACKGROUNDS,
+        ...BUILT_IN_ACCENTS,
+      ];
 
   return checkAssets.find((a) => a.id === id) ?? null;
 }
 
 /**
  * Get the display label for an asset value (built-in or asset reference)
+ * Accepts both legacy AssetType and new TypeTagValue
  */
-export function getAssetLabel(value: string, type?: AssetType): string {
+export function getAssetLabel(value: string, type?: AssetType | TypeTagValue): string {
   if (!value || value === 'none') return 'None';
 
   const asset = getBuiltInAsset(value, type);
@@ -135,4 +173,53 @@ export function getAssetLabel(value: string, type?: AssetType): string {
   // For asset references, return a generic label
   // The actual label should be fetched from the asset manager
   return 'Custom Asset';
+}
+
+// ============================================================================
+// Virtual Folder Structure for Built-in Assets
+// ============================================================================
+
+/** Prefix for built-in virtual folders */
+export const BUILTIN_FOLDER_PREFIX = '__builtin__';
+
+/** Built-in virtual folder definitions */
+export const BUILTIN_FOLDERS = {
+  BACKGROUNDS: `${BUILTIN_FOLDER_PREFIX}/Backgrounds`,
+  SETUP_OVERLAYS: `${BUILTIN_FOLDER_PREFIX}/Setup Overlays`,
+  SCRIPT_BACKGROUNDS: `${BUILTIN_FOLDER_PREFIX}/Script Backgrounds`,
+  ACCENTS: `${BUILTIN_FOLDER_PREFIX}/Accents`,
+} as const;
+
+/** All built-in virtual folder paths */
+export const ALL_BUILTIN_FOLDERS = [
+  BUILTIN_FOLDERS.BACKGROUNDS,
+  BUILTIN_FOLDERS.SETUP_OVERLAYS,
+  BUILTIN_FOLDERS.SCRIPT_BACKGROUNDS,
+  BUILTIN_FOLDERS.ACCENTS,
+] as const;
+
+/**
+ * Check if a folder path is a built-in virtual folder
+ */
+export function isBuiltInFolder(folder: string | null): boolean {
+  if (!folder) return false;
+  return folder.startsWith(BUILTIN_FOLDER_PREFIX);
+}
+
+/**
+ * Get built-in assets for a virtual folder path
+ */
+export function getBuiltInAssetsForFolder(folder: string): BuiltInAsset[] {
+  switch (folder) {
+    case BUILTIN_FOLDERS.BACKGROUNDS:
+      return BUILT_IN_BACKGROUNDS;
+    case BUILTIN_FOLDERS.SETUP_OVERLAYS:
+      return BUILT_IN_SETUP_OVERLAYS;
+    case BUILTIN_FOLDERS.SCRIPT_BACKGROUNDS:
+      return BUILT_IN_SCRIPT_BACKGROUNDS;
+    case BUILTIN_FOLDERS.ACCENTS:
+      return BUILT_IN_ACCENTS;
+    default:
+      return [];
+  }
 }

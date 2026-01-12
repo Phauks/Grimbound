@@ -6,7 +6,7 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { FormGroup, Input } from '@/components/Shared/Form';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
@@ -70,54 +70,48 @@ export function SavePresetModal({
   };
 
   // Drag and drop handlers
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (onImport) setIsDragging(true);
-    },
-    [onImport]
-  );
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onImport) setIsDragging(true);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
     }
-  }, []);
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-      setLocalError(null);
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    setLocalError(null);
 
-      if (!onImport) return;
+    if (!onImport) return;
 
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        const file = files[0];
-        if (file.type === 'application/json' || file.name.endsWith('.json')) {
-          try {
-            await onImport(file);
-          } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to import preset';
-            setLocalError(message);
-          }
-        } else {
-          setLocalError('Please drop a JSON file');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === 'application/json' || file.name.endsWith('.json')) {
+        try {
+          await onImport(file);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to import preset';
+          setLocalError(message);
         }
+      } else {
+        setLocalError('Please drop a JSON file');
       }
-    },
-    [onImport]
-  );
+    }
+  };
 
   const displayError = localError || importError;
 

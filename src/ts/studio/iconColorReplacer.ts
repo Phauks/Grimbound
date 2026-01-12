@@ -55,7 +55,7 @@ function buildTeamColorPresets(): TeamColorPreset[] {
     'outsider',
     'minion',
     'demon',
-    'traveler',
+    'traveller',
     'fabled',
     'loric',
   ];

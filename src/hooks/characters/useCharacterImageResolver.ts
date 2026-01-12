@@ -52,6 +52,7 @@ export function useCharacterImageResolver({
   const [isLoading, setIsLoading] = useState(false);
 
   // Build a map of official character data for image fallback lookup
+  // useMemo required: used to compute enrichedCharacters which is a useEffect dependency
   const officialCharMap = useMemo(() => {
     const map = new Map<string, Character>();
     for (const char of officialData) {
@@ -63,24 +64,29 @@ export function useCharacterImageResolver({
   }, [officialData]);
 
   // Enrich characters with fallback images from official data before resolution
-  const enrichedCharacters = useMemo(() => {
-    return characters.map((char) => {
-      // If character already has an image, use it as-is
-      const existingImage = getFirstImageUrl(char.image as string | string[] | undefined);
-      if (existingImage) return char;
+  // useMemo required: used as useEffect dependency
+  const enrichedCharacters = useMemo(
+    () =>
+      characters.map((char) => {
+        // If character already has an image, use it as-is
+        const existingImage = getFirstImageUrl(char.image as string | string[] | undefined);
+        if (existingImage) return char;
 
-      // Try to get image from official character data
-      const officialChar = officialCharMap.get(char.id.toLowerCase());
-      if (officialChar) {
-        const officialImage = getFirstImageUrl(officialChar.image as string | string[] | undefined);
-        if (officialImage) {
-          return { ...char, image: officialImage };
+        // Try to get image from official character data
+        const officialChar = officialCharMap.get(char.id.toLowerCase());
+        if (officialChar) {
+          const officialImage = getFirstImageUrl(
+            officialChar.image as string | string[] | undefined
+          );
+          if (officialImage) {
+            return { ...char, image: officialImage };
+          }
         }
-      }
 
-      return char;
-    });
-  }, [characters, officialCharMap]);
+        return char;
+      }),
+    [characters, officialCharMap]
+  );
 
   // Resolve character images using SSOT utility
   useEffect(() => {

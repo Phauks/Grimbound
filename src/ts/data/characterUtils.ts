@@ -299,18 +299,3 @@ export function isIdLinkedToName(character: Character): boolean {
   const expectedId = nameToId(character.name);
   return character.id === expectedId;
 }
-
-export default {
-  validateCharacter,
-  getCharacterImageUrl,
-  getAllCharacterImageUrls,
-  countReminders,
-  getGlobalReminders,
-  groupByTeam,
-  calculateTokenCounts,
-  getBestPreviewCharacter,
-  createCharacterTemplate,
-  isIdLinkedToName,
-  SAVE_DEBOUNCE_MS,
-  HOVER_DELAY_MS,
-};

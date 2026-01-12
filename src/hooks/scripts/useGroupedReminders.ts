@@ -8,7 +8,7 @@
  * @module hooks/scripts/useGroupedReminders
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 /**
  * A grouped reminder combines duplicate text entries with a count
@@ -105,87 +105,76 @@ export function useGroupedReminders({
 }: UseGroupedRemindersOptions): UseGroupedRemindersResult {
   const [reminders, setReminders] = useState<string[]>(initialReminders);
 
-  // Sync with external changes
-  useEffect(() => {
+  // Track previous prop for render-time comparison (React's recommended pattern)
+  const [prevInitialReminders, setPrevInitialReminders] = useState(initialReminders);
+
+  // Sync during render when prop changes (faster than useEffect)
+  if (initialReminders !== prevInitialReminders) {
+    setPrevInitialReminders(initialReminders);
     setReminders(initialReminders);
-  }, [initialReminders]);
+  }
 
-  const grouped = useMemo(() => groupReminders(reminders), [reminders]);
+  const grouped = groupReminders(reminders);
 
-  const updateReminders = useCallback(
-    (newReminders: string[]) => {
-      setReminders(newReminders);
-      onChange(newReminders);
-    },
-    [onChange]
-  );
+  const updateReminders = (newReminders: string[]) => {
+    setReminders(newReminders);
+    onChange(newReminders);
+  };
 
-  const updateText = useCallback(
-    (oldText: string, newText: string) => {
-      if (disabled) return;
-      const updated = reminders.map((r) => (r === oldText ? newText : r));
-      updateReminders(updated);
-    },
-    [reminders, updateReminders, disabled]
-  );
+  const updateText = (oldText: string, newText: string) => {
+    if (disabled) return;
+    const updated = reminders.map((r) => (r === oldText ? newText : r));
+    updateReminders(updated);
+  };
 
-  const updateCount = useCallback(
-    (text: string, newCount: number) => {
-      if (disabled) return;
+  const updateCount = (text: string, newCount: number) => {
+    if (disabled) return;
 
-      // Clamp count between 1 and 20
-      const clampedCount = Math.max(1, Math.min(20, newCount));
-      const currentCount = reminders.filter((r) => r === text).length;
+    // Clamp count between 1 and 20
+    const clampedCount = Math.max(1, Math.min(20, newCount));
+    const currentCount = reminders.filter((r) => r === text).length;
 
-      if (clampedCount === currentCount) return;
+    if (clampedCount === currentCount) return;
 
-      let updated: string[];
-      if (clampedCount > currentCount) {
-        // Add more instances at the end
-        const toAdd = clampedCount - currentCount;
-        updated = [...reminders, ...new Array(toAdd).fill(text)];
-      } else {
-        // Remove instances from the end
-        let removeCount = currentCount - clampedCount;
-        updated = [];
-        const reversed = [...reminders].reverse();
-        for (const r of reversed) {
-          if (r === text && removeCount > 0) {
-            removeCount--;
-          } else {
-            updated.unshift(r);
-          }
+    let updated: string[];
+    if (clampedCount > currentCount) {
+      // Add more instances at the end
+      const toAdd = clampedCount - currentCount;
+      updated = [...reminders, ...new Array(toAdd).fill(text)];
+    } else {
+      // Remove instances from the end
+      let removeCount = currentCount - clampedCount;
+      updated = [];
+      const reversed = [...reminders].reverse();
+      for (const r of reversed) {
+        if (r === text && removeCount > 0) {
+          removeCount--;
+        } else {
+          updated.unshift(r);
         }
       }
+    }
 
-      updateReminders(updated);
-    },
-    [reminders, updateReminders, disabled]
-  );
+    updateReminders(updated);
+  };
 
-  const remove = useCallback(
-    (text: string) => {
-      if (disabled) return;
-      const updated = reminders.filter((r) => r !== text);
-      updateReminders(updated);
-    },
-    [reminders, updateReminders, disabled]
-  );
+  const remove = (text: string) => {
+    if (disabled) return;
+    const updated = reminders.filter((r) => r !== text);
+    updateReminders(updated);
+  };
 
-  const add = useCallback(() => {
+  const add = () => {
     if (disabled) return;
     const updated = [...reminders, ''];
     updateReminders(updated);
-  }, [reminders, updateReminders, disabled]);
+  };
 
-  const reorder = useCallback(
-    (newGrouped: GroupedReminder[]) => {
-      if (disabled) return;
-      const updated = ungroupReminders(newGrouped);
-      updateReminders(updated);
-    },
-    [updateReminders, disabled]
-  );
+  const reorder = (newGrouped: GroupedReminder[]) => {
+    if (disabled) return;
+    const updated = ungroupReminders(newGrouped);
+    updateReminders(updated);
+  };
 
   return {
     grouped,
@@ -197,5 +186,3 @@ export function useGroupedReminders({
     reorder,
   };
 }
-
-export default useGroupedReminders;

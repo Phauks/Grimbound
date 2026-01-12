@@ -17,8 +17,8 @@
    ======================================== */
 
 :root {
-  /* View container height (viewport minus header and tabs) */
-  --view-height: calc(100vh - var(--header-height) - var(--tab-height));
+  /* View container height (viewport minus header, tabs, and footer) */
+  --view-height: calc(100vh - var(--header-height) - var(--tab-height) - var(--footer-height));
 
   /* Sidebar width configuration */
   --sidebar-width-left: 350px;
@@ -103,6 +103,35 @@
   border-right: 1px solid var(--border-color);
   position: relative;
   z-index: 900;
+}
+
+/* ========================================
+   Resizable Sidebar Handle
+   ======================================== */
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 910;
+  transition: background-color var(--transition-fast);
+}
+
+.resizeHandle:hover,
+.resizeHandle.dragging {
+  background-color: var(--color-primary);
+}
+
+/* Position handle on right edge for left sidebar */
+.resizeHandleRight {
+  right: -3px;
+}
+
+/* Position handle on left edge for right sidebar */
+.resizeHandleLeft {
+  left: -3px;
 }
 
 .sidebarRight {

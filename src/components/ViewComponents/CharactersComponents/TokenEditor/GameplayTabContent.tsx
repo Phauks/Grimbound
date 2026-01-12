@@ -27,13 +27,14 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useDraggableList, useGroupedReminders } from '@/hooks/index.js';
 import { useResolvedImageUrls } from '@/hooks/sync/useResolvedImageUrls';
 import { useAutoResizeTextarea } from '@/hooks/ui/useAutoResizeTextarea';
 import { useControlledField } from '@/hooks/ui/useControlledField';
+import { useDebouncedCallback } from '@/hooks/ui/useDebouncedCallback';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
 import { TIMING } from '@/ts/constants.js';
@@ -117,78 +118,66 @@ function useImageUrls({
     setPreviewVariantIndex(null);
   }, [initialImages, currentKey]);
 
-  const handleImageUpdate = useCallback(
-    (index: number, value: string) => {
-      if (isOfficial) return;
-      setLocalImages((prev) => {
-        const newImages = [...prev];
-        newImages[index] = value;
-        return newImages;
-      });
-      const updatedImages = localImages.map((img, i) => (i === index ? value : img));
-      debouncedImageUpdate(normalizeImageValue(updatedImages));
-    },
-    [isOfficial, localImages, debouncedImageUpdate]
-  );
+  const handleImageUpdate = (index: number, value: string) => {
+    if (isOfficial) return;
+    setLocalImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = value;
+      return newImages;
+    });
+    const updatedImages = localImages.map((img, i) => (i === index ? value : img));
+    debouncedImageUpdate(normalizeImageValue(updatedImages));
+  };
 
-  const handleImageBlur = useCallback(() => {
+  const handleImageBlur = () => {
     if (isOfficial) return;
     onEditChange('image', normalizeImageValue(localImages));
-  }, [isOfficial, localImages, onEditChange]);
+  };
 
-  const handleImagePreview = useCallback(
-    (index: number, url: string) => {
-      if (!onPreviewVariant) return;
-      setPreviewVariantIndex(index);
-      onPreviewVariant(url);
-    },
-    [onPreviewVariant]
-  );
+  const handleImagePreview = (index: number, url: string) => {
+    if (!onPreviewVariant) return;
+    setPreviewVariantIndex(index);
+    onPreviewVariant(url);
+  };
 
-  const handleAddImage = useCallback(() => {
+  const handleAddImage = () => {
     if (isOfficial) return;
     const newImages = [...localImages, ''];
     setLocalImages(newImages);
     onEditChange('image', newImages);
-  }, [isOfficial, localImages, onEditChange]);
+  };
 
-  const handleRemoveImage = useCallback(
-    (index: number) => {
-      if (isOfficial) return;
-      const isLastImage = localImages.length <= 1;
-      if (isLastImage) {
-        setLocalImages(['']);
-        onEditChange('image', '');
-        return;
-      }
-      const newImages = localImages.filter((_, i) => i !== index);
-      setLocalImages(newImages);
-      onEditChange('image', normalizeImageValue(newImages));
-    },
-    [isOfficial, localImages, onEditChange]
-  );
+  const handleRemoveImage = (index: number) => {
+    if (isOfficial) return;
+    const isLastImage = localImages.length <= 1;
+    if (isLastImage) {
+      setLocalImages(['']);
+      onEditChange('image', '');
+      return;
+    }
+    const newImages = localImages.filter((_, i) => i !== index);
+    setLocalImages(newImages);
+    onEditChange('image', normalizeImageValue(newImages));
+  };
 
-  const handleRefreshImages = useCallback(() => {
+  const handleRefreshImages = () => {
     if (isOfficial) return;
     onEditChange('image', normalizeImageValue(localImages));
     onRefreshPreview?.();
-  }, [isOfficial, localImages, onEditChange, onRefreshPreview]);
+  };
 
-  const handleAssetSelection = useCallback(
-    (index: number, assetRef: string) => {
-      if (isOfficial) return;
-      // assetRef is already in "asset:uuid" format from useAssetSelection hook
-      setLocalImages((prev) => {
-        const newImages = [...prev];
-        newImages[index] = assetRef;
-        return newImages;
-      });
-      // Update immediately (no debounce for explicit selection)
-      const updatedImages = localImages.map((img, i) => (i === index ? assetRef : img));
-      onEditChange('image', normalizeImageValue(updatedImages));
-    },
-    [isOfficial, localImages, onEditChange]
-  );
+  const handleAssetSelection = (index: number, assetRef: string) => {
+    if (isOfficial) return;
+    // assetRef is already in "asset:uuid" format from useAssetSelection hook
+    setLocalImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = assetRef;
+      return newImages;
+    });
+    // Update immediately (no debounce for explicit selection)
+    const updatedImages = localImages.map((img, i) => (i === index ? assetRef : img));
+    onEditChange('image', normalizeImageValue(updatedImages));
+  };
 
   return {
     localImages,
@@ -238,25 +227,26 @@ function useNightOrderField(
   const [orderValue, setOrderValue] = useState(initialOrder);
   const lastSentOrderRef = useRef<number>(initialOrder);
 
-  // Sync order with prop changes
-  useEffect(() => {
+  // Track previous prop for render-time comparison (React's recommended pattern)
+  const [prevInitialOrder, setPrevInitialOrder] = useState(initialOrder);
+
+  // Sync order during render when prop changes (faster than useEffect)
+  if (initialOrder !== prevInitialOrder) {
+    setPrevInitialOrder(initialOrder);
     if (initialOrder !== lastSentOrderRef.current) {
       setOrderValue(initialOrder);
       lastSentOrderRef.current = initialOrder;
     }
-  }, [initialOrder]);
+  }
 
-  const onOrderChange = useCallback((value: number) => {
+  const onOrderChange = (value: number) => {
     setOrderValue(value);
-  }, []);
+  };
 
-  const onOrderBlur = useCallback(
-    (value: number) => {
-      lastSentOrderRef.current = value;
-      onEditChange(orderField, value);
-    },
-    [onEditChange, orderField]
-  );
+  const onOrderBlur = (value: number) => {
+    lastSentOrderRef.current = value;
+    onEditChange(orderField, value);
+  };
 
   return {
     reminderValue: reminder.localValue,
@@ -338,7 +328,7 @@ function useIdentityFields({
     }
   }, [character.id]);
 
-  const handleToggleIdLink = useCallback(() => {
+  const handleToggleIdLink = () => {
     if (isOfficial) return;
 
     // If turning link OFF, always allow
@@ -371,106 +361,78 @@ function useIdentityFields({
       lastSentIdRef.current = nameBasedId;
       onIdLinkChange(true);
     }
-  }, [
-    isOfficial,
-    isIdLinked,
-    onIdLinkChange,
-    character,
-    scriptCharacters,
-    addToast,
-    onReplaceCharacter,
-  ]);
+  };
 
-  const updateNameWithIdLink = useCallback(
-    (newName: string) => {
-      if (isIdLinked && onReplaceCharacter) {
-        // Get other character IDs (excluding current character)
-        const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
-        const proposedId = nameToId(newName);
-
-        // Ensure unique ID
-        const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(proposedId, otherIds);
-
-        // Update local ID state to reflect the unique ID
-        setLocalId(uniqueId);
-        lastSentNameRef.current = newName;
-        lastSentIdRef.current = uniqueId;
-
-        // Replace character with unique ID
-        onReplaceCharacter({ ...character, name: newName, id: uniqueId });
-
-        // Show toast if renamed
-        if (wasRenamed) {
-          addToast(`ID '${originalId}' already in use, renamed to '${uniqueId}'`, 'info');
-          // Break ID link since we had to modify the ID
-          onIdLinkChange(false);
-        }
-        return;
-      }
-      lastSentNameRef.current = newName;
-      onEditChange('name', newName);
-    },
-    [
-      isIdLinked,
-      onReplaceCharacter,
-      character,
-      onEditChange,
-      scriptCharacters,
-      addToast,
-      onIdLinkChange,
-    ]
-  );
-
-  const handleRandomName = useCallback(() => {
-    if (isOfficial) return;
-    const newName = generateRandomName();
-    name.handleChange(newName);
-    updateNameWithIdLink(newName);
-  }, [isOfficial, name, updateNameWithIdLink]);
-
-  const handleNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      name.handleChange(e.target.value);
-    },
-    [name]
-  );
-
-  const handleNameBlur = useCallback(() => {
-    if (isOfficial) return;
-    // On blur, handle ID linking if enabled
-    updateNameWithIdLink(name.localValue);
-  }, [isOfficial, name.localValue, updateNameWithIdLink]);
-
-  const handleIdChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (isIdLinked || isOfficial) return;
-
-      const proposedId = e.target.value;
-
+  const updateNameWithIdLink = (newName: string) => {
+    if (isIdLinked && onReplaceCharacter) {
       // Get other character IDs (excluding current character)
       const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
+      const proposedId = nameToId(newName);
 
       // Ensure unique ID
       const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(proposedId, otherIds);
 
+      // Update local ID state to reflect the unique ID
       setLocalId(uniqueId);
+      lastSentNameRef.current = newName;
       lastSentIdRef.current = uniqueId;
-      onEditChange('id', uniqueId);
+
+      // Replace character with unique ID
+      onReplaceCharacter({ ...character, name: newName, id: uniqueId });
 
       // Show toast if renamed
       if (wasRenamed) {
         addToast(`ID '${originalId}' already in use, renamed to '${uniqueId}'`, 'info');
+        // Break ID link since we had to modify the ID
+        onIdLinkChange(false);
       }
-    },
-    [isIdLinked, isOfficial, onEditChange, scriptCharacters, character.uuid, addToast]
-  );
+      return;
+    }
+    lastSentNameRef.current = newName;
+    onEditChange('name', newName);
+  };
 
-  const handleTeamChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      if (!isOfficial) onEditChange('team', e.target.value);
-    },
-    [isOfficial, onEditChange]
-  );
+  const handleRandomName = () => {
+    if (isOfficial) return;
+    const newName = generateRandomName();
+    name.handleChange(newName);
+    updateNameWithIdLink(newName);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    name.handleChange(e.target.value);
+  };
+
+  const handleNameBlur = () => {
+    if (isOfficial) return;
+    // On blur, handle ID linking if enabled
+    updateNameWithIdLink(name.localValue);
+  };
+
+  const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isIdLinked || isOfficial) return;
+
+    const proposedId = e.target.value;
+
+    // Get other character IDs (excluding current character)
+    const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
+
+    // Ensure unique ID
+    const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(proposedId, otherIds);
+
+    setLocalId(uniqueId);
+    lastSentIdRef.current = uniqueId;
+    onEditChange('id', uniqueId);
+
+    // Show toast if renamed
+    if (wasRenamed) {
+      addToast(`ID '${originalId}' already in use, renamed to '${uniqueId}'`, 'info');
+    }
+  };
+
+  const handleTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!isOfficial) onEditChange('team', e.target.value);
+  };
 
   return {
     localName: name.localValue,
@@ -523,10 +485,7 @@ function useAbilityField({
   });
 
   // Split ability text when setup is enabled
-  const abilitySplit = useMemo(() => {
-    if (!character.setup) return null;
-    return splitAbilityText(ability.localValue);
-  }, [ability.localValue, character.setup]);
+  const abilitySplit = character.setup ? splitAbilityText(ability.localValue) : null;
 
   // Display value for ability textarea (without brackets when setup enabled)
   const displayAbility =
@@ -539,64 +498,70 @@ function useAbilityField({
     minRows: 3,
   });
 
-  // Sync setup text with split when setup is enabled
-  useEffect(() => {
+  // Track previous abilitySplit for render-time comparison (React's recommended pattern)
+  const [prevAbilitySplitJson, setPrevAbilitySplitJson] = useState(() =>
+    JSON.stringify(abilitySplit)
+  );
+
+  // Sync setup text during render when abilitySplit changes (faster than useEffect)
+  const abilitySplitJson = JSON.stringify(abilitySplit);
+  if (abilitySplitJson !== prevAbilitySplitJson) {
+    setPrevAbilitySplitJson(abilitySplitJson);
     if (abilitySplit) {
       setLocalSetupText(abilitySplit.setupContent);
     }
-  }, [abilitySplit]);
+  }
 
-  // Auto-detect setup text
-  useEffect(() => {
+  /**
+   * Auto-detect setup brackets in ability text
+   * Called on blur to avoid mid-typing interruptions
+   */
+  const autoDetectSetup = (abilityText: string) => {
     if (isOfficial) return;
-    const hasSetup = hasSetupBrackets(ability.localValue);
+    const hasSetup = hasSetupBrackets(abilityText);
     if (hasSetup && !character.setup) {
       onEditChange('setup', true);
-      const split = splitAbilityText(ability.localValue);
+      const split = splitAbilityText(abilityText);
       setLocalSetupText(split.setupContent);
     }
-  }, [ability.localValue, character.setup, isOfficial, onEditChange]);
+  };
 
-  const handleAbilityChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      if (isOfficial) return;
-      const newAbilityPart = e.target.value;
+  const handleAbilityChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (isOfficial) return;
+    const newAbilityPart = e.target.value;
 
-      if (character.setup && localSetupText) {
-        const combined = combineAbilityWithSetup(newAbilityPart, localSetupText);
-        ability.handleChange(combined);
-      } else {
-        ability.handleChange(newAbilityPart);
-      }
-    },
-    [isOfficial, character.setup, localSetupText, ability]
-  );
+    if (character.setup && localSetupText) {
+      const combined = combineAbilityWithSetup(newAbilityPart, localSetupText);
+      ability.handleChange(combined);
+    } else {
+      ability.handleChange(newAbilityPart);
+    }
+  };
 
-  const handleAbilityBlur = useCallback(() => {
+  const handleAbilityBlur = () => {
     if (isOfficial) return;
     if (character.setup && localSetupText) {
       const combined = combineAbilityWithSetup(displayAbility, localSetupText);
       ability.handleChange(combined);
     }
     ability.handleBlur();
-  }, [isOfficial, character.setup, localSetupText, displayAbility, ability]);
+    // Auto-detect setup brackets on blur (moved from useEffect to event handler)
+    autoDetectSetup(ability.localValue);
+  };
 
-  const handleSetupTextChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (isOfficial) return;
-      const newSetupText = e.target.value;
-      setLocalSetupText(newSetupText);
+  const handleSetupTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isOfficial) return;
+    const newSetupText = e.target.value;
+    setLocalSetupText(newSetupText);
 
-      const combined = combineAbilityWithSetup(
-        abilitySplit?.abilityWithoutSetup || ability.localValue,
-        newSetupText
-      );
-      ability.handleChange(combined);
-    },
-    [isOfficial, abilitySplit, ability]
-  );
+    const combined = combineAbilityWithSetup(
+      abilitySplit?.abilityWithoutSetup || ability.localValue,
+      newSetupText
+    );
+    ability.handleChange(combined);
+  };
 
-  const handleSetupTextBlur = useCallback(() => {
+  const handleSetupTextBlur = () => {
     if (isOfficial) return;
     const combined = combineAbilityWithSetup(
       abilitySplit?.abilityWithoutSetup || ability.localValue,
@@ -604,31 +569,28 @@ function useAbilityField({
     );
     ability.handleChange(combined);
     ability.handleBlur();
-  }, [isOfficial, abilitySplit, ability, localSetupText]);
+  };
 
-  const handleSetupChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (isOfficial) return;
-      const newSetupValue = e.target.checked;
-      onEditChange('setup', newSetupValue);
+  const handleSetupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isOfficial) return;
+    const newSetupValue = e.target.checked;
+    onEditChange('setup', newSetupValue);
 
-      if (newSetupValue) {
-        if (!hasSetupBrackets(ability.localValue)) {
-          const newAbility = `${ability.localValue.trim()} []`;
-          ability.handleChange(newAbility);
-          onEditChange('ability', newAbility);
-          setLocalSetupText('');
-        }
-      } else {
-        const split = splitAbilityText(ability.localValue);
-        const newAbility = split.abilityWithoutSetup.replace(/\s+/g, ' ').trim();
+    if (newSetupValue) {
+      if (!hasSetupBrackets(ability.localValue)) {
+        const newAbility = `${ability.localValue.trim()} []`;
         ability.handleChange(newAbility);
         onEditChange('ability', newAbility);
         setLocalSetupText('');
       }
-    },
-    [isOfficial, ability, onEditChange]
-  );
+    } else {
+      const split = splitAbilityText(ability.localValue);
+      const newAbility = split.abilityWithoutSetup.replace(/\s+/g, ' ').trim();
+      ability.handleChange(newAbility);
+      onEditChange('ability', newAbility);
+      setLocalSetupText('');
+    }
+  };
 
   return {
     displayAbility,
@@ -668,25 +630,23 @@ function useComputedTitles({
   localName,
   localId,
 }: UseComputedTitlesOptions): UseComputedTitlesResult {
-  return useMemo(() => {
-    const officialMsg = 'Official character - cannot edit';
-    return {
-      idLinkButtonTitle: isOfficial
-        ? officialMsg
-        : isIdLinked
-          ? 'ID linked to name (click to unlink)'
-          : 'ID not linked (click to link to name)',
-      idInputTitle: isOfficial
-        ? officialMsg
-        : isIdLinked
-          ? 'Unlink to edit ID manually'
-          : 'Unique identifier for this character',
-      browseAssetsTitle: isOfficial ? officialMsg : 'Browse character icons from Asset Manager',
-      refreshImagesTitle: isOfficial ? officialMsg : 'Refresh preview with current image URLs',
-      randomNameTitle: isOfficial ? officialMsg : 'Generate random name',
-      idInputValue: isIdLinked ? nameToId(localName) : localId,
-    };
-  }, [isOfficial, isIdLinked, localName, localId]);
+  const officialMsg = 'Official character - cannot edit';
+  return {
+    idLinkButtonTitle: isOfficial
+      ? officialMsg
+      : isIdLinked
+        ? 'ID linked to name (click to unlink)'
+        : 'ID not linked (click to link to name)',
+    idInputTitle: isOfficial
+      ? officialMsg
+      : isIdLinked
+        ? 'Unlink to edit ID manually'
+        : 'Unique identifier for this character',
+    browseAssetsTitle: isOfficial ? officialMsg : 'Browse character icons from Asset Manager',
+    refreshImagesTitle: isOfficial ? officialMsg : 'Refresh preview with current image URLs',
+    randomNameTitle: isOfficial ? officialMsg : 'Generate random name',
+    idInputValue: isIdLinked ? nameToId(localName) : localId,
+  };
 }
 
 // ============================================
@@ -713,26 +673,20 @@ function useAssetModal({
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [assetModalTargetIndex, setAssetModalTargetIndex] = useState(0);
 
-  const handleOpenAssetModal = useCallback(
-    (index: number) => {
-      if (isOfficial) return;
-      setAssetModalTargetIndex(index);
-      setShowAssetModal(true);
-    },
-    [isOfficial]
-  );
+  const handleOpenAssetModal = (index: number) => {
+    if (isOfficial) return;
+    setAssetModalTargetIndex(index);
+    setShowAssetModal(true);
+  };
 
-  const handleAssetModalSelect = useCallback(
-    (assetId: string) => {
-      onAssetSelection(assetModalTargetIndex, assetId);
-      setShowAssetModal(false);
-    },
-    [assetModalTargetIndex, onAssetSelection]
-  );
-
-  const handleCloseAssetModal = useCallback(() => {
+  const handleAssetModalSelect = (assetId: string) => {
+    onAssetSelection(assetModalTargetIndex, assetId);
     setShowAssetModal(false);
-  }, []);
+  };
+
+  const handleCloseAssetModal = () => {
+    setShowAssetModal(false);
+  };
 
   return {
     showAssetModal,
@@ -773,7 +727,7 @@ interface GameplayTabContentProps {
 // Main Component
 // ============================================
 
-export const GameplayTabContent = memo(function GameplayTabContent({
+export function GameplayTabContent({
   character,
   isOfficial,
   onEditChange,
@@ -802,22 +756,11 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   // Debounced Update Helper (for image URLs only - special timing)
   // ============================================
 
-  // Track timer for image debounce
-  const imageDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const debouncedImageUpdate = useCallback(
-    (value: string | string[], delay: number = TIMING.IMAGE_LOAD_DEBOUNCE) => {
-      // Cancel any pending update
-      if (imageDebounceTimerRef.current) {
-        clearTimeout(imageDebounceTimerRef.current);
-      }
-
-      imageDebounceTimerRef.current = setTimeout(() => {
-        imageDebounceTimerRef.current = null;
-        onEditChange('image', value);
-      }, delay);
+  const { debouncedFn: debouncedImageUpdate } = useDebouncedCallback(
+    (value: string | string[]) => {
+      onEditChange('image', value);
     },
-    [onEditChange]
+    { delay: TIMING.IMAGE_LOAD_DEBOUNCE }
   );
 
   // ============================================
@@ -929,10 +872,10 @@ export const GameplayTabContent = memo(function GameplayTabContent({
   );
 
   // Team styling
-  const teamClass = useMemo(() => {
+  const teamClass = (() => {
     const classKey = TEAM_SELECT_CLASS_MAP[character.team];
     return classKey ? styles[classKey] : '';
-  }, [character.team]);
+  })();
 
   // ============================================
   // Computed Titles (extracted hook)
@@ -1288,13 +1231,11 @@ export const GameplayTabContent = memo(function GameplayTabContent({
           isOpen={assetModal.showAssetModal}
           onClose={assetModal.handleCloseAssetModal}
           onSelectAsset={assetModal.handleAssetModalSelect}
-          initialAssetType="character-icon"
+          initialAssetType="icon"
           selectionMode={true}
           includeBuiltIn={false}
         />
       )}
     </div>
   );
-});
-
-export default GameplayTabContent;
+}

@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { useState } from 'react';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import { OptionGroup } from '@/components/Shared/UI/OptionGroup';
@@ -13,7 +13,7 @@ interface ReminderTabProps {
 
 type SubTabType = 'background' | 'text';
 
-export const ReminderTab = memo(({ generationOptions, onOptionChange }: ReminderTabProps) => {
+export function ReminderTab({ generationOptions, onOptionChange }: ReminderTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('background');
 
   const handleFontSpacingChange = (type: string, value: number) => {
@@ -183,6 +183,4 @@ export const ReminderTab = memo(({ generationOptions, onOptionChange }: Reminder
       </div>
     </div>
   );
-});
-
-ReminderTab.displayName = 'ReminderTab';
+}

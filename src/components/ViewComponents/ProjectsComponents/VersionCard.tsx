@@ -5,7 +5,6 @@
  * Shows whether the version matches the current project state.
  */
 
-import { useMemo } from 'react';
 import { Button } from '@/components/Shared/UI/Button';
 import styles from '@/styles/components/projects/VersionCard.module.css';
 import type { Project, ProjectVersion } from '@/ts/types/project';
@@ -28,7 +27,7 @@ export function VersionCard({
   onRestore,
 }: VersionCardProps) {
   // Check if this version matches the current project state
-  const isCurrent = useMemo(() => {
+  const isCurrent = (() => {
     // Simple comparison: compare the JSON stringified states
     // This is a basic check - could be enhanced with deep comparison
     try {
@@ -38,10 +37,10 @@ export function VersionCard({
     } catch {
       return false;
     }
-  }, [version.stateSnapshot, project.state]);
+  })();
 
   // Format timestamp
-  const formattedDate = useMemo(() => {
+  const formattedDate = (() => {
     const date = new Date(version.createdAt);
     const now = Date.now();
     const diff = now - version.createdAt;
@@ -77,17 +76,17 @@ export function VersionCard({
       hour: 'numeric',
       minute: '2-digit',
     });
-  }, [version.createdAt]);
+  })();
 
   // Extract summary stats from snapshot
-  const stats = useMemo(() => {
+  const stats = (() => {
     const snapshot = version.stateSnapshot;
     return {
       characterCount: snapshot.characters?.length || 0,
       customIconCount: snapshot.customIcons?.length || 0,
       scriptName: snapshot.scriptMeta?.name || null,
     };
-  }, [version.stateSnapshot]);
+  })();
 
   return (
     <div className={`${styles.card} ${isCurrent ? styles.current : ''}`}>

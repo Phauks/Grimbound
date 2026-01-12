@@ -5,7 +5,8 @@
  * Uses SettingsSelectorBase pattern for consistent UI with other settings.
  */
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
@@ -40,7 +41,7 @@ export interface TeamColorSettingsProps {
 }
 
 /** Preview circle that shows split colors for Traveler */
-const TeamColorPreview = memo(function TeamColorPreview({
+function TeamColorPreview({
   preset,
   customColor,
   enabled,
@@ -75,10 +76,10 @@ const TeamColorPreview = memo(function TeamColorPreview({
       style={{ background: getBackgroundStyle() }}
     />
   );
-});
+}
 
 /** Render panel content in portal */
-const TeamColorPanelContent = memo(function TeamColorPanelContent({
+function TeamColorPanelContent({
   panelRef,
   panelPosition,
   presets,
@@ -181,9 +182,9 @@ const TeamColorPanelContent = memo(function TeamColorPanelContent({
     </div>,
     document.body
   );
-});
+}
 
-export const TeamColorSettings = memo(function TeamColorSettings({
+export function TeamColorSettings({
   enabled,
   selectedPreset,
   customColor,
@@ -196,14 +197,11 @@ export const TeamColorSettings = memo(function TeamColorSettings({
 }: TeamColorSettingsProps) {
   const [colorPickerValue, setColorPickerValue] = useState('#3B5998');
 
-  const panelValue: TeamColorPanelValue = useMemo(
-    () => ({
-      presetId: selectedPreset?.id ?? null,
-      customColor,
-      colorPickerValue,
-    }),
-    [selectedPreset, customColor, colorPickerValue]
-  );
+  const panelValue: TeamColorPanelValue = {
+    presetId: selectedPreset?.id ?? null,
+    customColor,
+    colorPickerValue,
+  };
 
   const { isExpanded, panelPosition, containerRef, panelRef, toggle, close, handleKeyDown } =
     useExpandablePanel<TeamColorPanelValue>({
@@ -214,40 +212,34 @@ export const TeamColorSettings = memo(function TeamColorSettings({
       autoApplyOnClose: false,
     });
 
-  const summaryText = useMemo(() => {
+  const summaryText = (() => {
     if (!enabled) return 'None';
     if (customColor) return 'Custom';
     if (selectedPreset) return selectedPreset.displayName;
     return 'None';
-  }, [enabled, customColor, selectedPreset]);
+  })();
 
-  const handleToggle = useCallback(
-    (newEnabled: boolean) => {
-      if (newEnabled && !enabled) {
-        toggle();
-      } else if (!newEnabled) {
-        onPresetSelect(null);
-        close();
-      }
-      onToggle(newEnabled);
-    },
-    [enabled, onToggle, onPresetSelect, toggle, close]
-  );
+  const handleToggle = (newEnabled: boolean) => {
+    if (newEnabled && !enabled) {
+      toggle();
+    } else if (!newEnabled) {
+      onPresetSelect(null);
+      close();
+    }
+    onToggle(newEnabled);
+  };
 
-  const handlePresetClick = useCallback(
-    (preset: TeamColorPreset) => {
-      onPresetSelect(preset);
-    },
-    [onPresetSelect]
-  );
+  const handlePresetClick = (preset: TeamColorPreset) => {
+    onPresetSelect(preset);
+  };
 
-  const handleCustomColorApply = useCallback(() => {
+  const handleCustomColorApply = () => {
     onCustomColor(colorPickerValue);
-  }, [colorPickerValue, onCustomColor]);
+  };
 
-  const handleClear = useCallback(() => {
+  const handleClear = () => {
     onPresetSelect(null);
-  }, [onPresetSelect]);
+  };
 
   return (
     <SettingsSelectorBase
@@ -286,4 +278,4 @@ export const TeamColorSettings = memo(function TeamColorSettings({
       )}
     </SettingsSelectorBase>
   );
-});
+}

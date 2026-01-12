@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import type { Character, Token } from '@/ts/types/index.js';
 import {
@@ -28,42 +28,36 @@ export function useTokenDetailEditor({
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Debounced regeneration function
-  const regeneratePreview = useCallback(
-    debounce(async (charToRegen: Character) => {
-      try {
-        setIsRegenerating(true);
-        const newCanvas = await regenerateSingleToken(charToRegen, character, generationOptions);
-        setPreviewToken({
-          ...characterToken,
-          canvas: newCanvas,
-        });
-      } catch (error) {
-        logger.error('useTokenDetailEditor', 'Failed to regenerate preview:', error);
-      } finally {
-        setIsRegenerating(false);
-      }
-    }, 300),
-    []
-  );
+  const regeneratePreview = debounce(async (charToRegen: Character) => {
+    try {
+      setIsRegenerating(true);
+      const newCanvas = await regenerateSingleToken(charToRegen, character, generationOptions);
+      setPreviewToken({
+        ...characterToken,
+        canvas: newCanvas,
+      });
+    } catch (error) {
+      logger.error('useTokenDetailEditor', 'Failed to regenerate preview:', error);
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, 300);
 
-  const handleEditChange = useCallback(
-    (field: keyof Character, value: Character[keyof Character]) => {
-      const updated = { ...editedCharacter, [field]: value };
-      setEditedCharacter(updated);
-      setIsDirty(true);
-      regeneratePreview(updated);
-    },
-    [editedCharacter, regeneratePreview]
-  );
+  const handleEditChange = (field: keyof Character, value: Character[keyof Character]) => {
+    const updated = { ...editedCharacter, [field]: value };
+    setEditedCharacter(updated);
+    setIsDirty(true);
+    regeneratePreview(updated);
+  };
 
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     const reset = JSON.parse(JSON.stringify(character));
     setEditedCharacter(reset);
     setPreviewToken(characterToken);
     setIsDirty(false);
-  }, [character, characterToken]);
+  };
 
-  const handleApplyToScript = useCallback(async () => {
+  const handleApplyToScript = async () => {
     try {
       const updated = updateCharacterInJson(jsonInput, character.id, editedCharacter);
       setJsonInput(updated);
@@ -72,15 +66,15 @@ export function useTokenDetailEditor({
     } catch (error) {
       logger.error('useTokenDetailEditor', 'Failed to apply changes:', error);
     }
-  }, [editedCharacter, character.id, jsonInput, setJsonInput]);
+  };
 
-  const handleDownloadAll = useCallback(async () => {
+  const handleDownloadAll = async () => {
     try {
       await downloadCharacterTokensAsZip(previewToken, reminderTokens, character.name);
     } catch (error) {
       logger.error('useTokenDetailEditor', 'Failed to download tokens:', error);
     }
-  }, [previewToken, reminderTokens, character.name]);
+  };
 
   return {
     editedCharacter,

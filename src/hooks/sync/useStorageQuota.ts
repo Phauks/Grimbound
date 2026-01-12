@@ -144,7 +144,7 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
   /**
    * Clean up orphaned assets (assets not linked to any project)
    */
-  const cleanupOrphaned = useCallback(async (): Promise<number> => {
+  const cleanupOrphaned = async (): Promise<number> => {
     try {
       // Get all assets
       const allAssets = await assetStorageService.list({});
@@ -180,63 +180,60 @@ export function useStorageQuota(options: UseStorageQuotaOptions = {}) {
       logger.error('useStorageQuota', 'Cleanup failed:', error);
       return 0;
     }
-  }, [assetStorageService, checkQuota]);
+  };
 
   /**
    * Clean up old cached assets (LRU eviction)
    */
-  const cleanupOldAssets = useCallback(
-    async (maxAge: number = 30 * 24 * 60 * 60 * 1000): Promise<number> => {
-      try {
-        const now = Date.now();
-        const allAssets = await assetStorageService.list({});
+  const cleanupOldAssets = async (maxAge: number = 30 * 24 * 60 * 60 * 1000): Promise<number> => {
+    try {
+      const now = Date.now();
+      const allAssets = await assetStorageService.list({});
 
-        // Find assets older than maxAge
-        const oldAssets = allAssets.filter((asset) => {
-          const age = now - (asset.metadata.uploadedAt ?? 0);
-          return age > maxAge;
-        });
+      // Find assets older than maxAge
+      const oldAssets = allAssets.filter((asset) => {
+        const age = now - (asset.metadata.uploadedAt ?? 0);
+        return age > maxAge;
+      });
 
-        if (oldAssets.length === 0) {
-          logger.debug('useStorageQuota', 'No old assets found');
-          return 0;
-        }
-
-        // Sort by age (oldest first) and delete
-        oldAssets.sort((a, b) => (a.metadata.uploadedAt ?? 0) - (b.metadata.uploadedAt ?? 0));
-
-        let deletedCount = 0;
-        for (const asset of oldAssets) {
-          try {
-            await assetStorageService.delete(asset.id);
-            deletedCount++;
-          } catch (error) {
-            logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error);
-          }
-        }
-
-        logger.info('useStorageQuota', `Cleaned up ${deletedCount} old assets`);
-
-        // Re-check quota after cleanup
-        await checkQuota();
-
-        return deletedCount;
-      } catch (error) {
-        logger.error('useStorageQuota', 'Cleanup failed:', error);
+      if (oldAssets.length === 0) {
+        logger.debug('useStorageQuota', 'No old assets found');
         return 0;
       }
-    },
-    [assetStorageService, checkQuota]
-  );
+
+      // Sort by age (oldest first) and delete
+      oldAssets.sort((a, b) => (a.metadata.uploadedAt ?? 0) - (b.metadata.uploadedAt ?? 0));
+
+      let deletedCount = 0;
+      for (const asset of oldAssets) {
+        try {
+          await assetStorageService.delete(asset.id);
+          deletedCount++;
+        } catch (error) {
+          logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error);
+        }
+      }
+
+      logger.info('useStorageQuota', `Cleaned up ${deletedCount} old assets`);
+
+      // Re-check quota after cleanup
+      await checkQuota();
+
+      return deletedCount;
+    } catch (error) {
+      logger.error('useStorageQuota', 'Cleanup failed:', error);
+      return 0;
+    }
+  };
 
   /**
    * Combined cleanup function (orphaned + old assets)
    */
-  const cleanup = useCallback(async (): Promise<{ orphaned: number; old: number }> => {
+  const cleanup = async (): Promise<{ orphaned: number; old: number }> => {
     const orphaned = await cleanupOrphaned();
     const old = await cleanupOldAssets();
     return { orphaned, old };
-  }, [cleanupOrphaned, cleanupOldAssets]);
+  };
 
   // Initial check and periodic updates
   useEffect(() => {

@@ -4,6 +4,203 @@
 
 ---
 
+## React Compiler (Automatic Memoization)
+
+**This codebase uses React Compiler (`babel-plugin-react-compiler`) for automatic memoization.**
+
+### What This Means
+
+- **DO NOT use `useCallback`** - The compiler handles function memoization automatically
+- **DO NOT use `useMemo`** - The compiler handles value memoization automatically
+- **DO NOT use `React.memo`** - The compiler handles component memoization automatically
+- **DO NOT use `forwardRef`** - React 19 supports ref as a regular prop
+
+### Exception: useEffect Dependencies
+
+**React Compiler cannot change `useEffect` dependency arrays.** When a value is explicitly listed as a dependency, it must have a stable reference to avoid infinite loops.
+
+**KEEP `useCallback`** only when the function is used as a dependency in `useEffect`:
+
+```typescript
+// KEEP - callback is in useEffect deps
+const loadData = useCallback(async () => {
+  const result = await fetchData();
+  setData(result);
+}, [fetchData]);
+
+useEffect(() => {
+  loadData();
+}, [loadData]); // loadData is a dependency
+
+// REMOVE - callback is NOT in useEffect deps
+const handleClick = () => {  // No useCallback needed
+  doSomething();
+};
+```
+
+**KEEP `useMemo`** only when the computed value is used as a dependency in `useEffect`:
+
+```typescript
+// KEEP - computed array is in useEffect deps
+const enrichedItems = useMemo(
+  () => items.map(item => ({ ...item, extra: compute(item) })),
+  [items]
+);
+
+useEffect(() => {
+  processItems(enrichedItems);
+}, [enrichedItems]); // enrichedItems is a dependency
+
+// REMOVE - computed value is NOT in useEffect deps
+const filteredItems = items.filter(i => i.active); // No useMemo needed
+return <List items={filteredItems} />;
+```
+
+**Why this matters:** Arrays/objects created via `.map()`, `.filter()`, `new Map()`, etc. are NEW references every render. If used as `useEffect` dependencies without `useMemo`, the effect runs every render → setState → re-render → **infinite loop**.
+
+### ref-as-prop Pattern (React 19)
+
+```typescript
+// OLD: forwardRef pattern
+const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
+  return <input ref={ref} {...props} />;
+});
+
+// NEW: ref as regular prop
+interface InputProps {
+  ref?: React.Ref<HTMLInputElement>;
+  // ... other props
+}
+
+function Input({ ref, ...props }: InputProps) {
+  return <input ref={ref} {...props} />;
+}
+```
+
+### Verification
+
+The React Compiler is configured in `vite.config.ts`:
+```typescript
+react({
+  babel: {
+    plugins: ['babel-plugin-react-compiler'],
+  },
+}),
+```
+
+Run `npx vite build` to verify - successful build with no compiler errors confirms it's working.
+
+---
+
+## useEffect Guidelines
+
+### When to Use useEffect
+
+✅ **Appropriate uses:**
+- External subscriptions (event listeners, WebSocket, BroadcastChannel)
+- Data fetching (async operations)
+- DOM measurements that need layout
+- Timer cleanup (setTimeout/setInterval cleanup)
+- Third-party library integration
+
+❌ **Avoid useEffect for:**
+- Derived state (use `useMemo` or compute during render)
+- Resetting state when props change (use `key` prop or event handlers)
+- **Prop sync** (use state-during-render pattern - see below)
+- Transforming data for rendering (compute in render)
+- Effect chains (one effect triggers another via state)
+
+### Patterns
+
+**localStorage Initialization:**
+```typescript
+// BAD: Empty-dep effect
+const [value, setValue] = useState(null);
+useEffect(() => {
+  setValue(localStorage.getItem('key'));
+}, []);
+
+// GOOD: useState initializer
+const [value, setValue] = useState(() => localStorage.getItem('key'));
+```
+
+**Derived State:**
+```typescript
+// BAD: Effect to compute derived value
+const [fullName, setFullName] = useState('');
+useEffect(() => {
+  setFullName(`${firstName} ${lastName}`);
+}, [firstName, lastName]);
+
+// GOOD: Compute during render
+const fullName = `${firstName} ${lastName}`;
+// Or with useMemo if expensive
+const fullName = useMemo(() => expensiveComputation(firstName, lastName), [firstName, lastName]);
+```
+
+**Effect Chains:**
+```typescript
+// BAD: Effect chain (one effect triggers another)
+useEffect(() => {
+  setIsDirty(true);
+  incrementVersion(); // Triggers another effect!
+}, [state]);
+
+useEffect(() => {
+  if (isDirty) save();
+}, [isDirty, version]);
+
+// GOOD: Single unified effect
+useEffect(() => {
+  if (stateChanged(state, previousState)) {
+    scheduleSave();
+  }
+}, [state]);
+```
+
+**Prop Sync - State During Render (PREFERRED):**
+```typescript
+// PREFERRED: React's "adjusting state during render" pattern
+// Faster than useEffect (synchronous, no extra render cycle)
+// This is the officially recommended React pattern for prop sync
+
+// Track previous value for comparison
+const [prevValue, setPrevValue] = useState<T>(value);
+
+// Sync during render - NOT in useEffect
+if (value !== prevValue) {
+  setPrevValue(value);
+  // Only sync if this is an external change (not our own update reflected back)
+  if (value !== lastSentValueRef.current) {
+    setLocalValue(value);
+    lastSentValueRef.current = value;
+  }
+}
+
+// For object values, use JSON comparison:
+const [prevValueJson, setPrevValueJson] = useState(() => JSON.stringify(value));
+const valueJson = JSON.stringify(value);
+
+if (valueJson !== prevValueJson) {
+  setPrevValueJson(valueJson);
+  setPendingValue(value);
+}
+```
+
+**Why state-during-render is better than useEffect for prop sync:**
+- **Faster**: Synchronous update, no extra render cycle
+- **Simpler**: No dependency array concerns
+- **Official**: React's recommended pattern per "You Might Not Need an Effect"
+- **Predictable**: State is consistent within the same render
+
+**Real examples in codebase:**
+- `useControlledField.ts` - Single controlled input with debouncing
+- `useControlledFields.ts` - Multiple controlled inputs
+- `useExpandablePanel.ts` - Panel state management
+- `UnifiedSettingsBox.tsx` - Settings selector state
+
+---
+
 ## Core Programming Principles
 
 ### DRY (Don't Repeat Yourself)
@@ -312,32 +509,6 @@ export function MyComponent() {
 </ServiceProvider>
 ```
 
-### Service Container (Optional)
-
-For complex scenarios, use the lightweight `ServiceContainer`:
-
-```typescript
-import { ServiceContainer, ServiceTokens } from '@/ts/services/ServiceContainer.js';
-
-// Create container
-const container = new ServiceContainer();
-
-// Register services
-container.registerSingleton(ServiceTokens.ProjectDatabase, () => new ProjectDatabaseService());
-container.register(ServiceTokens.ProjectService, (c) =>
-  new ProjectService({
-    database: c.resolve(ServiceTokens.ProjectDatabase),
-  })
-);
-
-// Resolve with dependencies
-const projectService = container.resolve<IProjectService>(ServiceTokens.ProjectService);
-
-// Create scoped container for testing
-const testContainer = container.createScope();
-testContainer.registerInstance(ServiceTokens.ProjectDatabase, mockDatabase);
-```
-
 ### Available Interface Files
 
 | File | Interfaces |
@@ -560,4 +731,4 @@ import { createCanvas, drawCurvedText } from '@/ts/canvas/index.js';
 
 ---
 
-*Last updated: 2025-12-31*
+*Last updated: 2026-01-12*

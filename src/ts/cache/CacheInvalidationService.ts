@@ -473,5 +473,3 @@ export class CacheInvalidationService {
  * Shared across the entire application.
  */
 export const cacheInvalidationService = new CacheInvalidationService();
-
-export default cacheInvalidationService;

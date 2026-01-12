@@ -1,4 +1,3 @@
-import { forwardRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ContextMenuPosition } from '@/hooks/ui/useContextMenu';
 import styles from '@/styles/components/shared/ContextMenu.module.css';
@@ -37,55 +36,58 @@ export interface ContextMenuProps {
  * Reusable context menu component that renders via Portal to document.body.
  * Supports keyboard navigation, danger variants, and consistent styling.
  */
-export const ContextMenu = forwardRef<HTMLDivElement, ContextMenuProps>(
-  ({ isOpen, position, items, onClose, className }, ref) => {
-    if (!(isOpen && position) || items.length === 0) {
-      return null;
-    }
-
-    const handleItemClick = (item: ContextMenuItem) => {
-      if (item.disabled || !item.onClick) return;
-      item.onClick();
-      onClose();
-    };
-
-    const menu = (
-      <div
-        ref={ref}
-        className={`${styles.contextMenu} ${className || ''}`}
-        style={{
-          position: 'fixed',
-          top: position.y,
-          left: position.x,
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose();
-        }}
-        onContextMenu={(e) => e.preventDefault()}
-        role="menu"
-        aria-label="Context menu"
-      >
-        {items.map((item, index) => (
-          <button
-            type="button"
-            key={`${item.label}-${index}`}
-            className={`${styles.contextMenuItem} ${item.variant === 'danger' ? styles.danger : ''} ${item.disabled ? styles.disabled : ''}`}
-            onClick={() => handleItemClick(item)}
-            disabled={item.disabled}
-            role="menuitem"
-            title={item.description}
-          >
-            {item.icon && <span className={styles.menuIcon}>{item.icon}</span>}
-            <span className={styles.menuLabel}>{item.label}</span>
-          </button>
-        ))}
-      </div>
-    );
-
-    // Render via Portal to document.body for proper stacking
-    return createPortal(menu, document.body);
+export function ContextMenu({
+  isOpen,
+  position,
+  items,
+  onClose,
+  className,
+  ref,
+}: ContextMenuProps & { ref?: React.Ref<HTMLDivElement> }) {
+  if (!(isOpen && position) || items.length === 0) {
+    return null;
   }
-);
 
-ContextMenu.displayName = 'ContextMenu';
+  const handleItemClick = (item: ContextMenuItem) => {
+    if (item.disabled || !item.onClick) return;
+    item.onClick();
+    onClose();
+  };
+
+  const menu = (
+    <div
+      ref={ref}
+      className={`${styles.contextMenu} ${className || ''}`}
+      style={{
+        position: 'fixed',
+        top: position.y,
+        left: position.x,
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+      role="menu"
+      aria-label="Context menu"
+    >
+      {items.map((item, index) => (
+        <button
+          type="button"
+          key={`${item.label}-${index}`}
+          className={`${styles.contextMenuItem} ${item.variant === 'danger' ? styles.danger : ''} ${item.disabled ? styles.disabled : ''}`}
+          onClick={() => handleItemClick(item)}
+          disabled={item.disabled}
+          role="menuitem"
+          title={item.description}
+        >
+          {item.icon && <span className={styles.menuIcon}>{item.icon}</span>}
+          <span className={styles.menuLabel}>{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // Render via Portal to document.body for proper stacking
+  return createPortal(menu, document.body);
+}

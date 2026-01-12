@@ -16,7 +16,7 @@
  * @module components/Shared/Drawer/OfficialCharacterDrawer
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SearchHighlight } from '@/components/Shared/UI/SearchHighlight';
 import { useDataSync } from '@/contexts/DataSyncContext';
@@ -97,7 +97,7 @@ interface CharacterRowProps {
   getSearchMatch: (text: string) => SearchMatch;
 }
 
-const CharacterRow = memo(function CharacterRow({
+function CharacterRow({
   character,
   isOnScript,
   imageUrl,
@@ -126,7 +126,7 @@ const CharacterRow = memo(function CharacterRow({
       </div>
     </button>
   );
-});
+}
 
 // ============================================
 // TeamSection Component
@@ -144,7 +144,7 @@ interface TeamSectionProps {
   getSearchMatch: (text: string) => SearchMatch;
 }
 
-const TeamSection = memo(function TeamSection({
+function TeamSection({
   team,
   characters,
   onScriptIds,
@@ -186,16 +186,13 @@ const TeamSection = memo(function TeamSection({
       </div>
     </div>
   );
-});
+}
 
 // ============================================
 // Main Component
 // ============================================
 
-export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
-  isOpen,
-  onClose,
-}: OfficialCharacterDrawerProps) {
+export function OfficialCharacterDrawer({ isOpen, onClose }: OfficialCharacterDrawerProps) {
   // Context
   const { getCharacters, getCharacterImage, isInitialized } = useDataSync();
   const { characters, setCharacters, setJsonInput, scriptMeta, setMetadata } = useTokenContext();
@@ -218,10 +215,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   const [expandedTeams, setExpandedTeams] = useState<Set<Team>>(new Set());
 
   // Compute which official characters are on script
-  const onScriptIds = useMemo(
-    () => new Set(characters.filter((c) => c.source === 'official').map((c) => c.id)),
-    [characters]
-  );
+  const onScriptIds = new Set(characters.filter((c) => c.source === 'official').map((c) => c.id));
 
   // Character filtering with search highlighting
   const {
@@ -278,89 +272,84 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   }, [isOpen, isInitialized, getCharacters]);
 
   // Group by team
-  const charactersByTeam = useMemo(() => groupByTeam(filteredCharacters), [filteredCharacters]);
+  const charactersByTeam = groupByTeam(filteredCharacters);
 
   // Stats
   const totalOnScript = characters.filter((c) => c.source === 'official').length;
   const totalOfficial = officialCharacters.length;
 
   // Toggle character on/off script
-  const toggleCharacter = useCallback(
-    async (officialChar: Character) => {
-      let updated: Character[];
+  const toggleCharacter = async (officialChar: Character) => {
+    let updated: Character[];
 
-      if (onScriptIds.has(officialChar.id)) {
-        // Remove from script
-        updated = characters.filter((c) => c.id !== officialChar.id);
-      } else {
-        // Add to script - check for collision with existing custom character
-        const existingCustom = characters.find(
-          (c) => c.id === officialChar.id && c.source === 'custom'
+    if (onScriptIds.has(officialChar.id)) {
+      // Remove from script
+      updated = characters.filter((c) => c.id !== officialChar.id);
+    } else {
+      // Add to script - check for collision with existing custom character
+      const existingCustom = characters.find(
+        (c) => c.id === officialChar.id && c.source === 'custom'
+      );
+
+      if (existingCustom) {
+        // Collision detected - rename the existing custom character
+        const otherIds = characters.filter((c) => c.uuid !== existingCustom.uuid).map((c) => c.id);
+
+        // Add the official ID we're about to use
+        otherIds.push(officialChar.id);
+
+        // Get unique ID for the custom character
+        const { id: uniqueId } = ensureUniqueId(existingCustom.id, otherIds);
+
+        // Generate new UUID for renamed custom character
+        const newCustomUuid = await generateStableUuid(uniqueId, existingCustom.name);
+
+        // Create renamed custom character
+        const renamedCustom: Character = {
+          ...existingCustom,
+          id: uniqueId,
+          uuid: newCustomUuid,
+        };
+
+        // Update metadata for renamed character - break ID link
+        setMetadata(newCustomUuid, { idLinkedToName: false });
+
+        // Create the official character
+        const officialUuid = await generateStableUuid(officialChar.id, officialChar.name);
+        const newOfficial: Character = {
+          ...officialChar,
+          uuid: officialUuid,
+          source: 'official',
+        };
+
+        // Replace custom with renamed version, add official
+        updated = characters.map((c) => (c.uuid === existingCustom.uuid ? renamedCustom : c));
+        updated.push(newOfficial);
+
+        // Show toast
+        addToast(
+          `Renamed custom '${existingCustom.id}' to '${uniqueId}' to add official character`,
+          'info'
         );
-
-        if (existingCustom) {
-          // Collision detected - rename the existing custom character
-          const otherIds = characters
-            .filter((c) => c.uuid !== existingCustom.uuid)
-            .map((c) => c.id);
-
-          // Add the official ID we're about to use
-          otherIds.push(officialChar.id);
-
-          // Get unique ID for the custom character
-          const { id: uniqueId } = ensureUniqueId(existingCustom.id, otherIds);
-
-          // Generate new UUID for renamed custom character
-          const newCustomUuid = await generateStableUuid(uniqueId, existingCustom.name);
-
-          // Create renamed custom character
-          const renamedCustom: Character = {
-            ...existingCustom,
-            id: uniqueId,
-            uuid: newCustomUuid,
-          };
-
-          // Update metadata for renamed character - break ID link
-          setMetadata(newCustomUuid, { idLinkedToName: false });
-
-          // Create the official character
-          const officialUuid = await generateStableUuid(officialChar.id, officialChar.name);
-          const newOfficial: Character = {
-            ...officialChar,
-            uuid: officialUuid,
-            source: 'official',
-          };
-
-          // Replace custom with renamed version, add official
-          updated = characters.map((c) => (c.uuid === existingCustom.uuid ? renamedCustom : c));
-          updated.push(newOfficial);
-
-          // Show toast
-          addToast(
-            `Renamed custom '${existingCustom.id}' to '${uniqueId}' to add official character`,
-            'info'
-          );
-        } else {
-          // No collision - add normally
-          const uuid = await generateStableUuid(officialChar.id, officialChar.name);
-          const newChar: Character = {
-            ...officialChar,
-            uuid,
-            source: 'official',
-          };
-          updated = [...characters, newChar];
-        }
+      } else {
+        // No collision - add normally
+        const uuid = await generateStableUuid(officialChar.id, officialChar.name);
+        const newChar: Character = {
+          ...officialChar,
+          uuid,
+          source: 'official',
+        };
+        updated = [...characters, newChar];
       }
+    }
 
-      // Update state
-      setCharacters(updated);
-      setJsonInput(charactersToJson(updated, scriptMeta));
-    },
-    [characters, onScriptIds, setCharacters, setJsonInput, scriptMeta, setMetadata, addToast]
-  );
+    // Update state
+    setCharacters(updated);
+    setJsonInput(charactersToJson(updated, scriptMeta));
+  };
 
   // Toggle individual team expansion
-  const toggleTeamExpand = useCallback((team: Team) => {
+  const toggleTeamExpand = (team: Team) => {
     setExpandedTeams((prev) => {
       const next = new Set(prev);
       if (next.has(team)) {
@@ -370,7 +359,7 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
       }
       return next;
     });
-  }, []);
+  };
 
   // Check if all teams with characters are expanded
   const teamsWithCharacters = TEAM_ORDER.filter((team) => charactersByTeam[team].length > 0);
@@ -378,17 +367,22 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
     teamsWithCharacters.length > 0 && teamsWithCharacters.every((team) => expandedTeams.has(team));
 
   // Toggle all teams
-  const toggleAllTeams = useCallback(() => {
+  const toggleAllTeams = () => {
     if (allExpanded) {
       setExpandedTeams(new Set());
     } else {
       setExpandedTeams(new Set(teamsWithCharacters));
     }
-  }, [allExpanded, teamsWithCharacters]);
+  };
 
   if (!shouldRender) return null;
 
-  const showLoadingState = isLoading || imagesLoading;
+  // Show loading if:
+  // 1. Characters are being loaded from sync
+  // 2. We have characters but no image URLs yet (covers race condition on first load)
+  // 3. Images are actively being loaded
+  const awaitingImages = officialCharacters.length > 0 && imageUrls.size === 0;
+  const showLoadingState = isLoading || awaitingImages || imagesLoading;
 
   const drawerContent = (
     <>
@@ -528,6 +522,4 @@ export const OfficialCharacterDrawer = memo(function OfficialCharacterDrawer({
   );
 
   return createPortal(drawerContent, document.body);
-});
-
-export default OfficialCharacterDrawer;
+}

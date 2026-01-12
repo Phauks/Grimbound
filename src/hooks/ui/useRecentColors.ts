@@ -7,7 +7,7 @@
  * @module hooks/ui/useRecentColors
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { STORAGE_KEYS } from '@/ts/utils/storageKeys.js';
 
 /** Default maximum number of recent colors to store */
@@ -106,29 +106,23 @@ export interface UseRecentColorsResult {
 export function useRecentColors(options: UseRecentColorsOptions = {}): UseRecentColorsResult {
   const { maxColors = DEFAULT_MAX_COLORS } = options;
 
-  const [colors, setColors] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Initialize from localStorage synchronously - no async loading needed
+  const [colors, setColors] = useState<string[]>(() => getStoredRecentColors());
 
-  // Load colors from localStorage on mount
-  useEffect(() => {
-    setColors(getStoredRecentColors());
-    setIsLoaded(true);
-  }, []);
+  // isLoaded is always true now - no async loading
+  const isLoaded = true;
 
   // Add a color to the recent list
-  const addColor = useCallback(
-    (color: string) => {
-      const updated = addColorToStorage(color, maxColors);
-      setColors(updated);
-    },
-    [maxColors]
-  );
+  const addColor = (color: string) => {
+    const updated = addColorToStorage(color, maxColors);
+    setColors(updated);
+  };
 
   // Clear all recent colors
-  const clearColors = useCallback(() => {
+  const clearColors = () => {
     clearStoredRecentColors();
     setColors([]);
-  }, []);
+  };
 
   return {
     colors,

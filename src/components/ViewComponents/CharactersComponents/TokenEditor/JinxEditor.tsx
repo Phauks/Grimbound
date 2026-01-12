@@ -11,7 +11,7 @@
  * @module components/CharactersComponents/TokenEditor/JinxEditor
  */
 
-import { memo, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCharacterImageResolver } from '@/hooks/characters/useCharacterImageResolver';
 import { useJinxOperations } from '@/hooks/characters/useJinxOperations';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
@@ -110,7 +110,7 @@ interface JinxRowProps {
   targetCharacterImageUrl?: string;
 }
 
-const JinxRow = memo(function JinxRow({
+function JinxRow({
   jinx,
   index,
   currentCharacter,
@@ -124,24 +124,15 @@ const JinxRow = memo(function JinxRow({
   isPreviewActive,
   targetCharacterImageUrl,
 }: JinxRowProps) {
-  const targetName = useMemo(
-    () => getCharacterName(jinx.id, scriptCharacters, officialCharacters),
-    [jinx.id, scriptCharacters, officialCharacters]
-  );
+  const targetName = getCharacterName(jinx.id, scriptCharacters, officialCharacters);
 
-  const handleCharacterChange = useCallback(
-    (characterId: string) => {
-      onUpdate({ id: characterId });
-    },
-    [onUpdate]
-  );
+  const handleCharacterChange = (characterId: string) => {
+    onUpdate({ id: characterId });
+  };
 
-  const handleReasonChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      onUpdate({ reason: event.target.value });
-    },
-    [onUpdate]
-  );
+  const handleReasonChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onUpdate({ reason: event.target.value });
+  };
 
   // Check if we have valid target to show preview button
   const hasValidTarget = jinx.id && jinx.id.trim() !== '';
@@ -223,13 +214,13 @@ const JinxRow = memo(function JinxRow({
       />
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export const JinxEditor = memo(function JinxEditor({
+export function JinxEditor({
   character,
   disabled,
   onEditChange,
@@ -239,12 +230,9 @@ export const JinxEditor = memo(function JinxEditor({
   previewedJinxIndex,
 }: JinxEditorProps) {
   // Handle jinxes change
-  const handleJinxesChange = useCallback(
-    (jinxes: Jinx[]) => {
-      onEditChange('jinxes', jinxes);
-    },
-    [onEditChange]
-  );
+  const handleJinxesChange = (jinxes: Jinx[]) => {
+    onEditChange('jinxes', jinxes);
+  };
 
   // Use the jinx operations hook
   const { jinxes, add, update, remove } = useJinxOperations({
@@ -254,6 +242,7 @@ export const JinxEditor = memo(function JinxEditor({
   });
 
   // Build list of characters that need image resolution for thumbnails
+  // useMemo required: used as useEffect dependency in useCharacterImageResolver
   const charactersForImageResolution = useMemo(() => {
     const chars: Character[] = [character];
     const seenIds = new Set<string>([character.id]);
@@ -278,58 +267,46 @@ export const JinxEditor = memo(function JinxEditor({
   });
 
   // Create stable update/remove handlers for each row
-  const handleUpdate = useCallback(
-    (index: number, updates: Partial<Jinx>) => {
-      update(index, updates);
-    },
-    [update]
-  );
+  const handleUpdate = (index: number, updates: Partial<Jinx>) => {
+    update(index, updates);
+  };
 
-  const handleRemove = useCallback(
-    (index: number) => {
-      remove(index);
-    },
-    [remove]
-  );
+  const handleRemove = (index: number) => {
+    remove(index);
+  };
 
   // Find target character by ID
-  const findTargetCharacter = useCallback(
-    (targetId: string): Character | null => {
-      // Look in script characters first
-      const scriptChar = scriptCharacters.find((c) => c.id === targetId);
-      if (scriptChar) return scriptChar;
+  const findTargetCharacter = (targetId: string): Character | null => {
+    // Look in script characters first
+    const scriptChar = scriptCharacters.find((c) => c.id === targetId);
+    if (scriptChar) return scriptChar;
 
-      // Then official characters
-      const officialChar = officialCharacters.find((c) => c.id === targetId);
-      if (officialChar) return officialChar;
+    // Then official characters
+    const officialChar = officialCharacters.find((c) => c.id === targetId);
+    if (officialChar) return officialChar;
 
-      return null;
-    },
-    [scriptCharacters, officialCharacters]
-  );
+    return null;
+  };
 
   // Handle preview click for a jinx
-  const handlePreviewClick = useCallback(
-    (index: number, jinx: Jinx) => {
-      if (!onPreviewJinx) return;
+  const handlePreviewClick = (index: number, jinx: Jinx) => {
+    if (!onPreviewJinx) return;
 
-      // If already previewing this jinx, clear the preview
-      if (previewedJinxIndex === index) {
-        onPreviewJinx(null);
-        return;
-      }
+    // If already previewing this jinx, clear the preview
+    if (previewedJinxIndex === index) {
+      onPreviewJinx(null);
+      return;
+    }
 
-      const targetCharacter = findTargetCharacter(jinx.id);
-      if (!targetCharacter) return;
+    const targetCharacter = findTargetCharacter(jinx.id);
+    if (!targetCharacter) return;
 
-      onPreviewJinx({
-        jinx,
-        character,
-        targetCharacter,
-      });
-    },
-    [onPreviewJinx, previewedJinxIndex, character, findTargetCharacter]
-  );
+    onPreviewJinx({
+      jinx,
+      character,
+      targetCharacter,
+    });
+  };
 
   return (
     <div className={styles.formGroup}>
@@ -384,6 +361,6 @@ export const JinxEditor = memo(function JinxEditor({
       )}
     </div>
   );
-});
+}
 
 export default JinxEditor;

@@ -9,7 +9,7 @@
 
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 export interface UseDraggableListOptions<T> {
   /** The list of items to manage */
@@ -79,35 +79,29 @@ export function useDraggableList<T>({
 
   const itemIds = items.map((item, index) => getItemId(item, index));
 
-  const onDragStart = useCallback(
-    (event: { active: { id: UniqueIdentifier } }) => {
-      if (disabled) return;
-      setActiveId(event.active.id);
-    },
-    [disabled]
-  );
+  const onDragStart = (event: { active: { id: UniqueIdentifier } }) => {
+    if (disabled) return;
+    setActiveId(event.active.id);
+  };
 
-  const onDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveId(null);
-
-      if (disabled || !over || active.id === over.id) return;
-
-      const oldIndex = itemIds.indexOf(active.id);
-      const newIndex = itemIds.indexOf(over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        onReorder(newItems);
-      }
-    },
-    [items, itemIds, onReorder, disabled]
-  );
-
-  const onDragCancel = useCallback(() => {
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
     setActiveId(null);
-  }, []);
+
+    if (disabled || !over || active.id === over.id) return;
+
+    const oldIndex = itemIds.indexOf(active.id);
+    const newIndex = itemIds.indexOf(over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      onReorder(newItems);
+    }
+  };
+
+  const onDragCancel = () => {
+    setActiveId(null);
+  };
 
   return {
     items,
@@ -119,5 +113,3 @@ export function useDraggableList<T>({
     onDragCancel,
   };
 }
-
-export default useDraggableList;

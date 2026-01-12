@@ -2,11 +2,13 @@
  * File Upload Module - Constants
  *
  * Per-asset-type validation rules and configuration.
+ * Uses tag-based categorization system (type:* tags).
  *
  * @module services/upload/constants
  */
 
-import type { AssetType, AssetTypeConfig } from './types.js';
+import { getTypeFromTags, type TypeTagValue } from './tagUtils.js';
+import type { AssetTypeConfig } from './types.js';
 
 // ============================================================================
 // Size Constants
@@ -45,14 +47,15 @@ export const MAGIC_BYTES: Record<string, Uint8Array> = {
 export const WEBP_SIGNATURE = new Uint8Array([0x57, 0x45, 0x42, 0x50]);
 
 // ============================================================================
-// Asset Type Configurations
+// Tag-Based Asset Type Configurations
 // ============================================================================
 
 /**
- * Configuration for each asset type
+ * Configuration for each asset type tag
+ * Keys are TypeTagValue (e.g., 'icon', 'token-background')
  */
-export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
-  'character-icon': {
+export const TAG_TYPE_CONFIGS: Record<TypeTagValue, AssetTypeConfig> = {
+  icon: {
     allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
     allowedExtensions: ['.png', '.jpg', '.jpeg', '.webp'],
     maxSize: 5 * MB,
@@ -93,7 +96,7 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
     thumbnailSize: 512, // Large - high-res preview needed for layout assessment
   },
 
-  'setup-overlay': {
+  setup: {
     allowedMimeTypes: ['image/png', 'image/webp'],
     allowedExtensions: ['.png', '.webp'],
     maxSize: 5 * MB,
@@ -173,6 +176,24 @@ export const ASSET_TYPE_CONFIGS: Record<AssetType, AssetTypeConfig> = {
 };
 
 // ============================================================================
+// Config Lookup Helpers
+// ============================================================================
+
+/**
+ * Get configuration for an asset by its tags array
+ * @returns Config for the type tag, or undefined if no valid type tag
+ */
+export const getConfigByTags = (tags: string[]): AssetTypeConfig | undefined => {
+  const type = getTypeFromTags(tags);
+  return type ? TAG_TYPE_CONFIGS[type] : undefined;
+};
+
+/**
+ * Get configuration for an asset type tag value
+ */
+export const getConfigByType = (type: TypeTagValue): AssetTypeConfig => TAG_TYPE_CONFIGS[type];
+
+// ============================================================================
 // Default Configuration
 // ============================================================================
 
@@ -201,13 +222,13 @@ export const PROCESSED_IMAGE_QUALITY = 0.9;
 // ============================================================================
 
 /**
- * Folder paths in ZIP export for each asset type
+ * Folder paths in ZIP export for each asset type tag
  */
-export const ASSET_ZIP_PATHS: Record<AssetType, string> = {
-  'character-icon': 'assets/character-icons/',
+export const TAG_ZIP_PATHS: Record<TypeTagValue, string> = {
+  icon: 'assets/icons/',
   'token-background': 'assets/token-backgrounds/',
   'script-background': 'assets/script-backgrounds/',
-  'setup-overlay': 'assets/setup-overlays/',
+  setup: 'assets/setup-overlays/',
   accent: 'assets/accents/',
   logo: 'assets/logos/',
   'studio-icon': 'assets/studio-icons/',
@@ -215,33 +236,26 @@ export const ASSET_ZIP_PATHS: Record<AssetType, string> = {
   'studio-project': 'assets/studio-projects/',
 };
 
+/**
+ * Get ZIP path for an asset by its tags
+ */
+export const getZipPathByTags = (tags: string[]): string | undefined => {
+  const type = getTypeFromTags(tags);
+  return type ? TAG_ZIP_PATHS[type] : undefined;
+};
+
 // ============================================================================
 // UI Labels
 // ============================================================================
 
 /**
- * Human-readable labels for asset types
+ * Plural labels for asset type tags
  */
-export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  'character-icon': 'Character Icon',
-  'token-background': 'Token Background',
-  'script-background': 'Script Background',
-  'setup-overlay': 'Setup Overlay',
-  accent: 'Accent',
-  logo: 'Logo',
-  'studio-icon': 'Studio Icon',
-  'studio-logo': 'Studio Logo',
-  'studio-project': 'Studio Project',
-};
-
-/**
- * Plural labels for asset types
- */
-export const ASSET_TYPE_LABELS_PLURAL: Record<AssetType, string> = {
-  'character-icon': 'Character Icons',
+export const TAG_TYPE_LABELS_PLURAL: Record<TypeTagValue, string> = {
+  icon: 'Icons',
   'token-background': 'Token Backgrounds',
   'script-background': 'Script Backgrounds',
-  'setup-overlay': 'Setup Overlays',
+  setup: 'Setup Overlays',
   accent: 'Accents',
   logo: 'Logos',
   'studio-icon': 'Studio Icons',
@@ -250,16 +264,29 @@ export const ASSET_TYPE_LABELS_PLURAL: Record<AssetType, string> = {
 };
 
 /**
- * Icons for asset types (emoji or icon class)
+ * Icons for asset type tags (emoji)
  */
-export const ASSET_TYPE_ICONS: Record<AssetType, string> = {
-  'character-icon': '👤',
+export const TAG_TYPE_ICONS: Record<TypeTagValue, string> = {
+  icon: '👤',
   'token-background': '🎨',
   'script-background': '📜',
-  'setup-overlay': '✨',
+  setup: '✨',
   accent: '🍃',
   logo: '🏷️',
   'studio-icon': '✨',
   'studio-logo': '🎭',
   'studio-project': '📦',
 };
+
+/**
+ * User-facing asset type tabs (excludes internal studio-* types)
+ * Used for type filters, reclassify menus, and upload type selection
+ */
+export const USER_TYPE_TABS: TypeTagValue[] = [
+  'icon',
+  'token-background',
+  'script-background',
+  'setup',
+  'accent',
+  'logo',
+];

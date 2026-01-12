@@ -7,7 +7,7 @@
  * @module hooks/autosave/useAutoSavePreference
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { logger } from '@/ts/utils/index.js';
 import { getStorageItem, STORAGE_KEYS, setStorageItem } from '@/ts/utils/storageKeys.js';
 
@@ -30,33 +30,29 @@ import { getStorageItem, STORAGE_KEYS, setStorageItem } from '@/ts/utils/storage
  * ```
  */
 export function useAutoSavePreference() {
-  const [isEnabled, setIsEnabled] = useState<boolean>(true); // Default: enabled
-
-  // Load preference from localStorage on mount
-  useEffect(() => {
+  // Load preference from localStorage via useState initializer (no effect needed)
+  const [isEnabled, setIsEnabled] = useState<boolean>(() => {
     const stored = getStorageItem(STORAGE_KEYS.AUTO_SAVE_ENABLED);
-
     if (stored !== null) {
       const enabled = stored === 'true';
-      setIsEnabled(enabled);
       logger.debug(
         'AutoSavePreference',
         `Loaded preference from localStorage: ${enabled ? 'enabled' : 'disabled'}`
       );
-    } else {
-      // No preference stored yet - use default (enabled)
-      logger.debug('AutoSavePreference', 'No stored preference, using default: enabled');
+      return enabled;
     }
-  }, []);
+    logger.debug('AutoSavePreference', 'No stored preference, using default: enabled');
+    return true; // Default: enabled
+  });
 
   /**
    * Toggle auto-save enabled/disabled state
    */
-  const toggleAutoSave = useCallback((enabled: boolean) => {
+  const toggleAutoSave = (enabled: boolean) => {
     setIsEnabled(enabled);
     setStorageItem(STORAGE_KEYS.AUTO_SAVE_ENABLED, String(enabled));
     logger.info('AutoSavePreference', `Auto-save ${enabled ? 'enabled' : 'disabled'} by user`);
-  }, []);
+  };
 
   return {
     isEnabled,

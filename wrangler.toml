@@ -1,0 +1,23 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "grimbound"
+compatibility_date = "2025-01-10"
+main = "src/worker.ts"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# SPA routing - return index.html for unknown paths
+not_found_handling = "single-page-application"
+
+# Build configuration for wrangler dev/deploy
+[build]
+command = "npm run vite-build"
+watch_dir = "src"
+
+# TypeScript config for worker compilation
+[build.upload]
+# Wrangler uses esbuild to compile worker.ts automatically
+
+# Preview environment for PR deployments
+[env.preview]
+name = "grimbound-preview"

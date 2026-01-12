@@ -668,7 +668,7 @@ describe('TokenGenerator', () => {
 
     it('should draw accents when enabled', async () => {
       const genWithAccents = new TokenGenerator(
-        { ...options, accentEnabled: true, maximumAccents: 3 },
+        { ...options, accentEnabled: true },
         mockImageCache
       );
 

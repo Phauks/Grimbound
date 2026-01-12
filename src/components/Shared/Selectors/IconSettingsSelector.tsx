@@ -19,7 +19,7 @@
  * @module components/Shared/IconSettingsSelector
  */
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { MeasurementSlider } from '@/components/Shared/Controls/MeasurementSlider';
 import { IconDrawer, type TokenType } from '@/components/Shared/Drawer/IconDrawer';
@@ -95,7 +95,7 @@ const DEFAULT_ALL_SETTINGS: AllIconSettings = {
 // Compact Icon Preview for Selector
 // ============================================================================
 
-const IconPreviewCompact = memo(function IconPreviewCompact() {
+function IconPreviewCompact() {
   return (
     <div className={iconStyles.previewContainer}>
       <div className={iconStyles.iconPreview}>
@@ -106,7 +106,7 @@ const IconPreviewCompact = memo(function IconPreviewCompact() {
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Settings Column Component
@@ -118,31 +118,18 @@ interface SettingsColumnProps {
   onSettingsChange: (settings: IconSettings) => void;
 }
 
-const SettingsColumn = memo(function SettingsColumn({
-  settings,
-  displayUnit,
-  onSettingsChange,
-}: SettingsColumnProps) {
-  const handleScaleChange = useCallback(
-    (val: number) => {
-      onSettingsChange({ ...settings, scale: val });
-    },
-    [settings, onSettingsChange]
-  );
+function SettingsColumn({ settings, displayUnit, onSettingsChange }: SettingsColumnProps) {
+  const handleScaleChange = (val: number) => {
+    onSettingsChange({ ...settings, scale: val });
+  };
 
-  const handleOffsetXChange = useCallback(
-    (val: number) => {
-      onSettingsChange({ ...settings, offsetX: val });
-    },
-    [settings, onSettingsChange]
-  );
+  const handleOffsetXChange = (val: number) => {
+    onSettingsChange({ ...settings, offsetX: val });
+  };
 
-  const handleOffsetYChange = useCallback(
-    (val: number) => {
-      onSettingsChange({ ...settings, offsetY: val });
-    },
-    [settings, onSettingsChange]
-  );
+  const handleOffsetYChange = (val: number) => {
+    onSettingsChange({ ...settings, offsetY: val });
+  };
 
   return (
     <div className={drawerStyles.column}>
@@ -188,7 +175,7 @@ const SettingsColumn = memo(function SettingsColumn({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Team Configuration for Auto-generation
@@ -204,7 +191,7 @@ const TEAM_OPTIONS: TeamOption[] = [
   { id: 'outsider', label: TEAM_LABELS.outsider },
   { id: 'minion', label: TEAM_LABELS.minion },
   { id: 'demon', label: 'Demon/Evil' },
-  { id: 'traveller', label: TEAM_LABELS.traveler },
+  { id: 'traveller', label: TEAM_LABELS.traveller },
   { id: 'fabled', label: TEAM_LABELS.fabled },
   { id: 'loric', label: TEAM_LABELS.loric },
 ];
@@ -219,11 +206,7 @@ interface VariantsColumnProps {
   onOptionChange?: (options: Partial<GenerationOptions>) => void;
 }
 
-const VariantsColumn = memo(function VariantsColumn({
-  tokenType,
-  generationOptions,
-  onOptionChange,
-}: VariantsColumnProps) {
+function VariantsColumn({ tokenType, generationOptions, onOptionChange }: VariantsColumnProps) {
   // For Meta tokens, show a simple message
   if (tokenType === 'meta') {
     return (
@@ -318,7 +301,7 @@ const VariantsColumn = memo(function VariantsColumn({
       </div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Jinx Settings Column (for Meta tokens)
@@ -329,21 +312,15 @@ interface JinxSettingsColumnProps {
   onOptionChange: (options: Partial<GenerationOptions>) => void;
 }
 
-const JinxSettingsColumn = memo(function JinxSettingsColumn({
-  generationOptions,
-  onOptionChange,
-}: JinxSettingsColumnProps) {
+function JinxSettingsColumn({ generationOptions, onOptionChange }: JinxSettingsColumnProps) {
   // Internal value is decimal (0.15 = 15%), display as percentage
   const jinxIconSpacing = generationOptions.jinxIconSpacing ?? 0;
   const displayValue = Math.round(jinxIconSpacing * 100);
 
-  const handleSpacingChange = useCallback(
-    (percentValue: number) => {
-      // Convert percentage to decimal for storage
-      onOptionChange({ jinxIconSpacing: percentValue / 100 });
-    },
-    [onOptionChange]
-  );
+  const handleSpacingChange = (percentValue: number) => {
+    // Convert percentage to decimal for storage
+    onOptionChange({ jinxIconSpacing: percentValue / 100 });
+  };
 
   return (
     <div className={drawerStyles.column}>
@@ -366,21 +343,21 @@ const JinxSettingsColumn = memo(function JinxSettingsColumn({
       <div className={iconStyles.helperText}>Adjusts distance between icons on jinx tokens</div>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Empty Column Placeholder
 // ============================================================================
 
-const EmptyColumn = memo(function EmptyColumn() {
+function EmptyColumn() {
   return <div className={drawerStyles.column} />;
-});
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export const IconSettingsSelector = memo(function IconSettingsSelector({
+export function IconSettingsSelector({
   generationOptions,
   onOptionChange,
   displayUnit: displayUnitProp,
@@ -398,22 +375,16 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
     displayUnitProp ?? generationOptions.measurementUnit ?? 'inches';
 
   // Extract AllIconSettings from generationOptions (self-contained extraction)
-  const allIconSettings: AllIconSettings = useMemo(
-    () => ({
-      character: generationOptions.iconSettings?.character ?? { ...DEFAULT_ICON_SETTINGS },
-      reminder: generationOptions.iconSettings?.reminder ?? { ...DEFAULT_ICON_SETTINGS },
-      meta: generationOptions.iconSettings?.meta ?? { ...DEFAULT_ICON_SETTINGS },
-    }),
-    [generationOptions.iconSettings]
-  );
+  const allIconSettings: AllIconSettings = {
+    character: generationOptions.iconSettings?.character ?? { ...DEFAULT_ICON_SETTINGS },
+    reminder: generationOptions.iconSettings?.reminder ?? { ...DEFAULT_ICON_SETTINGS },
+    meta: generationOptions.iconSettings?.meta ?? { ...DEFAULT_ICON_SETTINGS },
+  };
 
   // Convert AllIconSettings changes to GenerationOptions updates
-  const handleSettingsChange = useCallback(
-    (settings: AllIconSettings) => {
-      onOptionChange({ iconSettings: settings });
-    },
-    [onOptionChange]
-  );
+  const handleSettingsChange = (settings: AllIconSettings) => {
+    onOptionChange({ iconSettings: settings });
+  };
 
   // Panel coordination - closes other panels when this one opens
   const drawerCloseRef = useRef<(() => void) | undefined>(undefined);
@@ -434,23 +405,20 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
 
   // Handle settings change for active token type
   // When linked and editing Character or Meta, syncs both
-  const handleActiveSettingsChange = useCallback(
-    (settings: IconSettings) => {
-      if (isLinked && activeTokenType !== 'reminder') {
-        drawer.updatePending({
-          ...drawer.pendingValue,
-          character: settings,
-          meta: settings,
-        });
-      } else {
-        drawer.updatePending({
-          ...drawer.pendingValue,
-          [activeTokenType]: settings,
-        });
-      }
-    },
-    [drawer, activeTokenType, isLinked]
-  );
+  const handleActiveSettingsChange = (settings: IconSettings) => {
+    if (isLinked && activeTokenType !== 'reminder') {
+      drawer.updatePending({
+        ...drawer.pendingValue,
+        character: settings,
+        meta: settings,
+      });
+    } else {
+      drawer.updatePending({
+        ...drawer.pendingValue,
+        [activeTokenType]: settings,
+      });
+    }
+  };
 
   return (
     <>
@@ -504,6 +472,4 @@ export const IconSettingsSelector = memo(function IconSettingsSelector({
       </IconDrawer>
     </>
   );
-});
-
-export default IconSettingsSelector;
+}

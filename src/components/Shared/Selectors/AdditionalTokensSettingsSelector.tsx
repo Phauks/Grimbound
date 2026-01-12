@@ -12,7 +12,7 @@
  * @module components/Shared/Selectors/AdditionalTokensSettingsSelector
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AdditionalTokensDrawer } from '@/components/Shared/Drawer/AdditionalTokensDrawer';
 import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
 import type { Character, GenerationOptions } from '@/ts/types/index';
@@ -47,11 +47,7 @@ const DEFAULT_SETTINGS: Partial<GenerationOptions> = {
 // Preview Component
 // ============================================================================
 
-const AdditionalTokensPreview = memo(function AdditionalTokensPreview({
-  hasEnabledTokens,
-}: {
-  hasEnabledTokens: boolean;
-}) {
+function AdditionalTokensPreview({ hasEnabledTokens }: { hasEnabledTokens: boolean }) {
   return (
     <div
       style={{
@@ -67,13 +63,13 @@ const AdditionalTokensPreview = memo(function AdditionalTokensPreview({
       <span>🎲</span>
     </div>
   );
-});
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export const AdditionalTokensSettingsSelector = memo(function AdditionalTokensSettingsSelector({
+export function AdditionalTokensSettingsSelector({
   generationOptions,
   onOptionChange,
   characters,
@@ -84,19 +80,11 @@ export const AdditionalTokensSettingsSelector = memo(function AdditionalTokensSe
   const [isOpen, setIsOpen] = useState(false);
 
   // Check if any token types are enabled
-  const hasEnabledTokens = useMemo(
-    () =>
-      generationOptions.pandemoniumToken !== false ||
-      generationOptions.scriptNameToken !== false ||
-      generationOptions.jinxTokens === true ||
-      generationOptions.generateBootleggerRules !== false,
-    [
-      generationOptions.pandemoniumToken,
-      generationOptions.scriptNameToken,
-      generationOptions.jinxTokens,
-      generationOptions.generateBootleggerRules,
-    ]
-  );
+  const hasEnabledTokens =
+    generationOptions.pandemoniumToken !== false ||
+    generationOptions.scriptNameToken !== false ||
+    generationOptions.jinxTokens === true ||
+    generationOptions.generateBootleggerRules !== false;
 
   // Panel coordination - close other panels when this opens
   const closeRef = useRef<(() => void) | undefined>(undefined);
@@ -108,18 +96,18 @@ export const AdditionalTokensSettingsSelector = memo(function AdditionalTokensSe
   }, []);
 
   // Handlers
-  const handleOpen = useCallback(() => {
+  const handleOpen = () => {
     onWillOpen?.();
     setIsOpen(true);
-  }, [onWillOpen]);
+  };
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsOpen(false);
-  }, []);
+  };
 
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     onOptionChange(DEFAULT_SETTINGS);
-  }, [onOptionChange]);
+  };
 
   return (
     <>
@@ -149,6 +137,4 @@ export const AdditionalTokensSettingsSelector = memo(function AdditionalTokensSe
       />
     </>
   );
-});
-
-export default AdditionalTokensSettingsSelector;
+}

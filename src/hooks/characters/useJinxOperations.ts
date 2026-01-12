@@ -7,8 +7,10 @@
  * @module hooks/characters/useJinxOperations
  */
 
-import { useCallback, useMemo } from 'react';
 import type { Character, Jinx } from '@/ts/types/index.js';
+
+// Stable empty array to avoid creating new references
+const EMPTY_JINXES: Jinx[] = [];
 
 // ============================================================================
 // Types
@@ -47,50 +49,41 @@ export function useJinxOperations({
   onJinxesChange,
   disabled = false,
 }: UseJinxOperationsOptions): UseJinxOperationsResult {
-  // Memoize the jinxes array to avoid creating new references
-  const jinxes = useMemo(() => character.jinxes ?? [], [character.jinxes]);
+  // Get jinxes array (never undefined) - use stable empty array to avoid new refs
+  const jinxes = character.jinxes ?? EMPTY_JINXES;
 
   // Add a new empty jinx
-  const add = useCallback(() => {
+  const add = () => {
     if (disabled) return;
     const newJinxes: Jinx[] = [...jinxes, { id: '', reason: '' }];
     onJinxesChange(newJinxes);
-  }, [disabled, jinxes, onJinxesChange]);
+  };
 
   // Update a jinx at the specified index
-  const update = useCallback(
-    (index: number, updates: Partial<Jinx>) => {
-      if (disabled) return;
-      if (index < 0 || index >= jinxes.length) return;
+  const update = (index: number, updates: Partial<Jinx>) => {
+    if (disabled) return;
+    if (index < 0 || index >= jinxes.length) return;
 
-      const newJinxes = [...jinxes];
-      newJinxes[index] = { ...newJinxes[index], ...updates };
-      onJinxesChange(newJinxes);
-    },
-    [disabled, jinxes, onJinxesChange]
-  );
+    const newJinxes = [...jinxes];
+    newJinxes[index] = { ...newJinxes[index], ...updates };
+    onJinxesChange(newJinxes);
+  };
 
   // Remove a jinx at the specified index
-  const remove = useCallback(
-    (index: number) => {
-      if (disabled) return;
-      if (index < 0 || index >= jinxes.length) return;
+  const remove = (index: number) => {
+    if (disabled) return;
+    if (index < 0 || index >= jinxes.length) return;
 
-      const newJinxes = [...jinxes];
-      newJinxes.splice(index, 1);
-      onJinxesChange(newJinxes);
-    },
-    [disabled, jinxes, onJinxesChange]
-  );
+    const newJinxes = [...jinxes];
+    newJinxes.splice(index, 1);
+    onJinxesChange(newJinxes);
+  };
 
   // Replace the entire jinxes array (for reordering via drag-and-drop)
-  const reorder = useCallback(
-    (newJinxes: Jinx[]) => {
-      if (disabled) return;
-      onJinxesChange(newJinxes);
-    },
-    [disabled, onJinxesChange]
-  );
+  const reorder = (newJinxes: Jinx[]) => {
+    if (disabled) return;
+    onJinxesChange(newJinxes);
+  };
 
   return {
     jinxes,
@@ -101,5 +94,3 @@ export function useJinxOperations({
     isDisabled: disabled,
   };
 }
-
-export default useJinxOperations;

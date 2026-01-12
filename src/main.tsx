@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/Shared/Feedback/ErrorBoundary';
+import { UnifiedErrorDisplay } from './components/Shared/Feedback/ViewErrorFallback';
 import { DataSyncProvider } from './contexts/DataSyncContext';
 import { FontProvider } from './contexts/FontContext';
 import { ServiceProvider } from './contexts/ServiceContext';
@@ -243,137 +244,6 @@ const updateSW = registerSW({
 (window as { updateSW?: typeof updateSW }).updateSW = updateSW;
 
 // ============================================================================
-// App Error Fallback
-// ============================================================================
-
-/** CSS variable colors with fallbacks (for React component after CSS loads) */
-const THEME_VARS = {
-  bg: 'var(--bg-main, #1a1a1a)',
-  text: 'var(--text-primary, #f5f5f5)',
-  textSecondary: 'var(--text-secondary, #b0b0b0)',
-  textMuted: 'var(--text-muted, #808080)',
-  errorLight: 'var(--color-error-light, #ff6b6b)',
-  errorBorder: 'var(--color-error, #e74c3c)',
-  errorBg: 'var(--color-danger-subtle, rgba(231, 76, 60, 0.1))',
-  primary: 'var(--color-primary, #8b0000)',
-  border: 'var(--border-color, #404040)',
-} as const;
-
-/**
- * Fallback UI shown when React's ErrorBoundary catches an error.
- * Uses shared theme constants for consistent styling.
- */
-function AppErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
-  const [copied, setCopied] = React.useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(error.message).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        padding: '2rem',
-        background: THEME_VARS.bg,
-        color: THEME_VARS.text,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        textAlign: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: THEME_VARS.errorBg,
-          border: `1px solid ${THEME_VARS.errorBorder}`,
-          borderRadius: '8px',
-          padding: '2rem',
-          maxWidth: '500px',
-        }}
-      >
-        <h1 style={{ color: THEME_VARS.errorLight, margin: '0 0 1rem 0', fontSize: '1.5rem' }}>
-          Something went wrong
-        </h1>
-        <p
-          style={{
-            color: THEME_VARS.textSecondary,
-            margin: '0 0 1rem 0',
-            fontSize: '0.9rem',
-            wordBreak: 'break-word',
-          }}
-        >
-          {error.message}
-        </p>
-        <div
-          style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}
-        >
-          <button
-            type="button"
-            onClick={handleCopy}
-            style={{
-              background: 'transparent',
-              color: THEME_VARS.textSecondary,
-              border: `1px solid ${THEME_VARS.border}`,
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            {copied ? 'Copied!' : 'Copy Error'}
-          </button>
-          <button
-            type="button"
-            onClick={resetErrorBoundary}
-            style={{
-              background: THEME_VARS.primary,
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Try Again
-          </button>
-          <button
-            type="button"
-            onClick={() => location.reload()}
-            style={{
-              background: 'transparent',
-              color: THEME_VARS.textSecondary,
-              border: `1px solid ${THEME_VARS.border}`,
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-      <p style={{ color: THEME_VARS.textMuted, marginTop: '1rem', fontSize: '0.8rem' }}>
-        Check the browser console for more details
-      </p>
-    </div>
-  );
-}
-
-// ============================================================================
 // React App Mount
 // ============================================================================
 
@@ -386,7 +256,7 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <AppErrorFallback error={error} resetErrorBoundary={resetErrorBoundary} />
+        <UnifiedErrorDisplay error={error} variant="app" onRetry={resetErrorBoundary} />
       )}
       onError={(error, errorInfo) => {
         errorLogger.error('React error boundary caught error', {

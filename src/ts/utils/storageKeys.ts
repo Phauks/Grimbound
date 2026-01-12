@@ -34,6 +34,10 @@ export const STORAGE_KEYS = {
   TOKEN_SECTION_CHARACTERS_OPEN: 'clocktower_token_section_characters_open',
   TOKEN_SECTION_REMINDERS_OPEN: 'clocktower_token_section_reminders_open',
   TOKEN_SECTION_META_OPEN: 'clocktower_token_section_meta_open',
+  /** Left sidebar width preference */
+  SIDEBAR_WIDTH_LEFT: 'clocktower_sidebar_width_left',
+  /** Script PDF settings (player script and night order) */
+  SCRIPT_PDF_SETTINGS: 'script-pdf-settings',
 } as const;
 
 /**

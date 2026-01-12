@@ -21,7 +21,6 @@ interface ProjectNavigationProps {
   currentProjectId: string | null;
   onSelectProject: (projectId: string) => void;
   onCreateProject: () => void;
-  onImportProject: () => void;
   onIconManagement: () => void;
   onDeleteProject?: (project: Project) => void;
 }
@@ -32,7 +31,6 @@ export function ProjectNavigation({
   currentProjectId,
   onSelectProject,
   onCreateProject,
-  onImportProject,
   onIconManagement: _onIconManagement,
   onDeleteProject,
 }: ProjectNavigationProps) {
@@ -167,9 +165,6 @@ export function ProjectNavigation({
       <div className={styles.headerRow}>
         <Button variant="primary" size="small" onClick={onCreateProject} title="Create New Project">
           + Create Project
-        </Button>
-        <Button variant="secondary" size="small" onClick={onImportProject} title="Import Project">
-          Import
         </Button>
       </div>
 

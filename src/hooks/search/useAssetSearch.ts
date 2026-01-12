@@ -109,5 +109,3 @@ export function useAssetSearch(options: UseAssetSearchOptions): UseAssetSearchRe
     resultCount,
   };
 }
-
-export default useAssetSearch;

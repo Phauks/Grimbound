@@ -9,7 +9,6 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { memo } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 
 interface SortableImageUrlRowProps {
@@ -41,7 +40,7 @@ interface SortableImageUrlRowProps {
   onBrowseAssets?: (index: number) => void;
 }
 
-export const SortableImageUrlRow = memo(function SortableImageUrlRow({
+export function SortableImageUrlRow({
   id,
   url,
   resolvedUrl,
@@ -143,6 +142,4 @@ export const SortableImageUrlRow = memo(function SortableImageUrlRow({
       </button>
     </div>
   );
-});
-
-export default SortableImageUrlRow;
+}

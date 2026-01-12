@@ -7,7 +7,7 @@
  * @module hooks/fonts/useFontFiltering
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FontCategory, FontDefinition, FontSource } from '@/ts/types/fonts.js';
 
 // ============================================================================
@@ -67,7 +67,7 @@ export function useFontFiltering({
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Toggle category filter
-  const toggleCategory = useCallback((category: FontCategory) => {
+  const toggleCategory = (category: FontCategory) => {
     setActiveCategories((prev) => {
       const next = new Set(prev);
       if (next.has(category)) {
@@ -77,62 +77,53 @@ export function useFontFiltering({
       }
       return next;
     });
-  }, []);
+  };
 
   // Filter fonts based on all active filters
-  const filteredFonts = useMemo(() => {
-    let result = fonts;
+  let filteredFonts = fonts;
 
-    // Apply allowed sources from props
-    if (allowedSources && allowedSources.length > 0) {
-      result = result.filter((f) => allowedSources.includes(f.source));
-    }
+  // Apply allowed sources from props
+  if (allowedSources && allowedSources.length > 0) {
+    filteredFonts = filteredFonts.filter((f) => allowedSources.includes(f.source));
+  }
 
-    // Apply allowed categories from props
-    if (allowedCategories && allowedCategories.length > 0) {
-      result = result.filter((f) => allowedCategories.includes(f.category));
-    }
+  // Apply allowed categories from props
+  if (allowedCategories && allowedCategories.length > 0) {
+    filteredFonts = filteredFonts.filter((f) => allowedCategories.includes(f.category));
+  }
 
-    // Apply source tab filter
-    if (activeSource !== 'all') {
-      result = result.filter((f) => f.source === activeSource);
-    }
+  // Apply source tab filter
+  if (activeSource !== 'all') {
+    filteredFonts = filteredFonts.filter((f) => f.source === activeSource);
+  }
 
-    // Apply category chip filter
-    if (activeCategories.size > 0) {
-      result = result.filter((f) => activeCategories.has(f.category));
-    }
+  // Apply category chip filter
+  if (activeCategories.size > 0) {
+    filteredFonts = filteredFonts.filter((f) => activeCategories.has(f.category));
+  }
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (f) => f.name.toLowerCase().includes(query) || f.family.toLowerCase().includes(query)
-      );
-    }
-
-    return result;
-  }, [fonts, allowedSources, allowedCategories, activeSource, activeCategories, searchQuery]);
+  // Apply search filter
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    filteredFonts = filteredFonts.filter(
+      (f) => f.name.toLowerCase().includes(query) || f.family.toLowerCase().includes(query)
+    );
+  }
 
   // Group fonts by category for list view display
-  const groupedFonts = useMemo(() => {
-    const groups = new Map<FontCategory, FontDefinition[]>();
-    for (const font of filteredFonts) {
-      const list = groups.get(font.category) ?? [];
-      list.push(font);
-      groups.set(font.category, list);
-    }
-    return groups;
-  }, [filteredFonts]);
+  const groupedFonts = new Map<FontCategory, FontDefinition[]>();
+  for (const font of filteredFonts) {
+    const list = groupedFonts.get(font.category) ?? [];
+    list.push(font);
+    groupedFonts.set(font.category, list);
+  }
 
   // Get available categories from all fonts (not filtered)
-  const availableCategories = useMemo(() => {
-    const categories = new Set<FontCategory>();
-    for (const font of fonts) {
-      categories.add(font.category);
-    }
-    return Array.from(categories);
-  }, [fonts]);
+  const categorySet = new Set<FontCategory>();
+  for (const font of fonts) {
+    categorySet.add(font.category);
+  }
+  const availableCategories = Array.from(categorySet);
 
   return {
     searchQuery,
@@ -148,5 +139,3 @@ export function useFontFiltering({
     availableCategories,
   };
 }
-
-export default useFontFiltering;

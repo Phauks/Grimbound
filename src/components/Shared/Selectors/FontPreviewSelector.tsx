@@ -14,7 +14,7 @@
  * @module components/Shared/FontPreviewSelector
  */
 
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '@/styles/components/shared/FontPreviewSelector.module.css';
 
@@ -69,7 +69,7 @@ interface DropdownPosition {
 // Component
 // ============================================================================
 
-export const FontPreviewSelector = memo(function FontPreviewSelector({
+export function FontPreviewSelector({
   value,
   onChange,
   options,
@@ -152,58 +152,55 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
   }, [isOpen]);
 
   // Keyboard navigation
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (disabled) return;
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled) return;
 
-      switch (event.key) {
-        case 'Enter':
-        case ' ':
-          event.preventDefault();
-          if (isOpen && focusedIndex >= 0) {
-            onChange(options[focusedIndex].value);
-            setIsOpen(false);
-            buttonRef.current?.focus();
-          } else {
-            setIsOpen(!isOpen);
-            setFocusedIndex(options.findIndex((opt) => opt.value === value));
-          }
-          break;
-        case 'ArrowDown':
-          event.preventDefault();
-          if (isOpen) {
-            setFocusedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0));
-          } else {
-            setIsOpen(true);
-            setFocusedIndex(options.findIndex((opt) => opt.value === value));
-          }
-          break;
-        case 'ArrowUp':
-          event.preventDefault();
-          if (isOpen) {
-            setFocusedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1));
-          } else {
-            setIsOpen(true);
-            setFocusedIndex(options.findIndex((opt) => opt.value === value));
-          }
-          break;
-        case 'Escape':
-          event.preventDefault();
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (isOpen && focusedIndex >= 0) {
+          onChange(options[focusedIndex].value);
           setIsOpen(false);
-          setFocusedIndex(-1);
           buttonRef.current?.focus();
-          break;
-        case 'Tab':
-          setIsOpen(false);
-          setFocusedIndex(-1);
-          break;
-        default:
-          // Other keys are handled by default browser behavior
-          break;
-      }
-    },
-    [disabled, isOpen, focusedIndex, options, value, onChange]
-  );
+        } else {
+          setIsOpen(!isOpen);
+          setFocusedIndex(options.findIndex((opt) => opt.value === value));
+        }
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        if (isOpen) {
+          setFocusedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0));
+        } else {
+          setIsOpen(true);
+          setFocusedIndex(options.findIndex((opt) => opt.value === value));
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (isOpen) {
+          setFocusedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1));
+        } else {
+          setIsOpen(true);
+          setFocusedIndex(options.findIndex((opt) => opt.value === value));
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        setIsOpen(false);
+        setFocusedIndex(-1);
+        buttonRef.current?.focus();
+        break;
+      case 'Tab':
+        setIsOpen(false);
+        setFocusedIndex(-1);
+        break;
+      default:
+        // Other keys are handled by default browser behavior
+        break;
+    }
+  };
 
   // Handle option selection
   const handleOptionClick = (optionValue: string) => {
@@ -362,6 +359,4 @@ export const FontPreviewSelector = memo(function FontPreviewSelector({
       {renderDropdown()}
     </div>
   );
-});
-
-export default FontPreviewSelector;
+}

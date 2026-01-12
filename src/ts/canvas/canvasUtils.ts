@@ -299,18 +299,3 @@ export function measureCharacterWidths(
 
   return { charWidths, totalWidth };
 }
-
-export default {
-  createCanvas,
-  createCircularClipPath,
-  applyTextShadow,
-  applyAbilityTextShadow,
-  clearShadow,
-  wrapText,
-  drawImageCover,
-  fillCircle,
-  strokeCircle,
-  drawCenteredText,
-  drawMultiLineText,
-  measureCharacterWidths,
-};

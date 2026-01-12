@@ -4,12 +4,9 @@
  * Exports all night order related types, utilities, and constants.
  */
 
-// PDF Export using Hybrid mode (Snapdom + pdf-lib text overlay) - Faster
-export {
-  downloadNightOrderPdfHybrid,
-  generateNightOrderPdfHybrid,
-  getNightOrderPdfBlobHybrid,
-} from './hybridPdfExporter.js';
+// Text extraction for PDF generation (re-exported from scriptPdf/shared)
+export type { ExtractedText, TextExtractionResult } from '@/ts/scriptPdf/shared/index.js';
+export { extractTextFromContainer, scaleTextPositions } from '@/ts/scriptPdf/shared/index.js';
 // Layout & Scaling
 export type { PaginatedEntries, ScaleConfig } from './nightOrderLayout.js';
 export {
@@ -38,7 +35,7 @@ export {
   paginateEntries,
   pointsToInches,
 } from './nightOrderLayout.js';
-// PDF Export using Snapdom (true WYSIWYG) - Legacy mode
+// PDF Export
 export type {
   ExportPhase,
   NightOrderPdfOptions,
@@ -88,17 +85,9 @@ export {
   preRenderNightOrder,
   shouldShowEntry,
 } from './nightOrderUtils.js';
-// Night Sheet Renderer (for direct canvas capture)
-export {
-  areFontsWarmed,
-  getFontWarmingStatus,
-  preloadSnapdom,
-  type RenderOptions,
-  type RenderResult,
-  renderNightSheetToCanvas,
-  warmDefaultNightSheetFonts,
-  warmFonts,
-} from './nightSheetRenderer.js';
+// Night Sheet Renderer
+export type { HybridRenderOptions, HybridRenderResult } from './nightSheetRenderer.js';
+export { renderNightSheet } from './nightSheetRenderer.js';
 // Special entries
 export {
   DAWN_ENTRY,
@@ -113,6 +102,3 @@ export {
   MINION_INFO_ENTRY,
   SPECIAL_ENTRIES,
 } from './specialEntries.js';
-// Text extraction for hybrid mode
-export type { ExtractedText, TextExtractionResult } from './textExtractor.js';
-export { extractTextFromContainer, scaleTextPositions } from './textExtractor.js';

@@ -211,8 +211,3 @@ export const VersionManager = {
     return [...versions].sort((a, b) => VersionManager.compare(a, b));
   },
 };
-
-// Export singleton instance for convenience
-export const versionManager = VersionManager;
-
-export default VersionManager;

@@ -9,7 +9,7 @@
  * - Ability text: Trade Gothic (with Trade Gothic Bold for reminder tokens)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/script/NightOrderEntry.module.css';
@@ -40,7 +40,7 @@ interface NightOrderEntryProps {
  * Render ability text with bold reminder tokens and circle indicators
  */
 function AbilityText({ text }: { text: string }) {
-  const segments = useMemo(() => parseAbilityText(text), [text]);
+  const segments = parseAbilityText(text);
 
   // Pre-compute occurrence counts for stable keys
   const getOccurrenceKey = (segment: (typeof segments)[0], idx: number): string => {
@@ -134,17 +134,14 @@ export function NightOrderEntry({
   }, [entry.image, entry.id, cachedImageUrl]);
 
   // Handle right-click to show context menu (only for character entries)
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      // Only show context menu for character entries (not special entries like DUSK/DAWN)
-      if (entry.type === 'special') return;
-      contextMenu.onContextMenu(e, entry.id);
-    },
-    [entry.type, entry.id, contextMenu]
-  );
+  const handleContextMenu = (e: React.MouseEvent) => {
+    // Only show context menu for character entries (not special entries like DUSK/DAWN)
+    if (entry.type === 'special') return;
+    contextMenu.onContextMenu(e, entry.id);
+  };
 
   // Build context menu items
-  const menuItems = useMemo((): ContextMenuItem[] => {
+  const menuItems: ContextMenuItem[] = (() => {
     const items: ContextMenuItem[] = [];
 
     // Convert to Custom option - only for official character entries
@@ -172,7 +169,7 @@ export function NightOrderEntry({
     });
 
     return items;
-  }, [entry.type, isOfficial, onEditCharacter, onToggleLock, contextMenu.data]);
+  })();
 
   return (
     <button
@@ -205,13 +202,9 @@ export function NightOrderEntry({
         textAlign: 'inherit',
       }}
     >
-      {/* Drag handle or lock icon */}
+      {/* Drag handle (only shown for movable entries) */}
       <div className={styles.dragArea}>
-        {isOfficial && showLockIcon ? (
-          <span className={styles.lockIcon} title="This entry cannot be moved">
-            🔒
-          </span>
-        ) : showDragHandle ? (
+        {showDragHandle ? (
           <div className={styles.dragHandle} {...dragHandleProps} title="Drag to reorder">
             <span className={styles.dragIcon}>⋮⋮</span>
           </div>
@@ -238,8 +231,15 @@ export function NightOrderEntry({
 
       {/* Content: Name and ability */}
       <div className={styles.content}>
-        <div className={styles.name} style={{ color: teamColor }}>
-          {entry.name}
+        <div className={styles.nameRow}>
+          <span className={styles.name} style={{ color: teamColor }}>
+            {entry.name}
+          </span>
+          {isOfficial && showLockIcon && (
+            <span className={styles.lockIcon} title="Official character - position is fixed">
+              🔒
+            </span>
+          )}
         </div>
         <div className={styles.ability}>
           <AbilityText text={entry.ability} />

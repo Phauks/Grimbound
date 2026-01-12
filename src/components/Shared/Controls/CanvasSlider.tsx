@@ -13,7 +13,7 @@
  * @module components/Shared/Controls/CanvasSlider
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/shared/CanvasSlider.module.css';
 
 // ============================================================================
@@ -84,7 +84,7 @@ function drawSliderToggle(ctx: CanvasRenderingContext2D, x: number, height: numb
 // Component
 // ============================================================================
 
-export const CanvasSlider = memo(function CanvasSlider({
+export function CanvasSlider({
   value,
   onChange,
   min = 0,
@@ -139,16 +139,13 @@ export const CanvasSlider = memo(function CanvasSlider({
   );
 
   // Handle mouse down - start drag
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (disabled) return;
-      e.preventDefault();
-      const newValue = positionToValue(e.clientX);
-      onChange(newValue);
-      setIsDragging(true);
-    },
-    [disabled, positionToValue, onChange]
-  );
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (disabled) return;
+    e.preventDefault();
+    const newValue = positionToValue(e.clientX);
+    onChange(newValue);
+    setIsDragging(true);
+  };
 
   // Handle global mouse events for dragging
   useEffect(() => {
@@ -173,37 +170,34 @@ export const CanvasSlider = memo(function CanvasSlider({
   }, [isDragging, positionToValue, onChange]);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (disabled) return;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
 
-      const step = (max - min) / 20; // 5% steps
-      let newValue = value;
+    const step = (max - min) / 20; // 5% steps
+    let newValue = value;
 
-      switch (e.key) {
-        case 'ArrowLeft':
-        case 'ArrowDown':
-          newValue = Math.max(min, value - step);
-          break;
-        case 'ArrowRight':
-        case 'ArrowUp':
-          newValue = Math.min(max, value + step);
-          break;
-        case 'Home':
-          newValue = min;
-          break;
-        case 'End':
-          newValue = max;
-          break;
-        default:
-          return;
-      }
+    switch (e.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        newValue = Math.max(min, value - step);
+        break;
+      case 'ArrowRight':
+      case 'ArrowUp':
+        newValue = Math.min(max, value + step);
+        break;
+      case 'Home':
+        newValue = min;
+        break;
+      case 'End':
+        newValue = max;
+        break;
+      default:
+        return;
+    }
 
-      e.preventDefault();
-      onChange(newValue);
-    },
-    [disabled, min, max, value, onChange]
-  );
+    e.preventDefault();
+    onChange(newValue);
+  };
 
   const containerClasses = [styles.container, disabled && styles.disabled, className]
     .filter(Boolean)
@@ -229,9 +223,7 @@ export const CanvasSlider = memo(function CanvasSlider({
       />
     </div>
   );
-});
+}
 
 // Export the toggle drawing function for custom implementations
 export { drawSliderToggle };
-
-export default CanvasSlider;

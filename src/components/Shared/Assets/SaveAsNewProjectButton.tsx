@@ -10,7 +10,7 @@
  * - Badge-style button matching auto-save indicator design
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useProjects } from '@/hooks';
 import styles from '@/styles/components/shared/AutoSaveIndicator.module.css';
@@ -37,18 +37,18 @@ export function SaveAsNewProjectButton({ onTabChange }: SaveAsNewProjectButtonPr
     }
   }, [isEditing]);
 
-  const handleStartEditing = useCallback(() => {
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setProjectName('');
+  };
+
+  const handleStartEditing = () => {
     setIsEditing(true);
     // Use script name if available, otherwise fallback to default
     setProjectName(scriptMeta?.name || 'Untitled Project');
-  }, [scriptMeta?.name]);
+  };
 
-  const handleCancelEditing = useCallback(() => {
-    setIsEditing(false);
-    setProjectName('');
-  }, []);
-
-  const handleSaveProject = useCallback(async () => {
+  const handleSaveProject = async () => {
     const trimmedName = projectName.trim();
 
     // Don't save if name is empty
@@ -81,29 +81,26 @@ export function SaveAsNewProjectButton({ onTabChange }: SaveAsNewProjectButtonPr
     } finally {
       setIsSaving(false);
     }
-  }, [projectName, createProject, onTabChange, handleCancelEditing]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleSaveProject();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancelEditing();
-      }
-    },
-    [handleSaveProject, handleCancelEditing]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveProject();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEditing();
+    }
+  };
 
-  const handleBlur = useCallback(() => {
+  const handleBlur = () => {
     // Small delay to allow click events to register first
     setTimeout(() => {
       if (isEditing) {
         handleSaveProject();
       }
     }, 150);
-  }, [isEditing, handleSaveProject]);
+  };
 
   // Show input field when editing
   if (isEditing) {

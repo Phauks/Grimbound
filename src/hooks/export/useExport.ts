@@ -35,32 +35,35 @@ export function useExport() {
 
   // Filter tokens to only include those from enabled characters
   // Meta tokens are always included
-  const enabledTokens = useMemo(() => {
-    return tokens.filter((token) => {
-      // Meta tokens (script-name, almanac, pandemonium, bootlegger) are always included
-      if (
-        token.type === 'script-name' ||
-        token.type === 'almanac' ||
-        token.type === 'pandemonium' ||
-        token.type === 'bootlegger'
-      ) {
+  // useMemo required: used by useCallback functions that are useEffect dependencies
+  const enabledTokens = useMemo(
+    () =>
+      tokens.filter((token) => {
+        // Meta tokens (script-name, almanac, pandemonium, bootlegger) are always included
+        if (
+          token.type === 'script-name' ||
+          token.type === 'almanac' ||
+          token.type === 'pandemonium' ||
+          token.type === 'bootlegger'
+        ) {
+          return true;
+        }
+
+        // Character tokens: check characterData.uuid
+        if (token.type === 'character' && token.characterData?.uuid) {
+          return enabledCharacterUuids.has(token.characterData.uuid);
+        }
+
+        // Reminder tokens: check parentUuid (links to parent character)
+        if (token.type === 'reminder' && token.parentUuid) {
+          return enabledCharacterUuids.has(token.parentUuid);
+        }
+
+        // Include tokens without UUID tracking (shouldn't happen, but safe fallback)
         return true;
-      }
-
-      // Character tokens: check characterData.uuid
-      if (token.type === 'character' && token.characterData?.uuid) {
-        return enabledCharacterUuids.has(token.characterData.uuid);
-      }
-
-      // Reminder tokens: check parentUuid (links to parent character)
-      if (token.type === 'reminder' && token.parentUuid) {
-        return enabledCharacterUuids.has(token.parentUuid);
-      }
-
-      // Include tokens without UUID tracking (shouldn't happen, but safe fallback)
-      return true;
-    });
-  }, [tokens, enabledCharacterUuids]);
+      }),
+    [tokens, enabledCharacterUuids]
+  );
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(
     null
   );
@@ -69,12 +72,13 @@ export function useExport() {
   // Track if we're in a downloadAll operation to avoid resetting state
   const isDownloadingAllRef = useRef(false);
 
+  // useCallback required: used as dependency in other useCallbacks
   const getBaseFilename = useCallback(() => {
     if (scriptMeta?.name) {
       return sanitizeFilename(scriptMeta.name);
     }
     return 'clocktower_tokens';
-  }, [scriptMeta]);
+  }, [scriptMeta?.name]);
 
   // Cancel any in-progress export
   const cancelExport = useCallback(() => {
@@ -102,6 +106,7 @@ export function useExport() {
   );
 
   // Unified download function that handles all export types
+  // useCallback required: used as dependency in other useCallbacks
   const executeDownload = useCallback(
     async (options: DownloadOptions) => {
       const { step, filename, requiresTokens = false, requiresJson = false, exportFn } = options;
@@ -155,6 +160,7 @@ export function useExport() {
     [enabledTokens, jsonInput, cancelExport, createProgressCallback]
   );
 
+  // useCallback required: used as useEffect dependency in TokensView
   const downloadZip = useCallback(async () => {
     await executeDownload({
       step: 'zip',
@@ -163,8 +169,9 @@ export function useExport() {
       exportFn: async (progressCallback) =>
         await createTokensZip(enabledTokens, progressCallback ?? null),
     });
-  }, [enabledTokens, getBaseFilename, executeDownload]);
+  }, [enabledTokens, executeDownload, getBaseFilename]);
 
+  // useCallback required: used as useEffect dependency in TokensView
   const downloadPdf = useCallback(async () => {
     const pdfGenerator = new PDFGenerator({
       tokenPadding: generationOptions.pdfPadding ?? 0.25, // Default 1/4" padding
@@ -186,8 +193,9 @@ export function useExport() {
         return undefined;
       },
     });
-  }, [enabledTokens, generationOptions, getBaseFilename, executeDownload]);
+  }, [enabledTokens, generationOptions, executeDownload, getBaseFilename]);
 
+  // useCallback required: used as useEffect dependency in ExportView
   const downloadJson = useCallback(async () => {
     await executeDownload({
       step: 'json',
@@ -199,7 +207,7 @@ export function useExport() {
         return new Blob([cleanJson], { type: 'application/json' });
       },
     });
-  }, [jsonInput, getBaseFilename, executeDownload]);
+  }, [jsonInput, executeDownload, getBaseFilename]);
 
   const downloadStyleFormat = useCallback(async () => {
     await executeDownload({
@@ -215,9 +223,9 @@ export function useExport() {
         return new Blob([JSON.stringify(styleData, null, 2)], { type: 'application/json' });
       },
     });
-  }, [generationOptions, scriptMeta, getBaseFilename, executeDownload]);
+  }, [scriptMeta, generationOptions, executeDownload, getBaseFilename]);
 
-  const downloadAll = useCallback(async () => {
+  const downloadAll = async () => {
     if (enabledTokens.length === 0) return;
 
     // Mark that we're in a downloadAll operation
@@ -257,7 +265,7 @@ export function useExport() {
       setExportProgress(null);
       setExportStep(null);
     }
-  }, [enabledTokens, generationOptions, scriptMeta, jsonInput, getBaseFilename]);
+  };
 
   return {
     downloadZip,

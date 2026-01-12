@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices';
-import type { AssetFilter, AssetType, AssetWithUrl, DBAsset } from '@/ts/services/upload/types';
+import { getTypeFromTags } from '@/ts/services/upload/tagUtils';
+import type { AssetFilter, AssetWithUrl, DBAsset } from '@/ts/services/upload/types';
 
 /**
  * Create a mock AssetStorageService for testing.
@@ -11,9 +12,10 @@ export function createMockAssetStorageService(
   const assets = new Map<string, DBAsset>();
   let idCounter = 0;
 
-  const createMockAsset = (id: string, type: AssetType = 'character-icon'): DBAsset => ({
+  const createMockAsset = (id: string, tags: string[] = ['type:icon']): DBAsset => ({
     id,
-    type,
+    tags,
+    folder: null, // null = root
     projectId: null, // null = global
     blob: new Blob(['mock-data']),
     thumbnail: new Blob(['mock-thumbnail']),
@@ -33,7 +35,7 @@ export function createMockAssetStorageService(
     // CRUD Operations
     save: vi.fn().mockImplementation(async (data) => {
       const id = `mock-asset-${++idCounter}`;
-      const asset = createMockAsset(id, data.type);
+      const asset = createMockAsset(id, data.tags);
       asset.metadata.filename = data.metadata?.filename ?? `Asset ${id}`;
       assets.set(id, asset);
       return id;
@@ -74,8 +76,8 @@ export function createMockAssetStorageService(
     ),
     getByType: vi
       .fn()
-      .mockImplementation(async (type: AssetType) =>
-        Array.from(assets.values()).filter((a) => a.type === type)
+      .mockImplementation(async (typeTagValue: string) =>
+        Array.from(assets.values()).filter((a) => getTypeFromTags(a.tags) === typeTagValue)
       ),
     findByHash: vi.fn().mockResolvedValue(undefined),
     getByProject: vi.fn().mockResolvedValue([]),

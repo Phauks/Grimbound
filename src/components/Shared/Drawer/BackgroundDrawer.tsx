@@ -10,7 +10,7 @@
  * @module components/Shared/Drawer/BackgroundDrawer
  */
 
-import { memo, type ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { DrawerTokenTabs, type TabGroup } from '@/components/Shared/Controls';
 import { SettingsDrawer } from './SettingsDrawer';
 
@@ -39,7 +39,7 @@ export interface BackgroundDrawerProps {
   onLinkToggle?: () => void;
 }
 
-export const BackgroundDrawer = memo(function BackgroundDrawer({
+export function BackgroundDrawer({
   isOpen,
   onClose,
   onApply,
@@ -52,27 +52,24 @@ export const BackgroundDrawer = memo(function BackgroundDrawer({
   onLinkToggle,
 }: BackgroundDrawerProps) {
   // Build tab groups with optional link toggle
-  const groups = useMemo(
-    (): TabGroup[] => [
-      {
-        tabs: [
-          { id: 'character', label: 'Character' },
-          { id: 'meta', label: 'Meta' },
-        ],
-        link: onLinkToggle
-          ? {
-              isLinked,
-              onToggle: onLinkToggle,
-              ariaLabel: 'Link Character and Meta background settings',
-            }
-          : undefined,
-      },
-      {
-        tabs: [{ id: 'reminder', label: 'Reminder' }],
-      },
-    ],
-    [isLinked, onLinkToggle]
-  );
+  const groups: TabGroup[] = [
+    {
+      tabs: [
+        { id: 'character', label: 'Character' },
+        { id: 'meta', label: 'Meta' },
+      ],
+      link: onLinkToggle
+        ? {
+            isLinked,
+            onToggle: onLinkToggle,
+            ariaLabel: 'Link Character and Meta background settings',
+          }
+        : undefined,
+    },
+    {
+      tabs: [{ id: 'reminder', label: 'Reminder' }],
+    },
+  ];
 
   const headerSlot = (
     <DrawerTokenTabs
@@ -95,6 +92,4 @@ export const BackgroundDrawer = memo(function BackgroundDrawer({
       {children}
     </SettingsDrawer>
   );
-});
-
-export default BackgroundDrawer;
+}

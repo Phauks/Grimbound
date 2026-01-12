@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import type { ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { ContextMenu } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
@@ -35,111 +35,103 @@ interface PresetCardProps {
   onDragEnd?: (e: React.DragEvent) => void;
 }
 
-export const PresetCard = memo(
-  ({
-    icon,
-    name,
-    title,
-    isActive = false,
-    onApply,
-    onMenuToggle,
-    menuIsOpen = false,
-    menuItems = [],
-    defaultStar = false,
-    isAddButton = false,
-    disabled = false,
-    draggable = false,
-    isDragging = false,
-    isDropTarget = false,
-    onDragStart,
-    onDragOver,
-    onDragLeave,
-    onDrop,
-    onDragEnd,
-  }: PresetCardProps) => {
-    const cardRef = useRef<HTMLButtonElement>(null);
+export function PresetCard({
+  icon,
+  name,
+  title,
+  isActive = false,
+  onApply,
+  onMenuToggle,
+  menuIsOpen = false,
+  menuItems = [],
+  defaultStar = false,
+  isAddButton = false,
+  disabled = false,
+  draggable = false,
+  isDragging = false,
+  isDropTarget = false,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+}: PresetCardProps) {
+  const cardRef = useRef<HTMLButtonElement>(null);
 
-    // Use context menu hook in controlled mode (parent manages open state)
-    const contextMenu = useContextMenu({
-      isOpen: menuIsOpen,
-      onToggle: (open) => {
-        if (!open) onMenuToggle();
-      },
-      positionMode: 'element',
-      elementOffset: { x: 8, y: 0 },
-    });
+  // Use context menu hook in controlled mode (parent manages open state)
+  const contextMenu = useContextMenu({
+    isOpen: menuIsOpen,
+    onToggle: (open) => {
+      if (!open) onMenuToggle();
+    },
+    positionMode: 'element',
+    elementOffset: { x: 8, y: 0 },
+  });
 
-    // Convert MenuItemConfig to ContextMenuItem format
-    const contextMenuItems: ContextMenuItem[] = useMemo(
-      () =>
-        menuItems.map((item) => ({
-          icon: item.icon,
-          label: item.label,
-          description: item.description,
-          onClick: item.onClick,
-        })),
-      [menuItems]
-    );
+  // Convert MenuItemConfig to ContextMenuItem format
+  const contextMenuItems: ContextMenuItem[] = menuItems.map((item) => ({
+    icon: item.icon,
+    label: item.label,
+    description: item.description,
+    onClick: item.onClick,
+  }));
 
-    const cardClasses = cn(
-      styles.card,
-      isActive && styles.active,
-      isAddButton && styles.cardAdd,
-      disabled && styles.disabled,
-      isDragging && styles.dragging,
-      isDropTarget && styles.dropTarget
-    );
+  const cardClasses = cn(
+    styles.card,
+    isActive && styles.active,
+    isAddButton && styles.cardAdd,
+    disabled && styles.disabled,
+    isDragging && styles.dragging,
+    isDropTarget && styles.dropTarget
+  );
 
-    const handleContextMenu = (e: React.MouseEvent) => {
-      if (menuItems.length > 0) {
-        e.preventDefault();
-        // Open context menu positioned relative to the card element
-        contextMenu.open(e, undefined, cardRef.current);
-        onMenuToggle(e);
-      }
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (menuItems.length > 0) {
+      e.preventDefault();
+      // Open context menu positioned relative to the card element
+      contextMenu.open(e, undefined, cardRef.current);
+      onMenuToggle(e);
+    }
+  };
+
+  // Calculate position for element-based positioning
+  const menuPosition = (() => {
+    if (!(menuIsOpen && cardRef.current)) return null;
+    const rect = cardRef.current.getBoundingClientRect();
+    return {
+      x: rect.right + 8,
+      y: rect.top,
     };
+  })();
 
-    // Calculate position for element-based positioning
-    const menuPosition = useMemo(() => {
-      if (!(menuIsOpen && cardRef.current)) return null;
-      const rect = cardRef.current.getBoundingClientRect();
-      return {
-        x: rect.right + 8,
-        y: rect.top,
-      };
-    }, [menuIsOpen]);
+  return (
+    <button
+      type="button"
+      ref={cardRef}
+      className={cardClasses}
+      onClick={onApply}
+      onContextMenu={handleContextMenu}
+      title={title}
+      disabled={disabled}
+      draggable={draggable && !disabled}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+    >
+      {defaultStar && <span className={styles.defaultStar}>⭐</span>}
+      <span className={styles.icon}>{icon}</span>
+      <span className={styles.name}>{name}</span>
 
-    return (
-      <button
-        type="button"
-        ref={cardRef}
-        className={cardClasses}
-        onClick={onApply}
-        onContextMenu={handleContextMenu}
-        title={title}
-        disabled={disabled}
-        draggable={draggable && !disabled}
-        onDragStart={onDragStart}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onDragEnd={onDragEnd}
-      >
-        {defaultStar && <span className={styles.defaultStar}>⭐</span>}
-        <span className={styles.icon}>{icon}</span>
-        <span className={styles.name}>{name}</span>
-
-        {/* Context menu using shared component */}
-        <ContextMenu
-          ref={contextMenu.menuRef}
-          isOpen={menuIsOpen}
-          position={menuPosition}
-          items={contextMenuItems}
-          onClose={() => onMenuToggle()}
-        />
-      </button>
-    );
-  }
-);
-
-PresetCard.displayName = 'PresetCard';
+      {/* Context menu using shared component */}
+      <ContextMenu
+        ref={contextMenu.menuRef}
+        isOpen={menuIsOpen}
+        position={menuPosition}
+        items={contextMenuItems}
+        onClose={() => onMenuToggle()}
+      />
+    </button>
+  );
+}

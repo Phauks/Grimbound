@@ -41,9 +41,25 @@ export type {
   UseControlledFieldsResult,
 } from './useControlledFields';
 export { useControlledFields } from './useControlledFields';
+// Debounced callback hook
+export type {
+  UseDebouncedCallbackOptions,
+  UseDebouncedCallbackResult,
+} from './useDebouncedCallback';
+export { useDebouncedCallback } from './useDebouncedCallback';
 export type { UseDraggableListOptions, UseDraggableListResult } from './useDraggableList';
 // Draggable list hooks
 export { useDraggableList } from './useDraggableList';
+export type {
+  DragState,
+  Position,
+  ResizeHandle,
+  Size,
+  UseDraggablePositionOptions,
+  UseDraggablePositionResult,
+} from './useDraggablePosition';
+// Draggable position hooks (for draggable drawers/panels)
+export { useDraggablePosition } from './useDraggablePosition';
 // Drawer animation hooks
 export { useDrawerAnimation } from './useDrawerAnimation';
 export type { UseDrawerStateOptions, UseDrawerStateReturn } from './useDrawerState';
@@ -58,21 +74,41 @@ export type {
 export { useExpandablePanel } from './useExpandablePanel';
 // Filter hooks
 export { useFilters } from './useFilters';
-export type { default as UseIntersectionObserverOptions } from './useIntersectionObserver';
+export type {
+  UseIntersectionObserverOptions,
+  UseIntersectionObserverReturn,
+} from './useIntersectionObserver';
 // Intersection observer hooks
 export { useIntersectionObserver } from './useIntersectionObserver';
-export type { default as UseModalBehaviorOptions } from './useModalBehavior';
+export type { UseModalBehaviorOptions, UseModalBehaviorReturn } from './useModalBehavior';
 // Modal behavior hooks
 export { useModalBehavior } from './useModalBehavior';
 export type { UsePageScaleResult } from './usePageScale';
 // Page scale hooks (WYSIWYG preview)
 export { usePageScale } from './usePageScale';
-export type { UseRecentColorsOptions, UseRecentColorsResult } from './useRecentColors';
+export type {
+  UseRecentColorsOptions,
+  UseRecentColorsResult,
+} from './useRecentColors';
 // Recent colors hooks
 export { addRecentColor, getRecentColors, useRecentColors } from './useRecentColors';
+// Resizable sidebar hooks
+export type {
+  UseResizableSidebarOptions,
+  UseResizableSidebarResult,
+} from './useResizableSidebar';
+export { useResizableSidebar } from './useResizableSidebar';
 export type { UseSelectionOptions, UseSelectionReturn } from './useSelection';
 // Selection hooks
 export { useSelection } from './useSelection';
 export type { UseUndoStackReturn } from './useUndoStack';
 // Undo stack hooks
 export { useUndoStack } from './useUndoStack';
+// Virtual scroll hooks
+export type {
+  UseVirtualGridOptions,
+  UseVirtualGridReturn,
+  UseVirtualScrollOptions,
+  UseVirtualScrollReturn,
+} from './useVirtualScroll';
+export { useVirtualGrid, useVirtualScroll } from './useVirtualScroll';

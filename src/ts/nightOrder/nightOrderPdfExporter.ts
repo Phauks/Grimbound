@@ -1,24 +1,30 @@
 /**
  * Night Order PDF Exporter
  *
- * True WYSIWYG PDF export using Snapdom to capture the actual React components.
- * This replaces the previous manual pdf-lib drawing approach with a capture-based
- * approach that guarantees the PDF matches the UI exactly.
+ * Uses a two-phase hybrid approach for fast PDF generation:
+ * 1. Capture visual layout with Snapdom (embedFonts: false) - FAST
+ * 2. Overlay text using pdf-lib with embedded fonts - accurate typography
  *
- * Flow:
- * 1. Render NightSheetPrintable offscreen at DPI-correct dimensions
- * 2. Capture with Snapdom to canvas
- * 3. Convert canvas to JPEG
- * 4. Embed as full-page image in PDF using pdf-lib
+ * This avoids the slow base64 font encoding in Snapdom while maintaining
+ * high-quality font rendering in the final PDF.
  */
 
+import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument } from 'pdf-lib';
-import type { NightSheetBackground } from '@/components/ViewComponents/ScriptComponents/NightOrderView';
+import {
+  canvasToJpegBytes,
+  drawTextOnPage,
+  loadAllFonts,
+  PAGE_HEIGHT_PT,
+  PAGE_WIDTH_PT,
+  resolveBackgroundImage,
+} from '@/ts/scriptPdf/shared/index.js';
+import type { BackgroundStyle } from '@/ts/types/backgroundEffects.js';
 import type { ScriptMeta } from '@/ts/types/index.js';
 import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
+import { paginateEntries } from './nightOrderLayout.js';
 import type { NightOrderState } from './nightOrderTypes.js';
-import { preloadSnapdom, renderNightSheetToCanvas } from './nightSheetRenderer.js';
 
 // ============================================================================
 // Types
@@ -54,94 +60,56 @@ export interface NightOrderPdfOptions {
   onProgress?: ProgressCallback;
   /** Abort signal for cancellation */
   signal?: AbortSignal;
-  /** Background customization */
-  background?: NightSheetBackground;
+  /** Background style configuration */
+  background?: BackgroundStyle;
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-/** Letter page size in points (72 points = 1 inch) */
-const PAGE_WIDTH_PT = 8.5 * 72; // 612
-const PAGE_HEIGHT_PT = 11 * 72; // 792
 
 /** Default background settings */
-const DEFAULT_BACKGROUND: NightSheetBackground = {
-  baseColor: '#f4edd9',
-  showTexture: true,
-  textureOpacity: 0.06,
+const DEFAULT_BACKGROUND: BackgroundStyle = {
+  sourceType: 'styled',
+  mode: 'solid',
+  solidColor: '#f4edd9',
+  gradient: {
+    type: 'linear',
+    colorStart: '#f4edd9',
+    colorEnd: '#e8dcc8',
+    rotation: 180,
+  },
+  texture: {
+    type: 'none',
+    intensity: 50,
+    scale: 1,
+    seed: 12345,
+    randomizeSeedPerToken: false,
+  },
+  effects: {
+    vignetteEnabled: false,
+    vignetteIntensity: 20,
+    vignetteColor: '#000000',
+    innerGlowEnabled: false,
+    innerGlowColor: '#ffffff',
+    innerGlowRadius: 10,
+    innerGlowIntensity: 30,
+    borderEnabled: false,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    borderStyle: 'solid',
+    borderMode: 'overlay',
+  },
+  light: {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    vibrance: 0,
+  },
 };
-
-/** JPEG quality for PDF embedding (0-1) */
-const JPEG_QUALITY = 0.92;
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Convert canvas to JPEG bytes for PDF embedding
- */
-async function canvasToJpegBytes(canvas: HTMLCanvasElement): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error('Failed to convert canvas to blob'));
-          return;
-        }
-        blob
-          .arrayBuffer()
-          .then((buffer) => {
-            resolve(new Uint8Array(buffer));
-          })
-          .catch(reject);
-      },
-      'image/jpeg',
-      JPEG_QUALITY
-    );
-  });
-}
-
-/**
- * Embed a canvas as a full-page image in PDF
- */
-async function embedCanvasInPdf(pdfDoc: PDFDocument, canvas: HTMLCanvasElement): Promise<void> {
-  // Convert canvas to JPEG bytes
-  const jpegBytes = await canvasToJpegBytes(canvas);
-
-  // Embed the image
-  const image = await pdfDoc.embedJpg(jpegBytes);
-
-  // Add a new page
-  const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
-
-  // Draw the image to fill the page
-  page.drawImage(image, {
-    x: 0,
-    y: 0,
-    width: PAGE_WIDTH_PT,
-    height: PAGE_HEIGHT_PT,
-  });
-
-  // Release canvas memory
-  canvas.width = 1;
-  canvas.height = 1;
-}
 
 // ============================================================================
 // Main Export Functions
 // ============================================================================
 
 /**
- * Generate a night order PDF as bytes
- *
- * @param firstNight - First night order state
- * @param otherNight - Other nights order state
- * @param scriptMeta - Script metadata (name, logo)
- * @param options - Export options
- * @returns PDF as Uint8Array
+ * Generate a night order PDF using the hybrid approach
  */
 export async function generateNightOrderPdf(
   firstNight: NightOrderState,
@@ -157,101 +125,189 @@ export async function generateNightOrderPdf(
     background = DEFAULT_BACKGROUND,
   } = options;
 
-  // Check for abort
   if (signal?.aborted) {
     throw new DOMException('Export cancelled', 'AbortError');
   }
-
-  logger.info('NightOrderPdfExporter', 'Starting PDF generation', {
-    includeFirstNight,
-    includeOtherNight,
-    firstNightEntries: firstNight.entries.length,
-    otherNightEntries: otherNight.entries.length,
-  });
 
   const startTime = performance.now();
+  logger.info('NightOrderPdfExporter', 'Starting PDF generation');
 
-  // Phase: Initializing - preload Snapdom in parallel with PDF creation
-  onProgress?.('initializing', 0, 100);
+  try {
+    // Phase: Initializing
+    onProgress?.('initializing', 0, 100);
 
-  // Preload Snapdom and create PDF document in parallel
-  const [, pdfDoc] = await Promise.all([preloadSnapdom(), PDFDocument.create()]);
+    // Resolve background image if using image background
+    const resolvedBackgroundUrl =
+      background.sourceType === 'image'
+        ? await resolveBackgroundImage(background.imageUrl, 'NightOrderPdfExporter')
+        : undefined;
 
-  // Set metadata
-  pdfDoc.setTitle(scriptMeta?.name ? `${scriptMeta.name} - Night Order` : 'Night Order');
-  pdfDoc.setCreator('Grimbound Token Generator');
+    // Create PDF document and register fontkit for custom font embedding
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    pdfDoc.setTitle(scriptMeta?.name ? `${scriptMeta.name} - Night Order` : 'Night Order');
+    pdfDoc.setCreator('Grimbound Token Generator');
 
-  // Phase: Rendering First Night
-  if (includeFirstNight && firstNight.entries.length > 0) {
-    if (signal?.aborted) {
-      throw new DOMException('Export cancelled', 'AbortError');
-    }
+    // Phase: Loading fonts
+    onProgress?.('loading-fonts', 10, 100);
+    const fonts = await loadAllFonts(pdfDoc, 'NightOrderPdfExporter');
 
-    onProgress?.('rendering-first', 25, 100);
+    // We need to dynamically import the renderer to avoid circular dependencies
+    const { renderNightSheet } = await import('./nightSheetRenderer.js');
 
-    const result = await renderNightSheetToCanvas({
-      nightType: 'first',
-      entries: firstNight.entries,
-      scriptMeta,
-      background,
-      signal,
+    // Paginate entries for both night types
+    const firstNightPages = includeFirstNight
+      ? paginateEntries(firstNight.entries)
+      : { pages: [], pageCount: 0 };
+    const otherNightPages = includeOtherNight
+      ? paginateEntries(otherNight.entries)
+      : { pages: [], pageCount: 0 };
+    const totalPages = firstNightPages.pageCount + otherNightPages.pageCount;
+
+    logger.info('NightOrderPdfExporter', 'Pagination calculated', {
+      firstNightPages: firstNightPages.pageCount,
+      otherNightPages: otherNightPages.pageCount,
+      totalPages,
     });
 
-    await embedCanvasInPdf(pdfDoc, result.canvas);
+    let pagesRendered = 0;
 
-    logger.debug('NightOrderPdfExporter', 'First night page added');
-  }
+    // Phase: Rendering First Night (potentially multiple pages)
+    if (firstNightPages.pageCount > 0) {
+      for (let i = 0; i < firstNightPages.pages.length; i++) {
+        if (signal?.aborted) {
+          throw new DOMException('Export cancelled', 'AbortError');
+        }
 
-  // Phase: Rendering Other Nights
-  if (includeOtherNight && otherNight.entries.length > 0) {
-    if (signal?.aborted) {
-      throw new DOMException('Export cancelled', 'AbortError');
+        const pageEntries = firstNightPages.pages[i];
+        const pageNumber = i + 1;
+
+        // Calculate progress: 20-50% for first night pages
+        const progressBase = 20;
+        const progressRange = 30;
+        const pageProgress =
+          progressBase + (progressRange * pagesRendered) / Math.max(totalPages, 1);
+        onProgress?.('rendering-first', Math.round(pageProgress), 100);
+
+        const result = await renderNightSheet({
+          nightType: 'first',
+          entries: pageEntries,
+          scriptMeta,
+          background,
+          resolvedBackgroundUrl,
+          signal,
+          pageNumber,
+          totalPages: firstNightPages.pageCount,
+        });
+
+        // Embed background image
+        const jpegBytes = await canvasToJpegBytes(result.canvas);
+        const image = await pdfDoc.embedJpg(jpegBytes);
+        const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
+
+        // Draw background image
+        page.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: PAGE_WIDTH_PT,
+          height: PAGE_HEIGHT_PT,
+        });
+
+        // Overlay text with proper fonts (treatReminderAsBold=true for night order)
+        drawTextOnPage(page, result.texts, fonts, PAGE_HEIGHT_PT, 'NightOrderPdfExporter', true);
+
+        // Release canvas memory
+        result.canvas.width = 1;
+        result.canvas.height = 1;
+
+        pagesRendered++;
+        logger.debug(
+          'NightOrderPdfExporter',
+          `First night page ${pageNumber}/${firstNightPages.pageCount} added`
+        );
+      }
     }
 
-    onProgress?.('rendering-other', 60, 100);
+    // Phase: Rendering Other Nights (potentially multiple pages)
+    if (otherNightPages.pageCount > 0) {
+      for (let i = 0; i < otherNightPages.pages.length; i++) {
+        if (signal?.aborted) {
+          throw new DOMException('Export cancelled', 'AbortError');
+        }
 
-    const result = await renderNightSheetToCanvas({
-      nightType: 'other',
-      entries: otherNight.entries,
-      scriptMeta,
-      background,
-      signal,
+        const pageEntries = otherNightPages.pages[i];
+        const pageNumber = i + 1;
+
+        // Calculate progress: 50-80% for other night pages
+        const progressBase = 50;
+        const progressRange = 30;
+        const pageProgress =
+          progressBase +
+          (progressRange * (pagesRendered - firstNightPages.pageCount)) /
+            Math.max(otherNightPages.pageCount, 1);
+        onProgress?.('rendering-other', Math.round(pageProgress), 100);
+
+        const result = await renderNightSheet({
+          nightType: 'other',
+          entries: pageEntries,
+          scriptMeta,
+          background,
+          resolvedBackgroundUrl,
+          signal,
+          pageNumber,
+          totalPages: otherNightPages.pageCount,
+        });
+
+        // Embed background image
+        const jpegBytes = await canvasToJpegBytes(result.canvas);
+        const image = await pdfDoc.embedJpg(jpegBytes);
+        const page = pdfDoc.addPage([PAGE_WIDTH_PT, PAGE_HEIGHT_PT]);
+
+        // Draw background image
+        page.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: PAGE_WIDTH_PT,
+          height: PAGE_HEIGHT_PT,
+        });
+
+        // Overlay text with proper fonts (treatReminderAsBold=true for night order)
+        drawTextOnPage(page, result.texts, fonts, PAGE_HEIGHT_PT, 'NightOrderPdfExporter', true);
+
+        // Release canvas memory
+        result.canvas.width = 1;
+        result.canvas.height = 1;
+
+        pagesRendered++;
+        logger.debug(
+          'NightOrderPdfExporter',
+          `Other nights page ${pageNumber}/${otherNightPages.pageCount} added`
+        );
+      }
+    }
+
+    // Phase: Saving
+    onProgress?.('saving', 90, 100);
+
+    const pdfBytes = await pdfDoc.save();
+
+    const endTime = performance.now();
+    logger.info('NightOrderPdfExporter', `PDF generated in ${(endTime - startTime).toFixed(0)}ms`, {
+      pageCount: pdfDoc.getPageCount(),
+      sizeKB: Math.round(pdfBytes.length / 1024),
     });
 
-    await embedCanvasInPdf(pdfDoc, result.canvas);
+    onProgress?.('saving', 100, 100);
 
-    logger.debug('NightOrderPdfExporter', 'Other nights page added');
+    return pdfBytes;
+  } catch (error) {
+    logger.error('NightOrderPdfExporter', 'PDF generation failed', error);
+    throw error;
   }
-
-  // Phase: Saving
-  if (signal?.aborted) {
-    throw new DOMException('Export cancelled', 'AbortError');
-  }
-
-  onProgress?.('saving', 90, 100);
-
-  // Save PDF to bytes
-  const pdfBytes = await pdfDoc.save();
-
-  const endTime = performance.now();
-  logger.info('NightOrderPdfExporter', `PDF generated in ${(endTime - startTime).toFixed(0)}ms`, {
-    pageCount: pdfDoc.getPageCount(),
-    sizeKB: Math.round(pdfBytes.length / 1024),
-  });
-
-  onProgress?.('saving', 100, 100);
-
-  return pdfBytes;
 }
 
 /**
- * Generate and download a night order PDF
- *
- * @param firstNight - First night order state
- * @param otherNight - Other nights order state
- * @param scriptMeta - Script metadata (name, logo)
- * @param filename - Output filename
- * @param options - Export options
+ * Generate and download a night order PDF using hybrid mode
  */
 export async function downloadNightOrderPdf(
   firstNight: NightOrderState,
@@ -262,7 +318,6 @@ export async function downloadNightOrderPdf(
 ): Promise<void> {
   const pdfBytes = await generateNightOrderPdf(firstNight, otherNight, scriptMeta, options);
 
-  // Create blob and download (slice to ensure standard ArrayBuffer for Blob compatibility)
   const blob = new Blob([pdfBytes.slice()], { type: 'application/pdf' });
   downloadFile(blob, filename);
 
@@ -270,13 +325,7 @@ export async function downloadNightOrderPdf(
 }
 
 /**
- * Generate a night order PDF as a Blob
- *
- * @param firstNight - First night order state
- * @param otherNight - Other nights order state
- * @param scriptMeta - Script metadata (name, logo)
- * @param options - Export options
- * @returns PDF as Blob
+ * Get a night order PDF as a Blob using hybrid mode
  */
 export async function getNightOrderPdfBlob(
   firstNight: NightOrderState,
@@ -285,6 +334,5 @@ export async function getNightOrderPdfBlob(
   options: NightOrderPdfOptions = {}
 ): Promise<Blob> {
   const pdfBytes = await generateNightOrderPdf(firstNight, otherNight, scriptMeta, options);
-  // Slice to ensure standard ArrayBuffer for Blob compatibility
   return new Blob([pdfBytes.slice()], { type: 'application/pdf' });
 }

@@ -10,7 +10,7 @@
  * @module components/Shared/Drawer/FontDrawer
  */
 
-import { memo, type ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { DrawerTokenTabs, type TabGroup } from '@/components/Shared/Controls';
 import { SettingsDrawer } from './SettingsDrawer';
 
@@ -43,7 +43,7 @@ export interface FontDrawerProps {
   onTextLinkToggle?: () => void;
 }
 
-export const FontDrawer = memo(function FontDrawer({
+export function FontDrawer({
   isOpen,
   onClose,
   onApply,
@@ -58,42 +58,40 @@ export const FontDrawer = memo(function FontDrawer({
   onTextLinkToggle,
 }: FontDrawerProps) {
   // Build tab groups - 3 groups with optional link toggles
-  const groups = useMemo((): TabGroup[] => {
-    return [
-      // Group 1: Character Name ↔ Meta Name
-      {
-        tabs: [
-          { id: 'character', label: 'Character Name' },
-          { id: 'meta', label: 'Meta Name' },
-        ],
-        link: onNameLinkToggle
-          ? {
-              isLinked: isNameLinked,
-              onToggle: onNameLinkToggle,
-              ariaLabel: 'Link Character Name and Meta Name text settings',
-            }
-          : undefined,
-      },
-      // Group 2: Character Text ↔ Meta Text
-      {
-        tabs: [
-          { id: 'characterText', label: 'Character Text' },
-          { id: 'metaText', label: 'Meta Text' },
-        ],
-        link: onTextLinkToggle
-          ? {
-              isLinked: isTextLinked,
-              onToggle: onTextLinkToggle,
-              ariaLabel: 'Link Character Text and Meta Text text settings',
-            }
-          : undefined,
-      },
-      // Group 3: Reminder
-      {
-        tabs: [{ id: 'reminder', label: 'Reminder' }],
-      },
-    ];
-  }, [isNameLinked, onNameLinkToggle, isTextLinked, onTextLinkToggle]);
+  const groups: TabGroup[] = [
+    // Group 1: Character Name ↔ Meta Name
+    {
+      tabs: [
+        { id: 'character', label: 'Character Name' },
+        { id: 'meta', label: 'Meta Name' },
+      ],
+      link: onNameLinkToggle
+        ? {
+            isLinked: isNameLinked,
+            onToggle: onNameLinkToggle,
+            ariaLabel: 'Link Character Name and Meta Name text settings',
+          }
+        : undefined,
+    },
+    // Group 2: Character Text ↔ Meta Text
+    {
+      tabs: [
+        { id: 'characterText', label: 'Character Text' },
+        { id: 'metaText', label: 'Meta Text' },
+      ],
+      link: onTextLinkToggle
+        ? {
+            isLinked: isTextLinked,
+            onToggle: onTextLinkToggle,
+            ariaLabel: 'Link Character Text and Meta Text text settings',
+          }
+        : undefined,
+    },
+    // Group 3: Reminder
+    {
+      tabs: [{ id: 'reminder', label: 'Reminder' }],
+    },
+  ];
 
   const headerSlot = (
     <DrawerTokenTabs
@@ -117,6 +115,4 @@ export const FontDrawer = memo(function FontDrawer({
       {children}
     </SettingsDrawer>
   );
-});
-
-export default FontDrawer;
+}

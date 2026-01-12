@@ -114,5 +114,3 @@ export function ConfirmDialog({
     </Modal>
   );
 }
-
-export default ConfirmDialog;

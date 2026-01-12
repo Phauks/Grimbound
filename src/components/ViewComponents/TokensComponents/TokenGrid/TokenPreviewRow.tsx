@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useTokenGenerator } from '@/hooks/tokens/useTokenGenerator';
 import styles from '@/styles/components/tokens/TokenPreviewRow.module.css';
 import { combineHashes, hashGenerationOptions, simpleHash } from '@/ts/cache/utils/hashUtils.js';
 import { CONFIG } from '@/ts/config.js';
+import { DEFAULT_SAMPLE_CHARACTER } from '@/ts/constants.js';
 import { calculateTokenCounts, getBestPreviewCharacter } from '@/ts/data/characterUtils';
 import { calculateTokenCountsByType, TokenGenerator } from '@/ts/generation/index.js';
 import type { Character, GenerationOptions, Jinx, ScriptMeta, Token } from '@/ts/types/index.js';
@@ -140,18 +141,6 @@ async function generateMetaTokenCanvas(
   }
 }
 
-// Sample character for preview when no script is loaded
-// Uses 'washerwoman' as id so sync storage can resolve the icon
-const SAMPLE_CHARACTER: Character = {
-  id: 'washerwoman',
-  name: 'Washerwoman',
-  team: 'townsfolk',
-  ability: 'You start knowing that 1 of 2 players is a particular Townsfolk.',
-  image: 'washerwoman.webp', // Extension needed for sync storage lookup
-  reminders: ['Townsfolk', 'Wrong'],
-  setup: false,
-};
-
 /** Props for TokenPreviewImage subcomponent */
 interface TokenPreviewImageProps {
   canvas: HTMLCanvasElement | null;
@@ -241,7 +230,7 @@ export function TokenPreviewRow({
   // These are only used when in context mode (no props provided)
   const exampleCharacterToken = propCharacters ? null : context.exampleCharacterToken;
   // Stable no-op function to avoid creating new reference each render
-  const noopSetToken = useCallback(() => {}, []);
+  const noopSetToken = () => {};
   const setExampleCharacterToken = propCharacters ? noopSetToken : context.setExampleCharacterToken;
   const exampleMetaToken = propCharacters ? null : context.exampleMetaToken;
 
@@ -260,9 +249,10 @@ export function TokenPreviewRow({
   const prevHashRef = useRef<string>('');
 
   // Get sample character from exampleCharacterToken using extracted helper
-  const { sampleCharacter, wasAutoSelected, selectedReminderText } = useMemo(
-    () => selectSampleCharacter(characters, exampleCharacterToken, SAMPLE_CHARACTER),
-    [characters, exampleCharacterToken]
+  const { sampleCharacter, wasAutoSelected, selectedReminderText } = selectSampleCharacter(
+    characters,
+    exampleCharacterToken,
+    DEFAULT_SAMPLE_CHARACTER
   );
 
   // Generate preview on mount and when options actually change (deep comparison)
@@ -307,9 +297,11 @@ export function TokenPreviewRow({
         const charCanvas = await generator.generateCharacterToken(sampleCharacter);
         setPreviewCharCanvas(charCanvas);
 
-        // Set auto-selected character as example token (if auto-selected and not sample Washerwoman)
-        if (wasAutoSelected && sampleCharacter !== SAMPLE_CHARACTER) {
-          setExampleCharacterToken(createAutoSelectedToken(sampleCharacter, charCanvas, CONFIG.PDF.DPI));
+        // Set auto-selected character as example token (if auto-selected and not the default sample)
+        if (wasAutoSelected && sampleCharacter !== DEFAULT_SAMPLE_CHARACTER) {
+          setExampleCharacterToken(
+            createAutoSelectedToken(sampleCharacter, charCanvas, CONFIG.PDF.DPI)
+          );
         }
 
         // Generate reminder token - use selected reminder if user picked one, otherwise first reminder
@@ -368,10 +360,10 @@ export function TokenPreviewRow({
   }, [generationOptions, autoRegenerate, characters.length, isLoading, generateTokens]);
 
   // Handle apply to all tokens - use custom handler or default
-  const handleApplyToAll = useCallback(() => {
+  const handleApplyToAll = () => {
     if (characters.length === 0) return;
     (onGenerate ?? generateTokens)();
-  }, [characters.length, onGenerate, generateTokens]);
+  };
 
   // Calculate token counts - use upfront calculation so meta count doesn't increment during generation
   const counts = calculateTokenCounts(characters);

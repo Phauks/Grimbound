@@ -21,7 +21,7 @@
 | `progressUtils.ts` | Progress tracking | `createProgressState()`, `updateProgress()` |
 | `tokenGrouping.ts` | Token organization | `groupTokensByTeam()`, `sortTokens()` |
 | `scriptSorting.ts` | Script sorting | `sortCharactersByTeam()` |
-| `storageKeys.ts` | localStorage keys | `STORAGE_KEYS.*` (CUSTOM_PRESETS, THEME, AUTO_SAVE_ENABLED, CACHE_LOG_LEVEL, AUTO_SAVE_TELEMETRY), `getStorageItem()`, `setStorageItem()` |
+| `storageKeys.ts` | localStorage keys | `STORAGE_KEYS.*` (CUSTOM_PRESETS, THEME, AUTO_SAVE_ENABLED, CACHE_LOG_LEVEL, AUTO_SAVE_TELEMETRY, SIDEBAR_WIDTH_LEFT), `getStorageItem()`, `setStorageItem()` |
 | `nameGenerator.ts` | Unique names | `generateUniqueName()` |
 | `teamUtils.ts` | Team CSS mapping | `getTeamStyleClass()`, `normalizeTeamName()`, `TEAM_CLASS_MAP` |
 | `searchUtils.ts` | **Modular search** | `searchFilter()`, `getSearchMatch()`, `parseSearchQuery()`, `matchesTerm()`, `levenshteinDistance()` |
@@ -176,6 +176,53 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 
 ---
 
+## Script PDF Module (`src/ts/scriptPdf/`)
+
+| Module | Purpose | Key Exports |
+|--------|---------|-------------|
+| `types.ts` | Type definitions | `ScriptPdfSettings`, `PlayerScriptSettings`, `PlayerScriptCharacter`, `BackgroundStyle` (re-export) |
+| `constants.ts` | Layout constants | `PAGE_WIDTH_PT`, `PLAYER_SCRIPT_FRONT`, `TEAM_COLORS`, `DEFAULT_SCRIPT_PDF_SETTINGS` |
+| `utils.ts` | Shared utilities | `groupCharactersByTeam()`, `extractActiveJinxes()`, `calculateOptimalColumns()`, `validateScriptForPlayerScript()` |
+| `playerScript/PlayerScriptEntry.tsx` | Character entry | `PlayerScriptEntry` - Single character row with icon, name, ability |
+| `playerScript/TeamSection.tsx` | Team grouping | `TeamSection` - Team with vertical label and character grid |
+| `playerScript/PlayerScriptFront.tsx` | Front page | `PlayerScriptFront` - Complete front page layout |
+| `playerScript/PlayerScriptBack.tsx` | Backing sheet | `PlayerScriptBack` - Night order icons, logo/name, player count table |
+| `playerScript/playerScriptRenderer.tsx` | Hybrid renderer | `renderPlayerScriptForHybrid()` - Offscreen render + text extraction |
+| `playerScript/playerScriptPdfExporter.ts` | PDF export | `generatePlayerScriptPdf()`, `downloadPlayerScriptPdf()`, `getPlayerScriptPdfBlob()` |
+
+**Key Types:**
+- `ScriptPdfSettings` - Complete settings (common + playerScript + nightOrder)
+- `CommonPdfSettings` - Shared margins + BackgroundStyle
+- `PlayerScriptSettings` - Player script specific (fonts, content toggles, layout)
+- `PlayerScriptCharacter` - Character data optimized for script rendering
+
+**Key Utilities:**
+```typescript
+// Group characters by team for display
+const groups = groupCharactersByTeam(characters);
+// Returns Map<Team, PlayerScriptCharacter[]>
+
+// Extract active jinxes between script characters
+const jinxes = extractActiveJinxes(characters);
+// Returns PlayerScriptJinx[]
+
+// Calculate column layout
+const columns = calculateOptimalColumns(totalChars, 'auto');
+// Returns 1 or 2
+
+// Validate script for generation
+const { valid, errors, warnings, counts } = validateScriptForPlayerScript(chars);
+```
+
+**Background Presets:**
+- `Classic Parchment` - Warm parchment with subtle texture
+- `Clean White` - Pure white, no texture
+- `Aged Paper` - Sepia with linen texture and vignette
+- `Official Style` - Matches official BotC PDF style
+- `Night Theme` - Dark background with marble texture
+
+---
+
 ## Font Services Module (`src/ts/services/fonts/`)
 
 | Module | Purpose | Key Exports |
@@ -263,6 +310,8 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `useScriptData` | Script data loading |
 | `useScriptTransformations` | Script data transformations |
 | `useGroupedReminders` | Reminder grouping logic |
+| `useScriptPdfDrawer` | Script PDF settings drawer state (open/close, tabs, pending values) |
+| `usePlayerScriptOrder` | Character ordering for player script (drag-and-drop, SAO reset) |
 | `usePresets` | Preset management |
 | `useFilters` | Filter state management |
 
@@ -273,6 +322,7 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `useExport` | Export operations |
 | `useExportDownloads` | Export download management |
 | `useScriptPdfDownloads` | Script PDF download operations |
+| `usePlayerScriptExport` | Player script PDF export with progress tracking and abort handling |
 | `useFileUpload` | File upload handling |
 
 ### UI & Interaction
@@ -292,7 +342,9 @@ const { filteredCharacters, getMatch } = useCharacterSearch({
 | `useControlledField` | Single controlled input field state |
 | `useControlledFields` | Multiple controlled input fields state |
 | `useDraggableList` | Drag-and-drop list state |
+| `useDraggablePosition` | Draggable element positioning (for drawers/panels) |
 | `useRecentColors` | Recent color picker history |
+| `useResizableSidebar` | Drag-to-resize sidebar with localStorage persistence |
 
 ### Navigation & Multi-Tab
 
@@ -389,6 +441,19 @@ TIMING = {
 STUDIO_DEFAULTS = {
   BORDER_WIDTH: 3,
   BORDER_COLOR: '#FFFFFF',
+}
+
+// Default sample character for preview when no script is loaded
+DEFAULT_SAMPLE_CHARACTER = {
+  id: 'grimbound',
+  name: 'Grimbound',
+  team: 'fabled',
+  ability: 'At the end of the first night, the storyteller dies.',
+  image: '/images/favicon.svg',
+  reminders: ['RIP'],
+  setup: true,
+  firstNight: 1,
+  otherNight: 1,
 }
 ```
 

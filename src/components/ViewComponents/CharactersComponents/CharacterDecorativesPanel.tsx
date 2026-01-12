@@ -17,7 +17,6 @@
  * @module components/CharactersComponents/CharacterDecorativesPanel
  */
 
-import { memo, useCallback, useMemo } from 'react';
 import { BackgroundStyleSelector } from '@/components/Shared/Selectors/BackgroundStyleSelector';
 import { DecorativesSettingsSelector } from '@/components/Shared/Selectors/DecorativesSettingsSelector';
 import { FontSettingsSelector } from '@/components/Shared/Selectors/FontSettingsSelector';
@@ -46,7 +45,7 @@ interface CharacterDecorativesPanelProps {
 // Main Component
 // ============================================================================
 
-export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel({
+export function CharacterDecorativesPanel({
   decoratives,
   generationOptions,
   onDecorativesChange,
@@ -55,89 +54,70 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
   const isEnabled = decoratives.useCustomSettings ?? false;
 
   // Create effective options for display
-  const effectiveOptions = useMemo(
-    () => createEffectiveOptions(generationOptions, decoratives),
-    [generationOptions, decoratives]
-  );
+  const effectiveOptions = createEffectiveOptions(generationOptions, decoratives);
 
   // Toggle handler for master switch
-  const handleToggleCustomSettings = useCallback(
-    (enabled: boolean) => {
-      onDecorativesChange({ useCustomSettings: enabled });
-    },
-    [onDecorativesChange]
-  );
+  const handleToggleCustomSettings = (enabled: boolean) => {
+    onDecorativesChange({ useCustomSettings: enabled });
+  };
 
   // Background style change handler - converts GenerationOptions changes to DecorativeOverrides
-  const handleBackgroundOptionChange = useCallback(
-    (options: Partial<GenerationOptions>) => {
-      if (options.characterBackgroundStyle) {
-        onDecorativesChange({ backgroundStyle: options.characterBackgroundStyle });
-      }
-    },
-    [onDecorativesChange]
-  );
+  const handleBackgroundOptionChange = (options: Partial<GenerationOptions>) => {
+    if (options.characterBackgroundStyle) {
+      onDecorativesChange({ backgroundStyle: options.characterBackgroundStyle });
+    }
+  };
 
   // Text settings change handler - handles both character name and ability text
-  const handleTextOptionChange = useCallback(
-    (options: Partial<GenerationOptions>) => {
-      const updates: Partial<DecorativeOverrides> = {};
+  const handleTextOptionChange = (options: Partial<GenerationOptions>) => {
+    const updates: Partial<DecorativeOverrides> = {};
 
-      // Character name font settings
-      if (options.characterNameFont !== undefined) updates.nameFont = options.characterNameFont;
-      if (options.characterNameColor !== undefined) updates.nameColor = options.characterNameColor;
-      if (options.fontSpacing?.characterName !== undefined)
-        updates.nameFontSpacing = options.fontSpacing.characterName;
-      if (options.textShadow?.characterName !== undefined)
-        updates.nameTextShadow = options.textShadow.characterName;
+    // Character name font settings
+    if (options.characterNameFont !== undefined) updates.nameFont = options.characterNameFont;
+    if (options.characterNameColor !== undefined) updates.nameColor = options.characterNameColor;
+    if (options.fontSpacing?.characterName !== undefined)
+      updates.nameFontSpacing = options.fontSpacing.characterName;
+    if (options.textShadow?.characterName !== undefined)
+      updates.nameTextShadow = options.textShadow.characterName;
 
-      // Ability text font settings
-      if (options.abilityTextFont !== undefined) updates.abilityTextFont = options.abilityTextFont;
-      if (options.abilityTextColor !== undefined)
-        updates.abilityTextColor = options.abilityTextColor;
-      if (options.fontSpacing?.characterText !== undefined)
-        updates.abilityTextFontSpacing = options.fontSpacing.characterText;
-      if (options.textShadow?.characterText !== undefined)
-        updates.abilityTextShadow = options.textShadow.characterText;
+    // Ability text font settings
+    if (options.abilityTextFont !== undefined) updates.abilityTextFont = options.abilityTextFont;
+    if (options.abilityTextColor !== undefined) updates.abilityTextColor = options.abilityTextColor;
+    if (options.fontSpacing?.characterText !== undefined)
+      updates.abilityTextFontSpacing = options.fontSpacing.characterText;
+    if (options.textShadow?.characterText !== undefined)
+      updates.abilityTextShadow = options.textShadow.characterText;
 
-      // Display ability text toggle
-      if (options.displayAbilityText !== undefined)
-        updates.displayAbilityText = options.displayAbilityText;
+    // Display ability text toggle
+    if (options.displayAbilityText !== undefined)
+      updates.displayAbilityText = options.displayAbilityText;
 
-      if (Object.keys(updates).length > 0) {
-        onDecorativesChange(updates);
-      }
-    },
-    [onDecorativesChange]
-  );
+    if (Object.keys(updates).length > 0) {
+      onDecorativesChange(updates);
+    }
+  };
 
   // Icon settings change handler - converts GenerationOptions to DecorativeOverrides
-  const handleIconOptionChange = useCallback(
-    (options: Partial<GenerationOptions>) => {
-      const updates: Partial<DecorativeOverrides> = {};
+  const handleIconOptionChange = (options: Partial<GenerationOptions>) => {
+    const updates: Partial<DecorativeOverrides> = {};
 
-      // Extract character icon settings
-      if (options.iconSettings?.character) {
-        const { scale, offsetX, offsetY } = options.iconSettings.character;
-        if (scale !== undefined) updates.iconScale = scale;
-        if (offsetX !== undefined) updates.iconOffsetX = offsetX;
-        if (offsetY !== undefined) updates.iconOffsetY = offsetY;
-      }
+    // Extract character icon settings
+    if (options.iconSettings?.character) {
+      const { scale, offsetX, offsetY } = options.iconSettings.character;
+      if (scale !== undefined) updates.iconScale = scale;
+      if (offsetX !== undefined) updates.iconOffsetX = offsetX;
+      if (offsetY !== undefined) updates.iconOffsetY = offsetY;
+    }
 
-      if (Object.keys(updates).length > 0) {
-        onDecorativesChange(updates);
-      }
-    },
-    [onDecorativesChange]
-  );
+    if (Object.keys(updates).length > 0) {
+      onDecorativesChange(updates);
+    }
+  };
 
   // Decoratives settings change handler (setup + accents)
-  const handleDecorativesOptionChange = useCallback(
-    (options: Partial<GenerationOptions>) => {
-      onDecorativesChange(mapDecorativesOptionsToDecorative(options));
-    },
-    [onDecorativesChange]
-  );
+  const handleDecorativesOptionChange = (options: Partial<GenerationOptions>) => {
+    onDecorativesChange(mapDecorativesOptionsToDecorative(options));
+  };
 
   return (
     <div className={styles.tabContent}>
@@ -222,6 +202,4 @@ export const CharacterDecorativesPanel = memo(function CharacterDecorativesPanel
       )}
     </div>
   );
-});
-
-export default CharacterDecorativesPanel;
+}

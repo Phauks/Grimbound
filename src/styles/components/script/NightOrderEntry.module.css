@@ -87,27 +87,36 @@
 
 /* Draggable wrapper - allows grabbing from entire row */
 .draggable {
-  cursor: grab;
   user-select: none;
 }
 
-.draggable:active {
-  cursor: grabbing;
-}
-
-/* Drag area with handle or lock */
+/* Drag area with handle or lock - absolute positioned to not affect layout */
 .dragArea {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Show drag area on entry hover */
+.entry:hover .dragArea {
+  opacity: 1;
 }
 
 .lockIcon {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   opacity: 0.4;
   cursor: default;
+  margin-left: 0.3rem;
+  vertical-align: middle;
 }
 
 .dragHandle {
@@ -151,6 +160,9 @@
   max-height: 100%;
   object-fit: contain;
   border-radius: 4px;
+  /* Scale via transform to not affect layout */
+  transform: scale(var(--icon-scale, 1));
+  transform-origin: center;
 }
 
 /* Content area */
@@ -160,6 +172,13 @@
   display: flex;
   flex-direction: column;
   gap: 0; /* No gap between name and ability */
+}
+
+/* Name row with lock icon */
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 /* Character name - Goudy Old Style with dynamic scaling */

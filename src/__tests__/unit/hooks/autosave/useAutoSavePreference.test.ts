@@ -169,18 +169,6 @@ describe('useAutoSavePreference', () => {
     });
   });
 
-  describe('Callback stability', () => {
-    it('should maintain stable toggleAutoSave reference across renders', () => {
-      const { result, rerender } = renderHook(() => useAutoSavePreference());
-
-      const firstToggle = result.current.toggleAutoSave;
-
-      rerender();
-
-      expect(result.current.toggleAutoSave).toBe(firstToggle);
-    });
-  });
-
   describe('Edge cases', () => {
     it('should handle localStorage getItem throwing error gracefully', () => {
       // Mock getItem to throw

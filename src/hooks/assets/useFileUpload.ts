@@ -31,7 +31,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFileUploadService } from '@/contexts/ServiceContext';
 import type {
   UploadError,
@@ -90,106 +90,103 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
   const dragCounterRef = useRef(0);
 
   // Reset state
-  const reset = useCallback(() => {
+  const reset = () => {
     setIsUploading(false);
     setProgress(0);
     setError(null);
     setResults([]);
     abortedRef.current = false;
-  }, []);
+  };
 
   // Abort current upload
-  const abort = useCallback(() => {
+  const abort = () => {
     abortedRef.current = true;
-  }, []);
+  };
 
   // Handle file selection
-  const handleFileSelect = useCallback(
-    async (files: FileList | File[]) => {
-      const fileArray = Array.from(files);
-      if (fileArray.length === 0) return;
+  const handleFileSelect = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
 
-      // Check multiple file constraint
-      if (!config.multiple && fileArray.length > 1) {
-        setError('Only one file can be uploaded at a time');
-        config.onError?.('Only one file can be uploaded at a time');
-        return;
-      }
+    // Check multiple file constraint
+    if (!config.multiple && fileArray.length > 1) {
+      setError('Only one file can be uploaded at a time');
+      config.onError?.('Only one file can be uploaded at a time');
+      return;
+    }
 
-      setIsUploading(true);
-      setProgress(0);
-      setError(null);
-      abortedRef.current = false;
+    setIsUploading(true);
+    setProgress(0);
+    setError(null);
+    abortedRef.current = false;
 
-      try {
-        const uploadResults = await fileUploadService.upload(fileArray, {
-          assetType: config.assetType,
-          projectId: config.projectId,
-          characterId: config.characterId,
-          onProgress: (p) => {
-            if (!abortedRef.current) {
-              setProgress(p);
-            }
-          },
-        });
-
-        if (!abortedRef.current) {
-          setResults(uploadResults);
-
-          // Check for errors
-          const errors = uploadResults.filter((r): r is UploadError => !r.success);
-          if (errors.length > 0) {
-            const errorMsg = errors.map((e) => e.error).join('; ');
-            setError(errorMsg);
-            config.onError?.(errorMsg);
-          }
-
-          config.onComplete?.(uploadResults);
-        }
-      } catch (err) {
-        if (!abortedRef.current) {
-          const errorMsg = (err as Error).message;
-          setError(errorMsg);
-          config.onError?.(errorMsg);
-        }
-      } finally {
-        if (!abortedRef.current) {
-          setIsUploading(false);
-          setProgress(100);
-        }
-      }
-    },
-    [fileUploadService, config]
-  );
-
-  // Handle paste event
-  const handlePaste = useCallback(
-    async (e: ClipboardEvent) => {
-      const result = await fileUploadService.uploadFromClipboard(e, {
-        assetType: config.assetType,
+    try {
+      const uploadResults = await fileUploadService.upload(fileArray, {
+        tags: config.tags,
         projectId: config.projectId,
+        folder: config.folder,
         characterId: config.characterId,
+        onProgress: (p) => {
+          if (!abortedRef.current) {
+            setProgress(p);
+          }
+        },
       });
 
-      if (result) {
-        setResults([result]);
-        if (!result.success) {
-          const errorMsg = result.error;
+      if (!abortedRef.current) {
+        setResults(uploadResults);
+
+        // Check for errors
+        const errors = uploadResults.filter((r): r is UploadError => !r.success);
+        if (errors.length > 0) {
+          const errorMsg = errors.map((e) => e.error).join('; ');
           setError(errorMsg);
           config.onError?.(errorMsg);
         }
-        config.onComplete?.([result]);
+
+        config.onComplete?.(uploadResults);
       }
-    },
-    [fileUploadService, config]
-  );
+    } catch (err) {
+      if (!abortedRef.current) {
+        const errorMsg = (err as Error).message;
+        setError(errorMsg);
+        config.onError?.(errorMsg);
+      }
+    } finally {
+      if (!abortedRef.current) {
+        setIsUploading(false);
+        setProgress(100);
+      }
+    }
+  };
+
+  // Handle paste event
+  const handlePaste = async (e: ClipboardEvent) => {
+    const result = await fileUploadService.uploadFromClipboard(e, {
+      tags: config.tags,
+      projectId: config.projectId,
+      folder: config.folder,
+      characterId: config.characterId,
+    });
+
+    if (result) {
+      setResults([result]);
+      if (!result.success) {
+        const errorMsg = result.error;
+        setError(errorMsg);
+        config.onError?.(errorMsg);
+      }
+      config.onComplete?.([result]);
+    }
+  };
 
   // Open file picker
-  const openFilePicker = useCallback(async () => {
+  const openFilePicker = async () => {
     const uploadResults = await fileUploadService.openFilePicker(
       {
-        assetType: config.assetType,
+        tags: config.tags,
         projectId: config.projectId,
+        folder: config.folder,
         characterId: config.characterId,
       },
       config.multiple ?? false
@@ -207,46 +204,43 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
 
       config.onComplete?.(uploadResults);
     }
-  }, [fileUploadService, config]);
+  };
 
   // Drag handlers
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
+  const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current++;
     if (dragCounterRef.current === 1) {
       setIsDragOver(true);
     }
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current--;
     if (dragCounterRef.current === 0) {
       setIsDragOver(false);
     }
-  }, []);
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dragCounterRef.current = 0;
-      setIsDragOver(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
 
-      const files = e.dataTransfer?.files;
-      if (files && files.length > 0) {
-        handleFileSelect(files);
-      }
-    },
-    [handleFileSelect]
-  );
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(
@@ -280,5 +274,3 @@ export function useFileUpload(config: UseFileUploadConfig): UseFileUploadReturn 
     abort,
   };
 }
-
-export default useFileUpload;

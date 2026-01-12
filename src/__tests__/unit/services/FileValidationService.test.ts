@@ -14,7 +14,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MB } from '@/ts/services/upload/constants';
 import { FileValidationService } from '@/ts/services/upload/FileValidationService';
-import type { AssetType } from '@/ts/services/upload/types';
+
+// ============================================================================
+// Tag Helpers
+// ============================================================================
+
+/**
+ * Create tags array for common asset types
+ */
+const tags = {
+  icon: ['type:icon'],
+  tokenBackground: ['type:token-background'],
+  scriptBackground: ['type:script-background'],
+  setup: ['type:setup'],
+  accent: ['type:accent'],
+  logo: ['type:logo'],
+  studioIcon: ['type:studio-icon'],
+  studioLogo: ['type:studio-logo'],
+  studioProject: ['type:studio-project'],
+};
 
 // ============================================================================
 // Test Utilities
@@ -191,14 +209,14 @@ describe('FileValidationService', () => {
 
     it('should accept files within size limits', async () => {
       const file = createPngFile('test.png', 2 * MB);
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('should reject files that exceed size limits', async () => {
-      const file = createPngFile('test.png', 10 * MB); // Exceeds 5MB limit for character-icon
-      const result = await service.validate(file, 'character-icon');
+      const file = createPngFile('test.png', 10 * MB); // Exceeds 5MB limit for icon
+      const result = await service.validate(file, tags.icon);
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(expect.stringContaining('File too large'));
     });
@@ -206,26 +224,26 @@ describe('FileValidationService', () => {
     it('should accept files at exactly max size', async () => {
       const maxSize = 5 * MB;
       const file = createPngFile('test.png', maxSize);
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       // Valid if file size equals max size
       expect(result.errors.filter((e) => e.includes('File too large'))).toHaveLength(0);
     });
 
     it('should include correct file size in error message', async () => {
       const file = createPngFile('test.png', 6 * MB);
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.errors[0]).toMatch(/6\.0MB/);
       expect(result.errors[0]).toMatch(/5\.0MB/);
     });
 
     it('should handle different size limits for different asset types', async () => {
       const file = createPngFile('test.png', 15 * MB);
-      // character-icon: 5MB max (should fail)
-      const charResult = await service.validate(file, 'character-icon');
+      // icon: 5MB max (should fail)
+      const charResult = await service.validate(file, tags.icon);
       expect(charResult.valid).toBe(false);
 
       // script-background: 20MB max (should pass)
-      const scriptResult = await service.validate(file, 'script-background');
+      const scriptResult = await service.validate(file, tags.scriptBackground);
       expect(scriptResult.errors.filter((e) => e.includes('File too large'))).toHaveLength(0);
     });
   });
@@ -241,31 +259,31 @@ describe('FileValidationService', () => {
 
     it('should accept allowed MIME types', async () => {
       const pngFile = createPngFile();
-      const result = await service.validate(pngFile, 'character-icon');
+      const result = await service.validate(pngFile, tags.icon);
       expect(result.errors.filter((e) => e.includes('Invalid file type'))).toHaveLength(0);
     });
 
     it('should reject disallowed MIME types', async () => {
       const gifFile = createGifFile();
-      const result = await service.validate(gifFile, 'character-icon'); // GIF not allowed for character-icon
+      const result = await service.validate(gifFile, tags.icon); // GIF not allowed for icon
       expect(result.errors).toContainEqual(expect.stringContaining('Invalid file type'));
     });
 
     it('should include allowed extensions in error message', async () => {
       const gifFile = createGifFile();
-      const result = await service.validate(gifFile, 'character-icon');
+      const result = await service.validate(gifFile, tags.icon);
       expect(result.errors[0]).toMatch(/\.png.*\.jpg.*\.jpeg.*\.webp/i);
     });
 
     it('should accept different MIME types for different asset types', async () => {
       const jpegFile = createJpegFile();
 
-      // character-icon: allows JPEG
-      const charResult = await service.validate(jpegFile, 'character-icon');
+      // icon: allows JPEG
+      const charResult = await service.validate(jpegFile, tags.icon);
       expect(charResult.errors.filter((e) => e.includes('Invalid file type'))).toHaveLength(0);
 
       // token-background: does not allow JPEG
-      const bgResult = await service.validate(jpegFile, 'token-background');
+      const bgResult = await service.validate(jpegFile, tags.tokenBackground);
       expect(bgResult.errors).toContainEqual(expect.stringContaining('Invalid file type'));
     });
   });
@@ -313,7 +331,7 @@ describe('FileValidationService', () => {
     it('should validate minimum width', async () => {
       setupImageMock(100, 200); // Below 200px min width
       const file = createPngFile();
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.errors).toContainEqual(expect.stringContaining('Image too narrow'));
       expect(result.errors[result.errors.length - 1]).toMatch(/100px.*200px/);
     });
@@ -321,14 +339,14 @@ describe('FileValidationService', () => {
     it('should validate minimum height', async () => {
       setupImageMock(200, 100); // Below 200px min height
       const file = createPngFile();
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.errors).toContainEqual(expect.stringContaining('Image too short'));
     });
 
     it('should warn about maximum width (not error)', async () => {
       setupImageMock(3000, 3000); // Above 2048px max
       const file = createPngFile();
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.valid).toBe(true); // Still valid, just with warnings
       expect(result.warnings).toContainEqual(expect.stringContaining('will be resized'));
       expect(result.warnings[0]).toMatch(/3000px.*2048px/);
@@ -337,7 +355,7 @@ describe('FileValidationService', () => {
     it('should warn about maximum height', async () => {
       setupImageMock(500, 3000); // Above 2048px max height
       const file = createPngFile();
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.warnings).toContainEqual(expect.stringContaining('will be resized'));
     });
   });
@@ -350,14 +368,14 @@ describe('FileValidationService', () => {
     it('should allow square images when requireSquare is true', async () => {
       setupImageMock(500, 500);
       const file = createPngFile();
-      const result = await service.validate(file, 'token-background');
+      const result = await service.validate(file, tags.tokenBackground);
       expect(result.warnings.filter((w) => w.includes('not square'))).toHaveLength(0);
     });
 
     it('should warn about non-square images when requireSquare is true', async () => {
       setupImageMock(600, 500);
       const file = createPngFile();
-      const result = await service.validate(file, 'token-background');
+      const result = await service.validate(file, tags.tokenBackground);
       expect(result.warnings).toContainEqual(expect.stringContaining('not square'));
       expect(result.warnings[0]).toMatch(/600×500/);
     });
@@ -365,15 +383,15 @@ describe('FileValidationService', () => {
     it('should allow nearly square images (within 5% tolerance)', async () => {
       setupImageMock(525, 500); // 5% difference
       const file = createPngFile();
-      const result = await service.validate(file, 'token-background');
+      const result = await service.validate(file, tags.tokenBackground);
       // Should not warn about square if within tolerance
       expect(result.warnings.filter((w) => w.includes('not square'))).toHaveLength(0);
     });
 
-    it('should not require square for character-icon', async () => {
+    it('should not require square for icon', async () => {
       setupImageMock(600, 400);
       const file = createPngFile();
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.warnings.filter((w) => w.includes('not square'))).toHaveLength(0);
     });
   });
@@ -471,7 +489,7 @@ describe('FileValidationService', () => {
 
     it('should warn if transparency required but not detected', async () => {
       const file = createJpegFile(); // JPEG has no transparency
-      const result = await service.validate(file, 'token-background'); // Requires transparency
+      const result = await service.validate(file, tags.tokenBackground); // Requires transparency
       expect(result.warnings).toContainEqual(expect.stringContaining('may not have transparency'));
     });
 
@@ -502,7 +520,7 @@ describe('FileValidationService', () => {
       });
 
       const file = createPngFile();
-      const result = await service.validate(file, 'token-background');
+      const result = await service.validate(file, tags.tokenBackground);
       expect(result.warnings.filter((w) => w.includes('transparency'))).toHaveLength(0);
     });
   });
@@ -512,48 +530,53 @@ describe('FileValidationService', () => {
   // ==========================================================================
 
   describe('getConfig', () => {
-    it('should return correct config for character-icon', () => {
-      const config = service.getConfig('character-icon');
-      expect(config.allowedMimeTypes).toContain('image/png');
-      expect(config.allowedMimeTypes).toContain('image/jpeg');
-      expect(config.maxSize).toBe(5 * MB);
-      expect(config.minWidth).toBe(200);
+    it('should return correct config for icon', () => {
+      const config = service.getConfig(tags.icon);
+      expect(config?.allowedMimeTypes).toContain('image/png');
+      expect(config?.allowedMimeTypes).toContain('image/jpeg');
+      expect(config?.maxSize).toBe(5 * MB);
+      expect(config?.minWidth).toBe(200);
     });
 
     it('should return correct config for token-background', () => {
-      const config = service.getConfig('token-background');
-      expect(config.allowedMimeTypes).toContain('image/png');
-      expect(config.allowedMimeTypes).not.toContain('image/jpeg');
-      expect(config.maxSize).toBe(10 * MB);
-      expect(config.requireSquare).toBe(true);
-      expect(config.requireTransparency).toBe(true);
+      const config = service.getConfig(tags.tokenBackground);
+      expect(config?.allowedMimeTypes).toContain('image/png');
+      expect(config?.allowedMimeTypes).not.toContain('image/jpeg');
+      expect(config?.maxSize).toBe(10 * MB);
+      expect(config?.requireSquare).toBe(true);
+      expect(config?.requireTransparency).toBe(true);
     });
 
     it('should return correct config for different asset types', () => {
-      const configs: AssetType[] = [
-        'character-icon',
-        'token-background',
-        'script-background',
-        'setup-overlay',
-        'accent',
-        'logo',
-        'studio-icon',
-        'studio-logo',
-        'studio-project',
+      const tagsList = [
+        tags.icon,
+        tags.tokenBackground,
+        tags.scriptBackground,
+        tags.setup,
+        tags.accent,
+        tags.logo,
+        tags.studioIcon,
+        tags.studioLogo,
+        tags.studioProject,
       ];
 
-      configs.forEach((assetType) => {
-        const config = service.getConfig(assetType);
-        expect(config.allowedMimeTypes).toBeDefined();
-        expect(config.allowedExtensions).toBeDefined();
-        expect(config.maxSize).toBeGreaterThan(0);
+      tagsList.forEach((tagArray) => {
+        const config = service.getConfig(tagArray);
+        expect(config?.allowedMimeTypes).toBeDefined();
+        expect(config?.allowedExtensions).toBeDefined();
+        expect(config?.maxSize).toBeGreaterThan(0);
       });
+    });
+
+    it('should return undefined for missing type tag', () => {
+      const config = service.getConfig(['homebrew', 'starred']);
+      expect(config).toBeUndefined();
     });
   });
 
   describe('getAllowedFilesDescription', () => {
     it('should include extensions', () => {
-      const description = service.getAllowedFilesDescription('character-icon');
+      const description = service.getAllowedFilesDescription(tags.icon);
       expect(description).toContain('.png');
       expect(description).toContain('.jpg');
       expect(description).toContain('.jpeg');
@@ -561,20 +584,25 @@ describe('FileValidationService', () => {
     });
 
     it('should include max size in MB', () => {
-      const description = service.getAllowedFilesDescription('character-icon');
+      const description = service.getAllowedFilesDescription(tags.icon);
       expect(description).toContain('5');
       expect(description).toContain('MB');
     });
 
     it('should format size correctly for different asset types', () => {
-      const charDesc = service.getAllowedFilesDescription('character-icon');
+      const charDesc = service.getAllowedFilesDescription(tags.icon);
       expect(charDesc).toMatch(/5MB/);
 
-      const bgDesc = service.getAllowedFilesDescription('token-background');
+      const bgDesc = service.getAllowedFilesDescription(tags.tokenBackground);
       expect(bgDesc).toMatch(/10MB/);
 
-      const scriptDesc = service.getAllowedFilesDescription('script-background');
+      const scriptDesc = service.getAllowedFilesDescription(tags.scriptBackground);
       expect(scriptDesc).toMatch(/20MB/);
+    });
+
+    it('should return unknown for missing type tag', () => {
+      const description = service.getAllowedFilesDescription(['homebrew']);
+      expect(description).toBe('Unknown asset type');
     });
   });
 
@@ -587,9 +615,9 @@ describe('FileValidationService', () => {
       setupImageMock(540, 540);
     });
 
-    it('should validate a valid character icon file', async () => {
+    it('should validate a valid icon file', async () => {
       const file = createPngFile('avatar.png', 2 * MB);
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.detectedMimeType).toBe('image/png');
@@ -599,7 +627,7 @@ describe('FileValidationService', () => {
     it('should fail validation with multiple errors', async () => {
       setupImageMock(100, 100); // Too narrow and too short
       const file = createGifFile('test.gif', 10 * MB); // Wrong type, too large, wrong dimensions
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(1); // Multiple errors
       expect(result.errors).toContainEqual(expect.stringContaining('Invalid file type'));
@@ -608,14 +636,14 @@ describe('FileValidationService', () => {
 
     it('should validate SVG logo correctly', async () => {
       const file = createSvgFile('logo.svg');
-      const result = await service.validate(file, 'logo');
+      const result = await service.validate(file, tags.logo);
       expect(result.valid).toBe(true);
       expect(result.detectedMimeType).toBe('image/svg+xml');
     });
 
     it('should return dimensions even for SVG files that do not render', async () => {
       const file = createSvgFile('logo.svg');
-      const result = await service.validate(file, 'logo');
+      const result = await service.validate(file, tags.logo);
       // SVG might fail to load as image, but should still be valid
       // Since SVG is accepted for logos
       expect(result.detectedMimeType).toBe('image/svg+xml');
@@ -670,8 +698,8 @@ describe('FileValidationService', () => {
 
     it('should handle size validation at max boundaries', () => {
       const service = new FileValidationService();
-      const config = service.getConfig('character-icon');
-      expect(config.maxSize).toBe(5 * MB);
+      const config = service.getConfig(tags.icon);
+      expect(config?.maxSize).toBe(5 * MB);
     });
   });
 
@@ -686,33 +714,33 @@ describe('FileValidationService', () => {
 
     it('should validate script-background with higher size limit', async () => {
       const file = createPngFile('script-bg.png', 15 * MB);
-      const result = await service.validate(file, 'script-background');
+      const result = await service.validate(file, tags.scriptBackground);
       expect(result.errors.filter((e) => e.includes('File too large'))).toHaveLength(0);
     });
 
     it('should validate accent with small size limit', async () => {
       const file = createPngFile('accent.png', 800 * 1024); // 800KB
-      const result = await service.validate(file, 'accent');
+      const result = await service.validate(file, tags.accent);
       expect(result.errors.filter((e) => e.includes('File too large'))).toHaveLength(0);
     });
 
     it('should allow JPEG for script-background but not token-background', async () => {
       const jpegFile = createJpegFile('bg.jpg', 15 * MB);
 
-      const scriptResult = await service.validate(jpegFile, 'script-background');
+      const scriptResult = await service.validate(jpegFile, tags.scriptBackground);
       expect(scriptResult.errors.filter((e) => e.includes('Invalid file type'))).toHaveLength(0);
 
-      const bgResult = await service.validate(jpegFile, 'token-background');
+      const bgResult = await service.validate(jpegFile, tags.tokenBackground);
       expect(bgResult.errors).toContainEqual(expect.stringContaining('Invalid file type'));
     });
 
-    it('should allow SVG for logo but not character-icon', async () => {
+    it('should allow SVG for logo but not icon', async () => {
       const svgFile = createSvgFile('logo.svg');
 
-      const logoResult = await service.validate(svgFile, 'logo');
+      const logoResult = await service.validate(svgFile, tags.logo);
       expect(logoResult.errors.filter((e) => e.includes('Invalid file type'))).toHaveLength(0);
 
-      const charResult = await service.validate(svgFile, 'character-icon');
+      const charResult = await service.validate(svgFile, tags.icon);
       expect(charResult.errors).toContainEqual(expect.stringContaining('Invalid file type'));
     });
 
@@ -720,10 +748,10 @@ describe('FileValidationService', () => {
       setupImageMock(540, 540);
       const file = createPngFile('studio-icon.png', 5 * MB);
 
-      const studioIconResult = await service.validate(file, 'studio-icon');
+      const studioIconResult = await service.validate(file, tags.studioIcon);
       expect(studioIconResult.valid).toBe(true);
 
-      const studioProjectResult = await service.validate(file, 'studio-project');
+      const studioProjectResult = await service.validate(file, tags.studioProject);
       expect(studioProjectResult.valid).toBe(true);
     });
   });
@@ -737,7 +765,7 @@ describe('FileValidationService', () => {
       setupImageMock(0, 0, true); // shouldFail = true
       const file = createPngFile();
 
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.errors).toContainEqual(
         expect.stringContaining('Could not read image dimensions')
       );
@@ -747,7 +775,7 @@ describe('FileValidationService', () => {
       setupImageMock(0, 0, true); // shouldFail = true
       const file = createPngFile('test.png', 2 * MB);
 
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       // Should still validate mime type and size
       expect(result.detectedMimeType).toBe('image/png');
       expect(result.errors.filter((e) => e.includes('File too large'))).toHaveLength(0);
@@ -757,9 +785,29 @@ describe('FileValidationService', () => {
       setupImageMock(0, 0, true); // shouldFail = true
       const file = createPngFile();
 
-      const result = await service.validate(file, 'character-icon');
+      const result = await service.validate(file, tags.icon);
       expect(result.detectedMimeType).toBe('image/png');
       expect(result.dimensions).toBeUndefined();
+    });
+  });
+
+  describe('validate - error handling for invalid tags', () => {
+    beforeEach(() => {
+      setupImageMock(500, 500);
+    });
+
+    it('should return error for missing type tag', async () => {
+      const file = createPngFile();
+      const result = await service.validate(file, ['homebrew', 'starred']);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(expect.stringContaining('Unknown asset type tag'));
+    });
+
+    it('should return error for invalid type tag', async () => {
+      const file = createPngFile();
+      const result = await service.validate(file, ['type:invalid-type']);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(expect.stringContaining('Unknown asset type tag'));
     });
   });
 });

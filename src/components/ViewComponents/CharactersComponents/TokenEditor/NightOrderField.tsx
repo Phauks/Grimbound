@@ -10,7 +10,6 @@
  * @module components/CharactersComponents/TokenEditor/NightOrderField
  */
 
-import { memo, useCallback, useMemo } from 'react';
 import { useAutoResizeTextarea } from '@/hooks/ui/useAutoResizeTextarea';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import {
@@ -43,7 +42,7 @@ interface NightOrderFieldProps {
   placeholder?: string;
 }
 
-export const NightOrderField = memo(function NightOrderField({
+export function NightOrderField({
   label,
   idPrefix,
   reminderValue,
@@ -62,45 +61,36 @@ export const NightOrderField = memo(function NightOrderField({
     minRows: 2,
   });
 
-  // Analyze format issues (memoized to avoid recalc on every render)
-  const formatIssues: FormatIssue[] = useMemo(
-    () => analyzeReminderText(reminderValue),
-    [reminderValue]
-  );
+  // Analyze format issues
+  const formatIssues: FormatIssue[] = analyzeReminderText(reminderValue);
 
   // Handle reminder text change - pass to parent's useControlledField
-  const handleReminderChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      if (disabled) return;
-      const newValue = e.target.value;
-      onReminderChange(newValue);
+  const handleReminderChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (disabled) return;
+    const newValue = e.target.value;
+    onReminderChange(newValue);
 
-      // Auto-set night order to 1 if reminder has text but order is 0
-      if (newValue.trim() && nightOrderValue === 0) {
-        onNightOrderChange(1);
-      }
-    },
-    [disabled, nightOrderValue, onReminderChange, onNightOrderChange]
-  );
+    // Auto-set night order to 1 if reminder has text but order is 0
+    if (newValue.trim() && nightOrderValue === 0) {
+      onNightOrderChange(1);
+    }
+  };
 
   // Handle reminder blur - parent's useControlledField flushes debounced value
-  const handleReminderBlur = useCallback(() => {
+  const handleReminderBlur = () => {
     if (disabled) return;
     onReminderBlur();
-  }, [disabled, onReminderBlur]);
+  };
 
   // Handle night order change - update parent immediately
-  const handleNightOrderChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (disabled) return;
-      const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-      onNightOrderChange(val);
-    },
-    [disabled, onNightOrderChange]
-  );
+  const handleNightOrderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+    onNightOrderChange(val);
+  };
 
   // Handle night order blur - normalize and commit
-  const handleNightOrderBlur = useCallback(() => {
+  const handleNightOrderBlur = () => {
     if (disabled) return;
     let normalizedValue = nightOrderValue || 0;
     // If there's reminder text but night order is 0, set to 1
@@ -108,15 +98,15 @@ export const NightOrderField = memo(function NightOrderField({
       normalizedValue = 1;
     }
     onNightOrderBlur(normalizedValue);
-  }, [disabled, nightOrderValue, reminderValue, onNightOrderBlur]);
+  };
 
   // Handle format fix - normalize and commit via parent
-  const handleFixFormat = useCallback(() => {
+  const handleFixFormat = () => {
     if (disabled) return;
     const normalized = normalizeReminderText(reminderValue);
     onReminderChange(normalized);
     onReminderBlur();
-  }, [disabled, reminderValue, onReminderChange, onReminderBlur]);
+  };
 
   return (
     <div className={styles.formGroup}>
@@ -151,6 +141,4 @@ export const NightOrderField = memo(function NightOrderField({
       <FormatWarning issues={formatIssues} disabled={disabled} onFix={handleFixFormat} />
     </div>
   );
-});
-
-export default NightOrderField;
+}

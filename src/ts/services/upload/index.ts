@@ -64,18 +64,21 @@ export {
 } from './assetResolver.js';
 // Constants
 export {
-  ASSET_TYPE_CONFIGS,
-  ASSET_TYPE_ICONS,
-  ASSET_TYPE_LABELS,
-  ASSET_TYPE_LABELS_PLURAL,
-  ASSET_ZIP_PATHS,
   DEFAULT_THUMBNAIL_SIZE,
+  getConfigByTags,
+  getConfigByType,
+  getZipPathByTags,
   KB,
   MAGIC_BYTES,
   MB,
   PROCESSED_IMAGE_FORMAT,
   PROCESSED_IMAGE_QUALITY,
+  TAG_TYPE_CONFIGS,
+  TAG_TYPE_ICONS,
+  TAG_TYPE_LABELS_PLURAL,
+  TAG_ZIP_PATHS,
   THUMBNAIL_QUALITY,
+  USER_TYPE_TABS,
 } from './constants.js';
 export {
   FileUploadService,

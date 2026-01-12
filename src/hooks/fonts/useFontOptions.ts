@@ -7,7 +7,6 @@
  * @module hooks/fonts/useFontOptions
  */
 
-import { useMemo } from 'react';
 import { useFonts } from '@/contexts/FontContext';
 import type { FontCategory } from '@/ts/types/fonts.js';
 
@@ -56,51 +55,24 @@ export function useFontOptions(): UseFontOptionsResult {
   const { fonts, isLoading } = useFonts();
 
   // Convert fonts to FontOption format
-  const allFonts = useMemo<FontOption[]>(
-    () =>
-      fonts.map((font) => ({
-        value: font.family,
-        label: font.name,
-        category: font.category,
-      })),
-    [fonts]
-  );
+  const allFonts: FontOption[] = fonts.map((font) => ({
+    value: font.family,
+    label: font.name,
+    category: font.category,
+  }));
 
   // Filter by category
-  const displayFonts = useMemo<FontOption[]>(
-    () => allFonts.filter((f) => f.category === 'Display'),
-    [allFonts]
-  );
-
-  const sansSerifFonts = useMemo<FontOption[]>(
-    () => allFonts.filter((f) => f.category === 'Sans Serif'),
-    [allFonts]
-  );
-
-  const serifFonts = useMemo<FontOption[]>(
-    () => allFonts.filter((f) => f.category === 'Serif'),
-    [allFonts]
-  );
-
-  const scriptFonts = useMemo<FontOption[]>(
-    () => allFonts.filter((f) => f.category === 'Script'),
-    [allFonts]
-  );
-
-  const customFonts = useMemo<FontOption[]>(
-    () => allFonts.filter((f) => f.category === 'Custom'),
-    [allFonts]
-  );
+  const displayFonts = allFonts.filter((f) => f.category === 'Display');
+  const sansSerifFonts = allFonts.filter((f) => f.category === 'Sans Serif');
+  const serifFonts = allFonts.filter((f) => f.category === 'Serif');
+  const scriptFonts = allFonts.filter((f) => f.category === 'Script');
+  const customFonts = allFonts.filter((f) => f.category === 'Custom');
 
   // Helper to get fonts by multiple categories
-  const getFontsByCategory = useMemo(
-    () =>
-      (...categories: FontCategory[]): FontOption[] => {
-        if (categories.length === 0) return allFonts;
-        return allFonts.filter((f) => categories.includes(f.category as FontCategory));
-      },
-    [allFonts]
-  );
+  const getFontsByCategory = (...categories: FontCategory[]): FontOption[] => {
+    if (categories.length === 0) return allFonts;
+    return allFonts.filter((f) => categories.includes(f.category as FontCategory));
+  };
 
   return {
     allFonts,
@@ -124,7 +96,7 @@ export function useFontOptions(): UseFontOptionsResult {
  */
 export function useCharacterNameFontOptions(): FontOption[] {
   const { displayFonts, customFonts } = useFontOptions();
-  return useMemo(() => [...displayFonts, ...customFonts], [displayFonts, customFonts]);
+  return [...displayFonts, ...customFonts];
 }
 
 /**
@@ -133,7 +105,7 @@ export function useCharacterNameFontOptions(): FontOption[] {
  */
 export function useAbilityTextFontOptions(): FontOption[] {
   const { sansSerifFonts, customFonts } = useFontOptions();
-  return useMemo(() => [...sansSerifFonts, ...customFonts], [sansSerifFonts, customFonts]);
+  return [...sansSerifFonts, ...customFonts];
 }
 
 /**
@@ -142,7 +114,7 @@ export function useAbilityTextFontOptions(): FontOption[] {
  */
 export function useReminderTextFontOptions(): FontOption[] {
   const { sansSerifFonts, customFonts } = useFontOptions();
-  return useMemo(() => [...sansSerifFonts, ...customFonts], [sansSerifFonts, customFonts]);
+  return [...sansSerifFonts, ...customFonts];
 }
 
 /**
@@ -151,7 +123,5 @@ export function useReminderTextFontOptions(): FontOption[] {
  */
 export function useMetaFontOptions(): FontOption[] {
   const { displayFonts, customFonts } = useFontOptions();
-  return useMemo(() => [...displayFonts, ...customFonts], [displayFonts, customFonts]);
+  return [...displayFonts, ...customFonts];
 }
-
-export default useFontOptions;

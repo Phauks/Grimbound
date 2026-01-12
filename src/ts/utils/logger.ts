@@ -274,5 +274,3 @@ export function enableTimestamps(): void {
   logger.setTimestamps(true);
   logger.info('Logger', 'Timestamps enabled');
 }
-
-export default logger;

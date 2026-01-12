@@ -24,14 +24,14 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import type {
   AssetFilter,
   AssetManagerOptions,
-  AssetType,
   AssetWithUrl,
 } from '@/ts/services/upload/index.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 import { useSelection } from '../ui/useSelection.js';
 
 // ============================================================================
@@ -42,12 +42,13 @@ export interface AssetStats {
   count: number;
   totalSize: number;
   totalSizeMB: number;
-  byType: Record<AssetType, { count: number; size: number }>;
+  byType: Record<TypeTagValue | string, { count: number; size: number }>;
 }
 
 export interface UseAssetManagerReturn {
   // State
   assets: AssetWithUrl[];
+  allFolders: string[];
   isLoading: boolean;
   error: string | null;
 
@@ -83,6 +84,19 @@ export interface UseAssetManagerReturn {
   moveSelectedToProject: (projectId: string) => Promise<void>;
   cleanupOrphans: () => Promise<number>;
   refresh: () => Promise<void>;
+
+  // Star operations
+  toggleStar: (id: string) => Promise<void>;
+  toggleStarSelected: () => Promise<void>;
+
+  // Folder operations
+  moveToFolder: (id: string, folder: string | null) => Promise<void>;
+  moveSelectedToFolder: (folder: string | null) => Promise<void>;
+
+  // Tag operations
+  addTag: (id: string, tag: string) => Promise<void>;
+  removeTag: (id: string, tag: string) => Promise<void>;
+  addTagToSelected: (tag: string) => Promise<void>;
 }
 
 // ============================================================================
@@ -103,6 +117,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
 
   // State
   const [assets, setAssets] = useState<AssetWithUrl[]>([]);
+  const [allFolders, setAllFolders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,9 +134,9 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     useSelection();
 
   // Select all assets currently loaded
-  const selectAll = useCallback(() => {
+  const selectAll = () => {
     setSelection(assets.map((a) => a.id));
-  }, [assets, setSelection]);
+  };
 
   // Fetch assets
   const fetchAssets = useCallback(async () => {
@@ -149,6 +164,22 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       // Fetch orphaned count
       const orphaned = await assetStorageService.getOrphaned();
       setOrphanedCount(orphaned.length);
+
+      // Fetch all folders (completely unfiltered) for navigation
+      // This ensures folder structure is always visible regardless of type/tag/search filters
+      const folderFilter: AssetFilter = {
+        projectId: effectiveFilter.projectId,
+        sortBy: 'uploadedAt',
+        sortDirection: 'desc',
+      };
+      const allAssetsForFolders = await assetStorageService.listWithUrls(folderFilter);
+      const folderSet = new Set<string>();
+      for (const asset of allAssetsForFolders) {
+        if (asset.folder) {
+          folderSet.add(asset.folder);
+        }
+      }
+      setAllFolders(Array.from(folderSet).sort());
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -157,7 +188,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   }, [assetStorageService, filter, options.currentProjectId]);
 
   // Load more assets (for infinite scroll)
-  const loadMore = useCallback(async () => {
+  const loadMore = async () => {
     if (isLoadingMore || !filter.limit) return;
 
     setIsLoadingMore(true);
@@ -183,7 +214,7 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     } finally {
       setIsLoadingMore(false);
     }
-  }, [assetStorageService, filter, isLoadingMore, options.currentProjectId]);
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -207,34 +238,28 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
   );
 
   // Filter methods
-  const setFilter = useCallback(
-    (updates: Partial<AssetFilter>) => {
-      setFilterState((prev) => ({ ...prev, ...updates }));
-      clearSelection(); // Clear selection on filter change
-    },
-    [clearSelection]
-  );
+  const setFilter = (updates: Partial<AssetFilter>) => {
+    setFilterState((prev) => ({ ...prev, ...updates }));
+    clearSelection(); // Clear selection on filter change
+  };
 
-  const resetFilter = useCallback(() => {
+  const resetFilter = () => {
     setFilterState({ ...DEFAULT_FILTER, ...options.initialFilter });
     clearSelection();
-  }, [options.initialFilter, clearSelection]);
+  };
 
   // Action methods
-  const deleteAsset = useCallback(
-    async (id: string) => {
-      try {
-        await assetStorageService.delete(id);
-        await fetchAssets();
-      } catch (err) {
-        setError((err as Error).message);
-        throw err;
-      }
-    },
-    [assetStorageService, fetchAssets]
-  );
+  const deleteAsset = async (id: string) => {
+    try {
+      await assetStorageService.delete(id);
+      await fetchAssets();
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    }
+  };
 
-  const deleteSelected = useCallback(async () => {
+  const deleteSelected = async () => {
     if (selectedIds.size === 0) return;
 
     try {
@@ -245,35 +270,29 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [assetStorageService, selectedIds, fetchAssets, clearSelection]);
+  };
 
-  const promoteToGlobal = useCallback(
-    async (id: string) => {
-      try {
-        await assetStorageService.promoteToGlobal(id);
-        await fetchAssets();
-      } catch (err) {
-        setError((err as Error).message);
-        throw err;
-      }
-    },
-    [assetStorageService, fetchAssets]
-  );
+  const promoteToGlobal = async (id: string) => {
+    try {
+      await assetStorageService.promoteToGlobal(id);
+      await fetchAssets();
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    }
+  };
 
-  const moveToProject = useCallback(
-    async (id: string, projectId: string) => {
-      try {
-        await assetStorageService.moveToProject(id, projectId);
-        await fetchAssets();
-      } catch (err) {
-        setError((err as Error).message);
-        throw err;
-      }
-    },
-    [assetStorageService, fetchAssets]
-  );
+  const moveToProject = async (id: string, projectId: string) => {
+    try {
+      await assetStorageService.moveToProject(id, projectId);
+      await fetchAssets();
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    }
+  };
 
-  const promoteSelectedToGlobal = useCallback(async () => {
+  const promoteSelectedToGlobal = async () => {
     if (selectedIds.size === 0) return;
 
     try {
@@ -284,25 +303,22 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [assetStorageService, selectedIds, fetchAssets, clearSelection]);
+  };
 
-  const moveSelectedToProject = useCallback(
-    async (projectId: string) => {
-      if (selectedIds.size === 0) return;
+  const moveSelectedToProject = async (projectId: string) => {
+    if (selectedIds.size === 0) return;
 
-      try {
-        await assetStorageService.bulkMoveToProject(Array.from(selectedIds), projectId);
-        clearSelection();
-        await fetchAssets();
-      } catch (err) {
-        setError((err as Error).message);
-        throw err;
-      }
-    },
-    [assetStorageService, selectedIds, fetchAssets, clearSelection]
-  );
+    try {
+      await assetStorageService.bulkMoveToProject(Array.from(selectedIds), projectId);
+      clearSelection();
+      await fetchAssets();
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    }
+  };
 
-  const cleanupOrphans = useCallback(async () => {
+  const cleanupOrphans = async () => {
     try {
       const count = await assetStorageService.cleanupOrphans();
       await fetchAssets();
@@ -311,21 +327,191 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
       setError((err as Error).message);
       throw err;
     }
-  }, [assetStorageService, fetchAssets]);
+  };
 
-  const refresh = useCallback(async () => {
+  const refresh = async () => {
     await fetchAssets();
-  }, [fetchAssets]);
+  };
+
+  // Star operations - with optimistic updates
+  const toggleStar = async (id: string) => {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset) return;
+
+    const isStarred = asset.tags.includes('starred');
+    const newTags = isStarred
+      ? asset.tags.filter((t) => t !== 'starred')
+      : [...asset.tags, 'starred'];
+
+    // Optimistic update - update local state immediately
+    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: newTags } : a)));
+
+    try {
+      await assetStorageService.update(id, { tags: newTags });
+      // No fetchAssets() - we already updated locally
+    } catch (err) {
+      // Rollback on error
+      setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: asset.tags } : a)));
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  const toggleStarSelected = async () => {
+    if (selectedIds.size === 0) return;
+
+    // Check if all selected are starred - if so, unstar all; otherwise star all
+    const selectedAssets = assets.filter((a) => selectedIds.has(a.id));
+    const allStarred = selectedAssets.every((a) => a.tags.includes('starred'));
+
+    // Build updates map for optimistic update
+    const updatesMap = new Map<string, string[]>();
+    const updates = selectedAssets.map((asset) => {
+      const newTags = allStarred
+        ? asset.tags.filter((t) => t !== 'starred')
+        : asset.tags.includes('starred')
+          ? asset.tags
+          : [...asset.tags, 'starred'];
+      updatesMap.set(asset.id, newTags);
+      return { id: asset.id, data: { tags: newTags } };
+    });
+
+    // Optimistic update
+    setAssets((prev) =>
+      prev.map((a) => {
+        const newTags = updatesMap.get(a.id);
+        return newTags ? { ...a, tags: newTags } : a;
+      })
+    );
+
+    try {
+      await assetStorageService.bulkUpdate(updates);
+    } catch (err) {
+      // Rollback on error
+      await fetchAssets();
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  // Folder operations - with optimistic updates
+  const moveToFolder = async (id: string, folder: string | null) => {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset) return;
+
+    const oldFolder = asset.folder;
+
+    // Optimistic update - update local state immediately
+    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, folder } : a)));
+
+    try {
+      await assetStorageService.update(id, { folder });
+      // No fetchAssets() - we already updated locally
+    } catch (err) {
+      // Rollback on error
+      setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, folder: oldFolder } : a)));
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  const moveSelectedToFolder = async (folder: string | null) => {
+    if (selectedIds.size === 0) return;
+
+    const updates = Array.from(selectedIds).map((id) => ({
+      id,
+      data: { folder },
+    }));
+
+    try {
+      await assetStorageService.bulkUpdate(updates);
+      clearSelection();
+      await fetchAssets();
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  // Tag operations - with optimistic updates
+  const addTag = async (id: string, tag: string) => {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset || asset.tags.includes(tag)) return;
+
+    const newTags = [...asset.tags, tag];
+
+    // Optimistic update
+    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: newTags } : a)));
+
+    try {
+      await assetStorageService.update(id, { tags: newTags });
+    } catch (err) {
+      // Rollback on error
+      setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: asset.tags } : a)));
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  const removeTag = async (id: string, tag: string) => {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset) return;
+
+    const newTags = asset.tags.filter((t) => t !== tag);
+
+    // Optimistic update
+    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: newTags } : a)));
+
+    try {
+      await assetStorageService.update(id, { tags: newTags });
+    } catch (err) {
+      // Rollback on error
+      setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, tags: asset.tags } : a)));
+      setError((err as Error).message);
+      throw err;
+    }
+  };
+
+  const addTagToSelected = async (tag: string) => {
+    if (selectedIds.size === 0) return;
+
+    const selectedAssets = assets.filter((a) => selectedIds.has(a.id));
+    const updatesMap = new Map<string, string[]>();
+    const updates = selectedAssets
+      .filter((asset) => !asset.tags.includes(tag))
+      .map((asset) => {
+        const newTags = [...asset.tags, tag];
+        updatesMap.set(asset.id, newTags);
+        return { id: asset.id, data: { tags: newTags } };
+      });
+
+    if (updates.length === 0) return;
+
+    // Optimistic update
+    setAssets((prev) =>
+      prev.map((a) => {
+        const newTags = updatesMap.get(a.id);
+        return newTags ? { ...a, tags: newTags } : a;
+      })
+    );
+
+    try {
+      await assetStorageService.bulkUpdate(updates);
+    } catch (err) {
+      // Rollback on error
+      await fetchAssets();
+      setError((err as Error).message);
+      throw err;
+    }
+  };
 
   // Compute hasMore for pagination
-  const hasMore = useMemo(() => {
-    const currentCount = assets.length;
-    return currentCount < totalCount;
-  }, [assets.length, totalCount]);
+  const hasMore = assets.length < totalCount;
 
   return {
     // State
     assets,
+    allFolders,
     isLoading,
     error,
 
@@ -361,7 +547,18 @@ export function useAssetManager(options: AssetManagerOptions = {}): UseAssetMana
     moveSelectedToProject,
     cleanupOrphans,
     refresh,
+
+    // Star operations
+    toggleStar,
+    toggleStarSelected,
+
+    // Folder operations
+    moveToFolder,
+    moveSelectedToFolder,
+
+    // Tag operations
+    addTag,
+    removeTag,
+    addTagToSelected,
   };
 }
-
-export default useAssetManager;

@@ -114,5 +114,3 @@ export function DownloadSection({
     </div>
   );
 }
-
-export default DownloadSection;

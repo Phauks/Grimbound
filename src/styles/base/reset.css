@@ -19,7 +19,8 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden; /* Prevent body scroll - views handle their own scrolling */
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

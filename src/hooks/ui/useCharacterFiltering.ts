@@ -10,7 +10,7 @@
  * @module hooks/ui/useCharacterFiltering
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useCharacterSearch } from '@/hooks/search/useCharacterSearch.js';
 import type { Character, Team } from '@/ts/types/index.js';
 import type { SearchMatch } from '@/ts/utils/searchUtils.js';
@@ -128,23 +128,19 @@ export function useCharacterFiltering({
     fields: ['name', 'ability', 'reminders'],
   });
 
-  const toggleShowSelectedOnly = useCallback(() => {
+  const toggleShowSelectedOnly = () => {
     setShowSelectedOnly((prev) => !prev);
-  }, []);
+  };
 
-  const clearSearch = useCallback(() => {
+  const clearSearch = () => {
     setSearchQuery('');
-  }, []);
+  };
 
   // Apply additional filters (edition, team, selected-only) on top of search results
-  const filteredCharacters = useMemo(
-    () =>
-      searchFiltered
-        .filter((c) => filterByEdition(c, editionFilter))
-        .filter((c) => filterByTeam(c, teamFilter))
-        .filter((c) => !showSelectedOnly || onScriptIds.has(c.id)),
-    [searchFiltered, editionFilter, teamFilter, showSelectedOnly, onScriptIds]
-  );
+  const filteredCharacters = searchFiltered
+    .filter((c) => filterByEdition(c, editionFilter))
+    .filter((c) => filterByTeam(c, teamFilter))
+    .filter((c) => !showSelectedOnly || onScriptIds.has(c.id));
 
   return {
     searchQuery,
@@ -161,5 +157,3 @@ export function useCharacterFiltering({
     isSearching,
   };
 }
-
-export default useCharacterFiltering;

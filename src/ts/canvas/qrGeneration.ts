@@ -282,11 +282,15 @@ export async function generateStyledQRCode(
     });
 
     // Get the raw data as a blob and convert to canvas
-    const blob = await qrCode.getRawData('png');
+    const rawData = await qrCode.getRawData('png');
 
-    if (!blob) {
+    if (!rawData) {
       throw new TokenCreationError('Failed to generate QR code blob', 'QR Code');
     }
+
+    // In browser environment, getRawData returns Blob; in Node.js it returns Buffer
+    // We're always in browser context here
+    const blob = rawData as Blob;
 
     // Create an image from the blob
     const img = new Image();

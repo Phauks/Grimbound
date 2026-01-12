@@ -13,7 +13,7 @@
  * @module hooks/ui/useDrawerState
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 // ============================================================================
 // Types
@@ -77,25 +77,21 @@ export function useDrawerState<T>({
   // Store original value when drawer opens for cancel functionality
   const originalValueRef = useRef<T>(value);
 
-  // Sync pending value when drawer opens
-  useEffect(() => {
-    if (isOpen) {
-      setPendingValue(value);
-      originalValueRef.current = value;
-    }
-  }, [isOpen, value]);
+  // Note: We intentionally do NOT sync pendingValue from value while drawer is open.
+  // The open() function handles the initial sync, and user edits are preserved
+  // even if external value changes. This prevents losing unsaved changes.
 
   // Open drawer
-  const open = useCallback(() => {
+  const open = () => {
     if (disabled) return;
     onWillOpen?.();
     originalValueRef.current = value;
     setPendingValue(value);
     setIsOpen(true);
-  }, [disabled, value, onWillOpen]);
+  };
 
   // Toggle drawer
-  const toggle = useCallback(() => {
+  const toggle = () => {
     if (disabled) return;
     if (isOpen) {
       // Closing via toggle - apply changes
@@ -108,55 +104,49 @@ export function useDrawerState<T>({
       setPendingValue(value);
       setIsOpen(true);
     }
-  }, [disabled, isOpen, value, pendingValue, onChange, onWillOpen]);
+  };
 
   // Update entire pending value
-  const updatePending = useCallback(
-    (newValue: T) => {
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [onPreviewChange]
-  );
+  const updatePending = (newValue: T) => {
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Update a single field of pending value (for object types)
-  const updatePendingField = useCallback(
-    <K extends keyof T>(key: K, fieldValue: T[K]) => {
-      const newValue = { ...pendingValue, [key]: fieldValue } as T;
-      setPendingValue(newValue);
-      onPreviewChange?.(newValue);
-    },
-    [pendingValue, onPreviewChange]
-  );
+  const updatePendingField = <K extends keyof T>(key: K, fieldValue: T[K]) => {
+    const newValue = { ...pendingValue, [key]: fieldValue } as T;
+    setPendingValue(newValue);
+    onPreviewChange?.(newValue);
+  };
 
   // Close drawer (applies pending changes)
-  const close = useCallback(() => {
+  const close = () => {
     if (!isOpen) return;
     onChange(pendingValue);
     setIsOpen(false);
-  }, [isOpen, pendingValue, onChange]);
+  };
 
   // Apply and close
-  const apply = useCallback(() => {
+  const apply = () => {
     onChange(pendingValue);
     setIsOpen(false);
-  }, [pendingValue, onChange]);
+  };
 
   // Cancel and close - revert to original value
-  const cancel = useCallback(() => {
+  const cancel = () => {
     const original = originalValueRef.current;
     setPendingValue(original);
     onPreviewChange?.(original);
     setIsOpen(false);
-  }, [onPreviewChange]);
+  };
 
   // Reset to default value (does not close)
-  const reset = useCallback(() => {
+  const reset = () => {
     if (defaultValue !== undefined) {
       setPendingValue(defaultValue);
       onPreviewChange?.(defaultValue);
     }
-  }, [defaultValue, onPreviewChange]);
+  };
 
   // Check if there are unsaved changes
   const hasChanges = isOpen && JSON.stringify(pendingValue) !== JSON.stringify(value);
@@ -175,5 +165,3 @@ export function useDrawerState<T>({
     hasChanges,
   };
 }
-
-export default useDrawerState;

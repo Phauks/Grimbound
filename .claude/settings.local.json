@@ -30,7 +30,19 @@
       "WebFetch(domain:snapdom.dev)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:npmtrends.com)",
-      "mcp__plugin_episodic-memory_episodic-memory__read"
+      "mcp__plugin_episodic-memory_episodic-memory__read",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(du:*)",
+      "Bash(findstr:*)",
+      "Bash(npx knip)",
+      "Bash(timeout 15 npm run dev:*)",
+      "Bash(node remove-default-exports.mjs:*)",
+      "Bash(del \"C:\\\\Users\\\\Trevo\\\\OneDrive\\\\Desktop\\\\Board Games\\\\Blood on the Clocktower\\\\Github - Token Generator\\\\Clocktower_Token_Generator\\\\src\\\\components\\\\Shared\\\\Drawer\\\\ScriptPdfDrawer\\\\CommonTab.tsx\")",
+      "Bash(npm uninstall:*)",
+      "Skill(feature-dev:feature-dev)",
+      "Skill(superpowers:systematic-debugging)",
+      "Skill(superpowers:requesting-code-review)"
     ]
   }
 }

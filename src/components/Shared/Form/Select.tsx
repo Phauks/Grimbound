@@ -5,7 +5,7 @@
  * Supports standard HTML select attributes plus custom styling options.
  */
 
-import { forwardRef, type ReactNode, type SelectHTMLAttributes } from 'react';
+import type { ReactNode, SelectHTMLAttributes } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 
 export interface SelectOption {
@@ -31,66 +31,60 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
   children?: ReactNode;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  (
-    {
-      size = 'medium',
-      error = false,
-      errorMessage,
-      options,
-      placeholder,
-      fullWidth = false,
-      className,
-      disabled,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const selectClasses = [
-      styles.select,
-      styles[`select${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error && styles.selectError,
-      disabled && styles.selectDisabled,
-      fullWidth && styles.fullWidth,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+export function Select({
+  size = 'medium',
+  error = false,
+  errorMessage,
+  options,
+  placeholder,
+  fullWidth = false,
+  className,
+  disabled,
+  children,
+  ref,
+  ...props
+}: SelectProps & { ref?: React.Ref<HTMLSelectElement> }) {
+  const selectClasses = [
+    styles.select,
+    styles[`select${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error && styles.selectError,
+    disabled && styles.selectDisabled,
+    fullWidth && styles.fullWidth,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-    const wrapperClasses = [styles.selectWrapper, fullWidth && styles.fullWidth]
-      .filter(Boolean)
-      .join(' ');
+  const wrapperClasses = [styles.selectWrapper, fullWidth && styles.fullWidth]
+    .filter(Boolean)
+    .join(' ');
 
-    return (
-      <div className={wrapperClasses}>
-        <div className={styles.selectContainer}>
-          <select
-            ref={ref}
-            className={selectClasses}
-            disabled={disabled}
-            aria-invalid={error}
-            {...props}
-          >
-            {placeholder && (
-              <option value="" disabled>
-                {placeholder}
-              </option>
-            )}
-            {options
-              ? options.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.disabled}>
-                    {option.label}
-                  </option>
-                ))
-              : children}
-          </select>
-          <span className={styles.selectChevron}>▼</span>
-        </div>
-        {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
+  return (
+    <div className={wrapperClasses}>
+      <div className={styles.selectContainer}>
+        <select
+          ref={ref}
+          className={selectClasses}
+          disabled={disabled}
+          aria-invalid={error}
+          {...props}
+        >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
+          {options
+            ? options.map((option) => (
+                <option key={option.value} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </option>
+              ))
+            : children}
+        </select>
+        <span className={styles.selectChevron}>▼</span>
       </div>
-    );
-  }
-);
-
-Select.displayName = 'Select';
+      {errorMessage && <span className={styles.errorText}>{errorMessage}</span>}
+    </div>
+  );
+}

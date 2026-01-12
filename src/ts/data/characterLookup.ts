@@ -205,5 +205,3 @@ export class CharacterLookupService implements ICharacterLookupService {
 
 // Export singleton instance
 export const characterLookup = new CharacterLookupService();
-
-export default characterLookup;

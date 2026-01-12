@@ -9,7 +9,6 @@
  * @module hooks/cache/useCacheManager
  */
 
-import { useCallback, useMemo } from 'react';
 import type { InvalidationScope } from '@/ts/cache/CacheInvalidationService.js';
 import type { CombinedCacheStats } from '@/ts/cache/CacheManager.js';
 import { cacheManager } from '@/ts/cache/CacheManager.js';
@@ -100,114 +99,77 @@ export interface UseCacheManagerReturn {
  * ```
  */
 export function useCacheManager(): UseCacheManagerReturn {
-  // Memoize callback wrappers to prevent unnecessary re-renders
-  const getCharacterImage = useCallback(
-    (url: string, isLocal: boolean = false) => cacheManager.getCharacterImage(url, isLocal),
-    []
-  );
+  const getCharacterImage = (url: string, isLocal: boolean = false) =>
+    cacheManager.getCharacterImage(url, isLocal);
 
-  const preloadImages = useCallback(
-    (
-      urls: string[],
-      isLocal: boolean = false,
-      onProgress?: (loaded: number, total: number) => void
-    ) => cacheManager.preloadImages(urls, isLocal, onProgress),
-    []
-  );
+  const preloadImages = (
+    urls: string[],
+    isLocal: boolean = false,
+    onProgress?: (loaded: number, total: number) => void
+  ) => cacheManager.preloadImages(urls, isLocal, onProgress);
 
-  const hasImage = useCallback((url: string) => cacheManager.hasImage(url), []);
+  const hasImage = (url: string) => cacheManager.hasImage(url);
 
-  const getPreRenderedToken = useCallback(
-    (filename: string, strategyName?: string) =>
-      cacheManager.getPreRenderedToken(filename, strategyName),
-    []
-  );
+  const getPreRenderedToken = (filename: string, strategyName?: string) =>
+    cacheManager.getPreRenderedToken(filename, strategyName);
 
-  const preRender = useCallback((context: PreRenderContext) => cacheManager.preRender(context), []);
+  const preRender = (context: PreRenderContext) => cacheManager.preRender(context);
 
-  const cacheTokenBatch = useCallback(
-    (tokens: Token[], type: string = 'manual') => cacheManager.cacheTokenBatch(tokens, type),
-    []
-  );
+  const cacheTokenBatch = (tokens: Token[], type: string = 'manual') =>
+    cacheManager.cacheTokenBatch(tokens, type);
 
-  const invalidateAsset = useCallback(
-    (assetId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
-      cacheManager.invalidateAsset(assetId, reason),
-    []
-  );
+  const invalidateAsset = (assetId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
+    cacheManager.invalidateAsset(assetId, reason);
 
-  const invalidateCharacter = useCallback(
-    (characterId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
-      cacheManager.invalidateCharacter(characterId, reason),
-    []
-  );
+  const invalidateCharacter = (
+    characterId: string,
+    reason: 'update' | 'delete' | 'manual' = 'manual'
+  ) => cacheManager.invalidateCharacter(characterId, reason);
 
-  const invalidateProject = useCallback(
-    (projectId: string, reason: 'update' | 'delete' | 'manual' = 'manual') =>
-      cacheManager.invalidateProject(projectId, reason),
-    []
-  );
+  const invalidateProject = (
+    projectId: string,
+    reason: 'update' | 'delete' | 'manual' = 'manual'
+  ) => cacheManager.invalidateProject(projectId, reason);
 
-  const invalidate = useCallback((scope: InvalidationScope) => cacheManager.invalidate(scope), []);
+  const invalidate = (scope: InvalidationScope) => cacheManager.invalidate(scope);
 
-  const clearCache = useCallback((name: string) => cacheManager.clearCache(name), []);
+  const clearCache = (name: string) => cacheManager.clearCache(name);
 
-  const clearAll = useCallback(() => cacheManager.clearAll(), []);
+  const clearAll = () => cacheManager.clearAll();
 
-  const getStats = useCallback(() => cacheManager.getStats(), []);
+  const getStats = () => cacheManager.getStats();
 
-  const getCacheStats = useCallback((name: string) => cacheManager.getCacheStats(name), []);
+  const getCacheStats = (name: string) => cacheManager.getCacheStats(name);
 
-  const isStrategyRendering = useCallback(
-    (strategyName: string) => cacheManager.isStrategyRendering(strategyName),
-    []
-  );
+  const isStrategyRendering = (strategyName: string) =>
+    cacheManager.isStrategyRendering(strategyName);
 
-  return useMemo(
-    () => ({
-      // Character images
-      getCharacterImage,
-      preloadImages,
-      hasImage,
+  return {
+    // Character images
+    getCharacterImage,
+    preloadImages,
+    hasImage,
 
-      // Pre-rendered tokens
-      getPreRenderedToken,
-      preRender,
-      cacheTokenBatch,
+    // Pre-rendered tokens
+    getPreRenderedToken,
+    preRender,
+    cacheTokenBatch,
 
-      // Invalidation
-      invalidateAsset,
-      invalidateCharacter,
-      invalidateProject,
-      invalidate,
+    // Invalidation
+    invalidateAsset,
+    invalidateCharacter,
+    invalidateProject,
+    invalidate,
 
-      // Cache management
-      clearCache,
-      clearAll,
+    // Cache management
+    clearCache,
+    clearAll,
 
-      // Statistics
-      getStats,
-      getCacheStats,
-      isStrategyRendering,
-    }),
-    [
-      getCharacterImage,
-      preloadImages,
-      hasImage,
-      getPreRenderedToken,
-      preRender,
-      cacheTokenBatch,
-      invalidateAsset,
-      invalidateCharacter,
-      invalidateProject,
-      invalidate,
-      clearCache,
-      clearAll,
-      getStats,
-      getCacheStats,
-      isStrategyRendering,
-    ]
-  );
+    // Statistics
+    getStats,
+    getCacheStats,
+    isStrategyRendering,
+  };
 }
 
 /**
@@ -239,7 +201,7 @@ export function useCacheManager(): UseCacheManagerReturn {
  * ```
  */
 export function useCombinedCacheStats(): CombinedCacheStats {
-  return useMemo(() => cacheManager.getStats(), []);
+  return cacheManager.getStats();
 }
 
 /**
@@ -261,8 +223,5 @@ export function useCombinedCacheStats(): CombinedCacheStats {
  * ```
  */
 export function useAnyStrategyRendering(strategyNames: string[]): boolean {
-  return useMemo(
-    () => strategyNames.some((name) => cacheManager.isStrategyRendering(name)),
-    [strategyNames]
-  );
+  return strategyNames.some((name) => cacheManager.isStrategyRendering(name));
 }

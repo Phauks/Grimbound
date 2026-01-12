@@ -5,7 +5,6 @@
  * Extracted from TokenGrid component to follow Single Responsibility Principle.
  */
 
-import { useMemo } from 'react';
 import type { Token } from '@/ts/types/index.js';
 import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping.js';
 
@@ -58,42 +57,28 @@ export interface UseTokenGroupingReturn {
  */
 export function useTokenGrouping(tokens: Token[]): UseTokenGroupingReturn {
   // Sort character tokens by their original order from JSON
-  const characterTokens = useMemo(() => {
-    const chars = tokens.filter((t) => t.type === 'character');
-    return [...chars].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-  }, [tokens]);
+  const characterTokens = tokens
+    .filter((t) => t.type === 'character')
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   // Filter meta tokens
-  const metaTokens = useMemo(
-    () => tokens.filter((t) => t.type !== 'character' && t.type !== 'reminder'),
-    [tokens]
-  );
+  const metaTokens = tokens.filter((t) => t.type !== 'character' && t.type !== 'reminder');
 
   // Sort reminder tokens by parent character order, then by reminder text
-  const reminderTokens = useMemo(() => {
-    const reminders = tokens.filter((t) => t.type === 'reminder');
-
-    return [...reminders].sort((a, b) => {
+  const reminderTokens = tokens
+    .filter((t) => t.type === 'reminder')
+    .sort((a, b) => {
       const orderA = a.order ?? 999;
       const orderB = b.order ?? 999;
       if (orderA !== orderB) return orderA - orderB;
       // If same character, sort by reminder text
       return (a.reminderText || '').localeCompare(b.reminderText || '');
     });
-  }, [tokens]);
 
   // Group tokens by identity to show count badges for duplicates
-  const groupedCharacterTokens = useMemo(
-    () => groupTokensByIdentity(characterTokens),
-    [characterTokens]
-  );
-
-  const groupedReminderTokens = useMemo(
-    () => groupTokensByIdentity(reminderTokens),
-    [reminderTokens]
-  );
-
-  const groupedMetaTokens = useMemo(() => groupTokensByIdentity(metaTokens), [metaTokens]);
+  const groupedCharacterTokens = groupTokensByIdentity(characterTokens);
+  const groupedReminderTokens = groupTokensByIdentity(reminderTokens);
+  const groupedMetaTokens = groupTokensByIdentity(metaTokens);
 
   return {
     characterTokens,
@@ -104,5 +89,3 @@ export function useTokenGrouping(tokens: Token[]): UseTokenGroupingReturn {
     groupedMetaTokens,
   };
 }
-
-export default useTokenGrouping;

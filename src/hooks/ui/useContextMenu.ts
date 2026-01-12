@@ -79,37 +79,34 @@ export function useContextMenu<TData = undefined>(
     setData(null);
   }, [isControlled, onToggle]);
 
-  const open = useCallback(
-    (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const open = (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      let pos: ContextMenuPosition;
+    let pos: ContextMenuPosition;
 
-      if (positionMode === 'element' && element) {
-        const rect = element.getBoundingClientRect();
-        pos = {
-          x: rect.right + elementOffset.x,
-          y: rect.top + elementOffset.y,
-        };
-      } else {
-        pos = {
-          x: e.clientX,
-          y: e.clientY,
-        };
-      }
+    if (positionMode === 'element' && element) {
+      const rect = element.getBoundingClientRect();
+      pos = {
+        x: rect.right + elementOffset.x,
+        y: rect.top + elementOffset.y,
+      };
+    } else {
+      pos = {
+        x: e.clientX,
+        y: e.clientY,
+      };
+    }
 
-      setPosition(pos);
-      setData(itemData ?? (null as TData | null));
+    setPosition(pos);
+    setData(itemData ?? (null as TData | null));
 
-      if (isControlled) {
-        onToggle?.(true);
-      } else {
-        setInternalIsOpen(true);
-      }
-    },
-    [positionMode, elementOffset, isControlled, onToggle]
-  );
+    if (isControlled) {
+      onToggle?.(true);
+    } else {
+      setInternalIsOpen(true);
+    }
+  };
 
   // Click outside and Escape key handling
   useEffect(() => {
@@ -143,12 +140,9 @@ export function useContextMenu<TData = undefined>(
   }, [isOpen, close]);
 
   // Convenience handler for onContextMenu prop
-  const onContextMenu = useCallback(
-    (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
-      open(e, itemData, element);
-    },
-    [open]
-  );
+  const onContextMenu = (e: React.MouseEvent, itemData?: TData, element?: HTMLElement | null) => {
+    open(e, itemData, element);
+  };
 
   return {
     isOpen,

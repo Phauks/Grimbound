@@ -10,7 +10,7 @@
  * @module hooks/studio/useAssetEffectState
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { STUDIO_DEFAULTS } from '@/ts/constants.js';
 import { type BorderOptions, TEAM_COLOR_PRESETS, type TeamColorPreset } from '@/ts/studio/index.js';
 import { logger } from '@/ts/utils/logger.js';
@@ -99,83 +99,74 @@ export function useAssetEffectState(
   // ============================================================================
 
   /** Save current effects for undo */
-  const saveForUndo = useCallback(() => {
+  const saveForUndo = () => {
     setPreviousEffects({ ...effects });
-  }, [effects]);
+  };
 
   // ============================================================================
   // Actions
   // ============================================================================
 
-  const applyTeamColor = useCallback(
-    (preset: TeamColorPreset | null) => {
-      // Note: Image validation is done by the orchestrator (useAssetEditor)
+  const applyTeamColor = (preset: TeamColorPreset | null) => {
+    // Note: Image validation is done by the orchestrator (useAssetEditor)
+    saveForUndo();
+    setEffects((prev) => ({
+      ...prev,
+      teamColorPreset: preset,
+      customColor: null, // Clear custom color when applying preset
+    }));
+
+    if (preset) {
+      logger.info('AssetEffectState', `Applied team color: ${preset.displayName}`);
+    } else {
+      logger.info('AssetEffectState', 'Removed team color');
+    }
+  };
+
+  const applyCustomColor = (hexColor: string) => {
+    // Note: Image validation is done by the orchestrator (useAssetEditor)
+    saveForUndo();
+    setEffects((prev) => ({
+      ...prev,
+      teamColorPreset: null, // Clear preset when applying custom
+      customColor: hexColor,
+    }));
+
+    logger.info('AssetEffectState', `Applied custom color: ${hexColor}`);
+  };
+
+  const applyBorder = (options: Partial<BorderOptions>, skipUndo: boolean = false) => {
+    // Note: Image validation is done by the orchestrator (useAssetEditor)
+    if (!skipUndo) {
       saveForUndo();
-      setEffects((prev) => ({
-        ...prev,
-        teamColorPreset: preset,
-        customColor: null, // Clear custom color when applying preset
-      }));
+    }
+    setEffects((prev) => ({
+      ...prev,
+      borderOptions: {
+        width: options.width ?? prev.borderOptions?.width ?? STUDIO_DEFAULTS.BORDER_WIDTH,
+        color: options.color ?? prev.borderOptions?.color ?? STUDIO_DEFAULTS.BORDER_COLOR,
+        style: options.style ?? prev.borderOptions?.style ?? 'solid',
+      },
+    }));
 
-      if (preset) {
-        logger.info('AssetEffectState', `Applied team color: ${preset.displayName}`);
-      } else {
-        logger.info('AssetEffectState', 'Removed team color');
-      }
-    },
-    [saveForUndo]
-  );
+    if (!skipUndo) {
+      logger.info(
+        'AssetEffectState',
+        `Applied border: ${options.width ?? STUDIO_DEFAULTS.BORDER_WIDTH}px ${options.color ?? STUDIO_DEFAULTS.BORDER_COLOR}`
+      );
+    }
+  };
 
-  const applyCustomColor = useCallback(
-    (hexColor: string) => {
-      // Note: Image validation is done by the orchestrator (useAssetEditor)
-      saveForUndo();
-      setEffects((prev) => ({
-        ...prev,
-        teamColorPreset: null, // Clear preset when applying custom
-        customColor: hexColor,
-      }));
-
-      logger.info('AssetEffectState', `Applied custom color: ${hexColor}`);
-    },
-    [saveForUndo]
-  );
-
-  const applyBorder = useCallback(
-    (options: Partial<BorderOptions>, skipUndo: boolean = false) => {
-      // Note: Image validation is done by the orchestrator (useAssetEditor)
-      if (!skipUndo) {
-        saveForUndo();
-      }
-      setEffects((prev) => ({
-        ...prev,
-        borderOptions: {
-          width: options.width ?? prev.borderOptions?.width ?? STUDIO_DEFAULTS.BORDER_WIDTH,
-          color: options.color ?? prev.borderOptions?.color ?? STUDIO_DEFAULTS.BORDER_COLOR,
-          style: options.style ?? prev.borderOptions?.style ?? 'solid',
-        },
-      }));
-
-      if (!skipUndo) {
-        logger.info(
-          'AssetEffectState',
-          `Applied border: ${options.width ?? STUDIO_DEFAULTS.BORDER_WIDTH}px ${options.color ?? STUDIO_DEFAULTS.BORDER_COLOR}`
-        );
-      }
-    },
-    [saveForUndo]
-  );
-
-  const removeBorder = useCallback(() => {
+  const removeBorder = () => {
     saveForUndo();
     setEffects((prev) => ({
       ...prev,
       borderOptions: null,
     }));
     logger.info('AssetEffectState', 'Removed border');
-  }, [saveForUndo]);
+  };
 
-  const invertColors = useCallback(() => {
+  const invertColors = () => {
     // Note: Image validation is done by the orchestrator (useAssetEditor)
     saveForUndo();
     setEffects((prev) => ({
@@ -184,38 +175,35 @@ export function useAssetEffectState(
     }));
 
     logger.info('AssetEffectState', 'Toggled color inversion');
-  }, [saveForUndo]);
+  };
 
-  const undo = useCallback(() => {
+  const undo = () => {
     if (previousEffects) {
       setEffects(previousEffects);
       setPreviousEffects(null);
     }
-  }, [previousEffects]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     // Note: Image validation is done by the orchestrator (useAssetEditor)
     saveForUndo();
     setEffects(DEFAULT_EFFECTS);
-  }, [saveForUndo]);
+  };
 
-  const clear = useCallback(() => {
+  const clear = () => {
     setEffects(DEFAULT_EFFECTS);
     setPreviousEffects(null);
-  }, []);
+  };
 
   // ============================================================================
   // Derived State
   // ============================================================================
 
-  const hasChanges = useMemo(
-    () =>
-      effects.teamColorPreset !== null ||
-      effects.customColor !== null ||
-      effects.borderOptions !== null ||
-      effects.inverted,
-    [effects]
-  );
+  const hasChanges =
+    effects.teamColorPreset !== null ||
+    effects.customColor !== null ||
+    effects.borderOptions !== null ||
+    effects.inverted;
 
   // ============================================================================
   // Return

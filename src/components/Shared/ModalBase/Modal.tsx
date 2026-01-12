@@ -173,5 +173,3 @@ Modal.Footer = function ModalFooter({ children, align = 'end', className }: Moda
 
   return <div className={cn(styles.footer, alignClass, className)}>{children}</div>;
 };
-
-export default Modal;

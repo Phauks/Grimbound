@@ -9,7 +9,10 @@ import { logger } from './utils/logger.js';
  * Base error class for all token generator errors
  */
 // V8-specific interface for captureStackTrace
-interface ErrorConstructorWithStackTrace extends ErrorConstructor {
+interface ErrorConstructorWithStackTrace {
+  new (message?: string): Error;
+  (message?: string): Error;
+  readonly prototype: Error;
   captureStackTrace?(
     targetObject: object,
     constructorOpt?: new (...args: unknown[]) => unknown
@@ -271,20 +274,4 @@ export const ErrorHandler = {
     // System errors or unknown errors should show generic message
     return error instanceof TokenGeneratorError;
   },
-};
-
-export default {
-  TokenGeneratorError,
-  DataLoadError,
-  ValidationError,
-  TokenCreationError,
-  PDFGenerationError,
-  ZipCreationError,
-  ResourceNotFoundError,
-  UIInitializationError,
-  DataSyncError,
-  StorageError,
-  GitHubAPIError,
-  PackageValidationError,
-  ErrorHandler,
 };

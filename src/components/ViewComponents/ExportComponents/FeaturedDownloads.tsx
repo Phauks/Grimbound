@@ -100,5 +100,3 @@ export function FeaturedDownloads({
     </section>
   );
 }
-
-export default FeaturedDownloads;

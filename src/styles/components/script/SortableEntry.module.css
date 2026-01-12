@@ -1,0 +1,60 @@
+/**
+ * Shared Sortable Entry Styles
+ *
+ * Unified styles for drag-and-drop entries used in both
+ * PlayerScriptPreview and NightOrderSheet.
+ */
+
+.sortableEntry {
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+  position: relative;
+  border-radius: 4px;
+}
+
+/* Draggable entries - user can drag to reorder */
+.sortableEntry.draggable {
+  user-select: none;
+  cursor: pointer;
+}
+
+/* Subtle hover effect - indicates interactivity without grab cursor */
+.sortableEntry.draggable::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sortableEntry.draggable:hover::before {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Ensure children sit above the hover overlay */
+.sortableEntry > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Active drag state */
+.sortableEntry.dragging {
+  opacity: 0.8;
+  background-color: rgba(79, 70, 229, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Print styles - hide drag interactions */
+@media print {
+  .sortableEntry::before {
+    display: none;
+  }
+
+  .sortableEntry.draggable {
+    cursor: default;
+  }
+}

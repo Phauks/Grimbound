@@ -3,12 +3,12 @@
  *
  * Full-featured modal for managing uploaded assets with filtering,
  * bulk operations, and asset organization.
- * Migrated to use unified Modal, Button, and ConfirmDialog components.
+ * Uses tag-based asset categorization system.
  *
  * @module components/Modals/AssetManagerModal
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { AssetThumbnail } from '@/components/Shared/Assets/AssetThumbnail.js';
 import { FileDropzone } from '@/components/Shared/Controls/FileDropzone.js';
 import { ConfirmDialog } from '@/components/Shared/ModalBase/ConfirmDialog';
@@ -24,12 +24,53 @@ import {
 } from '@/hooks/assets/index.js';
 import styles from '@/styles/components/modals/AssetManagerModal.module.css';
 import {
-  ASSET_TYPE_ICONS,
-  ASSET_TYPE_LABELS,
-  ASSET_TYPE_LABELS_PLURAL,
-  type AssetType,
-} from '@/ts/services/upload/index.js';
+  createTypeTag,
+  getTypeFromTags,
+  getTypeLabel,
+  TYPE_TAGS,
+  type TypeTagValue,
+} from '@/ts/services/upload/tagUtils.js';
 import type { GenerationOptions } from '@/ts/types/index.js';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Icons for each asset type tag */
+const TYPE_TAG_ICONS: Record<TypeTagValue, string> = {
+  icon: '👤',
+  'token-background': '🎨',
+  'script-background': '📜',
+  setup: '⚙️',
+  accent: '✨',
+  logo: '🏷️',
+  'studio-icon': '🎭',
+  'studio-logo': '🖼️',
+  'studio-project': '📁',
+};
+
+/** Plural labels for each asset type tag */
+const TYPE_TAG_LABELS_PLURAL: Record<TypeTagValue, string> = {
+  icon: 'Icons',
+  'token-background': 'Token Backgrounds',
+  'script-background': 'Script Backgrounds',
+  setup: 'Setup Overlays',
+  accent: 'Accents',
+  logo: 'Logos',
+  'studio-icon': 'Studio Icons',
+  'studio-logo': 'Studio Logos',
+  'studio-project': 'Studio Projects',
+};
+
+/** Main asset types to show in tabs (exclude studio types) */
+const MAIN_TYPE_TAGS: TypeTagValue[] = [
+  'icon',
+  'token-background',
+  'script-background',
+  'setup',
+  'accent',
+  'logo',
+];
 
 // ============================================================================
 // Types
@@ -42,8 +83,8 @@ interface AssetManagerModalProps {
   onClose: () => void;
   /** Current project ID */
   projectId?: string;
-  /** Initial filter by asset type */
-  initialAssetType?: AssetType;
+  /** Initial filter by asset type tag */
+  initialAssetType?: TypeTagValue;
   /** Callback when an asset is selected for use */
   onSelectAsset?: (assetId: string) => void;
   /** Selection mode (for picking an asset) */
@@ -63,15 +104,6 @@ interface AssetManagerModalProps {
 type ScopeFilter = 'project' | 'global' | 'all';
 type ViewMode = 'grid' | 'list';
 
-const ASSET_TYPES: AssetType[] = [
-  'character-icon',
-  'token-background',
-  'script-background',
-  'setup-overlay',
-  'accent',
-  'logo',
-];
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -90,12 +122,12 @@ export function AssetManagerModal({
   previewTokenType = 'character',
 }: AssetManagerModalProps) {
   // Local UI state
-  const [activeTab, setActiveTab] = useState<AssetType | 'all'>(initialAssetType ?? 'all');
+  const [activeTab, setActiveTab] = useState<TypeTagValue | 'all'>(initialAssetType ?? 'all');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>(projectId ? 'project' : 'all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [showUpload, setShowUpload] = useState(false);
-  const [uploadType, setUploadType] = useState<AssetType>('character-icon');
+  const [uploadType, setUploadType] = useState<TypeTagValue>('icon');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   // Get script metadata from context for preview labels
@@ -122,7 +154,7 @@ export function AssetManagerModal({
   } = useAssetManager({
     currentProjectId: projectId ?? undefined,
     initialFilter: {
-      type: initialAssetType,
+      tags: initialAssetType ? [createTypeTag(initialAssetType)] : undefined,
       projectId: scopeFilter === 'all' ? 'all' : scopeFilter === 'global' ? null : projectId,
       search: searchQuery,
     },
@@ -173,85 +205,70 @@ export function AssetManagerModal({
   // Filter Handlers
   // ============================================================================
 
-  const handleTabChange = useCallback(
-    (tab: AssetType | 'all') => {
-      setActiveTab(tab);
-      setFilter({
-        type: tab === 'all' ? undefined : tab,
-      });
-    },
-    [setFilter]
-  );
+  const handleTabChange = (tab: TypeTagValue | 'all') => {
+    setActiveTab(tab);
+    setFilter({
+      tags: tab === 'all' ? undefined : [createTypeTag(tab)],
+    });
+  };
 
-  const handleScopeChange = useCallback(
-    (scope: ScopeFilter) => {
-      setScopeFilter(scope);
-      setFilter({
-        projectId: scope === 'all' ? 'all' : scope === 'global' ? null : projectId,
-      });
-    },
-    [setFilter, projectId]
-  );
+  const handleScopeChange = (scope: ScopeFilter) => {
+    setScopeFilter(scope);
+    setFilter({
+      projectId: scope === 'all' ? 'all' : scope === 'global' ? null : projectId,
+    });
+  };
 
-  const handleSearchChange = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setFilter({ search: query || undefined });
-    },
-    [setFilter]
-  );
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setFilter({ search: query || undefined });
+  };
 
   // ============================================================================
   // Asset Click Handler
   // ============================================================================
 
-  const handleAssetClick = useCallback(
-    (id: string) => {
-      if (selectionMode) {
-        toggleAssetSelection(id);
-      } else {
-        toggleSelect(id);
-      }
-    },
-    [selectionMode, toggleAssetSelection, toggleSelect]
-  );
+  const handleAssetClick = (id: string) => {
+    if (selectionMode) {
+      toggleAssetSelection(id);
+    } else {
+      toggleSelect(id);
+    }
+  };
 
   // ============================================================================
   // Delete Handlers
   // ============================================================================
 
-  const handleDeleteClick = useCallback((id: string) => {
+  const handleDeleteClick = (id: string) => {
     setConfirmDelete(id);
-  }, []);
+  };
 
-  const handleConfirmDelete = useCallback(async () => {
+  const handleConfirmDelete = async () => {
     if (confirmDelete) {
       await deleteAsset(confirmDelete);
       setConfirmDelete(null);
     }
-  }, [confirmDelete, deleteAsset]);
+  };
 
-  const handleCancelDelete = useCallback(() => {
+  const handleCancelDelete = () => {
     setConfirmDelete(null);
-  }, []);
+  };
 
-  const handleBulkDelete = useCallback(async () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.size > 0) {
       await deleteSelected();
     }
-  }, [selectedIds, deleteSelected]);
+  };
 
   // ============================================================================
   // Upload Handler
   // ============================================================================
 
-  const handleUploadComplete = useCallback(
-    (_assetIds: string[]) => {
-      setShowUpload(false);
-      refresh();
-    },
-    [refresh]
-  );
+  const handleUploadComplete = (_assetIds: string[]) => {
+    setShowUpload(false);
+    refresh();
+  };
 
   // ============================================================================
   // Render: Asset Content (Grid or List)
@@ -365,42 +382,46 @@ export function AssetManagerModal({
     // List view
     return (
       <div className={styles.assetList}>
-        {assets.map((asset) => (
-          <button
-            type="button"
-            key={asset.id}
-            className={`${styles.listItem} ${(selectionMode ? selectedAssetId === asset.id : isSelected(asset.id)) ? styles.selectedItem : ''}`}
-            onClick={() => handleAssetClick(asset.id)}
-          >
-            <img
-              src={asset.thumbnailUrl}
-              alt={asset.metadata.filename}
-              className={styles.listThumbnail}
-            />
-            <div className={styles.listInfo}>
-              <span className={styles.listFilename}>{asset.metadata.filename}</span>
-              <span className={styles.listMeta}>
-                {ASSET_TYPE_ICONS[asset.type]} {ASSET_TYPE_LABELS[asset.type]} •{' '}
-                {(asset.metadata.size / 1024).toFixed(1)} KB
+        {assets.map((asset) => {
+          const assetType = getTypeFromTags(asset.tags);
+          return (
+            <button
+              type="button"
+              key={asset.id}
+              className={`${styles.listItem} ${(selectionMode ? selectedAssetId === asset.id : isSelected(asset.id)) ? styles.selectedItem : ''}`}
+              onClick={() => handleAssetClick(asset.id)}
+            >
+              <img
+                src={asset.thumbnailUrl}
+                alt={asset.metadata.filename}
+                className={styles.listThumbnail}
+              />
+              <div className={styles.listInfo}>
+                <span className={styles.listFilename}>{asset.metadata.filename}</span>
+                <span className={styles.listMeta}>
+                  {assetType ? TYPE_TAG_ICONS[assetType] : '📄'}{' '}
+                  {assetType ? getTypeLabel(assetType) : 'Unknown'} •{' '}
+                  {(asset.metadata.size / 1024).toFixed(1)} KB
+                </span>
+              </div>
+              <span className={asset.projectId ? styles.projectBadge : styles.globalBadge}>
+                {asset.projectId ? '📁' : '🌐'}
               </span>
-            </div>
-            <span className={asset.projectId ? styles.projectBadge : styles.globalBadge}>
-              {asset.projectId ? '📁' : '🌐'}
-            </span>
-            {!selectionMode && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteClick(asset.id);
-                }}
-                className={styles.listDeleteButton}
-              >
-                🗑️
-              </button>
-            )}
-          </button>
-        ))}
+              {!selectionMode && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(asset.id);
+                  }}
+                  className={styles.listDeleteButton}
+                >
+                  🗑️
+                </button>
+              )}
+            </button>
+          );
+        })}
       </div>
     );
   };
@@ -420,15 +441,15 @@ export function AssetManagerModal({
         >
           All
         </button>
-        {ASSET_TYPES.map((type) => (
+        {MAIN_TYPE_TAGS.map((type) => (
           <button
             type="button"
             key={type}
             className={`${styles.tab} ${activeTab === type ? styles.activeTab : ''}`}
             onClick={() => handleTabChange(type)}
           >
-            <span className={styles.tabIcon}>{ASSET_TYPE_ICONS[type]}</span>
-            <span className={styles.tabLabel}>{ASSET_TYPE_LABELS_PLURAL[type]}</span>
+            <span className={styles.tabIcon}>{TYPE_TAG_ICONS[type]}</span>
+            <span className={styles.tabLabel}>{TYPE_TAG_LABELS_PLURAL[type]}</span>
           </button>
         ))}
       </div>
@@ -506,18 +527,18 @@ export function AssetManagerModal({
             <select
               id="asset-upload-type"
               value={uploadType}
-              onChange={(e) => setUploadType(e.target.value as AssetType)}
+              onChange={(e) => setUploadType(e.target.value as TypeTagValue)}
               className={styles.typeSelect}
             >
-              {ASSET_TYPES.map((type) => (
+              {TYPE_TAGS.map((type) => (
                 <option key={type} value={type}>
-                  {ASSET_TYPE_ICONS[type]} {ASSET_TYPE_LABELS[type]}
+                  {TYPE_TAG_ICONS[type]} {getTypeLabel(type)}
                 </option>
               ))}
             </select>
           </div>
           <FileDropzone
-            assetType={uploadType}
+            tags={[createTypeTag(uploadType)]}
             projectId={scopeFilter === 'global' ? null : projectId}
             multiple={true}
             onUploadComplete={handleUploadComplete}

@@ -149,5 +149,3 @@ export function useResolvedImageUrls({
 
   return { resolvedUrls, isLoading };
 }
-
-export default useResolvedImageUrls;

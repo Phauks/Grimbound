@@ -15,7 +15,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
 import {
   type BuiltInAsset,
@@ -25,6 +25,7 @@ import {
   isBuiltInAsset,
 } from '@/ts/constants/builtInAssets.js';
 import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
+import { legacyTypeToTag } from '@/ts/services/upload/tagUtils.js';
 import type { AssetType, AssetWithUrl } from '@/ts/services/upload/types.js';
 
 // ============================================================================
@@ -95,7 +96,7 @@ export function useBuiltInAssets({
   const [error, setError] = useState<string | null>(null);
 
   // Get built-in assets for this type (static, no loading needed)
-  const builtInAssets = useMemo(() => getBuiltInAssets(assetType), [assetType]);
+  const builtInAssets = getBuiltInAssets(assetType);
 
   // Load user assets
   const loadUserAssets = useCallback(async () => {
@@ -106,7 +107,7 @@ export function useBuiltInAssets({
       // If includeGlobal is true and we have a projectId, we need to fetch both
       // project-specific and global assets. Use 'all' to get everything then filter.
       const assets = await assetStorageService.listWithUrls({
-        type: assetType,
+        tags: [legacyTypeToTag(assetType)],
         projectId: includeGlobal ? 'all' : (projectId ?? null),
       });
 
@@ -131,7 +132,7 @@ export function useBuiltInAssets({
   }, [loadUserAssets]);
 
   // Merge built-in and user assets
-  const assets = useMemo((): MergedAsset[] => {
+  const assets: MergedAsset[] = (() => {
     const merged: MergedAsset[] = [];
 
     // Add built-in assets first
@@ -159,64 +160,55 @@ export function useBuiltInAssets({
     }
 
     return merged;
-  }, [builtInAssets, userAssets]);
+  })();
 
   // Resolve any asset value to a URL
-  const resolveUrl = useCallback(
-    async (value: string): Promise<string | null> => {
-      if (!value || value === 'none') return null;
+  const resolveUrl = async (value: string): Promise<string | null> => {
+    if (!value || value === 'none') return null;
 
-      // Check if it's a built-in asset
-      const builtInPath = getBuiltInAssetPath(value, assetType);
-      if (builtInPath) return builtInPath;
+    // Check if it's a built-in asset
+    const builtInPath = getBuiltInAssetPath(value, assetType);
+    if (builtInPath) return builtInPath;
 
-      // Check if it's an asset reference
-      if (isAssetReference(value)) {
-        const assetId = extractAssetId(value);
-        if (!assetId) return null;
+    // Check if it's an asset reference
+    if (isAssetReference(value)) {
+      const assetId = extractAssetId(value);
+      if (!assetId) return null;
 
-        try {
-          const asset = await assetStorageService.getByIdWithUrl(assetId);
-          return asset?.url ?? null;
-        } catch {
-          return null;
-        }
+      try {
+        const asset = await assetStorageService.getByIdWithUrl(assetId);
+        return asset?.url ?? null;
+      } catch {
+        return null;
       }
+    }
 
-      // Fallback: try as a direct path
-      return value;
-    },
-    [assetStorageService, assetType]
-  );
+    // Fallback: try as a direct path
+    return value;
+  };
 
   // Get label for any asset value
-  const getLabel = useCallback(
-    (value: string): string => {
-      if (!value || value === 'none') return 'None';
+  const getLabel = (value: string): string => {
+    if (!value || value === 'none') return 'None';
 
-      // Check built-in
-      const builtIn = getBuiltInAsset(value, assetType);
-      if (builtIn) return builtIn.label;
+    // Check built-in
+    const builtIn = getBuiltInAsset(value, assetType);
+    if (builtIn) return builtIn.label;
 
-      // Check loaded user assets
-      if (isAssetReference(value)) {
-        const assetId = extractAssetId(value);
-        const userAsset = userAssets.find((a) => a.id === assetId);
-        if (userAsset) {
-          return userAsset.metadata?.filename ?? 'Custom Asset';
-        }
+    // Check loaded user assets
+    if (isAssetReference(value)) {
+      const assetId = extractAssetId(value);
+      const userAsset = userAssets.find((a) => a.id === assetId);
+      if (userAsset) {
+        return userAsset.metadata?.filename ?? 'Custom Asset';
       }
+    }
 
-      return 'Custom Asset';
-    },
-    [assetType, userAssets]
-  );
+    return 'Custom Asset';
+  };
 
   // Check if value is a built-in asset
-  const isBuiltIn = useCallback(
-    (value: string): boolean => isBuiltInAsset(value, assetType),
-    [assetType]
-  );
+  const isBuiltIn = (value: string): boolean => isBuiltInAsset(value, assetType);
 
   return {
     assets,
@@ -230,5 +222,3 @@ export function useBuiltInAssets({
     refresh: loadUserAssets,
   };
 }
-
-export default useBuiltInAssets;

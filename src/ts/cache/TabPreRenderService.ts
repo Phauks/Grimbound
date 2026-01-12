@@ -530,5 +530,3 @@ export class TabPreRenderService {
  * ```
  */
 export const tabPreRenderService = new TabPreRenderService();
-
-export default tabPreRenderService;

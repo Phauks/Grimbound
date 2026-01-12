@@ -10,7 +10,7 @@
  * layout remain proportional at any zoom level or viewport size.
  */
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/script/NightOrderView.module.css';
 
 /** Reference dimensions the content is designed for */
@@ -25,11 +25,11 @@ export function ScaledPage({ children }: ScaledPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  const calculateScale = useCallback((width: number) => {
+  const calculateScale = (width: number) => {
     // Scale down to fit, but never scale up beyond 1
     const newScale = Math.min(1, width / REFERENCE_WIDTH);
     setScale(newScale);
-  }, []);
+  };
 
   useEffect(() => {
     const container = containerRef.current;

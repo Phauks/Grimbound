@@ -7,23 +7,20 @@
  * @module components/Shared/AssetThumbnail
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/shared/AssetThumbnail.module.css';
-import {
-  ASSET_TYPE_ICONS,
-  ASSET_TYPE_LABELS,
-  type AssetType,
-  type AssetWithUrl,
-} from '@/ts/services/upload/index.js';
+import { TAG_TYPE_ICONS } from '@/ts/services/upload/index.js';
+import { getTypeFromTags, getTypeLabel, type TypeTagValue } from '@/ts/services/upload/tagUtils.js';
+import type { AssetWithUrl } from '@/ts/services/upload/types.js';
 
-// Asset types for reclassify submenu
-const ASSET_TYPES: AssetType[] = [
-  'character-icon',
+/** User-facing asset type tabs for reclassify submenu */
+const USER_TYPE_TABS: TypeTagValue[] = [
+  'icon',
   'token-background',
   'script-background',
-  'setup-overlay',
+  'setup',
   'accent',
   'logo',
 ];
@@ -48,15 +45,15 @@ export interface AssetThumbnailProps {
   /** Callback when duplicate is clicked */
   onDuplicate?: (id: string) => void;
   /** Callback when reclassify is clicked */
-  onReclassify?: (id: string, newType: AssetType) => void;
+  onReclassify?: (id: string, newType: TypeTagValue) => void;
   /** Callback when promote to global is clicked */
   onPromoteToGlobal?: (id: string) => void;
   /** Whether to show selection checkbox */
   showSelect?: boolean;
   /** Whether actions are disabled */
   disabled?: boolean;
-  /** Size variant */
-  size?: 'small' | 'medium' | 'large';
+  /** Size variant - compact for grid view, others for detailed view */
+  size?: 'compact' | 'small' | 'medium' | 'large';
 }
 
 // ============================================================================
@@ -94,40 +91,37 @@ export function AssetThumbnail({
   const contextMenu = useContextMenu();
 
   // Handle checkbox change
-  const handleCheckboxChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      e.stopPropagation();
-      onSelect?.(asset.id);
-    },
-    [asset.id, onSelect]
-  );
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    onSelect?.(asset.id);
+  };
 
   // Handle card click - always trigger onSelect if available (for selection mode)
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (!disabled && onSelect) {
       onSelect(asset.id);
     }
-  }, [asset.id, disabled, onSelect]);
+  };
 
   // Handle context menu
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!disabled) {
-        contextMenu.open(e);
-      }
-    },
-    [disabled, contextMenu]
-  );
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled) {
+      contextMenu.open(e);
+    }
+  };
 
   // Handle image error
-  const handleImageError = useCallback(() => {
+  const handleImageError = () => {
     setImageError(true);
-  }, []);
+  };
+
+  // Derive asset type from tags
+  const assetType = getTypeFromTags(asset.tags);
 
   // Build context menu items
-  const contextMenuItems = useMemo((): ContextMenuItem[] => {
+  const contextMenuItems = ((): ContextMenuItem[] => {
     const items: ContextMenuItem[] = [];
 
     if (onRename) {
@@ -143,11 +137,11 @@ export function AssetThumbnail({
         icon: '🏷️',
         label: 'Reclassify',
         description: 'Change asset type',
-        submenu: ASSET_TYPES.map((type) => ({
-          icon: ASSET_TYPE_ICONS[type],
-          label: ASSET_TYPE_LABELS[type],
+        submenu: USER_TYPE_TABS.map((type) => ({
+          icon: TAG_TYPE_ICONS[type],
+          label: getTypeLabel(type),
           onClick: () => onReclassify(asset.id, type),
-          disabled: type === asset.type,
+          disabled: type === assetType,
         })),
       });
     }
@@ -187,17 +181,7 @@ export function AssetThumbnail({
     }
 
     return items;
-  }, [
-    asset.id,
-    asset.type,
-    asset.projectId,
-    onRename,
-    onReclassify,
-    onDownload,
-    onDuplicate,
-    onPromoteToGlobal,
-    onDelete,
-  ]);
+  })();
 
   // Build class names
   const cardClasses = [
@@ -212,8 +196,8 @@ export function AssetThumbnail({
 
   const isGlobal = asset.projectId === null;
   // Provide fallbacks for unknown asset types (backward compatibility)
-  const typeIcon = ASSET_TYPE_ICONS[asset.type] ?? '📄';
-  const typeLabel = ASSET_TYPE_LABELS[asset.type] ?? asset.type;
+  const typeIcon = assetType ? TAG_TYPE_ICONS[assetType] : '📄';
+  const typeLabel = assetType ? getTypeLabel(assetType) : 'Unknown';
 
   return (
     <>
@@ -263,6 +247,13 @@ export function AssetThumbnail({
               />
             </div>
           )}
+
+          {/* Star indicator for starred assets */}
+          {asset.tags.includes('starred') && (
+            <span className={styles.starIndicator} role="img" aria-label="Starred">
+              ⭐
+            </span>
+          )}
         </div>
 
         {/* Info Section */}
@@ -303,5 +294,3 @@ export function AssetThumbnail({
     </>
   );
 }
-
-export default AssetThumbnail;

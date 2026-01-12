@@ -7,9 +7,9 @@
  * @module components/Views/CharactersView
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { OfficialCharacterDrawer } from '@/components/Shared/Drawer';
 import { Button } from '@/components/Shared/UI/Button';
 import { CharacterNavigation } from '@/components/ViewComponents/CharactersComponents/CharacterNavigation';
@@ -26,6 +26,7 @@ import {
   useCharacterOperations,
   useTokenPreviewCache,
 } from '@/hooks';
+import { useResizableSidebar } from '@/hooks/ui';
 import previewStyles from '@/styles/components/characterEditor/TokenPreview.module.css';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
@@ -64,8 +65,11 @@ export function CharactersView({
   const { addToast } = useToast();
   const { setDownloads, clearDownloads } = useDownloadsContext();
 
+  // Resizable sidebar
+  const { width: sidebarWidth, isDragging, handleProps } = useResizableSidebar();
+
   // Determine the initial character UUID
-  const getInitialCharacterUuid = useCallback(() => {
+  const getInitialCharacterUuid = () => {
     if (isMetaToken(initialToken)) return '';
 
     if (externalSelectedUuid) {
@@ -86,7 +90,7 @@ export function CharactersView({
     }
 
     return characters[0]?.uuid || '';
-  }, [characters, externalSelectedUuid, initialToken]);
+  };
 
   // Selection state
   const [selectedCharacterUuid, setSelectedCharacterUuid] = useState<string>(() =>
@@ -99,12 +103,30 @@ export function CharactersView({
   const [isOfficialDrawerOpen, setIsOfficialDrawerOpen] = useState(false);
 
   // Jinx preview state
-  const [jinxPreviewData, setJinxPreviewData] = useState<JinxPreviewData | null>(null);
   const [jinxPreviewToken, setJinxPreviewToken] = useState<Token | null>(null);
   const [previewedJinxIndex, setPreviewedJinxIndex] = useState<number | null>(null);
+  // Generation counter for cancellation (incremented each time we start generating)
+  const jinxGenerationRef = useRef(0);
 
   // Track original UUID for character operations
   const originalCharacterUuidRef = useRef<string>(selectedCharacterUuid);
+
+  /**
+   * Internal setter that also clears jinx preview and optionally notifies parent.
+   * Used by useCharacterOperations when it needs to change selection.
+   * This eliminates the "clear jinx on character change" effect.
+   */
+  const setSelectedCharacterUuidWithEffects = (uuid: string, notifyParent = true) => {
+    setSelectedCharacterUuid(uuid);
+    // Clear jinx preview when character changes (increment counter to cancel any pending generation)
+    jinxGenerationRef.current++;
+    setJinxPreviewToken(null);
+    setPreviewedJinxIndex(null);
+    // Notify parent if requested and uuid is truthy
+    if (notifyParent && uuid) {
+      onCharacterSelect?.(uuid);
+    }
+  };
 
   // Character editor hook
   const { editedCharacter, handleEditChange, handleReplaceCharacter } = useCharacterEditor({
@@ -154,7 +176,8 @@ export function CharactersView({
       getMetadata,
       addToast,
       selectedCharacterUuid,
-      setSelectedCharacterUuid,
+      // Use wrapper that clears jinx and notifies parent (eliminates useEffect)
+      setSelectedCharacterUuid: setSelectedCharacterUuidWithEffects,
       setEditedCharacter: (char) => {
         if (char) handleReplaceCharacter(char);
         // When null, the editor resets via selection change
@@ -178,162 +201,141 @@ export function CharactersView({
   });
 
   // Sync with external selected UUID
+  // Note: We DON'T notify parent here because change originates FROM parent
   const prevExternalUuidRef = useRef(externalSelectedUuid);
   useEffect(() => {
     if (externalSelectedUuid && externalSelectedUuid !== prevExternalUuidRef.current) {
       prevExternalUuidRef.current = externalSelectedUuid;
+      // Inline the logic instead of calling wrapper (avoids dependency on wrapper function)
       setSelectedCharacterUuid(externalSelectedUuid);
+      // Clear jinx preview when character changes (increment counter to cancel any pending generation)
+      jinxGenerationRef.current++;
+      setJinxPreviewToken(null);
+      setPreviewedJinxIndex(null);
+      // DON'T notify parent since change originates FROM parent
     }
   }, [externalSelectedUuid]);
 
-  // Notify parent of character selection changes
-  useEffect(() => {
-    if (onCharacterSelect && selectedCharacterUuid) {
-      onCharacterSelect(selectedCharacterUuid);
-    }
-  }, [selectedCharacterUuid, onCharacterSelect]);
-
   // Selected character (from source or edited)
-  const selectedCharacter = useMemo(
-    () => editedCharacter || characters.find((c) => c.uuid === selectedCharacterUuid),
-    [editedCharacter, selectedCharacterUuid, characters]
-  );
+  const selectedCharacter =
+    editedCharacter || characters.find((c) => c.uuid === selectedCharacterUuid);
 
   // Check if selected character is official
-  const isSelectedCharacterOfficial = useMemo(
-    () => selectedCharacter?.source === 'official',
-    [selectedCharacter]
-  );
+  const isSelectedCharacterOfficial = selectedCharacter?.source === 'official';
 
   // Handle character selection
-  const handleSelectCharacter = useCallback(
-    (newCharacterUuid: string) => {
-      originalCharacterUuidRef.current = newCharacterUuid;
-      setSelectedCharacterUuid(newCharacterUuid);
-      setSelectedMetaToken(null);
-      setIsMetaSelected(false);
+  const handleSelectCharacter = (newCharacterUuid: string) => {
+    originalCharacterUuidRef.current = newCharacterUuid;
+    // Use wrapper that clears jinx preview and notifies parent
+    setSelectedCharacterUuidWithEffects(newCharacterUuid);
+    setSelectedMetaToken(null);
+    setIsMetaSelected(false);
 
-      // Apply cached tokens if available for instant display
-      applyCachedTokens(newCharacterUuid);
-    },
-    [applyCachedTokens]
-  );
+    // Apply cached tokens if available for instant display
+    applyCachedTokens(newCharacterUuid);
+  };
 
   // Handle meta token selection
-  const handleSelectMetaToken = useCallback((token: Token) => {
+  const handleSelectMetaToken = (token: Token) => {
     setSelectedMetaToken(token);
     setSelectedCharacterUuid('');
     setIsMetaSelected(true);
-  }, []);
+  };
 
   // Handle meta selection (no specific token)
-  const handleSelectMeta = useCallback(() => {
+  const handleSelectMeta = () => {
     setSelectedMetaToken(null);
     setSelectedCharacterUuid('');
     setIsMetaSelected(true);
-  }, []);
+  };
 
-  // Handle jinx preview
-  const handlePreviewJinx = useCallback((data: JinxPreviewData | null) => {
+  // Handle jinx preview - generates token directly (moved from useEffect to event handler)
+  const handlePreviewJinx = async (data: JinxPreviewData | null) => {
     if (!data) {
-      // Clear jinx preview
-      setJinxPreviewData(null);
+      // Clear jinx preview (increment counter to cancel any pending generation)
+      jinxGenerationRef.current++;
       setJinxPreviewToken(null);
       setPreviewedJinxIndex(null);
       return;
     }
-
-    // Store the preview data - we'll generate the token in an effect
-    setJinxPreviewData(data);
 
     // Find the index of this jinx in the character's jinxes array
     const jinxes = data.character.jinxes || [];
     const index = jinxes.findIndex((j) => j.id === data.jinx.id && j.reason === data.jinx.reason);
     setPreviewedJinxIndex(index >= 0 ? index : 0);
-  }, []);
 
-  // Generate jinx token when preview data changes
-  useEffect(() => {
-    if (!jinxPreviewData) {
-      setJinxPreviewToken(null);
-      return;
-    }
+    // Increment generation counter and capture it for cancellation check
+    const generationId = ++jinxGenerationRef.current;
 
-    let cancelled = false;
+    try {
+      const { TokenGenerator } = await import('@/ts/generation/TokenGenerator.js');
+      const generator = new TokenGenerator(generationOptions);
 
-    const generateJinxPreview = async () => {
-      try {
-        const { TokenGenerator } = await import('@/ts/generation/TokenGenerator.js');
-        const generator = new TokenGenerator(generationOptions);
+      const canvas = await generator.generateJinxToken(
+        data.jinx,
+        data.character,
+        data.targetCharacter
+      );
 
-        const canvas = await generator.generateJinxToken(
-          jinxPreviewData.jinx,
-          jinxPreviewData.character,
-          jinxPreviewData.targetCharacter
-        );
+      // Check if this generation is still valid (hasn't been superseded)
+      if (generationId !== jinxGenerationRef.current) return;
 
-        if (cancelled) return;
+      // Create a Token object for display
+      // Extract first image from array if needed
+      const getFirstImage = (img: string | string[]): string =>
+        Array.isArray(img) ? img[0] || '' : img || '';
 
-        // Create a Token object for display
-        // Extract first image from array if needed
-        const getFirstImage = (img: string | string[]): string =>
-          Array.isArray(img) ? img[0] || '' : img || '';
-
-        const token: Token = {
-          name: `${jinxPreviewData.character.name} & ${jinxPreviewData.targetCharacter.name}`,
-          type: 'jinx',
-          team: 'meta',
-          canvas,
-          diameter: canvas.width,
-          filename: `jinx_${jinxPreviewData.character.id}_${jinxPreviewData.targetCharacter.id}.png`,
-          jinxData: {
-            reason: jinxPreviewData.jinx.reason,
-            char1: {
-              id: jinxPreviewData.character.id,
-              name: jinxPreviewData.character.name,
-              image: getFirstImage(jinxPreviewData.character.image),
-            },
-            char2: {
-              id: jinxPreviewData.targetCharacter.id,
-              name: jinxPreviewData.targetCharacter.name,
-              image: getFirstImage(jinxPreviewData.targetCharacter.image),
-            },
+      const token: Token = {
+        name: `${data.character.name} & ${data.targetCharacter.name}`,
+        type: 'jinx',
+        team: 'meta',
+        canvas,
+        diameter: canvas.width,
+        filename: `jinx_${data.character.id}_${data.targetCharacter.id}.png`,
+        jinxData: {
+          reason: data.jinx.reason,
+          char1: {
+            id: data.character.id,
+            name: data.character.name,
+            image: getFirstImage(data.character.image),
           },
-        };
+          char2: {
+            id: data.targetCharacter.id,
+            name: data.targetCharacter.name,
+            image: getFirstImage(data.targetCharacter.image),
+          },
+        },
+      };
 
-        setJinxPreviewToken(token);
-      } catch (error) {
+      setJinxPreviewToken(token);
+    } catch (error) {
+      // Only set error state if this generation is still valid
+      if (generationId === jinxGenerationRef.current) {
         logger.error('CharactersView', 'Failed to generate jinx preview', error);
         setJinxPreviewToken(null);
       }
-    };
-
-    generateJinxPreview();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [jinxPreviewData, generationOptions]);
-
-  // Clear jinx preview when character changes
-  useEffect(() => {
-    // Clear preview data when switching to any character (or deselecting)
-    if (selectedCharacterUuid || selectedCharacterUuid === '') {
-      setJinxPreviewData(null);
-      setJinxPreviewToken(null);
-      setPreviewedJinxIndex(null);
     }
-  }, [selectedCharacterUuid]);
+  };
+
+  // NOTE: Jinx generation was moved from useEffect to handlePreviewJinx event handler.
+  // Jinx clearing is handled in setSelectedCharacterUuidWithEffects wrapper.
 
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Characters" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Characters" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <ViewLayout variant="3-panel">
-        {/* Left Panel - Character Navigation */}
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        {/* Left Panel - Character Navigation (Resizable) */}
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isDragging}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <CharacterNavigation
             characters={characters}
             tokens={tokens}
@@ -402,7 +404,8 @@ export function CharactersView({
                     const parentCharName = reminder.parentCharacter;
                     if (parentCharName) {
                       const char = characters.find((c) => c.name === parentCharName);
-                      if (char?.uuid) setSelectedCharacterUuid(char.uuid);
+                      // Use wrapper to clear jinx and notify parent
+                      if (char?.uuid) setSelectedCharacterUuidWithEffects(char.uuid);
                     }
                   }}
                 />
@@ -483,6 +486,7 @@ export function CharactersView({
             />
           ) : selectedCharacter ? (
             <TokenEditor
+              key={selectedCharacterUuid}
               character={selectedCharacter}
               onEditChange={handleEditChange}
               onReplaceCharacter={handleReplaceCharacter}

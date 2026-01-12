@@ -21,7 +21,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import { type Ref, useEffect, useState } from 'react';
 import styles from '@/styles/components/script/NightSheet.module.css';
 import {
   calculateScaleConfig,
@@ -29,9 +29,10 @@ import {
   getScaleWarning,
 } from '@/ts/nightOrder/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
+import type { MarginConfig } from '@/ts/scriptPdf/types.js';
+import type { BackgroundStyle } from '@/ts/types/backgroundEffects.js';
 import type { Character, ScriptMeta } from '@/ts/types/index.js';
 import { NightOrderEntry } from './NightOrderEntry';
-import type { NightSheetBackground } from './NightOrderView';
 import { SortableNightOrderEntry } from './SortableNightOrderEntry';
 
 export type NightSheetType = 'first' | 'other';
@@ -46,8 +47,8 @@ interface NightSheetProps {
   enableDragDrop?: boolean;
   /** Callback when entry is moved (for drag-drop) */
   onMoveEntry?: (entryId: string, newIndex: number) => void;
-  /** Background customization options */
-  background?: NightSheetBackground;
+  /** Background style configuration */
+  background?: BackgroundStyle;
   /** Callback when "Edit Character" is selected from context menu */
   onEditCharacter?: (characterId: string) => void;
   /** Callback when lock state is toggled for an entry */
@@ -56,6 +57,10 @@ interface NightSheetProps {
   pageNumber?: number;
   /** Total number of pages for this night type */
   totalPages?: number;
+  /** Icon scale multiplier (0.5 to 1.5, default 1.0) */
+  iconScale?: number;
+  /** Page margins in inches */
+  margins?: MarginConfig;
 }
 
 /**
@@ -65,30 +70,22 @@ function getSheetTitle(type: NightSheetType): string {
   return type === 'first' ? 'First Night' : 'Other Nights';
 }
 
-/**
- * Generate SVG noise texture for paper effect
- */
-function getNoiseTextureSvg(opacity: number): string {
-  const encodedOpacity = opacity.toFixed(2);
-  return `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='${encodedOpacity}'/%3E%3C/svg%3E")`;
-}
-
-export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function NightSheet(
-  {
-    type,
-    entries,
-    characters,
-    scriptMeta,
-    enableDragDrop = false,
-    onMoveEntry,
-    background,
-    onEditCharacter,
-    onToggleLock,
-    pageNumber,
-    totalPages,
-  },
-  ref
-) {
+export function NightSheet({
+  type,
+  entries,
+  characters,
+  scriptMeta,
+  enableDragDrop = false,
+  onMoveEntry,
+  background,
+  onEditCharacter,
+  onToggleLock,
+  pageNumber,
+  totalPages,
+  iconScale = 1.0,
+  margins,
+  ref,
+}: NightSheetProps & { ref?: Ref<HTMLDivElement> }) {
   // Build title with page number if multi-page
   const baseTitle = getSheetTitle(type);
   const title =
@@ -99,63 +96,54 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
   const scriptLogo = scriptMeta?.logo;
 
   // Create a lookup map for character source (case-insensitive)
-  const characterSourceMap = useMemo(() => {
+  const characterSourceMap = (() => {
     const map = new Map<string, 'official' | 'custom'>();
     for (const char of characters) {
       map.set(char.id.toLowerCase(), char.source || 'custom');
     }
     return map;
-  }, [characters]);
+  })();
 
   // Helper to check if an entry is official
-  const isEntryOfficial = useCallback(
-    (entry: NightOrderEntryType): boolean => {
-      // Special entries are not "official" in the movable sense
-      if (entry.type === 'special') return false;
-      // Check character source
-      const source = characterSourceMap.get(entry.id.toLowerCase());
-      return source === 'official';
-    },
-    [characterSourceMap]
-  );
+  const isEntryOfficial = (entry: NightOrderEntryType): boolean => {
+    // Special entries are not "official" in the movable sense
+    if (entry.type === 'special') return false;
+    // Check character source
+    const source = characterSourceMap.get(entry.id.toLowerCase());
+    return source === 'official';
+  };
 
   // Calculate scaling: full scale when paginated, dynamic scaling otherwise
-  const scaleConfig = useMemo(() => {
+  const scaleConfig = (() => {
     // If paginated (pageNumber provided), use full scale - pagination handles overflow
     if (pageNumber !== undefined) {
       return getFullScaleConfig(entries);
     }
     // Otherwise, scale to fit all entries on one page
     return calculateScaleConfig(entries);
-  }, [entries, pageNumber]);
+  })();
 
   // Get warning message if scaled to minimum (only applies when not paginated)
-  const scaleWarning = useMemo(() => {
-    if (pageNumber !== undefined) return null; // No warning when paginated
-    return getScaleWarning(scaleConfig);
-  }, [scaleConfig, pageNumber]);
+  const scaleWarning = pageNumber !== undefined ? null : getScaleWarning(scaleConfig);
 
   // Build dynamic background style with CSS custom properties for scaling
-  const sheetStyle = useMemo(() => {
-    const style: React.CSSProperties = {
-      // Background customization
-      backgroundColor: background?.baseColor || '#f4edd9',
-      // CSS custom properties for dynamic scaling
-      '--scale-factor': scaleConfig.scaleFactor,
-      '--entry-height': `${scaleConfig.entryHeight}in`,
-      '--icon-size': `${scaleConfig.iconSize}in`,
-      '--name-font-size': `${scaleConfig.nameFontSize}pt`,
-      '--ability-font-size': `${scaleConfig.abilityFontSize}pt`,
-      '--entry-spacing': `${scaleConfig.entrySpacing}in`,
-      '--header-font-size': `${scaleConfig.headerFontSize}rem`,
-    } as React.CSSProperties;
-
-    if (background?.showTexture) {
-      style.backgroundImage = getNoiseTextureSvg(background.textureOpacity);
-    }
-
-    return style;
-  }, [background, scaleConfig]);
+  const sheetStyle: React.CSSProperties = {
+    // Background customization (uses solidColor from BackgroundStyle)
+    backgroundColor: background?.solidColor || '#f4edd9',
+    // Page margins (override CSS defaults if provided)
+    ...(margins && {
+      padding: `${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in`,
+    }),
+    // CSS custom properties for dynamic scaling
+    '--scale-factor': scaleConfig.scaleFactor,
+    '--entry-height': `${scaleConfig.entryHeight}in`,
+    '--icon-size': `${scaleConfig.iconSize}in`,
+    '--icon-scale': iconScale, // Transform-based scale (doesn't affect layout)
+    '--name-font-size': `${scaleConfig.nameFontSize}pt`,
+    '--ability-font-size': `${scaleConfig.abilityFontSize}pt`,
+    '--entry-spacing': `${scaleConfig.entrySpacing}in`,
+    '--header-font-size': `${scaleConfig.headerFontSize}rem`,
+  } as React.CSSProperties;
 
   // Track if currently dragging for cursor state
   const [isDragging, setIsDragging] = useState(false);
@@ -190,39 +178,33 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
   );
 
   // Handle drag start
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = () => {
     setIsDragging(true);
-  }, []);
+  };
 
   // Handle drag end
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setIsDragging(false);
-      const { active, over } = event;
+  const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragging(false);
+    const { active, over } = event;
 
-      if (over && active.id !== over.id) {
-        const overIndex = entries.findIndex((e) => e.id === over.id);
-        if (overIndex !== -1 && onMoveEntry) {
-          onMoveEntry(active.id as string, overIndex);
-        }
+    if (over && active.id !== over.id) {
+      const overIndex = entries.findIndex((e) => e.id === over.id);
+      if (overIndex !== -1 && onMoveEntry) {
+        onMoveEntry(active.id as string, overIndex);
       }
-    },
-    [entries, onMoveEntry]
-  );
+    }
+  };
 
   // Handle drag cancel (e.g., pressing Escape)
-  const handleDragCancel = useCallback(() => {
+  const handleDragCancel = () => {
     setIsDragging(false);
-  }, []);
+  };
 
-  // Get IDs for sortable context - memoized to prevent re-renders during drag
-  const entryIds = useMemo(() => entries.map((entry) => entry.id), [entries]);
+  // Get IDs for sortable context
+  const entryIds = entries.map((entry) => entry.id);
 
-  // Check if we have any draggable entries (custom characters) - memoized
-  const hasDraggableEntries = useMemo(
-    () => entries.some((e) => !isEntryOfficial(e)),
-    [entries, isEntryOfficial]
-  );
+  // Check if we have any draggable entries (custom characters)
+  const hasDraggableEntries = entries.some((e) => !isEntryOfficial(e));
 
   // Render entries list
   const renderEntries = () => {
@@ -315,4 +297,4 @@ export const NightSheet = forwardRef<HTMLDivElement, NightSheetProps>(function N
       <div className={styles.entriesContainer}>{renderEntries()}</div>
     </div>
   );
-});
+}

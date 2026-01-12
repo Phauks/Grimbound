@@ -6,7 +6,7 @@
  * @module hooks/pwa/usePWAInstall
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/ts/utils/logger.js';
 
 // Create child logger for PWA operations
@@ -99,7 +99,7 @@ export function usePWAInstall(): PWAInstallState {
     };
   }, []);
 
-  const promptInstall = useCallback(async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
+  const promptInstall = async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
     if (!deferredPrompt) {
       pwaLogger.info('Install prompt not available');
       return 'unavailable';
@@ -125,7 +125,7 @@ export function usePWAInstall(): PWAInstallState {
     } finally {
       setIsPrompting(false);
     }
-  }, [deferredPrompt]);
+  };
 
   return {
     canInstall: deferredPrompt !== null,
@@ -134,5 +134,3 @@ export function usePWAInstall(): PWAInstallState {
     promptInstall,
   };
 }
-
-export default usePWAInstall;

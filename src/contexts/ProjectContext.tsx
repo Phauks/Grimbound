@@ -7,15 +7,7 @@
  * @module contexts/ProjectContext
  */
 
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { useProjectService } from '@/contexts/ServiceContext';
 import type { AutoSaveStatus, Project } from '@/ts/types/project.js';
 import { logger } from '@/ts/utils/index.js';
@@ -47,10 +39,6 @@ interface ProjectContextType {
   // Dirty state (has unsaved changes)
   isDirty: boolean;
   setIsDirty: (dirty: boolean) => void;
-
-  // Change version (increments on every state change to trigger effects)
-  changeVersion: number;
-  incrementChangeVersion: () => void;
 
   // Last saved timestamp
   lastSavedAt: number | null;
@@ -108,29 +96,23 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
   // Dirty state tracking
   const [isDirty, setIsDirty] = useState(false);
 
-  // Change version - increments on every state change
-  const [changeVersion, setChangeVersion] = useState(0);
-  const incrementChangeVersion = useCallback(() => {
-    setChangeVersion((v) => v + 1);
-  }, []);
-
   // Last saved timestamp
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   // Auto-save function - use a ref-based setter to avoid function-in-state issues
   const saveNowRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
-  const setSaveNowFn = useCallback((fn: () => Promise<void>) => {
+  const setSaveNowFn = (fn: () => Promise<void>) => {
     saveNowRef.current = fn;
-  }, []);
+  };
 
   const saveNow = saveNowRef.current;
 
   // Sync isDirty with autoSaveStatus when it changes
-  const updateAutoSaveStatus = useCallback((status: AutoSaveStatus) => {
+  const updateAutoSaveStatus = (status: AutoSaveStatus) => {
     setAutoSaveStatus(status);
     setIsDirty(status.isDirty);
-  }, []);
+  };
 
   // Restore lastSavedAt from project metadata when project loads
   // This ensures "Last saved" timestamp persists across page refreshes
@@ -179,8 +161,6 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     setAutoSaveStatus: updateAutoSaveStatus,
     isDirty,
     setIsDirty,
-    changeVersion,
-    incrementChangeVersion,
     lastSavedAt,
     setLastSavedAt,
     saveNow,

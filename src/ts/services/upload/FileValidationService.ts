@@ -7,8 +7,9 @@
  * @module services/upload/FileValidationService
  */
 
-import { ASSET_TYPE_CONFIGS, MAGIC_BYTES, MB, WEBP_SIGNATURE } from './constants.js';
-import type { AssetType, AssetTypeConfig, ValidationResult } from './types.js';
+import { getConfigByTags, MAGIC_BYTES, MB, WEBP_SIGNATURE } from './constants.js';
+import { getTypeFromTags } from './tagUtils.js';
+import type { AssetTypeConfig, ValidationResult } from './types.js';
 
 // ============================================================================
 // Constants
@@ -35,16 +36,27 @@ const SQUARE_TOLERANCE = 0.05;
  */
 export class FileValidationService {
   /**
-   * Validate a file for a specific asset type
+   * Validate a file for a specific asset type (identified by tags)
    *
    * @param file - File to validate
-   * @param assetType - Type of asset being uploaded
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns Validation result with errors/warnings
    */
-  async validate(file: File, assetType: AssetType): Promise<ValidationResult> {
-    const config = ASSET_TYPE_CONFIGS[assetType];
+  async validate(file: File, tags: string[]): Promise<ValidationResult> {
+    const config = getConfigByTags(tags);
     const errors: string[] = [];
     const warnings: string[] = [];
+
+    // Check that we have a valid type tag
+    if (!config) {
+      const type = getTypeFromTags(tags);
+      errors.push(`Unknown asset type tag: type:${type ?? 'missing'}`);
+      return {
+        valid: false,
+        errors,
+        warnings,
+      };
+    }
 
     // 1. Detect actual MIME type from file content
     const detectedMimeType = await this.detectMimeType(file);
@@ -145,23 +157,24 @@ export class FileValidationService {
   }
 
   /**
-   * Get the configuration for an asset type
+   * Get the configuration for an asset type (by tags)
    *
-   * @param assetType - Type of asset
-   * @returns Asset type configuration
+   * @param tags - Tags array (must include exactly one type:* tag)
+   * @returns Asset type configuration or undefined
    */
-  getConfig(assetType: AssetType): AssetTypeConfig {
-    return ASSET_TYPE_CONFIGS[assetType];
+  getConfig(tags: string[]): AssetTypeConfig | undefined {
+    return getConfigByTags(tags);
   }
 
   /**
    * Get human-readable description of allowed files
    *
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns Description string
    */
-  getAllowedFilesDescription(assetType: AssetType): string {
-    const config = ASSET_TYPE_CONFIGS[assetType];
+  getAllowedFilesDescription(tags: string[]): string {
+    const config = getConfigByTags(tags);
+    if (!config) return 'Unknown asset type';
     const extensions = config.allowedExtensions.join(', ');
     const maxMB = (config.maxSize / MB).toFixed(0);
     return `${extensions} (max ${maxMB}MB)`;

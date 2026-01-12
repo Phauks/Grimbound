@@ -7,7 +7,6 @@
  * @module hooks/search/useSearch
  */
 
-import { useCallback, useMemo } from 'react';
 import {
   getSearchMatch,
   parseSearchQuery,
@@ -76,31 +75,23 @@ export function useSearch<T>(options: UseSearchOptions<T>): UseSearchResult<T> {
   const { items, query, config, enabled = true } = options;
 
   // Parse query into normalized terms
-  const queryInfo = useMemo(() => parseSearchQuery(query), [query]);
+  const queryInfo = parseSearchQuery(query);
 
   // Filter items based on search query
-  const filteredItems = useMemo(() => {
-    if (!enabled || queryInfo.isEmpty) {
-      return items;
-    }
-    return searchFilter(items, query, config);
-  }, [items, query, config, enabled, queryInfo.isEmpty]);
+  const filteredItems = !enabled || queryInfo.isEmpty ? items : searchFilter(items, query, config);
 
-  // Memoized match function for highlighting
-  const getMatch = useCallback(
-    (text: string): SearchMatch => {
-      if (!text || queryInfo.isEmpty) {
-        return {
-          text: text ?? '',
-          matches: [],
-          isMatch: true,
-          score: 1,
-        };
-      }
-      return getSearchMatch(text, queryInfo.terms);
-    },
-    [queryInfo]
-  );
+  // Match function for highlighting
+  const getMatch = (text: string): SearchMatch => {
+    if (!text || queryInfo.isEmpty) {
+      return {
+        text: text ?? '',
+        matches: [],
+        isMatch: true,
+        score: 1,
+      };
+    }
+    return getSearchMatch(text, queryInfo.terms);
+  };
 
   return {
     filteredItems,
@@ -110,5 +101,3 @@ export function useSearch<T>(options: UseSearchOptions<T>): UseSearchResult<T> {
     resultCount: filteredItems.length,
   };
 }
-
-export default useSearch;

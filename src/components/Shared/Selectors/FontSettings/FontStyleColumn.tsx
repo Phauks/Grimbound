@@ -7,7 +7,6 @@
  * @module components/Shared/Selectors/FontSettings/FontStyleColumn
  */
 
-import { memo } from 'react';
 import { EditableSlider } from '@/components/Shared/Controls/EditableSlider';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import styles from '@/styles/components/shared/FontDrawer.module.css';
@@ -44,11 +43,7 @@ export interface FontStyleColumnProps {
 // Component
 // ============================================================================
 
-export const FontStyleColumn = memo(function FontStyleColumn({
-  settings,
-  onUpdate,
-  defaults,
-}: FontStyleColumnProps) {
+export function FontStyleColumn({ settings, onUpdate, defaults }: FontStyleColumnProps) {
   const renderStyle = settings.renderStyle ?? 'filled';
   const isFillDisabled = renderStyle === 'outlined';
   const isStrokeDisabled = renderStyle === 'filled';
@@ -166,6 +161,4 @@ export const FontStyleColumn = memo(function FontStyleColumn({
       </div>
     </div>
   );
-});
-
-export default FontStyleColumn;
+}

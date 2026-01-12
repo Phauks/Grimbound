@@ -135,14 +135,8 @@ function createDefaultOptions(
     transparentBackground: false,
     displayAbilityText: true,
     setupStyle: 'none',
-    maximumAccents: 0,
-    accentPopulationProbability: 0.5,
-    accentGeneration: 'random',
-    accentArcSpan: 30,
-    accentSlots: 12,
-    enableLeftAccent: false,
-    enableRightAccent: false,
-    sideAccentProbability: 0.3,
+    accentEnabled: true,
+    accentGeneration: 'classic',
     iconSettings: {
       character: { scale: 1.0, offsetX: 0, offsetY: 0 },
       reminder: { scale: 1.0, offsetX: 0, offsetY: 0 },
@@ -541,47 +535,49 @@ describe('TokenImageRenderer', () => {
   // ==========================================================================
 
   describe('drawAccents', () => {
-    it('should call drawAccents with accent options', async () => {
+    it('should call drawAccents with character data', async () => {
       const { drawAccents } = await import('@/ts/canvas/index.js');
-      renderer.updateOptions({
-        maximumAccents: 5,
-        accentPopulationProbability: 0.8,
-      });
       const ctx = createMockCanvas();
+      const characterData = {
+        reminderCount: 3,
+        firstNight: true,
+        otherNight: false,
+      };
 
-      await renderer.drawAccents(ctx, 300);
+      await renderer.drawAccents(ctx, 300, characterData);
 
       expect(drawAccents).toHaveBeenCalledWith(
         ctx,
         300,
         expect.objectContaining({
-          maximumAccents: 5,
-          accentPopulationProbability: 0.8,
+          characterData: expect.objectContaining({
+            reminderCount: 3,
+            firstNight: true,
+            otherNight: false,
+          }),
         })
       );
     });
 
-    it('should pass all accent settings', async () => {
+    it('should pass accent generation style from options', async () => {
       const { drawAccents } = await import('@/ts/canvas/index.js');
       renderer.updateOptions({
-        maximumAccents: 3,
-        accentArcSpan: 45,
-        accentSlots: 8,
-        enableLeftAccent: true,
-        enableRightAccent: true,
+        accentGeneration: 'autumn',
       });
       const ctx = createMockCanvas();
+      const characterData = {
+        reminderCount: 2,
+        firstNight: false,
+        otherNight: true,
+      };
 
-      await renderer.drawAccents(ctx, 300);
+      await renderer.drawAccents(ctx, 300, characterData);
 
       expect(drawAccents).toHaveBeenCalledWith(
         ctx,
         300,
         expect.objectContaining({
-          accentArcSpan: 45,
-          accentSlots: 8,
-          enableLeftAccent: true,
-          enableRightAccent: true,
+          accentGeneration: 'autumn',
         })
       );
     });

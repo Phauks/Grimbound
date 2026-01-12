@@ -3,7 +3,7 @@
  *
  * Tests cover:
  * - Hook returns expected values
- * - Orchestration of sub-hooks (useAutoSaveDetector, useAutoSaveTrigger)
+ * - Orchestration of useAutoSave (unified hook)
  * - isAutoSaveEnabled based on currentProject
  * - isUserEnabled based on enabled parameter
  * - useUnsavedChangesWarning functionality
@@ -12,8 +12,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ProjectContextModule from '@/contexts/ProjectContext';
-import * as UseAutoSaveDetectorModule from '@/hooks/autosave/useAutoSaveDetector';
-import * as UseAutoSaveTriggerModule from '@/hooks/autosave/useAutoSaveTrigger';
+import * as UseAutoSaveModule from '@/hooks/autosave/useAutoSave';
 import { useProjectAutoSave, useUnsavedChangesWarning } from '@/hooks/autosave/useProjectAutoSave';
 
 // ============================================================================
@@ -21,8 +20,7 @@ import { useProjectAutoSave, useUnsavedChangesWarning } from '@/hooks/autosave/u
 // ============================================================================
 
 vi.mock('@/contexts/ProjectContext');
-vi.mock('@/hooks/autosave/useAutoSaveDetector');
-vi.mock('@/hooks/autosave/useAutoSaveTrigger');
+vi.mock('@/hooks/autosave/useAutoSave');
 
 // ============================================================================
 // Test Helpers
@@ -43,7 +41,7 @@ const createMockProjectContext = (overrides = {}) => ({
   ...overrides,
 });
 
-const createMockTriggerResult = (overrides = {}) => ({
+const createMockAutoSaveResult = (overrides = {}) => ({
   saveNow: vi.fn(),
   conflictModalProps: {
     isOpen: false,
@@ -64,19 +62,18 @@ const createMockTriggerResult = (overrides = {}) => ({
 
 describe('useProjectAutoSave', () => {
   let mockProjectContext: ReturnType<typeof createMockProjectContext>;
-  let mockTriggerResult: ReturnType<typeof createMockTriggerResult>;
+  let mockAutoSaveResult: ReturnType<typeof createMockAutoSaveResult>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockProjectContext = createMockProjectContext();
-    mockTriggerResult = createMockTriggerResult();
+    mockAutoSaveResult = createMockAutoSaveResult();
 
     vi.spyOn(ProjectContextModule, 'useProjectContext').mockReturnValue(
       mockProjectContext as ReturnType<typeof ProjectContextModule.useProjectContext>
     );
-    vi.spyOn(UseAutoSaveDetectorModule, 'useAutoSaveDetector').mockReturnValue(undefined);
-    vi.spyOn(UseAutoSaveTriggerModule, 'useAutoSaveTrigger').mockReturnValue(mockTriggerResult);
+    vi.spyOn(UseAutoSaveModule, 'useAutoSave').mockReturnValue(mockAutoSaveResult);
   });
 
   afterEach(() => {
@@ -98,28 +95,22 @@ describe('useProjectAutoSave', () => {
       expect(result.current).toHaveProperty('isUserEnabled');
     });
 
-    it('should call useAutoSaveDetector', () => {
-      renderHook(() => useProjectAutoSave());
-
-      expect(UseAutoSaveDetectorModule.useAutoSaveDetector).toHaveBeenCalled();
-    });
-
-    it('should call useAutoSaveTrigger with enabled parameter', () => {
+    it('should call useAutoSave with enabled parameter', () => {
       renderHook(() => useProjectAutoSave(true));
 
-      expect(UseAutoSaveTriggerModule.useAutoSaveTrigger).toHaveBeenCalledWith(true);
+      expect(UseAutoSaveModule.useAutoSave).toHaveBeenCalledWith(true);
     });
 
-    it('should pass enabled=false to useAutoSaveTrigger when disabled', () => {
+    it('should pass enabled=false to useAutoSave when disabled', () => {
       renderHook(() => useProjectAutoSave(false));
 
-      expect(UseAutoSaveTriggerModule.useAutoSaveTrigger).toHaveBeenCalledWith(false);
+      expect(UseAutoSaveModule.useAutoSave).toHaveBeenCalledWith(false);
     });
 
     it('should default enabled to true', () => {
       renderHook(() => useProjectAutoSave());
 
-      expect(UseAutoSaveTriggerModule.useAutoSaveTrigger).toHaveBeenCalledWith(true);
+      expect(UseAutoSaveModule.useAutoSave).toHaveBeenCalledWith(true);
     });
   });
 
@@ -171,14 +162,14 @@ describe('useProjectAutoSave', () => {
   // --------------------------------------------------------------------------
 
   describe('saveNow', () => {
-    it('should delegate to useAutoSaveTrigger.saveNow', () => {
+    it('should delegate to useAutoSave.saveNow', () => {
       const { result } = renderHook(() => useProjectAutoSave());
 
       act(() => {
         result.current.saveNow();
       });
 
-      expect(mockTriggerResult.saveNow).toHaveBeenCalled();
+      expect(mockAutoSaveResult.saveNow).toHaveBeenCalled();
     });
   });
 
@@ -187,14 +178,14 @@ describe('useProjectAutoSave', () => {
   // --------------------------------------------------------------------------
 
   describe('conflictModalProps', () => {
-    it('should pass through conflictModalProps from trigger', () => {
+    it('should pass through conflictModalProps from useAutoSave', () => {
       const customProps = {
         isOpen: true,
         onResolve: vi.fn(),
         onClose: vi.fn(),
       };
-      mockTriggerResult = createMockTriggerResult({ conflictModalProps: customProps });
-      vi.spyOn(UseAutoSaveTriggerModule, 'useAutoSaveTrigger').mockReturnValue(mockTriggerResult);
+      mockAutoSaveResult = createMockAutoSaveResult({ conflictModalProps: customProps });
+      vi.spyOn(UseAutoSaveModule, 'useAutoSave').mockReturnValue(mockAutoSaveResult);
 
       const { result } = renderHook(() => useProjectAutoSave());
 
@@ -207,14 +198,14 @@ describe('useProjectAutoSave', () => {
   // --------------------------------------------------------------------------
 
   describe('telemetry', () => {
-    it('should pass through telemetry from trigger', () => {
+    it('should pass through telemetry from useAutoSave', () => {
       const customTelemetry = {
         saveCount: 5,
         errorCount: 1,
         lastError: 'Some error',
       };
-      mockTriggerResult = createMockTriggerResult({ telemetry: customTelemetry });
-      vi.spyOn(UseAutoSaveTriggerModule, 'useAutoSaveTrigger').mockReturnValue(mockTriggerResult);
+      mockAutoSaveResult = createMockAutoSaveResult({ telemetry: customTelemetry });
+      vi.spyOn(UseAutoSaveModule, 'useAutoSave').mockReturnValue(mockAutoSaveResult);
 
       const { result } = renderHook(() => useProjectAutoSave());
 

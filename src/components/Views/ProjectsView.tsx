@@ -5,18 +5,19 @@
  * and right panel (ProjectEditor). Follows CharactersView pattern.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
 import { DeleteProjectModal } from '@/components/Modals/DeleteProjectModal';
 import { ExportProjectModal } from '@/components/Modals/ExportProjectModal';
 import { IconManagementModal } from '@/components/Modals/IconManagementModal';
 import { ImportProjectModal } from '@/components/Modals/ImportProjectModal';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { ProjectEditor } from '@/components/ViewComponents/ProjectsComponents/ProjectEditor';
 import { ProjectNavigation } from '@/components/ViewComponents/ProjectsComponents/ProjectNavigation';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useProjects } from '@/hooks';
+import { useResizableSidebar } from '@/hooks/ui';
 import type { CustomIconMetadata, Project } from '@/ts/types/project.js';
 import { logger } from '@/ts/utils/logger.js';
 
@@ -32,13 +33,19 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
     duplicateProject,
     createProject,
     activateProject,
+    loadProjects,
   } = useProjects();
   const { characters } = useTokenContext();
   const { addToast } = useToast();
 
+  // Resizable sidebar
+  const { width: sidebarWidth, isDragging, handleProps } = useResizableSidebar();
+
   // Selected project for editing - initialize to current/active project if available
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  // Track pending project ID to select after list refresh (for import)
+  const [pendingSelectId, setPendingSelectId] = useState<string | null>(null);
 
   // Initialize selectedProject to the active project on mount
   useEffect(() => {
@@ -54,17 +61,27 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
   }, [projects, initialProjectId, hasInitialized]);
 
   // Keep selectedProject in sync with the projects list (updates after saves)
+  // Note: Don't clear selection if project not found - it might be a newly created project
+  // not yet loaded. Deletion is handled explicitly via handleDeleteSuccess.
   useEffect(() => {
     if (selectedProject) {
       const updatedProject = projects.find((p) => p.id === selectedProject.id);
       if (updatedProject && updatedProject !== selectedProject) {
         setSelectedProject(updatedProject);
-      } else if (!updatedProject) {
-        // Project was deleted
-        setSelectedProject(null);
       }
     }
   }, [projects, selectedProject]);
+
+  // Handle pending project selection (for imports)
+  useEffect(() => {
+    if (pendingSelectId) {
+      const project = projects.find((p) => p.id === pendingSelectId);
+      if (project) {
+        setSelectedProject(project);
+        setPendingSelectId(null);
+      }
+    }
+  }, [projects, pendingSelectId]);
 
   // Modal states
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -75,15 +92,12 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
   const [iconManagementModalOpen, setIconManagementModalOpen] = useState(false);
 
   // Handlers
-  const handleSelectProject = useCallback(
-    (projectId: string) => {
-      const project = projects.find((p) => p.id === projectId);
-      setSelectedProject(project || null);
-    },
-    [projects]
-  );
+  const handleSelectProject = (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId);
+    setSelectedProject(project || null);
+  };
 
-  const handleCreateProject = useCallback(async () => {
+  const handleCreateProject = async () => {
     try {
       const timestamp = new Date().toLocaleString('en-US', {
         month: 'short',
@@ -93,95 +107,80 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
       });
       const newProject = await createProject(`New Project - ${timestamp}`);
       if (newProject) {
-        // Delay selection to allow projects array to update
-        setTimeout(() => {
-          setSelectedProject(newProject);
-        }, 50);
+        // Select the new project immediately - sync effect will keep it updated
+        setSelectedProject(newProject);
         addToast('New project created!', 'success');
       }
     } catch (err) {
       logger.error('ProjectsView', 'Failed to create project', err);
       addToast('Failed to create project', 'error');
     }
-  }, [createProject, addToast]);
+  };
 
-  const handleImportProject = useCallback(() => {
+  const handleImportProject = () => {
     setImportModalOpen(true);
-  }, []);
+  };
 
-  const handleIconManagement = useCallback(() => {
+  const handleIconManagement = () => {
     if (!currentProject) {
       alert('Please create or activate a project first to manage custom icons');
       return;
     }
     setIconManagementModalOpen(true);
-  }, [currentProject]);
+  };
 
-  const handleExportProject = useCallback((project: Project) => {
+  const handleExportProject = (project: Project) => {
     setProjectToExport(project);
     setExportModalOpen(true);
-  }, []);
+  };
 
-  const handleDeleteProject = useCallback((project: Project) => {
+  const handleDeleteProject = (project: Project) => {
     setProjectToDelete(project);
     setDeleteModalOpen(true);
-  }, []);
+  };
 
-  const handleDuplicateProject = useCallback(
-    async (project: Project) => {
-      try {
-        const newProject = await duplicateProject(project.id);
-        if (newProject) {
-          setSelectedProject(newProject);
-        }
-      } catch (err) {
-        logger.error('ProjectsView', 'Failed to duplicate project', err);
+  const handleDuplicateProject = async (project: Project) => {
+    try {
+      const newProject = await duplicateProject(project.id);
+      if (newProject) {
+        setSelectedProject(newProject);
       }
-    },
-    [duplicateProject]
-  );
+    } catch (err) {
+      logger.error('ProjectsView', 'Failed to duplicate project', err);
+    }
+  };
 
-  const handleUpdateIcons = useCallback(
-    async (icons: CustomIconMetadata[]) => {
-      if (!currentProject) return;
-      await updateProject(currentProject.id, {
-        state: { ...currentProject.state, customIcons: icons },
-      });
-    },
-    [currentProject, updateProject]
-  );
+  const handleUpdateIcons = async (icons: CustomIconMetadata[]) => {
+    if (!currentProject) return;
+    await updateProject(currentProject.id, {
+      state: { ...currentProject.state, customIcons: icons },
+    });
+  };
 
-  const handleImportSuccess = useCallback(
-    (projectId: string) => {
-      setImportModalOpen(false);
-      // Select the newly imported project
-      const project = projects.find((p) => p.id === projectId);
-      if (project) {
-        setSelectedProject(project);
-      }
-    },
-    [projects]
-  );
+  const handleImportSuccess = (projectId: string) => {
+    setImportModalOpen(false);
+    // Set pending selection and refresh projects list
+    // The pending selection effect will select it once the list updates
+    setPendingSelectId(projectId);
+    loadProjects();
+  };
 
-  const handleDeleteSuccess = useCallback(() => {
+  const handleDeleteSuccess = () => {
     setDeleteModalOpen(false);
     // Clear selection if deleted project was selected
     if (selectedProject?.id === projectToDelete?.id) {
       setSelectedProject(null);
     }
     setProjectToDelete(null);
-  }, [selectedProject, projectToDelete]);
+  };
 
   // Calculate last project (most recently accessed, excluding current)
-  const lastProject = useMemo(
-    () =>
-      projects
-        .filter((p) => !currentProject || p.id !== currentProject.id)
-        .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt)[0] || null,
-    [projects, currentProject]
-  );
+  const lastProject =
+    projects
+      .filter((p) => !currentProject || p.id !== currentProject.id)
+      .sort((a, b) => b.lastAccessedAt - a.lastAccessedAt)[0] || null;
 
-  const handleLoadLastProject = useCallback(async () => {
+  const handleLoadLastProject = async () => {
     if (lastProject) {
       // Select the project
       setSelectedProject(lastProject);
@@ -194,25 +193,31 @@ export function ProjectsView({ initialProjectId }: ProjectsViewProps) {
         addToast('Failed to activate project', 'error');
       }
     }
-  }, [lastProject, activateProject, addToast]);
+  };
 
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Projects" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Projects" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       {/* Main unified layout: Left sidebar + Right panel */}
       <ViewLayout variant="2-panel">
-        {/* Left Sidebar - Project Navigation */}
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        {/* Left Sidebar - Project Navigation (Resizable) */}
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isDragging}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <ProjectNavigation
             projects={projects}
             selectedProjectId={selectedProject?.id || null}
             currentProjectId={currentProject?.id || null}
             onSelectProject={handleSelectProject}
             onCreateProject={handleCreateProject}
-            onImportProject={handleImportProject}
             onIconManagement={handleIconManagement}
             onDeleteProject={handleDeleteProject}
           />

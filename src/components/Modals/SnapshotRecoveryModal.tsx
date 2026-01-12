@@ -36,6 +36,7 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
   const [selectedSnapshot, setSelectedSnapshot] = useState<AutoSaveSnapshot | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Load snapshots function (extracted for retry button)
   const loadSnapshots = useCallback(async () => {
     if (!currentProject) return;
 
@@ -70,14 +71,14 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
     if (isOpen && currentProject) {
       loadSnapshots();
     }
-  }, [isOpen, currentProject?.id, currentProject, loadSnapshots]);
+  }, [isOpen, currentProject, loadSnapshots]);
 
-  const handleRestore = useCallback((snapshot: AutoSaveSnapshot) => {
+  const handleRestore = (snapshot: AutoSaveSnapshot) => {
     setSelectedSnapshot(snapshot);
     setShowConfirm(true);
-  }, []);
+  };
 
-  const confirmRestore = useCallback(async () => {
+  const confirmRestore = async () => {
     if (!(selectedSnapshot && currentProject)) return;
 
     try {
@@ -120,24 +121,14 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
     } finally {
       setIsLoading(false);
     }
-  }, [
-    selectedSnapshot,
-    currentProject,
-    projectDatabaseService,
-    setCharacters,
-    setScriptMeta,
-    setJsonInput,
-    clearAllMetadata,
-    setCurrentProject,
-    onClose,
-  ]);
+  };
 
-  const cancelRestore = useCallback(() => {
+  const cancelRestore = () => {
     setSelectedSnapshot(null);
     setShowConfirm(false);
-  }, []);
+  };
 
-  const formatTimestamp = useCallback((timestamp: number): string => {
+  const formatTimestamp = (timestamp: number): string => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - timestamp;
@@ -164,15 +155,15 @@ export function SnapshotRecoveryModal({ isOpen, onClose }: SnapshotRecoveryModal
       hour: 'numeric',
       minute: '2-digit',
     });
-  }, []);
+  };
 
-  const getSnapshotSummary = useCallback((snapshot: AutoSaveSnapshot): string => {
+  const getSnapshotSummary = (snapshot: AutoSaveSnapshot): string => {
     const state = snapshot.stateSnapshot;
     const charCount = state.characters?.length || 0;
     const scriptName = state.scriptMeta?.name || 'Unnamed script';
 
     return `${charCount} character${charCount !== 1 ? 's' : ''} • ${scriptName}`;
-  }, []);
+  };
 
   if (!isOpen) return null;
 

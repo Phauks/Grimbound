@@ -9,9 +9,9 @@
 
 import type { CreateAssetData } from './AssetStorageService.js';
 import type { ProcessingOptions } from './ImageProcessingService.js';
+import type { TypeTagValue } from './tagUtils.js';
 import type {
   AssetFilter,
-  AssetType,
   AssetTypeConfig,
   AssetWithUrl,
   DBAsset,
@@ -34,10 +34,10 @@ export interface IFileValidationService {
    * Validate a file for a specific asset type
    *
    * @param file - File to validate
-   * @param assetType - Type of asset being uploaded
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns Validation result with errors/warnings
    */
-  validate(file: File, assetType: AssetType): Promise<ValidationResult>;
+  validate(file: File, tags: string[]): Promise<ValidationResult>;
 
   /**
    * Detect MIME type from file content using magic bytes
@@ -65,20 +65,20 @@ export interface IFileValidationService {
   checkTransparency(file: File, mimeType: string): Promise<boolean>;
 
   /**
-   * Get the configuration for an asset type
+   * Get the configuration for an asset type (by tags)
    *
-   * @param assetType - Type of asset
-   * @returns Asset type configuration
+   * @param tags - Tags array (must include exactly one type:* tag)
+   * @returns Asset type configuration or undefined
    */
-  getConfig(assetType: AssetType): AssetTypeConfig;
+  getConfig(tags: string[]): AssetTypeConfig | undefined;
 
   /**
    * Get human-readable description of allowed files
    *
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns Description string
    */
-  getAllowedFilesDescription(assetType: AssetType): string;
+  getAllowedFilesDescription(tags: string[]): string;
 }
 
 // ============================================================================
@@ -103,11 +103,11 @@ export interface IImageProcessingService {
    * Process an image file for storage
    *
    * @param file - Original file
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @param options - Processing options
    * @returns Processed image with blob, thumbnail, and metadata
    */
-  process(file: File, assetType: AssetType, options?: ProcessingOptions): Promise<ProcessedImage>;
+  process(file: File, tags: string[], options?: ProcessingOptions): Promise<ProcessedImage>;
 
   /**
    * Generate a thumbnail from an image
@@ -285,12 +285,12 @@ export interface IAssetStorageService {
   listWithUrls(filter?: AssetFilter): Promise<AssetWithUrl[]>;
 
   /**
-   * Get assets by type
+   * Get assets by type tag
    *
-   * @param type - Asset type
+   * @param type - Type tag value (e.g., 'icon', 'token-background')
    * @returns Assets of that type
    */
-  getByType(type: AssetType): Promise<DBAsset[]>;
+  getByType(type: TypeTagValue): Promise<DBAsset[]>;
 
   /**
    * Find an asset by content hash
@@ -345,12 +345,16 @@ export interface IAssetStorageService {
   unlinkFromCharacter(assetId: string, characterId: string): Promise<void>;
 
   /**
-   * Replace all links for a character
+   * Replace all links for a character (by type tag)
+   *
+   * @param characterId - Character ID
+   * @param newAssetId - New asset ID (or null to unlink)
+   * @param typeTag - Type tag value (e.g., 'icon')
    */
   replaceCharacterLink(
     characterId: string,
     newAssetId: string | null,
-    assetType: AssetType
+    typeTag: TypeTagValue
   ): Promise<void>;
 
   /**
@@ -459,7 +463,7 @@ export interface IAssetStorageService {
     count: number;
     totalSize: number;
     totalSizeMB: number;
-    byType: Record<AssetType, { count: number; size: number }>;
+    byType: Record<TypeTagValue, { count: number; size: number }>;
   }>;
 
   /**
@@ -485,7 +489,7 @@ export interface IFileUploadService {
    * Upload one or more files
    *
    * @param files - File or array of files to upload
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Array of upload results
    */
   upload(files: File | File[], config: UploadConfig): Promise<UploadOutcome[]>;
@@ -494,7 +498,7 @@ export interface IFileUploadService {
    * Upload from clipboard event
    *
    * @param event - Clipboard event
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result or null if no image in clipboard
    */
   uploadFromClipboard(event: ClipboardEvent, config: UploadConfig): Promise<UploadOutcome | null>;
@@ -503,7 +507,7 @@ export interface IFileUploadService {
    * Upload from a URL
    *
    * @param url - Image URL
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result
    */
   uploadFromUrl(url: string, config: UploadConfig): Promise<UploadOutcome>;
@@ -513,7 +517,7 @@ export interface IFileUploadService {
    *
    * @param blob - Blob to upload
    * @param filename - Filename to use
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @returns Upload result
    */
   uploadFromBlob(blob: Blob, filename: string, config: UploadConfig): Promise<UploadOutcome>;
@@ -521,28 +525,28 @@ export interface IFileUploadService {
   /**
    * Create a file input and trigger file selection
    *
-   * @param config - Upload configuration
+   * @param config - Upload configuration (must include tags with type:* tag)
    * @param multiple - Allow multiple file selection
    * @returns Promise that resolves with upload results
    */
   openFilePicker(config: UploadConfig, multiple?: boolean): Promise<UploadOutcome[]>;
 
   /**
-   * Get accept string for file input based on asset type
+   * Get accept string for file input based on tags
    *
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns Accept string for file input
    */
-  getAcceptString(assetType: AssetType): string;
+  getAcceptString(tags: string[]): string;
 
   /**
-   * Check if a file type is valid for an asset type
+   * Check if a file type is valid for asset type (identified by tags)
    *
    * @param file - File to check
-   * @param assetType - Type of asset
+   * @param tags - Tags array (must include exactly one type:* tag)
    * @returns True if file type is valid
    */
-  isValidFileType(file: File, assetType: AssetType): boolean;
+  isValidFileType(file: File, tags: string[]): boolean;
 }
 
 // ============================================================================
@@ -569,7 +573,7 @@ export interface IAssetSuggestionService {
    * @param characterId - Character ID
    * @param characterName - Character name
    * @param projectId - Current project ID
-   * @param assetType - Type of asset to suggest
+   * @param typeTag - Type tag value (e.g., 'icon', 'token-background')
    * @param limit - Maximum number of suggestions
    * @returns Sorted suggestions
    */
@@ -577,7 +581,7 @@ export interface IAssetSuggestionService {
     characterId: string,
     characterName: string,
     projectId: string | null,
-    assetType: AssetType,
+    typeTag: TypeTagValue,
     limit?: number
   ): Promise<AssetSuggestion[]>;
 }

@@ -162,5 +162,3 @@ export function StorageWarning({
     </div>
   );
 }
-
-export default StorageWarning;

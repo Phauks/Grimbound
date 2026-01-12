@@ -345,11 +345,3 @@ export function calculateFittedCircularTextLayout(
     wasReduced: true,
   };
 }
-
-export default {
-  calculateCircularTextLayout,
-  calculateFittedCircularTextLayout,
-  createCircularWidthCalculator,
-  calculateCircularWidth,
-  precalculateCurvedTextPositions,
-};

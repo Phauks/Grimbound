@@ -20,7 +20,7 @@
  * @module components/Shared/FontSettingsSelector
  */
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { FontDrawer, type TokenType } from '@/components/Shared/Drawer';
 import { useFonts } from '@/contexts/FontContext';
 import { useCoordinatedPanel } from '@/contexts/PanelCoordinationContext';
@@ -31,7 +31,6 @@ import type {
   FontSizeOptions,
   FontSpacingOptions,
   GenerationOptions,
-  ReminderCountStyle,
   TextLocation,
   TextRenderStyle,
   TextRenderStyleOptions,
@@ -390,13 +389,7 @@ function isLightColor(hex: string): boolean {
 // Preview Component
 // ============================================================================
 
-const FontPreview = memo(function FontPreview({
-  settings,
-  isLightText,
-}: {
-  settings: FontSettings;
-  isLightText: boolean;
-}) {
+function FontPreview({ settings, isLightText }: { settings: FontSettings; isLightText: boolean }) {
   const previewStyle: React.CSSProperties = {
     fontFamily: settings.fontFamily,
     color: settings.color,
@@ -419,13 +412,13 @@ const FontPreview = memo(function FontPreview({
       />
     </div>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const FontSettingsSelector = memo(function FontSettingsSelector({
+export function FontSettingsSelector({
   generationOptions,
   onOptionChange,
   title,
@@ -450,42 +443,19 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   const [activeTokenType, setActiveTokenType] = useState<TokenType>(initialTokenType);
 
   // Build AllFontSettings from generationOptions (self-contained extraction)
-  const allFontSettings: AllFontSettings = useMemo(
-    () => buildAllFontSettingsFromOptions(generationOptions),
-    [generationOptions]
-  );
+  const allFontSettings: AllFontSettings = buildAllFontSettingsFromOptions(generationOptions);
 
   // Convert AllFontSettings changes to GenerationOptions updates
-  const handleSettingsChange = useCallback(
-    (settings: AllFontSettings) => {
-      onOptionChange(convertFontSettingsToOptions(settings));
-    },
-    [onOptionChange]
-  );
+  const handleSettingsChange = (settings: AllFontSettings) => {
+    onOptionChange(convertFontSettingsToOptions(settings));
+  };
 
   // Extract display settings from generationOptions
   const displayAbilityText = generationOptions.displayAbilityText !== false;
-  const showReminderCount = generationOptions.tokenCount !== false;
-  const reminderCountStyle = generationOptions.reminderCountStyle || 'arabic';
-  const reminderCountUniformLayout = generationOptions.reminderCountUniformLayout ?? false;
 
   // Handlers for display settings
-  const handleDisplayAbilityTextChange = useCallback(
-    (enabled: boolean) => onOptionChange({ displayAbilityText: enabled }),
-    [onOptionChange]
-  );
-  const handleShowReminderCountChange = useCallback(
-    (enabled: boolean) => onOptionChange({ tokenCount: enabled }),
-    [onOptionChange]
-  );
-  const handleReminderCountStyleChange = useCallback(
-    (style: ReminderCountStyle) => onOptionChange({ reminderCountStyle: style }),
-    [onOptionChange]
-  );
-  const handleReminderCountUniformLayoutChange = useCallback(
-    (enabled: boolean) => onOptionChange({ reminderCountUniformLayout: enabled }),
-    [onOptionChange]
-  );
+  const handleDisplayAbilityTextChange = (enabled: boolean) =>
+    onOptionChange({ displayAbilityText: enabled });
 
   // Use extracted font filtering hook
   const filtering = useFontFiltering({
@@ -495,25 +465,22 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   });
 
   // Default settings for reset - use default all font settings
-  const defaultAllSettings: AllFontSettings = useMemo(
-    () => ({
-      character: {
-        ...DEFAULT_ALL_FONT_SETTINGS.character,
-        fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.character.fontFamily,
-      },
-      meta: {
-        ...DEFAULT_ALL_FONT_SETTINGS.meta,
-        fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.meta.fontFamily,
-      },
-      characterText: { ...DEFAULT_ALL_FONT_SETTINGS.characterText },
-      metaText: { ...DEFAULT_ALL_FONT_SETTINGS.metaText },
-      reminder: {
-        ...DEFAULT_ALL_FONT_SETTINGS.reminder,
-        fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.reminder.fontFamily,
-      },
-    }),
-    [fonts]
-  );
+  const defaultAllSettings: AllFontSettings = {
+    character: {
+      ...DEFAULT_ALL_FONT_SETTINGS.character,
+      fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.character.fontFamily,
+    },
+    meta: {
+      ...DEFAULT_ALL_FONT_SETTINGS.meta,
+      fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.meta.fontFamily,
+    },
+    characterText: { ...DEFAULT_ALL_FONT_SETTINGS.characterText },
+    metaText: { ...DEFAULT_ALL_FONT_SETTINGS.metaText },
+    reminder: {
+      ...DEFAULT_ALL_FONT_SETTINGS.reminder,
+      fontFamily: fonts[0]?.family || DEFAULT_ALL_FONT_SETTINGS.reminder.fontFamily,
+    },
+  };
 
   // Panel coordination - closes other panels when this one opens
   const panelId = `font-settings-${title?.replace(/\s+/g, '-').toLowerCase() ?? 'default'}`;
@@ -542,33 +509,30 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
   const currentFont = fonts.find((f) => f.family === displaySettings.fontFamily) || fonts[0];
 
   // Helper to update active token type settings with optional linking
-  const updateActiveSettings = useCallback(
-    (updates: Partial<FontSettings>) => {
-      const newActiveSettings = { ...drawer.pendingValue[activeTokenType], ...updates };
-      const newAllSettings = { ...drawer.pendingValue, [activeTokenType]: newActiveSettings };
+  const updateActiveSettings = (updates: Partial<FontSettings>) => {
+    const newActiveSettings = { ...drawer.pendingValue[activeTokenType], ...updates };
+    const newAllSettings = { ...drawer.pendingValue, [activeTokenType]: newActiveSettings };
 
-      // Handle linking: Character ↔ Meta (for name fonts)
-      if (isNameLinked) {
-        if (activeTokenType === 'character') {
-          newAllSettings.meta = { ...drawer.pendingValue.meta, ...updates };
-        } else if (activeTokenType === 'meta') {
-          newAllSettings.character = { ...drawer.pendingValue.character, ...updates };
-        }
+    // Handle linking: Character ↔ Meta (for name fonts)
+    if (isNameLinked) {
+      if (activeTokenType === 'character') {
+        newAllSettings.meta = { ...drawer.pendingValue.meta, ...updates };
+      } else if (activeTokenType === 'meta') {
+        newAllSettings.character = { ...drawer.pendingValue.character, ...updates };
       }
+    }
 
-      // Handle linking: Character Text ↔ Meta Text
-      if (isTextLinked) {
-        if (activeTokenType === 'characterText') {
-          newAllSettings.metaText = { ...drawer.pendingValue.metaText, ...updates };
-        } else if (activeTokenType === 'metaText') {
-          newAllSettings.characterText = { ...drawer.pendingValue.characterText, ...updates };
-        }
+    // Handle linking: Character Text ↔ Meta Text
+    if (isTextLinked) {
+      if (activeTokenType === 'characterText') {
+        newAllSettings.metaText = { ...drawer.pendingValue.metaText, ...updates };
+      } else if (activeTokenType === 'metaText') {
+        newAllSettings.characterText = { ...drawer.pendingValue.characterText, ...updates };
       }
+    }
 
-      drawer.updatePending(newAllSettings);
-    },
-    [drawer, activeTokenType, isNameLinked, isTextLinked]
-  );
+    drawer.updatePending(newAllSettings);
+  };
 
   // Use extracted font operations hook
   const fontOps = useFontOperations({
@@ -652,18 +616,10 @@ export const FontSettingsSelector = memo(function FontSettingsSelector({
           activeTokenType={activeTokenType}
           displayAbilityText={displayAbilityText}
           onDisplayAbilityTextChange={handleDisplayAbilityTextChange}
-          showReminderCount={showReminderCount}
-          onShowReminderCountChange={handleShowReminderCountChange}
-          reminderCountStyle={reminderCountStyle}
-          onReminderCountStyleChange={handleReminderCountStyleChange}
-          reminderCountUniformLayout={reminderCountUniformLayout}
-          onReminderCountUniformLayoutChange={handleReminderCountUniformLayoutChange}
           textLocation={drawer.pendingValue[activeTokenType].textLocation}
           onTextLocationChange={(location) => updateActiveSettings({ textLocation: location })}
         />
       </FontDrawer>
     </>
   );
-});
-
-export default FontSettingsSelector;
+}

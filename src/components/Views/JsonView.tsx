@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { CodeMirrorEditor, type EditorControls } from '@/components/Shared/Json/CodeMirrorEditor';
 import { Button } from '@/components/Shared/UI/Button';
 import { ScriptMessagesBar } from '@/components/ViewComponents/JsonComponents';
@@ -17,6 +17,7 @@ import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsCont
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useTokenContext } from '@/contexts/TokenContext';
 import { useScriptData, useScriptTransformations, useTokenGenerator } from '@/hooks';
+import { useResizableSidebar } from '@/hooks/ui';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import CONFIG from '@/ts/config.js';
@@ -50,6 +51,9 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     updateScript,
   } = useScriptData();
   const { generateTokens } = useTokenGenerator();
+
+  // Resizable sidebar
+  const { width: sidebarWidth, isDragging: isResizing, handleProps } = useResizableSidebar();
 
   // Local state
   const [isDragging, setIsDragging] = useState(false);
@@ -166,47 +170,38 @@ export function JsonView({ onGenerate }: JsonViewProps) {
   ]);
 
   // Handlers
-  const handleTextareaChange = useCallback(
-    (newValue: string) => {
-      setJsonInput(newValue);
-      setError(null);
-      setWarnings([]);
-    },
-    [setJsonInput, setError, setWarnings]
-  );
+  const handleTextareaChange = (newValue: string) => {
+    setJsonInput(newValue);
+    setError(null);
+    setWarnings([]);
+  };
 
-  const handleFileUpload = useCallback(
-    async (file: File) => {
-      isExternalChangeRef.current = true;
-      const text = await file.text();
-      await updateScript(text, 'upload');
-      previousJsonRef.current = '';
-    },
-    [updateScript]
-  );
+  const handleFileUpload = async (file: File) => {
+    isExternalChangeRef.current = true;
+    const text = await file.text();
+    await updateScript(text, 'upload');
+    previousJsonRef.current = '';
+  };
 
   // Drag and drop handlers
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file && file.type === 'application/json') {
-        await handleFileUpload(file);
-      }
-    },
-    [handleFileUpload]
-  );
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/json') {
+      await handleFileUpload(file);
+    }
+  };
 
   // Download JSON handler
   const handleDownloadJson = useCallback(() => {
@@ -228,7 +223,6 @@ export function JsonView({ onGenerate }: JsonViewProps) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [jsonInput, scriptMeta, currentProject]);
-
   // Register downloads for this view
   useEffect(() => {
     const downloads: DownloadItem[] = [
@@ -252,12 +246,19 @@ export function JsonView({ onGenerate }: JsonViewProps) {
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="JSON" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="JSON" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <ViewLayout variant="2-panel">
-        {/* Left Sidebar - Load Scripts */}
-        <ViewLayout.Panel position="left" width="left" scrollable>
+        {/* Left Sidebar - Load Scripts (Resizable) */}
+        <ViewLayout.Panel
+          position="left"
+          resizable
+          resizableWidth={sidebarWidth}
+          isResizing={isResizing}
+          onWidthChange={handleProps.onMouseDown}
+          scrollable
+        >
           <div className={layoutStyles.panelContent}>
             {/* Upload Script */}
             <details className={layoutStyles.sidebarCard} open>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TabType } from '@/components/Layout/TabNavigation';
 import { ViewLayout } from '@/components/Layout/ViewLayout';
-import { ErrorBoundary, ViewErrorFallback } from '@/components/Shared';
+import { ErrorBoundary, UnifiedErrorDisplay } from '@/components/Shared';
 import { AppearancePanel } from '@/components/Shared/Options/AppearancePanel';
 import { PresetSection } from '@/components/ViewComponents/TokensComponents/Presets/PresetSection';
 import { TokenGrid } from '@/components/ViewComponents/TokensComponents/TokenGrid/TokenGrid';
@@ -10,7 +10,7 @@ import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsCont
 import { PanelCoordinationProvider } from '@/contexts/PanelCoordinationContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTokenContext } from '@/contexts/TokenContext';
-import { useExport, useMissingTokenGenerator } from '@/hooks';
+import { useExport, useMissingTokenGenerator, useTokenGenerator } from '@/hooks';
 import layoutStyles from '@/styles/components/layout/ViewLayout.module.css';
 import styles from '@/styles/components/views/Views.module.css';
 import { createTokensZip, isMetaToken, tokensToBundleData } from '@/ts/export/zipExporter';
@@ -36,38 +36,49 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
   const { setDownloads, clearDownloads } = useDownloadsContext();
   const { addToast } = useToast();
   const { generateMissingTokens, hasMissingTokens } = useMissingTokenGenerator();
+  const { generateTokens } = useTokenGenerator();
   const { downloadPdf, isExporting } = useExport();
 
-  // Ref to ensure missing token check only runs once per mount
+  // Ref to ensure token check only runs once per mount
   const hasCheckedMissingRef = useRef(false);
 
-  // Generate missing tokens on mount (if any characters don't have tokens)
+  // Generate tokens on mount:
+  // - If no tokens exist, use full generation (includes meta tokens)
+  // - If some tokens exist but some characters are missing, use incremental generation
   // The ref guard prevents re-triggering when function references change due to token updates
-  // The hash check in useMissingTokenGenerator provides additional protection
   useEffect(() => {
     if (hasCheckedMissingRef.current) return;
+    if (characters.length === 0) return; // No characters to generate tokens for
     hasCheckedMissingRef.current = true;
 
-    if (hasMissingTokens()) {
+    if (tokens.length === 0) {
+      // No tokens at all - use full generation (includes meta tokens)
+      generateTokens();
+    } else if (hasMissingTokens()) {
+      // Some tokens exist but characters are missing - use incremental generation
       generateMissingTokens();
     }
-  }, [hasMissingTokens, generateMissingTokens]);
+  }, [tokens.length, characters.length, hasMissingTokens, generateMissingTokens, generateTokens]);
 
   // Cache version is now managed by useTokenGenerator which pre-renders during generation
   // This value triggers re-render if tokens need to be re-cached (e.g., after tab switch)
   const [cacheReady] = useState(0);
 
   // Filter tokens to only show enabled characters (meta tokens always shown)
-  const displayTokens = useMemo(() => {
-    return tokens.filter((t) => {
-      // Meta tokens always shown
-      if (isMetaToken(t)) return true;
-      // Character/reminder tokens filtered by enabled status
-      return t.parentUuid && enabledCharacterUuids.has(t.parentUuid);
-    });
-  }, [tokens, enabledCharacterUuids]);
+  // useMemo required: used as dependency for useCallback handlers in useEffect deps
+  const displayTokens = useMemo(
+    () =>
+      tokens.filter((t) => {
+        // Meta tokens always shown
+        if (isMetaToken(t)) return true;
+        // Character/reminder tokens filtered by enabled status
+        return t.parentUuid && enabledCharacterUuids.has(t.parentUuid);
+      }),
+    [tokens, enabledCharacterUuids]
+  );
 
   // Filter tokens by type (using filtered display tokens)
+  // useMemo required: used as dependency for useCallback handlers in useEffect deps
   const characterTokens = useMemo(
     () => displayTokens.filter((t) => t.type === 'character'),
     [displayTokens]
@@ -78,44 +89,65 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
   );
   const metaTokens = useMemo(() => displayTokens.filter((t) => isMetaToken(t)), [displayTokens]);
 
-  // Factory for creating download handlers - reduces repetition
-  const createDownloadHandler = useCallback(
-    (tokenList: Token[], filename: string, tokenType: string, useTeamFolders: boolean) =>
-      async () => {
-        if (tokenList.length === 0) return;
-        try {
-          const blob = await createTokensZip(tokenList, null, {
-            saveInTeamFolders: useTeamFolders,
-            saveRemindersSeparately: false,
-            metaTokenFolder: false,
-            includeScriptJson: false,
-            compressionLevel: 'normal',
-          });
-          downloadFile(blob, filename);
-          addToast(`Downloaded ${tokenList.length} ${tokenType} tokens`, 'success');
-        } catch (error) {
-          logger.error('TokensView', `Failed to download ${tokenType} tokens`, error);
-          addToast(`Failed to download ${tokenType} tokens`, 'error');
-        }
-      },
-    [addToast]
-  );
+  // Download handler for character tokens
+  // useCallback required: used as useEffect dependency
+  const handleDownloadCharacterTokens = useCallback(async () => {
+    if (characterTokens.length === 0) return;
+    try {
+      const blob = await createTokensZip(characterTokens, null, {
+        saveInTeamFolders: true,
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+        includeScriptJson: false,
+        compressionLevel: 'normal',
+      });
+      downloadFile(blob, 'character_tokens.zip');
+      addToast(`Downloaded ${characterTokens.length} character tokens`, 'success');
+    } catch (error) {
+      logger.error('TokensView', 'Failed to download character tokens', error);
+      addToast('Failed to download character tokens', 'error');
+    }
+  }, [characterTokens, addToast]);
 
-  // Download handlers using factory
-  const handleDownloadCharacterTokens = useMemo(
-    () => createDownloadHandler(characterTokens, 'character_tokens.zip', 'character', true),
-    [createDownloadHandler, characterTokens]
-  );
+  // Download handler for reminder tokens
+  // useCallback required: used as useEffect dependency
+  const handleDownloadReminderTokens = useCallback(async () => {
+    if (reminderTokens.length === 0) return;
+    try {
+      const blob = await createTokensZip(reminderTokens, null, {
+        saveInTeamFolders: true,
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+        includeScriptJson: false,
+        compressionLevel: 'normal',
+      });
+      downloadFile(blob, 'reminder_tokens.zip');
+      addToast(`Downloaded ${reminderTokens.length} reminder tokens`, 'success');
+    } catch (error) {
+      logger.error('TokensView', 'Failed to download reminder tokens', error);
+      addToast('Failed to download reminder tokens', 'error');
+    }
+  }, [reminderTokens, addToast]);
 
-  const handleDownloadReminderTokens = useMemo(
-    () => createDownloadHandler(reminderTokens, 'reminder_tokens.zip', 'reminder', true),
-    [createDownloadHandler, reminderTokens]
-  );
-
-  const handleDownloadMetaTokens = useMemo(
-    () => createDownloadHandler(metaTokens, 'meta_tokens.zip', 'meta', false),
-    [createDownloadHandler, metaTokens]
-  );
+  // Download handler for meta tokens
+  // useCallback required: used as useEffect dependency
+  const handleDownloadMetaTokens = useCallback(async () => {
+    if (metaTokens.length === 0) return;
+    try {
+      const blob = await createTokensZip(metaTokens, null, {
+        saveInTeamFolders: false,
+        saveRemindersSeparately: false,
+        metaTokenFolder: false,
+        includeScriptJson: false,
+        compressionLevel: 'normal',
+      });
+      downloadFile(blob, 'meta_tokens.zip');
+      addToast(`Downloaded ${metaTokens.length} meta tokens`, 'success');
+    } catch (error) {
+      logger.error('TokensView', 'Failed to download meta tokens', error);
+      addToast('Failed to download meta tokens', 'error');
+    }
+  }, [metaTokens, addToast]);
 
   // Register downloads for this view - always register with proper disabled states
   useEffect(() => {
@@ -196,7 +228,7 @@ export function TokensView({ onTokenClick, onTabChange }: TokensViewProps) {
   return (
     <ErrorBoundary
       fallbackRender={({ error, resetErrorBoundary }) => (
-        <ViewErrorFallback view="Tokens" error={error} onRetry={resetErrorBoundary} />
+        <UnifiedErrorDisplay context="Tokens" error={error} onRetry={resetErrorBoundary} />
       )}
     >
       <ViewLayout variant="2-panel">

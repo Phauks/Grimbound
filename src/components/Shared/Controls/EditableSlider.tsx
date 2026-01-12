@@ -15,7 +15,7 @@
  * @module components/Shared/Controls/EditableSlider
  */
 
-import { memo, useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import styles from '@/styles/components/shared/EditableSlider.module.css';
 
 export interface EditableSliderProps {
@@ -45,7 +45,7 @@ export interface EditableSliderProps {
   decimals?: number;
 }
 
-export const EditableSlider = memo(function EditableSlider({
+export function EditableSlider({
   value,
   onChange,
   min,
@@ -67,54 +67,46 @@ export const EditableSlider = memo(function EditableSlider({
   const decimalPlaces = decimals ?? (step < 1 ? Math.max(0, Math.ceil(-Math.log10(step))) : 0);
 
   // Format value for display
-  const formatValue = useCallback(
-    (val: number) => (decimalPlaces > 0 ? val.toFixed(decimalPlaces) : String(Math.round(val))),
-    [decimalPlaces]
-  );
+  const formatValue = (val: number) =>
+    decimalPlaces > 0 ? val.toFixed(decimalPlaces) : String(Math.round(val));
 
   // Handle text input focus
-  const handleFocus = useCallback(() => {
+  const handleFocus = () => {
     setIsEditing(true);
     setEditValue(formatValue(value));
-  }, [value, formatValue]);
+  };
 
   // Handle text input blur - apply value
-  const handleBlur = useCallback(() => {
+  const handleBlur = () => {
     setIsEditing(false);
     const parsed = parseFloat(editValue);
     if (!Number.isNaN(parsed)) {
       const clamped = Math.min(max, Math.max(min, parsed));
       onChange(clamped);
     }
-  }, [editValue, min, max, onChange]);
+  };
 
   // Handle keyboard shortcuts
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        inputRef.current?.blur();
-      } else if (e.key === 'Escape') {
-        setEditValue(formatValue(value));
-        inputRef.current?.blur();
-      }
-    },
-    [value, formatValue]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      inputRef.current?.blur();
+    } else if (e.key === 'Escape') {
+      setEditValue(formatValue(value));
+      inputRef.current?.blur();
+    }
+  };
 
   // Handle slider change
-  const handleSliderChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange(parseFloat(e.target.value));
-    },
-    [onChange]
-  );
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(parseFloat(e.target.value));
+  };
 
   // Handle reset click
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     if (defaultValue !== undefined) {
       onChange(defaultValue);
     }
-  }, [defaultValue, onChange]);
+  };
 
   const displayValue = formatValue(value);
   const hasReset = defaultValue !== undefined && value !== defaultValue;
@@ -163,6 +155,4 @@ export const EditableSlider = memo(function EditableSlider({
       />
     </div>
   );
-});
-
-export default EditableSlider;
+}

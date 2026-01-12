@@ -106,7 +106,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
   const { characters, scriptMeta: tokenScriptMeta } = useTokenContext();
 
   // Initialize state - use cache if available for instant display
-  const initial = useMemo(() => getInitialState(initialScriptData), [initialScriptData]);
+  const initial = getInitialState(initialScriptData);
 
   // State
   const [firstNight, setFirstNight] = useState<NightOrderState>(initial.firstNight);
@@ -229,10 +229,11 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
       hasInitializedRef.current = true;
       lastCharacterCountRef.current = characters.length;
     }
-  }, [characters, tokenScriptMeta, initialScriptData, initializeFromScript, isDirty]);
+  }, [characters, tokenScriptMeta, initialScriptData, isDirty, initializeFromScript]);
 
   /**
    * Move an entry to a new position
+   * useCallback required: exposed in context value
    */
   const moveEntry = useCallback(
     (nightType: 'first' | 'other', entryId: string, newIndex: number) => {
@@ -278,6 +279,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
 
   /**
    * Reset ordering for a specific night type
+   * useCallback required: exposed in context value
    */
   const resetOrder = useCallback((nightType: 'first' | 'other') => {
     // To properly reset, we'd need to store the original script data
@@ -298,6 +300,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
 
   /**
    * Reset all ordering
+   * useCallback required: exposed in context value
    */
   const resetAll = useCallback(() => {
     setFirstNight((prev) => ({
@@ -314,6 +317,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
   /**
    * Invalidate night order caches
    * Call when script data changes significantly
+   * useCallback required: exposed in context value
    */
   const invalidateCache = useCallback(() => {
     // Clear module-level cache in nightOrderUtils
@@ -325,6 +329,7 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
 
   /**
    * Clear all data
+   * useCallback required: exposed in context value
    */
   const clear = useCallback(() => {
     setFirstNight(createEmptyNightOrderState());
@@ -334,8 +339,8 @@ export function NightOrderProvider({ children, initialScriptData }: NightOrderPr
     setError(null);
   }, []);
 
-  // Memoize context value
-  const value = useMemo<NightOrderContextValue>(
+  // useMemo required: context value object must be stable to prevent consumer re-renders
+  const value: NightOrderContextValue = useMemo(
     () => ({
       // State
       firstNight,

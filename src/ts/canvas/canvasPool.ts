@@ -119,5 +119,3 @@ export const globalCanvasPool = new CanvasPool();
 // Studio-specific canvas pool with larger capacity for layer management
 // Studio typically maintains multiple layers simultaneously
 export const studioCanvasPool = new CanvasPool(20);
-
-export default { CanvasPool, globalCanvasPool, studioCanvasPool };

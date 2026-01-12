@@ -13,9 +13,8 @@ describe('teamUtils', () => {
       expect(TEAM_CLASS_MAP.meta).toBe('teamMeta');
     });
 
-    it('should handle both traveller spellings', () => {
+    it('should have traveller mapping', () => {
       expect(TEAM_CLASS_MAP.traveller).toBe('teamTraveller');
-      expect(TEAM_CLASS_MAP.traveler).toBe('teamTraveller');
     });
   });
 
@@ -49,10 +48,6 @@ describe('teamUtils', () => {
 
     it('should return correct class for traveller', () => {
       expect(getTeamStyleClass('traveller', mockStyles)).toBe('scoped-traveller-def');
-    });
-
-    it('should handle American spelling traveler', () => {
-      expect(getTeamStyleClass('traveler', mockStyles)).toBe('scoped-traveller-def');
     });
 
     it('should return correct class for fabled', () => {
@@ -98,15 +93,10 @@ describe('teamUtils', () => {
       expect(normalizeTeamName('Minion')).toBe('minion');
     });
 
-    it('should normalize traveler to traveller', () => {
-      expect(normalizeTeamName('traveler')).toBe('traveller');
-      expect(normalizeTeamName('Traveler')).toBe('traveller');
-      expect(normalizeTeamName('TRAVELER')).toBe('traveller');
-    });
-
-    it('should keep traveller as is', () => {
+    it('should lowercase traveller', () => {
       expect(normalizeTeamName('traveller')).toBe('traveller');
       expect(normalizeTeamName('Traveller')).toBe('traveller');
+      expect(normalizeTeamName('TRAVELLER')).toBe('traveller');
     });
 
     it('should default to townsfolk for undefined', () => {

@@ -9,7 +9,7 @@
  * @module components/CharactersComponents/TokenEditor/JsonTabContent
  */
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CodeMirrorEditor } from '@/components/Shared/Json/CodeMirrorEditor';
 import { useJsonEditor } from '@/hooks';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
@@ -40,7 +40,7 @@ function getDisplayCharacter(character: Character): Partial<Character> {
   return displayable;
 }
 
-export const JsonTabContent = memo(function JsonTabContent({
+export function JsonTabContent({
   character,
   isOfficial,
   onReplaceCharacter,
@@ -63,22 +63,23 @@ export const JsonTabContent = memo(function JsonTabContent({
   });
 
   // Metadata content (read-only)
-  const metadataContent = useMemo(() => {
-    const metaObj = {
+  const metadataContent = JSON.stringify(
+    {
       uuid: charUuid,
       idLinkedToName: metadata.idLinkedToName,
       decoratives: metadata.decoratives || {},
-    };
-    return JSON.stringify(metaObj, null, 2);
-  }, [charUuid, metadata.idLinkedToName, metadata.decoratives]);
+    },
+    null,
+    2
+  );
 
-  const handleCopyMetadata = useCallback(async () => {
+  const handleCopyMetadata = async () => {
     try {
       await navigator.clipboard.writeText(metadataContent);
     } catch {
       // Clipboard API may fail in some contexts
     }
-  }, [metadataContent]);
+  };
 
   return (
     <div className={`${styles.jsonTabContent} ${isOfficial ? styles.disabled : ''}`}>
@@ -210,6 +211,4 @@ export const JsonTabContent = memo(function JsonTabContent({
       </div>
     </div>
   );
-});
-
-export default JsonTabContent;
+}

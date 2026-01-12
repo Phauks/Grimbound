@@ -62,9 +62,7 @@ export function createFullGenerationOptions(): GenerationOptions {
     almanacToken: true,
     pandemoniumToken: true,
     accentEnabled: true,
-    accentGeneration: 'random',
-    maximumAccents: 3,
-    accentPopulationProbability: 0.5,
+    accentGeneration: 'classic',
     fontSpacing: createDefaultFontSpacing(),
     textShadow: createDefaultTextShadow(),
   };

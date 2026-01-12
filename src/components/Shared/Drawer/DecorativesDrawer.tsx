@@ -7,7 +7,7 @@
  * @module components/Shared/Drawer/DecorativesDrawer
  */
 
-import { memo, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { SettingsDrawer } from './SettingsDrawer';
 
 export interface DecorativesDrawerProps {
@@ -25,7 +25,7 @@ export interface DecorativesDrawerProps {
   title?: string;
 }
 
-export const DecorativesDrawer = memo(function DecorativesDrawer({
+export function DecorativesDrawer({
   isOpen,
   onClose,
   onApply,
@@ -45,6 +45,4 @@ export const DecorativesDrawer = memo(function DecorativesDrawer({
       {children}
     </SettingsDrawer>
   );
-});
-
-export default DecorativesDrawer;
+}

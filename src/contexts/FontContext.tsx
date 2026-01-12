@@ -7,15 +7,7 @@
  * @module contexts/FontContext
  */
 
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { fontRegistry } from '@/ts/services/fonts/index.js';
 import type {
   FontCategory,
@@ -103,17 +95,17 @@ export function FontProvider({ children }: FontProviderProps) {
   }, []);
 
   // Load a font
-  const loadFont = useCallback(async (family: string, weights?: FontWeight[]) => {
+  const loadFont = async (family: string, weights?: FontWeight[]) => {
     try {
       await fontRegistry.loadFont(family, weights);
     } catch (error) {
       logger.error('FontContext', `Failed to load font: ${family}`, error);
       throw error;
     }
-  }, []);
+  };
 
   // Upload a custom font
-  const uploadFont = useCallback(async (file: File) => {
+  const uploadFont = async (file: File) => {
     try {
       const font = await fontRegistry.uploadCustomFont(file);
       return font;
@@ -121,74 +113,51 @@ export function FontProvider({ children }: FontProviderProps) {
       logger.error('FontContext', 'Failed to upload font', error);
       throw error;
     }
-  }, []);
+  };
 
   // Delete a custom font
-  const deleteFont = useCallback(async (id: string) => {
+  const deleteFont = async (id: string) => {
     try {
       await fontRegistry.deleteCustomFont(id);
     } catch (error) {
       logger.error('FontContext', `Failed to delete font: ${id}`, error);
       throw error;
     }
-  }, []);
+  };
 
   // Get fonts by source
-  const getFontsBySource = useCallback(
-    (source: FontSource) => fonts.filter((f) => f.source === source),
-    [fonts]
-  );
+  const getFontsBySource = (source: FontSource) => fonts.filter((f) => f.source === source);
 
   // Get fonts by category
-  const getFontsByCategory = useCallback(
-    (category: FontCategory) => fonts.filter((f) => f.category === category),
-    [fonts]
-  );
+  const getFontsByCategory = (category: FontCategory) =>
+    fonts.filter((f) => f.category === category);
 
   // Search fonts
-  const searchFonts = useCallback(async (query: string) => fontRegistry.searchFonts(query), []);
+  const searchFonts = async (query: string) => fontRegistry.searchFonts(query);
 
   // Get a font by family
-  const getFont = useCallback((family: string) => fonts.find((f) => f.family === family), [fonts]);
+  const getFont = (family: string) => fonts.find((f) => f.family === family);
 
   // Check if a font is loaded
-  const isFontLoaded = useCallback(
-    (family: string) => {
-      const font = fonts.find((f) => f.family === family);
-      return font?.status === 'loaded';
-    },
-    [fonts]
-  );
+  const isFontLoaded = (family: string) => {
+    const font = fonts.find((f) => f.family === family);
+    return font?.status === 'loaded';
+  };
 
-  // Context value
-  const value = useMemo<FontContextValue>(
-    () => ({
-      fonts,
-      isLoading,
-      isInitialized,
-      loadFont,
-      uploadFont,
-      deleteFont,
-      getFontsBySource,
-      getFontsByCategory,
-      searchFonts,
-      getFont,
-      isFontLoaded,
-    }),
-    [
-      fonts,
-      isLoading,
-      isInitialized,
-      loadFont,
-      uploadFont,
-      deleteFont,
-      getFontsBySource,
-      getFontsByCategory,
-      searchFonts,
-      getFont,
-      isFontLoaded,
-    ]
-  );
+  // Context value (no memoization - functions are fresh each render but that's okay)
+  const value: FontContextValue = {
+    fonts,
+    isLoading,
+    isInitialized,
+    loadFont,
+    uploadFont,
+    deleteFont,
+    getFontsBySource,
+    getFontsByCategory,
+    searchFonts,
+    getFont,
+    isFontLoaded,
+  };
 
   return <FontContext.Provider value={value}>{children}</FontContext.Provider>;
 }
@@ -245,7 +214,7 @@ export function useFonts(): FontContextValue {
  */
 export function useFontsBySource(source: FontSource): FontDefinition[] {
   const { getFontsBySource } = useFonts();
-  return useMemo(() => getFontsBySource(source), [getFontsBySource, source]);
+  return getFontsBySource(source);
 }
 
 /**
@@ -263,7 +232,7 @@ export function useFontsBySource(source: FontSource): FontDefinition[] {
  */
 export function useFontsByCategory(category: FontCategory): FontDefinition[] {
   const { getFontsByCategory } = useFonts();
-  return useMemo(() => getFontsByCategory(category), [getFontsByCategory, category]);
+  return getFontsByCategory(category);
 }
 
 /**

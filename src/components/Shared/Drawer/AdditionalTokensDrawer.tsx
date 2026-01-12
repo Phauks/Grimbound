@@ -9,7 +9,6 @@
  * @module components/Shared/Drawer/AdditionalTokensDrawer
  */
 
-import { memo, useCallback, useMemo } from 'react';
 import drawerStyles from '@/styles/components/shared/SettingsDrawer.module.css';
 import type { BootleggerIconType, Character, GenerationOptions } from '@/ts/types/index';
 import { SettingsDrawer } from './SettingsDrawer';
@@ -45,7 +44,7 @@ function countActiveJinxes(characters: Character[]): number {
   return count;
 }
 
-export const AdditionalTokensDrawer = memo(function AdditionalTokensDrawer({
+export function AdditionalTokensDrawer({
   isOpen,
   onClose,
   onApply,
@@ -62,7 +61,7 @@ export const AdditionalTokensDrawer = memo(function AdditionalTokensDrawer({
 
   // Jinx state
   const jinxEnabled = generationOptions.jinxTokens ?? false;
-  const activeJinxCount = useMemo(() => countActiveJinxes(characters), [characters]);
+  const activeJinxCount = countActiveJinxes(characters);
 
   // Script tokens state
   const pandemoniumEnabled = generationOptions.pandemoniumToken !== false;
@@ -70,61 +69,37 @@ export const AdditionalTokensDrawer = memo(function AdditionalTokensDrawer({
   const hideAuthor = generationOptions.hideScriptNameAuthor ?? false;
 
   // Handlers
-  const handleBootleggerToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ generateBootleggerRules: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleBootleggerToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ generateBootleggerRules: e.target.checked });
+  };
 
-  const handleBootleggerIconType = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      onOptionChange({ bootleggerIconType: e.target.value as BootleggerIconType });
-    },
-    [onOptionChange]
-  );
+  const handleBootleggerIconType = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onOptionChange({ bootleggerIconType: e.target.value as BootleggerIconType });
+  };
 
-  const handleBootleggerNormalize = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ bootleggerNormalizeIcons: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleBootleggerNormalize = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ bootleggerNormalizeIcons: e.target.checked });
+  };
 
-  const handleBootleggerHideName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ bootleggerHideName: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleBootleggerHideName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ bootleggerHideName: e.target.checked });
+  };
 
-  const handleJinxToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ jinxTokens: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleJinxToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ jinxTokens: e.target.checked });
+  };
 
-  const handlePandemoniumToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ pandemoniumToken: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handlePandemoniumToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ pandemoniumToken: e.target.checked });
+  };
 
-  const handleScriptNameToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ scriptNameToken: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleScriptNameToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ scriptNameToken: e.target.checked });
+  };
 
-  const handleHideAuthorToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onOptionChange({ hideScriptNameAuthor: e.target.checked });
-    },
-    [onOptionChange]
-  );
+  const handleHideAuthorToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionChange({ hideScriptNameAuthor: e.target.checked });
+  };
 
   return (
     <SettingsDrawer
@@ -208,6 +183,4 @@ export const AdditionalTokensDrawer = memo(function AdditionalTokensDrawer({
       </div>
     </SettingsDrawer>
   );
-});
-
-export default AdditionalTokensDrawer;
+}

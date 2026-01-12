@@ -45,7 +45,8 @@ describe('AssetStorageService', () => {
 
   const createMockAsset = (overrides: Partial<DBAsset> = {}): DBAsset => ({
     id: 'asset-1',
-    type: 'character-icon',
+    tags: ['type:icon'],
+    folder: null,
     projectId: 'project-1',
     blob: createMockBlob(),
     thumbnail: createMockBlob(2048),
@@ -56,7 +57,7 @@ describe('AssetStorageService', () => {
   });
 
   const createCreateAssetData = (overrides: Partial<CreateAssetData> = {}): CreateAssetData => ({
-    type: 'character-icon',
+    tags: ['type:icon'],
     projectId: 'project-1',
     blob: createMockBlob(),
     thumbnail: createMockBlob(2048),
@@ -118,7 +119,7 @@ describe('AssetStorageService', () => {
       expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
       expect(projectDb.assets.put).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'character-icon',
+          tags: ['type:icon'],
           projectId: 'project-1',
         })
       );
@@ -464,17 +465,30 @@ describe('AssetStorageService', () => {
 
   describe('list()', () => {
     it('should list all assets when no filter provided', async () => {
-      const assets = [createMockAsset({ id: 'asset-1' }), createMockAsset({ id: 'asset-2' })];
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // Create assets with explicit uploadedAt for deterministic order
+      const baseTime = Date.now();
+      const assets = [
+        createMockAsset({
+          id: 'asset-1',
+          metadata: { ...createMockMetadata(), uploadedAt: baseTime + 1 },
+        }),
+        createMockAsset({
+          id: 'asset-2',
+          metadata: { ...createMockMetadata(), uploadedAt: baseTime },
+        }),
+      ];
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const result = await service.list();
 
-      expect(result).toEqual(assets);
+      // Default sort is desc by uploadedAt, so asset-1 (newer) should come first
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('asset-1');
+      expect(result[1].id).toBe('asset-2');
     });
 
-    it('should use compound index for type+projectId optimization', async () => {
+    it('should use compound index for folder+projectId optimization', async () => {
       const assets = [createMockAsset()];
       const toArrayFn = vi.fn().mockResolvedValue(assets);
       const equalsFn = vi.fn().mockReturnValue({
@@ -485,16 +499,16 @@ describe('AssetStorageService', () => {
         equals: equalsFn,
       } as unknown as ReturnType<typeof projectDb.assets.where>);
 
-      await service.list({ type: 'character-icon', projectId: 'project-1' });
+      await service.list({ folder: 'Icons', projectId: 'project-1' });
 
-      expect(projectDb.assets.where).toHaveBeenCalledWith('[type+projectId]');
-      expect(equalsFn).toHaveBeenCalledWith(['character-icon', 'project-1']);
+      expect(projectDb.assets.where).toHaveBeenCalledWith('[folder+projectId]');
+      expect(equalsFn).toHaveBeenCalledWith(['Icons', 'project-1']);
     });
 
-    it('should filter by type using index', async () => {
-      const assets = [createMockAsset({ type: 'character-icon' })];
+    it('should filter by tags using index', async () => {
+      const assets = [createMockAsset({ tags: ['type:icon'] })];
       const whereChain = {
-        anyOf: vi.fn().mockReturnValue({
+        equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
       };
@@ -503,19 +517,19 @@ describe('AssetStorageService', () => {
         whereChain as unknown as ReturnType<typeof projectDb.assets.where>
       );
 
-      await service.list({ type: 'character-icon' });
+      await service.list({ tags: ['type:icon'] });
 
-      expect(projectDb.assets.where).toHaveBeenCalledWith('type');
-      expect(whereChain.anyOf).toHaveBeenCalledWith(['character-icon']);
+      expect(projectDb.assets.where).toHaveBeenCalledWith('tags');
+      expect(whereChain.equals).toHaveBeenCalledWith('type:icon');
     });
 
-    it('should filter by multiple types', async () => {
+    it('should filter by multiple tags with AND logic', async () => {
       const assets = [
-        createMockAsset({ type: 'character-icon' }),
-        createMockAsset({ type: 'token-background' }),
+        createMockAsset({ tags: ['type:icon', 'team:townsfolk'] }),
+        createMockAsset({ tags: ['type:icon', 'team:outsider'] }),
       ];
       const whereChain = {
-        anyOf: vi.fn().mockReturnValue({
+        equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
       };
@@ -524,9 +538,12 @@ describe('AssetStorageService', () => {
         whereChain as unknown as ReturnType<typeof projectDb.assets.where>
       );
 
-      await service.list({ type: ['character-icon', 'token-background'] });
+      const result = await service.list({ tags: ['type:icon', 'team:townsfolk'] });
 
-      expect(whereChain.anyOf).toHaveBeenCalledWith(['character-icon', 'token-background']);
+      expect(whereChain.equals).toHaveBeenCalledWith('type:icon');
+      // Second tag is applied as filter, so only the first asset should match
+      expect(result).toHaveLength(1);
+      expect(result[0].tags).toContain('team:townsfolk');
     });
 
     it('should apply search filter', async () => {
@@ -538,9 +555,8 @@ describe('AssetStorageService', () => {
         }),
       ];
 
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const result = await service.list({ search: 'test' });
 
@@ -554,9 +570,8 @@ describe('AssetStorageService', () => {
         createMockAsset({ id: 'asset-2', linkedTo: ['char-1'] }),
       ];
 
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const result = await service.list({ orphanedOnly: true });
 
@@ -570,9 +585,8 @@ describe('AssetStorageService', () => {
         createMockAsset({ metadata: { ...createMockMetadata(), filename: 'alpha.png' } }),
       ];
 
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const result = await service.list({ sortBy: 'filename', sortDirection: 'asc' });
 
@@ -586,9 +600,8 @@ describe('AssetStorageService', () => {
         createMockAsset({ metadata: { ...createMockMetadata(), size: 2000 } }),
       ];
 
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const result = await service.list({ sortBy: 'size', sortDirection: 'desc' });
 
@@ -606,9 +619,8 @@ describe('AssetStorageService', () => {
         })
       );
 
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       // Default sort is desc by uploadedAt, so offset:2 limit:3 gives assets 7, 6, 5
       const result = await service.list({ offset: 2, limit: 3 });
@@ -621,9 +633,8 @@ describe('AssetStorageService', () => {
   describe('count()', () => {
     it('should return total count ignoring pagination', async () => {
       const assets = [createMockAsset(), createMockAsset(), createMockAsset()];
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const count = await service.count({ offset: 1, limit: 1 });
 
@@ -634,9 +645,8 @@ describe('AssetStorageService', () => {
   describe('listWithUrls()', () => {
     it('should return assets with object URLs', async () => {
       const assets = [createMockAsset({ id: 'asset-1' })];
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // list() calls toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
       vi.mocked(projectDb.assets.get).mockResolvedValue(assets[0]);
 
       const result = await service.listWithUrls();
@@ -648,8 +658,8 @@ describe('AssetStorageService', () => {
   });
 
   describe('getByType()', () => {
-    it('should get assets by type', async () => {
-      const assets = [createMockAsset({ type: 'character-icon' })];
+    it('should get assets by type tag', async () => {
+      const assets = [createMockAsset({ tags: ['type:icon'] })];
       const whereChain = {
         equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
@@ -660,10 +670,29 @@ describe('AssetStorageService', () => {
         whereChain as unknown as ReturnType<typeof projectDb.assets.where>
       );
 
-      const result = await service.getByType('character-icon');
+      const result = await service.getByType('icon');
 
       expect(result).toEqual(assets);
-      expect(projectDb.assets.where).toHaveBeenCalledWith('type');
+      expect(projectDb.assets.where).toHaveBeenCalledWith('tags');
+      expect(whereChain.equals).toHaveBeenCalledWith('type:icon');
+    });
+
+    it('should accept full type:* tag format', async () => {
+      const assets = [createMockAsset({ tags: ['type:token-background'] })];
+      const whereChain = {
+        equals: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue(assets),
+        }),
+      };
+
+      vi.mocked(projectDb.assets.where).mockReturnValue(
+        whereChain as unknown as ReturnType<typeof projectDb.assets.where>
+      );
+
+      const result = await service.getByType('type:token-background');
+
+      expect(result).toEqual(assets);
+      expect(whereChain.equals).toHaveBeenCalledWith('type:token-background');
     });
   });
 
@@ -837,10 +866,10 @@ describe('AssetStorageService', () => {
     it('should replace all links for a character with new asset', async () => {
       const oldAsset = createMockAsset({
         id: 'old-asset',
-        type: 'character-icon',
+        tags: ['type:icon'],
         linkedTo: ['char-1'],
       });
-      const newAsset = createMockAsset({ id: 'new-asset', type: 'character-icon', linkedTo: [] });
+      const newAsset = createMockAsset({ id: 'new-asset', tags: ['type:icon'], linkedTo: [] });
 
       const equalsFnForOld = vi.fn().mockReturnValue({
         toArray: vi.fn().mockResolvedValue([oldAsset]),
@@ -857,7 +886,7 @@ describe('AssetStorageService', () => {
       vi.mocked(projectDb.assets.update).mockResolvedValue();
       vi.mocked(cacheInvalidationService.invalidateAsset).mockResolvedValue();
 
-      await service.replaceCharacterLink('char-1', 'new-asset', 'character-icon');
+      await service.replaceCharacterLink('char-1', 'new-asset', 'icon');
 
       expect(projectDb.assets.update).toHaveBeenCalledWith('old-asset', {
         linkedTo: [],
@@ -868,7 +897,11 @@ describe('AssetStorageService', () => {
     });
 
     it('should unlink all when new asset ID is null', async () => {
-      const oldAsset = createMockAsset({ id: 'asset-1', linkedTo: ['char-1'] });
+      const oldAsset = createMockAsset({
+        id: 'asset-1',
+        tags: ['type:icon'],
+        linkedTo: ['char-1'],
+      });
 
       const equalsFn = vi.fn().mockReturnValue({
         toArray: vi.fn().mockResolvedValue([oldAsset]),
@@ -882,7 +915,7 @@ describe('AssetStorageService', () => {
       vi.mocked(projectDb.assets.update).mockResolvedValue();
       vi.mocked(cacheInvalidationService.invalidateAsset).mockResolvedValue();
 
-      await service.replaceCharacterLink('char-1', null, 'character-icon');
+      await service.replaceCharacterLink('char-1', null, 'type:icon');
 
       expect(projectDb.assets.update).toHaveBeenCalledWith('asset-1', { linkedTo: [] });
     });
@@ -1224,25 +1257,23 @@ describe('AssetStorageService', () => {
     it('should return storage statistics', async () => {
       const assets = [
         createMockAsset({
-          type: 'character-icon',
+          tags: ['type:icon'],
           metadata: { ...createMockMetadata(), size: 10240 },
         }),
         createMockAsset({
-          type: 'token-background',
+          tags: ['type:token-background'],
           metadata: { ...createMockMetadata(), size: 20480 },
         }),
       ];
 
-      // getStats calls list() which uses toCollection().toArray()
-      vi.mocked(projectDb.assets.toCollection).mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(assets),
-      } as unknown as ReturnType<typeof projectDb.assets.toCollection>);
+      // getStats calls list() which uses toArray() directly for fallback path
+      vi.mocked(projectDb.assets.toArray).mockResolvedValue(assets);
 
       const stats = await service.getStats();
 
       expect(stats.count).toBe(2);
       expect(stats.totalSize).toBeGreaterThan(0);
-      expect(stats.byType['character-icon'].count).toBe(1);
+      expect(stats.byType.icon.count).toBe(1);
       expect(stats.byType['token-background'].count).toBe(1);
     });
   });
@@ -1325,15 +1356,15 @@ describe('AssetStorageService', () => {
         createMockAsset({ id: 'asset-3', lastUsedAt: 1500 }),
       ];
 
-      // Use type filter to hit the where().anyOf() code path
+      // Use tags filter to hit the where().equals() code path
       vi.mocked(projectDb.assets.where).mockReturnValue({
-        anyOf: vi.fn().mockReturnValue({
+        equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
       } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       const result = await service.list({
-        type: 'character-icon',
+        tags: ['type:icon'],
         sortBy: 'lastUsedAt',
         sortDirection: 'desc',
       });
@@ -1357,16 +1388,16 @@ describe('AssetStorageService', () => {
         })
       );
 
-      // Use type filter to hit the where().anyOf() code path
+      // Use tags filter to hit the where().equals() code path
       vi.mocked(projectDb.assets.where).mockReturnValue({
-        anyOf: vi.fn().mockReturnValue({
+        equals: vi.fn().mockReturnValue({
           toArray: vi.fn().mockResolvedValue(assets),
         }),
       } as unknown as ReturnType<typeof projectDb.assets.where>);
 
       // Default sort is desc by uploadedAt, so order is: 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
       // offset: 2, limit: 3 would give: 7, 6, 5
-      const result = await service.list({ type: 'character-icon', offset: 2, limit: 3 });
+      const result = await service.list({ tags: ['type:icon'], offset: 2, limit: 3 });
 
       expect(result).toHaveLength(3);
       expect(result[0].id).toBe('mock-asset-7');

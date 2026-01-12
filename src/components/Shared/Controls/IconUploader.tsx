@@ -5,7 +5,7 @@
  * Supports image preview, format validation, and size constraints.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import styles from '@/styles/components/shared/IconUploader.module.css';
 
 interface IconUploaderProps {
@@ -47,130 +47,112 @@ export function IconUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Validate file
-  const validateFile = useCallback(
-    (file: File): string | null => {
-      // Check file type
-      if (!acceptedFormats.includes(file.type)) {
-        const formatList = acceptedFormats.map((f) => f.split('/')[1].toUpperCase()).join(', ');
-        return `Invalid format. Please use: ${formatList}`;
-      }
+  const validateFile = (file: File): string | null => {
+    // Check file type
+    if (!acceptedFormats.includes(file.type)) {
+      const formatList = acceptedFormats.map((f) => f.split('/')[1].toUpperCase()).join(', ');
+      return `Invalid format. Please use: ${formatList}`;
+    }
 
-      // Check file size
-      const maxBytes = MAX_BYTES(maxSizeMB);
-      if (file.size > maxBytes) {
-        return `File too large. Maximum size: ${maxSizeMB}MB`;
-      }
+    // Check file size
+    const maxBytes = MAX_BYTES(maxSizeMB);
+    if (file.size > maxBytes) {
+      return `File too large. Maximum size: ${maxSizeMB}MB`;
+    }
 
-      return null;
-    },
-    [acceptedFormats, maxSizeMB]
-  );
+    return null;
+  };
 
   // Process image file
-  const processFile = useCallback(
-    async (file: File) => {
-      setError(null);
-      setIsProcessing(true);
+  const processFile = async (file: File) => {
+    setError(null);
+    setIsProcessing(true);
 
-      try {
-        // Validate
-        const validationError = validateFile(file);
-        if (validationError) {
-          setError(validationError);
-          setIsProcessing(false);
-          return;
-        }
-
-        // Convert to data URL
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const dataUrl = e.target?.result as string;
-          onChange(dataUrl);
-          setIsProcessing(false);
-        };
-        reader.onerror = () => {
-          setError('Failed to read file');
-          setIsProcessing(false);
-        };
-        reader.readAsDataURL(file);
-      } catch (_err) {
-        setError('Failed to process image');
+    try {
+      // Validate
+      const validationError = validateFile(file);
+      if (validationError) {
+        setError(validationError);
         setIsProcessing(false);
+        return;
       }
-    },
-    [validateFile, onChange]
-  );
+
+      // Convert to data URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        onChange(dataUrl);
+        setIsProcessing(false);
+      };
+      reader.onerror = () => {
+        setError('Failed to read file');
+        setIsProcessing(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (_err) {
+      setError('Failed to process image');
+      setIsProcessing(false);
+    }
+  };
 
   // Handle file drop
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      if (disabled) return;
-
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        processFile(files[0]);
-      }
-    },
-    [disabled, processFile]
-  );
-
-  // Handle file selection
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        processFile(files[0]);
-      }
-    },
-    [processFile]
-  );
-
-  // Handle drag events
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!disabled) {
-        setIsDragging(true);
-      }
-    },
-    [disabled]
-  );
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-  }, []);
+
+    if (disabled) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      processFile(files[0]);
+    }
+  };
+
+  // Handle drag events
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
 
   // Handle click to browse
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (!disabled) {
       fileInputRef.current?.click();
     }
-  }, [disabled]);
+  };
 
   // Handle remove
-  const handleRemove = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onChange(null);
-      setError(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    },
-    [onChange]
-  );
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(null);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const acceptString = acceptedFormats.join(',');
 

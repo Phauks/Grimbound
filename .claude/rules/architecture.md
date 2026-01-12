@@ -5,7 +5,7 @@
 > **Location**: This file lives in `.claude/rules/` and is loaded by Claude Code when architectural context is needed.
 
 **Last Updated**: 2025-12-31
-**Version**: v0.5.0
+**Version**: v0.6.0
 
 ---
 
@@ -442,7 +442,6 @@ src/ts/cache/
 
 ```
 src/ts/services/
-├── ServiceContainer.ts         # Lightweight DI container
 ├── fonts/                      # Font management
 │   ├── index.ts                # Barrel export
 │   ├── IFontServices.ts        # DI interfaces (contracts)
@@ -471,6 +470,47 @@ src/ts/services/
     ├── constants.ts            # Upload constants
     └── types.ts
 ```
+
+### Script PDF Module
+
+```
+src/ts/scriptPdf/
+├── index.ts                    # Barrel export
+├── types.ts                    # Shared types
+│   ├── PlayerScriptOptions     # Player script generation options
+│   ├── PlayerScriptCharacter   # Character prepared for rendering
+│   ├── PlayerScriptJinx        # Jinx entry for display
+│   ├── ScriptPdfSettings       # Complete settings (common + playerScript + nightOrder)
+│   ├── CommonPdfSettings       # Shared margins + BackgroundStyle
+│   ├── PlayerScriptSettings    # Player script specific settings
+│   ├── NightOrderSettings      # Night order specific settings
+│   └── ScriptPdfContextValue   # Context interface
+├── constants.ts                # Layout constants & defaults
+│   ├── PAGE_WIDTH/HEIGHT_*     # Page dimension constants
+│   ├── PLAYER_SCRIPT_FRONT     # Front page layout (margins, fonts, spacing)
+│   ├── PLAYER_SCRIPT_BACK      # Backing sheet layout
+│   ├── TEAM_COLORS/LABELS      # Team styling constants
+│   ├── PLAYER_COUNT_TABLE      # Player count breakdown
+│   ├── DEFAULT_SCRIPT_PDF_BACKGROUND    # Default BackgroundStyle
+│   ├── SCRIPT_PDF_BACKGROUND_PRESETS    # Background presets
+│   └── DEFAULT_SCRIPT_PDF_SETTINGS      # Complete default settings
+├── utils.ts                    # Shared utilities
+│   ├── groupCharactersByTeam() # Group by team in display order
+│   ├── separateCharactersByType()  # Separate main/fabled/travellers
+│   ├── applyCustomOrder()      # Apply custom character order
+│   ├── calculateOptimalColumns()   # Auto column selection
+│   ├── extractActiveJinxes()   # Extract jinxes between script chars
+│   ├── extractNightOrderIcons()    # Get night order icons for backing
+│   ├── validateScriptForPlayerScript() # Validation
+│   └── calculateAvailableHeight()  # Layout calculations
+└── playerScript/               # Player script specific (Phase 2+)
+    └── ... (to be implemented)
+```
+
+**Key Types:**
+- `BackgroundStyle` - Re-exported from Token view for PDF backgrounds
+- `ScriptPdfSettings` - Unified settings for all script PDF generation
+- `PlayerScriptCharacter` - Character data optimized for script rendering
 
 ---
 
@@ -1149,6 +1189,149 @@ const resolvedUrl = ctx.resolvedImageUrls.get(`${character.id}:${variant.variant
 - Additional async step before generation
 - Memory for resolved URL map (negligible for typical scripts)
 - Must maintain map key format consistency
+
+### ADR-010: Hybrid-Only PDF Export
+
+**Context**: The night order export had both legacy (full Snapdom) and hybrid (Snapdom + pdf-lib text) modes with an opt-in toggle.
+
+**Decision**: Remove legacy mode entirely. Use hybrid approach as the only export method.
+
+**Rationale**:
+- Hybrid mode is faster and more reliable
+- Reduces code complexity and maintenance burden
+- Single code path is easier to test and debug
+
+**Changes Made**:
+- Removed legacy `nightOrderPdfExporter.ts` and `nightSheetRenderer.tsx`
+- Removed `useHybridMode` state and toggle from NightOrderView
+- Renamed hybrid files to be the primary files
+- Updated index.ts exports
+
+### ADR-011: Reusable Script Component Architecture
+
+**Context**: Player script and night order share similar rendering needs (React component → Snapdom capture → PDF).
+
+**Decision**: Create shared infrastructure in `src/ts/scriptPdf/` with specialized components for each document type.
+
+**Structure**:
+```
+src/ts/scriptPdf/
+├── index.ts                    # Barrel export
+├── types.ts                    # Shared types
+├── constants.ts                # Layout constants
+├── utils.ts                    # Shared utilities
+├── hybridPdfExporter.ts        # Generic hybrid PDF exporter
+├── textExtractor.ts            # Shared text extraction
+└── playerScript/               # Player script specific
+    ├── PlayerScriptPrintable.tsx
+    ├── PlayerScriptBackingSheet.tsx
+    └── playerScriptRenderer.ts
+```
+
+**Rationale**:
+- Shared utilities reduce code duplication
+- Consistent approach for both document types
+- Easy to add new script document types in future
+
+### ADR-012: Player Script Character Ordering
+
+**Context**: Users need to reorder characters on the player script, similar to night order reordering.
+
+**Decision**: Implement drag-and-drop reordering using @dnd-kit (already in project). Store custom order in script meta or project state.
+
+**Storage Format**:
+```typescript
+interface ScriptMeta {
+  // ... existing fields
+  playerScriptOrder?: string[];  // Array of character IDs in custom order
+}
+```
+
+**Rationale**:
+- Consistent with existing night order drag-and-drop pattern
+- Uses existing @dnd-kit infrastructure
+- Persisted in script meta for project saving
+
+### ADR-013: Unified PDF Settings Drawer
+
+**Context**: Both player script and night order PDFs share common settings (margins, fonts, backgrounds). Managing these separately creates inconsistent UX and duplicated code.
+
+**Decision**: Create a single `ScriptPdfDrawer` component with tabbed interface for Common, Player Script, and Night Order settings. Uses the existing `SettingsDrawer` base component pattern.
+
+**Tab Structure**:
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ 📄 Script PDF Settings                    [Reset] [Cancel] [Apply]  │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Common]  [Player Script]  [Night Order]                           │
+├─────────────────────────────────────────────────────────────────────┤
+│  Tab content varies by selection...                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Settings Categories**:
+
+| Tab | Settings |
+|-----|----------|
+| **Common** | Margins, Full BackgroundStyle (solid/gradient, textures, effects) |
+| **Player Script** | Fonts, Author toggle, Backing sheet, Layout columns, Jinxes/Fabled options |
+| **Night Order** | Fonts, Icon scaling, Decoratives |
+
+**Rationale**:
+- Consistent UX for all script PDF settings
+- Shared settings (margins, fonts) configured once
+- Follows established drawer pattern from Token view
+
+### ADR-014: Reuse BackgroundStyle for Script PDF Backgrounds
+
+**Context**: Token view has a sophisticated background system with `BackgroundStyle` supporting solid colors, gradients, 11+ texture types, visual effects, and light adjustments. The simple paper texture approach in the original night order was limited.
+
+**Decision**: Use the existing `BackgroundStyle` type for script PDF backgrounds. The `BackgroundStyleEditor` component is embedded in the Script PDF drawer.
+
+**BackgroundStyle Features Available**:
+- **Source Type**: Styled (procedural) or Image
+- **Base**: Solid color or gradient (linear/radial/conic)
+- **Textures**: marble, clouds, watercolor, perlin, radial-fade, organic-cells, silk-flow, parchment, linen, wood-grain, brushed-metal
+- **Effects**: Vignette, inner glow, border (solid/dashed/dotted)
+- **Light**: Brightness, contrast, saturation, vibrance
+
+**Rationale**:
+- Reuses proven, well-tested background system
+- Consistent styling capabilities across Token and Script views
+- Rich presets available (Classic White, Elegant Cream, Aged Parchment, etc.)
+
+### ADR-015: React Compiler for Automatic Memoization
+
+**Context**: The codebase had ~800 `useCallback`, ~190 `useMemo`, and ~100 `React.memo` wrappers for manual memoization. This added significant boilerplate and cognitive overhead. React 19 introduced the React Compiler which can automatically determine optimal memoization.
+
+**Decision**: Enable React Compiler via `babel-plugin-react-compiler` and remove manual memoization wrappers.
+
+**Migration**:
+1. Install `babel-plugin-react-compiler`
+2. Configure in `vite.config.ts` under `@vitejs/plugin-react` babel plugins
+3. Remove `useCallback` wrappers (except those used in `useEffect` dependencies)
+4. Remove `useMemo` wrappers
+5. Remove `React.memo` wrappers
+6. Convert `forwardRef` to ref-as-prop pattern (React 19 feature)
+
+**Exception - Keep useCallback when**:
+```typescript
+// The callback is used as a useEffect dependency
+const loadData = useCallback(async () => { ... }, [deps]);
+useEffect(() => { loadData(); }, [loadData]);
+```
+
+**Rationale**:
+- Compiler makes optimal memoization decisions automatically
+- Eliminates ~1000 lines of boilerplate code
+- Reduces cognitive overhead for developers
+- Better performance - compiler can optimize cases humans miss
+- Future-proof - follows React team's recommended direction
+
+**Trade-offs**:
+- Requires React 19 and compatible tooling
+- Build time slightly increased for compilation
+- Debugging memoization issues is less explicit
 
 ---
 

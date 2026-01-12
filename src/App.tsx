@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useProjectAutoSave, useStorageQuota, useUnsavedChangesWarning } from '@/hooks';
 import versionData from '../version.json';
 import { AppFooter } from './components/Layout/AppFooter';
@@ -16,6 +16,7 @@ import { ToastContainer } from './components/Shared/UI/Toast';
 import { DownloadsProvider } from './contexts/DownloadsContext';
 import { NightOrderProvider } from './contexts/NightOrderContext';
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
+import { ScriptPdfProvider } from './contexts/ScriptPdfContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { TokenProvider, useTokenContext } from './contexts/TokenContext';
 import layoutStyles from './styles/components/layout/AppLayout.module.css';
@@ -50,7 +51,7 @@ function AppContent() {
   const [showAssetManager, setShowAssetManager] = useState(false);
 
   // Disable default right-click menu app-wide, except for text inputs
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+  const handleContextMenu = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const tagName = target.tagName.toLowerCase();
     // Allow default context menu for text inputs (copy/paste functionality)
@@ -58,7 +59,7 @@ function AppContent() {
       return;
     }
     e.preventDefault();
-  }, []);
+  };
 
   return (
     <div className={layoutStyles.appContainer} onContextMenu={handleContextMenu} role="application">
@@ -119,11 +120,13 @@ export default function App() {
     <ToastProvider>
       <ProjectProvider>
         <TokenProvider>
-          <DownloadsProvider>
-            <NightOrderProvider>
-              <AppContent />
-            </NightOrderProvider>
-          </DownloadsProvider>
+          <ScriptPdfProvider>
+            <DownloadsProvider>
+              <NightOrderProvider>
+                <AppContent />
+              </NightOrderProvider>
+            </DownloadsProvider>
+          </ScriptPdfProvider>
         </TokenProvider>
       </ProjectProvider>
     </ToastProvider>

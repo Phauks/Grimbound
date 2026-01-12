@@ -196,6 +196,7 @@ export {
 export type { ScriptSortOptions, SortOrder } from './scriptSorting.js';
 // Script sorting utilities
 export {
+  compareSAO,
   getScriptSortStats,
   isScriptJsonSortedBySAO,
   isScriptSortedBySAO,

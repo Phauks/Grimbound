@@ -19,6 +19,7 @@
 // Canvas Module
 // ============================================================================
 export {
+  type AccentCharacterData,
   type AccentDrawingOptions,
   applyAbilityTextShadow,
   applyConfigurableShadow,

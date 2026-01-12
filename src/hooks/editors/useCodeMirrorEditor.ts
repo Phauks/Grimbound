@@ -41,7 +41,7 @@ import {
   placeholder as placeholderExtension,
   rectangularSelection,
 } from '@codemirror/view';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { createCodeMirrorTheme } from '@/ts/ui/codemirrorTheme.js';
 
@@ -132,44 +132,40 @@ export function useCodeMirrorEditor(
   const { currentThemeId } = useTheme();
 
   // Create the update listener extension - uses refs to avoid stale closures
-  const updateListener = useMemo(() => {
-    return EditorView.updateListener.of((update) => {
-      if (update.docChanged && !isExternalUpdate.current) {
-        const newValue = update.state.doc.toString();
-        // Use ref to always call current onChange
-        onChangeRef.current?.(newValue);
+  const updateListener = EditorView.updateListener.of((update) => {
+    if (update.docChanged && !isExternalUpdate.current) {
+      const newValue = update.state.doc.toString();
+      // Use ref to always call current onChange
+      onChangeRef.current?.(newValue);
 
-        // Debounced JSON validation
-        if (onValidJsonRef.current) {
-          if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-          }
-          debounceTimerRef.current = setTimeout(() => {
-            try {
-              const parsed = JSON.parse(newValue);
-              onValidJsonRef.current?.(parsed);
-            } catch {
-              // Invalid JSON, don't call onValidJson
-            }
-          }, debounceMs);
+      // Debounced JSON validation
+      if (onValidJsonRef.current) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
         }
+        debounceTimerRef.current = setTimeout(() => {
+          try {
+            const parsed = JSON.parse(newValue);
+            onValidJsonRef.current?.(parsed);
+          } catch {
+            // Invalid JSON, don't call onValidJson
+          }
+        }, debounceMs);
       }
-    });
-  }, [debounceMs]); // Only depends on debounceMs now, callbacks accessed via refs
+    }
+  });
 
   // Create a custom JSON linter that doesn't show errors for empty content
-  const customJsonLinter = useMemo(() => {
-    return linter(
-      (view) => {
-        const content = view.state.doc.toString().trim();
-        // Don't lint empty content - no annoying errors when editor is empty
-        if (!content) return [];
-        // Use the built-in JSON parser for non-empty content
-        return jsonParseLinter()(view);
-      },
-      { delay: debounceMs }
-    );
-  }, [debounceMs]);
+  const customJsonLinter = linter(
+    (view) => {
+      const content = view.state.doc.toString().trim();
+      // Don't lint empty content - no annoying errors when editor is empty
+      if (!content) return [];
+      // Use the built-in JSON parser for non-empty content
+      return jsonParseLinter()(view);
+    },
+    { delay: debounceMs }
+  );
 
   // Create the editor - intentionally runs only on mount
   // Updates to value, theme, disabled, and placeholder are handled via compartments in separate useEffects
@@ -337,46 +333,39 @@ export function useCodeMirrorEditor(
     });
   }, [currentThemeId]);
 
-  // Update disabled state
+  // Update disabled state and placeholder (consolidated into single effect)
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
 
     view.dispatch({
-      effects: readOnlyCompartment.current.reconfigure([
-        EditorState.readOnly.of(disabled),
-        EditorView.editable.of(!disabled),
-      ]),
+      effects: [
+        readOnlyCompartment.current.reconfigure([
+          EditorState.readOnly.of(disabled),
+          EditorView.editable.of(!disabled),
+        ]),
+        placeholderCompartment.current.reconfigure(
+          placeholder ? placeholderExtension(placeholder) : []
+        ),
+      ],
     });
-  }, [disabled]);
-
-  // Update placeholder
-  useEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-
-    view.dispatch({
-      effects: placeholderCompartment.current.reconfigure(
-        placeholder ? placeholderExtension(placeholder) : []
-      ),
-    });
-  }, [placeholder]);
+  }, [disabled, placeholder]);
 
   // Undo/redo handlers
-  const triggerUndo = useCallback(() => {
+  const triggerUndo = () => {
     const view = viewRef.current;
     if (!view) return false;
     return undo(view);
-  }, []);
+  };
 
-  const triggerRedo = useCallback(() => {
+  const triggerRedo = () => {
     const view = viewRef.current;
     if (!view) return false;
     return redo(view);
-  }, []);
+  };
 
   // Open search panel programmatically
-  const openSearch = useCallback(() => {
+  const openSearch = () => {
     const view = viewRef.current;
     if (!view) return;
     // The search keymap includes openSearchPanel
@@ -384,7 +373,7 @@ export function useCodeMirrorEditor(
     import('@codemirror/search').then(({ openSearchPanel }) => {
       openSearchPanel(view);
     });
-  }, []);
+  };
 
   // Check undo/redo availability (simplified - always return true if view exists)
   // CodeMirror manages this internally, but we expose it for UI consistency

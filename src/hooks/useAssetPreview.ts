@@ -12,7 +12,7 @@ import { useAssetStorageService } from '@/contexts/ServiceContext';
 import { getBuiltInAsset, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
 import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
-import type { AssetType } from '@/ts/services/upload/types.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 
 // ============================================================================
 // Types
@@ -38,7 +38,7 @@ export interface UseAssetPreviewOptions {
   /** Current value: built-in ID, "asset:uuid", or "none" */
   value: string;
   /** Asset type for filtering built-in assets */
-  assetType: AssetType;
+  assetType: TypeTagValue;
   /** Label to show when value is "none" or empty */
   noneLabel?: string;
   /** Fallback label for direct paths */
@@ -68,7 +68,7 @@ function createNoneState(noneLabel: string): AssetPreviewState {
 }
 
 /** Try to resolve as built-in asset */
-function tryResolveBuiltIn(value: string, assetType: AssetType): AssetPreviewState | null {
+function tryResolveBuiltIn(value: string, assetType: TypeTagValue): AssetPreviewState | null {
   if (!isBuiltInAsset(value, assetType)) return null;
 
   const builtIn = getBuiltInAsset(value, assetType);
@@ -191,5 +191,3 @@ export function useAssetPreview({
     sourceLabel: SOURCE_LABELS[state.source],
   };
 }
-
-export default useAssetPreview;

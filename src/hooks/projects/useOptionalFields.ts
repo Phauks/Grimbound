@@ -9,7 +9,7 @@
  * @module hooks/projects/useOptionalFields
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Project } from '@/ts/types/project.js';
 
 // ============================================================================
@@ -142,40 +142,39 @@ export function useOptionalFields(): UseOptionalFieldsResult {
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [showAddDropdown, setShowAddDropdown] = useState(false);
 
-  // Field value map for lookup-based access
-  const fieldValues = useMemo<Record<string, string>>(
-    () => ({
-      privateNotes,
-      difficulty,
-      gameplay,
-      storytellerTips,
-      changelog,
-    }),
-    [privateNotes, difficulty, gameplay, storytellerTips, changelog]
-  );
+  // Field values ref (updated each render, accessed via stable ref)
+  const fieldValuesRef = useRef<Record<string, string>>({
+    privateNotes,
+    difficulty,
+    gameplay,
+    storytellerTips,
+    changelog,
+  });
+  // Keep ref current with latest values
+  fieldValuesRef.current = {
+    privateNotes,
+    difficulty,
+    gameplay,
+    storytellerTips,
+    changelog,
+  };
 
-  // Field setters map (stable reference)
-  const fieldSetters = useMemo<Record<string, (value: string) => void>>(
-    () => ({
-      privateNotes: setPrivateNotes,
-      difficulty: setDifficulty,
-      gameplay: setGameplay,
-      storytellerTips: setStorytellerTips,
-      changelog: setChangelog,
-    }),
-    []
-  );
+  // Field setters map (wrapped in ref for stable reference since setters are stable)
+  const fieldSettersRef = useRef<Record<string, (value: string) => void>>({
+    privateNotes: setPrivateNotes,
+    difficulty: setDifficulty,
+    gameplay: setGameplay,
+    storytellerTips: setStorytellerTips,
+    changelog: setChangelog,
+  });
 
-  const getValue = useCallback((key: string) => fieldValues[key] || '', [fieldValues]);
+  const getValue = (key: string) => fieldValuesRef.current[key] || '';
 
-  const setValue = useCallback(
-    (key: string, value: string) => {
-      fieldSetters[key]?.(value);
-    },
-    [fieldSetters]
-  );
+  const setValue = (key: string, value: string) => {
+    fieldSettersRef.current[key]?.(value);
+  };
 
-  const resetFromProject = useCallback((project: Project) => {
+  const resetFromProject = (project: Project) => {
     setPrivateNotes(project.privateNotes || '');
     setGameplay(project.gameplay || '');
     setDifficulty(project.difficulty || '');
@@ -183,40 +182,31 @@ export function useOptionalFields(): UseOptionalFieldsResult {
     setChangelog(project.changelog || '');
     setVisibleFields(getFieldsWithContent(project));
     setShowAddDropdown(false);
-  }, []);
+  };
 
-  const addField = useCallback((key: string) => {
+  const addField = (key: string) => {
     setVisibleFields((prev) => new Set([...prev, key]));
     setShowAddDropdown(false);
-  }, []);
+  };
 
-  const removeField = useCallback(
-    (key: string) => {
-      fieldSetters[key]?.('');
-      setVisibleFields((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    },
-    [fieldSetters]
-  );
+  const removeField = (key: string) => {
+    fieldSettersRef.current[key]?.('');
+    setVisibleFields((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
 
-  const availableFields = useMemo(
-    () => OPTIONAL_FIELDS_CONFIG.filter((f) => !visibleFields.has(f.key)),
-    [visibleFields]
-  );
+  const availableFields = OPTIONAL_FIELDS_CONFIG.filter((f) => !visibleFields.has(f.key));
 
-  const getValuesForSave = useCallback(
-    (): OptionalFieldValues => ({
-      privateNotes: privateNotes.trim() || undefined,
-      gameplay: gameplay.trim() || undefined,
-      difficulty: difficulty.trim() || undefined,
-      storytellerTips: storytellerTips.trim() || undefined,
-      changelog: changelog.trim() || undefined,
-    }),
-    [privateNotes, gameplay, difficulty, storytellerTips, changelog]
-  );
+  const getValuesForSave = (): OptionalFieldValues => ({
+    privateNotes: privateNotes.trim() || undefined,
+    gameplay: gameplay.trim() || undefined,
+    difficulty: difficulty.trim() || undefined,
+    storytellerTips: storytellerTips.trim() || undefined,
+    changelog: changelog.trim() || undefined,
+  });
 
   return {
     getValue,

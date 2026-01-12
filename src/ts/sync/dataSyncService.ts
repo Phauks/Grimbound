@@ -539,5 +539,3 @@ export class DataSyncService {
 
 // Export singleton instance
 export const dataSyncService = new DataSyncService();
-
-export default dataSyncService;

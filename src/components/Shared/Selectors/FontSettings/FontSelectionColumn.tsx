@@ -7,7 +7,7 @@
  * @module components/Shared/Selectors/FontSettings/FontSelectionColumn
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SourceTab, ViewMode } from '@/hooks/fonts/useFontFiltering';
 import styles from '@/styles/components/shared/FontDrawer.module.css';
 import type { FontCategory, FontDefinition } from '@/ts/types/fonts.js';
@@ -93,7 +93,7 @@ export interface FontSelectionColumnProps {
 // Component
 // ============================================================================
 
-export const FontSelectionColumn = memo(function FontSelectionColumn({
+export function FontSelectionColumn({
   searchQuery,
   onSearchChange,
   activeSource,
@@ -119,11 +119,7 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Create a stable filter key that changes when any filter changes
-  const filterKey = useMemo(
-    () =>
-      `${searchQuery}|${activeSource}|${Array.from(activeCategories).sort().join(',')}|${viewMode}`,
-    [searchQuery, activeSource, activeCategories, viewMode]
-  );
+  const filterKey = `${searchQuery}|${activeSource}|${Array.from(activeCategories).sort().join(',')}|${viewMode}`;
 
   // Track previous filter key to detect changes
   const prevFilterKeyRef = useRef(filterKey);
@@ -321,6 +317,4 @@ export const FontSelectionColumn = memo(function FontSelectionColumn({
       </div>
     </div>
   );
-});
-
-export default FontSelectionColumn;
+}

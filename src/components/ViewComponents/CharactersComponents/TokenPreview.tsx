@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '@/styles/components/characterEditor/TokenPreview.module.css';
 import type { Token } from '@/ts/types/index.js';
 import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping';
@@ -28,18 +28,15 @@ export function TokenPreview({
   const [startIndex, setStartIndex] = useState(0);
 
   // Group reminder tokens to show count badges for duplicates
-  const groupedReminders = useMemo(() => groupTokensByIdentity(reminderTokens), [reminderTokens]);
+  const groupedReminders = groupTokensByIdentity(reminderTokens);
 
   // Derive selected reminder from index - automatically updates when tokens regenerate
   const selectedReminder =
     selectedIndex !== null ? (groupedReminders[selectedIndex]?.token ?? null) : null;
 
   // Get image URLs for tokens (prefers dataUrl, falls back to canvas)
-  const characterImageUrl = useMemo(() => getTokenImageUrl(characterToken), [characterToken]);
-  const selectedReminderImageUrl = useMemo(
-    () => getTokenImageUrl(selectedReminder),
-    [selectedReminder]
-  );
+  const characterImageUrl = getTokenImageUrl(characterToken);
+  const selectedReminderImageUrl = getTokenImageUrl(selectedReminder);
 
   // Calculate visible reminders based on pagination (using grouped reminders)
   const visibleReminders = groupedReminders.slice(startIndex, startIndex + REMINDERS_PER_PAGE);

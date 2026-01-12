@@ -12,6 +12,7 @@ export {
 } from '@/ts/cache/instances/fontCache.js';
 // Accent drawing utilities
 export {
+  type AccentCharacterData,
   type AccentDrawingOptions,
   drawAccents,
 } from './accentDrawing.js';

@@ -4,17 +4,15 @@
  * Provides automatic state persistence with debouncing and snapshot management.
  * Monitors TokenContext for changes and saves to the active project.
  *
- * This hook orchestrates two separate hooks:
- * - useAutoSaveDetector: Watches for state changes and sets isDirty flag
- * - useAutoSaveTrigger: Watches isDirty flag and triggers debounced saves
+ * Uses the unified useAutoSave hook which detects changes AND triggers saves
+ * in a single effect, eliminating the previous effect chain.
  *
  * @module hooks/autosave/useProjectAutoSave
  */
 
 import { useEffect } from 'react';
 import { useProjectContext } from '@/contexts/ProjectContext.js';
-import { useAutoSaveDetector } from './useAutoSaveDetector.js';
-import { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
+import { useAutoSave } from './useAutoSave.js';
 
 /**
  * Auto-save hook for active project
@@ -33,11 +31,8 @@ import { useAutoSaveTrigger } from './useAutoSaveTrigger.js';
 export function useProjectAutoSave(enabled: boolean = true) {
   const { currentProject } = useProjectContext();
 
-  // Detect state changes → sets isDirty flag
-  useAutoSaveDetector();
-
-  // Watch isDirty flag → trigger debounced saves
-  const { saveNow, conflictModalProps, telemetry } = useAutoSaveTrigger(enabled);
+  // Unified auto-save: detects changes and triggers saves in one effect
+  const { saveNow, conflictModalProps, telemetry } = useAutoSave(enabled);
 
   return {
     saveNow,

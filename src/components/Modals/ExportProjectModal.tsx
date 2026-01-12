@@ -6,7 +6,7 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
@@ -37,7 +37,7 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
   const [error, setError] = useState<string | null>(null);
 
   // Estimate file size
-  const estimatedSize = useMemo(() => {
+  const estimatedSize = (() => {
     if (!project) return '0 KB';
 
     // Rough estimation
@@ -70,10 +70,10 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
     } else {
       return `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
     }
-  }, [project, options]);
+  })();
 
   // Handle export
-  const handleExport = useCallback(async () => {
+  const handleExport = async () => {
     if (!project) return;
 
     setIsExporting(true);
@@ -116,16 +116,16 @@ export function ExportProjectModal({ isOpen, onClose, project }: ExportProjectMo
       setIsExporting(false);
       setProgress(0);
     }
-  }, [project, options, onClose, createExporter]);
+  };
 
   // Reset state when modal closes
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     if (!isExporting) {
       setError(null);
       setProgress(0);
       onClose();
     }
-  }, [isExporting, onClose]);
+  };
 
   if (!project) return null;
 

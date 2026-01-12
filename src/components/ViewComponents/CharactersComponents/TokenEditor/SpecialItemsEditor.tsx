@@ -7,7 +7,6 @@
  * @module components/CharactersComponents/TokenEditor/SpecialItemsEditor
  */
 
-import { memo, useCallback } from 'react';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import type { Character } from '@/ts/types/index.js';
 import {
@@ -60,13 +59,7 @@ interface SpecialItemCardProps {
   onRemove: () => void;
 }
 
-const SpecialItemCard = memo(function SpecialItemCard({
-  item,
-  index,
-  disabled,
-  onUpdate,
-  onRemove,
-}: SpecialItemCardProps) {
+function SpecialItemCard({ item, index, disabled, onUpdate, onRemove }: SpecialItemCardProps) {
   const itemType = String(item.type || 'selection');
   const itemName = String(item.name || '');
   const itemValue = item.value !== undefined ? String(item.value) : '';
@@ -181,58 +174,45 @@ const SpecialItemCard = memo(function SpecialItemCard({
       </div>
     </div>
   );
-});
+}
 
 /**
  * Editor for special items array.
  */
-export const SpecialItemsEditor = memo(function SpecialItemsEditor({
-  character,
-  disabled,
-  onEditChange,
-}: SpecialItemsEditorProps) {
+export function SpecialItemsEditor({ character, disabled, onEditChange }: SpecialItemsEditorProps) {
   const specialArray = getSpecialArray(character);
 
-  const updateSpecialArray = useCallback(
-    (newArray: SpecialItem[]) => {
-      // Cast to handle 'special' field which exists on CharacterWithSpecial
-      (onEditChange as (field: string, value: unknown) => void)('special', newArray);
-    },
-    [onEditChange]
-  );
+  const updateSpecialArray = (newArray: SpecialItem[]) => {
+    // Cast to handle 'special' field which exists on CharacterWithSpecial
+    (onEditChange as (field: string, value: unknown) => void)('special', newArray);
+  };
 
-  const handleUpdateItem = useCallback(
-    (index: number, item: SpecialItem, updates: Partial<SpecialItem>) => {
-      if (disabled) return;
+  const handleUpdateItem = (index: number, item: SpecialItem, updates: Partial<SpecialItem>) => {
+    if (disabled) return;
 
-      const newItem: SpecialItem = { ...item, ...updates };
-      // Remove empty optional fields
-      if (!newItem.value && newItem.value !== 0) delete newItem.value;
-      if (!newItem.time) delete newItem.time;
-      if (!newItem.global) delete newItem.global;
+    const newItem: SpecialItem = { ...item, ...updates };
+    // Remove empty optional fields
+    if (!newItem.value && newItem.value !== 0) delete newItem.value;
+    if (!newItem.time) delete newItem.time;
+    if (!newItem.global) delete newItem.global;
 
-      const newArray = [...specialArray];
-      newArray[index] = newItem;
-      updateSpecialArray(newArray);
-    },
-    [disabled, specialArray, updateSpecialArray]
-  );
+    const newArray = [...specialArray];
+    newArray[index] = newItem;
+    updateSpecialArray(newArray);
+  };
 
-  const handleRemoveItem = useCallback(
-    (index: number) => {
-      if (disabled) return;
-      const newArray = [...specialArray];
-      newArray.splice(index, 1);
-      updateSpecialArray(newArray);
-    },
-    [disabled, specialArray, updateSpecialArray]
-  );
+  const handleRemoveItem = (index: number) => {
+    if (disabled) return;
+    const newArray = [...specialArray];
+    newArray.splice(index, 1);
+    updateSpecialArray(newArray);
+  };
 
-  const handleAddItem = useCallback(() => {
+  const handleAddItem = () => {
     if (disabled) return;
     const newArray: SpecialItem[] = [...specialArray, { type: 'selection', name: 'grimoire' }];
     updateSpecialArray(newArray);
-  }, [disabled, specialArray, updateSpecialArray]);
+  };
 
   return (
     <div className={styles.formGroup}>
@@ -274,6 +254,4 @@ export const SpecialItemsEditor = memo(function SpecialItemsEditor({
       </button>
     </div>
   );
-});
-
-export default SpecialItemsEditor;
+}

@@ -11,7 +11,7 @@
  * @module hooks/studio/useAssetUIState
  */
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 // ============================================================================
 // Types
@@ -51,27 +51,27 @@ export function useAssetUIState(): UseAssetUIStateResult {
   const [processingMessage, setProcessingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const startProcessing = useCallback((message: string) => {
+  const startProcessing = (message: string) => {
     setIsProcessing(true);
     setProcessingMessage(message);
     setError(null);
-  }, []);
+  };
 
-  const endProcessing = useCallback(() => {
+  const endProcessing = () => {
     setIsProcessing(false);
     setProcessingMessage('');
-  }, []);
+  };
 
-  const clearError = useCallback(() => {
+  const clearError = () => {
     setError(null);
-  }, []);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     setIsLoading(false);
     setIsProcessing(false);
     setProcessingMessage('');
     setError(null);
-  }, []);
+  };
 
   return {
     isLoading,
@@ -87,5 +87,3 @@ export function useAssetUIState(): UseAssetUIStateResult {
     reset,
   };
 }
-
-export default useAssetUIState;

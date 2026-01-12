@@ -15,7 +15,7 @@
  * @module components/Shared/ColorPreviewSelector
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { drawSliderToggle } from '@/components/Shared/Controls/CanvasSlider';
 import { useExpandablePanel, useRecentColors } from '@/hooks';
@@ -62,7 +62,7 @@ export interface ColorPreviewSelectorProps {
 // Color Preview Component
 // ============================================================================
 
-const ColorSwatch = memo(function ColorSwatch({
+function ColorSwatch({
   color,
   size,
   onClick,
@@ -95,13 +95,13 @@ const ColorSwatch = memo(function ColorSwatch({
       {isLight && <div className={styles.swatchBorder} />}
     </button>
   );
-});
+}
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export const ColorPreviewSelector = memo(function ColorPreviewSelector({
+export function ColorPreviewSelector({
   value,
   onChange,
   onPreviewChange,
@@ -126,13 +126,10 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   const [hsvInputs, setHsvInputs] = useState({ h: '0', s: '100', v: '100' });
 
   // Wrap onChange to track recent colors
-  const handleApply = useCallback(
-    (color: string) => {
-      addRecentColor(color);
-      onChange(color);
-    },
-    [onChange, addRecentColor]
-  );
+  const handleApply = (color: string) => {
+    addRecentColor(color);
+    onChange(color);
+  };
 
   // Use the shared expandable panel hook
   const panel = useExpandablePanel<string>({
@@ -311,176 +308,149 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
   }, [draggingSlider, hue, saturation, brightness, panel]);
 
   // Update all state from a hex color
-  const updateFromHex = useCallback(
-    (hex: string) => {
-      panel.updatePending(hex);
-      setHexInput(hex);
-      const hsv = hexToHsv(hex);
-      setHue(hsv.h);
-      setSaturation(hsv.s);
-      setBrightness(hsv.v);
-      setHsvInputs({
-        h: String(Math.round(hsv.h)),
-        s: String(Math.round(hsv.s)),
-        v: String(Math.round(hsv.v)),
-      });
-      const rgb = parseHexColor(hex);
-      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
-    },
-    [panel]
-  );
+  const updateFromHex = (hex: string) => {
+    panel.updatePending(hex);
+    setHexInput(hex);
+    const hsv = hexToHsv(hex);
+    setHue(hsv.h);
+    setSaturation(hsv.s);
+    setBrightness(hsv.v);
+    setHsvInputs({
+      h: String(Math.round(hsv.h)),
+      s: String(Math.round(hsv.s)),
+      v: String(Math.round(hsv.v)),
+    });
+    const rgb = parseHexColor(hex);
+    setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+  };
 
   // Update color from HSV values
-  const updateFromHsv = useCallback(
-    (h: number, s: number, v: number) => {
-      const hex = hsvToHex(h, s, v);
-      panel.updatePending(hex);
-      setHexInput(hex);
-      setHue(h);
-      setSaturation(s);
-      setBrightness(v);
-      setHsvInputs({
-        h: String(Math.round(h)),
-        s: String(Math.round(s)),
-        v: String(Math.round(v)),
-      });
-      const rgb = parseHexColor(hex);
-      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
-    },
-    [panel]
-  );
+  const updateFromHsv = (h: number, s: number, v: number) => {
+    const hex = hsvToHex(h, s, v);
+    panel.updatePending(hex);
+    setHexInput(hex);
+    setHue(h);
+    setSaturation(s);
+    setBrightness(v);
+    setHsvInputs({
+      h: String(Math.round(h)),
+      s: String(Math.round(s)),
+      v: String(Math.round(v)),
+    });
+    const rgb = parseHexColor(hex);
+    setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+  };
 
   // Handle mousedown on the Hue slider (starts drag)
-  const handleHueSliderMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = hueSliderRef.current;
-      if (!canvas) return;
+  const handleHueSliderMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = hueSliderRef.current;
+    if (!canvas) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const newHue = (x / rect.width) * 360;
-      updateFromHsv(newHue, saturation, brightness);
-      setDraggingSlider('hue');
-    },
-    [saturation, brightness, updateFromHsv]
-  );
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const newHue = (x / rect.width) * 360;
+    updateFromHsv(newHue, saturation, brightness);
+    setDraggingSlider('hue');
+  };
 
   // Handle mousedown on the Saturation slider (starts drag)
-  const handleSatSliderMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = satSliderRef.current;
-      if (!canvas) return;
+  const handleSatSliderMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = satSliderRef.current;
+    if (!canvas) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const newSat = (x / rect.width) * 100;
-      updateFromHsv(hue, newSat, brightness);
-      setDraggingSlider('sat');
-    },
-    [hue, brightness, updateFromHsv]
-  );
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const newSat = (x / rect.width) * 100;
+    updateFromHsv(hue, newSat, brightness);
+    setDraggingSlider('sat');
+  };
 
   // Handle mousedown on the Value slider (starts drag)
-  const handleValueSliderMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = valueSliderRef.current;
-      if (!canvas) return;
+  const handleValueSliderMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = valueSliderRef.current;
+    if (!canvas) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const newValue = (x / rect.width) * 100;
-      updateFromHsv(hue, saturation, newValue);
-      setDraggingSlider('val');
-    },
-    [hue, saturation, updateFromHsv]
-  );
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const newValue = (x / rect.width) * 100;
+    updateFromHsv(hue, saturation, newValue);
+    setDraggingSlider('val');
+  };
 
   // Handle HSV input changes
-  const handleHsvInputChange = useCallback(
-    (channel: 'h' | 's' | 'v', val: string) => {
-      const newHsv = { ...hsvInputs, [channel]: val };
-      setHsvInputs(newHsv);
+  const handleHsvInputChange = (channel: 'h' | 's' | 'v', val: string) => {
+    const newHsv = { ...hsvInputs, [channel]: val };
+    setHsvInputs(newHsv);
 
-      const h = parseFloat(newHsv.h);
-      const s = parseFloat(newHsv.s);
-      const v = parseFloat(newHsv.v);
+    const h = parseFloat(newHsv.h);
+    const s = parseFloat(newHsv.s);
+    const v = parseFloat(newHsv.v);
 
-      if (!(Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(v))) {
-        const clampedH = Math.max(0, Math.min(360, h));
-        const clampedS = Math.max(0, Math.min(100, s));
-        const clampedV = Math.max(0, Math.min(100, v));
+    if (!(Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(v))) {
+      const clampedH = Math.max(0, Math.min(360, h));
+      const clampedS = Math.max(0, Math.min(100, s));
+      const clampedV = Math.max(0, Math.min(100, v));
 
-        const hex = hsvToHex(clampedH, clampedS, clampedV);
-        panel.updatePending(hex);
-        setHexInput(hex);
-        setHue(clampedH);
-        setSaturation(clampedS);
-        setBrightness(clampedV);
-        const rgb = parseHexColor(hex);
-        setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
-      }
-    },
-    [hsvInputs, panel]
-  );
+      const hex = hsvToHex(clampedH, clampedS, clampedV);
+      panel.updatePending(hex);
+      setHexInput(hex);
+      setHue(clampedH);
+      setSaturation(clampedS);
+      setBrightness(clampedV);
+      const rgb = parseHexColor(hex);
+      setRgbInputs({ r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) });
+    }
+  };
 
   // Handle hex input change
-  const handleHexInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      let val = e.target.value.toUpperCase();
-      if (val && !val.startsWith('#')) {
-        val = `#${val}`;
-      }
-      setHexInput(val);
+  const handleHexInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.toUpperCase();
+    if (val && !val.startsWith('#')) {
+      val = `#${val}`;
+    }
+    setHexInput(val);
 
-      if (/^#[0-9A-F]{6}$/i.test(val)) {
-        updateFromHex(val);
-      }
-    },
-    [updateFromHex]
-  );
+    if (/^#[0-9A-F]{6}$/i.test(val)) {
+      updateFromHex(val);
+    }
+  };
 
   // Handle RGB input changes
-  const handleRgbChange = useCallback(
-    (channel: 'r' | 'g' | 'b', val: string) => {
-      const newRgb = { ...rgbInputs, [channel]: val };
-      setRgbInputs(newRgb);
+  const handleRgbChange = (channel: 'r' | 'g' | 'b', val: string) => {
+    const newRgb = { ...rgbInputs, [channel]: val };
+    setRgbInputs(newRgb);
 
-      const r = parseInt(newRgb.r, 10);
-      const g = parseInt(newRgb.g, 10);
-      const b = parseInt(newRgb.b, 10);
+    const r = parseInt(newRgb.r, 10);
+    const g = parseInt(newRgb.g, 10);
+    const b = parseInt(newRgb.b, 10);
 
-      if (!(Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b))) {
-        if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
-          const hex = rgbToHex(r, g, b);
-          panel.updatePending(hex);
-          setHexInput(hex);
-          const hsv = hexToHsv(hex);
-          setHue(hsv.h);
-          setSaturation(hsv.s);
-          setBrightness(hsv.v);
-          setHsvInputs({
-            h: String(Math.round(hsv.h)),
-            s: String(Math.round(hsv.s)),
-            v: String(Math.round(hsv.v)),
-          });
-        }
+    if (!(Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b))) {
+      if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+        const hex = rgbToHex(r, g, b);
+        panel.updatePending(hex);
+        setHexInput(hex);
+        const hsv = hexToHsv(hex);
+        setHue(hsv.h);
+        setSaturation(hsv.s);
+        setBrightness(hsv.v);
+        setHsvInputs({
+          h: String(Math.round(hsv.h)),
+          s: String(Math.round(hsv.s)),
+          v: String(Math.round(hsv.v)),
+        });
       }
-    },
-    [rgbInputs, panel]
-  );
+    }
+  };
 
   const displayColor = panel.isExpanded ? panel.pendingValue : value;
 
   // Handle preset selection
-  const handlePresetClick = useCallback(
-    (presetValue: string) => {
-      updateFromHex(presetValue);
-    },
-    [updateFromHex]
-  );
+  const handlePresetClick = (presetValue: string) => {
+    updateFromHex(presetValue);
+  };
 
   // Handle EyeDropper color picker
-  const handleEyeDropper = useCallback(async () => {
+  const handleEyeDropper = async () => {
     if (!isEyeDropperSupported) return;
 
     try {
@@ -493,16 +463,16 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
     } catch {
       // User cancelled or error - do nothing
     }
-  }, [updateFromHex]);
+  };
 
   // Handle randomize color
-  const handleRandomize = useCallback(() => {
+  const handleRandomize = () => {
     const randomHex = `#${Math.floor(Math.random() * 16777215)
       .toString(16)
       .padStart(6, '0')
       .toUpperCase()}`;
     updateFromHex(randomHex);
-  }, [updateFromHex]);
+  };
 
   // Use hexInput for display during dragging (it updates live), fall back to panel.pendingValue
   const displayPendingColor = hexInput || panel.pendingValue;
@@ -775,10 +745,8 @@ export const ColorPreviewSelector = memo(function ColorPreviewSelector({
       {renderPanel()}
     </div>
   );
-});
+}
 
 // Re-export types and presets for backwards compatibility
 export { DEFAULT_COLOR_PRESETS as DEFAULT_PRESETS };
 export type { ColorPreset };
-
-export default ColorPreviewSelector;

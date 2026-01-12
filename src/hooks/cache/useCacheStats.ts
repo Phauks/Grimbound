@@ -247,7 +247,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
   /**
    * Clear all caches
    */
-  const clearAllCaches = useCallback(async () => {
+  const clearAllCaches = async () => {
     try {
       // Clear image cache
       globalImageCache.clear();
@@ -260,12 +260,12 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
     } catch (error) {
       logger.error('useCacheStats', 'Failed to clear caches:', error);
     }
-  }, [assetStorageService, refresh]);
+  };
 
   /**
    * Export cache report as JSON
    */
-  const exportReport = useCallback(() => {
+  const exportReport = () => {
     const report = {
       timestamp: new Date().toISOString(),
       stats,
@@ -298,7 +298,7 @@ export function useCacheStats(options: UseCacheStatsOptions = {}) {
     a.download = `cache-report-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [stats]);
+  };
 
   // Auto-refresh on interval
   useEffect(() => {

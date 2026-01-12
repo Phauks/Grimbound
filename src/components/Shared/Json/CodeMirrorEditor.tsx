@@ -13,7 +13,7 @@
  * - Undo/redo history (Ctrl+Z / Ctrl+Y)
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCodeMirrorEditor } from '@/hooks';
 import styles from '@/styles/components/shared/CodeMirrorEditor.module.css';
 
@@ -109,28 +109,25 @@ export function CodeMirrorEditor({
   }, [triggerUndo, triggerRedo, openSearch]);
 
   // Handle drag and drop for JSON files
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      const file = e.dataTransfer.files[0];
-      if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
-        try {
-          const text = await file.text();
-          onChange(text);
-        } catch {
-          // Failed to read file, ignore
-        }
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
+      try {
+        const text = await file.text();
+        onChange(text);
+      } catch {
+        // Failed to read file, ignore
       }
-    },
-    [onChange]
-  );
+    }
+  };
 
   return (
     <div

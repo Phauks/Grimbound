@@ -25,10 +25,9 @@ export {
 export {
   type AutoSaveTelemetry,
   type AutoSaveTelemetryStats,
-  useAutoSaveDetector,
+  useAutoSave,
   useAutoSavePreference,
   useAutoSaveTelemetry,
-  useAutoSaveTrigger,
   useProjectAutoSave,
   useUnsavedChangesWarning,
 } from './autosave/index.js';

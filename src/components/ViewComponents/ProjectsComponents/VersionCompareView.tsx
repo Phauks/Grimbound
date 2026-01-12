@@ -9,7 +9,7 @@
  * differences including inline word-level diffs for text fields.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import styles from '@/styles/components/projects/VersionCompareView.module.css';
 import { getTeamHexColor, TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team } from '@/ts/types/index';
@@ -64,21 +64,15 @@ export function VersionCompareView({
   const [expandedCharacters, setExpandedCharacters] = useState<Set<string>>(new Set());
 
   // Calculate the detailed diff between current and version states
-  const detailedDiff = useMemo(
-    () => calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState),
-    [currentState, compareVersion.stateSnapshot]
-  );
+  const detailedDiff = calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState);
 
   // Also calculate simple diff for summary (reuses existing logic)
-  const diff = useMemo(
-    () => calculateProjectDiff(compareVersion.stateSnapshot, currentState),
-    [currentState, compareVersion.stateSnapshot]
-  );
+  const diff = calculateProjectDiff(compareVersion.stateSnapshot, currentState);
 
-  const summary = useMemo(() => getDiffSummary(diff), [diff]);
+  const summary = getDiffSummary(diff);
 
   // Toggle expanded state for a character
-  const toggleExpanded = useCallback((characterId: string) => {
+  const toggleExpanded = (characterId: string) => {
     setExpandedCharacters((prev) => {
       const next = new Set(prev);
       if (next.has(characterId)) {
@@ -88,7 +82,7 @@ export function VersionCompareView({
       }
       return next;
     });
-  }, []);
+  };
 
   return (
     <div className={styles.container}>

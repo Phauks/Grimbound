@@ -1,0 +1,310 @@
+/**
+ * ScriptPdfDrawer Styles
+ *
+ * Styles for the unified script PDF settings drawer.
+ * Extends the base SettingsDrawer styles with tab navigation
+ * and settings-specific layouts.
+ */
+
+/* ============================================================================
+   Tab Bar - Horizontal Tab Navigation
+   ============================================================================ */
+
+.tabBar {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border-radius: 6px;
+}
+
+.tab {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #888);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text-primary, #f0f0f0);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tabActive {
+  color: var(--text-primary, #f0f0f0);
+  background: var(--color-accent, #8b5cf6);
+}
+
+.tabActive:hover {
+  background: var(--color-accent-hover, #7c3aed);
+}
+
+/* ============================================================================
+   Drawer Body - Single Column Layout
+   ============================================================================ */
+
+.drawerBody {
+  padding: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tabContent {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ============================================================================
+   Section Styling
+   ============================================================================ */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #888);
+  margin: 0 0 0.25rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+/* ============================================================================
+   Form Controls
+   ============================================================================ */
+
+/* Checkbox Labels */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary, #f0f0f0);
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.checkboxLabel:hover {
+  color: var(--color-accent, #8b5cf6);
+}
+
+.checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent, #8b5cf6);
+  cursor: pointer;
+}
+
+/* Radio Group */
+.radioGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+.radioGroupLabel {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #ccc);
+  margin-right: 0.25rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-primary, #f0f0f0);
+  cursor: pointer;
+}
+
+.radioLabel:hover {
+  color: var(--color-accent, #8b5cf6);
+}
+
+.radio {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent, #8b5cf6);
+  cursor: pointer;
+}
+
+/* Labels */
+.label {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #ccc);
+  min-width: 3rem;
+}
+
+/* ============================================================================
+   Margin Controls
+   ============================================================================ */
+
+.marginGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.marginField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slider {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--color-accent, #8b5cf6);
+  cursor: pointer;
+}
+
+.sliderValue {
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted, #888);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* ============================================================================
+   Background Preview
+   ============================================================================ */
+
+.backgroundPreview {
+  padding: 0.75rem;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+}
+
+.placeholderText {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.colorSwatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+
+/* ============================================================================
+   Color Presets & Picker
+   ============================================================================ */
+
+.colorPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.colorPreset {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.colorPreset:hover {
+  transform: scale(1.1);
+  border-color: var(--text-muted, #888);
+}
+
+.colorPresetActive {
+  border-color: var(--color-accent, #8b5cf6);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 0 0 2px var(--color-accent, #8b5cf6);
+}
+
+.colorPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.colorPicker {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.colorPicker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorPicker::-webkit-color-swatch {
+  border-radius: 4px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+}
+
+.colorInput {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  color: var(--text-primary, #f0f0f0);
+  text-transform: uppercase;
+}
+
+.colorInput:focus {
+  outline: none;
+  border-color: var(--color-accent, #8b5cf6);
+}
+
+/* ============================================================================
+   Responsive Adjustments
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .marginGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .radioGroup {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .drawerBody {
+    max-height: 300px;
+  }
+}

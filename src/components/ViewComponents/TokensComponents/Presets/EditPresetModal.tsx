@@ -5,7 +5,7 @@
  * Migrated to use unified Modal and Button components.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormGroup, Input } from '@/components/Shared/Form';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
@@ -33,12 +33,16 @@ export function EditPresetModal({
   const [presetDescription, setPresetDescription] = useState(preset.description || '');
   const [presetIcon, setPresetIcon] = useState(preset.icon);
 
-  // Reset form when preset changes
-  useEffect(() => {
+  // Track previous preset for render-time comparison (React's recommended pattern)
+  const [prevPresetId, setPrevPresetId] = useState(preset.id);
+
+  // Sync form fields during render when preset changes (faster than useEffect)
+  if (preset.id !== prevPresetId) {
+    setPrevPresetId(preset.id);
     setPresetName(preset.name);
     setPresetDescription(preset.description || '');
     setPresetIcon(preset.icon);
-  }, [preset]);
+  }
 
   const handleSave = () => {
     if (!presetName.trim()) return;

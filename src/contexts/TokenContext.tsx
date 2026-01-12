@@ -132,6 +132,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
 
   // Get metadata for a character
   // If no metadata exists, dynamically compute idLinkedToName based on whether id === nameToId(name)
+  // useCallback required: exposed in context value
   const getMetadata = useCallback(
     (uuid: string): CharacterMetadata => {
       const existing = characterMetadata.get(uuid);
@@ -154,6 +155,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
   );
 
   // Set or update metadata for a character
+  // useCallback required: exposed in context value
   const setMetadataForChar = useCallback((uuid: string, metadata: Partial<CharacterMetadata>) => {
     setCharacterMetadata((prev) => {
       const newMap = new Map(prev);
@@ -164,6 +166,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
   }, []);
 
   // Delete metadata for a character
+  // useCallback required: exposed in context value
   const deleteMetadata = useCallback((uuid: string) => {
     setCharacterMetadata((prev) => {
       const newMap = new Map(prev);
@@ -173,16 +176,19 @@ export function TokenProvider({ children }: TokenProviderProps) {
   }, []);
 
   // Clear all metadata (e.g., when loading a new script)
+  // useCallback required: exposed in context value
   const clearAllMetadata = useCallback(() => {
     setCharacterMetadata(new Map());
   }, []);
 
   // Character enable/disable helpers
+  // useCallback required: exposed in context value
   const isCharacterEnabled = useCallback(
     (uuid: string): boolean => isCharEnabled(uuid, characterMetadata),
     [characterMetadata]
   );
 
+  // useCallback required: exposed in context value
   const setCharacterEnabled = useCallback((uuid: string, enabled: boolean) => {
     setCharacterMetadata((prev) => {
       const newMap = new Map(prev);
@@ -195,6 +201,7 @@ export function TokenProvider({ children }: TokenProviderProps) {
     setLastGeneratedJsonHash(null);
   }, []);
 
+  // useCallback required: exposed in context value
   const setAllCharactersEnabled = useCallback(
     (enabled: boolean) => {
       setCharacterMetadata((prev) => {
@@ -212,17 +219,18 @@ export function TokenProvider({ children }: TokenProviderProps) {
     [characters]
   );
 
+  // useCallback required: exposed in context value
   const getEnabledCharacters = useCallback(
     (): Character[] => filterEnabledCharacters(characters, characterMetadata),
     [characters, characterMetadata]
   );
 
-  // Memoized derived values for performance
+  // Derived values
+  // useMemo required: these are exposed in context and may be used as useEffect dependencies by consumers
   const enabledCharacterUuids = useMemo(
     () => getEnabledCharacterUuids(characters, characterMetadata),
     [characters, characterMetadata]
   );
-
   const characterSelectionSummary = useMemo(
     () => getCharacterSelectionSummary(characters, characterMetadata),
     [characters, characterMetadata]
@@ -245,57 +253,93 @@ export function TokenProvider({ children }: TokenProviderProps) {
   const [exampleCharacterToken, setExampleCharacterToken] = useState<Token | null>(null);
   const [exampleMetaToken, setExampleMetaToken] = useState<Token | null>(null);
 
+  // useCallback required: exposed in context value
   const updateGenerationOptions = useCallback((options: Partial<GenerationOptions>) => {
     setGenerationOptions((prev) => ({ ...prev, ...options }));
   }, []);
 
+  // useCallback required: exposed in context value
   const updateFilters = useCallback((newFilters: Partial<typeof filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
 
-  const value: TokenContextType = {
-    tokens,
-    setTokens,
-    characters,
-    setCharacters,
-    officialData,
-    setOfficialData,
-    characterMetadata,
-    getMetadata,
-    setMetadata: setMetadataForChar,
-    deleteMetadata,
-    clearAllMetadata,
-    isCharacterEnabled,
-    setCharacterEnabled,
-    setAllCharactersEnabled,
-    getEnabledCharacters,
-    enabledCharacterUuids,
-    characterSelectionSummary,
-    scriptMeta,
-    setScriptMeta,
-    generationOptions,
-    updateGenerationOptions,
-    jsonInput,
-    setJsonInput,
-    filters,
-    updateFilters,
-    exampleCharacterToken,
-    setExampleCharacterToken,
-    exampleMetaToken,
-    setExampleMetaToken,
-    isLoading,
-    setIsLoading,
-    error,
-    setError,
-    warnings,
-    setWarnings,
-    generationProgress,
-    setGenerationProgress,
-    lastGeneratedJsonHash,
-    setLastGeneratedJsonHash,
-    syncStatus,
-    isSyncInitialized,
-  };
+  // useMemo required: context value object must be stable to prevent consumer re-renders
+  const value: TokenContextType = useMemo(
+    () => ({
+      tokens,
+      setTokens,
+      characters,
+      setCharacters,
+      officialData,
+      setOfficialData,
+      characterMetadata,
+      getMetadata,
+      setMetadata: setMetadataForChar,
+      deleteMetadata,
+      clearAllMetadata,
+      isCharacterEnabled,
+      setCharacterEnabled,
+      setAllCharactersEnabled,
+      getEnabledCharacters,
+      enabledCharacterUuids,
+      characterSelectionSummary,
+      scriptMeta,
+      setScriptMeta,
+      generationOptions,
+      updateGenerationOptions,
+      jsonInput,
+      setJsonInput,
+      filters,
+      updateFilters,
+      exampleCharacterToken,
+      setExampleCharacterToken,
+      exampleMetaToken,
+      setExampleMetaToken,
+      isLoading,
+      setIsLoading,
+      error,
+      setError,
+      warnings,
+      setWarnings,
+      generationProgress,
+      setGenerationProgress,
+      lastGeneratedJsonHash,
+      setLastGeneratedJsonHash,
+      syncStatus,
+      isSyncInitialized,
+    }),
+    [
+      tokens,
+      characters,
+      officialData,
+      characterMetadata,
+      getMetadata,
+      setMetadataForChar,
+      deleteMetadata,
+      clearAllMetadata,
+      isCharacterEnabled,
+      setCharacterEnabled,
+      setAllCharactersEnabled,
+      getEnabledCharacters,
+      enabledCharacterUuids,
+      characterSelectionSummary,
+      scriptMeta,
+      generationOptions,
+      updateGenerationOptions,
+      jsonInput,
+      filters,
+      updateFilters,
+      exampleCharacterToken,
+      exampleMetaToken,
+      isLoading,
+      error,
+      warnings,
+      generationProgress,
+      lastGeneratedJsonHash,
+      syncStatus,
+      isSyncInitialized,
+    ]
+  );
 
   return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;
 }

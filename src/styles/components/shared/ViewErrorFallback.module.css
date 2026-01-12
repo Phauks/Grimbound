@@ -1,9 +1,13 @@
 /**
- * ViewErrorFallback Styles
+ * UnifiedErrorDisplay Styles
  *
- * Styles for the error fallback UI displayed in View components.
+ * Unified styles for error fallback UI across all contexts:
+ * - view: Default for ErrorBoundary fallbacks within views
+ * - app: Full-page display for top-level app errors
+ * - minimal: Compact display without technical details
  */
 
+/* ---- Base Container ---- */
 .container {
   display: flex;
   align-items: center;
@@ -12,6 +16,19 @@
   padding: 2rem;
   background: var(--bg-secondary, #1a1a2e);
   border-radius: 8px;
+}
+
+/* ---- App Variant: Full-page error ---- */
+.appVariant {
+  min-height: 100vh;
+  border-radius: 0;
+  background: var(--bg-main, #1a1a1a);
+}
+
+/* ---- Minimal Variant: Compact inline ---- */
+.minimalVariant {
+  min-height: auto;
+  padding: 1rem;
 }
 
 .content {
@@ -157,4 +174,53 @@
   color: var(--text-primary, #fff);
   background: var(--bg-tertiary, #2a2a3e);
   border-color: var(--border-color-hover, #4a4a5e);
+}
+
+/* ---- Reload Button (app variant) ---- */
+.reloadButton {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #a0a0a0);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border-color, #3a3a4e);
+  border-radius: 6px;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.reloadButton:hover {
+  background: var(--bg-tertiary, #2a2a3e);
+  border-color: var(--border-color-hover, #4a4a5e);
+}
+
+/* ---- Console Hint (app variant) ---- */
+.consoleHint {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, #808080);
+}
+
+/* ---- Minimal Variant Adjustments ---- */
+.minimalVariant .title {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.minimalVariant .message {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.minimalVariant .actions {
+  margin-bottom: 0;
+}
+
+/* ---- Flex wrap for action buttons on narrow screens ---- */
+@media (max-width: 480px) {
+  .actions {
+    flex-wrap: wrap;
+  }
 }

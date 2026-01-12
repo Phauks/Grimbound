@@ -105,7 +105,6 @@ export const TEAM_SELECT_CLASS_MAP: Record<string, string> = {
   minion: 'teamMinion',
   demon: 'teamDemon',
   traveller: 'teamTraveller',
-  traveler: 'teamTraveller',
   fabled: 'teamFabled',
   loric: 'teamLoric',
 };

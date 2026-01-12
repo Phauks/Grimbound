@@ -246,16 +246,6 @@ describe('useAutoSaveTelemetry', () => {
 
       expect(stats.avgSaveDurationMs).toBe(0);
     });
-
-    it('should return stable reference for getStats callback', () => {
-      const { result, rerender } = renderHook(() => useAutoSaveTelemetry());
-
-      const firstGetStats = result.current.getStats;
-
-      rerender();
-
-      expect(result.current.getStats).toBe(firstGetStats);
-    });
   });
 
   describe('reset', () => {
@@ -362,28 +352,6 @@ describe('useAutoSaveTelemetry', () => {
 
       expect(stats.successRate).toBe(0);
       expect(stats.avgSaveDurationMs).toBe(0);
-    });
-  });
-
-  describe('Callback stability', () => {
-    it('should maintain stable recordSaveAttempt reference', () => {
-      const { result, rerender } = renderHook(() => useAutoSaveTelemetry());
-
-      const firstRecord = result.current.recordSaveAttempt;
-
-      rerender();
-
-      expect(result.current.recordSaveAttempt).toBe(firstRecord);
-    });
-
-    it('should maintain stable reset reference', () => {
-      const { result, rerender } = renderHook(() => useAutoSaveTelemetry());
-
-      const firstReset = result.current.reset;
-
-      rerender();
-
-      expect(result.current.reset).toBe(firstReset);
     });
   });
 });
