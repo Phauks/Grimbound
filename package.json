@@ -92,10 +92,10 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "fake-indexeddb": "^6.2.5",
     "husky": "^9.1.7",
-    "knip": "^5.79.0",
-    "lint-staged": "^16.2.7",
     "jest-canvas-mock": "^2.5.2",
     "jsdom": "^27.4.0",
+    "knip": "^5.79.0",
+    "lint-staged": "^16.2.7",
     "npm-run-all2": "^8.0.4",
     "playwright": "^1.57.0",
     "react-docgen-typescript": "^2.4.0",
@@ -107,7 +107,7 @@
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.15",
     "workbox-window": "^7.4.0",
-    "wrangler": "^4.56.0"
+    "wrangler": "^4.58.0"
   },
   "keywords": [
     "blood-on-the-clocktower",
