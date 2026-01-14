@@ -1,3 +1,9 @@
+## [0.7.0](https://github.com/Phauks/Grimbound/compare/v0.6.0...v0.7.0) (2026-01-14)
+
+### ✨ Features
+
+* add data-testid attribute to app container for testing ([9160314](https://github.com/Phauks/Grimbound/commit/9160314647ad26400a4590c81b590bce570cb33a))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
