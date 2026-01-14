@@ -740,7 +740,7 @@ describe('useTokenDetailEditor', () => {
 
       if (result.current) {
         // First edit
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('name', 'First Change');
         });
 
@@ -748,7 +748,7 @@ describe('useTokenDetailEditor', () => {
         expect(result.current.isDirty).toBe(true);
 
         // Reset
-        act(() => {
+        await act(async () => {
           result.current.handleReset();
         });
 
@@ -756,7 +756,7 @@ describe('useTokenDetailEditor', () => {
         expect(result.current.isDirty).toBe(false);
 
         // Second edit
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('ability', 'New Ability');
         });
 
@@ -786,21 +786,21 @@ describe('useTokenDetailEditor', () => {
       expect(result.current.isDirty).toBe(false);
 
       // First edit - should set isDirty to true
-      act(() => {
+      await act(async () => {
         result.current.handleEditChange('name', 'First Change');
       });
 
       expect(result.current.isDirty).toBe(true);
 
       // Reset to simulate apply behavior (sets isDirty to false)
-      act(() => {
+      await act(async () => {
         result.current.handleReset();
       });
 
       expect(result.current.isDirty).toBe(false);
 
       // Another edit should make it dirty again
-      act(() => {
+      await act(async () => {
         result.current.handleEditChange('ability', 'New Ability');
       });
 
@@ -823,7 +823,7 @@ describe('useTokenDetailEditor', () => {
       if (result.current) {
         expect(result.current.editedCharacter.reminders).toEqual(['Reminder 1', 'Reminder 2']);
 
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('reminders', [
             'Reminder 1',
             'Reminder 2',
@@ -838,7 +838,7 @@ describe('useTokenDetailEditor', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle character with special characters in name', () => {
+    it('should handle character with special characters in name', async () => {
       const character = createCharacter({ name: 'Character\'s "Special" (Name) & More' });
       const characterToken = createCharacterToken();
 
@@ -853,7 +853,7 @@ describe('useTokenDetailEditor', () => {
       if (result.current) {
         expect(result.current.editedCharacter.name).toBe('Character\'s "Special" (Name) & More');
 
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('name', 'Normal Name');
         });
 
@@ -861,7 +861,7 @@ describe('useTokenDetailEditor', () => {
       }
     });
 
-    it('should handle empty character ability', () => {
+    it('should handle empty character ability', async () => {
       const character = createCharacter({ ability: '' });
       const characterToken = createCharacterToken();
 
@@ -876,7 +876,7 @@ describe('useTokenDetailEditor', () => {
       if (result.current) {
         expect(result.current.editedCharacter.ability).toBe('');
 
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('ability', 'New Ability');
         });
 
@@ -922,7 +922,7 @@ describe('useTokenDetailEditor', () => {
       }
     });
 
-    it('should handle multiple concurrent edits (last one wins)', () => {
+    it('should handle multiple concurrent edits (last one wins)', async () => {
       const character = createCharacter({ name: 'Original', ability: 'Original' });
       const characterToken = createCharacterToken();
 
@@ -935,7 +935,7 @@ describe('useTokenDetailEditor', () => {
       );
 
       if (result.current) {
-        act(() => {
+        await act(async () => {
           result.current.handleEditChange('name', 'Change 1');
           result.current.handleEditChange('name', 'Change 2');
           result.current.handleEditChange('name', 'Change 3');
@@ -947,7 +947,7 @@ describe('useTokenDetailEditor', () => {
   });
 
   describe('State Isolation and Independence', () => {
-    it('should not affect other hook instances', () => {
+    it('should not affect other hook instances', async () => {
       const character1 = createCharacter({ id: 'char-1', name: 'Char 1' });
       const character2 = createCharacter({ id: 'char-2', name: 'Char 2' });
       const token1 = createCharacterToken();
@@ -970,7 +970,7 @@ describe('useTokenDetailEditor', () => {
       );
 
       if (result1.current && result2.current) {
-        act(() => {
+        await act(async () => {
           result1.current.handleEditChange('name', 'Modified 1');
         });
 

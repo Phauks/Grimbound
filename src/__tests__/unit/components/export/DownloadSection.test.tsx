@@ -194,7 +194,7 @@ describe('DownloadSection', () => {
       expect(content).not.toHaveClass('sectionContentOpen');
     });
 
-    it('should toggle content on header click when collapsible', () => {
+    it('should collapse on header click when collapsible and open', () => {
       const items = [createMockDownloadItem({ label: 'Toggle Item' })];
       render(
         <DownloadSection
@@ -215,6 +215,26 @@ describe('DownloadSection', () => {
 
       // Click to collapse
       fireEvent.click(header);
+      expect(header).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('should expand on header click when collapsible and closed', () => {
+      const items = [createMockDownloadItem({ label: 'Toggle Item' })];
+      render(
+        <DownloadSection
+          title="Collapsible Section"
+          icon="📦"
+          items={items}
+          executingId={null}
+          onExecute={vi.fn()}
+          collapsible={true}
+          defaultOpen={false}
+        />
+      );
+
+      const header = screen.getByRole('button', { name: /Collapsible Section/i });
+
+      // Initially collapsed
       expect(header).toHaveAttribute('aria-expanded', 'false');
 
       // Click to expand

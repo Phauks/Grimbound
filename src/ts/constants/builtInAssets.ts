@@ -176,6 +176,40 @@ export function getAssetLabel(value: string, type?: AssetType | TypeTagValue): s
 }
 
 // ============================================================================
+// Type-Agnostic Helpers (Check ALL Built-in Assets)
+// ============================================================================
+
+/**
+ * Check if a value is ANY built-in asset (regardless of type)
+ *
+ * Use this when you want to resolve an asset without knowing its type.
+ * Design principle: Asset types are for organization, not restriction.
+ */
+export function isAnyBuiltInAsset(value: string): boolean {
+  return isBuiltInAsset(value); // No type = check all
+}
+
+/**
+ * Get path for ANY built-in asset (regardless of type)
+ *
+ * Use this when you want to resolve an asset without knowing its type.
+ * Design principle: Asset types are for organization, not restriction.
+ */
+export function getAnyBuiltInAssetPath(value: string): string | null {
+  return getBuiltInAssetPath(value); // No type = check all
+}
+
+/**
+ * Get ANY built-in asset by ID (regardless of type)
+ *
+ * Use this when you want to resolve an asset without knowing its type.
+ * Design principle: Asset types are for organization, not restriction.
+ */
+export function getAnyBuiltInAsset(value: string): BuiltInAsset | null {
+  return getBuiltInAsset(value); // No type = check all
+}
+
+// ============================================================================
 // Virtual Folder Structure for Built-in Assets
 // ============================================================================
 

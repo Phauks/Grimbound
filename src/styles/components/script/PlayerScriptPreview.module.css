@@ -71,6 +71,12 @@
   background-color: #f4edd9;
 }
 
+/* Error background - shown when background image fails to load */
+/* Note: Inline styles are empty when error, so no !important needed */
+.errorBackground {
+  background: repeating-conic-gradient(#ff0000 0deg 90deg, #ffff00 90deg 180deg) 0 0 / 20px 20px;
+}
+
 /* ============================================================================
    Header Section
    ============================================================================ */

@@ -13,7 +13,12 @@
 
 import { useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
-import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
+import {
+  getAnyBuiltInAssetPath,
+  getBuiltInAssetPath,
+  isAnyBuiltInAsset,
+  isBuiltInAsset,
+} from '@/ts/constants/builtInAssets.js';
 import { extractAssetId, isAssetReference } from '@/ts/services/upload/assetResolver.js';
 import type { IAssetStorageService } from '@/ts/services/upload/IUploadServices.js';
 import type { AssetType } from '@/ts/services/upload/types.js';
@@ -56,10 +61,21 @@ async function tryResolveAssetReference(
   return asset?.url ?? null;
 }
 
-/** Try to resolve built-in asset ID */
+/**
+ * Try to resolve built-in asset ID
+ * First checks the specified asset type, then falls back to ALL built-in assets.
+ * Design principle: Asset types are for organization, not restriction.
+ */
 function tryResolveBuiltInAsset(url: string, assetType: AssetType): string | null {
-  if (!isBuiltInAsset(url, assetType)) return null;
-  return getBuiltInAssetPath(url, assetType);
+  // First try the specified type
+  if (isBuiltInAsset(url, assetType)) {
+    return getBuiltInAssetPath(url, assetType);
+  }
+  // Fallback: check ALL built-in assets regardless of type
+  if (isAnyBuiltInAsset(url)) {
+    return getAnyBuiltInAssetPath(url);
+  }
+  return null;
 }
 
 /**

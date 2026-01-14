@@ -781,14 +781,16 @@ describe('CharactersView', () => {
       expect(screen.getByTestId('nav-selected-uuid')).toHaveTextContent('c2');
     });
 
-    it('should select meta when initialToken is meta token', () => {
+    it('should select meta when initialToken is meta token', async () => {
       const initialToken = createMockToken({
         type: 'script-name',
         team: 'meta',
         name: 'Script Name',
       });
 
-      render(<CharactersView initialToken={initialToken} />);
+      await act(async () => {
+        render(<CharactersView initialToken={initialToken} />);
+      });
 
       expect(screen.getByTestId('nav-is-meta-selected')).toHaveTextContent('true');
     });

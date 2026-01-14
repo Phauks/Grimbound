@@ -666,7 +666,7 @@ describe('useTokenPreviewCache', () => {
   });
 
   describe('Cache Invalidation on Options Change', () => {
-    it('should clear cache when effectiveOptions hash changes', () => {
+    it('should clear cache when effectiveOptions hash changes', async () => {
       const char1 = createCharacter({ uuid: 'char-1' });
       const char2 = createCharacter({ uuid: 'char-2' });
       const options1 = createOptions();
@@ -691,7 +691,7 @@ describe('useTokenPreviewCache', () => {
       expect(result.current.applyCachedTokens('char-2')).toBe(false);
 
       // Change options - this should trigger cache clearing
-      act(() => {
+      await act(async () => {
         rerender({ options: options2 });
       });
 

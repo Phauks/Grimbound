@@ -4,6 +4,7 @@
  * Shared utilities for image loading and conversion in hybrid PDF rendering.
  */
 
+import { getAnyBuiltInAssetPath, isAnyBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
 import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
 import { applyCorsProxy, loadImage } from '@/ts/utils/imageUtils.js';
@@ -48,7 +49,12 @@ export async function resolveScriptLogo(
 /**
  * Resolve background image URL (asset reference or external URL) to data URL
  *
- * This handles both asset:uuid references and external URLs.
+ * This handles:
+ * 1. Built-in asset IDs (script_background_1, character_background_1, etc.) - type-agnostic
+ * 2. Asset references (asset:uuid) -> IndexedDB
+ * 3. External URLs (http/https/data/blob)
+ *
+ * Design principle: Asset types are for organization, not restriction.
  *
  * @param imageUrl - The image URL to resolve
  * @param logContext - Logger context name
@@ -60,10 +66,19 @@ export async function resolveBackgroundImage(
   if (!imageUrl) return undefined;
 
   try {
-    // First resolve asset references (asset:uuid -> blob URL)
+    // 1. Check for ANY built-in asset first (type-agnostic)
+    if (isAnyBuiltInAsset(imageUrl)) {
+      const builtInPath = getAnyBuiltInAssetPath(imageUrl);
+      if (builtInPath) {
+        const img = await loadImage(builtInPath);
+        return await imageToDataUrl(img);
+      }
+    }
+
+    // 2. Try to resolve asset references (asset:uuid -> blob URL)
     const resolvedUrl = await resolveAssetUrl(imageUrl);
 
-    // Then load the image and convert to data URL for Snapdom
+    // 3. Load the image and convert to data URL for Snapdom
     const proxiedUrl = applyCorsProxy(resolvedUrl);
     const img = await loadImage(proxiedUrl);
     return await imageToDataUrl(img);

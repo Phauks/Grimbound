@@ -8,7 +8,7 @@
  */
 
 import { createBackgroundGradient } from '@/ts/canvas/gradientUtils.js';
-import { getBuiltInAssetPath, isBuiltInAsset } from '@/ts/constants/builtInAssets.js';
+import { getAnyBuiltInAssetPath, isAnyBuiltInAsset } from '@/ts/constants/builtInAssets.js';
 import { ResourceNotFoundError, TokenCreationError } from '@/ts/errors.js';
 import { isAssetReference, resolveAssetUrl } from '@/ts/services/upload/assetResolver.js';
 import type {
@@ -44,9 +44,9 @@ async function loadBackgroundImage(url: string): Promise<HTMLImageElement> {
   if (isAssetReference(url)) {
     resolvedUrl = await resolveAssetUrl(url);
   }
-  // Check if it's a built-in asset ID (like 'character_background_1')
-  else if (isBuiltInAsset(url, 'token-background')) {
-    resolvedUrl = getBuiltInAssetPath(url, 'token-background') || '';
+  // Check if it's ANY built-in asset ID (type-agnostic: works for token-background, script-background, etc.)
+  else if (isAnyBuiltInAsset(url)) {
+    resolvedUrl = getAnyBuiltInAssetPath(url) || '';
   }
   // Otherwise use the URL directly (http, data, blob URLs)
   else {

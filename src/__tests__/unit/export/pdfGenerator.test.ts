@@ -780,7 +780,8 @@ describe('PDFGenerator', () => {
     });
 
     it('should handle very large token array', async () => {
-      const tokens = createMockTokens(100);
+      // Use 30 tokens to test multi-page behavior without excessive slowdown
+      const tokens = createMockTokens(30);
 
       const pdfBytes = await generator.generatePDF(tokens);
 

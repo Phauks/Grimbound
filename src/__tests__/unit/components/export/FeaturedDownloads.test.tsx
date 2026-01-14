@@ -148,7 +148,7 @@ describe('FeaturedDownloads', () => {
       expect(screen.queryByText('Hidden Item')).not.toBeInTheDocument();
     });
 
-    it('should toggle content visibility on header click', () => {
+    it('should collapse content on header click when open', () => {
       const items = [createMockDownloadItem({ label: 'Toggle Item' })];
       render(
         <FeaturedDownloads
@@ -167,11 +167,26 @@ describe('FeaturedDownloads', () => {
 
       // Content should be hidden
       expect(screen.queryByText('Toggle Item')).not.toBeInTheDocument();
+    });
+
+    it('should expand content on header click when closed', () => {
+      const items = [createMockDownloadItem({ label: 'Toggle Item' })];
+      render(
+        <FeaturedDownloads
+          items={items}
+          executingId={null}
+          onExecute={vi.fn()}
+          defaultOpen={false}
+        />
+      );
+
+      // Content should be hidden initially
+      expect(screen.queryByText('Toggle Item')).not.toBeInTheDocument();
 
       // Click header to expand
       fireEvent.click(screen.getByRole('button', { name: /Featured Downloads/i }));
 
-      // Content should be visible again
+      // Content should be visible
       expect(screen.getByText('Toggle Item')).toBeInTheDocument();
     });
   });

@@ -80,10 +80,19 @@ export function useAssetSelection(options: UseAssetSelectionOptions): UseAssetSe
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // Get built-in assets for the current filter type
+  // Design principle: Asset types are for organization, not restriction.
+  // For background types, show ALL background assets so users can pick any.
+  // The initialAssetType controls which tab is shown by default.
   const builtInAssets = ((): ReturnType<typeof getBuiltInAssets> => {
     if (!(selectionMode && includeBuiltIn)) return [];
     const filterType = activeTab === 'all' ? initialAssetType : activeTab;
     if (!filterType) return [];
+
+    // For any background type, include all background assets
+    if (filterType === 'token-background' || filterType === 'script-background') {
+      return [...getBuiltInAssets('token-background'), ...getBuiltInAssets('script-background')];
+    }
+
     return getBuiltInAssets(filterType);
   })();
 

@@ -115,6 +115,12 @@
   font-style: italic;
 }
 
+/* Error background - shown when background image fails to load */
+/* Note: Inline styles are empty when error, so no !important needed */
+.errorBackground {
+  background: repeating-conic-gradient(#ff0000 0deg 90deg, #ffff00 90deg 180deg) 0 0 / 20px 20px;
+}
+
 /* First Night specific styling */
 .sheet[data-night-type="first"] .title {
   color: #1a3a5a;

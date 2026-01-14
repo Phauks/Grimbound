@@ -358,10 +358,10 @@ export function CharactersView({
           {isMetaSelected ? (
             // Meta preview
             <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
-              {selectedMetaToken ? (
+              {selectedMetaToken?.dataUrl ? (
                 <div className={styles.metaTokenPreview}>
                   <img
-                    src={selectedMetaToken.dataUrl || ''}
+                    src={selectedMetaToken.dataUrl}
                     alt={selectedMetaToken.name}
                     className={styles.metaTokenImage}
                   />
@@ -379,11 +379,11 @@ export function CharactersView({
           ) : selectedCharacter ? (
             // Character preview (or jinx preview when active)
             <div className={`${layoutStyles.contentPanel} ${styles.customizePreview}`}>
-              {jinxPreviewToken ? (
+              {jinxPreviewToken?.dataUrl ? (
                 // Jinx token preview
                 <div className={styles.jinxTokenPreview}>
                   <img
-                    src={jinxPreviewToken.dataUrl || ''}
+                    src={jinxPreviewToken.dataUrl}
                     alt={jinxPreviewToken.name}
                     className={styles.jinxTokenImage}
                   />

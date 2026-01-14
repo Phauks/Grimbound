@@ -170,6 +170,46 @@ export interface PlayerScriptPreviewProps {
 // SUBCOMPONENTS
 // ============================================================================
 
+/**
+ * Build author/version text for script header
+ */
+function buildAuthorVersionText(
+  scriptMeta: ScriptMeta | null,
+  showAuthor: boolean,
+  showVersion: boolean
+): string | null {
+  const parts: string[] = [];
+  if (showAuthor && scriptMeta?.author) {
+    parts.push(`by ${scriptMeta.author}`);
+  }
+  if (showVersion && scriptMeta?.version) {
+    parts.push(`v${scriptMeta.version}`);
+  }
+  return parts.length > 0 ? parts.join(' • ') : null;
+}
+
+interface ScriptHeaderProps {
+  scriptName: string;
+  titleStyle: 'centered' | 'compact';
+  authorVersionText: string | null;
+}
+
+function ScriptHeader({ scriptName, titleStyle, authorVersionText }: ScriptHeaderProps) {
+  const isCompact = titleStyle === 'compact';
+  return (
+    <div className={`${styles.header} ${isCompact ? styles.headerCompact : ''}`}>
+      <h1 className={`${styles.scriptName} ${isCompact ? styles.scriptNameCompact : ''}`}>
+        {scriptName}
+      </h1>
+      {authorVersionText && (
+        <p className={`${styles.author} ${isCompact ? styles.authorCompact : ''}`}>
+          {authorVersionText}
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface TeamSectionPreviewProps {
   team: Team;
   characters: PlayerScriptCharacter[];
@@ -331,13 +371,28 @@ export function PlayerScriptPreview({
     imageUrl: backingBackground?.sourceType === 'image' ? backingBackground.imageUrl : undefined,
   });
 
+  // Detect background errors: image was requested but failed to resolve
+  const hasFrontBgError =
+    background?.sourceType === 'image' && background.imageUrl && !resolvedFrontBgUrl;
+  const hasBackBgError =
+    backingBackground?.sourceType === 'image' && backingBackground.imageUrl && !resolvedBackBgUrl;
+
   // Build background styles using extracted helper (with resolved image URLs)
-  const backgroundStyle = buildPageBackgroundStyle(background, ps.margins, resolvedFrontBgUrl);
-  const backingBackgroundStyle = buildPageBackgroundStyle(
-    backingBackground,
-    bs.margins,
-    resolvedBackBgUrl
-  );
+  // Skip background styles when error - CSS class will apply error pattern
+  const backgroundStyle = hasFrontBgError
+    ? {}
+    : buildPageBackgroundStyle(background, ps.margins, resolvedFrontBgUrl);
+  const backingBackgroundStyle = hasBackBgError
+    ? {}
+    : buildPageBackgroundStyle(backingBackground, bs.margins, resolvedBackBgUrl);
+
+  // Build class names for pages - add error class if resolution failed
+  const frontPageClassName = hasFrontBgError
+    ? `${styles.pageContent} ${styles.errorBackground}`
+    : styles.pageContent;
+  const backingPageClassName = hasBackBgError
+    ? `${styles.pageContent} ${styles.errorBackground}`
+    : styles.pageContent;
 
   // Handle order changes
   const handleOrderChange = (newOrder: string[]) => {
@@ -390,7 +445,7 @@ export function PlayerScriptPreview({
         {/* Front Page */}
         <div className={nightOrderStyles.pageWrapper}>
           <ScaledPage>
-            <div className={styles.pageContent} style={backgroundStyle}>
+            <div className={frontPageClassName} style={backgroundStyle}>
               {/* SAO Reset Button - floats in top right of script page */}
               {hasCustomOrder && (
                 <button
@@ -404,29 +459,15 @@ export function PlayerScriptPreview({
               )}
 
               {/* Header */}
-              <div
-                className={`${styles.header} ${ps.titleStyle === 'compact' ? styles.headerCompact : ''}`}
-              >
-                <h1
-                  className={`${styles.scriptName} ${ps.titleStyle === 'compact' ? styles.scriptNameCompact : ''}`}
-                >
-                  {scriptMeta?.name || 'Untitled Script'}
-                </h1>
-                {(ps.showAuthor || ps.showVersion) &&
-                  (scriptMeta?.author || scriptMeta?.version) && (
-                    <p
-                      className={`${styles.author} ${ps.titleStyle === 'compact' ? styles.authorCompact : ''}`}
-                    >
-                      {ps.showAuthor && scriptMeta?.author && `by ${scriptMeta.author}`}
-                      {ps.showAuthor &&
-                        scriptMeta?.author &&
-                        ps.showVersion &&
-                        scriptMeta?.version &&
-                        ' • '}
-                      {ps.showVersion && scriptMeta?.version && `v${scriptMeta.version}`}
-                    </p>
-                  )}
-              </div>
+              <ScriptHeader
+                scriptName={scriptMeta?.name || 'Untitled Script'}
+                titleStyle={ps.titleStyle}
+                authorVersionText={buildAuthorVersionText(
+                  scriptMeta,
+                  ps.showAuthor,
+                  ps.showVersion
+                )}
+              />
 
               {/* Team Sections */}
               <div className={styles.teamSections}>
@@ -466,45 +507,14 @@ export function PlayerScriptPreview({
         {/* Backing Sheet - Always included with player script */}
         <div className={nightOrderStyles.pageWrapper}>
           <ScaledPage>
-            <div className={styles.pageContent} style={backingBackgroundStyle}>
+            <div className={backingPageClassName} style={backingBackgroundStyle}>
               {/* Night Order Icons - Show all with wrapping */}
               {bs.showNightOrderOnBack && (
-                <div className={styles.nightOrderBar}>
-                  <div className={styles.nightOrderRow}>
-                    <span className={styles.nightOrderLabel}>First Night:</span>
-                    <div className={styles.nightOrderIcons}>
-                      {nightOrderIcons.firstNight.map((icon) => (
-                        <div key={`first-${icon.id}`} className={styles.nightOrderIconWrapper}>
-                          <ResolvedImage
-                            characterId={icon.id}
-                            fallbackUrl={icon.image}
-                            alt={icon.name || icon.id}
-                            title={icon.name}
-                            className={styles.nightOrderIcon}
-                            style={backingIconScaleStyle}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={styles.nightOrderRow}>
-                    <span className={styles.nightOrderLabel}>Other Nights:</span>
-                    <div className={styles.nightOrderIcons}>
-                      {nightOrderIcons.otherNight.map((icon) => (
-                        <div key={`other-${icon.id}`} className={styles.nightOrderIconWrapper}>
-                          <ResolvedImage
-                            characterId={icon.id}
-                            fallbackUrl={icon.image}
-                            alt={icon.name || icon.id}
-                            title={icon.name}
-                            className={styles.nightOrderIcon}
-                            style={backingIconScaleStyle}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <NightOrderBar
+                  firstNight={nightOrderIcons.firstNight}
+                  otherNight={nightOrderIcons.otherNight}
+                  iconScaleStyle={backingIconScaleStyle}
+                />
               )}
 
               {/* Center Content */}
@@ -533,95 +543,44 @@ export function PlayerScriptPreview({
                 )}
 
                 {/* Fabled */}
-                {bs.showFabled && fabled.length > 0 && (
-                  <div className={styles.fabledSection}>
-                    <h3 className={styles.sectionLabel}>Fabled</h3>
-                    {fabled.map((char) => (
-                      <div key={char.id} className={styles.fabledEntry}>
-                        <div className={styles.fabledIconWrapper}>
-                          <ResolvedImage
-                            characterId={char.id}
-                            fallbackUrl={char.image}
-                            alt={char.name}
-                            className={styles.fabledIcon}
-                            style={backingIconScaleStyle}
-                          />
-                        </div>
-                        <div>
-                          <span className={styles.fabledName} style={{ color: TEAM_COLORS.fabled }}>
-                            {char.name}
-                          </span>
-                          <p className={styles.fabledAbility}>{char.ability}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                {bs.showFabled && (
+                  <CharacterSection
+                    characters={fabled}
+                    sectionClass={styles.fabledSection}
+                    label="Fabled"
+                    entryClass={styles.fabledEntry}
+                    iconWrapperClass={styles.fabledIconWrapper}
+                    iconClass={styles.fabledIcon}
+                    nameClass={styles.fabledName}
+                    abilityClass={styles.fabledAbility}
+                    iconScaleStyle={backingIconScaleStyle}
+                    nameColor={TEAM_COLORS.fabled}
+                  />
                 )}
 
                 {/* Travellers */}
-                {bs.showTravellers && travellers.length > 0 && (
-                  <div className={styles.travellersSection}>
-                    <h3 className={styles.sectionLabel}>Travellers</h3>
-                    {travellers.map((char) => (
-                      <div key={char.id} className={styles.travellerEntry}>
-                        <div className={styles.travellerIconWrapper}>
-                          <ResolvedImage
-                            characterId={char.id}
-                            fallbackUrl={char.image}
-                            alt={char.name}
-                            className={styles.travellerIcon}
-                            style={backingIconScaleStyle}
-                          />
-                        </div>
-                        <div>
-                          <span className={styles.travellerName}>{char.name}</span>
-                          <p className={styles.travellerAbility}>{char.ability}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                {bs.showTravellers && (
+                  <CharacterSection
+                    characters={travellers}
+                    sectionClass={styles.travellersSection}
+                    label="Travellers"
+                    entryClass={styles.travellerEntry}
+                    iconWrapperClass={styles.travellerIconWrapper}
+                    iconClass={styles.travellerIcon}
+                    nameClass={styles.travellerName}
+                    abilityClass={styles.travellerAbility}
+                    iconScaleStyle={backingIconScaleStyle}
+                  />
                 )}
 
                 {/* Bootlegger */}
-                {bs.showBootlegger &&
-                  (bootleggerData.characters.length > 0 || bootleggerData.rules.length > 0) && (
-                    <div className={styles.bootleggerSection}>
-                      <h3 className={styles.sectionLabel}>Bootlegger</h3>
-                      {/* Character-based bootlegger entries (with icons) */}
-                      {bootleggerData.characters.map((char) => (
-                        <div key={char.id} className={styles.bootleggerEntry}>
-                          <div className={styles.bootleggerIconWrapper}>
-                            <ResolvedImage
-                              characterId={char.id}
-                              fallbackUrl={char.image}
-                              alt={char.name}
-                              className={styles.bootleggerIcon}
-                              style={backingIconScaleStyle}
-                            />
-                          </div>
-                          <div>
-                            <span className={styles.bootleggerName}>{char.name}</span>
-                            <p className={styles.bootleggerAbility}>{char.ability}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {/* Rule text entries (with bootlegger icon) */}
-                      {bootleggerData.rules.map((rule) => (
-                        <div key={rule} className={styles.bootleggerEntry}>
-                          <div className={styles.bootleggerIconWrapper}>
-                            <ResolvedImage
-                              characterId="bootlegger"
-                              fallbackUrl="/images/icons/bootlegger.webp"
-                              alt="Bootlegger"
-                              className={styles.bootleggerIcon}
-                              style={backingIconScaleStyle}
-                            />
-                          </div>
-                          <p className={styles.bootleggerAbility}>{rule}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {bs.showBootlegger && (
+                  <BootleggerSection
+                    characters={bootleggerData.characters}
+                    rules={bootleggerData.rules}
+                    iconScaleStyle={backingIconScaleStyle}
+                  />
+                )}
               </div>
 
               {/* Player Count Table */}
@@ -699,7 +658,6 @@ function ResolvedImage({
 
 interface JinxEntryProps {
   jinx: PlayerScriptJinx;
-  /** Icon scale style object with --icon-scale CSS variable */
   iconScaleStyle: React.CSSProperties;
 }
 
@@ -727,6 +685,157 @@ function JinxEntry({ jinx, iconScaleStyle }: JinxEntryProps) {
         </div>
       </div>
       <p className={styles.jinxText}>{jinx.reason}</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// BACKING SHEET SECTION COMPONENTS (extracted to reduce main component complexity)
+// ============================================================================
+
+interface NightOrderBarProps {
+  firstNight: NightOrderIcon[];
+  otherNight: NightOrderIcon[];
+  iconScaleStyle: React.CSSProperties;
+}
+
+function NightOrderBar({ firstNight, otherNight, iconScaleStyle }: NightOrderBarProps) {
+  return (
+    <div className={styles.nightOrderBar}>
+      <div className={styles.nightOrderRow}>
+        <span className={styles.nightOrderLabel}>First Night:</span>
+        <div className={styles.nightOrderIcons}>
+          {firstNight.map((icon) => (
+            <div key={`first-${icon.id}`} className={styles.nightOrderIconWrapper}>
+              <ResolvedImage
+                characterId={icon.id}
+                fallbackUrl={icon.image}
+                alt={icon.name || icon.id}
+                title={icon.name}
+                className={styles.nightOrderIcon}
+                style={iconScaleStyle}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.nightOrderRow}>
+        <span className={styles.nightOrderLabel}>Other Nights:</span>
+        <div className={styles.nightOrderIcons}>
+          {otherNight.map((icon) => (
+            <div key={`other-${icon.id}`} className={styles.nightOrderIconWrapper}>
+              <ResolvedImage
+                characterId={icon.id}
+                fallbackUrl={icon.image}
+                alt={icon.name || icon.id}
+                title={icon.name}
+                className={styles.nightOrderIcon}
+                style={iconScaleStyle}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface CharacterSectionProps {
+  characters: PlayerScriptCharacter[];
+  sectionClass: string;
+  label: string;
+  entryClass: string;
+  iconWrapperClass: string;
+  iconClass: string;
+  nameClass: string;
+  abilityClass: string;
+  iconScaleStyle: React.CSSProperties;
+  nameColor?: string;
+}
+
+function CharacterSection({
+  characters,
+  sectionClass,
+  label,
+  entryClass,
+  iconWrapperClass,
+  iconClass,
+  nameClass,
+  abilityClass,
+  iconScaleStyle,
+  nameColor,
+}: CharacterSectionProps) {
+  if (characters.length === 0) return null;
+
+  return (
+    <div className={sectionClass}>
+      <h3 className={styles.sectionLabel}>{label}</h3>
+      {characters.map((char) => (
+        <div key={char.id} className={entryClass}>
+          <div className={iconWrapperClass}>
+            <ResolvedImage
+              characterId={char.id}
+              fallbackUrl={char.image}
+              alt={char.name}
+              className={iconClass}
+              style={iconScaleStyle}
+            />
+          </div>
+          <div>
+            <span className={nameClass} style={nameColor ? { color: nameColor } : undefined}>
+              {char.name}
+            </span>
+            <p className={abilityClass}>{char.ability}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface BootleggerSectionProps {
+  characters: PlayerScriptCharacter[];
+  rules: string[];
+  iconScaleStyle: React.CSSProperties;
+}
+
+function BootleggerSection({ characters, rules, iconScaleStyle }: BootleggerSectionProps) {
+  if (characters.length === 0 && rules.length === 0) return null;
+
+  return (
+    <div className={styles.bootleggerSection}>
+      <h3 className={styles.sectionLabel}>Bootlegger</h3>
+      {characters.map((char) => (
+        <div key={char.id} className={styles.bootleggerEntry}>
+          <div className={styles.bootleggerIconWrapper}>
+            <ResolvedImage
+              characterId={char.id}
+              fallbackUrl={char.image}
+              alt={char.name}
+              className={styles.bootleggerIcon}
+              style={iconScaleStyle}
+            />
+          </div>
+          <div>
+            <span className={styles.bootleggerName}>{char.name}</span>
+            <p className={styles.bootleggerAbility}>{char.ability}</p>
+          </div>
+        </div>
+      ))}
+      {rules.map((rule) => (
+        <div key={rule} className={styles.bootleggerEntry}>
+          <div className={styles.bootleggerIconWrapper}>
+            <ResolvedImage
+              characterId="bootlegger"
+              fallbackUrl="/images/icons/bootlegger.webp"
+              alt="Bootlegger"
+              className={styles.bootleggerIcon}
+              style={iconScaleStyle}
+            />
+          </div>
+          <p className={styles.bootleggerAbility}>{rule}</p>
+        </div>
+      ))}
     </div>
   );
 }

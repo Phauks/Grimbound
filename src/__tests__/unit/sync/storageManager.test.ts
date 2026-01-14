@@ -916,7 +916,11 @@ describe('StorageManager', () => {
       const result = await storageManager.getImage('washerwoman');
 
       expect(mockCache.match).toHaveBeenCalledWith('/icons/washerwoman.webp');
-      expect(result).toBeInstanceOf(Blob);
+      // Use duck-typing instead of instanceof due to cross-realm Blob issues in Node.js
+      expect(result).not.toBeNull();
+      expect(result?.constructor.name).toBe('Blob');
+      expect(typeof result?.size).toBe('number');
+      expect(typeof result?.type).toBe('string');
     });
 
     it('should return null when image not cached', async () => {

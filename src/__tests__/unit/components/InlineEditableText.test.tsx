@@ -40,7 +40,7 @@ describe('InlineEditableText', () => {
 
   describe('entering edit mode', () => {
     it('should enter edit mode on click', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<InlineEditableText value="Test Name" onSave={vi.fn()} />);
 
       await user.click(screen.getByRole('button'));
@@ -50,7 +50,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should enter edit mode on double-click', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<InlineEditableText value="Test Name" onSave={vi.fn()} />);
 
       await user.dblClick(screen.getByRole('button'));
@@ -59,7 +59,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should call onEditStart when entering edit mode', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onEditStart = vi.fn();
       render(<InlineEditableText value="Test" onSave={vi.fn()} onEditStart={onEditStart} />);
 
@@ -69,7 +69,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should not enter edit mode when disabled', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<InlineEditableText value="Test" onSave={vi.fn()} disabled />);
 
       await user.click(screen.getByRole('button'));
@@ -78,7 +78,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should select all text when selectAllOnEdit is true', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<InlineEditableText value="Test Name" onSave={vi.fn()} selectAllOnEdit />);
 
       await user.click(screen.getByRole('button'));
@@ -90,7 +90,7 @@ describe('InlineEditableText', () => {
 
   describe('saving', () => {
     it('should call onSave with new value on Enter', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       render(<InlineEditableText value="Old Name" onSave={onSave} />);
 
@@ -104,7 +104,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should call onSave with new value on blur', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       render(<InlineEditableText value="Old Name" onSave={onSave} />);
 
@@ -119,7 +119,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should not call onSave when value is unchanged', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       render(<InlineEditableText value="Same Name" onSave={onSave} />);
 
@@ -130,7 +130,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should call onEditEnd after saving', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onEditEnd = vi.fn();
       render(<InlineEditableText value="Old" onSave={vi.fn()} onEditEnd={onEditEnd} />);
 
@@ -144,7 +144,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should trim whitespace from value before saving', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       render(<InlineEditableText value="Test" onSave={onSave} />);
 
@@ -160,7 +160,7 @@ describe('InlineEditableText', () => {
 
   describe('canceling', () => {
     it('should revert value on Escape', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       render(<InlineEditableText value="Original" onSave={onSave} />);
 
@@ -174,7 +174,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should call onEditEnd when canceling', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onEditEnd = vi.fn();
       render(<InlineEditableText value="Test" onSave={vi.fn()} onEditEnd={onEditEnd} />);
 
@@ -187,7 +187,7 @@ describe('InlineEditableText', () => {
 
   describe('validation', () => {
     it('should show error when validation fails', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const validate = vi.fn().mockReturnValue('Name is required');
       render(<InlineEditableText value="Test" onSave={vi.fn()} validate={validate} />);
 
@@ -199,7 +199,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should not call onSave when validation fails', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn();
       const validate = vi.fn().mockReturnValue('Invalid');
       render(<InlineEditableText value="Test" onSave={onSave} validate={validate} />);
@@ -212,7 +212,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should clear error when user types', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const validate = vi.fn().mockReturnValue('Error');
       render(<InlineEditableText value="Test" onSave={vi.fn()} validate={validate} />);
 
@@ -229,7 +229,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should call validate with trimmed value', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const validate = vi.fn().mockReturnValue(null);
       render(<InlineEditableText value="Test" onSave={vi.fn()} validate={validate} />);
 
@@ -243,7 +243,7 @@ describe('InlineEditableText', () => {
 
   describe('error handling', () => {
     it('should show error when onSave throws', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn().mockRejectedValue(new Error('Save failed'));
       render(<InlineEditableText value="Test" onSave={onSave} />);
 
@@ -257,7 +257,7 @@ describe('InlineEditableText', () => {
     });
 
     it('should stay in edit mode when save fails', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       const onSave = vi.fn().mockRejectedValue(new Error('Oops'));
       render(<InlineEditableText value="Test" onSave={onSave} />);
 
@@ -273,7 +273,7 @@ describe('InlineEditableText', () => {
 
   describe('maxLength', () => {
     it('should limit input length', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       render(<InlineEditableText value="" onSave={vi.fn()} maxLength={5} />);
 
       await user.click(screen.getByRole('button'));

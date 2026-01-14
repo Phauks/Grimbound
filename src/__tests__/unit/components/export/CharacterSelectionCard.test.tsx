@@ -130,6 +130,22 @@ describe('CharacterSelectionCard', () => {
       // Click to expand
       fireEvent.click(screen.getByRole('button'));
       expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    });
+
+    it('should collapse content on header click when open', () => {
+      render(
+        <CharacterSelectionCard
+          enabledCount={10}
+          totalCount={15}
+          disabledCount={5}
+          defaultOpen={true}
+        >
+          <div data-testid="child-content">Child Content</div>
+        </CharacterSelectionCard>
+      );
+
+      // Initially expanded
+      expect(screen.getByTestId('child-content')).toBeInTheDocument();
 
       // Click to collapse
       fireEvent.click(screen.getByRole('button'));

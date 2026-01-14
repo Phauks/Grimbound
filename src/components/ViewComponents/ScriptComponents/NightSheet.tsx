@@ -133,17 +133,25 @@ export function NightSheet({
     imageUrl: background?.sourceType === 'image' ? background.imageUrl : undefined,
   });
 
+  // Detect background error: image was requested but failed to resolve
+  const hasBackgroundError =
+    background?.sourceType === 'image' && background.imageUrl && !resolvedBackgroundUrl;
+
   // Get background styles (handles image, solid color, or gradient)
-  // Only call getBackgroundImageStyles for image backgrounds
+  // Only call getBackgroundImageStyles for image backgrounds when resolved successfully
   const imageBackgroundStyles =
-    background?.sourceType === 'image'
+    background?.sourceType === 'image' && resolvedBackgroundUrl
       ? getBackgroundImageStyles(background, resolvedBackgroundUrl)
       : null;
 
   // Build dynamic background style with CSS custom properties for scaling
+  // When there's a background error, let the CSS class handle the error pattern
   const sheetStyle: React.CSSProperties = {
     // Background customization: use image styles if available, otherwise solid color
-    ...(imageBackgroundStyles || { backgroundColor: background?.solidColor || '#f4edd9' }),
+    // Skip background styles when error - CSS class will apply error pattern
+    ...(hasBackgroundError
+      ? {}
+      : imageBackgroundStyles || { backgroundColor: background?.solidColor || '#f4edd9' }),
     // Page margins (override CSS defaults if provided)
     ...(margins && {
       padding: `${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in`,
@@ -275,8 +283,13 @@ export function NightSheet({
     );
   };
 
+  // Build class names - add error background class if resolution failed
+  const sheetClassName = hasBackgroundError
+    ? `${styles.sheet} ${styles.errorBackground}`
+    : styles.sheet;
+
   return (
-    <div ref={ref} className={styles.sheet} data-night-type={type} style={sheetStyle}>
+    <div ref={ref} className={sheetClassName} data-night-type={type} style={sheetStyle}>
       {/* Sheet Header */}
       <header className={styles.header}>
         <h2 className={styles.title}>{title}</h2>
