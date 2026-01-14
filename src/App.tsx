@@ -62,7 +62,12 @@ function AppContent() {
   };
 
   return (
-    <div className={layoutStyles.appContainer} onContextMenu={handleContextMenu} role="application">
+    <div
+      className={layoutStyles.appContainer}
+      onContextMenu={handleContextMenu}
+      role="application"
+      data-testid="app"
+    >
       <AppHeader
         onSettingsClick={() => setShowSettings(true)}
         onInfoClick={() => setShowInfo(true)}
