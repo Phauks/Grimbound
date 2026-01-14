@@ -16,10 +16,14 @@ vi.mock('jszip', () => {
     .mockResolvedValue(new Blob(['zip'], { type: 'application/zip' }));
 
   // Return a constructor function that returns the mock object
-  const MockJSZip = function (this: any) {
+  interface MockJSZipInstance {
+    file: typeof mockFile;
+    generateAsync: typeof mockGenerateAsync;
+  }
+  function MockJSZip(this: MockJSZipInstance) {
     this.file = mockFile;
     this.generateAsync = mockGenerateAsync;
-  } as any;
+  }
 
   return {
     default: MockJSZip,

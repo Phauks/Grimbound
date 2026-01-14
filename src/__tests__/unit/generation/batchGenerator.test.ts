@@ -47,7 +47,7 @@ vi.mock('@/ts/generation/TokenFactory', () => ({
   TokenFactory: class MockTokenFactory {
     private tokenCallback?: ((token: Token) => void) | null;
 
-    constructor(_dpi: number, tokenCallback?: ((token: Token) => void) | null) {
+    constructor(tokenCallback?: ((token: Token) => void) | null) {
       this.tokenCallback = tokenCallback;
     }
 

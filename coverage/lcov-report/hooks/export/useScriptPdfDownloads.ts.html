@@ -32,14 +32,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
@@ -163,20 +163,7 @@
 <a name='L98'></a><a href='#L98'>98</a>
 <a name='L99'></a><a href='#L99'>99</a>
 <a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a>
-<a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a>
-<a name='L111'></a><a href='#L111'>111</a>
-<a name='L112'></a><a href='#L112'>112</a>
-<a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L101'></a><a href='#L101'>101</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -255,6 +242,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -270,21 +259,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -302,7 +276,7 @@
  * @module hooks/export/useScriptPdfDownloads
  */
 &nbsp;
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { type DownloadItem, useDownloadsContext } from '@/contexts/DownloadsContext';
 import type { Character, ScriptMeta } from '@/ts/types/index';
 import { logger } from '@/ts/utils/logger.js';
@@ -336,7 +310,7 @@ export function <span class="fstat-no" title="function not covered" >useScriptPd
   const { setDownloads, clearDownloads <span class="cstat-no" title="statement not covered" >} = useDownloadsContext();</span>
 &nbsp;
   // Build the script data array for encoding
-  const <span class="cstat-no" title="statement not covered" >scriptData = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >scriptData = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!characters || characters.length === 0) {</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
     }
@@ -346,7 +320,7 @@ export function <span class="fstat-no" title="function not covered" >useScriptPd
 <span class="cstat-no" title="statement not covered" >      return [scriptMeta, ...characters];</span>
     }
 <span class="cstat-no" title="statement not covered" >    return characters;</span>
-  }, [characters, scriptMeta]);
+  })();
 &nbsp;
   // Handler to open in official tool
   const <span class="cstat-no" title="statement not covered" >handleOpenInOfficialTool = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
@@ -365,16 +339,18 @@ export function <span class="fstat-no" title="function not covered" >useScriptPd
   }, [scriptData, characters.length, scriptMeta]);
 &nbsp;
   // Build download items
-  const <span class="cstat-no" title="statement not covered" >downloads: DownloadItem[] = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-    const hasCharacters = <span class="cstat-no" title="statement not covered" >characters &amp;&amp; characters.length &gt; 0;</span>
+  const hasCharacters = <span class="cstat-no" title="statement not covered" >characters &amp;&amp; characters.length &gt; 0;</span>
+  const characterCount = <span class="cstat-no" title="statement not covered" >characters?.length ?? 0;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return [</span>
+  // Register/unregister downloads when content changes
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+    const downloads: DownloadItem[] = <span class="cstat-no" title="statement not covered" >[</span>
       {
         id: 'script-pdf-official',
         icon: '📜',
         label: 'Script PDF',
         description: hasCharacters
-          ? `Open in official BOTC Script Tool (${characters.length} characters)`
+          ? `Open in official BOTC Script Tool (${characterCount} characters)`
           : 'No characters in script',
         action: handleOpenInOfficialTool,
         disabled: !hasCharacters,
@@ -382,25 +358,10 @@ export function <span class="fstat-no" title="function not covered" >useScriptPd
         category: 'script',
         sourceView: 'script',
       },
-      // Future: Add custom print view option here
-      // {
-      //   id: 'script-pdf-custom',
-      //   icon: '🖨️',
-      //   label: 'Print Script',
-      //   description: 'Open print-optimized view with custom styling',
-      //   action: handleOpenCustomPrintView,
-      //   disabled: !hasCharacters,
-      //   category: 'script',
-      //   sourceView: 'script',
-      // },
     ];
-  }, [characters, handleOpenInOfficialTool]);
-&nbsp;
-  // Register/unregister downloads when component mounts/unmounts
-<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    setDownloads(downloads);</span>
 <span class="cstat-no" title="statement not covered" >    return <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >c</span>learDownloads();</span></span>
-  }, [downloads, setDownloads, clearDownloads]);
+  }, [hasCharacters, characterCount, handleOpenInOfficialTool, setDownloads, clearDownloads]);
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -409,7 +370,7 @@ export function <span class="fstat-no" title="function not covered" >useScriptPd
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

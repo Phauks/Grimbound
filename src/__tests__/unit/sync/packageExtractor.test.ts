@@ -777,14 +777,12 @@ describe('PackageExtractor', () => {
   // ==========================================================================
 
   describe('singleton export', () => {
-    it('should export a default singleton instance', async () => {
-      const { default: defaultExtractor, packageExtractor } = await import(
-        '@/ts/sync/packageExtractor'
-      );
+    it('should export a singleton instance', async () => {
+      // Module exports named singleton, not default export
+      const { packageExtractor: importedExtractor } = await import('@/ts/sync/packageExtractor');
 
-      expect(defaultExtractor).toBeDefined();
-      expect(packageExtractor).toBeDefined();
-      expect(defaultExtractor).toBe(packageExtractor);
+      expect(importedExtractor).toBeDefined();
+      expect(importedExtractor).toBeInstanceOf(PackageExtractor);
     });
 
     it('should allow creating multiple instances', () => {

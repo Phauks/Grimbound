@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/110</span>
+                <span class='fraction'>0/111</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/67</span>
+                <span class='fraction'>0/72</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/100</span>
+                <span class='fraction'>0/101</span>
             </div>
         
             
@@ -529,7 +529,12 @@
 <a name='L464'></a><a href='#L464'>464</a>
 <a name='L465'></a><a href='#L465'>465</a>
 <a name='L466'></a><a href='#L466'>466</a>
-<a name='L467'></a><a href='#L467'>467</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L467'></a><a href='#L467'>467</a>
+<a name='L468'></a><a href='#L468'>468</a>
+<a name='L469'></a><a href='#L469'>469</a>
+<a name='L470'></a><a href='#L470'>470</a>
+<a name='L471'></a><a href='#L471'>471</a>
+<a name='L472'></a><a href='#L472'>472</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -646,6 +651,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -692,6 +698,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -722,6 +729,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -872,6 +880,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -884,6 +893,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1022,6 +1032,7 @@ import { downloadFile } from '@/ts/utils/imageUtils.js';
 import { logger } from '@/ts/utils/logger.js';
 import { sanitizeFilename } from '@/ts/utils/stringUtils.js';
 import { assetStorageService } from './AssetStorageService.js';
+import { getTypeFromTags } from './tagUtils.js';
 import type { DBAsset } from './types.js';
 &nbsp;
 /**
@@ -1159,7 +1170,8 @@ export class AssetArchiveService {
 &nbsp;
         // Track stats
 <span class="cstat-no" title="statement not covered" >        totalBytes += asset.metadata.size;</span>
-<span class="cstat-no" title="statement not covered" >        assetTypeCounts[asset.type] = (assetTypeCounts[asset.type] || 0) + 1;</span>
+        const <span class="cstat-no" title="statement not covered" >assetType = getTypeFromTags(asset.tags) ?? 'icon';</span>
+<span class="cstat-no" title="statement not covered" >        assetTypeCounts[assetType] = (assetTypeCounts[assetType] || 0) + 1;</span>
       }
 &nbsp;
       // Create manifest
@@ -1179,7 +1191,8 @@ export class AssetArchiveService {
       // Add asset metadata
       const metadata = <span class="cstat-no" title="statement not covered" >validAssets.map(<span class="fstat-no" title="function not covered" >(a</span>sset) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: asset.id,
-        type: asset.type,
+        tags: asset.tags,
+        folder: asset.folder,
         projectId: asset.projectId,
         metadata: asset.metadata,
         linkedTo: asset.linkedTo,
@@ -1338,11 +1351,12 @@ export class AssetArchiveService {
         };
       }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      if (!(assetMeta.type &amp;&amp; assetMeta.metadata)) {</span>
+      // Validate required fields
+<span class="cstat-no" title="statement not covered" >      if (!assetMeta.tags || assetMeta.tags.length === 0 || !assetMeta.metadata) {</span>
 <span class="cstat-no" title="statement not covered" >        return {</span>
           restored: false,
           skipped: false,
-          error: `Missing type or metadata for asset ${assetMeta.id}`,
+          error: `Missing tags or metadata for asset ${assetMeta.id}`,
         };
       }
 &nbsp;
@@ -1351,7 +1365,8 @@ export class AssetArchiveService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      await assetStorageService.save({</span>
         id: assetMeta.id,
-        type: assetMeta.type,
+        tags: assetMeta.tags,
+        folder: assetMeta.folder ?? null,
         projectId: options.projectId ?? assetMeta.projectId ?? null,
         blob: assetBlob,
         thumbnail: thumbnailBlob,
@@ -1468,7 +1483,7 @@ export const assetArchiveService = <span class="cstat-no" title="statement not c
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

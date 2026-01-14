@@ -26,11 +26,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext';
-import type {
-  AssetFilter,
-  AssetManagerOptions,
-  AssetWithUrl,
-} from '@/ts/services/upload/index.js';
+import type { AssetFilter, AssetManagerOptions, AssetWithUrl } from '@/ts/services/upload/index.js';
 import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 import { useSelection } from '../ui/useSelection.js';
 

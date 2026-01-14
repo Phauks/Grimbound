@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/21</span>
+                <span class='fraction'>16/16</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>16/16</span>
             </div>
         
             
@@ -123,9 +123,7 @@
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,16 +154,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">35x</span>
 <span class="cline-any cline-yes">155x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -194,7 +192,6 @@
  * @module hooks/ui/useFilters
  */
 &nbsp;
-import { useCallback, useMemo } from 'react';
 import { useTokenContext } from '@/contexts/TokenContext';
 &nbsp;
 // Type for filter keys that have string array values
@@ -203,7 +200,7 @@ type FilterKey = 'teams' | 'tokenTypes' | 'display' | 'reminders' | 'origin';
 export function useFilters() {
   const { filters, updateFilters } = useTokenContext();
 &nbsp;
-  const resetFilters = useCallback(() =&gt; {
+  const resetFilters = () =&gt; {
     updateFilters({
       teams: [],
       tokenTypes: [],
@@ -211,31 +208,31 @@ export function useFilters() {
       reminders: [],
       origin: [],
     });
-  }, [updateFilters]);
+  };
 &nbsp;
   /**
    * Factory function to create toggle handlers for filter arrays
    * Reduces boilerplate by generalizing the toggle pattern
    */
-  const createToggleHandler = useCallback(
+  const createToggleHandler =
     &lt;K extends FilterKey&gt;(key: K) =&gt;
-      (value: string) =&gt; {
-        const current = filters[key];
-        if (current.includes(value)) {
-          updateFilters({ [key]: current.filter((v) =&gt; v !== value) } as Partial&lt;typeof filters&gt;);
-        } else {
-          updateFilters({ [key]: [...current, value] } as Partial&lt;typeof filters&gt;);
-        }
-      },
-    [filters, updateFilters]
-  );
+    (value: string) =&gt; {
+      const current = filters[key];
+      if (current.includes(value)) {
+        updateFilters({
+          [key]: current.filter((v) =&gt; v !== value),
+        } as Partial&lt;typeof filters&gt;);
+      } else {
+        updateFilters({ [key]: [...current, value] } as Partial&lt;typeof filters&gt;);
+      }
+    };
 &nbsp;
-  // Memoize toggle handlers to maintain referential stability
-  const toggleTeam = useMemo(() =&gt; createToggleHandler('teams'), [createToggleHandler]);
-  const toggleTokenType = useMemo(() =&gt; createToggleHandler('tokenTypes'), [createToggleHandler]);
-  const toggleDisplay = useMemo(() =&gt; createToggleHandler('display'), [createToggleHandler]);
-  const toggleReminders = useMemo(() =&gt; createToggleHandler('reminders'), [createToggleHandler]);
-  const toggleOrigin = useMemo(() =&gt; createToggleHandler('origin'), [createToggleHandler]);
+  // Create toggle handlers
+  const toggleTeam = createToggleHandler('teams');
+  const toggleTokenType = createToggleHandler('tokenTypes');
+  const toggleDisplay = createToggleHandler('display');
+  const toggleReminders = createToggleHandler('reminders');
+  const toggleOrigin = createToggleHandler('origin');
 &nbsp;
   return {
     resetFilters,
@@ -253,7 +250,7 @@ export function useFilters() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

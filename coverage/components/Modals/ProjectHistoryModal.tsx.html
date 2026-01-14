@@ -540,7 +540,9 @@
 <a name='L475'></a><a href='#L475'>475</a>
 <a name='L476'></a><a href='#L476'>476</a>
 <a name='L477'></a><a href='#L477'>477</a>
-<a name='L478'></a><a href='#L478'>478</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L478'></a><a href='#L478'>478</a>
+<a name='L479'></a><a href='#L479'>479</a>
+<a name='L480'></a><a href='#L480'>480</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -573,29 +575,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -606,6 +585,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1030,14 +1034,19 @@
  * - Restore functionality for both versions and snapshots
  */
 &nbsp;
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
 import { useToast } from '@/contexts/ToastContext';
 import { useProjects } from '@/hooks';
 import styles from '@/styles/components/modals/ProjectHistoryModal.module.css';
 import { projectDb } from '@/ts/db/projectDb';
-import type { AutoSaveSnapshot, Project, ProjectVersion } from '@/ts/types/project';
+import type {
+  AutoSaveSnapshot,
+  DBAutoSaveSnapshot,
+  Project,
+  ProjectVersion,
+} from '@/ts/types/project';
 import { logger } from '@/ts/utils/logger';
 import { calculateProjectDiff, getDiffSummary } from '@/ts/utils/projectDiff';
 &nbsp;
@@ -1063,10 +1072,10 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
   const [selectedItem, setSelectedItem<span class="cstat-no" title="statement not covered" >] = useState&lt;TimelineItem | null&gt;(null);</span>
   const [activeTab, setActiveTab<span class="cstat-no" title="statement not covered" >] = useState&lt;TimelineTab&gt;('all');</span>
 &nbsp;
-  // Load auto-save snapshots from database
-  const <span class="cstat-no" title="statement not covered" >loadAutoSaveSnapshots = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (p</span>rojectId: string): Promise&lt;AutoSaveSnapshot[]&gt; =&gt; {
-      const dbSnapshots = <span class="cstat-no" title="statement not covered" >await projectDb.autoSaveSnapshots</span>
+  const <span class="cstat-no" title="statement not covered" >loadHistory = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+    // Load auto-save snapshots from database
+    const loadAutoSaveSnapshots = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (p</span>rojectId: string): Promise&lt;AutoSaveSnapshot[]&gt; =&gt; {</span>
+      const dbSnapshots: DBAutoSaveSnapshot[] = <span class="cstat-no" title="statement not covered" >await projectDb.autoSaveSnapshots</span>
         .where('projectId')
         .equals(projectId)
         .reverse()
@@ -1078,11 +1087,8 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
         timestamp: snap.timestamp,
         stateSnapshot: JSON.parse(snap.stateJson),
       }));
-    },
-    []
-  );
+    };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >loadHistory = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      setIsLoading(true);</span>
 <span class="cstat-no" title="statement not covered" >      logger.info('ProjectHistoryModal', 'Loading history', { projectId: project.id });</span>
@@ -1104,7 +1110,7 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
     } finally {
 <span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
     }
-  }, [project.id, addToast, loadAutoSaveSnapshots]);
+  }, [project.id, addToast]);
 &nbsp;
   // Load history on mount
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
@@ -1114,7 +1120,7 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
   }, [isOpen, loadHistory]);
 &nbsp;
   // Combine and sort timeline items, filtered by active tab
-  const <span class="cstat-no" title="statement not covered" >timeline = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >timeline = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const items: TimelineItem[] = <span class="cstat-no" title="statement not covered" >[];</span>
 &nbsp;
     // Filter based on active tab
@@ -1130,10 +1136,10 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return items.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >b.timestamp - a.timestamp)</span>;</span>
-  }, [versions, snapshots, activeTab]);
+  })();
 &nbsp;
   // Calculate diff for selected item
-  const <span class="cstat-no" title="statement not covered" >selectedDiff = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >selectedDiff = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!selectedItem) <span class="cstat-no" title="statement not covered" >return null;</span></span>
 &nbsp;
     const itemState =
@@ -1142,7 +1148,7 @@ export function <span class="fstat-no" title="function not covered" >ProjectHist
         : selectedItem.data.stateSnapshot;
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return calculateProjectDiff(itemState, project.state);</span>
-  }, [selectedItem, project.state]);
+  })();
 &nbsp;
   const handleRestore = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (i</span>tem: TimelineItem) =&gt; {</span>
     const itemType = <span class="cstat-no" title="statement not covered" >item.type === 'version' ? 'version' : 'snapshot';</span>
@@ -1501,7 +1507,7 @@ function <span class="fstat-no" title="function not covered" >formatTimestamp(t<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

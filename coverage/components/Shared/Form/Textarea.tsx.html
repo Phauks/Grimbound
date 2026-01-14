@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/45</span>
+                <span class='fraction'>0/43</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/41</span>
+                <span class='fraction'>0/39</span>
             </div>
         
             
@@ -214,13 +214,7 @@
 <a name='L149'></a><a href='#L149'>149</a>
 <a name='L150'></a><a href='#L150'>150</a>
 <a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a>
-<a name='L153'></a><a href='#L153'>153</a>
-<a name='L154'></a><a href='#L154'>154</a>
-<a name='L155'></a><a href='#L155'>155</a>
-<a name='L156'></a><a href='#L156'>156</a>
-<a name='L157'></a><a href='#L157'>157</a>
-<a name='L158'></a><a href='#L158'>158</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L152'></a><a href='#L152'>152</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -244,9 +238,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -374,9 +365,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Unified Textarea Component
  *
@@ -385,7 +373,7 @@
  * Auto-resize mode expands the textarea to fit all content without scrolling.
  */
 &nbsp;
-import { forwardRef, type TextareaHTMLAttributes, useCallback, useEffect, useRef } from 'react';
+import { type Ref, type TextareaHTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 &nbsp;
 export interface TextareaProps extends TextareaHTMLAttributes&lt;HTMLTextAreaElement&gt; {
@@ -403,137 +391,131 @@ export interface TextareaProps extends TextareaHTMLAttributes&lt;HTMLTextAreaEle
   minRows?: number;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >Textarea = forwardRef&lt;HTMLTextAreaElement, TextareaProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  (</span>
-    {
-      size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
-      error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      errorMessage,
-      fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      autoResize = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      minRows = <span class="branch-0 cbranch-no" title="branch not covered" >2,</span>
-      className,
-      disabled,
-      value,
-      onInput,
-      ...props
+export function <span class="fstat-no" title="function not covered" >Textarea({</span>
+  size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
+  error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  errorMessage,
+  fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  autoResize = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  minRows = <span class="branch-0 cbranch-no" title="branch not covered" >2,</span>
+  className,
+  disabled,
+  value,
+  onInput,
+  ref: forwardedRef,
+  ...props
+}: TextareaProps &amp; { ref?: Ref&lt;HTMLTextAreaElement&gt; }) {
+  // Internal ref for auto-resize functionality
+  const <span class="cstat-no" title="statement not covered" >internalRef = useRef&lt;HTMLTextAreaElement&gt;(null);</span>
+&nbsp;
+  // Use forwarded ref if provided, otherwise use internal ref
+  const textareaRef = (<span class="cstat-no" title="statement not covered" >forwardedRef as React.RefObject&lt;HTMLTextAreaElement&gt;) || internalRef;</span>
+&nbsp;
+  const textareaClasses = <span class="cstat-no" title="statement not covered" >[</span>
+    styles.textarea,
+    styles[`textarea${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error &amp;&amp; styles.textareaError,
+    disabled &amp;&amp; styles.textareaDisabled,
+    fullWidth &amp;&amp; styles.fullWidth,
+    autoResize &amp;&amp; styles.textareaAutoResize,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+&nbsp;
+  const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.textareaWrapper, fullWidth &amp;&amp; styles.fullWidth]</span>
+    .filter(Boolean)
+    .join(' ');
+&nbsp;
+  // Auto-resize function
+  const <span class="cstat-no" title="statement not covered" >resizeTextarea = useCallback(</span>
+<span class="fstat-no" title="function not covered" >    (t</span>extarea: HTMLTextAreaElement | null) =&gt; {
+<span class="cstat-no" title="statement not covered" >      if (!(textarea &amp;&amp; autoResize)) <span class="cstat-no" title="statement not covered" >return;</span></span>
+&nbsp;
+      // Get computed styles for calculating minimum height
+      const computedStyle = <span class="cstat-no" title="statement not covered" >window.getComputedStyle(textarea);</span>
+      const lineHeight = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.lineHeight) || 20;</span>
+      const paddingTop = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.paddingTop) || 0;</span>
+      const paddingBottom = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.paddingBottom) || 0;</span>
+      const borderTop = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.borderTopWidth) || 0;</span>
+      const borderBottom = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.borderBottomWidth) || 0;</span>
+&nbsp;
+      // Calculate minimum height based on minRows
+      const minHeight =
+<span class="cstat-no" title="statement not covered" >        lineHeight * minRows + paddingTop + paddingBottom + borderTop + borderBottom;</span>
+&nbsp;
+      // Reset height to auto to get accurate scrollHeight
+<span class="cstat-no" title="statement not covered" >      textarea.style.height = 'auto';</span>
+&nbsp;
+      // Set to scrollHeight or minHeight, whichever is larger
+      const newHeight = <span class="cstat-no" title="statement not covered" >Math.max(textarea.scrollHeight, minHeight);</span>
+<span class="cstat-no" title="statement not covered" >      textarea.style.height = `${newHeight}px`;</span>
     },
-    forwardedRef
-  ) =&gt; {
-    // Internal ref for auto-resize functionality
-    const <span class="cstat-no" title="statement not covered" >internalRef = useRef&lt;HTMLTextAreaElement&gt;(null);</span>
+    [autoResize, minRows]
+  );
 &nbsp;
-    // Use forwarded ref if provided, otherwise use internal ref
-    const textareaRef = (<span class="cstat-no" title="statement not covered" >forwardedRef as React.RefObject&lt;HTMLTextAreaElement&gt;) || internalRef;</span>
+  // Resize on mount and when value changes
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    if (autoResize &amp;&amp; textareaRef.current) {</span>
+<span class="cstat-no" title="statement not covered" >      resizeTextarea(textareaRef.current);</span>
+    }
+  }, [autoResize, resizeTextarea, textareaRef]);
 &nbsp;
-    const textareaClasses = <span class="cstat-no" title="statement not covered" >[</span>
-      styles.textarea,
-      styles[`textarea${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error &amp;&amp; styles.textareaError,
-      disabled &amp;&amp; styles.textareaDisabled,
-      fullWidth &amp;&amp; styles.fullWidth,
-      autoResize &amp;&amp; styles.textareaAutoResize,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+  // Handle window resize
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    if (!autoResize) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
-    const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.textareaWrapper, fullWidth &amp;&amp; styles.fullWidth]</span>
-      .filter(Boolean)
-      .join(' ');
-&nbsp;
-    // Auto-resize function
-    const <span class="cstat-no" title="statement not covered" >resizeTextarea = useCallback(</span>
-<span class="fstat-no" title="function not covered" >      (t</span>extarea: HTMLTextAreaElement | null) =&gt; {
-<span class="cstat-no" title="statement not covered" >        if (!(textarea &amp;&amp; autoResize)) <span class="cstat-no" title="statement not covered" >return;</span></span>
-&nbsp;
-        // Get computed styles for calculating minimum height
-        const computedStyle = <span class="cstat-no" title="statement not covered" >window.getComputedStyle(textarea);</span>
-        const lineHeight = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.lineHeight) || 20;</span>
-        const paddingTop = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.paddingTop) || 0;</span>
-        const paddingBottom = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.paddingBottom) || 0;</span>
-        const borderTop = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.borderTopWidth) || 0;</span>
-        const borderBottom = <span class="cstat-no" title="statement not covered" >parseFloat(computedStyle.borderBottomWidth) || 0;</span>
-&nbsp;
-        // Calculate minimum height based on minRows
-        const minHeight =
-<span class="cstat-no" title="statement not covered" >          lineHeight * minRows + paddingTop + paddingBottom + borderTop + borderBottom;</span>
-&nbsp;
-        // Reset height to auto to get accurate scrollHeight
-<span class="cstat-no" title="statement not covered" >        textarea.style.height = 'auto';</span>
-&nbsp;
-        // Set to scrollHeight or minHeight, whichever is larger
-        const newHeight = <span class="cstat-no" title="statement not covered" >Math.max(textarea.scrollHeight, minHeight);</span>
-<span class="cstat-no" title="statement not covered" >        textarea.style.height = `${newHeight}px`;</span>
-      },
-      [autoResize, minRows]
-    );
-&nbsp;
-    // Resize on mount and when value changes
-<span class="cstat-no" title="statement not covered" >    useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >      if (autoResize &amp;&amp; textareaRef.current) {</span>
+    const handleResize = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >      if (textareaRef.current) {</span>
 <span class="cstat-no" title="statement not covered" >        resizeTextarea(textareaRef.current);</span>
       }
-    }, [autoResize, resizeTextarea, textareaRef]);
-&nbsp;
-    // Handle window resize
-<span class="cstat-no" title="statement not covered" >    useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >      if (!autoResize) <span class="cstat-no" title="statement not covered" >return;</span></span>
-&nbsp;
-      const handleResize = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >        if (textareaRef.current) {</span>
-<span class="cstat-no" title="statement not covered" >          resizeTextarea(textareaRef.current);</span>
-        }
-      };
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      window.addEventListener('resize', handleResize);</span>
-<span class="cstat-no" title="statement not covered" >      return <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >w</span>indow.removeEventListener('resize', handleResize);</span></span>
-    }, [autoResize, resizeTextarea, textareaRef]);
-&nbsp;
-    const handleInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.FormEvent&lt;HTMLTextAreaElement&gt;) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      if (autoResize) {</span>
-<span class="cstat-no" title="statement not covered" >        resizeTextarea(e.currentTarget);</span>
-      }
-<span class="cstat-no" title="statement not covered" >      onInput?.(e);</span>
     };
 &nbsp;
-    // Callback ref to handle both forwarded ref and initial resize
-    const setRef = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>lement: HTMLTextAreaElement | null) =&gt; {</span>
-      // Update internal ref
-      (<span class="cstat-no" title="statement not covered" >internalRef as React.MutableRefObject&lt;HTMLTextAreaElement | null&gt;).current = element;</span>
+<span class="cstat-no" title="statement not covered" >    window.addEventListener('resize', handleResize);</span>
+<span class="cstat-no" title="statement not covered" >    return <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >w</span>indow.removeEventListener('resize', handleResize);</span></span>
+  }, [autoResize, resizeTextarea, textareaRef]);
 &nbsp;
-      // Update forwarded ref if it's a function or object
-<span class="cstat-no" title="statement not covered" >      if (typeof forwardedRef === 'function') {</span>
-<span class="cstat-no" title="statement not covered" >        forwardedRef(element);</span>
-<span class="cstat-no" title="statement not covered" >      } else if (forwardedRef) {</span>
-        (<span class="cstat-no" title="statement not covered" >forwardedRef as React.MutableRefObject&lt;HTMLTextAreaElement | null&gt;).current = element;</span>
-      }
+  const handleInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.FormEvent&lt;HTMLTextAreaElement&gt;) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (autoResize) {</span>
+<span class="cstat-no" title="statement not covered" >      resizeTextarea(e.currentTarget);</span>
+    }
+<span class="cstat-no" title="statement not covered" >    onInput?.(e);</span>
+  };
 &nbsp;
-      // Initial resize
-<span class="cstat-no" title="statement not covered" >      if (element &amp;&amp; autoResize) {</span>
-        // Use requestAnimationFrame to ensure styles are computed
-<span class="cstat-no" title="statement not covered" >        requestAnimationFrame(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >r</span>esizeTextarea(element))</span>;</span>
-      }
-    };
+  // Callback ref to handle both forwarded ref and initial resize
+  const setRef = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>lement: HTMLTextAreaElement | null) =&gt; {</span>
+    // Update internal ref
+    (<span class="cstat-no" title="statement not covered" >internalRef as React.MutableRefObject&lt;HTMLTextAreaElement | null&gt;).current = element;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;div className={wrapperClasses}&gt;
-        &lt;textarea
-          ref={setRef}
-          className={textareaClasses}
-          disabled={disabled}
-          aria-invalid={error}
-          value={value}
-          onInput={handleInput}
-          {...props}
-        /&gt;
-        {errorMessage &amp;&amp; &lt;span className={styles.errorText}&gt;{errorMessage}&lt;/span&gt;}
-      &lt;/div&gt;
-    );
-  }
-);
+    // Update forwarded ref if it's a function or object
+<span class="cstat-no" title="statement not covered" >    if (typeof forwardedRef === 'function') {</span>
+<span class="cstat-no" title="statement not covered" >      forwardedRef(element);</span>
+<span class="cstat-no" title="statement not covered" >    } else if (forwardedRef) {</span>
+      (<span class="cstat-no" title="statement not covered" >forwardedRef as React.MutableRefObject&lt;HTMLTextAreaElement | null&gt;).current = element;</span>
+    }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >Textarea.displayName = 'Textarea';</span>
+    // Initial resize
+<span class="cstat-no" title="statement not covered" >    if (element &amp;&amp; autoResize) {</span>
+      // Use requestAnimationFrame to ensure styles are computed
+<span class="cstat-no" title="statement not covered" >      requestAnimationFrame(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >r</span>esizeTextarea(element))</span>;</span>
+    }
+  };
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return (</span>
+    &lt;div className={wrapperClasses}&gt;
+      &lt;textarea
+        ref={setRef}
+        className={textareaClasses}
+        disabled={disabled}
+        aria-invalid={error}
+        value={value}
+        onInput={handleInput}
+        {...props}
+      /&gt;
+      {errorMessage &amp;&amp; &lt;span className={styles.errorText}&gt;{errorMessage}&lt;/span&gt;}
+    &lt;/div&gt;
+  );
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -541,7 +523,7 @@ export const <span class="cstat-no" title="statement not covered" >Textarea = fo
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

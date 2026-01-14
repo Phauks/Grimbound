@@ -357,16 +357,7 @@
 <a name='L292'></a><a href='#L292'>292</a>
 <a name='L293'></a><a href='#L293'>293</a>
 <a name='L294'></a><a href='#L294'>294</a>
-<a name='L295'></a><a href='#L295'>295</a>
-<a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a>
-<a name='L298'></a><a href='#L298'>298</a>
-<a name='L299'></a><a href='#L299'>299</a>
-<a name='L300'></a><a href='#L300'>300</a>
-<a name='L301'></a><a href='#L301'>301</a>
-<a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L295'></a><a href='#L295'>295</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -403,6 +394,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -487,16 +479,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -707,6 +689,7 @@ export function <span class="fstat-no" title="function not covered" >SnapshotRec
   const [selectedSnapshot, setSelectedSnapshot<span class="cstat-no" title="statement not covered" >] = useState&lt;AutoSaveSnapshot | null&gt;(null);</span>
   const [showConfirm, setShowConfirm<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
 &nbsp;
+  // Load snapshots function (extracted for retry button)
   const <span class="cstat-no" title="statement not covered" >loadSnapshots = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!currentProject) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
@@ -741,14 +724,14 @@ export function <span class="fstat-no" title="function not covered" >SnapshotRec
 <span class="cstat-no" title="statement not covered" >    if (isOpen &amp;&amp; currentProject) {</span>
 <span class="cstat-no" title="statement not covered" >      loadSnapshots();</span>
     }
-  }, [isOpen, currentProject?.id, currentProject, loadSnapshots]);
+  }, [isOpen, currentProject, loadSnapshots]);
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleRestore = useCallback(<span class="fstat-no" title="function not covered" >(s</span>napshot: AutoSaveSnapshot) =&gt; {</span>
+  const handleRestore = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>napshot: AutoSaveSnapshot) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setSelectedSnapshot(snapshot);</span>
 <span class="cstat-no" title="statement not covered" >    setShowConfirm(true);</span>
-  }, []);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >confirmRestore = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+  const confirmRestore = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!(selectedSnapshot &amp;&amp; currentProject)) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
@@ -791,24 +774,14 @@ export function <span class="fstat-no" title="function not covered" >SnapshotRec
     } finally {
 <span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
     }
-  }, [
-    selectedSnapshot,
-    currentProject,
-    projectDatabaseService,
-    setCharacters,
-    setScriptMeta,
-    setJsonInput,
-    clearAllMetadata,
-    setCurrentProject,
-    onClose,
-  ]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >cancelRestore = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const cancelRestore = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    setSelectedSnapshot(null);</span>
 <span class="cstat-no" title="statement not covered" >    setShowConfirm(false);</span>
-  }, []);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >formatTimestamp = useCallback(<span class="fstat-no" title="function not covered" >(t</span>imestamp: number): string =&gt; {</span>
+  const formatTimestamp = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>imestamp: number): string =&gt; {</span>
     const date = <span class="cstat-no" title="statement not covered" >new Date(timestamp);</span>
     const now = <span class="cstat-no" title="statement not covered" >new Date();</span>
     const diffMs = <span class="cstat-no" title="statement not covered" >now.getTime() - timestamp;</span>
@@ -835,15 +808,15 @@ export function <span class="fstat-no" title="function not covered" >SnapshotRec
       hour: 'numeric',
       minute: '2-digit',
     });
-  }, []);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >getSnapshotSummary = useCallback(<span class="fstat-no" title="function not covered" >(s</span>napshot: AutoSaveSnapshot): string =&gt; {</span>
+  const getSnapshotSummary = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>napshot: AutoSaveSnapshot): string =&gt; {</span>
     const state = <span class="cstat-no" title="statement not covered" >snapshot.stateSnapshot;</span>
     const charCount = <span class="cstat-no" title="statement not covered" >state.characters?.length || 0;</span>
     const scriptName = <span class="cstat-no" title="statement not covered" >state.scriptMeta?.name || 'Unnamed script';</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return `${charCount} character${charCount !== 1 ? 's' : ''} • ${scriptName}`;</span>
-  }, []);
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (!isOpen) <span class="cstat-no" title="statement not covered" >return null;</span></span>
 &nbsp;
@@ -979,7 +952,7 @@ export function <span class="fstat-no" title="function not covered" >SnapshotRec
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

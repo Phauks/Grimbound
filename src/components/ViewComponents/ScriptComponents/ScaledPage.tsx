@@ -25,15 +25,15 @@ export function ScaledPage({ children }: ScaledPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  const calculateScale = (width: number) => {
-    // Scale down to fit, but never scale up beyond 1
-    const newScale = Math.min(1, width / REFERENCE_WIDTH);
-    setScale(newScale);
-  };
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    const calculateScale = (width: number) => {
+      // Scale down to fit, but never scale up beyond 1
+      const newScale = Math.min(1, width / REFERENCE_WIDTH);
+      setScale(newScale);
+    };
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -51,7 +51,7 @@ export function ScaledPage({ children }: ScaledPageProps) {
     return () => {
       observer.disconnect();
     };
-  }, [calculateScale]);
+  }, []);
 
   return (
     <div ref={containerRef} className={styles.page}>

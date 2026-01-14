@@ -246,20 +246,7 @@
 <a name='L181'></a><a href='#L181'>181</a>
 <a name='L182'></a><a href='#L182'>182</a>
 <a name='L183'></a><a href='#L183'>183</a>
-<a name='L184'></a><a href='#L184'>184</a>
-<a name='L185'></a><a href='#L185'>185</a>
-<a name='L186'></a><a href='#L186'>186</a>
-<a name='L187'></a><a href='#L187'>187</a>
-<a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a>
-<a name='L190'></a><a href='#L190'>190</a>
-<a name='L191'></a><a href='#L191'>191</a>
-<a name='L192'></a><a href='#L192'>192</a>
-<a name='L193'></a><a href='#L193'>193</a>
-<a name='L194'></a><a href='#L194'>194</a>
-<a name='L195'></a><a href='#L195'>195</a>
-<a name='L196'></a><a href='#L196'>196</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L184'></a><a href='#L184'>184</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -357,7 +344,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -365,21 +351,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -387,6 +359,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -414,8 +392,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -471,7 +447,6 @@
  * @module hooks/studio/useAssetEditor
  */
 &nbsp;
-import { useCallback } from 'react';
 import { useAssetStorageService } from '@/contexts/ServiceContext.js';
 import type { BorderOptions, TeamColorPreset } from '@/ts/studio/index.js';
 import { useAssetCanvasOperations } from './useAssetCanvasOperations.js';
@@ -551,58 +526,49 @@ export function <span class="fstat-no" title="function not covered" >useAssetEdi
 &nbsp;
   // Update effect state's hasImage based on canvas
   // This is done by wrapping effect methods to check canvas state
-  const <span class="cstat-no" title="statement not covered" >applyTeamColor = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (p</span>reset: TeamColorPreset | null) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!canvasOps.originalCanvas) {</span>
-<span class="cstat-no" title="statement not covered" >        uiState.setError('No image loaded');</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
-      }
-<span class="cstat-no" title="statement not covered" >      effectState.applyTeamColor(preset);</span>
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyTeamColor = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>reset: TeamColorPreset | null) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!canvasOps.originalCanvas) {</span>
+<span class="cstat-no" title="statement not covered" >      uiState.setError('No image loaded');</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    effectState.applyTeamColor(preset);</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >applyCustomColor = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (h</span>exColor: string) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!canvasOps.originalCanvas) {</span>
-<span class="cstat-no" title="statement not covered" >        uiState.setError('No image loaded');</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
-      }
-<span class="cstat-no" title="statement not covered" >      effectState.applyCustomColor(hexColor);</span>
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyCustomColor = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(h</span>exColor: string) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!canvasOps.originalCanvas) {</span>
+<span class="cstat-no" title="statement not covered" >      uiState.setError('No image loaded');</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    effectState.applyCustomColor(hexColor);</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >applyBorder = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (o</span>ptions: Partial&lt;BorderOptions&gt;, skipUndo?: boolean) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!canvasOps.originalCanvas) {</span>
-<span class="cstat-no" title="statement not covered" >        uiState.setError('No image loaded');</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
-      }
-<span class="cstat-no" title="statement not covered" >      effectState.applyBorder(options, skipUndo);</span>
-    },
-    [canvasOps.originalCanvas, effectState, uiState]
-  );
+  const applyBorder = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(o</span>ptions: Partial&lt;BorderOptions&gt;, skipUndo?: boolean) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!canvasOps.originalCanvas) {</span>
+<span class="cstat-no" title="statement not covered" >      uiState.setError('No image loaded');</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    effectState.applyBorder(options, skipUndo);</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >invertColors = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const invertColors = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!canvasOps.originalCanvas) {</span>
 <span class="cstat-no" title="statement not covered" >      uiState.setError('No image loaded');</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 <span class="cstat-no" title="statement not covered" >    effectState.invertColors();</span>
-  }, [canvasOps.originalCanvas, effectState, uiState]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >reset = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const reset = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (canvasOps.originalCanvas) {</span>
 <span class="cstat-no" title="statement not covered" >      effectState.reset();</span>
     }
-  }, [canvasOps.originalCanvas, effectState]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >clear = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const clear = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    canvasOps.clear();</span>
 <span class="cstat-no" title="statement not covered" >    effectState.clear();</span>
 <span class="cstat-no" title="statement not covered" >    uiState.reset();</span>
-  }, [canvasOps, effectState, uiState]);
+  };
 &nbsp;
   // ============================================================================
   // Return
@@ -646,8 +612,6 @@ export function <span class="fstat-no" title="function not covered" >useAssetEdi
     presets: effectState.presets,
   };
 }
-&nbsp;
-export default useAssetEditor;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -655,7 +619,7 @@ export default useAssetEditor;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

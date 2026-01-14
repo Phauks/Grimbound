@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/48</span>
+                <span class='fraction'>0/44</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/43</span>
+                <span class='fraction'>0/39</span>
             </div>
         
             
@@ -344,15 +344,7 @@
 <a name='L279'></a><a href='#L279'>279</a>
 <a name='L280'></a><a href='#L280'>280</a>
 <a name='L281'></a><a href='#L281'>281</a>
-<a name='L282'></a><a href='#L282'>282</a>
-<a name='L283'></a><a href='#L283'>283</a>
-<a name='L284'></a><a href='#L284'>284</a>
-<a name='L285'></a><a href='#L285'>285</a>
-<a name='L286'></a><a href='#L286'>286</a>
-<a name='L287'></a><a href='#L287'>287</a>
-<a name='L288'></a><a href='#L288'>288</a>
-<a name='L289'></a><a href='#L289'>289</a>
-<a name='L290'></a><a href='#L290'>290</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L282'></a><a href='#L282'>282</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -394,7 +386,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -432,7 +425,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -537,7 +530,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -548,12 +540,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -576,7 +566,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -586,13 +575,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -648,7 +632,8 @@
  * Uses SettingsSelectorBase pattern for consistent UI with other settings.
  */
 &nbsp;
-import { memo, useCallback, useMemo, useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ColorPreviewSelector } from '@/components/Shared/Selectors/ColorPreviewSelector';
 import {
@@ -683,7 +668,7 @@ export interface TeamColorSettingsProps {
 }
 &nbsp;
 /** Preview circle that shows split colors for Traveler */
-const <span class="cstat-no" title="statement not covered" >TeamColorPreview = memo(function <span class="fstat-no" title="function not covered" >TeamColorPreview({</span></span>
+function <span class="fstat-no" title="function not covered" >TeamColorPreview({</span>
   preset,
   customColor,
   enabled,
@@ -718,10 +703,10 @@ const <span class="cstat-no" title="statement not covered" >TeamColorPreview = m
       style={{ background: getBackgroundStyle() }}
     /&gt;
   );
-});
+}
 &nbsp;
 /** Render panel content in portal */
-const <span class="cstat-no" title="statement not covered" >TeamColorPanelContent = memo(function <span class="fstat-no" title="function not covered" >TeamColorPanelContent({</span></span>
+function <span class="fstat-no" title="function not covered" >TeamColorPanelContent({</span>
   panelRef,
   panelPosition,
   presets,
@@ -824,9 +809,9 @@ const <span class="cstat-no" title="statement not covered" >TeamColorPanelConten
     &lt;/div&gt;,
     document.body
   );
-});
+}
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >TeamColorSettings = memo(function <span class="fstat-no" title="function not covered" >TeamColorSettings({</span></span>
+export function <span class="fstat-no" title="function not covered" >TeamColorSettings({</span>
   enabled,
   selectedPreset,
   customColor,
@@ -839,14 +824,11 @@ export const <span class="cstat-no" title="statement not covered" >TeamColorSett
 }: TeamColorSettingsProps) {
   const [colorPickerValue, setColorPickerValue<span class="cstat-no" title="statement not covered" >] = useState('#3B5998');</span>
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >panelValue: TeamColorPanelValue = useMemo(</span>
-<span class="fstat-no" title="function not covered" >    () =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
-      presetId: selectedPreset?.id ?? null,
-      customColor,
-      colorPickerValue,
-    }),
-    [selectedPreset, customColor, colorPickerValue]
-  );
+  const panelValue: TeamColorPanelValue = <span class="cstat-no" title="statement not covered" >{</span>
+    presetId: selectedPreset?.id ?? null,
+    customColor,
+    colorPickerValue,
+  };
 &nbsp;
   const { isExpanded, panelPosition, containerRef, panelRef, toggle, close, handleKeyDown <span class="cstat-no" title="statement not covered" >} =</span>
     useExpandablePanel&lt;TeamColorPanelValue&gt;({
@@ -857,40 +839,34 @@ export const <span class="cstat-no" title="statement not covered" >TeamColorSett
       autoApplyOnClose: false,
     });
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >summaryText = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >summaryText = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!enabled) <span class="cstat-no" title="statement not covered" >return 'None';</span></span>
 <span class="cstat-no" title="statement not covered" >    if (customColor) <span class="cstat-no" title="statement not covered" >return 'Custom';</span></span>
 <span class="cstat-no" title="statement not covered" >    if (selectedPreset) <span class="cstat-no" title="statement not covered" >return selectedPreset.displayName;</span></span>
 <span class="cstat-no" title="statement not covered" >    return 'None';</span>
-  }, [enabled, customColor, selectedPreset]);
+  })();
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleToggle = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (n</span>ewEnabled: boolean) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (newEnabled &amp;&amp; !enabled) {</span>
-<span class="cstat-no" title="statement not covered" >        toggle();</span>
-<span class="cstat-no" title="statement not covered" >      } else if (!newEnabled) {</span>
-<span class="cstat-no" title="statement not covered" >        onPresetSelect(null);</span>
-<span class="cstat-no" title="statement not covered" >        close();</span>
-      }
-<span class="cstat-no" title="statement not covered" >      onToggle(newEnabled);</span>
-    },
-    [enabled, onToggle, onPresetSelect, toggle, close]
-  );
+  const handleToggle = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(n</span>ewEnabled: boolean) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (newEnabled &amp;&amp; !enabled) {</span>
+<span class="cstat-no" title="statement not covered" >      toggle();</span>
+<span class="cstat-no" title="statement not covered" >    } else if (!newEnabled) {</span>
+<span class="cstat-no" title="statement not covered" >      onPresetSelect(null);</span>
+<span class="cstat-no" title="statement not covered" >      close();</span>
+    }
+<span class="cstat-no" title="statement not covered" >    onToggle(newEnabled);</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handlePresetClick = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (p</span>reset: TeamColorPreset) =&gt; {
-<span class="cstat-no" title="statement not covered" >      onPresetSelect(preset);</span>
-    },
-    [onPresetSelect]
-  );
+  const handlePresetClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(p</span>reset: TeamColorPreset) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    onPresetSelect(preset);</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleCustomColorApply = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleCustomColorApply = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    onCustomColor(colorPickerValue);</span>
-  }, [colorPickerValue, onCustomColor]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleClear = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleClear = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    onPresetSelect(null);</span>
-  }, [onPresetSelect]);
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;SettingsSelectorBase
@@ -929,7 +905,7 @@ export const <span class="cstat-no" title="statement not covered" >TeamColorSett
       )}
     &lt;/SettingsSelectorBase&gt;
   );
-});
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -937,7 +913,7 @@ export const <span class="cstat-no" title="statement not covered" >TeamColorSett
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

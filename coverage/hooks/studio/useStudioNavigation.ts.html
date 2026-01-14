@@ -196,14 +196,7 @@
 <a name='L131'></a><a href='#L131'>131</a>
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a>
-<a name='L135'></a><a href='#L135'>135</a>
-<a name='L136'></a><a href='#L136'>136</a>
-<a name='L137'></a><a href='#L137'>137</a>
-<a name='L138'></a><a href='#L138'>138</a>
-<a name='L139'></a><a href='#L139'>139</a>
-<a name='L140'></a><a href='#L140'>140</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L134'></a><a href='#L134'>134</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -249,7 +242,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -333,11 +325,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -350,7 +338,6 @@
  * @module hooks/studio/useStudioNavigation
  */
 &nbsp;
-import { useCallback } from 'react';
 import type { TabType } from '@/components/Layout/TabNavigation';
 import { navigateToStudioWithBlob } from '@/ts/studio/navigationHelpers.js';
 import type { Token } from '@/ts/types/index.js';
@@ -387,99 +374,94 @@ export function <span class="fstat-no" title="function not covered" >useStudioNa
   /**
    * Load cached character icon and navigate to Studio
    */
-  const <span class="cstat-no" title="statement not covered" >editInStudio = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (t</span>oken: Token) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!onTabChange) {</span>
-<span class="cstat-no" title="statement not covered" >        logger.warn('useStudioNavigation', 'No onTabChange handler provided');</span>
+  const editInStudio = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (t</span>oken: Token) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!onTabChange) {</span>
+<span class="cstat-no" title="statement not covered" >      logger.warn('useStudioNavigation', 'No onTabChange handler provided');</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
+&nbsp;
+    // Only works for character tokens (not reminders or meta tokens)
+<span class="cstat-no" title="statement not covered" >    if (token.type !== 'character') {</span>
+<span class="cstat-no" title="statement not covered" >      logger.warn('useStudioNavigation', 'Can only edit character tokens', token.type);</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      // Try to get the original icon URL from token data
+      let iconUrl: string | undefined = <span class="cstat-no" title="statement not covered" >token.imageUrl;</span>
+&nbsp;
+      // Fallback to character.image if imageUrl not available
+<span class="cstat-no" title="statement not covered" >      if (!iconUrl &amp;&amp; token.characterData?.image) {</span>
+        const charImage = <span class="cstat-no" title="statement not covered" >token.characterData.image;</span>
+        // Handle both single string and array of images
+<span class="cstat-no" title="statement not covered" >        if (typeof charImage === 'string') {</span>
+<span class="cstat-no" title="statement not covered" >          iconUrl = charImage;</span>
+<span class="cstat-no" title="statement not covered" >        } else if (Array.isArray(charImage) &amp;&amp; charImage.length &gt; 0) {</span>
+          // Use the variant index if available, otherwise use first image
+          const index = <span class="cstat-no" title="statement not covered" >token.variantIndex ?? 0;</span>
+<span class="cstat-no" title="statement not covered" >          iconUrl = charImage[index];</span>
+        }
+      }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      if (!iconUrl) {</span>
+<span class="cstat-no" title="statement not covered" >        logger.error('useStudioNavigation', 'No icon URL found for token', token.name);</span>
 <span class="cstat-no" title="statement not covered" >        return;</span>
       }
 &nbsp;
-      // Only works for character tokens (not reminders or meta tokens)
-<span class="cstat-no" title="statement not covered" >      if (token.type !== 'character') {</span>
-<span class="cstat-no" title="statement not covered" >        logger.warn('useStudioNavigation', 'Can only edit character tokens', token.type);</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
+<span class="cstat-no" title="statement not covered" >      logger.info('useStudioNavigation', 'Loading cached icon for Studio', {</span>
+        tokenName: token.name,
+        iconUrl: `${iconUrl.substring(0, 50)}...`,
+        isCached: globalImageCache.has(iconUrl),
+      });
+&nbsp;
+      // Get the cached image (it was loaded during token generation)
+      const cachedImage = <span class="cstat-no" title="statement not covered" >await globalImageCache.get(iconUrl);</span>
+&nbsp;
+      // Convert the cached HTMLImageElement to a blob
+      const canvas = <span class="cstat-no" title="statement not covered" >document.createElement('canvas');</span>
+<span class="cstat-no" title="statement not covered" >      canvas.width = cachedImage.naturalWidth;</span>
+<span class="cstat-no" title="statement not covered" >      canvas.height = cachedImage.naturalHeight;</span>
+      const ctx = <span class="cstat-no" title="statement not covered" >canvas.getContext('2d');</span>
+<span class="cstat-no" title="statement not covered" >      if (!ctx) {</span>
+<span class="cstat-no" title="statement not covered" >        throw new Error('Failed to get canvas context');</span>
       }
+<span class="cstat-no" title="statement not covered" >      ctx.drawImage(cachedImage, 0, 0);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      try {</span>
-        // Try to get the original icon URL from token data
-        let iconUrl: string | undefined = <span class="cstat-no" title="statement not covered" >token.imageUrl;</span>
-&nbsp;
-        // Fallback to character.image if imageUrl not available
-<span class="cstat-no" title="statement not covered" >        if (!iconUrl &amp;&amp; token.characterData?.image) {</span>
-          const charImage = <span class="cstat-no" title="statement not covered" >token.characterData.image;</span>
-          // Handle both single string and array of images
-<span class="cstat-no" title="statement not covered" >          if (typeof charImage === 'string') {</span>
-<span class="cstat-no" title="statement not covered" >            iconUrl = charImage;</span>
-<span class="cstat-no" title="statement not covered" >          } else if (Array.isArray(charImage) &amp;&amp; charImage.length &gt; 0) {</span>
-            // Use the variant index if available, otherwise use first image
-            const index = <span class="cstat-no" title="statement not covered" >token.variantIndex ?? 0;</span>
-<span class="cstat-no" title="statement not covered" >            iconUrl = charImage[index];</span>
+      const blob = <span class="cstat-no" title="statement not covered" >await new Promise&lt;Blob&gt;(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        canvas.toBlob(<span class="fstat-no" title="function not covered" >(b</span>) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >          if (b) {</span>
+<span class="cstat-no" title="statement not covered" >            resolve(b);</span>
+          } else {
+<span class="cstat-no" title="statement not covered" >            reject(new Error('Failed to convert canvas to blob'));</span>
           }
-        }
+        }, 'image/png');
+      });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (!iconUrl) {</span>
-<span class="cstat-no" title="statement not covered" >          logger.error('useStudioNavigation', 'No icon URL found for token', token.name);</span>
-<span class="cstat-no" title="statement not covered" >          return;</span>
-        }
+<span class="cstat-no" title="statement not covered" >      logger.info('useStudioNavigation', 'Navigating to Studio with cached icon blob', {</span>
+        tokenName: token.name,
+        blobSize: blob.size,
+      });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        logger.info('useStudioNavigation', 'Loading cached icon for Studio', {</span>
-          tokenName: token.name,
-          iconUrl: `${iconUrl.substring(0, 50)}...`,
-          isCached: globalImageCache.has(iconUrl),
-        });
-&nbsp;
-        // Get the cached image (it was loaded during token generation)
-        const cachedImage = <span class="cstat-no" title="statement not covered" >await globalImageCache.get(iconUrl);</span>
-&nbsp;
-        // Convert the cached HTMLImageElement to a blob
-        const canvas = <span class="cstat-no" title="statement not covered" >document.createElement('canvas');</span>
-<span class="cstat-no" title="statement not covered" >        canvas.width = cachedImage.naturalWidth;</span>
-<span class="cstat-no" title="statement not covered" >        canvas.height = cachedImage.naturalHeight;</span>
-        const ctx = <span class="cstat-no" title="statement not covered" >canvas.getContext('2d');</span>
-<span class="cstat-no" title="statement not covered" >        if (!ctx) {</span>
-<span class="cstat-no" title="statement not covered" >          throw new Error('Failed to get canvas context');</span>
-        }
-<span class="cstat-no" title="statement not covered" >        ctx.drawImage(cachedImage, 0, 0);</span>
-&nbsp;
-        const blob = <span class="cstat-no" title="statement not covered" >await new Promise&lt;Blob&gt;(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          canvas.toBlob(<span class="fstat-no" title="function not covered" >(b</span>) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >            if (b) {</span>
-<span class="cstat-no" title="statement not covered" >              resolve(b);</span>
-            } else {
-<span class="cstat-no" title="statement not covered" >              reject(new Error('Failed to convert canvas to blob'));</span>
-            }
-          }, 'image/png');
-        });
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        logger.info('useStudioNavigation', 'Navigating to Studio with cached icon blob', {</span>
-          tokenName: token.name,
-          blobSize: blob.size,
-        });
-&nbsp;
-        // Navigate to Studio with the cached icon blob in full edit mode
-        // User can edit just the icon before it's used for token generation
-<span class="cstat-no" title="statement not covered" >        navigateToStudioWithBlob(</span>
-          blob,
-          onTabChange,
-          {
-            characterName: token.name,
-            source: 'tokens',
-          },
-          'full'
-        );
-      } catch (error) {
-<span class="cstat-no" title="statement not covered" >        logger.error('useStudioNavigation', 'Failed to edit in Studio', error);</span>
-      }
-    },
-    [onTabChange]
-  );
+      // Navigate to Studio with the cached icon blob in full edit mode
+      // User can edit just the icon before it's used for token generation
+<span class="cstat-no" title="statement not covered" >      navigateToStudioWithBlob(</span>
+        blob,
+        onTabChange,
+        {
+          characterName: token.name,
+          source: 'tokens',
+        },
+        'full'
+      );
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      logger.error('useStudioNavigation', 'Failed to edit in Studio', error);</span>
+    }
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return {</span>
     editInStudio,
   };
 }
-&nbsp;
-export default useStudioNavigation;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -487,7 +469,7 @@ export default useStudioNavigation;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

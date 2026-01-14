@@ -7,7 +7,7 @@
     "src/ts/config.ts"
   ],
   "ignoreBinaries": ["license-checker"],
-  "ignoreDependencies": ["react-docgen-typescript", "wrangler"],
+  "ignoreDependencies": ["react-docgen-typescript"],
   "entry": [
     "src/main.tsx",
     "src/**/index.ts"

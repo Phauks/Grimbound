@@ -3,6 +3,10 @@ import 'fake-indexeddb/auto';
 import './canvas.setup';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import { LogLevel, logger } from '@/ts/utils/logger';
+
+// Silence all logging during tests to reduce noise
+logger.setLevel(LogLevel.NONE);
 
 // Mock localStorage (some environments don't have it fully implemented)
 const localStorageMock = (() => {

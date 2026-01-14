@@ -66,7 +66,9 @@ describe('useAssetTags', () => {
 
       const { result } = renderHook(() => useAssetTags());
 
-      await expect(result.current.addTag('missing', 'tag')).rejects.toThrow('Asset not found');
+      await act(async () => {
+        await expect(result.current.addTag('missing', 'tag')).rejects.toThrow('Asset not found');
+      });
     });
   });
 
@@ -93,9 +95,11 @@ describe('useAssetTags', () => {
 
       const { result } = renderHook(() => useAssetTags());
 
-      await expect(result.current.removeTag('asset-123', 'type:icon')).rejects.toThrow(
-        'Cannot remove type:* tag'
-      );
+      await act(async () => {
+        await expect(result.current.removeTag('asset-123', 'type:icon')).rejects.toThrow(
+          'Cannot remove type:* tag'
+        );
+      });
     });
   });
 
@@ -205,7 +209,9 @@ describe('useAssetTags', () => {
 
       const { result } = renderHook(() => useAssetTags());
 
-      await expect(result.current.addTag('asset-123', 'tag')).rejects.toThrow('Database error');
+      await act(async () => {
+        await expect(result.current.addTag('asset-123', 'tag')).rejects.toThrow('Database error');
+      });
     });
   });
 });

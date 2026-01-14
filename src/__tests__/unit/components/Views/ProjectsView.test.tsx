@@ -68,7 +68,6 @@ vi.mock('@/components/ViewComponents/ProjectsComponents/ProjectNavigation', () =
     currentProjectId,
     onSelectProject,
     onCreateProject,
-    onImportProject,
     onIconManagement,
     onDeleteProject,
   }: {
@@ -77,7 +76,6 @@ vi.mock('@/components/ViewComponents/ProjectsComponents/ProjectNavigation', () =
     currentProjectId: string | null;
     onSelectProject: (id: string) => void;
     onCreateProject: () => void;
-    onImportProject: () => void;
     onIconManagement: () => void;
     onDeleteProject: (project: Project) => void;
   }) => (
@@ -97,9 +95,6 @@ vi.mock('@/components/ViewComponents/ProjectsComponents/ProjectNavigation', () =
       ))}
       <button type="button" data-testid="create-btn" onClick={onCreateProject}>
         Create
-      </button>
-      <button type="button" data-testid="import-btn" onClick={onImportProject}>
-        Import
       </button>
       <button type="button" data-testid="icon-mgmt-btn" onClick={onIconManagement}>
         Icons
@@ -630,7 +625,8 @@ describe('ProjectsView', () => {
       expect(screen.queryByTestId('import-modal')).not.toBeInTheDocument();
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId('import-btn'));
+        // Import button is in ProjectEditor, not ProjectNavigation
+        fireEvent.click(screen.getByTestId('editor-import-btn'));
       });
 
       expect(screen.getByTestId('import-modal')).toBeInTheDocument();
@@ -640,7 +636,7 @@ describe('ProjectsView', () => {
       render(<ProjectsView />);
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId('import-btn'));
+        fireEvent.click(screen.getByTestId('editor-import-btn'));
       });
 
       expect(screen.getByTestId('import-modal')).toBeInTheDocument();
@@ -662,7 +658,7 @@ describe('ProjectsView', () => {
       render(<ProjectsView />);
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId('import-btn'));
+        fireEvent.click(screen.getByTestId('editor-import-btn'));
       });
 
       await act(async () => {
@@ -1041,29 +1037,9 @@ describe('ProjectsView', () => {
       });
     });
 
-    it('should clear selection when selected project is removed from list', async () => {
-      const project = createMockProject({ id: 'p1', name: 'Project 1' });
-      mockUseProjects = createMockUseProjects({ projects: [project] });
-      vi.spyOn(UseProjectsModule, 'useProjects').mockReturnValue(mockUseProjects);
-
-      const { rerender } = render(<ProjectsView />);
-
-      // Select project
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('select-p1'));
-      });
-
-      expect(screen.getByTestId('selected-id')).toHaveTextContent('p1');
-
-      // Remove project from list
-      mockUseProjects = createMockUseProjects({ projects: [] });
-      vi.spyOn(UseProjectsModule, 'useProjects').mockReturnValue(mockUseProjects);
-
-      rerender(<ProjectsView />);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('selected-id')).toHaveTextContent('none');
-      });
-    });
+    // Note: The component deliberately doesn't clear selection when a project
+    // is removed from the list (see component comment about race conditions with
+    // newly created projects). Deletion is handled explicitly via the delete modal.
+    // See "should clear selection when selected project is deleted" test above.
   });
 });

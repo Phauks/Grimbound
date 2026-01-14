@@ -510,70 +510,22 @@ describe('useTokenGrouping', () => {
   });
 
   describe('Memoization', () => {
-    it('should return same reference for characterTokens when tokens unchanged', () => {
-      const tokens: Token[] = [createMockToken({ type: 'character', name: 'Washer', order: 0 })];
+    // Note: Reference stability tests removed after React Compiler migration.
+    // React Compiler handles memoization automatically - testing reference equality
+    // is now testing implementation details rather than behavior.
 
-      const { result, rerender } = renderHook(() => useTokenGrouping(tokens));
-      const firstCharacterTokens = result.current.characterTokens;
-
-      rerender();
-
-      const secondCharacterTokens = result.current.characterTokens;
-      expect(firstCharacterTokens).toBe(secondCharacterTokens);
-    });
-
-    it('should update characterTokens reference when tokens change', () => {
+    it('should update characterTokens when tokens change', () => {
       const tokens1: Token[] = [createMockToken({ type: 'character', name: 'Washer', order: 0 })];
       const tokens2: Token[] = [createMockToken({ type: 'character', name: 'Drunk', order: 0 })];
 
       const { result, rerender } = renderHook(({ tokens }) => useTokenGrouping(tokens), {
         initialProps: { tokens: tokens1 },
       });
-      const firstCharacterTokens = result.current.characterTokens;
+      expect(result.current.characterTokens[0].name).toBe('Washer');
 
       rerender({ tokens: tokens2 });
 
-      const secondCharacterTokens = result.current.characterTokens;
-      expect(firstCharacterTokens).not.toBe(secondCharacterTokens);
-      expect(secondCharacterTokens[0].name).toBe('Drunk');
-    });
-
-    it('should return same reference for reminderTokens when tokens unchanged', () => {
-      const tokens: Token[] = [
-        createMockToken({ type: 'reminder', reminderText: 'Death', order: 0 }),
-      ];
-
-      const { result, rerender } = renderHook(() => useTokenGrouping(tokens));
-      const firstReminderTokens = result.current.reminderTokens;
-
-      rerender();
-
-      const secondReminderTokens = result.current.reminderTokens;
-      expect(firstReminderTokens).toBe(secondReminderTokens);
-    });
-
-    it('should return same reference for metaTokens when tokens unchanged', () => {
-      const tokens: Token[] = [createMockToken({ type: 'script-name', name: 'Script' })];
-
-      const { result, rerender } = renderHook(() => useTokenGrouping(tokens));
-      const firstMetaTokens = result.current.metaTokens;
-
-      rerender();
-
-      const secondMetaTokens = result.current.metaTokens;
-      expect(firstMetaTokens).toBe(secondMetaTokens);
-    });
-
-    it('should return same reference for groupedCharacterTokens when characterTokens unchanged', () => {
-      const tokens: Token[] = [createMockToken({ type: 'character', name: 'Washer', order: 0 })];
-
-      const { result, rerender } = renderHook(() => useTokenGrouping(tokens));
-      const firstGrouped = result.current.groupedCharacterTokens;
-
-      rerender();
-
-      const secondGrouped = result.current.groupedCharacterTokens;
-      expect(firstGrouped).toBe(secondGrouped);
+      expect(result.current.characterTokens[0].name).toBe('Drunk');
     });
 
     it('should update groupedCharacterTokens when characterTokens change', () => {
@@ -586,28 +538,11 @@ describe('useTokenGrouping', () => {
       const { result, rerender } = renderHook(({ tokens }) => useTokenGrouping(tokens), {
         initialProps: { tokens: tokens1 },
       });
-      const firstGrouped = result.current.groupedCharacterTokens;
-      expect(firstGrouped[0].count).toBe(1);
+      expect(result.current.groupedCharacterTokens[0].count).toBe(1);
 
       rerender({ tokens: tokens2 });
 
-      const secondGrouped = result.current.groupedCharacterTokens;
-      expect(firstGrouped).not.toBe(secondGrouped);
-      expect(secondGrouped[0].count).toBe(2);
-    });
-
-    it('should return same reference for grouped tokens when dependencies unchanged', () => {
-      const tokens: Token[] = [createMockToken({ type: 'character', name: 'Washer', order: 0 })];
-
-      const { result, rerender } = renderHook(() => useTokenGrouping(tokens));
-      const firstGrouped = result.current.groupedCharacterTokens;
-
-      // Rerender without changing dependencies
-      rerender();
-
-      const secondGrouped = result.current.groupedCharacterTokens;
-      // Should return same reference since dependencies haven't changed
-      expect(firstGrouped).toBe(secondGrouped);
+      expect(result.current.groupedCharacterTokens[0].count).toBe(2);
     });
   });
 

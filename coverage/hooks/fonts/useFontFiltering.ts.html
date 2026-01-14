@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/43</span>
+                <span class='fraction'>0/38</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/39</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -204,18 +204,7 @@
 <a name='L139'></a><a href='#L139'>139</a>
 <a name='L140'></a><a href='#L140'>140</a>
 <a name='L141'></a><a href='#L141'>141</a>
-<a name='L142'></a><a href='#L142'>142</a>
-<a name='L143'></a><a href='#L143'>143</a>
-<a name='L144'></a><a href='#L144'>144</a>
-<a name='L145'></a><a href='#L145'>145</a>
-<a name='L146'></a><a href='#L146'>146</a>
-<a name='L147'></a><a href='#L147'>147</a>
-<a name='L148'></a><a href='#L148'>148</a>
-<a name='L149'></a><a href='#L149'>149</a>
-<a name='L150'></a><a href='#L150'>150</a>
-<a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a>
-<a name='L153'></a><a href='#L153'>153</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L142'></a><a href='#L142'>142</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -298,7 +287,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -328,6 +316,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,25 +328,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -376,7 +354,7 @@
  * @module hooks/fonts/useFontFiltering
  */
 &nbsp;
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FontCategory, FontDefinition, FontSource } from '@/ts/types/fonts.js';
 &nbsp;
 // ============================================================================
@@ -436,7 +414,7 @@ export function <span class="fstat-no" title="function not covered" >useFontFilt
   const [viewMode, setViewMode<span class="cstat-no" title="statement not covered" >] = useState&lt;ViewMode&gt;('list');</span>
 &nbsp;
   // Toggle category filter
-  const <span class="cstat-no" title="statement not covered" >toggleCategory = useCallback(<span class="fstat-no" title="function not covered" >(c</span>ategory: FontCategory) =&gt; {</span>
+  const toggleCategory = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>ategory: FontCategory) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setActiveCategories(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; {</span>
       const next = <span class="cstat-no" title="statement not covered" >new Set(prev);</span>
 <span class="cstat-no" title="statement not covered" >      if (next.has(category)) {</span>
@@ -446,62 +424,53 @@ export function <span class="fstat-no" title="function not covered" >useFontFilt
       }
 <span class="cstat-no" title="statement not covered" >      return next;</span>
     });
-  }, []);
+  };
 &nbsp;
   // Filter fonts based on all active filters
-  const <span class="cstat-no" title="statement not covered" >filteredFonts = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-    let result = <span class="cstat-no" title="statement not covered" >fonts;</span>
+  let filteredFonts = <span class="cstat-no" title="statement not covered" >fonts;</span>
 &nbsp;
-    // Apply allowed sources from props
-<span class="cstat-no" title="statement not covered" >    if (allowedSources &amp;&amp; allowedSources.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      result = result.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >allowedSources.includes(f.source))</span>;</span>
-    }
+  // Apply allowed sources from props
+<span class="cstat-no" title="statement not covered" >  if (allowedSources &amp;&amp; allowedSources.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    filteredFonts = filteredFonts.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >allowedSources.includes(f.source))</span>;</span>
+  }
 &nbsp;
-    // Apply allowed categories from props
-<span class="cstat-no" title="statement not covered" >    if (allowedCategories &amp;&amp; allowedCategories.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      result = result.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >allowedCategories.includes(f.category))</span>;</span>
-    }
+  // Apply allowed categories from props
+<span class="cstat-no" title="statement not covered" >  if (allowedCategories &amp;&amp; allowedCategories.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    filteredFonts = filteredFonts.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >allowedCategories.includes(f.category))</span>;</span>
+  }
 &nbsp;
-    // Apply source tab filter
-<span class="cstat-no" title="statement not covered" >    if (activeSource !== 'all') {</span>
-<span class="cstat-no" title="statement not covered" >      result = result.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >f.source === activeSource)</span>;</span>
-    }
+  // Apply source tab filter
+<span class="cstat-no" title="statement not covered" >  if (activeSource !== 'all') {</span>
+<span class="cstat-no" title="statement not covered" >    filteredFonts = filteredFonts.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >f.source === activeSource)</span>;</span>
+  }
 &nbsp;
-    // Apply category chip filter
-<span class="cstat-no" title="statement not covered" >    if (activeCategories.size &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      result = result.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >activeCategories.has(f.category))</span>;</span>
-    }
+  // Apply category chip filter
+<span class="cstat-no" title="statement not covered" >  if (activeCategories.size &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    filteredFonts = filteredFonts.filter(<span class="fstat-no" title="function not covered" >(f</span>) =&gt; <span class="cstat-no" title="statement not covered" >activeCategories.has(f.category))</span>;</span>
+  }
 &nbsp;
-    // Apply search filter
-<span class="cstat-no" title="statement not covered" >    if (searchQuery.trim()) {</span>
-      const query = <span class="cstat-no" title="statement not covered" >searchQuery.toLowerCase().trim();</span>
-<span class="cstat-no" title="statement not covered" >      result = result.filter(</span>
-<span class="fstat-no" title="function not covered" >        (f</span>) =&gt; <span class="cstat-no" title="statement not covered" >f.name.toLowerCase().includes(query) || f.family.toLowerCase().includes(query)</span>
-      );
-    }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    return result;</span>
-  }, [fonts, allowedSources, allowedCategories, activeSource, activeCategories, searchQuery]);
+  // Apply search filter
+<span class="cstat-no" title="statement not covered" >  if (searchQuery.trim()) {</span>
+    const query = <span class="cstat-no" title="statement not covered" >searchQuery.toLowerCase().trim();</span>
+<span class="cstat-no" title="statement not covered" >    filteredFonts = filteredFonts.filter(</span>
+<span class="fstat-no" title="function not covered" >      (f</span>) =&gt; <span class="cstat-no" title="statement not covered" >f.name.toLowerCase().includes(query) || f.family.toLowerCase().includes(query)</span>
+    );
+  }
 &nbsp;
   // Group fonts by category for list view display
-  const <span class="cstat-no" title="statement not covered" >groupedFonts = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-    const groups = <span class="cstat-no" title="statement not covered" >new Map&lt;FontCategory, FontDefinition[]&gt;();</span>
-<span class="cstat-no" title="statement not covered" >    for (const font of filteredFonts) {</span>
-      const list = <span class="cstat-no" title="statement not covered" >groups.get(font.category) ?? [];</span>
-<span class="cstat-no" title="statement not covered" >      list.push(font);</span>
-<span class="cstat-no" title="statement not covered" >      groups.set(font.category, list);</span>
-    }
-<span class="cstat-no" title="statement not covered" >    return groups;</span>
-  }, [filteredFonts]);
+  const groupedFonts = <span class="cstat-no" title="statement not covered" >new Map&lt;FontCategory, FontDefinition[]&gt;();</span>
+<span class="cstat-no" title="statement not covered" >  for (const font of filteredFonts) {</span>
+    const list = <span class="cstat-no" title="statement not covered" >groupedFonts.get(font.category) ?? [];</span>
+<span class="cstat-no" title="statement not covered" >    list.push(font);</span>
+<span class="cstat-no" title="statement not covered" >    groupedFonts.set(font.category, list);</span>
+  }
 &nbsp;
   // Get available categories from all fonts (not filtered)
-  const <span class="cstat-no" title="statement not covered" >availableCategories = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-    const categories = <span class="cstat-no" title="statement not covered" >new Set&lt;FontCategory&gt;();</span>
-<span class="cstat-no" title="statement not covered" >    for (const font of fonts) {</span>
-<span class="cstat-no" title="statement not covered" >      categories.add(font.category);</span>
-    }
-<span class="cstat-no" title="statement not covered" >    return Array.from(categories);</span>
-  }, [fonts]);
+  const categorySet = <span class="cstat-no" title="statement not covered" >new Set&lt;FontCategory&gt;();</span>
+<span class="cstat-no" title="statement not covered" >  for (const font of fonts) {</span>
+<span class="cstat-no" title="statement not covered" >    categorySet.add(font.category);</span>
+  }
+  const availableCategories = <span class="cstat-no" title="statement not covered" >Array.from(categorySet);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return {</span>
     searchQuery,
@@ -517,8 +486,6 @@ export function <span class="fstat-no" title="function not covered" >useFontFilt
     availableCategories,
   };
 }
-&nbsp;
-export default useFontFiltering;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -526,7 +493,7 @@ export default useFontFiltering;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

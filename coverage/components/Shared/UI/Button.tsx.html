@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -223,15 +223,7 @@
 <a name='L158'></a><a href='#L158'>158</a>
 <a name='L159'></a><a href='#L159'>159</a>
 <a name='L160'></a><a href='#L160'>160</a>
-<a name='L161'></a><a href='#L161'>161</a>
-<a name='L162'></a><a href='#L162'>162</a>
-<a name='L163'></a><a href='#L163'>163</a>
-<a name='L164'></a><a href='#L164'>164</a>
-<a name='L165'></a><a href='#L165'>165</a>
-<a name='L166'></a><a href='#L166'>166</a>
-<a name='L167'></a><a href='#L167'>167</a>
-<a name='L168'></a><a href='#L168'>168</a>
-<a name='L169'></a><a href='#L169'>169</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L161'></a><a href='#L161'>161</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -297,9 +289,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -363,7 +352,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -374,15 +362,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -423,7 +407,7 @@
  * ```
  */
 &nbsp;
-import { type ButtonHTMLAttributes, forwardRef, type ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import styles from '@/styles/components/shared/Button.module.css';
 import { cn } from '@/ts/utils';
 &nbsp;
@@ -465,73 +449,64 @@ const sizeClasses: Record&lt;ButtonSize, string&gt; = <span class="cstat-no" tit
   large: styles.sizeLarge,
 };
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >Button = forwardRef&lt;HTMLButtonElement, ButtonProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  (</span>
-    {
-      variant = <span class="branch-0 cbranch-no" title="branch not covered" >'secondary',</span>
-      size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
-      icon,
-      iconPosition = <span class="branch-0 cbranch-no" title="branch not covered" >'left',</span>
-      isIconOnly = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      loading = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      loadingText,
-      className,
-      children,
-      disabled,
-      ...props
-    },
-    ref
-  ) =&gt; {
-    const <span class="cstat-no" title="statement not covered" >classes = cn(</span>
-      styles.button,
-      variantClasses[variant],
-      sizeClasses[size],
-      isIconOnly &amp;&amp; styles.iconOnly,
-      fullWidth &amp;&amp; styles.fullWidth,
-      loading &amp;&amp; styles.loading,
-      className
-    );
+export function <span class="fstat-no" title="function not covered" >Button({</span>
+  variant = <span class="branch-0 cbranch-no" title="branch not covered" >'secondary',</span>
+  size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
+  icon,
+  iconPosition = <span class="branch-0 cbranch-no" title="branch not covered" >'left',</span>
+  isIconOnly = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  loading = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  loadingText,
+  className,
+  children,
+  disabled,
+  ref,
+  ...props
+}: ButtonProps &amp; { ref?: React.Ref&lt;HTMLButtonElement&gt; }) {
+  const <span class="cstat-no" title="statement not covered" >classes = cn(</span>
+    styles.button,
+    variantClasses[variant],
+    sizeClasses[size],
+    isIconOnly &amp;&amp; styles.iconOnly,
+    fullWidth &amp;&amp; styles.fullWidth,
+    loading &amp;&amp; styles.loading,
+    className
+  );
 &nbsp;
-    // Determine what content to show
-    const showLoadingText = <span class="cstat-no" title="statement not covered" >loading &amp;&amp; loadingText;</span>
-    const displayContent = <span class="cstat-no" title="statement not covered" >showLoadingText ? loadingText : children;</span>
+  // Determine what content to show
+  const showLoadingText = <span class="cstat-no" title="statement not covered" >loading &amp;&amp; loadingText;</span>
+  const displayContent = <span class="cstat-no" title="statement not covered" >showLoadingText ? loadingText : children;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;button
-        ref={ref}
-        className={classes}
-        disabled={disabled || loading}
-        aria-busy={loading}
-        {...props}
-      &gt;
-        {/* Loading spinner */}
-        {loading &amp;&amp; &lt;span className={styles.spinner} aria-hidden="true" /&gt;}
+<span class="cstat-no" title="statement not covered" >  return (</span>
+    &lt;button
+      ref={ref}
+      className={classes}
+      disabled={disabled || loading}
+      aria-busy={loading}
+      {...props}
+    &gt;
+      {/* Loading spinner */}
+      {loading &amp;&amp; &lt;span className={styles.spinner} aria-hidden="true" /&gt;}
 &nbsp;
-        {/* Icon (hidden during loading unless no loading text) */}
-        {icon &amp;&amp; !loading &amp;&amp; (
-          &lt;span
-            className={cn(
-              styles.icon,
-              iconPosition === 'left' ? styles.iconLeft : styles.iconRight
-            )}
-          &gt;
-            {icon}
-          &lt;/span&gt;
-        )}
+      {/* Icon (hidden during loading unless no loading text) */}
+      {icon &amp;&amp; !loading &amp;&amp; (
+        &lt;span
+          className={cn(styles.icon, iconPosition === 'left' ? styles.iconLeft : styles.iconRight)}
+        &gt;
+          {icon}
+        &lt;/span&gt;
+      )}
 &nbsp;
-        {/* Button text content */}
-        {displayContent &amp;&amp; (
-          &lt;span className={loading &amp;&amp; !loadingText ? styles.hiddenContent : undefined}&gt;
-            {displayContent}
-          &lt;/span&gt;
-        )}
-      &lt;/button&gt;
-    );
-  }
-);
-&nbsp;
-<span class="cstat-no" title="statement not covered" >Button.displayName = 'Button';</span>
+      {/* Button text content */}
+      {displayContent &amp;&amp; (
+        &lt;span className={loading &amp;&amp; !loadingText ? styles.hiddenContent : undefined}&gt;
+          {displayContent}
+        &lt;/span&gt;
+      )}
+    &lt;/button&gt;
+  );
+}
 &nbsp;
 // ============================================
 // Toggle Button Variant
@@ -542,15 +517,16 @@ interface ToggleButtonProps extends ButtonProps {
   active?: boolean;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >ToggleButton = forwardRef&lt;HTMLButtonElement, ToggleButtonProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  ({</span> active = <span class="branch-0 cbranch-no" title="branch not covered" >false, c</span>lassName, ...props }, ref) =&gt; {
-    const <span class="cstat-no" title="statement not covered" >classes = cn(styles.toggle, active &amp;&amp; styles.active, className);</span>
+export function <span class="fstat-no" title="function not covered" >ToggleButton({</span>
+  active = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  className,
+  ref,
+  ...props
+}: ToggleButtonProps &amp; { ref?: React.Ref&lt;HTMLButtonElement&gt; }) {
+  const <span class="cstat-no" title="statement not covered" >classes = cn(styles.toggle, active &amp;&amp; styles.active, className);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return &lt;button ref={ref} className={classes} aria-pressed={active} {...props} /&gt;;</span>
-  }
-);
-&nbsp;
-<span class="cstat-no" title="statement not covered" >ToggleButton.displayName = 'ToggleButton';</span>
+<span class="cstat-no" title="statement not covered" >  return &lt;button ref={ref} className={classes} aria-pressed={active} {...props} /&gt;;</span>
+}
 &nbsp;
 // ============================================
 // Button Group
@@ -574,7 +550,7 @@ export function <span class="fstat-no" title="function not covered" >ButtonGroup
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

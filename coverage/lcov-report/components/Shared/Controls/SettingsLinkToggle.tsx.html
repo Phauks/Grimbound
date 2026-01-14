@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -171,14 +171,7 @@
 <a name='L106'></a><a href='#L106'>106</a>
 <a name='L107'></a><a href='#L107'>107</a>
 <a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a>
-<a name='L111'></a><a href='#L111'>111</a>
-<a name='L112'></a><a href='#L112'>112</a>
-<a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a>
-<a name='L115'></a><a href='#L115'>115</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -247,7 +240,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -255,13 +247,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -269,14 +254,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -306,7 +294,6 @@
  * @module components/Shared/Controls/SettingsLinkToggle
  */
 &nbsp;
-import { memo, useCallback } from 'react';
 import styles from '@/styles/components/shared/SettingsLinkToggle.module.css';
 &nbsp;
 export interface SettingsLinkToggleProps {
@@ -361,7 +348,7 @@ const UnlinkIcon = <span class="cstat-no" title="statement not covered" ><span c
   &lt;/svg&gt;
 );
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >SettingsLinkToggle = memo(function <span class="fstat-no" title="function not covered" >SettingsLinkToggle({</span></span>
+export function <span class="fstat-no" title="function not covered" >SettingsLinkToggle({</span>
   isLinked,
   onToggle,
   ariaLabel = <span class="branch-0 cbranch-no" title="branch not covered" >'Link Character and Meta settings',</span>
@@ -369,21 +356,18 @@ export const <span class="cstat-no" title="statement not covered" >SettingsLinkT
   disabled = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
   size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
 }: SettingsLinkToggleProps) {
-  const <span class="cstat-no" title="statement not covered" >handleClick = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!disabled) {</span>
 <span class="cstat-no" title="statement not covered" >      onToggle();</span>
     }
-  }, [disabled, onToggle]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleKeyDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.KeyboardEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if ((e.key === 'Enter' || e.key === ' ') &amp;&amp; !disabled) {</span>
-<span class="cstat-no" title="statement not covered" >        e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >        onToggle();</span>
-      }
-    },
-    [disabled, onToggle]
-  );
+  const handleKeyDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.KeyboardEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if ((e.key === 'Enter' || e.key === ' ') &amp;&amp; !disabled) {</span>
+<span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >      onToggle();</span>
+    }
+  };
 &nbsp;
   const tooltipText =
 <span class="cstat-no" title="statement not covered" >    tooltip || (isLinked ? 'Unlink Character and Meta' : 'Link Character and Meta');</span>
@@ -402,9 +386,7 @@ export const <span class="cstat-no" title="statement not covered" >SettingsLinkT
       {isLinked ? &lt;LinkIcon /&gt; : &lt;UnlinkIcon /&gt;}
     &lt;/button&gt;
   );
-});
-&nbsp;
-export default SettingsLinkToggle;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -412,7 +394,7 @@ export default SettingsLinkToggle;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

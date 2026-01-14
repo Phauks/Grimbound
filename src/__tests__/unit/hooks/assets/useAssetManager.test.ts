@@ -252,7 +252,7 @@ describe('useAssetManager', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      act(() => {
+      await act(async () => {
         result.current.setFilter({ type: 'background' });
       });
 
@@ -270,14 +270,14 @@ describe('useAssetManager', () => {
       });
 
       // Select some assets
-      act(() => {
+      await act(async () => {
         result.current.toggleSelect('asset-1');
       });
 
       expect(result.current.selectedCount).toBe(1);
 
       // Change filter
-      act(() => {
+      await act(async () => {
         result.current.setFilter({ type: 'background' });
       });
 
@@ -296,14 +296,14 @@ describe('useAssetManager', () => {
       });
 
       // Change filter
-      act(() => {
+      await act(async () => {
         result.current.setFilter({ type: 'background' });
       });
 
       expect(result.current.filter.type).toBe('background');
 
       // Reset
-      act(() => {
+      await act(async () => {
         result.current.resetFilter();
       });
 
@@ -483,13 +483,13 @@ describe('useAssetManager', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      let cleanedCount: number;
+      let cleanedCount = 0;
       await act(async () => {
         cleanedCount = await result.current.cleanupOrphans();
       });
 
       expect(mockAssetStorageService.cleanupOrphans).toHaveBeenCalled();
-      expect(cleanedCount!).toBe(3);
+      expect(cleanedCount).toBe(3);
     });
   });
 
@@ -596,14 +596,17 @@ describe('useAssetManager', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Initial fetch
-      expect(mockAssetStorageService.listWithUrls).toHaveBeenCalledTimes(1);
+      // Initial fetch calls listWithUrls twice:
+      // 1. Once for filtered assets
+      // 2. Once for folder navigation (unfiltered)
+      expect(mockAssetStorageService.listWithUrls).toHaveBeenCalledTimes(2);
 
       await act(async () => {
         await result.current.refresh();
       });
 
-      expect(mockAssetStorageService.listWithUrls).toHaveBeenCalledTimes(2);
+      // After refresh, listWithUrls is called 2 more times (4 total)
+      expect(mockAssetStorageService.listWithUrls).toHaveBeenCalledTimes(4);
     });
   });
 

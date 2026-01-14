@@ -266,15 +266,13 @@ const LEGACY_TYPE_MAP: Record<AssetType, TypeTagValue> = {
 };
 
 /**
- * Convert legacy AssetType to TypeTagValue
- * @deprecated Use TypeTagValue directly in new code
+ * Convert AssetType to TypeTagValue
  */
 export const legacyTypeToTagValue = (assetType: AssetType): TypeTagValue =>
   LEGACY_TYPE_MAP[assetType];
 
 /**
- * Convert legacy AssetType to type tag string (e.g., 'type:icon')
- * @deprecated Use createTypeTag with TypeTagValue directly in new code
+ * Convert AssetType to type tag string (e.g., 'type:icon')
  */
 export const legacyTypeToTag = (assetType: AssetType): string =>
   createTypeTag(LEGACY_TYPE_MAP[assetType]);

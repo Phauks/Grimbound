@@ -359,15 +359,7 @@
 <a name='L294'></a><a href='#L294'>294</a>
 <a name='L295'></a><a href='#L295'>295</a>
 <a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a>
-<a name='L298'></a><a href='#L298'>298</a>
-<a name='L299'></a><a href='#L299'>299</a>
-<a name='L300'></a><a href='#L300'>300</a>
-<a name='L301'></a><a href='#L301'>301</a>
-<a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a>
-<a name='L305'></a><a href='#L305'>305</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L297'></a><a href='#L297'>297</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -618,7 +610,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">103x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">21x</span>
@@ -635,18 +626,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">103x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -661,8 +647,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">103x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -921,48 +905,42 @@ export function useCharacterEditor({
   }, [setJsonInput, setCharacters]);
 &nbsp;
   // Handle single field edit
-  const handleEditChange = useCallback(
-    &lt;K extends keyof Character&gt;(field: K, value: Character[K]) =&gt; {
-      setEditedCharacter((prev) =&gt; {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          [field]: value,
-        };
-      });
-      setIsDirty(true);
+  const handleEditChange = &lt;K extends keyof Character&gt;(field: K, value: Character[K]) =&gt; {
+    setEditedCharacter((prev) =&gt; {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+    setIsDirty(true);
 &nbsp;
-      // Invalidate cache for this character since it changed
-      if (onCacheInvalidate &amp;&amp; selectedCharacterUuid) {
-        onCacheInvalidate(selectedCharacterUuid);
-      }
-    },
-    [onCacheInvalidate, selectedCharacterUuid]
-  );
+    // Invalidate cache for this character since it changed
+    if (onCacheInvalidate &amp;&amp; selectedCharacterUuid) {
+      onCacheInvalidate(selectedCharacterUuid);
+    }
+  };
 &nbsp;
   // Handle full character replacement
-  const handleReplaceCharacter = useCallback(
-    (newCharacter: Character) =&gt; {
-      setEditedCharacter(newCharacter);
-      setIsDirty(true);
+  const handleReplaceCharacter = (newCharacter: Character) =&gt; {
+    setEditedCharacter(newCharacter);
+    setIsDirty(true);
 &nbsp;
-      // Invalidate cache
-      if (onCacheInvalidate &amp;&amp; newCharacter.uuid) {
-        onCacheInvalidate(newCharacter.uuid);
-      }
-    },
-    [onCacheInvalidate]
-  );
+    // Invalidate cache
+    if (onCacheInvalidate &amp;&amp; newCharacter.uuid) {
+      onCacheInvalidate(newCharacter.uuid);
+    }
+  };
 &nbsp;
   // Reset editor to a new character (for external selection changes)
-  const resetToCharacter = useCallback((uuid: string) =&gt; {
+  const resetToCharacter = (uuid: string) =&gt; {
     const char = charactersRef.current.find((c) =&gt; c.uuid === uuid);
     if (char) {
       setEditedCharacter(JSON.parse(JSON.stringify(char)));
       setIsDirty(false);
       originalCharacterUuidRef.current = uuid;
     }
-  }, []);
+  };
 &nbsp;
   return {
     editedCharacter,
@@ -973,8 +951,6 @@ export function useCharacterEditor({
     originalCharacterUuid: originalCharacterUuidRef.current,
   };
 }
-&nbsp;
-export default useCharacterEditor;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -982,7 +958,7 @@ export default useCharacterEditor;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

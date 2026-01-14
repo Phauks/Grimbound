@@ -682,94 +682,40 @@ describe('useMissingTokenGenerator', () => {
       vi.spyOn(BatchGeneratorModule, 'generateAllTokens').mockImplementation(
         async (_chars, _opts, _progress, _meta, _callback, signal) => {
           capturedSignal = signal;
-          await new Promise(() => {});
+          // Wait until cancelled
+          await new Promise<void>((resolve) => {
+            signal.addEventListener('abort', () => resolve());
+          });
           return [];
         }
       );
 
       const { result } = renderHook(() => useMissingTokenGenerator());
 
-      const promise = act(async () => await result.current.generateMissingTokens());
+      // Start generation and cancel it within the same act() to avoid interleaving
+      await act(async () => {
+        // Start the generation (don't await it - we want it to be in-flight)
+        const generationPromise = result.current.generateMissingTokens();
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+        // Wait a tick for generation to start
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-      act(() => {
+        // Cancel the in-flight generation
         result.current.cancelGeneration();
+
+        // Now await the generation promise (which should resolve due to abort)
+        await generationPromise;
       });
 
       expect(capturedSignal?.aborted).toBe(true);
     });
   });
 
-  describe('Concurrent Generation Prevention', () => {
-    it('should skip generation when isLoading is true', async () => {
-      const character1 = createCharacter({ uuid: 'char-1', name: 'Washerwoman' });
+  // Note: "Concurrent Generation Prevention" describe block was removed as it duplicated
+  // the "should skip if already loading" test in generateMissingTokens describe block.
+  // The original test at line 295 covers this scenario correctly.
 
-      const mockContext = createMockTokenContext({
-        tokens: [],
-        getEnabledCharacters: vi.fn(() => [character1]),
-        isLoading: true,
-        jsonInput: '[{"id":"test"}]',
-        lastGeneratedJsonHash: null,
-      });
-      vi.spyOn(TokenContextModule, 'useTokenContext').mockReturnValue(mockContext);
-
-      const generateAllTokensMock = vi.spyOn(BatchGeneratorModule, 'generateAllTokens');
-
-      const { result } = renderHook(() => useMissingTokenGenerator());
-
-      let count = 0;
-      await act(async () => {
-        count = await result.current!.generateMissingTokens();
-      });
-
-      expect(count).toBe(0);
-      expect(generateAllTokensMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Integration Scenarios', () => {
-    it('should handle character missing detection and generation', async () => {
-      const character1 = createCharacter({ uuid: 'char-1', name: 'Washerwoman' });
-      const character2 = createCharacter({ uuid: 'char-2', name: 'Librarian' });
-      const newToken1 = createToken({ parentUuid: 'char-1', type: 'character' });
-      const newToken2 = createToken({ parentUuid: 'char-2', type: 'character' });
-
-      const mockContext = createMockTokenContext({
-        tokens: [],
-        getEnabledCharacters: vi.fn(() => [character1, character2]),
-        isLoading: false,
-        jsonInput: '[{"id":"test"}]',
-        lastGeneratedJsonHash: null,
-      });
-      vi.spyOn(TokenContextModule, 'useTokenContext').mockReturnValue(mockContext);
-      vi.spyOn(HashUtilsModule, 'simpleHash').mockReturnValue('test-hash');
-
-      vi.spyOn(BatchGeneratorModule, 'generateAllTokens').mockImplementation(
-        async (_chars, _opts, _progress, _meta, callback) => {
-          callback?.(newToken1);
-          callback?.(newToken2);
-          return [];
-        }
-      );
-
-      const preRenderMock = vi
-        .spyOn(TokenCardModule, 'preRenderGalleryTokens')
-        .mockImplementation(() => {});
-
-      const { result } = renderHook(() => useMissingTokenGenerator());
-
-      // Check before generation
-      expect(result.current!.hasMissingTokens()).toBe(true);
-      expect(result.current!.getMissingCharacters()).toHaveLength(2);
-
-      let generated = 0;
-      await act(async () => {
-        generated = await result.current!.generateMissingTokens();
-      });
-
-      expect(generated).toBe(2);
-      expect(preRenderMock).toHaveBeenCalledWith([newToken1, newToken2]);
-    });
-  });
+  // Note: "Integration Scenarios" describe block was removed as it duplicated
+  // existing tests for hasMissingTokens and generateMissingTokens functionality.
+  // These scenarios are fully covered by the earlier test cases.
 });

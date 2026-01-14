@@ -523,11 +523,13 @@ describe('CharactersPreRenderStrategy', () => {
         reminderTokens: [],
       });
 
+      // Use options that ARE included in the hash (displayAbilityText, characterBackground, etc.)
+      // Note: dpi is NOT in the hash because it doesn't affect visual appearance of cached previews
       const context1 = createPreRenderContext({
-        generationOptions: createMockGenerationOptions({ dpi: 300 }),
+        generationOptions: createMockGenerationOptions({ displayAbilityText: true }),
       });
       const context2 = createPreRenderContext({
-        generationOptions: createMockGenerationOptions({ dpi: 150 }),
+        generationOptions: createMockGenerationOptions({ displayAbilityText: false }),
       });
 
       await strategy.preRender(context1);

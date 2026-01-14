@@ -25,21 +25,21 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/56</span>
+                <span class='fraction'>0/55</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/52</span>
+                <span class='fraction'>0/53</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -320,7 +320,9 @@
 <a name='L255'></a><a href='#L255'>255</a>
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
-<a name='L258'></a><a href='#L258'>258</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -458,11 +460,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -547,11 +546,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -588,7 +592,7 @@
  * - Ability text: Trade Gothic (with Trade Gothic Bold for reminder tokens)
  */
 &nbsp;
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@/components/Shared/UI/ContextMenu';
 import { useContextMenu } from '@/hooks';
 import styles from '@/styles/components/script/NightOrderEntry.module.css';
@@ -619,7 +623,7 @@ interface NightOrderEntryProps {
  * Render ability text with bold reminder tokens and circle indicators
  */
 function <span class="fstat-no" title="function not covered" >AbilityText({</span> text }: { text: string }) {
-  const <span class="cstat-no" title="statement not covered" >segments = useMemo(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; p</span>arseAbilityText(text), [</span>text]);</span>
+  const <span class="cstat-no" title="statement not covered" >segments = parseAbilityText(text);</span>
 &nbsp;
   // Pre-compute occurrence counts for stable keys
   const getOccurrenceKey = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>egment: (typeof segments)[0], idx: number): string =&gt; {</span>
@@ -713,17 +717,14 @@ export function <span class="fstat-no" title="function not covered" >NightOrderE
   }, [entry.image, entry.id, cachedImageUrl]);
 &nbsp;
   // Handle right-click to show context menu (only for character entries)
-  const <span class="cstat-no" title="statement not covered" >handleContextMenu = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.MouseEvent) =&gt; {
-      // Only show context menu for character entries (not special entries like DUSK/DAWN)
-<span class="cstat-no" title="statement not covered" >      if (entry.type === 'special') <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >      contextMenu.onContextMenu(e, entry.id);</span>
-    },
-    [entry.type, entry.id, contextMenu]
-  );
+  const handleContextMenu = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.MouseEvent) =&gt; {</span>
+    // Only show context menu for character entries (not special entries like DUSK/DAWN)
+<span class="cstat-no" title="statement not covered" >    if (entry.type === 'special') <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >    contextMenu.onContextMenu(e, entry.id);</span>
+  };
 &nbsp;
   // Build context menu items
-  const <span class="cstat-no" title="statement not covered" >menuItems = useMemo(<span class="fstat-no" title="function not covered" >(): ContextMenuItem[] =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >menuItems: ContextMenuItem[] = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const items: ContextMenuItem[] = <span class="cstat-no" title="statement not covered" >[];</span>
 &nbsp;
     // Convert to Custom option - only for official character entries
@@ -751,7 +752,7 @@ export function <span class="fstat-no" title="function not covered" >NightOrderE
     });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return items;</span>
-  }, [entry.type, isOfficial, onEditCharacter, onToggleLock, contextMenu.data]);
+  })();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;button
@@ -784,13 +785,9 @@ export function <span class="fstat-no" title="function not covered" >NightOrderE
         textAlign: 'inherit',
       }}
     &gt;
-      {/* Drag handle or lock icon */}
+      {/* Drag handle (only shown for movable entries) */}
       &lt;div className={styles.dragArea}&gt;
-        {isOfficial &amp;&amp; showLockIcon ? (
-          &lt;span className={styles.lockIcon} title="This entry cannot be moved"&gt;
-            🔒
-          &lt;/span&gt;
-        ) : showDragHandle ? (
+        {showDragHandle ? (
           &lt;div className={styles.dragHandle} {...dragHandleProps} title="Drag to reorder"&gt;
             &lt;span className={styles.dragIcon}&gt;⋮⋮&lt;/span&gt;
           &lt;/div&gt;
@@ -801,22 +798,31 @@ export function <span class="fstat-no" title="function not covered" >NightOrderE
 &nbsp;
       {/* Character/Special icon */}
       &lt;div className={styles.iconContainer}&gt;
-        &lt;img
-          src={resolvedImageUrl}
-          alt={entry.name}
-          className={styles.icon}
-          onError={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
-            // Fallback for missing images
-            const target = <span class="cstat-no" title="statement not covered" >e.target as HTMLImageElement;</span>
-<span class="cstat-no" title="statement not covered" >            target.style.display = 'none';</span>
-          }}
-        /&gt;
+        {resolvedImageUrl &amp;&amp; (
+          &lt;img
+            src={resolvedImageUrl}
+            alt={entry.name}
+            className={styles.icon}
+            onError={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
+              // Fallback for missing images
+              const target = <span class="cstat-no" title="statement not covered" >e.target as HTMLImageElement;</span>
+<span class="cstat-no" title="statement not covered" >              target.style.display = 'none';</span>
+            }}
+          /&gt;
+        )}
       &lt;/div&gt;
 &nbsp;
       {/* Content: Name and ability */}
       &lt;div className={styles.content}&gt;
-        &lt;div className={styles.name} style={{ color: teamColor }}&gt;
-          {entry.name}
+        &lt;div className={styles.nameRow}&gt;
+          &lt;span className={styles.name} style={{ color: teamColor }}&gt;
+            {entry.name}
+          &lt;/span&gt;
+          {isOfficial &amp;&amp; showLockIcon &amp;&amp; (
+            &lt;span className={styles.lockIcon} title="Official character - position is fixed"&gt;
+              🔒
+            &lt;/span&gt;
+          )}
         &lt;/div&gt;
         &lt;div className={styles.ability}&gt;
           &lt;AbilityText text={entry.ability} /&gt;
@@ -841,7 +847,7 @@ export function <span class="fstat-no" title="function not covered" >NightOrderE
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

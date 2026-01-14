@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -181,11 +181,22 @@
 <a name='L116'></a><a href='#L116'>116</a>
 <a name='L117'></a><a href='#L117'>117</a>
 <a name='L118'></a><a href='#L118'>118</a>
-<a name='L119'></a><a href='#L119'>119</a>
-<a name='L120'></a><a href='#L120'>120</a>
-<a name='L121'></a><a href='#L121'>121</a>
-<a name='L122'></a><a href='#L122'>122</a>
-<a name='L123'></a><a href='#L123'>123</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L119'></a><a href='#L119'>119</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -245,23 +256,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -291,8 +285,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -319,7 +311,7 @@
  * @module components/Shared/Drawer/FontDrawer
  */
 &nbsp;
-import { memo, type ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { DrawerTokenTabs, type TabGroup } from '@/components/Shared/Controls';
 import { SettingsDrawer } from './SettingsDrawer';
 &nbsp;
@@ -352,7 +344,7 @@ export interface FontDrawerProps {
   onTextLinkToggle?: () =&gt; void;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >FontDrawer = memo(function <span class="fstat-no" title="function not covered" >FontDrawer({</span></span>
+export function <span class="fstat-no" title="function not covered" >FontDrawer({</span>
   isOpen,
   onClose,
   onApply,
@@ -367,42 +359,40 @@ export const <span class="cstat-no" title="statement not covered" >FontDrawer = 
   onTextLinkToggle,
 }: FontDrawerProps) {
   // Build tab groups - 3 groups with optional link toggles
-  const <span class="cstat-no" title="statement not covered" >groups = useMemo(<span class="fstat-no" title="function not covered" >(): TabGroup[] =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >    return [</span>
-      // Group 1: Character Name ↔ Meta Name
-      {
-        tabs: [
-          { id: 'character', label: 'Character Name' },
-          { id: 'meta', label: 'Meta Name' },
-        ],
-        link: onNameLinkToggle
-          ? {
-              isLinked: isNameLinked,
-              onToggle: onNameLinkToggle,
-              ariaLabel: 'Link Character Name and Meta Name text settings',
-            }
-          : undefined,
-      },
-      // Group 2: Character Text ↔ Meta Text
-      {
-        tabs: [
-          { id: 'characterText', label: 'Character Text' },
-          { id: 'metaText', label: 'Meta Text' },
-        ],
-        link: onTextLinkToggle
-          ? {
-              isLinked: isTextLinked,
-              onToggle: onTextLinkToggle,
-              ariaLabel: 'Link Character Text and Meta Text text settings',
-            }
-          : undefined,
-      },
-      // Group 3: Reminder
-      {
-        tabs: [{ id: 'reminder', label: 'Reminder' }],
-      },
-    ];
-  }, [isNameLinked, onNameLinkToggle, isTextLinked, onTextLinkToggle]);
+  const groups: TabGroup[] = <span class="cstat-no" title="statement not covered" >[</span>
+    // Group 1: Character Name ↔ Meta Name
+    {
+      tabs: [
+        { id: 'character', label: 'Character Name' },
+        { id: 'meta', label: 'Meta Name' },
+      ],
+      link: onNameLinkToggle
+        ? {
+            isLinked: isNameLinked,
+            onToggle: onNameLinkToggle,
+            ariaLabel: 'Link Character Name and Meta Name text settings',
+          }
+        : undefined,
+    },
+    // Group 2: Character Text ↔ Meta Text
+    {
+      tabs: [
+        { id: 'characterText', label: 'Character Text' },
+        { id: 'metaText', label: 'Meta Text' },
+      ],
+      link: onTextLinkToggle
+        ? {
+            isLinked: isTextLinked,
+            onToggle: onTextLinkToggle,
+            ariaLabel: 'Link Character Text and Meta Text text settings',
+          }
+        : undefined,
+    },
+    // Group 3: Reminder
+    {
+      tabs: [{ id: 'reminder', label: 'Reminder' }],
+    },
+  ];
 &nbsp;
   const headerSlot = (
 <span class="cstat-no" title="statement not covered" >    &lt;DrawerTokenTabs</span>
@@ -426,9 +416,7 @@ export const <span class="cstat-no" title="statement not covered" >FontDrawer = 
       {children}
     &lt;/SettingsDrawer&gt;
   );
-});
-&nbsp;
-export default FontDrawer;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -436,7 +424,7 @@ export default FontDrawer;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

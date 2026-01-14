@@ -8,8 +8,8 @@
  */
 
 import { CONFIG } from '@/ts/config.js';
-import type { AssetType } from '@/ts/services/upload/types.js';
 import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
+import type { AssetType } from '@/ts/services/upload/types.js';
 
 // ============================================================================
 // Types

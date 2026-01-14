@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/12</span>
             </div>
         
             
@@ -260,13 +260,15 @@
 <a name='L195'></a><a href='#L195'>195</a>
 <a name='L196'></a><a href='#L196'>196</a>
 <a name='L197'></a><a href='#L197'>197</a>
-<a name='L198'></a><a href='#L198'>198</a>
-<a name='L199'></a><a href='#L199'>199</a>
-<a name='L200'></a><a href='#L200'>200</a>
-<a name='L201'></a><a href='#L201'>201</a>
-<a name='L202'></a><a href='#L202'>202</a>
-<a name='L203'></a><a href='#L203'>203</a>
-<a name='L204'></a><a href='#L204'>204</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L198'></a><a href='#L198'>198</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -348,14 +350,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -383,7 +377,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,21 +409,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -492,11 +480,11 @@
  * ```
  */
 &nbsp;
-import { memo, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { useAssetPreview } from '@/hooks/useAssetPreview';
 import styles from '@/styles/components/shared/AssetPreviewSelector.module.css';
-import type { AssetType } from '@/ts/services/upload/types.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 import { InfoSection, SettingsSelectorBase } from './SettingsSelectorBase';
 &nbsp;
 // ============================================================================
@@ -512,7 +500,7 @@ export interface AssetPreviewSelectorProps {
   /** Called when selection changes */
   onChange: (value: string) =&gt; void;
   /** Asset type for filtering in modal */
-  assetType: AssetType;
+  assetType: TypeTagValue;
   /** Display label (shown next to preview) */
   label?: string;
   /** Preview shape */
@@ -550,7 +538,7 @@ interface AssetPreviewProps {
   isNone: boolean;
 }
 &nbsp;
-const <span class="cstat-no" title="statement not covered" >AssetPreview = memo(function <span class="fstat-no" title="function not covered" >AssetPreview({</span></span>
+function <span class="fstat-no" title="function not covered" >AssetPreview({</span>
   previewUrl,
   assetLabel,
   shape,
@@ -580,13 +568,13 @@ const <span class="cstat-no" title="statement not covered" >AssetPreview = memo(
       )}
     &lt;/div&gt;
   );
-});
+}
 &nbsp;
 // ============================================================================
 // Component
 // ============================================================================
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >AssetPreviewSelector = memo(function <span class="fstat-no" title="function not covered" >AssetPreviewSelector({</span></span>
+export function <span class="fstat-no" title="function not covered" >AssetPreviewSelector({</span>
   value,
   onChange,
   assetType,
@@ -618,17 +606,13 @@ export const <span class="cstat-no" title="statement not covered" >AssetPreviewS
     fallbackLabel: label,
   });
 &nbsp;
-  // Stable callbacks
-  const <span class="cstat-no" title="statement not covered" >handleOpenModal = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etIsModalOpen(true), [</span>]);</span>
-  const <span class="cstat-no" title="statement not covered" >handleCloseModal = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etIsModalOpen(false), [</span>]);</span>
+  const handleOpenModal = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etIsModalOpen(true);</span></span>
+  const handleCloseModal = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etIsModalOpen(false);</span></span>
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleSelectAsset = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (s</span>electedId: string) =&gt; {
-<span class="cstat-no" title="statement not covered" >      onChange(selectedId);</span>
-<span class="cstat-no" title="statement not covered" >      setIsModalOpen(false);</span>
-    },
-    [onChange]
-  );
+  const handleSelectAsset = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>electedId: string) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    onChange(selectedId);</span>
+<span class="cstat-no" title="statement not covered" >    setIsModalOpen(false);</span>
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;&gt;
@@ -669,9 +653,7 @@ export const <span class="cstat-no" title="statement not covered" >AssetPreviewS
       )}
     &lt;/&gt;
   );
-});
-&nbsp;
-export default AssetPreviewSelector;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -679,7 +661,7 @@ export default AssetPreviewSelector;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

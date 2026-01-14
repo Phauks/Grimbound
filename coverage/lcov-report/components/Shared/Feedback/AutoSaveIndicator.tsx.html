@@ -237,8 +237,7 @@
 <a name='L172'></a><a href='#L172'>172</a>
 <a name='L173'></a><a href='#L173'>173</a>
 <a name='L174'></a><a href='#L174'>174</a>
-<a name='L175'></a><a href='#L175'>175</a>
-<a name='L176'></a><a href='#L176'>176</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L175'></a><a href='#L175'>175</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -265,24 +264,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,7 +422,7 @@
  * - Manual "Save Now" button
  */
 &nbsp;
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { ProjectHistoryModal } from '@/components/Modals/ProjectHistoryModal';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import styles from '@/styles/components/shared/AutoSaveIndicator.module.css';
@@ -438,28 +436,27 @@ export function <span class="fstat-no" title="function not covered" >AutoSaveInd
   // Determine if auto-save is enabled (has active project)
   const isAutoSaveEnabled = <span class="cstat-no" title="statement not covered" >!!currentProject;</span>
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >getStatusInfo = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (s</span>tatus: AutoSaveStatus): { label: string; icon: string; color: string } =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!isAutoSaveEnabled) {</span>
-<span class="cstat-no" title="statement not covered" >        return { label: 'No Project', icon: '⚠', color: 'warning' };</span>
-      }
+  const getStatusInfo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span></span>
+    status: AutoSaveStatus
+  ): { label: string; icon: string; color: string } =&gt; {
+<span class="cstat-no" title="statement not covered" >    if (!isAutoSaveEnabled) {</span>
+<span class="cstat-no" title="statement not covered" >      return { label: 'No Project', icon: '⚠', color: 'warning' };</span>
+    }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      switch (status.state) {</span>
-        case 'saving':
-<span class="cstat-no" title="statement not covered" >          return { label: 'Saving...', icon: '⟳', color: 'info' };</span>
-        case 'saved':
-<span class="cstat-no" title="statement not covered" >          return { label: 'Saved', icon: '✓', color: 'success' };</span>
-        case 'error':
-<span class="cstat-no" title="statement not covered" >          return { label: 'Error', icon: '!', color: 'error' };</span>
-        default:
-<span class="cstat-no" title="statement not covered" >          if (status.isDirty) {</span>
-<span class="cstat-no" title="statement not covered" >            return { label: 'Unsaved', icon: '●', color: 'warning' };</span>
-          }
-<span class="cstat-no" title="statement not covered" >          return { label: 'Idle', icon: '○', color: 'idle' };</span>
-      }
-    },
-    [isAutoSaveEnabled]
-  );
+<span class="cstat-no" title="statement not covered" >    switch (status.state) {</span>
+      case 'saving':
+<span class="cstat-no" title="statement not covered" >        return { label: 'Saving...', icon: '⟳', color: 'info' };</span>
+      case 'saved':
+<span class="cstat-no" title="statement not covered" >        return { label: 'Saved', icon: '✓', color: 'success' };</span>
+      case 'error':
+<span class="cstat-no" title="statement not covered" >        return { label: 'Error', icon: '!', color: 'error' };</span>
+      default:
+<span class="cstat-no" title="statement not covered" >        if (status.isDirty) {</span>
+<span class="cstat-no" title="statement not covered" >          return { label: 'Unsaved', icon: '●', color: 'warning' };</span>
+        }
+<span class="cstat-no" title="statement not covered" >        return { label: 'Idle', icon: '○', color: 'idle' };</span>
+    }
+  };
 &nbsp;
   const statusInfo = <span class="cstat-no" title="statement not covered" >getStatusInfo(autoSaveStatus);</span>
 &nbsp;
@@ -595,7 +592,7 @@ function <span class="fstat-no" title="function not covered" >formatTimeSince(t<
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

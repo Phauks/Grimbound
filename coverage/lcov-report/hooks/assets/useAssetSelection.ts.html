@@ -186,9 +186,7 @@
 <a name='L121'></a><a href='#L121'>121</a>
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
-<a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a>
-<a name='L126'></a><a href='#L126'>126</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -302,8 +300,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -322,10 +318,10 @@
  * @module hooks/assets/useAssetSelection
  */
 &nbsp;
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { getBuiltInAssets } from '@/ts/constants/builtInAssets.js';
 import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
-import type { AssetType } from '@/ts/services/upload/index.js';
+import type { TypeTagValue } from '@/ts/services/upload/tagUtils.js';
 &nbsp;
 // ============================================================================
 // Types
@@ -347,9 +343,9 @@ export interface UseAssetSelectionOptions {
   /** Label for the None option */
   noneLabel?: string;
   /** Active tab for filtering built-in assets */
-  activeTab: AssetType | 'all';
+  activeTab: TypeTagValue | 'all';
   /** Initial asset type filter (for determining which built-ins to show) */
-  initialAssetType?: AssetType;
+  initialAssetType?: TypeTagValue;
   /** Callback when an asset is selected and applied */
   onSelectAsset?: (assetId: string) =&gt; void;
   /** Callback to close the modal */
@@ -395,20 +391,20 @@ export function <span class="fstat-no" title="function not covered" >useAssetSel
   const [selectedAssetId, setSelectedAssetId<span class="cstat-no" title="statement not covered" >] = useState&lt;string | null&gt;(null);</span>
 &nbsp;
   // Get built-in assets for the current filter type
-  const <span class="cstat-no" title="statement not covered" >builtInAssets = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >builtInAssets = (<span class="fstat-no" title="function not covered" >(): ReturnType&lt;typeof getBuiltInAssets&gt; =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!(selectionMode &amp;&amp; includeBuiltIn)) <span class="cstat-no" title="statement not covered" >return [];</span></span>
     const filterType = <span class="cstat-no" title="statement not covered" >activeTab === 'all' ? initialAssetType : activeTab;</span>
 <span class="cstat-no" title="statement not covered" >    if (!filterType) <span class="cstat-no" title="statement not covered" >return [];</span></span>
 <span class="cstat-no" title="statement not covered" >    return getBuiltInAssets(filterType);</span>
-  }, [selectionMode, includeBuiltIn, activeTab, initialAssetType]);
+  })();
 &nbsp;
   // Toggle selection for an asset
-  const <span class="cstat-no" title="statement not covered" >toggleAssetSelection = useCallback(<span class="fstat-no" title="function not covered" >(i</span>d: string) =&gt; {</span>
+  const toggleAssetSelection = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>d: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setSelectedAssetId(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >prev === id ? null : id))</span>;</span>
-  }, []);
+  };
 &nbsp;
   // Handle apply button click (selection mode)
-  const <span class="cstat-no" title="statement not covered" >handleApply = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleApply = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (onSelectAsset) {</span>
 <span class="cstat-no" title="statement not covered" >      if (selectedAssetId === 'none') {</span>
         // "None" was selected
@@ -422,7 +418,7 @@ export function <span class="fstat-no" title="function not covered" >useAssetSel
       }
 <span class="cstat-no" title="statement not covered" >      onClose();</span>
     }
-  }, [selectedAssetId, onSelectAsset, onClose]);
+  };
 &nbsp;
   const isApplyDisabled = <span class="cstat-no" title="statement not covered" >!selectedAssetId;</span>
 &nbsp;
@@ -436,8 +432,6 @@ export function <span class="fstat-no" title="function not covered" >useAssetSel
     noneLabel,
   };
 }
-&nbsp;
-export default useAssetSelection;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -445,7 +439,7 @@ export default useAssetSelection;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

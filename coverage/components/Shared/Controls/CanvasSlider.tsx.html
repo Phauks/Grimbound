@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/82</span>
+                <span class='fraction'>0/81</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/75</span>
+                <span class='fraction'>0/74</span>
             </div>
         
             
@@ -292,15 +292,7 @@
 <a name='L227'></a><a href='#L227'>227</a>
 <a name='L228'></a><a href='#L228'>228</a>
 <a name='L229'></a><a href='#L229'>229</a>
-<a name='L230'></a><a href='#L230'>230</a>
-<a name='L231'></a><a href='#L231'>231</a>
-<a name='L232'></a><a href='#L232'>232</a>
-<a name='L233'></a><a href='#L233'>233</a>
-<a name='L234'></a><a href='#L234'>234</a>
-<a name='L235'></a><a href='#L235'>235</a>
-<a name='L236'></a><a href='#L236'>236</a>
-<a name='L237'></a><a href='#L237'>237</a>
-<a name='L238'></a><a href='#L238'>238</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L230'></a><a href='#L230'>230</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -386,7 +378,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -442,14 +434,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -476,7 +465,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -503,17 +491,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -552,7 +536,7 @@
  * @module components/Shared/Controls/CanvasSlider
  */
 &nbsp;
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/shared/CanvasSlider.module.css';
 &nbsp;
 // ============================================================================
@@ -623,7 +607,7 @@ function <span class="fstat-no" title="function not covered" >drawSliderToggle(c
 // Component
 // ============================================================================
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >CanvasSlider = memo(function <span class="fstat-no" title="function not covered" >CanvasSlider({</span></span>
+export function <span class="fstat-no" title="function not covered" >CanvasSlider({</span>
   value,
   onChange,
   min = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
@@ -678,16 +662,13 @@ export const <span class="cstat-no" title="statement not covered" >CanvasSlider 
   );
 &nbsp;
   // Handle mouse down - start drag
-  const <span class="cstat-no" title="statement not covered" >handleMouseDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.MouseEvent&lt;HTMLCanvasElement&gt;) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
-      const newValue = <span class="cstat-no" title="statement not covered" >positionToValue(e.clientX);</span>
-<span class="cstat-no" title="statement not covered" >      onChange(newValue);</span>
-<span class="cstat-no" title="statement not covered" >      setIsDragging(true);</span>
-    },
-    [disabled, positionToValue, onChange]
-  );
+  const handleMouseDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.MouseEvent&lt;HTMLCanvasElement&gt;) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
+    const newValue = <span class="cstat-no" title="statement not covered" >positionToValue(e.clientX);</span>
+<span class="cstat-no" title="statement not covered" >    onChange(newValue);</span>
+<span class="cstat-no" title="statement not covered" >    setIsDragging(true);</span>
+  };
 &nbsp;
   // Handle global mouse events for dragging
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
@@ -712,37 +693,34 @@ export const <span class="cstat-no" title="statement not covered" >CanvasSlider 
   }, [isDragging, positionToValue, onChange]);
 &nbsp;
   // Handle keyboard navigation
-  const <span class="cstat-no" title="statement not covered" >handleKeyDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.KeyboardEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
+  const handleKeyDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.KeyboardEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
-      const <span class="cstat-no" title="statement not covered" >step = (max - min) / 20; // 5% steps</span>
-      let newValue = <span class="cstat-no" title="statement not covered" >value;</span>
+    const <span class="cstat-no" title="statement not covered" >step = (max - min) / 20; // 5% steps</span>
+    let newValue = <span class="cstat-no" title="statement not covered" >value;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      switch (e.key) {</span>
-        case 'ArrowLeft':
-        case 'ArrowDown':
-<span class="cstat-no" title="statement not covered" >          newValue = Math.max(min, value - step);</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'ArrowRight':
-        case 'ArrowUp':
-<span class="cstat-no" title="statement not covered" >          newValue = Math.min(max, value + step);</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'Home':
-<span class="cstat-no" title="statement not covered" >          newValue = min;</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'End':
-<span class="cstat-no" title="statement not covered" >          newValue = max;</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        default:
-<span class="cstat-no" title="statement not covered" >          return;</span>
-      }
+<span class="cstat-no" title="statement not covered" >    switch (e.key) {</span>
+      case 'ArrowLeft':
+      case 'ArrowDown':
+<span class="cstat-no" title="statement not covered" >        newValue = Math.max(min, value - step);</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'ArrowRight':
+      case 'ArrowUp':
+<span class="cstat-no" title="statement not covered" >        newValue = Math.min(max, value + step);</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'Home':
+<span class="cstat-no" title="statement not covered" >        newValue = min;</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'End':
+<span class="cstat-no" title="statement not covered" >        newValue = max;</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      default:
+<span class="cstat-no" title="statement not covered" >        return;</span>
+    }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >      onChange(newValue);</span>
-    },
-    [disabled, min, max, value, onChange]
-  );
+<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >    onChange(newValue);</span>
+  };
 &nbsp;
   const containerClasses = <span class="cstat-no" title="statement not covered" >[styles.container, disabled &amp;&amp; styles.disabled, className]</span>
     .filter(Boolean)
@@ -768,12 +746,10 @@ export const <span class="cstat-no" title="statement not covered" >CanvasSlider 
       /&gt;
     &lt;/div&gt;
   );
-});
+}
 &nbsp;
 // Export the toggle drawing function for custom implementations
 export { drawSliderToggle };
-&nbsp;
-export default CanvasSlider;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -781,7 +757,7 @@ export default CanvasSlider;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -362,5 +362,3 @@ export function JinxEditor({
     </div>
   );
 }
-
-export default JinxEditor;

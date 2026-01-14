@@ -5,8 +5,7 @@ export function AppFooter() {
     <footer className={styles.footer}>
       <p>
         Blood on the Clocktower is created by Steven Medway and published by The Pandemonium
-        Institute. Grimbound is a fan-made tool meant to support storytellers and
-        conforms with the{' '}
+        Institute. Grimbound is a fan-made tool meant to support storytellers and conforms with the{' '}
         <a
           href="https://bloodontheclocktower.com/pages/community-created-content-policy"
           target="_blank"

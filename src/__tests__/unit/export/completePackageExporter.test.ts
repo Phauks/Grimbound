@@ -46,7 +46,8 @@ vi.mock('@/ts/export/pdfGenerator', () => ({
 vi.mock('@/ts/export/zipExporter', () => ({
   getTokenFilename: vi.fn((token: Token) => token.filename),
   getTokenFolderPath: vi.fn(() => 'characters/'),
-  processTokenToBlob: vi.fn().mockResolvedValue(new Blob(['png'], { type: 'image/png' })),
+  // processTokenToBlob is synchronous (returns Blob, not Promise<Blob>)
+  processTokenToBlob: vi.fn().mockReturnValue(new Blob(['png'], { type: 'image/png' })),
 }));
 
 vi.mock('@/ts/utils/index', () => ({

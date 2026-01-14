@@ -154,10 +154,15 @@ export function AlmanacTabContent({
     // Trigger resize when switching to a different character
     if (characterUuid) {
       requestAnimationFrame(() => {
-        textareaRefs.current.forEach(resizeTextarea);
+        textareaRefs.current.forEach((el) => {
+          if (el) {
+            el.style.height = 'auto';
+            el.style.height = `${el.scrollHeight}px`;
+          }
+        });
       });
     }
-  }, [characterUuid, resizeTextarea]);
+  }, [characterUuid]);
 
   return (
     <div className={`${styles.tabContent} ${isOfficial ? styles.disabled : ''}`}>

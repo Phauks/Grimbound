@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">95.45% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>21/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -179,9 +179,7 @@
 <a name='L114'></a><a href='#L114'>114</a>
 <a name='L115'></a><a href='#L115'>115</a>
 <a name='L116'></a><a href='#L116'>116</a>
-<a name='L117'></a><a href='#L117'>117</a>
-<a name='L118'></a><a href='#L118'>118</a>
-<a name='L119'></a><a href='#L119'>119</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -240,24 +238,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -283,13 +281,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -348,34 +344,34 @@ export interface DownloadSectionProps {
  * /&gt;
  * ```
  */
-export function <span class="fstat-no" title="function not covered" >DownloadSection({</span>
+export function DownloadSection({
   title,
   icon,
   items,
-  collapsible = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-  defaultOpen = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
+  collapsible = true,
+  defaultOpen = true,
   executingId,
   onExecute,
   children,
 }: DownloadSectionProps) {
-  const [isOpen, setIsOpen<span class="cstat-no" title="statement not covered" >] = useState(defaultOpen);</span>
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 &nbsp;
   // Filter out items with no content if showing a grid
-  const enabledItems = <span class="cstat-no" title="statement not covered" >items.filter(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; <span class="cstat-no" title="statement not covered" >!item.disabled || item.disabledReason)</span>;</span>
-  const itemCount = <span class="cstat-no" title="statement not covered" >enabledItems.length;</span>
+  const enabledItems = items.filter((item) =&gt; !item.disabled || item.disabledReason);
+  const itemCount = enabledItems.length;
 &nbsp;
   // Don't render section if no items and no children
-<span class="cstat-no" title="statement not covered" >  if (itemCount === 0 &amp;&amp; !children) {</span>
-<span class="cstat-no" title="statement not covered" >    return null;</span>
+  if (itemCount === 0 &amp;&amp; !children) {
+    return null;
   }
 &nbsp;
-  const handleHeaderClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >    if (collapsible) {</span>
-<span class="cstat-no" title="statement not covered" >      setIsOpen(!isOpen);</span>
+  const handleHeaderClick = () =&gt; {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (collapsible) {
+      setIsOpen(!isOpen);
     }
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;div className={styles.downloadSection}&gt;
       &lt;button
         type="button"
@@ -400,12 +396,12 @@ export function <span class="fstat-no" title="function not covered" >DownloadSec
       &lt;div className={`${styles.sectionContent} ${isOpen ? styles.sectionContentOpen : ''}`}&gt;
         {children || (
           &lt;div className={styles.downloadGrid}&gt;
-            {items.map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (
-<span class="cstat-no" title="statement not covered" >              &lt;DownloadCard</span>
+            {items.map((item) =&gt; (
+              &lt;DownloadCard
                 key={item.id}
                 item={item}
                 isExecuting={executingId === item.id}
-                onExecute={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nExecute(item)}</span>
+                onExecute={() =&gt; onExecute(item)}
                 variant={item.id === 'download-all' ? 'download-all' : 'default'}
               /&gt;
             ))}
@@ -415,8 +411,6 @@ export function <span class="fstat-no" title="function not covered" >DownloadSec
     &lt;/div&gt;
   );
 }
-&nbsp;
-export default DownloadSection;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -424,7 +418,7 @@ export default DownloadSection;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
@@ -113,36 +113,7 @@
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a>
-<a name='L72'></a><a href='#L72'>72</a>
-<a name='L73'></a><a href='#L73'>73</a>
-<a name='L74'></a><a href='#L74'>74</a>
-<a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a>
-<a name='L77'></a><a href='#L77'>77</a>
-<a name='L78'></a><a href='#L78'>78</a>
-<a name='L79'></a><a href='#L79'>79</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L51'></a><a href='#L51'>51</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -179,34 +150,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -223,14 +167,13 @@
  * Sortable Night Order Entry Component
  *
  * Wrapper around NightOrderEntry that adds @dnd-kit sortable functionality.
+ * Uses shared SortableEntry component for consistent drag behavior.
  * Locked entries are rendered without drag capability.
  */
 &nbsp;
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import styles from '@/styles/components/script/NightOrderEntry.module.css';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import { NightOrderEntry } from './NightOrderEntry';
+import { SortableEntry } from './SortableEntry';
 &nbsp;
 interface SortableNightOrderEntryProps {
   entry: NightOrderEntryType;
@@ -254,47 +197,20 @@ export function <span class="fstat-no" title="function not covered" >SortableNig
   // Official characters can't be dragged until converted to custom
   const canDrag = <span class="cstat-no" title="statement not covered" >enableDragDrop &amp;&amp; !isOfficial;</span>
 &nbsp;
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging <span class="cstat-no" title="statement not covered" >} = useSortable({</span>
-    id: entry.id,
-    disabled: !canDrag,
-  });
-&nbsp;
-  // Use CSS.Translate instead of CSS.Transform to prevent scaling during drag
-  // CSS.Transform can include scaleX/scaleY which causes elements to shrink
-  const style: React.CSSProperties = <span class="cstat-no" title="statement not covered" >{</span>
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
-    // Apply grab cursor to entire row when draggable
-    cursor: canDrag ? (isDragging ? 'grabbing' : 'grab') : undefined,
-  };
-&nbsp;
-  // Apply drag listeners to the whole row wrapper instead of just the handle
-  const rowProps = <span class="cstat-no" title="statement not covered" >canDrag</span>
-    ? {
-        ...attributes,
-        ...listeners,
-      }
-    : undefined;
-&nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;div
-      ref={setNodeRef}
-      style={style}
-      className={`${isDragging ? styles.sorting : ''} ${canDrag ? styles.draggable : ''}`}
-      {...rowProps}
-    &gt;
-      &lt;NightOrderEntry
-        entry={entry}
-        isOfficial={isOfficial}
-        showDragHandle={false}
-        showLockIcon={isOfficial}
-        isDragging={isDragging}
-        onEditCharacter={onEditCharacter}
-        onToggleLock={onToggleLock}
-      /&gt;
-    &lt;/div&gt;
+    &lt;SortableEntry id={entry.id} enableDragDrop={canDrag}&gt;
+      {<span class="fstat-no" title="function not covered" >({</span> isDragging }) =&gt; (
+<span class="cstat-no" title="statement not covered" >        &lt;NightOrderEntry</span>
+          entry={entry}
+          isOfficial={isOfficial}
+          showDragHandle={false}
+          showLockIcon={isOfficial}
+          isDragging={isDragging}
+          onEditCharacter={onEditCharacter}
+          onToggleLock={onToggleLock}
+        /&gt;
+      )}
+    &lt;/SortableEntry&gt;
   );
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -304,7 +220,7 @@ export function <span class="fstat-no" title="function not covered" >SortableNig
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

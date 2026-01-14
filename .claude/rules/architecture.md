@@ -1,10 +1,8 @@
 # Grimbound - Architecture Documentation
 
-> **Purpose**: This document describes the system architecture, design decisions, and technical implementation details of Grimbound.
+> **Purpose**: System architecture, design decisions, and technical implementation details.
 
-> **Location**: This file lives in `.claude/rules/` and is loaded by Claude Code when architectural context is needed.
-
-**Last Updated**: 2025-12-31
+**Last Updated**: 2026-01-13
 **Version**: v0.6.0
 
 ---
@@ -16,26 +14,24 @@
 3. [Application Layers](#application-layers)
 4. [Data Flow](#data-flow)
 5. [State Management](#state-management)
-6. [Module Architecture](#module-architecture)
-7. [Design Patterns](#design-patterns)
-8. [Storage Architecture](#storage-architecture)
-9. [Caching Strategy](#caching-strategy)
-10. [Error Handling](#error-handling)
-11. [Security Considerations](#security-considerations)
-12. [Performance Optimizations](#performance-optimizations)
-13. [Architecture Decision Records](#architecture-decision-records)
+6. [Storage & Caching](#storage--caching)
+7. [Security & Performance](#security--performance)
+8. [Architecture Decision Records](#architecture-decision-records)
+9. [Codebase Quality](#codebase-quality)
+
+> **Cross-references**: For detailed patterns see `coding-patterns.md`. For module APIs see `utility-reference.md`.
 
 ---
 
 ## System Overview
 
-Grimbound is a client-side web application that generates printable tokens for the Blood on the Clocktower board game. It features:
+Grimbound is a client-side web application that generates printable tokens for the Blood on the Clocktower board game.
 
-- **Offline-first architecture** with GitHub data synchronization
-- **Canvas-based rendering** for high-quality token generation
-- **Multi-format export** (PDF, PNG, ZIP)
-- **Project management** with auto-save and versioning
-- **React-based UI** with TypeScript
+**Key Features:**
+- Offline-first architecture with GitHub data synchronization
+- Canvas-based rendering for high-quality token generation
+- Multi-format export (PDF, PNG, ZIP)
+- Project management with auto-save and versioning
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -44,26 +40,14 @@ Grimbound is a client-side web application that generates printable tokens for t
 │  │Projects │ │ Script  │ │ Tokens  │ │ Studio  │ │ Export  │  │
 │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘  │
 │       └───────────┴───────────┴───────────┴───────────┘        │
-│                              │                                  │
-├──────────────────────────────┼──────────────────────────────────┤
-│                     React Contexts                              │
-│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐  │
-│  │TokenContext│ │ProjectCtx  │ │DataSyncCtx │ │ ThemeCtx   │  │
-│  └────────────┘ └────────────┘ └────────────┘ └────────────┘  │
 ├─────────────────────────────────────────────────────────────────┤
-│                     Custom Hooks (35+)                          │
-│  useTokenGenerator, useProjectAutoSave, usePreRenderCache...   │
+│  React Contexts: Token, Project, DataSync, Theme, Service      │
 ├─────────────────────────────────────────────────────────────────┤
-│                     Core Services Layer                         │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
-│  │Generation│ │  Sync    │ │  Export  │ │  Cache   │          │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+│  Custom Hooks (60+): useTokenGenerator, useProjectAutoSave...  │
 ├─────────────────────────────────────────────────────────────────┤
-│                     Storage Layer                               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                       │
-│  │IndexedDB │ │Cache API │ │localStorage                      │
-│  │(Dexie)   │ │ (images) │ │(settings)│                       │
-│  └──────────┘ └──────────┘ └──────────┘                       │
+│  Core Services: Generation │ Sync │ Export │ Cache             │
+├─────────────────────────────────────────────────────────────────┤
+│  Storage: IndexedDB (Dexie) │ Cache API │ localStorage         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -71,131 +55,37 @@ Grimbound is a client-side web application that generates printable tokens for t
 
 ## Technology Stack
 
-### Frontend
-
-| Category | Technology | Version | Purpose |
-|----------|------------|---------|---------|
-| Framework | React | 19.x | UI components |
-| Language | TypeScript | 5.7.x | Type safety |
-| Build Tool | Vite | 7.3.x | Development & bundling |
-| Styling | CSS Modules | - | Scoped styles |
-
-### Libraries
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| dexie | 4.x | IndexedDB wrapper |
-| jsPDF | 2.5.x | PDF generation |
-| JSZip | 3.10.x | ZIP creation |
-| qr-code-styling | 1.6.x | QR code generation |
-| @dnd-kit | 6.x | Drag and drop |
-| @imgly/background-removal | 1.4.x | AI background removal |
-
-### Development Tools
-
-| Tool | Purpose |
-|------|---------|
-| Vitest | Unit testing |
-| Biome | Linting & formatting |
-| TypeScript | Type checking |
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| Framework | React 19.x | UI components |
+| Language | TypeScript 5.7.x | Type safety |
+| Build | Vite 7.3.x | Development & bundling |
+| Styling | CSS Modules | Scoped styles |
+| Database | Dexie 4.x | IndexedDB wrapper |
+| PDF | jsPDF 2.5.x | PDF generation |
+| ZIP | JSZip 3.10.x | ZIP creation |
+| DnD | @dnd-kit 6.x | Drag and drop |
+| Testing | Vitest | Unit testing |
+| Linting | Biome | Lint & format |
 
 ---
 
 ## Application Layers
 
-### Layer 1: Views (Components)
-
-The UI is organized into main views:
-
-```
-src/components/Views/
-├── ProjectsView.tsx      # Project management
-├── ScriptView.tsx        # Script JSON editing
-├── CharactersView.tsx    # Character editing
-├── TokensView.tsx        # Token preview & export
-├── StudioView.tsx        # Asset creation
-├── TownSquareView.tsx    # Game helper
-├── JsonView.tsx          # Raw JSON editing
-└── VersionsView.tsx      # Version history
-```
+### Layer 1: Views
+Main views in `src/components/Views/`: Projects, Script, Characters, Tokens, Studio, TownSquare, Json, Versions
 
 ### Layer 2: Shared Components
-
-Reusable components organized by function:
-
-```
-src/components/Shared/
-├── Assets/        # Asset management (thumbnails, upload)
-├── Controls/      # Input controls (sliders, uploaders)
-├── Drawer/        # Side panel drawers
-├── Feedback/      # Status indicators, progress bars
-├── Form/          # Form elements (input, checkbox, select)
-├── Json/          # JSON editor components
-├── ModalBase/     # Modal primitives
-├── Options/       # Configuration panels
-├── Selectors/     # Font, color, asset selectors
-└── UI/            # Generic UI (buttons, alerts, toast)
-```
+Organized in `src/components/Shared/`: Assets, Controls, Drawer, Feedback, Form, Json, ModalBase, Options, Selectors, UI
 
 ### Layer 3: React Contexts
-
-Global state providers:
-
-```typescript
-// TokenContext - Token generation state
-interface TokenContextType {
-  tokens: Token[];
-  setTokens: (tokens: Token[]) => void;
-  options: TokenGeneratorOptions;
-  setOptions: (options: TokenGeneratorOptions) => void;
-  // ...
-}
-
-// ProjectContext - Project management
-interface ProjectContextType {
-  currentProject: Project | null;
-  projects: Project[];
-  saveProject: () => Promise<void>;
-  // ...
-}
-
-// DataSyncContext - GitHub sync state
-interface DataSyncContextType {
-  syncStatus: SyncStatus;
-  characters: Character[];
-  checkForUpdates: () => Promise<void>;
-  // ...
-}
-```
+Global state providers: `TokenContext`, `ProjectContext`, `DataSyncContext`, `ThemeContext`, `ServiceContext`
 
 ### Layer 4: Custom Hooks
-
-60+ hooks that encapsulate business logic:
-
-```typescript
-// Token generation orchestration
-const { tokens, isGenerating, generate } = useTokenGenerator(options);
-
-// Project auto-save
-const { isSaving, hasUnsavedChanges } = useProjectAutoSave(project);
-
-// Cache management
-const { warmCache, cacheStats } = usePreRenderCache(characters);
-```
+60+ hooks encapsulating business logic. See `utility-reference.md` for complete list.
 
 ### Layer 5: Core Services
-
-TypeScript modules in `src/ts/`:
-
-| Module | Responsibility |
-|--------|----------------|
-| `generation/` | Token canvas generation |
-| `sync/` | GitHub data synchronization |
-| `export/` | PDF, PNG, ZIP export |
-| `cache/` | Multi-tier caching |
-| `canvas/` | Canvas rendering utilities |
-| `data/` | Data loading and parsing |
-| `services/` | Project and upload services |
+TypeScript modules in `src/ts/`: generation, sync, export, cache, canvas, data, services. See `utility-reference.md` for module details.
 
 ---
 
@@ -217,7 +107,6 @@ TypeScript modules in `src/ts/`:
 ┌──────────────┐     ┌───────────────┐
 │ Export (PDF) │────▶│  User Download │
 │ Export (ZIP) │     └───────────────┘
-│ Export (PNG) │
 └──────────────┘
 ```
 
@@ -226,8 +115,7 @@ TypeScript modules in `src/ts/`:
 ```
 ┌───────────┐     ┌──────────────────┐     ┌─────────────┐
 │ App Load  │────▶│ StorageManager   │────▶│ Load Cached │
-└───────────┘     │ getCharacters()  │     │   Data      │
-                  └──────────────────┘     └──────┬──────┘
+└───────────┘     └──────────────────┘     └──────┬──────┘
                                                    │
                          ┌─────────────────────────┘
                          ▼
@@ -258,14 +146,11 @@ TypeScript modules in `src/ts/`:
 
 ```
 <ThemeProvider>
-  <DataSyncProvider>
-    <ProjectProvider>
-      <TokenProvider>
-        <App />
-      </TokenProvider>
-    </ProjectProvider>
-  </DataSyncProvider>
-</ThemeProvider>
+  <ServiceProvider>
+    <DataSyncProvider>
+      <ProjectProvider>
+        <TokenProvider>
+          <App />
 ```
 
 ### State Categories
@@ -278,528 +163,21 @@ TypeScript modules in `src/ts/`:
 | Project Data | IndexedDB | Persistent | Projects, versions |
 | Character Data | IndexedDB + Cache | Persistent | Characters, images |
 
-### Data Persistence Strategy
-
-```typescript
-// User preferences (small, sync needed)
-localStorage.setItem(STORAGE_KEYS.THEME, 'dark');
-
-// Project data (structured, large)
-await projectDb.projects.put(project);
-
-// Character data (large dataset)
-await storageManager.storeCharacters(characters);
-
-// Character images (binary, large)
-await caches.open('character-icons').put(url, response);
-```
-
 ---
 
-## Module Architecture
-
-### Token Generation Module
-
-```
-src/ts/generation/
-├── index.ts                    # Barrel export
-├── TokenGenerator.ts           # Canvas rendering (~640 lines)
-│   ├── generateCharacterToken() → HTMLCanvasElement
-│   ├── generateReminderToken() → HTMLCanvasElement
-│   ├── generateScriptNameToken() → HTMLCanvasElement
-│   ├── generatePandemoniumToken() → HTMLCanvasElement
-│   ├── generateAlmanacQRToken() → HTMLCanvasElement
-│   └── generateBootleggerToken() → HTMLCanvasElement
-├── TokenFactory.ts             # Token object creation (~200 lines)
-│   ├── createCharacterToken()  # Character Token from canvas
-│   ├── createReminderToken()   # Reminder Token from canvas
-│   ├── createMetaToken()       # Meta Token from canvas
-│   ├── emit()                  # Call callback and return token
-│   └── emitAndPush()           # Emit and push to array
-├── batchGenerator.ts           # Batch orchestration (~630 lines)
-│   ├── generateAllTokens()     # Main entry point
-│   ├── generateScriptNameTokenOnly()
-│   ├── BatchContext            # Context object for reduced params
-│   ├── generateMetaTokens()    # Meta token orchestration
-│   └── generateCharacterAndReminderTokens()
-├── TokenImageRenderer.ts       # Image rendering
-├── TokenTextRenderer.ts        # Text rendering
-├── QROptionsResolver.ts        # QR code option resolution
-├── teamVariantGenerator.ts     # Team variant generation
-├── presets.ts                  # Preset configurations
-├── ImageCacheAdapter.ts        # DI adapter
-└── iconLayoutStrategies.ts     # Strategy pattern
-```
-
-**Separation of Concerns:**
-- `TokenGenerator`: Pure canvas rendering (low-level) - "how to draw a token"
-- `TokenFactory`: Token object creation (metadata assembly) - "how to package a canvas"
-- `batchGenerator`: Orchestration (high-level) - "which tokens to generate, in what order"
-
-### Sync Module
-
-```
-src/ts/sync/
-├── index.ts                    # Barrel + singleton
-├── ISyncServices.ts            # DI interfaces (contracts)
-├── dataSyncService.ts          # Orchestrator (uses DI)
-│   ├── initialize()
-│   ├── checkForUpdates()
-│   ├── downloadAndInstall()
-│   └── Event system
-├── githubReleaseClient.ts      # GitHub API
-├── packageExtractor.ts         # ZIP handling
-├── storageManager.ts           # IndexedDB + Cache
-├── versionManager.ts           # Version comparison
-└── migrationHelper.ts          # Legacy migration
-```
-
-### Background Effects Module
-
-```
-src/ts/canvas/backgroundEffects/
-├── index.ts                    # Module barrel export
-├── BackgroundRenderer.ts       # Main orchestrator
-│   ├── renderBackground()      # Complete rendering pipeline
-│   └── renderTexturePreview()  # Preview-only rendering
-├── constants.ts                # Shared constants
-├── noise/                      # Procedural noise utilities
-│   ├── index.ts                # Barrel export
-│   ├── perlin.ts               # Perlin noise implementation
-│   │   ├── initPermutation()   # Seed-based initialization
-│   │   └── perlin2D()          # 2D noise function
-│   └── fbm.ts                  # Fractal noise
-│       ├── fbm()               # Fractal Brownian Motion
-│       ├── turbulence()        # Absolute-value noise
-│       └── ridgedNoise()       # Ridge patterns
-├── textures/                   # Strategy pattern textures
-│   ├── index.ts                # Factory + barrel export
-│   ├── TextureStrategy.ts      # Interface + base class
-│   └── [11 texture files]      # Individual strategies
-│       ├── MarbleTexture.ts
-│       ├── CloudsTexture.ts
-│       ├── WatercolorTexture.ts
-│       ├── PerlinTexture.ts
-│       ├── RadialFadeTexture.ts
-│       ├── OrganicCellsTexture.ts
-│       ├── SilkFlowTexture.ts
-│       ├── ParchmentTexture.ts
-│       ├── LinenTexture.ts
-│       ├── WoodGrainTexture.ts
-│       └── BrushedMetalTexture.ts
-└── effects/                    # Visual effects
-    ├── index.ts                # Effect orchestration
-    ├── EffectStrategy.ts       # Interface
-    ├── BorderEffect.ts         # Border rendering
-    ├── VignetteEffect.ts       # Edge darkening
-    ├── InnerGlowEffect.ts      # Rim lighting
-    └── VibranceEffect.ts       # Smart saturation
-```
-
-### Cache Module
-
-```
-src/ts/cache/
-├── index.ts                    # Barrel export
-├── CacheManager.ts             # Cache facade (application layer)
-├── ICacheManager.ts            # Cache manager interface
-├── CacheInvalidationService.ts # Cache lifecycle
-├── TabPreRenderService.ts      # Unified tab hover pre-rendering
-├── charactersPreRenderHelpers.ts
-├── adapters/
-│   └── LRUCacheAdapter.ts      # LRU cache implementation
-├── core/                       # Core types & interfaces
-│   ├── index.ts                # Barrel export
-│   ├── interfaces.ts           # Core interfaces
-│   └── types.ts                # PreRenderContextType, CacheEntry, etc.
-├── instances/
-│   └── fontCache.ts            # Font caching singleton
-├── manager/
-│   └── PreRenderCacheManager.ts
-├── policies/
-│   └── LRUEvictionPolicy.ts    # LRU eviction
-├── strategies/
-│   ├── CharactersPreRenderStrategy.ts
-│   ├── TokensPreRenderStrategy.ts
-│   └── ProjectPreRenderStrategy.ts
-└── utils/
-    ├── AdaptiveWorkerPool.ts   # Adaptive worker pooling
-    ├── CacheLogger.ts          # Cache-specific logging
-    ├── EventEmitter.ts         # Typed events
-    ├── hashUtils.ts            # Shared hash utilities
-    ├── index.ts                # Barrel export
-    ├── memoryEstimator.ts      # Memory estimation
-    └── WorkerPool.ts           # Worker pool implementation
-```
-
-**TabPreRenderService** is a Facade that unifies all tab hover pre-rendering:
-- `preRenderTab(tab, context)` - Trigger pre-render for any supported tab
-- `getCachedNightOrder(scriptData)` - Get cached night order if available
-- `getCachedTokenDataUrl(filename)` - Get cached token data URL
-- Internally routes to CacheManager for heavy operations (characters) or module-level caches for lightweight data (script night order, token data URLs)
-
-### Services Module
-
-```
-src/ts/services/
-├── fonts/                      # Font management
-│   ├── index.ts                # Barrel export
-│   ├── IFontServices.ts        # DI interfaces (contracts)
-│   ├── FontRegistry.ts         # Font registration orchestrator
-│   ├── BuiltInFontProvider.ts  # Built-in font loading
-│   ├── CustomFontProvider.ts   # Custom font loading
-│   ├── GoogleFontProvider.ts   # Google Fonts API integration
-│   └── fontDatabase.ts         # Font data storage
-├── project/                    # Project management
-│   ├── index.ts                # Barrel export
-│   ├── IProjectService.ts      # DI interfaces (contracts)
-│   ├── ProjectService.ts       # Main orchestrator (uses DI)
-│   ├── ProjectDatabaseService.ts
-│   ├── ProjectExporter.ts      # Export (uses DI)
-│   └── ProjectImporter.ts
-└── upload/                     # File upload processing
-    ├── index.ts                # Barrel export
-    ├── IUploadServices.ts      # DI interfaces (contracts)
-    ├── FileUploadService.ts    # Main orchestrator (uses DI)
-    ├── FileValidationService.ts
-    ├── ImageProcessingService.ts
-    ├── AssetStorageService.ts
-    ├── AssetArchiveService.ts
-    ├── AssetSuggestionService.ts
-    ├── assetResolver.ts
-    ├── constants.ts            # Upload constants
-    └── types.ts
-```
-
-### Script PDF Module
-
-```
-src/ts/scriptPdf/
-├── index.ts                    # Barrel export
-├── types.ts                    # Shared types
-│   ├── PlayerScriptOptions     # Player script generation options
-│   ├── PlayerScriptCharacter   # Character prepared for rendering
-│   ├── PlayerScriptJinx        # Jinx entry for display
-│   ├── ScriptPdfSettings       # Complete settings (common + playerScript + nightOrder)
-│   ├── CommonPdfSettings       # Shared margins + BackgroundStyle
-│   ├── PlayerScriptSettings    # Player script specific settings
-│   ├── NightOrderSettings      # Night order specific settings
-│   └── ScriptPdfContextValue   # Context interface
-├── constants.ts                # Layout constants & defaults
-│   ├── PAGE_WIDTH/HEIGHT_*     # Page dimension constants
-│   ├── PLAYER_SCRIPT_FRONT     # Front page layout (margins, fonts, spacing)
-│   ├── PLAYER_SCRIPT_BACK      # Backing sheet layout
-│   ├── TEAM_COLORS/LABELS      # Team styling constants
-│   ├── PLAYER_COUNT_TABLE      # Player count breakdown
-│   ├── DEFAULT_SCRIPT_PDF_BACKGROUND    # Default BackgroundStyle
-│   ├── SCRIPT_PDF_BACKGROUND_PRESETS    # Background presets
-│   └── DEFAULT_SCRIPT_PDF_SETTINGS      # Complete default settings
-├── utils.ts                    # Shared utilities
-│   ├── groupCharactersByTeam() # Group by team in display order
-│   ├── separateCharactersByType()  # Separate main/fabled/travellers
-│   ├── applyCustomOrder()      # Apply custom character order
-│   ├── calculateOptimalColumns()   # Auto column selection
-│   ├── extractActiveJinxes()   # Extract jinxes between script chars
-│   ├── extractNightOrderIcons()    # Get night order icons for backing
-│   ├── validateScriptForPlayerScript() # Validation
-│   └── calculateAvailableHeight()  # Layout calculations
-└── playerScript/               # Player script specific (Phase 2+)
-    └── ... (to be implemented)
-```
-
-**Key Types:**
-- `BackgroundStyle` - Re-exported from Token view for PDF backgrounds
-- `ScriptPdfSettings` - Unified settings for all script PDF generation
-- `PlayerScriptCharacter` - Character data optimized for script rendering
-
----
-
-## Design Patterns
-
-### Strategy Pattern (Icon Layout)
-
-```typescript
-// Interface
-interface IconLayoutStrategy {
-  calculate(context: LayoutContext): IconLayout;
-}
-
-// Concrete strategies
-class CharacterIconStrategy implements IconLayoutStrategy { }
-class ReminderIconStrategy implements IconLayoutStrategy { }
-class MetaIconStrategy implements IconLayoutStrategy { }
-
-// Factory
-const strategy = IconLayoutStrategyFactory.create(tokenType, ...args);
-const layout = strategy.calculate(context);
-```
-
-**Why**: Token types have different layout requirements. Strategy pattern allows adding new token types without modifying existing code (Open/Closed principle).
-
-### Strategy Pattern (Texture Generation)
-
-```typescript
-// Interface + Base class
-interface TextureStrategy {
-  generate(context: TextureContext): TextureResult;
-  readonly name: string;
-}
-
-abstract class BaseTextureStrategy implements TextureStrategy {
-  protected isInCircle(x: number, y: number, center: number): boolean;
-  protected forEachCircularPixel(context: TextureContext, callback: Function): ImageData;
-}
-
-// Concrete strategies (11 textures)
-class MarbleTextureStrategy extends BaseTextureStrategy { }
-class CloudsTextureStrategy extends BaseTextureStrategy { }
-// ... etc
-
-// Factory with registration
-const strategy = TextureFactory.create('marble');
-TextureFactory.register('custom', new CustomTextureStrategy());
-```
-
-**Why**: 11 different texture algorithms with shared utilities. Strategy pattern enables:
-- Adding new textures without modifying existing code
-- Unit testing individual textures in isolation
-- Registering custom textures at runtime
-
-### Singleton Pattern (Services)
-
-```typescript
-// Global logger instance
-export const logger = new Logger();
-
-// Global image cache
-export const globalImageCache = new ImageCache();
-
-// Data sync service singleton
-export const dataSyncService = new DataSyncService();
-```
-
-**Why**: These services manage shared resources (console, image memory, sync state) that should have single instances.
-
-### Factory Pattern (Canvas Creation)
-
-```typescript
-function createCanvas(diameter: number, options?: CanvasOptions): CanvasContext {
-  const canvas = document.createElement('canvas');
-  const dpi = options?.dpi || 300;
-  canvas.width = diameter;
-  canvas.height = diameter;
-  // ... setup
-  return { canvas, ctx, center, radius };
-}
-```
-
-**Why**: Encapsulates canvas setup complexity and ensures consistent initialization.
-
-### Observer Pattern (Event System)
-
-```typescript
-// Typed event emitter
-interface SyncEvents {
-  'checking': [];
-  'downloading': [progress: number];
-  'success': [characters: Character[]];
-  'error': [error: Error];
-}
-
-dataSyncService.on('downloading', (progress) => {
-  updateProgressBar(progress);
-});
-```
-
-**Why**: Decouples sync state from UI, allows multiple subscribers.
-
-### Dependency Injection (Constructor Injection Pattern)
-
-The codebase uses **constructor injection with default parameters** for testability while maintaining zero breaking changes to existing code.
-
-#### React Context DI (ServiceContext)
-
-For React components and hooks, services are provided via `ServiceContext`:
-
-```typescript
-// src/contexts/ServiceContext.tsx
-export interface ServiceRegistry {
-  projectService: IProjectService;
-  projectDatabaseService: IProjectDatabase;
-  assetStorageService: IAssetStorageService;
-  fileUploadService: IFileUploadService;
-  fileValidationService: IFileValidationService;
-  dataSyncService: IDataSyncService;
-}
-
-// Hook usage in components
-const assetStorageService = useAssetStorageService();
-const projectService = useProjectService();
-
-// Testing with overrides
-<ServiceProvider overrides={{ projectService: mockProjectService }}>
-  <App />
-</ServiceProvider>
-```
-
-**Available Hooks**: `useProjectService()`, `useProjectDatabaseService()`, `useAssetStorageService()`, `useFileUploadService()`, `useFileValidationService()`, `useDataSyncService()`
-
-**Factory Hooks** (for classes that need fresh instances per-use):
-- `useProjectExporter()` - Returns `() => IProjectExporter`
-- `useProjectImporter()` - Returns `() => IProjectImporter`
-
-#### Interface-Based DI
-
-```typescript
-// Interface files define contracts
-// src/ts/services/project/IProjectService.ts
-export interface IProjectDatabase {
-  saveProject(project: Project): Promise<void>;
-  loadProject(id: string): Promise<Project | null>;
-}
-
-// src/ts/services/upload/IUploadServices.ts
-export interface IAssetStorageService {
-  save(data: CreateAssetData): Promise<string>;
-  getById(id: string): Promise<DBAsset | undefined>;
-}
-
-// src/ts/sync/ISyncServices.ts
-export interface IStorageManager {
-  initialize(): Promise<void>;
-  storeCharacters(characters: Character[], version: string): Promise<void>;
-}
-```
-
-#### Constructor Injection with Defaults
-
-```typescript
-// Dependencies interface
-export interface ProjectServiceDeps {
-  database: IProjectDatabase;
-  exporter: IProjectExporter;
-  importer: IProjectImporter;
-}
-
-export class ProjectService implements IProjectService {
-  private readonly db: IProjectDatabase;
-  private readonly exporter: IProjectExporter;
-
-  // Partial<Deps> allows any subset of dependencies
-  constructor(deps: Partial<ProjectServiceDeps> = {}) {
-    // Defaults to singleton instances for production
-    this.db = deps.database ?? projectDatabaseService;
-    this.exporter = deps.exporter ?? projectExporter;
-  }
-}
-
-// Singleton for application use (backward compatible)
-export const projectService = new ProjectService();
-```
-
-#### Services Using This Pattern
-
-| Service | Dependencies Injected |
-|---------|----------------------|
-| `ProjectService` | `IProjectDatabase`, `IProjectExporter`, `IProjectImporter` |
-| `ProjectExporter` | `IAssetStorageService` |
-| `FileUploadService` | `IAssetStorageService`, `IFileValidationService`, `IImageProcessingService` |
-| `DataSyncService` | `IStorageManager`, `IGitHubReleaseClient`, `IPackageExtractor` |
-| `TokenGenerator` | `IImageCache` |
-
-#### Testing with Mocks
-
-```typescript
-const mockDb = { saveProject: vi.fn(), loadProject: vi.fn() };
-const mockExporter = { exportAsZip: vi.fn() };
-const service = new ProjectService({
-  database: mockDb,
-  exporter: mockExporter
-});
-
-// Test behavior
-await service.createProject(options);
-expect(mockDb.saveProject).toHaveBeenCalled();
-```
-
-**Why**:
-- Enables unit testing by allowing mock injection
-- Zero breaking changes - existing code continues to work
-- Services depend on abstractions, not concretions (SOLID)
-- Loose coupling improves maintainability
-
----
-
-## Storage Architecture
-
-### IndexedDB Schema (via Dexie)
-
-```typescript
-// Character data store
-interface CharacterStore {
-  id: string;           // Primary key
-  name: string;
-  team: Team;
-  ability: string;
-  image: string;        // URL or asset reference
-  // ...
-}
-
-// Project store
-interface ProjectStore {
-  id: string;           // UUID
-  name: string;
-  script: ScriptEntry[];
-  options: TokenGeneratorOptions;
-  createdAt: Date;
-  updatedAt: Date;
-  versions: ProjectVersion[];
-}
-
-// Sync metadata
-interface SyncMetadata {
-  key: string;          // 'sync-metadata'
-  version: string;      // vYYYY.MM.DD-rN
-  lastChecked: Date;
-  etag?: string;
-}
-```
-
-### Cache API Usage
-
-```typescript
-// Character icon cache
-const cache = await caches.open('character-icons-v1');
-await cache.put(iconUrl, imageResponse);
-
-// Retrieval
-const response = await cache.match(iconUrl);
-if (response) {
-  const blob = await response.blob();
-  return URL.createObjectURL(blob);
-}
-```
-
-### Storage Quotas
-
-| Storage | Typical Usage | Quota Strategy |
-|---------|---------------|----------------|
-| IndexedDB | 2-5 MB | No explicit limit |
-| Cache API | 15-20 MB | LRU eviction |
-| localStorage | < 100 KB | Settings only |
-
----
-
-## Caching Strategy
+## Storage & Caching
+
+### Storage Architecture
+
+| Storage | Purpose | Quota |
+|---------|---------|-------|
+| IndexedDB (Dexie) | Projects, characters, sync metadata | 2-5 MB |
+| Cache API | Character icons, binary assets | 15-20 MB (LRU) |
+| localStorage | User preferences only | < 100 KB |
 
 ### Multi-tier Cache
 
 ```
-┌─────────────────────────────────────────┐
-│           Request for Image             │
-└───────────────────┬─────────────────────┘
-                    │
-                    ▼
 ┌─────────────────────────────────────────┐
 │     L1: In-Memory (globalImageCache)    │
 │     - HTMLImageElement instances        │
@@ -821,579 +199,177 @@ if (response) {
 └─────────────────────────────────────────┘
 ```
 
-### Cache Warming Strategy
+### Cache Services
 
-```typescript
-// Project-based warming
-const strategy = new ProjectPreRenderStrategy();
-strategy.warmForProject(project);  // Pre-loads project characters
-
-// Batch warming
-await generator.prewarmImageCache(characters);
-```
-
-### Cache Invalidation
-
-```typescript
-// On new sync data
-cacheInvalidationService.invalidateCharacterCache();
-
-// On options change affecting render
-cacheInvalidationService.invalidateTokenCache();
-```
+- **CacheManager**: Facade for pre-rendering with strategy pattern
+- **TabPreRenderService**: Unified tab hover pre-rendering
+- **CacheInvalidationService**: Lifecycle management and event subscription
 
 ---
 
-## Error Handling
+## Security & Performance
 
-### Error Hierarchy
+### Security
 
-```
-TokenGeneratorError (base)
-├── DataLoadError           - Loading failures
-├── ValidationError         - Data validation (validationErrors[])
-├── TokenCreationError      - Generation (tokenName)
-├── PDFGenerationError      - PDF export
-├── ZipCreationError        - ZIP export
-├── ResourceNotFoundError   - Missing resources (type, name)
-├── UIInitializationError   - DOM issues (missingElements[])
-├── DataSyncError           - Sync operations (syncOperation)
-├── StorageError            - Storage issues (storageType)
-├── GitHubAPIError          - GitHub API (statusCode, rateLimited)
-└── PackageValidationError  - Package issues (validationType)
-```
+| Area | Approach |
+|------|----------|
+| CORS | `applyCorsProxy()` for external images; `loadImage()` auto-handles |
+| Input Validation | `parseScriptData()` validates JSON; `characterLookupService.isValid()` |
+| Storage | No sensitive data in localStorage; no credentials stored |
+| GitHub API | Unauthenticated requests (rate limited) |
 
-### Error Handling Pattern
+### Performance Optimizations
 
-```typescript
-// Throwing with context
-throw new TokenCreationError(
-  'Failed to render character image',
-  character.name,
-  originalError
-);
-
-// Handling with ErrorHandler
-try {
-  await operation();
-} catch (error) {
-  const userMessage = ErrorHandler.getUserMessage(error);
-  ErrorHandler.log(error, 'ComponentName');
-
-  if (ErrorHandler.shouldShowToUser(error)) {
-    showToast(userMessage);
-  }
-}
-```
-
-### Error Boundary Pattern
-
-```typescript
-// React error boundary for component trees
-<ErrorBoundary fallback={<ErrorFallback />}>
-  <TokenGrid />
-</ErrorBoundary>
-```
-
----
-
-## Security Considerations
-
-### CORS Handling
-
-```typescript
-// External images via CORS proxy (uses CONFIG.API.CORS_PROXY)
-import { applyCorsProxy, loadImage } from '@/ts/utils/imageUtils.js';
-
-// Method 1: Use applyCorsProxy for explicit proxying
-const proxyUrl = applyCorsProxy(originalUrl);
-
-// Method 2: loadImage auto-handles CORS with fallback to proxy
-const image = await loadImage(externalUrl);
-
-// Local assets direct (no proxy needed)
-const localImage = await loadLocalImage('/images/icon.webp');
-```
-
-### Input Validation
-
-```typescript
-// Script JSON validation
-const { isValid, errors, characters } = parseScriptData(jsonInput);
-
-// Character ID validation
-const isValidId = characterLookupService.isValid(characterId);
-```
-
-### Storage Security
-
-- No sensitive data in localStorage (settings only)
-- No credentials stored client-side
-- GitHub API uses unauthenticated requests (rate limited)
-
----
-
-## Performance Optimizations
-
-### Canvas Optimizations
-
-```typescript
-// Canvas pooling
-const canvas = canvasPool.acquire(diameter);
-// ... use canvas
-canvasPool.release(canvas);
-
-// Text measurement caching
-const width = measureTextCached(ctx, text, font);
-
-// Path caching for repeated shapes
-const path = pathCache.get(pathKey) || createAndCachePath(pathKey);
-```
-
-### React Optimizations
-
-```typescript
-// Memoization
-const memoizedTokens = useMemo(() => groupTokens(tokens), [tokens]);
-
-// Callback stability
-const handleClick = useCallback(() => { /* ... */ }, [dependency]);
-
-// Virtualization for large lists
-<VirtualizedList items={characters} />
-```
-
-### Bundle Optimization
-
-```typescript
-// Dynamic imports for heavy libraries
-const jsPDF = await import('jspdf');
-const JSZip = await import('jszip');
-
-// Code splitting by route
-const StudioView = lazy(() => import('./Views/StudioView'));
-```
-
-### Rendering Optimizations
-
-```typescript
-// Batch token generation
-const tokens = await generateAllTokens(characters, options);
-
-// Web Workers for heavy computation (planned)
-const worker = new Worker('./tokenWorker.js');
-```
+| Area | Technique |
+|------|-----------|
+| Canvas | Pooling (`canvasPool`), text measurement caching (`measureTextCached`) |
+| React | React Compiler for automatic memoization (see `coding-patterns.md`) |
+| Bundle | Dynamic imports for jsPDF, JSZip; code splitting by route |
+| Rendering | Batch token generation; virtualization for large lists |
 
 ---
 
 ## Architecture Decision Records
 
-### ADR-001: IndexedDB + Cache API over localStorage
+### Summary Table
 
-**Context**: Need persistent storage for character data (2-5 MB) and images (15-20 MB).
+| ADR | Decision | Rationale |
+|-----|----------|-----------|
+| 001 | IndexedDB + Cache API over localStorage | localStorage 5MB limit; IndexedDB for structured data, Cache API for binary |
+| 002 | Strategy Pattern for Icon Layout | Open/Closed principle; testable; maintainable |
+| 003 | Deferred CodeMirror Integration | Bundle size (+150KB gzipped); core functionality priority |
+| 004 | React Context over Redux/Zustand | Simpler model; no deps; sufficient for complexity |
+| 005 | Singleton Services | Shared resources need single instances; replaceable via DI |
+| 006 | Modular Background Effects | Single responsibility; extensible via `TextureFactory.register()` |
+| 007 | Constructor Injection with Defaults | Zero breaking changes; full testability; SOLID compliance |
+| 008 | Unified Tab Pre-Render Service | Single API; consistent cache keys; appropriate caching per tab |
+| 009 | SSOT Character Image Resolution | Pre-resolve URLs in `batchGenerator`; unified resolution path |
+| 010 | Hybrid-Only PDF Export | Faster; reduces complexity; single code path |
+| 011 | Reusable Script Component Architecture | Shared infrastructure in `src/ts/scriptPdf/`; consistent approach |
+| 012 | Player Script Character Ordering | @dnd-kit for drag-and-drop; stored in script meta |
+| 013 | Unified PDF Settings Drawer | Tabbed interface; shared settings; consistent UX |
+| 014 | Reuse BackgroundStyle for Script PDF | Proven system; 11+ textures; rich presets |
+| 015 | React Compiler for Auto Memoization | Eliminates ~1000 lines boilerplate; optimal decisions |
 
-**Decision**: Use IndexedDB via Dexie for structured data, Cache API for binary images.
+### ADR Details
 
-**Rationale**:
-- localStorage limited to 5 MB
-- IndexedDB supports structured queries
-- Cache API designed for asset caching
-- Both support offline scenarios
+<details>
+<summary>ADR-006: Modular Background Effects</summary>
 
-### ADR-002: Strategy Pattern for Icon Layout
-
-**Context**: Different token types have varying layout requirements.
-
-**Decision**: Implement IconLayoutStrategy interface with concrete implementations.
-
-**Rationale**:
-- Open/Closed principle - new types don't modify existing code
-- Testable - strategies can be unit tested independently
-- Maintainable - layout logic concentrated in strategy classes
-
-### ADR-003: Deferred CodeMirror Integration
-
-**Context**: Want rich JSON editor with autocomplete and validation.
-
-**Decision**: Defer to v0.4.x release.
-
-**Rationale**:
-- Bundle size impact (+150-200 KB gzipped)
-- Core sync functionality higher priority
-- Current textarea works for basic use
-- Can be added incrementally
-
-### ADR-004: React Context over Redux/Zustand
-
-**Context**: Need global state management.
-
-**Decision**: Use React Context with custom hooks.
-
-**Rationale**:
-- Simpler mental model
-- No additional dependencies
-- Sufficient for current complexity
-- Re-evaluate at v0.5.x if needed
-
-### ADR-005: Singleton Services
-
-**Context**: Services like logging, image cache, and sync need shared state.
-
-**Decision**: Export singleton instances.
-
-**Rationale**:
-- Simple access pattern
-- Consistent state across app
-- Can be replaced for testing via DI
-
-### ADR-006: Modular Background Effects Architecture
-
-**Context**: Background effects system was a single 1181-line file mixing noise generation, 11 texture algorithms, visual effects, and color utilities.
-
-**Decision**: Refactor into modular architecture with Strategy pattern.
+**Context**: Background effects was a single 1181-line file.
 
 **Structure**:
 ```
 backgroundEffects/
 ├── BackgroundRenderer.ts    # Orchestrator (~250 lines)
 ├── noise/                   # Reusable noise utilities
-├── textures/               # Strategy pattern (11 files, ~50 lines each)
+├── textures/               # Strategy pattern (11 files)
 └── effects/                # Visual effect strategies
 ```
 
-**Rationale**:
-- **Single Responsibility**: Each texture/effect is its own file
-- **Open/Closed**: Add new textures without modifying existing code
-- **Testability**: Strategies can be unit tested independently
-- **Maintainability**: Find and modify specific textures quickly
-- **Extensibility**: `TextureFactory.register()` for custom textures
+**Trade-offs**: More files (mitigated by barrel exports)
+</details>
 
-**Trade-offs**:
-- More files to navigate (mitigated by barrel exports)
-- Slightly more complex import structure
-- Initial refactoring effort
+<details>
+<summary>ADR-007: Constructor Injection Pattern</summary>
 
-### ADR-007: Constructor Injection with Default Parameters
+See `coding-patterns.md` → Pattern 4: Dependency Injection for full implementation details.
 
-**Context**: Services had hard-coded singleton dependencies, making unit testing difficult and violating Dependency Inversion Principle.
+**Services Refactored**: ProjectService, ProjectExporter, FileUploadService, DataSyncService, TokenGenerator
 
-**Decision**: Refactor services to use constructor injection with `Partial<Deps>` pattern, maintaining backward compatibility via default parameters.
+**Interface Files**: `IProjectService.ts`, `IUploadServices.ts`, `ISyncServices.ts`
+</details>
 
-**Pattern**:
+<details>
+<summary>ADR-008: Tab Pre-Render Service</summary>
+
+**Problem**: Scattered pre-render logic with inconsistent cache keys.
+
+**Solution**: `TabPreRenderService` facade unifying all tab hover pre-rendering.
+
+**Routing**:
+- `characters` → CacheManager strategy (heavy canvas ops)
+- `tokens` → Module-level cache (data URL encoding)
+- `script` → Module-level cache (night order computation)
+</details>
+
+<details>
+<summary>ADR-009: SSOT Character Image Resolution</summary>
+
+**Problem**: Token generation bypassed SSOT (`resolveCharacterImageUrl`).
+
+**Solution**: Pre-resolve all URLs at `generateAllTokens()` entry point.
+
 ```typescript
-export interface ServiceDeps {
-  dependency1: IDependency1;
-  dependency2: IDependency2;
-}
-
-export class Service {
-  constructor(deps: Partial<ServiceDeps> = {}) {
-    this.dep1 = deps.dependency1 ?? singletonInstance;
-    this.dep2 = deps.dependency2 ?? anotherSingleton;
-  }
-}
-
-// Backward compatible singleton
-export const serviceInstance = new Service();
-```
-
-**Services Refactored**:
-- `ProjectService` (database, exporter, importer)
-- `ProjectExporter` (assetStorage)
-- `FileUploadService` (assetStorage, fileValidation, imageProcessing)
-- `DataSyncService` (storageManager, githubClient, packageExtractor)
-
-**Interface Files Created**:
-- `IProjectService.ts` - Project service contracts
-- `IUploadServices.ts` - Upload/asset service contracts
-- `ISyncServices.ts` - Sync service contracts
-
-**Rationale**:
-- **Zero breaking changes** - existing code continues to work
-- **Full testability** - all dependencies can be mocked
-- **SOLID compliance** - depends on abstractions, not concretions
-- **Gradual adoption** - can refactor services incrementally
-
-**Trade-offs**:
-- More boilerplate (interfaces + deps type)
-- Must maintain interface/implementation parity
-- Slightly more complex constructors
-
-### ADR-008: Unified Tab Pre-Render Service (Facade Pattern)
-
-**Context**: Tab hover pre-rendering was scattered across multiple locations:
-- `TabNavigation.tsx` had separate functions for characters, tokens, and script pre-rendering
-- `NightOrderContext.tsx` had its own cache lookup logic
-- Cache keys didn't always match between pre-render trigger and lookup, causing cache misses
-
-**Decision**: Create `TabPreRenderService` as a unified Facade for all tab hover pre-rendering.
-
-**Implementation**:
-```typescript
-// Single service handles all tab pre-rendering
-class TabPreRenderService {
-  preRenderTab(tab: PreRenderableTab, context: TabPreRenderContext): TabPreRenderResult;
-  getCachedNightOrder(scriptData: ScriptEntry[]): { firstNight, otherNight } | null;
-  getCachedTokenDataUrl(filename: string): string | undefined;
-  clearCache(tab: PreRenderableTab): void;
-}
-
-// Types
-type PreRenderableTab = 'characters' | 'tokens' | 'script';
-```
-
-**Routing Strategy**:
-- `characters` → Delegates to `CacheManager` strategy system (heavy canvas operations)
-- `tokens` → Module-level cache for data URL encoding
-- `script` → Module-level cache for night order computation
-
-**Rationale**:
-- **Single API** - One import, one method call for pre-rendering
-- **Cache key consistency** - Same service hashes data identically for store and lookup
-- **Appropriate caching** - Heavy operations use worker pool; lightweight data uses simple caches
-- **Future-proof** - Easy to add new tab types without modifying callers
-
-**Trade-offs**:
-- Adds indirection layer
-- Must maintain service as tabs evolve
-- Module-level caches don't share eviction policies with CacheManager
-
-### ADR-009: SSOT Character Image Resolution in Token Generation
-
-**Context**: Token generation used `getCharacterImageUrl()` (simple string extraction) which bypassed the SSOT (`resolveCharacterImageUrl`) causing asset references and sync storage images to fail.
-
-**Decision**: Integrate SSOT into `batchGenerator.ts` by pre-resolving all character image URLs at the entry point of `generateAllTokens()`.
-
-**Implementation**:
-```typescript
-// Pre-resolve before generation
-const resolvedImageUrls = await preResolveCharacterImageUrls(characters, generateVariants);
-
-// Store in BatchContext for O(1) lookup
 interface BatchContext {
-  resolvedImageUrls: Map<string, string>;  // characterId:variantIndex -> resolved URL
-}
-
-// Use resolved URLs in generation functions
-const resolvedUrl = ctx.resolvedImageUrls.get(`${character.id}:${variant.variantIndex}`);
-```
-
-**Rationale**:
-- **Unified resolution path** - All character image types handled consistently
-- **Asset references work** - `asset:uuid` properly resolved
-- **Sync storage supported** - Official character images from IndexedDB
-- **Performance** - Batch parallel resolution before generation starts
-- **Minimal changes** - Resolved URLs flow through existing code
-
-**Trade-offs**:
-- Additional async step before generation
-- Memory for resolved URL map (negligible for typical scripts)
-- Must maintain map key format consistency
-
-### ADR-010: Hybrid-Only PDF Export
-
-**Context**: The night order export had both legacy (full Snapdom) and hybrid (Snapdom + pdf-lib text) modes with an opt-in toggle.
-
-**Decision**: Remove legacy mode entirely. Use hybrid approach as the only export method.
-
-**Rationale**:
-- Hybrid mode is faster and more reliable
-- Reduces code complexity and maintenance burden
-- Single code path is easier to test and debug
-
-**Changes Made**:
-- Removed legacy `nightOrderPdfExporter.ts` and `nightSheetRenderer.tsx`
-- Removed `useHybridMode` state and toggle from NightOrderView
-- Renamed hybrid files to be the primary files
-- Updated index.ts exports
-
-### ADR-011: Reusable Script Component Architecture
-
-**Context**: Player script and night order share similar rendering needs (React component → Snapdom capture → PDF).
-
-**Decision**: Create shared infrastructure in `src/ts/scriptPdf/` with specialized components for each document type.
-
-**Structure**:
-```
-src/ts/scriptPdf/
-├── index.ts                    # Barrel export
-├── types.ts                    # Shared types
-├── constants.ts                # Layout constants
-├── utils.ts                    # Shared utilities
-├── hybridPdfExporter.ts        # Generic hybrid PDF exporter
-├── textExtractor.ts            # Shared text extraction
-└── playerScript/               # Player script specific
-    ├── PlayerScriptPrintable.tsx
-    ├── PlayerScriptBackingSheet.tsx
-    └── playerScriptRenderer.ts
-```
-
-**Rationale**:
-- Shared utilities reduce code duplication
-- Consistent approach for both document types
-- Easy to add new script document types in future
-
-### ADR-012: Player Script Character Ordering
-
-**Context**: Users need to reorder characters on the player script, similar to night order reordering.
-
-**Decision**: Implement drag-and-drop reordering using @dnd-kit (already in project). Store custom order in script meta or project state.
-
-**Storage Format**:
-```typescript
-interface ScriptMeta {
-  // ... existing fields
-  playerScriptOrder?: string[];  // Array of character IDs in custom order
+  resolvedImageUrls: Map<string, string>;  // characterId:variantIndex → URL
 }
 ```
+</details>
 
-**Rationale**:
-- Consistent with existing night order drag-and-drop pattern
-- Uses existing @dnd-kit infrastructure
-- Persisted in script meta for project saving
-
-### ADR-013: Unified PDF Settings Drawer
-
-**Context**: Both player script and night order PDFs share common settings (margins, fonts, backgrounds). Managing these separately creates inconsistent UX and duplicated code.
-
-**Decision**: Create a single `ScriptPdfDrawer` component with tabbed interface for Common, Player Script, and Night Order settings. Uses the existing `SettingsDrawer` base component pattern.
-
-**Tab Structure**:
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│ 📄 Script PDF Settings                    [Reset] [Cancel] [Apply]  │
-├─────────────────────────────────────────────────────────────────────┤
-│  [Common]  [Player Script]  [Night Order]                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  Tab content varies by selection...                                 │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**Settings Categories**:
-
-| Tab | Settings |
-|-----|----------|
-| **Common** | Margins, Full BackgroundStyle (solid/gradient, textures, effects) |
-| **Player Script** | Fonts, Author toggle, Backing sheet, Layout columns, Jinxes/Fabled options |
-| **Night Order** | Fonts, Icon scaling, Decoratives |
-
-**Rationale**:
-- Consistent UX for all script PDF settings
-- Shared settings (margins, fonts) configured once
-- Follows established drawer pattern from Token view
-
-### ADR-014: Reuse BackgroundStyle for Script PDF Backgrounds
-
-**Context**: Token view has a sophisticated background system with `BackgroundStyle` supporting solid colors, gradients, 11+ texture types, visual effects, and light adjustments. The simple paper texture approach in the original night order was limited.
-
-**Decision**: Use the existing `BackgroundStyle` type for script PDF backgrounds. The `BackgroundStyleEditor` component is embedded in the Script PDF drawer.
-
-**BackgroundStyle Features Available**:
-- **Source Type**: Styled (procedural) or Image
-- **Base**: Solid color or gradient (linear/radial/conic)
-- **Textures**: marble, clouds, watercolor, perlin, radial-fade, organic-cells, silk-flow, parchment, linen, wood-grain, brushed-metal
-- **Effects**: Vignette, inner glow, border (solid/dashed/dotted)
-- **Light**: Brightness, contrast, saturation, vibrance
-
-**Rationale**:
-- Reuses proven, well-tested background system
-- Consistent styling capabilities across Token and Script views
-- Rich presets available (Classic White, Elegant Cream, Aged Parchment, etc.)
-
-### ADR-015: React Compiler for Automatic Memoization
-
-**Context**: The codebase had ~800 `useCallback`, ~190 `useMemo`, and ~100 `React.memo` wrappers for manual memoization. This added significant boilerplate and cognitive overhead. React 19 introduced the React Compiler which can automatically determine optimal memoization.
-
-**Decision**: Enable React Compiler via `babel-plugin-react-compiler` and remove manual memoization wrappers.
+<details>
+<summary>ADR-015: React Compiler</summary>
 
 **Migration**:
 1. Install `babel-plugin-react-compiler`
-2. Configure in `vite.config.ts` under `@vitejs/plugin-react` babel plugins
-3. Remove `useCallback` wrappers (except those used in `useEffect` dependencies)
-4. Remove `useMemo` wrappers
-5. Remove `React.memo` wrappers
-6. Convert `forwardRef` to ref-as-prop pattern (React 19 feature)
+2. Remove `useCallback`, `useMemo`, `React.memo` wrappers
+3. Convert `forwardRef` to ref-as-prop pattern
 
-**Exception - Keep useCallback when**:
-```typescript
-// The callback is used as a useEffect dependency
-const loadData = useCallback(async () => { ... }, [deps]);
-useEffect(() => { loadData(); }, [loadData]);
-```
-
-**Rationale**:
-- Compiler makes optimal memoization decisions automatically
-- Eliminates ~1000 lines of boilerplate code
-- Reduces cognitive overhead for developers
-- Better performance - compiler can optimize cases humans miss
-- Future-proof - follows React team's recommended direction
-
-**Trade-offs**:
-- Requires React 19 and compatible tooling
-- Build time slightly increased for compilation
-- Debugging memoization issues is less explicit
+**Exception**: Keep `useCallback`/`useMemo` when value is in `useEffect` deps (see `coding-patterns.md`).
+</details>
 
 ---
 
-## Future Architecture Considerations
+## Future Considerations
 
-### Potential Improvements
+| Improvement | Purpose |
+|-------------|---------|
+| Web Workers | Non-blocking token generation |
+| Service Worker | True offline support |
+| Delta Updates | Incremental data sync |
+| WASM | Performance-critical canvas ops |
 
-1. **Web Workers** for token generation (non-blocking UI)
-2. **Service Worker** for true offline support and background sync
-3. **Delta Updates** for incremental data sync
-4. **Shared Workers** for multi-tab coordination
-5. **WASM** for performance-critical canvas operations
-
-### Scalability Concerns
-
-| Area | Current | Potential Solution |
-|------|---------|-------------------|
-| Large scripts (100+ chars) | Adequate | Virtual scrolling |
-| Many tokens (500+) | Slow render | Progressive loading |
-| Concurrent tabs | Conflict potential | BroadcastChannel |
-| Mobile devices | Not optimized | Responsive redesign |
+| Scalability Concern | Solution |
+|---------------------|----------|
+| Large scripts (100+ chars) | Virtual scrolling |
+| Many tokens (500+) | Progressive loading |
+| Concurrent tabs | BroadcastChannel |
+| Mobile devices | Responsive redesign |
 
 ---
 
-## Codebase Quality Analysis
+## Codebase Quality
 
-### Strengths (Maintain These)
+### Strengths
 
-1. **Well-organized module structure** with barrel exports
-2. **Comprehensive error hierarchy** with contextual information
-3. **Environment-aware logging** that auto-filters in production
-4. **Strategy pattern** for extensible token layouts
-5. **Strong TypeScript** with strict mode enabled
-6. **Separation of concerns** across modules
-7. **Extensive test coverage** for sync module (92 tests)
-8. **Constants/config** properly separated from logic
-9. **Custom hooks** extract complex logic from components
-10. **SSOT** for character image resolution
+1. Well-organized module structure with barrel exports
+2. Comprehensive error hierarchy with contextual information
+3. Environment-aware logging (auto-filters in production)
+4. Strategy pattern for extensible layouts
+5. Strong TypeScript with strict mode
+6. Separation of concerns across modules
+7. Extensive test coverage for sync module (92 tests)
+8. Constants/config separated from logic
+9. Custom hooks extract complex logic
+10. SSOT for character image resolution
 
-### Areas for Improvement
+### Technical Debt
 
-1. **Inconsistent DI**: Not all classes accept injected dependencies
-2. **Test coverage gaps**: Many hooks and components lack unit tests
+1. Inconsistent DI - not all classes accept injected dependencies
+2. Test coverage gaps - many hooks and components lack unit tests
+3. Missing E2E test suite
+4. Missing tests for TokenImageRenderer and TokenTextRenderer
 
-### Clever Solutions Worth Noting
+### Clever Solutions
 
-1. **Icon Layout Strategies** (`iconLayoutStrategies.ts`): Clean strategy pattern
-2. **Character Lookup Service**: O(1) validation via Map
-3. **Multi-tier caching**: Policies + strategies for intelligent cache management
-4. **Event-based sync**: Non-blocking updates with progress events
-5. **Canvas pooling**: Reuse canvases for performance
-6. **Circular text layout calculation**: Smart text wrapping for circular tokens
-7. **TokenGenerator composition**: Orchestration + TokenImageRenderer + TokenTextRenderer
-8. **TabPreRenderService**: Facade pattern for unified tab pre-rendering with consistent cache keys
-
-### Technical Debt to Track
-
-1. Add tests for custom hooks
-2. Complete dependency injection across all services
-3. Implement comprehensive E2E test suite
-4. Add unit tests for TokenImageRenderer and TokenTextRenderer
+| Solution | Location | Why Notable |
+|----------|----------|-------------|
+| Icon Layout Strategies | `iconLayoutStrategies.ts` | Clean strategy pattern |
+| Character Lookup | `characterLookup.ts` | O(1) validation via Map |
+| Multi-tier caching | `src/ts/cache/` | Policies + strategies |
+| Canvas pooling | `canvasPool.ts` | Reuse for performance |
+| TabPreRenderService | `TabPreRenderService.ts` | Facade with consistent cache keys |
 
 ---
 
-*This document should be updated whenever significant architectural changes are made. See ROADMAP.md for planned changes.*
+*Update this document when making significant architectural changes. See ROADMAP.md for planned changes.*

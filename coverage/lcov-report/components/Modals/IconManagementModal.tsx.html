@@ -276,10 +276,7 @@
 <a name='L211'></a><a href='#L211'>211</a>
 <a name='L212'></a><a href='#L212'>212</a>
 <a name='L213'></a><a href='#L213'>213</a>
-<a name='L214'></a><a href='#L214'>214</a>
-<a name='L215'></a><a href='#L215'>215</a>
-<a name='L216'></a><a href='#L216'>216</a>
-<a name='L217'></a><a href='#L217'>217</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L214'></a><a href='#L214'>214</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -347,7 +344,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -375,8 +371,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -503,7 +497,7 @@
  * Migrated to use unified Modal and Button components.
  */
 &nbsp;
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { IconUploader } from '@/components/Shared/Controls/IconUploader';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Button } from '@/components/Shared/UI/Button';
@@ -535,16 +529,16 @@ export function <span class="fstat-no" title="function not covered" >IconManagem
   const [showOnlyCustom, setShowOnlyCustom<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
 &nbsp;
   // Create map of character IDs to custom icons
-  const <span class="cstat-no" title="statement not covered" >iconMap = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >iconMap = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const map = <span class="cstat-no" title="statement not covered" >new Map&lt;string, CustomIconMetadata&gt;();</span>
 <span class="cstat-no" title="statement not covered" >    customIcons.forEach(<span class="fstat-no" title="function not covered" >(i</span>con) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      map.set(icon.characterId, icon);</span>
     });
 <span class="cstat-no" title="statement not covered" >    return map;</span>
-  }, [customIcons]);
+  })();
 &nbsp;
   // Filter characters
-  const <span class="cstat-no" title="statement not covered" >filteredCharacters = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >filteredCharacters = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     let filtered = <span class="cstat-no" title="statement not covered" >characters;</span>
 &nbsp;
     // Filter by search
@@ -559,51 +553,48 @@ export function <span class="fstat-no" title="function not covered" >IconManagem
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return filtered;</span>
-  }, [characters, searchQuery, showOnlyCustom, iconMap]);
+  })();
 &nbsp;
   // Handle icon upload/update
-  const <span class="cstat-no" title="statement not covered" >handleIconUpdate = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (c</span>haracter: Character, dataUrl: string | null) =&gt; {
-      const updatedIcons = <span class="cstat-no" title="statement not covered" >[...customIcons];</span>
-      const existingIndex = <span class="cstat-no" title="statement not covered" >updatedIcons.findIndex(<span class="fstat-no" title="function not covered" >(i</span>con) =&gt; <span class="cstat-no" title="statement not covered" >icon.characterId === character.id)</span>;</span>
+  const handleIconUpdate = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>haracter: Character, dataUrl: string | null) =&gt; {</span>
+    const updatedIcons = <span class="cstat-no" title="statement not covered" >[...customIcons];</span>
+    const existingIndex = <span class="cstat-no" title="statement not covered" >updatedIcons.findIndex(<span class="fstat-no" title="function not covered" >(i</span>con) =&gt; <span class="cstat-no" title="statement not covered" >icon.characterId === character.id)</span>;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      if (dataUrl) {</span>
-        const iconData: CustomIconMetadata = <span class="cstat-no" title="statement not covered" >{</span>
-          characterId: character.id,
-          characterName: character.name,
-          filename: `${character.id}.webp`,
-          source: 'uploaded',
-          dataUrl,
-          storedInIndexedDB: false,
-          lastModified: Date.now(),
-          fileSize: Math.round(dataUrl.length * 0.75), // Rough estimate
-          mimeType: 'image/webp',
-        };
+<span class="cstat-no" title="statement not covered" >    if (dataUrl) {</span>
+      const iconData: CustomIconMetadata = <span class="cstat-no" title="statement not covered" >{</span>
+        characterId: character.id,
+        characterName: character.name,
+        filename: `${character.id}.webp`,
+        source: 'uploaded',
+        dataUrl,
+        storedInIndexedDB: false,
+        lastModified: Date.now(),
+        fileSize: Math.round(dataUrl.length * 0.75), // Rough estimate
+        mimeType: 'image/webp',
+      };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (existingIndex &gt;= 0) {</span>
-<span class="cstat-no" title="statement not covered" >          updatedIcons[existingIndex] = iconData;</span>
-        } else {
-<span class="cstat-no" title="statement not covered" >          updatedIcons.push(iconData);</span>
-        }
-<span class="cstat-no" title="statement not covered" >      } else if (existingIndex &gt;= 0) {</span>
-        // Remove icon
-<span class="cstat-no" title="statement not covered" >        updatedIcons.splice(existingIndex, 1);</span>
+<span class="cstat-no" title="statement not covered" >      if (existingIndex &gt;= 0) {</span>
+<span class="cstat-no" title="statement not covered" >        updatedIcons[existingIndex] = iconData;</span>
+      } else {
+<span class="cstat-no" title="statement not covered" >        updatedIcons.push(iconData);</span>
       }
+<span class="cstat-no" title="statement not covered" >    } else if (existingIndex &gt;= 0) {</span>
+      // Remove icon
+<span class="cstat-no" title="statement not covered" >      updatedIcons.splice(existingIndex, 1);</span>
+    }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      onUpdateIcons(updatedIcons);</span>
-    },
-    [customIcons, onUpdateIcons]
-  );
+<span class="cstat-no" title="statement not covered" >    onUpdateIcons(updatedIcons);</span>
+  };
 &nbsp;
   // Stats
-  const <span class="cstat-no" title="statement not covered" >stats = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >stats = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const totalSize = <span class="cstat-no" title="statement not covered" >customIcons.reduce(<span class="fstat-no" title="function not covered" >(s</span>um, icon) =&gt; <span class="cstat-no" title="statement not covered" >sum + (icon.fileSize || 0), 0</span>);</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
       count: customIcons.length,
       totalCharacters: characters.length,
       totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2),
     };
-  }, [customIcons, characters]);
+  })();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;Modal
@@ -718,7 +709,7 @@ export function <span class="fstat-no" title="function not covered" >IconManagem
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

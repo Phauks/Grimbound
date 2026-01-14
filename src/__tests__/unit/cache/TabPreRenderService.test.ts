@@ -638,8 +638,10 @@ describe('TabPreRenderService', () => {
 
     it('should return null when options change', async () => {
       const character = createMockCharacter({ id: 'char1', uuid: 'uuid1' });
-      const options1 = createMockGenerationOptions({ dpi: 300 });
-      const options2 = createMockGenerationOptions({ dpi: 150 });
+      // Use characterNameFont which IS included in hashGenerationOptions
+      // (dpi is NOT included - it's a rendering/export setting, not a visual setting)
+      const options1 = createMockGenerationOptions({ characterNameFont: 'Dumbledore' });
+      const options2 = createMockGenerationOptions({ characterNameFont: 'Arial' });
       const context = createMockContext({
         characters: [character],
         generationOptions: options1,

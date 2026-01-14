@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/35</span>
+                <span class='fraction'>0/32</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/30</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -218,10 +218,7 @@
 <a name='L153'></a><a href='#L153'>153</a>
 <a name='L154'></a><a href='#L154'>154</a>
 <a name='L155'></a><a href='#L155'>155</a>
-<a name='L156'></a><a href='#L156'>156</a>
-<a name='L157'></a><a href='#L157'>157</a>
-<a name='L158'></a><a href='#L158'>158</a>
-<a name='L159'></a><a href='#L159'>159</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L156'></a><a href='#L156'>156</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -260,9 +257,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -379,7 +373,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useMemo, useState } from 'react';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useState } from 'react';
 import styles from '@/styles/components/characterEditor/TokenPreview.module.css';
 import type { Token } from '@/ts/types/index.js';
 import { groupTokensByIdentity } from '@/ts/utils/tokenGrouping';
@@ -409,18 +403,15 @@ export function <span class="fstat-no" title="function not covered" >TokenPrevie
   const [startIndex, setStartIndex<span class="cstat-no" title="statement not covered" >] = useState(0);</span>
 &nbsp;
   // Group reminder tokens to show count badges for duplicates
-  const <span class="cstat-no" title="statement not covered" >groupedReminders = useMemo(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; g</span>roupTokensByIdentity(reminderTokens), [</span>reminderTokens]);</span>
+  const <span class="cstat-no" title="statement not covered" >groupedReminders = groupTokensByIdentity(reminderTokens);</span>
 &nbsp;
   // Derive selected reminder from index - automatically updates when tokens regenerate
   const selectedReminder =
 <span class="cstat-no" title="statement not covered" >    selectedIndex !== null ? (groupedReminders[selectedIndex]?.token ?? null) : null;</span>
 &nbsp;
   // Get image URLs for tokens (prefers dataUrl, falls back to canvas)
-  const <span class="cstat-no" title="statement not covered" >characterImageUrl = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >g</span>etTokenImageUrl(characterToken), [</span>characterToken]);</span>
-  const <span class="cstat-no" title="statement not covered" >selectedReminderImageUrl = useMemo(</span>
-<span class="fstat-no" title="function not covered" >    () =&gt; <span class="cstat-no" title="statement not covered" >g</span>etTokenImageUrl(selectedReminder),</span>
-    [selectedReminder]
-  );
+  const characterImageUrl = <span class="cstat-no" title="statement not covered" >getTokenImageUrl(characterToken);</span>
+  const selectedReminderImageUrl = <span class="cstat-no" title="statement not covered" >getTokenImageUrl(selectedReminder);</span>
 &nbsp;
   // Calculate visible reminders based on pagination (using grouped reminders)
   const visibleReminders = <span class="cstat-no" title="statement not covered" >groupedReminders.slice(startIndex, startIndex + REMINDERS_PER_PAGE);</span>
@@ -544,7 +535,7 @@ export function <span class="fstat-no" title="function not covered" >TokenPrevie
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

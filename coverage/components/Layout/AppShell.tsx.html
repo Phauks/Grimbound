@@ -195,10 +195,7 @@
 <a name='L130'></a><a href='#L130'>130</a>
 <a name='L131'></a><a href='#L131'>131</a>
 <a name='L132'></a><a href='#L132'>132</a>
-<a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a>
-<a name='L135'></a><a href='#L135'>135</a>
-<a name='L136'></a><a href='#L136'>136</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L133'></a><a href='#L133'>133</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -260,7 +257,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -281,8 +277,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -340,7 +334,7 @@
  * Acts as the container for all sub-tabs (Projects, JSON, Tokens, Characters, Script, Export, Studio).
  */
 &nbsp;
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { CharactersView } from '@/components/Views/CharactersView';
 import { ExportView } from '@/components/Views/ExportView';
 import { JsonView } from '@/components/Views/JsonView';
@@ -370,15 +364,15 @@ export function <span class="fstat-no" title="function not covered" >AppShell() 
   const { currentProject <span class="cstat-no" title="statement not covered" >} = useProjects();</span>
   const { tokens, characters <span class="cstat-no" title="statement not covered" >} = useTokenContext();</span>
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleTokenClick = useCallback(<span class="fstat-no" title="function not covered" >(t</span>oken: Token) =&gt; {</span>
+  const handleTokenClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>oken: Token) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setSelectedTokenForCustomize(token);</span>
 <span class="cstat-no" title="statement not covered" >    setCreateNewCharacter(false);</span>
     // Clear last selected character when explicitly clicking a token (explicit navigation)
 <span class="cstat-no" title="statement not covered" >    setLastSelectedCharacterUuid(undefined);</span>
 <span class="cstat-no" title="statement not covered" >    setActiveTab('characters');</span>
-  }, []);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleTabChange = useCallback(<span class="fstat-no" title="function not covered" >(t</span>ab: TabType) =&gt; {</span>
+  const handleTabChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>ab: TabType) =&gt; {</span>
     // Reset createNewCharacter when manually changing tabs
 <span class="cstat-no" title="statement not covered" >    if (tab !== 'characters') {</span>
 <span class="cstat-no" title="statement not covered" >      setCreateNewCharacter(false);</span>
@@ -390,41 +384,38 @@ export function <span class="fstat-no" title="function not covered" >AppShell() 
 <span class="cstat-no" title="statement not covered" >      setCreateNewCharacter(false);</span>
     }
 <span class="cstat-no" title="statement not covered" >    setActiveTab(tab);</span>
-  }, []);
+  };
 &nbsp;
   // Handle "Edit Character" from night order context menu
-  const <span class="cstat-no" title="statement not covered" >handleEditCharacter = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (c</span>haracterId: string) =&gt; {
-      // Find the character by ID
-      const character = <span class="cstat-no" title="statement not covered" >characters.find(<span class="fstat-no" title="function not covered" >(c</span>) =&gt; <span class="cstat-no" title="statement not covered" >c.id === characterId)</span>;</span>
-<span class="cstat-no" title="statement not covered" >      if (!character) {</span>
-<span class="cstat-no" title="statement not covered" >        logger.warn('AppShell', `Character not found: ${characterId}`);</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
-      }
+  const handleEditCharacter = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>haracterId: string) =&gt; {</span>
+    // Find the character by ID
+    const character = <span class="cstat-no" title="statement not covered" >characters.find(<span class="fstat-no" title="function not covered" >(c</span>) =&gt; <span class="cstat-no" title="statement not covered" >c.id === characterId)</span>;</span>
+<span class="cstat-no" title="statement not covered" >    if (!character) {</span>
+<span class="cstat-no" title="statement not covered" >      logger.warn('AppShell', `Character not found: ${characterId}`);</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
 &nbsp;
-      // Find the matching token by character name (character tokens have type 'character')
-      const token = <span class="cstat-no" title="statement not covered" >tokens.find(</span>
-<span class="fstat-no" title="function not covered" >        (t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t.type === 'character' &amp;&amp; t.name.toLowerCase() === character.name.toLowerCase()</span>
-      );
+    // Find the matching token by character name (character tokens have type 'character')
+    const token = <span class="cstat-no" title="statement not covered" >tokens.find(</span>
+<span class="fstat-no" title="function not covered" >      (t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t.type === 'character' &amp;&amp; t.name.toLowerCase() === character.name.toLowerCase()</span>
+    );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      if (token) {</span>
-        // Use existing handleTokenClick pattern
-<span class="cstat-no" title="statement not covered" >        setSelectedTokenForCustomize(token);</span>
-<span class="cstat-no" title="statement not covered" >        setCreateNewCharacter(false);</span>
-        // Clear last selected character when explicitly navigating to a character
-<span class="cstat-no" title="statement not covered" >        setLastSelectedCharacterUuid(undefined);</span>
-<span class="cstat-no" title="statement not covered" >        setActiveTab('characters');</span>
-      } else {
-<span class="cstat-no" title="statement not covered" >        logger.warn('AppShell', `Token not found for character: ${character.name}`);</span>
-      }
-    },
-    [characters, tokens]
-  );
+<span class="cstat-no" title="statement not covered" >    if (token) {</span>
+      // Use existing handleTokenClick pattern
+<span class="cstat-no" title="statement not covered" >      setSelectedTokenForCustomize(token);</span>
+<span class="cstat-no" title="statement not covered" >      setCreateNewCharacter(false);</span>
+      // Clear last selected character when explicitly navigating to a character
+<span class="cstat-no" title="statement not covered" >      setLastSelectedCharacterUuid(undefined);</span>
+<span class="cstat-no" title="statement not covered" >      setActiveTab('characters');</span>
+    } else {
+<span class="cstat-no" title="statement not covered" >      logger.warn('AppShell', `Token not found for character: ${character.name}`);</span>
+    }
+  };
 &nbsp;
   // Handle character selection changes from CustomizeView
-  const <span class="cstat-no" title="statement not covered" >handleCharacterSelect = useCallback(<span class="fstat-no" title="function not covered" >(c</span>haracterUuid: string) =&gt; {</span>
+  const handleCharacterSelect = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>haracterUuid: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setLastSelectedCharacterUuid(characterUuid);</span>
-  }, []);
+  };
 &nbsp;
   const renderActiveView = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    switch (activeTab) {</span>
@@ -475,7 +466,7 @@ export function <span class="fstat-no" title="function not covered" >AppShell() 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

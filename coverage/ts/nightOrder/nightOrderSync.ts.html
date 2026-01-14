@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">19.54% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/87</span>
+                <span class='fraction'>17/87</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">13.2% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/53</span>
+                <span class='fraction'>7/53</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">13.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>2/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">19.76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/86</span>
+                <span class='fraction'>17/86</span>
             </div>
         
             
@@ -429,7 +429,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -698,13 +698,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -713,14 +713,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -739,21 +739,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Night Order Sync Utilities
@@ -775,7 +775,7 @@ import { isSpecialEntry } from './specialEntries.js';
  * Boundary values for night order positioning.
  * Used when calculating custom character order numbers.
  */
-const ORDER_BOUNDS = <span class="cstat-no" title="statement not covered" >{</span>
+const ORDER_BOUNDS = {
   /** Start of night (before any characters) */
   START: 0,
   /** End of night (dawn position) */
@@ -1040,17 +1040,17 @@ export function <span class="fstat-no" title="function not covered" >updateChara
  * @param nightType - Which night type to build for
  * @returns Array of character IDs in order, with dusk/dawn bookends
  */
-export function <span class="fstat-no" title="function not covered" >buildInitialNightOrderArray(</span>
+export function buildInitialNightOrderArray(
   characters: Character[],
   nightType: 'first' | 'other'
 ): string[] {
-  const orderKey = <span class="cstat-no" title="statement not covered" >nightType === 'first' ? 'firstNight' : 'otherNight';</span>
+  const orderKey = nightType === 'first' ? 'firstNight' : 'otherNight';
 &nbsp;
   // Filter and sort characters by night order number
-  const orderedChars = <span class="cstat-no" title="statement not covered" >characters</span>
-    .filter(<span class="fstat-no" title="function not covered" >(c</span>har) =&gt; {
-      const order = <span class="cstat-no" title="statement not covered" >char[orderKey];</span>
-<span class="cstat-no" title="statement not covered" >      return order !== undefined &amp;&amp; order &gt; 0;</span>
+  const orderedChars = characters
+    .filter((char) =&gt; {
+      const order = char[orderKey];
+      return order !== undefined &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >order &gt; 0;</span>
     })
     .sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; {
       const orderA = <span class="cstat-no" title="statement not covered" >a[orderKey] ?? 0;</span>
@@ -1059,14 +1059,14 @@ export function <span class="fstat-no" title="function not covered" >buildInitia
     });
 &nbsp;
   // Build array with special entries
-  const result: string[] = <span class="cstat-no" title="statement not covered" >['dusk'];</span>
+  const result: string[] = ['dusk'];
 &nbsp;
   // For first night, insert minioninfo and demoninfo at appropriate positions
-<span class="cstat-no" title="statement not covered" >  if (nightType === 'first') {</span>
-    let insertedMinionInfo = <span class="cstat-no" title="statement not covered" >false;</span>
-    let insertedDemonInfo = <span class="cstat-no" title="statement not covered" >false;</span>
+  if (nightType === 'first') {
+    let insertedMinionInfo = false;
+    let insertedDemonInfo = false;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    for (const char of orderedChars) {</span>
+    for (const char of orderedChars) {
       const order = <span class="cstat-no" title="statement not covered" >char[orderKey] ?? 0;</span>
 &nbsp;
       // Insert minioninfo before characters with order &gt; MINION_INFO threshold
@@ -1085,21 +1085,21 @@ export function <span class="fstat-no" title="function not covered" >buildInitia
     }
 &nbsp;
     // Add any not-yet-inserted special entries at the end (before dawn)
-<span class="cstat-no" title="statement not covered" >    if (!insertedMinionInfo) {</span>
-<span class="cstat-no" title="statement not covered" >      result.push('minioninfo');</span>
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!insertedMinionInfo) {
+      result.push('minioninfo');
     }
-<span class="cstat-no" title="statement not covered" >    if (!insertedDemonInfo) {</span>
-<span class="cstat-no" title="statement not covered" >      result.push('demoninfo');</span>
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!insertedDemonInfo) {
+      result.push('demoninfo');
     }
   } else {
     // Other nights - just add characters in order
-<span class="cstat-no" title="statement not covered" >    for (const char of orderedChars) {</span>
+    for (const char of orderedChars) {
 <span class="cstat-no" title="statement not covered" >      result.push(char.id);</span>
     }
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  result.push('dawn');</span>
-<span class="cstat-no" title="statement not covered" >  return result;</span>
+  result.push('dawn');
+  return result;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -1108,7 +1108,7 @@ export function <span class="fstat-no" title="function not covered" >buildInitia
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

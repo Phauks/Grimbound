@@ -66,7 +66,7 @@ export function DraggableAsset({
   };
 
   return (
-    <div
+    <article
       ref={setNodeRef}
       className={cn(styles.assetTile, isSelected && styles.selected, isDragging && styles.dragging)}
       style={style}
@@ -95,6 +95,6 @@ export function DraggableAsset({
 
       {/* Filename bar */}
       <span className={styles.assetName}>{asset.metadata.filename}</span>
-    </div>
+    </article>
   );
 }

@@ -248,17 +248,20 @@ describe('decorativeUtils', () => {
 
   describe('ACCENT_DECORATIVE_KEYS', () => {
     it('should contain all accent-related keys', () => {
-      // Accents are now deterministic based on character data
-      // Only accentEnabled and accentGeneration are configurable
+      // Accent configuration keys for deterministic accent system
       expect(ACCENT_DECORATIVE_KEYS).toContain('accentEnabled');
       expect(ACCENT_DECORATIVE_KEYS).toContain('accentGeneration');
+      expect(ACCENT_DECORATIVE_KEYS).toContain('accentRadialOffset');
+      expect(ACCENT_DECORATIVE_KEYS).toContain('accentRotate180');
+      expect(ACCENT_DECORATIVE_KEYS).toContain('accentFlip');
+      expect(ACCENT_DECORATIVE_KEYS).toContain('accentLayer');
     });
 
-    it('should have exactly 2 keys (deterministic accent system)', () => {
-      // Old randomization options removed:
-      // - maximumAccents, accentPopulationProbability, accentArcSpan
-      // - accentSlots, enableLeftAccent, enableRightAccent, sideAccentProbability
-      expect(ACCENT_DECORATIVE_KEYS).toHaveLength(2);
+    it('should have exactly 6 keys (deterministic accent system)', () => {
+      // Deterministic accent configuration options:
+      // - accentEnabled, accentGeneration, accentRadialOffset
+      // - accentRotate180, accentFlip, accentLayer
+      expect(ACCENT_DECORATIVE_KEYS).toHaveLength(6);
     });
   });
 

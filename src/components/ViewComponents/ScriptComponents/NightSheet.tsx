@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { type Ref, useEffect, useState } from 'react';
+import { useBackgroundImageUrl } from '@/hooks/characters/useBackgroundImageUrl.js';
 import styles from '@/styles/components/script/NightSheet.module.css';
 import {
   calculateScaleConfig,
@@ -30,6 +31,7 @@ import {
 } from '@/ts/nightOrder/index.js';
 import type { NightOrderEntry as NightOrderEntryType } from '@/ts/nightOrder/nightOrderTypes.js';
 import type { MarginConfig } from '@/ts/scriptPdf/types.js';
+import { getBackgroundImageStyles } from '@/ts/scriptPdf/utils.js';
 import type { BackgroundStyle } from '@/ts/types/backgroundEffects.js';
 import type { Character, ScriptMeta } from '@/ts/types/index.js';
 import { NightOrderEntry } from './NightOrderEntry';
@@ -126,10 +128,22 @@ export function NightSheet({
   // Get warning message if scaled to minimum (only applies when not paginated)
   const scaleWarning = pageNumber !== undefined ? null : getScaleWarning(scaleConfig);
 
+  // Resolve background image URL if using image background
+  const { resolvedUrl: resolvedBackgroundUrl } = useBackgroundImageUrl({
+    imageUrl: background?.sourceType === 'image' ? background.imageUrl : undefined,
+  });
+
+  // Get background styles (handles image, solid color, or gradient)
+  // Only call getBackgroundImageStyles for image backgrounds
+  const imageBackgroundStyles =
+    background?.sourceType === 'image'
+      ? getBackgroundImageStyles(background, resolvedBackgroundUrl)
+      : null;
+
   // Build dynamic background style with CSS custom properties for scaling
   const sheetStyle: React.CSSProperties = {
-    // Background customization (uses solidColor from BackgroundStyle)
-    backgroundColor: background?.solidColor || '#f4edd9',
+    // Background customization: use image styles if available, otherwise solid color
+    ...(imageBackgroundStyles || { backgroundColor: background?.solidColor || '#f4edd9' }),
     // Page margins (override CSS defaults if provided)
     ...(margins && {
       padding: `${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in`,

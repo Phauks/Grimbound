@@ -236,8 +236,11 @@ describe('PDFGenerator', () => {
     });
 
     it('should create multiple pages when tokens overflow', () => {
-      const generator = new PDFGenerator({ dpi: 100, margin: 0.5, tokenPadding: 0.1 });
-      const tokens = createMockTokens(20);
+      // Note: PDFGenerator uses CONFIG.PDF.DPI (300) internally, not a dpi option
+      // With 300 DPI, 8.5x11 page, 0.5" margin: ~20 tokens (525px each) fit per page
+      // Using 25 tokens to ensure overflow
+      const generator = new PDFGenerator({ margin: 0.5, tokenPadding: 0.1 });
+      const tokens = createMockTokens(25);
 
       const result = generator.calculateGridLayout(tokens, false);
 

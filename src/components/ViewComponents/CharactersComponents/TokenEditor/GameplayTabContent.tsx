@@ -27,26 +27,24 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { AssetManagerModal } from '@/components/Modals/AssetManagerModal';
 import { useToast } from '@/contexts/ToastContext';
 import { useDraggableList, useGroupedReminders } from '@/hooks/index.js';
 import { useResolvedImageUrls } from '@/hooks/sync/useResolvedImageUrls';
-import { useAutoResizeTextarea } from '@/hooks/ui/useAutoResizeTextarea';
-import { useControlledField } from '@/hooks/ui/useControlledField';
 import { useDebouncedCallback } from '@/hooks/ui/useDebouncedCallback';
 import styles from '@/styles/components/characterEditor/TokenEditor.module.css';
 import viewStyles from '@/styles/components/views/Views.module.css';
 import { TIMING } from '@/ts/constants.js';
 import type { Character } from '@/ts/types/index.js';
+import { nameToId } from '@/ts/utils/nameGenerator';
 import {
-  combineAbilityWithSetup,
-  ensureUniqueId,
-  getOtherCharacterIds,
-  hasSetupBrackets,
-  splitAbilityText,
-} from '@/ts/utils/index.js';
-import { generateRandomName, nameToId } from '@/ts/utils/nameGenerator';
+  normalizeImageValue,
+  useAbilityField,
+  useIdentityFields,
+  useImageUrls,
+  useNightOrderField,
+} from './hooks';
 import { JinxEditor, type JinxPreviewData } from './JinxEditor';
 import { NightOrderField } from './NightOrderField';
 import { SortableImageUrlRow } from './SortableImageUrlRow';
@@ -55,581 +53,16 @@ import { SpecialItemsEditor } from './SpecialItemsEditor';
 import { TEAM_SELECT_CLASS_MAP } from './types';
 
 // ============================================
-// Helpers
+// Helper Hooks (kept inline - small and specific)
 // ============================================
 
-/** Normalize image array for storage - single image stored as string, multiple as array */
-function normalizeImageValue(images: string[]): string | string[] {
-  return images.length === 1 ? images[0] : images;
-}
-
-// ============================================
-// Hook: Image URL Management
-// ============================================
-
-interface UseImageUrlsOptions {
-  initialImages: string[];
-  isOfficial: boolean;
-  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
-  onRefreshPreview?: () => void;
-  onPreviewVariant?: (imageUrl: string | undefined) => void;
-  /** Debounced update for image changes (uses longer delay for image loading) */
-  debouncedImageUpdate: (value: string | string[], delay?: number) => void;
-}
-
-interface UseImageUrlsResult {
-  localImages: string[];
-  setLocalImages: React.Dispatch<React.SetStateAction<string[]>>;
-  previewVariantIndex: number | null;
-  handleImageUpdate: (index: number, value: string) => void;
-  handleImageBlur: () => void;
-  handleImagePreview: (index: number, url: string) => void;
-  handleAddImage: () => void;
-  handleRemoveImage: (index: number) => void;
-  handleRefreshImages: () => void;
-  /** Handle asset selection from asset manager */
-  handleAssetSelection: (index: number, assetId: string) => void;
-}
-
-function useImageUrls({
-  initialImages,
-  isOfficial,
-  onEditChange,
-  onRefreshPreview,
-  onPreviewVariant,
-  debouncedImageUpdate,
-}: UseImageUrlsOptions): UseImageUrlsResult {
-  const [localImages, setLocalImages] = useState<string[]>(initialImages);
-  const [previewVariantIndex, setPreviewVariantIndex] = useState<number | null>(null);
-
-  // Track previous content to prevent infinite loops when parent creates
-  // new array references with same content
-  const prevKeyRef = useRef<string>('');
-  const currentKey = initialImages.join('\x00');
-
-  // Sync with prop changes (using content comparison)
-  useEffect(() => {
-    // Skip if content hasn't changed (prevents infinite loops from new array refs)
-    if (prevKeyRef.current === currentKey) {
-      return;
-    }
-    prevKeyRef.current = currentKey;
-    setLocalImages(initialImages);
-    setPreviewVariantIndex(null);
-  }, [initialImages, currentKey]);
-
-  const handleImageUpdate = (index: number, value: string) => {
-    if (isOfficial) return;
-    setLocalImages((prev) => {
-      const newImages = [...prev];
-      newImages[index] = value;
-      return newImages;
-    });
-    const updatedImages = localImages.map((img, i) => (i === index ? value : img));
-    debouncedImageUpdate(normalizeImageValue(updatedImages));
-  };
-
-  const handleImageBlur = () => {
-    if (isOfficial) return;
-    onEditChange('image', normalizeImageValue(localImages));
-  };
-
-  const handleImagePreview = (index: number, url: string) => {
-    if (!onPreviewVariant) return;
-    setPreviewVariantIndex(index);
-    onPreviewVariant(url);
-  };
-
-  const handleAddImage = () => {
-    if (isOfficial) return;
-    const newImages = [...localImages, ''];
-    setLocalImages(newImages);
-    onEditChange('image', newImages);
-  };
-
-  const handleRemoveImage = (index: number) => {
-    if (isOfficial) return;
-    const isLastImage = localImages.length <= 1;
-    if (isLastImage) {
-      setLocalImages(['']);
-      onEditChange('image', '');
-      return;
-    }
-    const newImages = localImages.filter((_, i) => i !== index);
-    setLocalImages(newImages);
-    onEditChange('image', normalizeImageValue(newImages));
-  };
-
-  const handleRefreshImages = () => {
-    if (isOfficial) return;
-    onEditChange('image', normalizeImageValue(localImages));
-    onRefreshPreview?.();
-  };
-
-  const handleAssetSelection = (index: number, assetRef: string) => {
-    if (isOfficial) return;
-    // assetRef is already in "asset:uuid" format from useAssetSelection hook
-    setLocalImages((prev) => {
-      const newImages = [...prev];
-      newImages[index] = assetRef;
-      return newImages;
-    });
-    // Update immediately (no debounce for explicit selection)
-    const updatedImages = localImages.map((img, i) => (i === index ? assetRef : img));
-    onEditChange('image', normalizeImageValue(updatedImages));
-  };
-
-  return {
-    localImages,
-    setLocalImages,
-    previewVariantIndex,
-    handleImageUpdate,
-    handleImageBlur,
-    handleImagePreview,
-    handleAddImage,
-    handleRemoveImage,
-    handleRefreshImages,
-    handleAssetSelection,
-  };
-}
-
-// ============================================
-// Helper: Night Order Field Handlers
-// ============================================
-
-interface NightOrderHandlers {
-  reminderValue: string;
-  orderValue: number;
-  onReminderChange: (value: string) => void;
-  /** Blur handler - flushes debounced value (parent manages local state) */
-  onReminderBlur: () => void;
-  onOrderChange: (value: number) => void;
-  onOrderBlur: (value: number) => void;
-}
-
-function useNightOrderField(
-  initialReminder: string,
-  initialOrder: number,
-  reminderField: 'firstNightReminder' | 'otherNightReminder',
-  orderField: 'firstNight' | 'otherNight',
-  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void,
-  disabled: boolean
-): NightOrderHandlers {
-  // Use centralized controlled field hook for reminder text
-  const reminder = useControlledField({
-    value: initialReminder,
-    onChange: (value) => onEditChange(reminderField, value),
-    debounceMs: TIMING.METADATA_DEBOUNCE,
-    disabled,
-  });
-
-  // Order value is a number, use simple state (no cursor issues with number inputs)
-  const [orderValue, setOrderValue] = useState(initialOrder);
-  const lastSentOrderRef = useRef<number>(initialOrder);
-
-  // Track previous prop for render-time comparison (React's recommended pattern)
-  const [prevInitialOrder, setPrevInitialOrder] = useState(initialOrder);
-
-  // Sync order during render when prop changes (faster than useEffect)
-  if (initialOrder !== prevInitialOrder) {
-    setPrevInitialOrder(initialOrder);
-    if (initialOrder !== lastSentOrderRef.current) {
-      setOrderValue(initialOrder);
-      lastSentOrderRef.current = initialOrder;
-    }
-  }
-
-  const onOrderChange = (value: number) => {
-    setOrderValue(value);
-  };
-
-  const onOrderBlur = (value: number) => {
-    lastSentOrderRef.current = value;
-    onEditChange(orderField, value);
-  };
-
-  return {
-    reminderValue: reminder.localValue,
-    orderValue,
-    onReminderChange: reminder.handleChange,
-    onReminderBlur: reminder.handleBlur,
-    onOrderChange,
-    onOrderBlur,
-  };
-}
-
-// ============================================
-// Hook: Identity Fields (Name, ID, Team)
-// ============================================
-
-interface UseIdentityFieldsOptions {
-  character: Character;
-  isOfficial: boolean;
-  isIdLinked: boolean;
-  onIdLinkChange: (linked: boolean) => void;
-  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
-  onReplaceCharacter?: (character: Character) => void;
-  /** All characters on the script (for uniqueness checking) */
-  scriptCharacters: Character[];
-  /** Toast function for notifications */
-  addToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
-}
-
-interface UseIdentityFieldsResult {
-  localName: string;
-  localId: string;
-  handleToggleIdLink: () => void;
-  handleRandomName: () => void;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleNameBlur: () => void;
-  handleIdChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-}
-
-function useIdentityFields({
-  character,
-  isOfficial,
-  isIdLinked,
-  onIdLinkChange,
-  onEditChange,
-  onReplaceCharacter,
-  scriptCharacters,
-  addToast,
-}: UseIdentityFieldsOptions): UseIdentityFieldsResult {
-  // Refs for tracking last sent values (needed for special cases like ID linking)
-  const lastSentNameRef = useRef<string>(character.name || '');
-  const lastSentIdRef = useRef<string>(character.id || '');
-
-  // Use controlled field hook for name with custom onChange
-  // Note: We handle the ID linking logic in updateNameWithIdLink
-  const name = useControlledField({
-    value: character.name || '',
-    onChange: (value) => {
-      // This is called on debounced change - for simple name changes
-      // ID linking is handled in handleNameBlur via updateNameWithIdLink
-      if (!isIdLinked) {
-        lastSentNameRef.current = value;
-        onEditChange('name', value);
-      }
-    },
-    debounceMs: TIMING.METADATA_DEBOUNCE,
-    disabled: isOfficial,
-  });
-
-  // ID field uses simple state since it has special linked behavior
-  const [localId, setLocalId] = useState(character.id || '');
-
-  // Sync ID with prop changes - only if change came from external source
-  useEffect(() => {
-    const propId = character.id || '';
-    if (propId !== lastSentIdRef.current) {
-      setLocalId(propId);
-      lastSentIdRef.current = propId;
-    }
-  }, [character.id]);
-
-  const handleToggleIdLink = () => {
-    if (isOfficial) return;
-
-    // If turning link OFF, always allow
-    if (isIdLinked) {
-      onIdLinkChange(false);
-      return;
-    }
-
-    // Trying to turn link ON - check if it's safe
-    const nameBasedId = nameToId(character.name);
-
-    // If current ID already matches name-derived ID, allow linking
-    if (character.id === nameBasedId) {
-      onIdLinkChange(true);
-      return;
-    }
-
-    // Current ID doesn't match name - check if switching would cause collision
-    const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
-    if (otherIds.some((id) => id.toLowerCase() === nameBasedId.toLowerCase())) {
-      // Would cause collision - don't allow linking
-      addToast(`Cannot link: ID '${nameBasedId}' is already used by another character`, 'warning');
-      return;
-    }
-
-    // No collision - update ID to match name and enable link
-    if (onReplaceCharacter) {
-      onReplaceCharacter({ ...character, id: nameBasedId });
-      setLocalId(nameBasedId);
-      lastSentIdRef.current = nameBasedId;
-      onIdLinkChange(true);
-    }
-  };
-
-  const updateNameWithIdLink = (newName: string) => {
-    if (isIdLinked && onReplaceCharacter) {
-      // Get other character IDs (excluding current character)
-      const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
-      const proposedId = nameToId(newName);
-
-      // Ensure unique ID
-      const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(proposedId, otherIds);
-
-      // Update local ID state to reflect the unique ID
-      setLocalId(uniqueId);
-      lastSentNameRef.current = newName;
-      lastSentIdRef.current = uniqueId;
-
-      // Replace character with unique ID
-      onReplaceCharacter({ ...character, name: newName, id: uniqueId });
-
-      // Show toast if renamed
-      if (wasRenamed) {
-        addToast(`ID '${originalId}' already in use, renamed to '${uniqueId}'`, 'info');
-        // Break ID link since we had to modify the ID
-        onIdLinkChange(false);
-      }
-      return;
-    }
-    lastSentNameRef.current = newName;
-    onEditChange('name', newName);
-  };
-
-  const handleRandomName = () => {
-    if (isOfficial) return;
-    const newName = generateRandomName();
-    name.handleChange(newName);
-    updateNameWithIdLink(newName);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    name.handleChange(e.target.value);
-  };
-
-  const handleNameBlur = () => {
-    if (isOfficial) return;
-    // On blur, handle ID linking if enabled
-    updateNameWithIdLink(name.localValue);
-  };
-
-  const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isIdLinked || isOfficial) return;
-
-    const proposedId = e.target.value;
-
-    // Get other character IDs (excluding current character)
-    const otherIds = getOtherCharacterIds(scriptCharacters, character.uuid);
-
-    // Ensure unique ID
-    const { id: uniqueId, wasRenamed, originalId } = ensureUniqueId(proposedId, otherIds);
-
-    setLocalId(uniqueId);
-    lastSentIdRef.current = uniqueId;
-    onEditChange('id', uniqueId);
-
-    // Show toast if renamed
-    if (wasRenamed) {
-      addToast(`ID '${originalId}' already in use, renamed to '${uniqueId}'`, 'info');
-    }
-  };
-
-  const handleTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!isOfficial) onEditChange('team', e.target.value);
-  };
-
-  return {
-    localName: name.localValue,
-    localId,
-    handleToggleIdLink,
-    handleRandomName,
-    handleNameChange,
-    handleNameBlur,
-    handleIdChange,
-    handleTeamChange,
-  };
-}
-
-// ============================================
-// Hook: Ability Field State and Handlers
-// ============================================
-
-interface UseAbilityFieldOptions {
-  character: Character;
-  isOfficial: boolean;
-  onEditChange: (field: keyof Character, value: Character[keyof Character]) => void;
-}
-
-interface UseAbilityFieldResult {
-  displayAbility: string;
-  localSetupText: string;
-  abilityTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  handleAbilityChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleAbilityBlur: () => void;
-  handleSetupTextChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSetupTextBlur: () => void;
-  handleSetupChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-function useAbilityField({
-  character,
-  isOfficial,
-  onEditChange,
-}: UseAbilityFieldOptions): UseAbilityFieldResult {
-  // Track the raw ability text and setup text separately
-  const [localSetupText, setLocalSetupText] = useState('');
-
-  // Use controlled field hook for ability text
-  // Note: The hook handles debouncing and cursor protection
-  const ability = useControlledField({
-    value: character.ability || '',
-    onChange: (value) => onEditChange('ability', value),
-    debounceMs: TIMING.METADATA_DEBOUNCE,
-    disabled: isOfficial,
-  });
-
-  // Split ability text when setup is enabled
-  const abilitySplit = character.setup ? splitAbilityText(ability.localValue) : null;
-
-  // Display value for ability textarea (without brackets when setup enabled)
-  const displayAbility =
-    character.setup && abilitySplit ? abilitySplit.abilityWithoutSetup : ability.localValue;
-
-  // Auto-resize for ability textarea
-  const abilityTextareaRef = useAutoResizeTextarea({
-    value: displayAbility,
-    enabled: !isOfficial,
-    minRows: 3,
-  });
-
-  // Track previous abilitySplit for render-time comparison (React's recommended pattern)
-  const [prevAbilitySplitJson, setPrevAbilitySplitJson] = useState(() =>
-    JSON.stringify(abilitySplit)
-  );
-
-  // Sync setup text during render when abilitySplit changes (faster than useEffect)
-  const abilitySplitJson = JSON.stringify(abilitySplit);
-  if (abilitySplitJson !== prevAbilitySplitJson) {
-    setPrevAbilitySplitJson(abilitySplitJson);
-    if (abilitySplit) {
-      setLocalSetupText(abilitySplit.setupContent);
-    }
-  }
-
-  /**
-   * Auto-detect setup brackets in ability text
-   * Called on blur to avoid mid-typing interruptions
-   */
-  const autoDetectSetup = (abilityText: string) => {
-    if (isOfficial) return;
-    const hasSetup = hasSetupBrackets(abilityText);
-    if (hasSetup && !character.setup) {
-      onEditChange('setup', true);
-      const split = splitAbilityText(abilityText);
-      setLocalSetupText(split.setupContent);
-    }
-  };
-
-  const handleAbilityChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (isOfficial) return;
-    const newAbilityPart = e.target.value;
-
-    if (character.setup && localSetupText) {
-      const combined = combineAbilityWithSetup(newAbilityPart, localSetupText);
-      ability.handleChange(combined);
-    } else {
-      ability.handleChange(newAbilityPart);
-    }
-  };
-
-  const handleAbilityBlur = () => {
-    if (isOfficial) return;
-    if (character.setup && localSetupText) {
-      const combined = combineAbilityWithSetup(displayAbility, localSetupText);
-      ability.handleChange(combined);
-    }
-    ability.handleBlur();
-    // Auto-detect setup brackets on blur (moved from useEffect to event handler)
-    autoDetectSetup(ability.localValue);
-  };
-
-  const handleSetupTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isOfficial) return;
-    const newSetupText = e.target.value;
-    setLocalSetupText(newSetupText);
-
-    const combined = combineAbilityWithSetup(
-      abilitySplit?.abilityWithoutSetup || ability.localValue,
-      newSetupText
-    );
-    ability.handleChange(combined);
-  };
-
-  const handleSetupTextBlur = () => {
-    if (isOfficial) return;
-    const combined = combineAbilityWithSetup(
-      abilitySplit?.abilityWithoutSetup || ability.localValue,
-      localSetupText
-    );
-    ability.handleChange(combined);
-    ability.handleBlur();
-  };
-
-  const handleSetupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isOfficial) return;
-    const newSetupValue = e.target.checked;
-    onEditChange('setup', newSetupValue);
-
-    if (newSetupValue) {
-      if (!hasSetupBrackets(ability.localValue)) {
-        const newAbility = `${ability.localValue.trim()} []`;
-        ability.handleChange(newAbility);
-        onEditChange('ability', newAbility);
-        setLocalSetupText('');
-      }
-    } else {
-      const split = splitAbilityText(ability.localValue);
-      const newAbility = split.abilityWithoutSetup.replace(/\s+/g, ' ').trim();
-      ability.handleChange(newAbility);
-      onEditChange('ability', newAbility);
-      setLocalSetupText('');
-    }
-  };
-
-  return {
-    displayAbility,
-    localSetupText,
-    abilityTextareaRef,
-    handleAbilityChange,
-    handleAbilityBlur,
-    handleSetupTextChange,
-    handleSetupTextBlur,
-    handleSetupChange,
-  };
-}
-
-// ============================================
-// Hook: Computed Titles (reduces JSX complexity)
-// ============================================
-
-interface UseComputedTitlesOptions {
-  isOfficial: boolean;
-  isIdLinked: boolean;
-  localName: string;
-  localId: string;
-}
-
-interface UseComputedTitlesResult {
-  idLinkButtonTitle: string;
-  idInputTitle: string;
-  browseAssetsTitle: string;
-  refreshImagesTitle: string;
-  randomNameTitle: string;
-  idInputValue: string;
-}
-
-function useComputedTitles({
-  isOfficial,
-  isIdLinked,
-  localName,
-  localId,
-}: UseComputedTitlesOptions): UseComputedTitlesResult {
+/** Computed titles for various UI elements */
+function useComputedTitles(
+  isOfficial: boolean,
+  isIdLinked: boolean,
+  localName: string,
+  localId: string
+) {
   const officialMsg = 'Official character - cannot edit';
   return {
     idLinkButtonTitle: isOfficial
@@ -649,27 +82,11 @@ function useComputedTitles({
   };
 }
 
-// ============================================
-// Hook: Asset Modal State
-// ============================================
-
-interface UseAssetModalOptions {
-  isOfficial: boolean;
-  onAssetSelection: (index: number, assetId: string) => void;
-}
-
-interface UseAssetModalResult {
-  showAssetModal: boolean;
-  assetModalTargetIndex: number;
-  handleOpenAssetModal: (index: number) => void;
-  handleAssetModalSelect: (assetId: string) => void;
-  handleCloseAssetModal: () => void;
-}
-
-function useAssetModal({
-  isOfficial,
-  onAssetSelection,
-}: UseAssetModalOptions): UseAssetModalResult {
+/** Asset modal state management */
+function useAssetModal(
+  isOfficial: boolean,
+  onAssetSelection: (index: number, assetId: string) => void
+) {
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [assetModalTargetIndex, setAssetModalTargetIndex] = useState(0);
 
@@ -810,13 +227,10 @@ export function GameplayTabContent({
   });
 
   // ============================================
-  // Asset Manager Modal State (extracted hook)
+  // Asset Manager Modal State (inline helper hook)
   // ============================================
 
-  const assetModal = useAssetModal({
-    isOfficial,
-    onAssetSelection: imageUrls.handleAssetSelection,
-  });
+  const assetModal = useAssetModal(isOfficial, imageUrls.handleAssetSelection);
 
   // ============================================
   // Reminders Management
@@ -878,15 +292,10 @@ export function GameplayTabContent({
   })();
 
   // ============================================
-  // Computed Titles (extracted hook)
+  // Computed Titles (inline helper hook)
   // ============================================
 
-  const titles = useComputedTitles({
-    isOfficial,
-    isIdLinked,
-    localName: identity.localName,
-    localId: identity.localId,
-  });
+  const titles = useComputedTitles(isOfficial, isIdLinked, identity.localName, identity.localId);
 
   // ============================================
   // Render

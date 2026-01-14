@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.25% </span>
+                <span class="strong">1.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/80</span>
+                <span class='fraction'>1/78</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/30</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.33% </span>
+                <span class="strong">1.35% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/75</span>
+                <span class='fraction'>1/74</span>
             </div>
         
             
@@ -336,8 +336,7 @@
 <a name='L271'></a><a href='#L271'>271</a>
 <a name='L272'></a><a href='#L272'>272</a>
 <a name='L273'></a><a href='#L273'>273</a>
-<a name='L274'></a><a href='#L274'>274</a>
-<a name='L275'></a><a href='#L275'>275</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L274'></a><a href='#L274'>274</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -383,7 +382,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -401,7 +400,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -663,7 +661,7 @@ export const TEAM_VARIANT_CONFIG: TeamVariantConfig[] = [
   { targetTeam: 'minion', displayName: TEAM_LABELS.minion, color: TEAM_COLORS.minion.hex },
   { targetTeam: 'demon', displayName: TEAM_LABELS.demon, color: TEAM_COLORS.demon.hex },
   { targetTeam: 'fabled', displayName: TEAM_LABELS.fabled, color: TEAM_COLORS.fabled.hex },
-  { targetTeam: 'traveller', displayName: TEAM_LABELS.traveler, color: TEAM_COLORS.traveler.hex },
+  { targetTeam: 'traveller', displayName: TEAM_LABELS.traveller, color: TEAM_COLORS.traveller.hex },
   { targetTeam: 'loric', displayName: TEAM_LABELS.loric, color: TEAM_COLORS.loric.hex },
 ];
 &nbsp;
@@ -672,10 +670,9 @@ export const TEAM_VARIANT_CONFIG: TeamVariantConfig[] = [
 // ============================================================================
 &nbsp;
 /**
- * Normalize team name to handle aliases (e.g., 'traveler' -&gt; 'traveller')
+ * Normalize team name to Team type
  */
 function <span class="fstat-no" title="function not covered" >normalizeTeam(t</span>eam: Team | string): Team {
-<span class="cstat-no" title="statement not covered" >  if (team === 'traveler') <span class="cstat-no" title="statement not covered" >return 'traveller';</span></span>
 <span class="cstat-no" title="statement not covered" >  return team as Team;</span>
 }
 &nbsp;
@@ -712,14 +709,14 @@ export function <span class="fstat-no" title="function not covered" >getTeamsToG
  */
 export function <span class="fstat-no" title="function not covered" >applyTeamRecolor(i</span>mageData: ImageData, targetTeam: AutoGenerateTeam): ImageData {
   // Find the preset for this team
-  const preset = <span class="cstat-no" title="statement not covered" >TEAM_COLOR_PRESETS.find(<span class="fstat-no" title="function not covered" >(p</span>) =&gt; <span class="cstat-no" title="statement not covered" >p.id === targetTeam || p.id === 'traveler')</span>;</span>
+  const preset = <span class="cstat-no" title="statement not covered" >TEAM_COLOR_PRESETS.find(<span class="fstat-no" title="function not covered" >(p</span>) =&gt; <span class="cstat-no" title="statement not covered" >p.id === targetTeam)</span>;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (!preset) {</span>
 <span class="cstat-no" title="statement not covered" >    logger.warn('TeamVariantGenerator', `No preset found for team: ${targetTeam}`);</span>
 <span class="cstat-no" title="statement not covered" >    return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);</span>
   }
 &nbsp;
-  // Handle traveler's split colors specially
+  // Handle traveller's split colors specially
 <span class="cstat-no" title="statement not covered" >  if (targetTeam === 'traveller' &amp;&amp; preset.split) {</span>
 <span class="cstat-no" title="statement not covered" >    return replaceIconColorSplit(imageData, preset.split, {</span>
       saturationBoost: preset.saturationBoost,
@@ -892,7 +889,7 @@ export async function <span class="fstat-no" title="function not covered" >creat
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

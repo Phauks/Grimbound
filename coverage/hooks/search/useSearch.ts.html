@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -166,19 +166,7 @@
 <a name='L101'></a><a href='#L101'>101</a>
 <a name='L102'></a><a href='#L102'>102</a>
 <a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a>
-<a name='L111'></a><a href='#L111'>111</a>
-<a name='L112'></a><a href='#L112'>112</a>
-<a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a>
-<a name='L115'></a><a href='#L115'>115</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L104'></a><a href='#L104'>104</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,15 +247,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,11 +261,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -300,7 +278,6 @@
  * @module hooks/search/useSearch
  */
 &nbsp;
-import { useCallback, useMemo } from 'react';
 import {
   getSearchMatch,
   parseSearchQuery,
@@ -369,31 +346,23 @@ export function <span class="fstat-no" title="function not covered" >useSearch&l
   const { items, query, config, enabled = <span class="branch-0 cbranch-no" title="branch not covered" >true }</span> = <span class="cstat-no" title="statement not covered" >options;</span>
 &nbsp;
   // Parse query into normalized terms
-  const <span class="cstat-no" title="statement not covered" >queryInfo = useMemo(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; p</span>arseSearchQuery(query), [</span>query]);</span>
+  const <span class="cstat-no" title="statement not covered" >queryInfo = parseSearchQuery(query);</span>
 &nbsp;
   // Filter items based on search query
-  const <span class="cstat-no" title="statement not covered" >filteredItems = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >    if (!enabled || queryInfo.isEmpty) {</span>
-<span class="cstat-no" title="statement not covered" >      return items;</span>
-    }
-<span class="cstat-no" title="statement not covered" >    return searchFilter(items, query, config);</span>
-  }, [items, query, config, enabled, queryInfo.isEmpty]);
+  const filteredItems = <span class="cstat-no" title="statement not covered" >!enabled || queryInfo.isEmpty ? items : searchFilter(items, query, config);</span>
 &nbsp;
-  // Memoized match function for highlighting
-  const <span class="cstat-no" title="statement not covered" >getMatch = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (t</span>ext: string): SearchMatch =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (!text || queryInfo.isEmpty) {</span>
-<span class="cstat-no" title="statement not covered" >        return {</span>
-          text: text ?? '',
-          matches: [],
-          isMatch: true,
-          score: 1,
-        };
-      }
-<span class="cstat-no" title="statement not covered" >      return getSearchMatch(text, queryInfo.terms);</span>
-    },
-    [queryInfo]
-  );
+  // Match function for highlighting
+  const getMatch = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(t</span>ext: string): SearchMatch =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!text || queryInfo.isEmpty) {</span>
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        text: text ?? '',
+        matches: [],
+        isMatch: true,
+        score: 1,
+      };
+    }
+<span class="cstat-no" title="statement not covered" >    return getSearchMatch(text, queryInfo.terms);</span>
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return {</span>
     filteredItems,
@@ -403,8 +372,6 @@ export function <span class="fstat-no" title="function not covered" >useSearch&l
     resultCount: filteredItems.length,
   };
 }
-&nbsp;
-export default useSearch;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -412,7 +379,7 @@ export default useSearch;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

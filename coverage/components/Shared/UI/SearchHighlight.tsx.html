@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/17</span>
             </div>
         
             
@@ -148,14 +148,8 @@
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a>
-<a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -199,9 +193,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -241,11 +232,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * SearchHighlight Component
@@ -256,7 +242,6 @@
  * @module components/Shared/UI/SearchHighlight
  */
 &nbsp;
-import { memo } from 'react';
 import styles from '@/styles/components/shared/SearchHighlight.module.css';
 import { cn } from '@/ts/utils/classNames.js';
 import type { SearchMatch } from '@/ts/utils/searchUtils.js';
@@ -290,55 +275,49 @@ export interface SearchHighlightProps {
  * // Or with variant
  * &lt;SearchHighlight match={match} variant="subtle" /&gt;
  */
-export const <span class="cstat-no" title="statement not covered" >SearchHighlight = memo&lt;SearchHighlightProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  ({</span> match, className, variant = <span class="branch-0 cbranch-no" title="branch not covered" >'default' }</span>) =&gt; {
-    // If no matches or no text, just render plain text
-<span class="cstat-no" title="statement not covered" >    if (!match.isMatch || match.matches.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      return &lt;span className={className}&gt;{match.text}&lt;/span&gt;;</span>
-    }
-&nbsp;
-    const parts: React.ReactNode[] = <span class="cstat-no" title="statement not covered" >[];</span>
-    let lastIndex = <span class="cstat-no" title="statement not covered" >0;</span>
-&nbsp;
-    // Sort matches by start position (should already be sorted from mergeRanges)
-    const sortedMatches = <span class="cstat-no" title="statement not covered" >[...match.matches].sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >a[0] - b[0])</span>;</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    for (let i = <span class="cstat-no" title="statement not covered" >0; i</span> &lt; sortedMatches.length; i++) {</span>
-      const [start, end] = <span class="cstat-no" title="statement not covered" >sortedMatches[i];</span>
-&nbsp;
-      // Clamp to valid range
-      const clampedStart = <span class="cstat-no" title="statement not covered" >Math.max(0, Math.min(start, match.text.length));</span>
-      const clampedEnd = <span class="cstat-no" title="statement not covered" >Math.max(0, Math.min(end, match.text.length));</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      if (clampedStart &gt;= clampedEnd) <span class="cstat-no" title="statement not covered" >continue;</span></span>
-&nbsp;
-      // Add text before match
-<span class="cstat-no" title="statement not covered" >      if (clampedStart &gt; lastIndex) {</span>
-<span class="cstat-no" title="statement not covered" >        parts.push(&lt;span key={`text-${i}`}&gt;{match.text.slice(lastIndex, clampedStart)}&lt;/span&gt;);</span>
-      }
-&nbsp;
-      // Add highlighted match
-<span class="cstat-no" title="statement not covered" >      parts.push(</span>
-        &lt;mark key={`match-${i}`} className={cn(styles.highlight, styles[variant])}&gt;
-          {match.text.slice(clampedStart, clampedEnd)}
-        &lt;/mark&gt;
-      );
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      lastIndex = clampedEnd;</span>
-    }
-&nbsp;
-    // Add remaining text after last match
-<span class="cstat-no" title="statement not covered" >    if (lastIndex &lt; match.text.length) {</span>
-<span class="cstat-no" title="statement not covered" >      parts.push(&lt;span key="text-end"&gt;{match.text.slice(lastIndex)}&lt;/span&gt;);</span>
-    }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    return &lt;span className={className}&gt;{parts}&lt;/span&gt;;</span>
+export function <span class="fstat-no" title="function not covered" >SearchHighlight({</span> match, className, variant = <span class="branch-0 cbranch-no" title="branch not covered" >'default' }</span>: SearchHighlightProps) {
+  // If no matches or no text, just render plain text
+<span class="cstat-no" title="statement not covered" >  if (!match.isMatch || match.matches.length === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    return &lt;span className={className}&gt;{match.text}&lt;/span&gt;;</span>
   }
-);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >SearchHighlight.displayName = 'SearchHighlight';</span>
+  const parts: React.ReactNode[] = <span class="cstat-no" title="statement not covered" >[];</span>
+  let lastIndex = <span class="cstat-no" title="statement not covered" >0;</span>
 &nbsp;
-export default SearchHighlight;
+  // Sort matches by start position (should already be sorted from mergeRanges)
+  const sortedMatches = <span class="cstat-no" title="statement not covered" >[...match.matches].sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >a[0] - b[0])</span>;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0; i</span> &lt; sortedMatches.length; i++) {</span>
+    const [start, end] = <span class="cstat-no" title="statement not covered" >sortedMatches[i];</span>
+&nbsp;
+    // Clamp to valid range
+    const clampedStart = <span class="cstat-no" title="statement not covered" >Math.max(0, Math.min(start, match.text.length));</span>
+    const clampedEnd = <span class="cstat-no" title="statement not covered" >Math.max(0, Math.min(end, match.text.length));</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (clampedStart &gt;= clampedEnd) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+&nbsp;
+    // Add text before match
+<span class="cstat-no" title="statement not covered" >    if (clampedStart &gt; lastIndex) {</span>
+<span class="cstat-no" title="statement not covered" >      parts.push(&lt;span key={`text-${i}`}&gt;{match.text.slice(lastIndex, clampedStart)}&lt;/span&gt;);</span>
+    }
+&nbsp;
+    // Add highlighted match
+<span class="cstat-no" title="statement not covered" >    parts.push(</span>
+      &lt;mark key={`match-${i}`} className={cn(styles.highlight, styles[variant])}&gt;
+        {match.text.slice(clampedStart, clampedEnd)}
+      &lt;/mark&gt;
+    );
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    lastIndex = clampedEnd;</span>
+  }
+&nbsp;
+  // Add remaining text after last match
+<span class="cstat-no" title="statement not covered" >  if (lastIndex &lt; match.text.length) {</span>
+<span class="cstat-no" title="statement not covered" >    parts.push(&lt;span key="text-end"&gt;{match.text.slice(lastIndex)}&lt;/span&gt;);</span>
+  }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return &lt;span className={className}&gt;{parts}&lt;/span&gt;;</span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -346,7 +325,7 @@ export default SearchHighlight;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

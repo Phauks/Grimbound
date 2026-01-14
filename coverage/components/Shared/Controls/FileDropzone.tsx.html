@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/42</span>
+                <span class='fraction'>0/46</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
@@ -297,19 +297,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -319,17 +311,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -341,6 +322,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -352,8 +354,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -416,21 +416,22 @@
  * @module components/Shared/FileDropzone
  */
 &nbsp;
-import { useCallback } from 'react';
 import { useFileValidationService } from '@/contexts/ServiceContext';
 import { useFileUpload } from '@/hooks';
 import styles from '@/styles/components/shared/FileDropzone.module.css';
-import { ASSET_TYPE_LABELS, type AssetType } from '@/ts/services/upload/index.js';
+import { getTypeFromTags, getTypeLabel } from '@/ts/services/upload/tagUtils.js';
 &nbsp;
 // ============================================================================
 // Types
 // ============================================================================
 &nbsp;
 export interface FileDropzoneProps {
-  /** Type of asset being uploaded */
-  assetType: AssetType;
+  /** Tags to apply (must include one type:* tag) */
+  tags: string[];
   /** Project ID to associate uploads with (null for global) */
   projectId?: string | null;
+  /** Folder to place assets in */
+  folder?: string | null;
   /** Character ID to link uploads to */
   characterId?: string;
   /** Allow multiple file selection */
@@ -456,8 +457,9 @@ export interface FileDropzoneProps {
 // ============================================================================
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >FileDropzone({</span>
-  assetType,
+  tags,
   projectId,
+  folder,
   characterId,
   multiple = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
   onUploadComplete,
@@ -473,8 +475,9 @@ export function <span class="fstat-no" title="function not covered" >FileDropzon
 &nbsp;
   // Use the unified file upload hook
   const { isUploading, progress, error, isDragOver, dragHandlers, openFilePicker <span class="cstat-no" title="statement not covered" >} = useFileUpload({</span>
-    assetType,
+    tags,
     projectId,
+    folder,
     characterId,
     multiple,
     onComplete: <span class="fstat-no" title="function not covered" >(u</span>ploadResults: { success: boolean; assetId?: string }[]) =&gt; {
@@ -488,27 +491,26 @@ export function <span class="fstat-no" title="function not covered" >FileDropzon
     onError,
   });
 &nbsp;
-  // Get allowed file description
-  const allowedDescription = <span class="cstat-no" title="statement not covered" >fileValidationService.getAllowedFilesDescription(assetType);</span>
-  const defaultLabel = <span class="cstat-no" title="statement not covered" >`Upload ${ASSET_TYPE_LABELS[assetType]}`;</span>
+  // Get allowed file description and label from tags
+  const <span class="cstat-no" title="statement not covered" >assetType = getTypeFromTags(tags);</span>
+  const allowedDescription =
+<span class="cstat-no" title="statement not covered" >    tags.length &gt; 0 ? fileValidationService.getAllowedFilesDescription(tags) : 'Images';</span>
+  const defaultLabel = <span class="cstat-no" title="statement not covered" >assetType ? `Upload ${getTypeLabel(assetType)}` : 'Upload File';</span>
 &nbsp;
   // Handle click
-  const <span class="cstat-no" title="statement not covered" >handleClick = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!(disabled || isUploading)) {</span>
 <span class="cstat-no" title="statement not covered" >      openFilePicker();</span>
     }
-  }, [disabled, isUploading, openFilePicker]);
+  };
 &nbsp;
   // Handle keyboard
-  const <span class="cstat-no" title="statement not covered" >handleKeyDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.KeyboardEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if ((e.key === 'Enter' || e.key === ' ') &amp;&amp; !disabled &amp;&amp; !isUploading) {</span>
-<span class="cstat-no" title="statement not covered" >        e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >        openFilePicker();</span>
-      }
-    },
-    [disabled, isUploading, openFilePicker]
-  );
+  const handleKeyDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.KeyboardEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if ((e.key === 'Enter' || e.key === ' ') &amp;&amp; !disabled &amp;&amp; !isUploading) {</span>
+<span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >      openFilePicker();</span>
+    }
+  };
 &nbsp;
   // Build class names
   const containerClasses = <span class="cstat-no" title="statement not covered" >[</span>
@@ -577,8 +579,6 @@ export function <span class="fstat-no" title="function not covered" >FileDropzon
     &lt;/div&gt;
   );
 }
-&nbsp;
-export default FileDropzone;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -586,7 +586,7 @@ export default FileDropzone;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

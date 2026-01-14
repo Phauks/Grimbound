@@ -152,6 +152,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     emptyOutDir: true, // Clean old builds to prevent service worker bloat
+    // PWA apps load everything upfront for offline use - larger chunks are expected
+    chunkSizeWarningLimit: 2500,
     rollupOptions: {
       output: {
         manualChunks: {

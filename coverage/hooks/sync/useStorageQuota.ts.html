@@ -385,10 +385,7 @@
 <a name='L320'></a><a href='#L320'>320</a>
 <a name='L321'></a><a href='#L321'>321</a>
 <a name='L322'></a><a href='#L322'>322</a>
-<a name='L323'></a><a href='#L323'>323</a>
-<a name='L324'></a><a href='#L324'>324</a>
-<a name='L325'></a><a href='#L325'>325</a>
-<a name='L326'></a><a href='#L326'>326</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L323'></a><a href='#L323'>323</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -576,7 +573,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -614,8 +610,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -859,7 +853,7 @@ export function <span class="fstat-no" title="function not covered" >useStorageQ
   /**
    * Clean up orphaned assets (assets not linked to any project)
    */
-  const <span class="cstat-no" title="statement not covered" >cleanupOrphaned = useCallback(<span class="fstat-no" title="function not covered" >async (): Promise&lt;number&gt; =&gt; {</span></span>
+  const cleanupOrphaned = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (): Promise&lt;number&gt; =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
       // Get all assets
       const allAssets = <span class="cstat-no" title="statement not covered" >await assetStorageService.list({});</span>
@@ -895,63 +889,60 @@ export function <span class="fstat-no" title="function not covered" >useStorageQ
 <span class="cstat-no" title="statement not covered" >      logger.error('useStorageQuota', 'Cleanup failed:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return 0;</span>
     }
-  }, [assetStorageService, checkQuota]);
+  };
 &nbsp;
   /**
    * Clean up old cached assets (LRU eviction)
    */
-  const <span class="cstat-no" title="statement not covered" >cleanupOldAssets = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (m</span>axAge: number = <span class="branch-0 cbranch-no" title="branch not covered" >30 * 24 * 60 * 60 * 1000): Promise&lt;number&gt; =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      try {</span>
-        const now = <span class="cstat-no" title="statement not covered" >Date.now();</span>
-        const allAssets = <span class="cstat-no" title="statement not covered" >await assetStorageService.list({});</span>
+  const cleanupOldAssets = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (m</span>axAge: number = <span class="branch-0 cbranch-no" title="branch not covered" >30 * 24 * 60 * 60 * 1000): Promise&lt;number&gt; =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const now = <span class="cstat-no" title="statement not covered" >Date.now();</span>
+      const allAssets = <span class="cstat-no" title="statement not covered" >await assetStorageService.list({});</span>
 &nbsp;
-        // Find assets older than maxAge
-        const oldAssets = <span class="cstat-no" title="statement not covered" >allAssets.filter(<span class="fstat-no" title="function not covered" >(a</span>sset) =&gt; {</span>
-          const age = <span class="cstat-no" title="statement not covered" >now - (asset.metadata.uploadedAt ?? 0);</span>
-<span class="cstat-no" title="statement not covered" >          return age &gt; maxAge;</span>
-        });
+      // Find assets older than maxAge
+      const oldAssets = <span class="cstat-no" title="statement not covered" >allAssets.filter(<span class="fstat-no" title="function not covered" >(a</span>sset) =&gt; {</span>
+        const age = <span class="cstat-no" title="statement not covered" >now - (asset.metadata.uploadedAt ?? 0);</span>
+<span class="cstat-no" title="statement not covered" >        return age &gt; maxAge;</span>
+      });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (oldAssets.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >          logger.debug('useStorageQuota', 'No old assets found');</span>
-<span class="cstat-no" title="statement not covered" >          return 0;</span>
-        }
-&nbsp;
-        // Sort by age (oldest first) and delete
-<span class="cstat-no" title="statement not covered" >        oldAssets.sort(<span class="fstat-no" title="function not covered" >(a</span>, <span class="cstat-no" title="statement not covered" >b) =&gt; (a.metadata.uploadedAt ?? 0) - (b.metadata.uploadedAt ?? 0))</span>;</span>
-&nbsp;
-        let deletedCount = <span class="cstat-no" title="statement not covered" >0;</span>
-<span class="cstat-no" title="statement not covered" >        for (const asset of oldAssets) {</span>
-<span class="cstat-no" title="statement not covered" >          try {</span>
-<span class="cstat-no" title="statement not covered" >            await assetStorageService.delete(asset.id);</span>
-<span class="cstat-no" title="statement not covered" >            deletedCount++;</span>
-          } catch (error) {
-<span class="cstat-no" title="statement not covered" >            logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error);</span>
-          }
-        }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        logger.info('useStorageQuota', `Cleaned up ${deletedCount} old assets`);</span>
-&nbsp;
-        // Re-check quota after cleanup
-<span class="cstat-no" title="statement not covered" >        await checkQuota();</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        return deletedCount;</span>
-      } catch (error) {
-<span class="cstat-no" title="statement not covered" >        logger.error('useStorageQuota', 'Cleanup failed:', error);</span>
+<span class="cstat-no" title="statement not covered" >      if (oldAssets.length === 0) {</span>
+<span class="cstat-no" title="statement not covered" >        logger.debug('useStorageQuota', 'No old assets found');</span>
 <span class="cstat-no" title="statement not covered" >        return 0;</span>
       }
-    },
-    [assetStorageService, checkQuota]
-  );
+&nbsp;
+      // Sort by age (oldest first) and delete
+<span class="cstat-no" title="statement not covered" >      oldAssets.sort(<span class="fstat-no" title="function not covered" >(a</span>, <span class="cstat-no" title="statement not covered" >b) =&gt; (a.metadata.uploadedAt ?? 0) - (b.metadata.uploadedAt ?? 0))</span>;</span>
+&nbsp;
+      let deletedCount = <span class="cstat-no" title="statement not covered" >0;</span>
+<span class="cstat-no" title="statement not covered" >      for (const asset of oldAssets) {</span>
+<span class="cstat-no" title="statement not covered" >        try {</span>
+<span class="cstat-no" title="statement not covered" >          await assetStorageService.delete(asset.id);</span>
+<span class="cstat-no" title="statement not covered" >          deletedCount++;</span>
+        } catch (error) {
+<span class="cstat-no" title="statement not covered" >          logger.error('useStorageQuota', `Failed to delete asset ${asset.id}:`, error);</span>
+        }
+      }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      logger.info('useStorageQuota', `Cleaned up ${deletedCount} old assets`);</span>
+&nbsp;
+      // Re-check quota after cleanup
+<span class="cstat-no" title="statement not covered" >      await checkQuota();</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      return deletedCount;</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      logger.error('useStorageQuota', 'Cleanup failed:', error);</span>
+<span class="cstat-no" title="statement not covered" >      return 0;</span>
+    }
+  };
 &nbsp;
   /**
    * Combined cleanup function (orphaned + old assets)
    */
-  const <span class="cstat-no" title="statement not covered" >cleanup = useCallback(<span class="fstat-no" title="function not covered" >async (): Promise&lt;{ orphaned: number; old: number }&gt; =&gt; {</span></span>
+  const cleanup = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (): Promise&lt;{ orphaned: number; old: number }&gt; =&gt; {</span></span>
     const orphaned = <span class="cstat-no" title="statement not covered" >await cleanupOrphaned();</span>
     const old = <span class="cstat-no" title="statement not covered" >await cleanupOldAssets();</span>
 <span class="cstat-no" title="statement not covered" >    return { orphaned, old };</span>
-  }, [cleanupOrphaned, cleanupOldAssets]);
+  };
 &nbsp;
   // Initial check and periodic updates
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
@@ -1045,7 +1036,7 @@ function <span class="fstat-no" title="function not covered" >generateWarning(</
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

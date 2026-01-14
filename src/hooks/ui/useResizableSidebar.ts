@@ -9,8 +9,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getStorageItem,
   STORAGE_KEYS,
-  setStorageItem,
   type StorageKey,
+  setStorageItem,
 } from '@/ts/utils/storageKeys.js';
 
 /** Configuration options for the resizable sidebar */

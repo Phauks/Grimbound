@@ -48,6 +48,254 @@ interface DecorativeSettings {
 }
 
 // ============================================================================
+// Setup Overlay Section Component
+// ============================================================================
+
+interface SetupOverlaySectionProps {
+  displaySettings: DecorativeSettings;
+  setupPreviewSrc: string | null;
+  onSetupToggle: (enabled: boolean) => void;
+  onSetupPlacementChange: (placement: SetupPlacement) => void;
+  onBrowseClick: () => void;
+}
+
+function SetupOverlaySection({
+  displaySettings,
+  setupPreviewSrc,
+  onSetupToggle,
+  onSetupPlacementChange,
+  onBrowseClick,
+}: SetupOverlaySectionProps) {
+  return (
+    <div className={drawerStyles.column}>
+      <div className={drawerStyles.sectionHeader}>Setup Overlay</div>
+      <div className={styles.assetRow}>
+        <button
+          type="button"
+          className={`${styles.enableBtn} ${displaySettings.setupEnabled ? styles.enableBtnActive : ''}`}
+          onClick={() => onSetupToggle(!displaySettings.setupEnabled)}
+        >
+          {displaySettings.setupEnabled ? 'Enabled' : 'Enable'}
+        </button>
+        <button
+          type="button"
+          className={styles.browseButton}
+          onClick={onBrowseClick}
+          disabled={!displaySettings.setupEnabled}
+        >
+          Browse
+        </button>
+        {displaySettings.setupEnabled && setupPreviewSrc && (
+          <img
+            src={setupPreviewSrc}
+            alt="Setup overlay"
+            className={styles.assetThumb}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+      </div>
+
+      {displaySettings.setupEnabled && (
+        <div className={styles.settingGroup}>
+          <div className={styles.settingGroupLabel}>Placement</div>
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              className={`${styles.styleButton} ${displaySettings.setupPlacement === 'left' ? styles.styleButtonActive : ''}`}
+              onClick={() => onSetupPlacementChange('left')}
+            >
+              Left
+            </button>
+            <button
+              type="button"
+              className={`${styles.styleButton} ${displaySettings.setupPlacement === 'right' ? styles.styleButtonActive : ''}`}
+              onClick={() => onSetupPlacementChange('right')}
+            >
+              Right
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Accents Section Component
+// ============================================================================
+
+interface AccentsSectionProps {
+  displaySettings: DecorativeSettings;
+  accentPreviewSrc: string | null;
+  showReminderCount: boolean;
+  reminderCountStyle: ReminderCountStyle;
+  reminderCountUniformLayout: boolean;
+  onAccentToggle: (enabled: boolean) => void;
+  onAccentRadialOffsetChange: (value: number) => void;
+  onAccentRotate180Change: (checked: boolean) => void;
+  onAccentFlipChange: (checked: boolean) => void;
+  onAccentLayerChange: (layer: 'under' | 'over') => void;
+  onBrowseClick: () => void;
+  onShowReminderCountChange: (enabled: boolean) => void;
+  onReminderCountStyleChange: (style: ReminderCountStyle) => void;
+  onReminderCountUniformLayoutChange: (enabled: boolean) => void;
+}
+
+function AccentsSection({
+  displaySettings,
+  accentPreviewSrc,
+  showReminderCount,
+  reminderCountStyle,
+  reminderCountUniformLayout,
+  onAccentToggle,
+  onAccentRadialOffsetChange,
+  onAccentRotate180Change,
+  onAccentFlipChange,
+  onAccentLayerChange,
+  onBrowseClick,
+  onShowReminderCountChange,
+  onReminderCountStyleChange,
+  onReminderCountUniformLayoutChange,
+}: AccentsSectionProps) {
+  return (
+    <div className={drawerStyles.column}>
+      <div className={drawerStyles.sectionHeader}>Accents</div>
+      <div className={styles.assetRow}>
+        <button
+          type="button"
+          className={`${styles.enableBtn} ${displaySettings.accentEnabled ? styles.enableBtnActive : ''}`}
+          onClick={() => onAccentToggle(!displaySettings.accentEnabled)}
+        >
+          {displaySettings.accentEnabled ? 'Enabled' : 'Enable'}
+        </button>
+        <button
+          type="button"
+          className={styles.browseButton}
+          onClick={onBrowseClick}
+          disabled={!displaySettings.accentEnabled}
+        >
+          Browse
+        </button>
+        {displaySettings.accentEnabled && accentPreviewSrc && (
+          <img
+            src={accentPreviewSrc}
+            alt="Accent"
+            className={styles.assetThumb}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+      </div>
+
+      {displaySettings.accentEnabled && (
+        <div className={styles.settingGroup}>
+          <EditableSlider
+            label="Distance"
+            value={Math.round(displaySettings.accentRadialOffset * 100)}
+            onChange={(val) => onAccentRadialOffsetChange(val / 100)}
+            min={50}
+            max={100}
+            step={1}
+            suffix="%"
+            defaultValue={Math.round(ACCENT_LAYOUT.DEFAULT_RADIAL_OFFSET * 100)}
+            ariaLabel="Accent distance from center"
+          />
+        </div>
+      )}
+
+      {displaySettings.accentEnabled && (
+        <div className={styles.checkboxRow}>
+          <label className={styles.checkboxOption}>
+            <input
+              type="checkbox"
+              checked={displaySettings.accentRotate180}
+              onChange={(e) => onAccentRotate180Change(e.target.checked)}
+            />
+            <span>Rotate 180°</span>
+          </label>
+          <label className={styles.checkboxOption}>
+            <input
+              type="checkbox"
+              checked={displaySettings.accentFlip}
+              onChange={(e) => onAccentFlipChange(e.target.checked)}
+            />
+            <span>Flip</span>
+          </label>
+        </div>
+      )}
+
+      {displaySettings.accentEnabled && (
+        <div className={styles.settingGroup}>
+          <div className={styles.settingGroupLabel}>Layer</div>
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              className={`${styles.styleButton} ${displaySettings.accentLayer === 'under' ? styles.styleButtonActive : ''}`}
+              onClick={() => onAccentLayerChange('under')}
+            >
+              Under
+            </button>
+            <button
+              type="button"
+              className={`${styles.styleButton} ${displaySettings.accentLayer === 'over' ? styles.styleButtonActive : ''}`}
+              onClick={() => onAccentLayerChange('over')}
+            >
+              Over
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reminder Count Settings */}
+      <div className={styles.sectionDivider} />
+      <div className={drawerStyles.sectionHeader}>Reminder Count</div>
+
+      <div className={styles.buttonGroup}>
+        <button
+          type="button"
+          className={`${styles.styleButton} ${showReminderCount ? '' : styles.styleButtonActive}`}
+          onClick={() => onShowReminderCountChange(false)}
+        >
+          None
+        </button>
+        <button
+          type="button"
+          className={`${styles.styleButton} ${showReminderCount && reminderCountStyle === 'arabic' ? styles.styleButtonActive : ''}`}
+          onClick={() => {
+            onShowReminderCountChange(true);
+            onReminderCountStyleChange('arabic');
+          }}
+        >
+          123
+        </button>
+        <button
+          type="button"
+          className={`${styles.styleButton} ${showReminderCount && reminderCountStyle === 'roman' ? styles.styleButtonActive : ''}`}
+          onClick={() => {
+            onShowReminderCountChange(true);
+            onReminderCountStyleChange('roman');
+          }}
+        >
+          III
+        </button>
+      </div>
+
+      <label className={styles.checkboxOption}>
+        <input
+          type="checkbox"
+          checked={reminderCountUniformLayout}
+          onChange={(e) => onReminderCountUniformLayoutChange(e.target.checked)}
+        />
+        <span>Uniform Layout</span>
+      </label>
+    </div>
+  );
+}
+
+// ============================================================================
 // Preview Component (for selector box)
 // ============================================================================
 
@@ -275,197 +523,34 @@ export function DecorativesSettingsSelector({
         onApply={drawer.apply}
         onReset={drawer.reset}
       >
-        {/* Column 1: Setup Overlay */}
-        <div className={drawerStyles.column}>
-          <div className={drawerStyles.sectionHeader}>Setup Overlay</div>
-          <div className={styles.assetRow}>
-            <button
-              type="button"
-              className={`${styles.enableBtn} ${displaySettings.setupEnabled ? styles.enableBtnActive : ''}`}
-              onClick={() => handleSetupToggle(!displaySettings.setupEnabled)}
-            >
-              {displaySettings.setupEnabled ? 'Enabled' : 'Enable'}
-            </button>
-            <button
-              type="button"
-              className={styles.browseButton}
-              onClick={() => setShowSetupModal(true)}
-              disabled={!displaySettings.setupEnabled}
-            >
-              Browse
-            </button>
-            {displaySettings.setupEnabled && setupPreviewSrc && (
-              <img
-                src={setupPreviewSrc}
-                alt="Setup overlay"
-                className={styles.assetThumb}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
-          </div>
+        <SetupOverlaySection
+          displaySettings={displaySettings}
+          setupPreviewSrc={setupPreviewSrc}
+          onSetupToggle={handleSetupToggle}
+          onSetupPlacementChange={(placement) =>
+            drawer.updatePendingField('setupPlacement', placement)
+          }
+          onBrowseClick={() => setShowSetupModal(true)}
+        />
 
-          {/* Setup Placement Sub-option */}
-          {displaySettings.setupEnabled && (
-            <div className={styles.settingGroup}>
-              <div className={styles.settingGroupLabel}>Placement</div>
-              <div className={styles.buttonGroup}>
-                <button
-                  type="button"
-                  className={`${styles.styleButton} ${displaySettings.setupPlacement === 'left' ? styles.styleButtonActive : ''}`}
-                  onClick={() => drawer.updatePendingField('setupPlacement', 'left')}
-                >
-                  Left
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.styleButton} ${displaySettings.setupPlacement === 'right' ? styles.styleButtonActive : ''}`}
-                  onClick={() => drawer.updatePendingField('setupPlacement', 'right')}
-                >
-                  Right
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Column 2: Accents */}
-        <div className={drawerStyles.column}>
-          <div className={drawerStyles.sectionHeader}>Accents</div>
-          <div className={styles.assetRow}>
-            <button
-              type="button"
-              className={`${styles.enableBtn} ${displaySettings.accentEnabled ? styles.enableBtnActive : ''}`}
-              onClick={() => handleAccentToggle(!displaySettings.accentEnabled)}
-            >
-              {displaySettings.accentEnabled ? 'Enabled' : 'Enable'}
-            </button>
-            <button
-              type="button"
-              className={styles.browseButton}
-              onClick={() => setShowAccentModal(true)}
-              disabled={!displaySettings.accentEnabled}
-            >
-              Browse
-            </button>
-            {displaySettings.accentEnabled && accentPreviewSrc && (
-              <img
-                src={accentPreviewSrc}
-                alt="Accent"
-                className={styles.assetThumb}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
-          </div>
-
-          {/* Accent Distance Sub-option */}
-          {displaySettings.accentEnabled && (
-            <div className={styles.settingGroup}>
-              <EditableSlider
-                label="Distance"
-                value={Math.round(displaySettings.accentRadialOffset * 100)}
-                onChange={(val) => drawer.updatePendingField('accentRadialOffset', val / 100)}
-                min={50}
-                max={100}
-                step={1}
-                suffix="%"
-                defaultValue={Math.round(ACCENT_LAYOUT.DEFAULT_RADIAL_OFFSET * 100)}
-                ariaLabel="Accent distance from center"
-              />
-            </div>
-          )}
-
-          {/* Accent Rotate 180 and Flip Sub-options */}
-          {displaySettings.accentEnabled && (
-            <div className={styles.checkboxRow}>
-              <label className={styles.checkboxOption}>
-                <input
-                  type="checkbox"
-                  checked={displaySettings.accentRotate180}
-                  onChange={(e) => drawer.updatePendingField('accentRotate180', e.target.checked)}
-                />
-                <span>Rotate 180°</span>
-              </label>
-              <label className={styles.checkboxOption}>
-                <input
-                  type="checkbox"
-                  checked={displaySettings.accentFlip}
-                  onChange={(e) => drawer.updatePendingField('accentFlip', e.target.checked)}
-                />
-                <span>Flip</span>
-              </label>
-            </div>
-          )}
-
-          {/* Accent Layer Sub-option */}
-          {displaySettings.accentEnabled && (
-            <div className={styles.settingGroup}>
-              <div className={styles.settingGroupLabel}>Layer</div>
-              <div className={styles.buttonGroup}>
-                <button
-                  type="button"
-                  className={`${styles.styleButton} ${displaySettings.accentLayer === 'under' ? styles.styleButtonActive : ''}`}
-                  onClick={() => drawer.updatePendingField('accentLayer', 'under')}
-                >
-                  Under
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.styleButton} ${displaySettings.accentLayer === 'over' ? styles.styleButtonActive : ''}`}
-                  onClick={() => drawer.updatePendingField('accentLayer', 'over')}
-                >
-                  Over
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Reminder Count Settings */}
-          <div className={styles.sectionDivider} />
-          <div className={drawerStyles.sectionHeader}>Reminder Count</div>
-
-          <div className={styles.buttonGroup}>
-            <button
-              type="button"
-              className={`${styles.styleButton} ${showReminderCount ? '' : styles.styleButtonActive}`}
-              onClick={() => handleShowReminderCountChange(false)}
-            >
-              None
-            </button>
-            <button
-              type="button"
-              className={`${styles.styleButton} ${showReminderCount && reminderCountStyle === 'arabic' ? styles.styleButtonActive : ''}`}
-              onClick={() => {
-                handleShowReminderCountChange(true);
-                handleReminderCountStyleChange('arabic');
-              }}
-            >
-              123
-            </button>
-            <button
-              type="button"
-              className={`${styles.styleButton} ${showReminderCount && reminderCountStyle === 'roman' ? styles.styleButtonActive : ''}`}
-              onClick={() => {
-                handleShowReminderCountChange(true);
-                handleReminderCountStyleChange('roman');
-              }}
-            >
-              III
-            </button>
-          </div>
-
-          <label className={styles.checkboxOption}>
-            <input
-              type="checkbox"
-              checked={reminderCountUniformLayout}
-              onChange={(e) => handleReminderCountUniformLayoutChange(e.target.checked)}
-            />
-            <span>Uniform Layout</span>
-          </label>
-        </div>
+        <AccentsSection
+          displaySettings={displaySettings}
+          accentPreviewSrc={accentPreviewSrc}
+          showReminderCount={showReminderCount}
+          reminderCountStyle={reminderCountStyle}
+          reminderCountUniformLayout={reminderCountUniformLayout}
+          onAccentToggle={handleAccentToggle}
+          onAccentRadialOffsetChange={(val) => drawer.updatePendingField('accentRadialOffset', val)}
+          onAccentRotate180Change={(checked) =>
+            drawer.updatePendingField('accentRotate180', checked)
+          }
+          onAccentFlipChange={(checked) => drawer.updatePendingField('accentFlip', checked)}
+          onAccentLayerChange={(layer) => drawer.updatePendingField('accentLayer', layer)}
+          onBrowseClick={() => setShowAccentModal(true)}
+          onShowReminderCountChange={handleShowReminderCountChange}
+          onReminderCountStyleChange={handleReminderCountStyleChange}
+          onReminderCountUniformLayoutChange={handleReminderCountUniformLayoutChange}
+        />
 
         {/* Column 3: Empty - maintains 3-column layout */}
         <div className={drawerStyles.column} />
@@ -499,5 +584,3 @@ export function DecorativesSettingsSelector({
     </>
   );
 }
-
-export default DecorativesSettingsSelector;

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -153,13 +153,7 @@
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -190,9 +184,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -252,9 +243,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Unified Select Component
  *
@@ -262,7 +250,7 @@
  * Supports standard HTML select attributes plus custom styling options.
  */
 &nbsp;
-import { forwardRef, type ReactNode, type SelectHTMLAttributes } from 'react';
+import type { ReactNode, SelectHTMLAttributes } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 &nbsp;
 export interface SelectOption {
@@ -288,69 +276,63 @@ export interface SelectProps extends Omit&lt;SelectHTMLAttributes&lt;HTMLSelectE
   children?: ReactNode;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >Select = forwardRef&lt;HTMLSelectElement, SelectProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  (</span>
-    {
-      size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
-      error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      errorMessage,
-      options,
-      placeholder,
-      fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      className,
-      disabled,
-      children,
-      ...props
-    },
-    ref
-  ) =&gt; {
-    const selectClasses = <span class="cstat-no" title="statement not covered" >[</span>
-      styles.select,
-      styles[`select${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error &amp;&amp; styles.selectError,
-      disabled &amp;&amp; styles.selectDisabled,
-      fullWidth &amp;&amp; styles.fullWidth,
-      className,
-    ]
-      .filter(Boolean)
-      .join(' ');
+export function <span class="fstat-no" title="function not covered" >Select({</span>
+  size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
+  error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  errorMessage,
+  options,
+  placeholder,
+  fullWidth = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  className,
+  disabled,
+  children,
+  ref,
+  ...props
+}: SelectProps &amp; { ref?: React.Ref&lt;HTMLSelectElement&gt; }) {
+  const selectClasses = <span class="cstat-no" title="statement not covered" >[</span>
+    styles.select,
+    styles[`select${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error &amp;&amp; styles.selectError,
+    disabled &amp;&amp; styles.selectDisabled,
+    fullWidth &amp;&amp; styles.fullWidth,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 &nbsp;
-    const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.selectWrapper, fullWidth &amp;&amp; styles.fullWidth]</span>
-      .filter(Boolean)
-      .join(' ');
+  const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.selectWrapper, fullWidth &amp;&amp; styles.fullWidth]</span>
+    .filter(Boolean)
+    .join(' ');
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;div className={wrapperClasses}&gt;
-        &lt;div className={styles.selectContainer}&gt;
-          &lt;select
-            ref={ref}
-            className={selectClasses}
-            disabled={disabled}
-            aria-invalid={error}
-            {...props}
-          &gt;
-            {placeholder &amp;&amp; (
-              &lt;option value="" disabled&gt;
-                {placeholder}
-              &lt;/option&gt;
-            )}
-            {options
-              ? options.map(<span class="fstat-no" title="function not covered" >(o</span>ption) =&gt; (
-<span class="cstat-no" title="statement not covered" >                  &lt;option key={option.value} value={option.value} disabled={option.disabled}&gt;</span>
-                    {option.label}
-                  &lt;/option&gt;
-                ))
-              : children}
-          &lt;/select&gt;
-          &lt;span className={styles.selectChevron}&gt;▼&lt;/span&gt;
-        &lt;/div&gt;
-        {errorMessage &amp;&amp; &lt;span className={styles.errorText}&gt;{errorMessage}&lt;/span&gt;}
+<span class="cstat-no" title="statement not covered" >  return (</span>
+    &lt;div className={wrapperClasses}&gt;
+      &lt;div className={styles.selectContainer}&gt;
+        &lt;select
+          ref={ref}
+          className={selectClasses}
+          disabled={disabled}
+          aria-invalid={error}
+          {...props}
+        &gt;
+          {placeholder &amp;&amp; (
+            &lt;option value="" disabled&gt;
+              {placeholder}
+            &lt;/option&gt;
+          )}
+          {options
+            ? options.map(<span class="fstat-no" title="function not covered" >(o</span>ption) =&gt; (
+<span class="cstat-no" title="statement not covered" >                &lt;option key={option.value} value={option.value} disabled={option.disabled}&gt;</span>
+                  {option.label}
+                &lt;/option&gt;
+              ))
+            : children}
+        &lt;/select&gt;
+        &lt;span className={styles.selectChevron}&gt;▼&lt;/span&gt;
       &lt;/div&gt;
-    );
-  }
-);
-&nbsp;
-<span class="cstat-no" title="statement not covered" >Select.displayName = 'Select';</span>
+      {errorMessage &amp;&amp; &lt;span className={styles.errorText}&gt;{errorMessage}&lt;/span&gt;}
+    &lt;/div&gt;
+  );
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -358,7 +340,7 @@ export const <span class="cstat-no" title="statement not covered" >Select = forw
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

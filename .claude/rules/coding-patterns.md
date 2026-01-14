@@ -531,7 +531,69 @@ export function MyComponent() {
 
 ---
 
-## Pattern 5: Custom Hooks Extraction
+## Pattern 5: Singleton Services
+
+Global services that manage shared resources use the singleton pattern:
+
+```typescript
+// Global logger instance
+export const logger = new Logger();
+
+// Global image cache
+export const globalImageCache = new ImageCache();
+
+// Data sync service singleton
+export const dataSyncService = new DataSyncService();
+```
+
+**Why**: These services manage shared resources (console, image memory, sync state) that should have single instances. They can still be replaced for testing via DI (see Pattern 4).
+
+---
+
+## Pattern 6: Factory Pattern (Canvas Creation)
+
+```typescript
+function createCanvas(diameter: number, options?: CanvasOptions): CanvasContext {
+  const canvas = document.createElement('canvas');
+  const dpi = options?.dpi || 300;
+  canvas.width = diameter;
+  canvas.height = diameter;
+  const ctx = canvas.getContext('2d')!;
+  const center = diameter / 2;
+  const radius = center;
+  return { canvas, ctx, center, radius };
+}
+```
+
+**Why**: Encapsulates canvas setup complexity and ensures consistent initialization across the codebase.
+
+---
+
+## Pattern 7: Observer Pattern (Event System)
+
+```typescript
+// Typed event emitter for sync events
+interface SyncEvents {
+  'checking': [];
+  'downloading': [progress: number];
+  'success': [characters: Character[]];
+  'error': [error: Error];
+}
+
+// Subscribe to events
+dataSyncService.on('downloading', (progress) => {
+  updateProgressBar(progress);
+});
+
+// Emit events
+this.emit('downloading', 0.5);
+```
+
+**Why**: Decouples sync state from UI, allows multiple subscribers without tight coupling.
+
+---
+
+## Pattern 8: Custom Hooks Extraction
 
 Extract complex component logic into focused hooks that each handle a single responsibility.
 
@@ -617,7 +679,7 @@ export function useCharacterEditor(options: UseCharacterEditorOptions): UseChara
 
 ---
 
-## Pattern 6: Character Image Resolution (SSOT)
+## Pattern 9: Character Image Resolution (SSOT)
 
 ```typescript
 // ALWAYS use the SSOT utility for character images
@@ -639,7 +701,7 @@ const { resolvedUrls, isLoading } = useCharacterImageResolver({ characters });
 
 ---
 
-## Pattern 7: Unified Tab Pre-Rendering (Facade Pattern)
+## Pattern 10: Unified Tab Pre-Rendering (Facade Pattern)
 
 ```typescript
 // TabPreRenderService provides unified API for all tab hover pre-rendering
@@ -731,4 +793,4 @@ import { createCanvas, drawCurvedText } from '@/ts/canvas/index.js';
 
 ---
 
-*Last updated: 2026-01-12*
+*Last updated: 2026-01-13*

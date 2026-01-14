@@ -393,16 +393,7 @@
 <a name='L328'></a><a href='#L328'>328</a>
 <a name='L329'></a><a href='#L329'>329</a>
 <a name='L330'></a><a href='#L330'>330</a>
-<a name='L331'></a><a href='#L331'>331</a>
-<a name='L332'></a><a href='#L332'>332</a>
-<a name='L333'></a><a href='#L333'>333</a>
-<a name='L334'></a><a href='#L334'>334</a>
-<a name='L335'></a><a href='#L335'>335</a>
-<a name='L336'></a><a href='#L336'>336</a>
-<a name='L337'></a><a href='#L337'>337</a>
-<a name='L338'></a><a href='#L338'>338</a>
-<a name='L339'></a><a href='#L339'>339</a>
-<a name='L340'></a><a href='#L340'>340</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L331'></a><a href='#L331'>331</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -443,7 +434,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -478,23 +468,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -502,6 +478,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -749,7 +731,7 @@
  * Migrated to use unified Modal, Button, and Alert components.
  */
 &nbsp;
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal } from '@/components/Shared/ModalBase/Modal';
 import { Alert } from '@/components/Shared/UI/Alert';
 import { Button } from '@/components/Shared/UI/Button';
@@ -781,94 +763,85 @@ export function <span class="fstat-no" title="function not covered" >ImportProje
   const <span class="cstat-no" title="statement not covered" >fileInputRef = useRef&lt;HTMLInputElement&gt;(null);</span>
 &nbsp;
   // Process and validate file
-  const <span class="cstat-no" title="statement not covered" >processFile = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (f</span>ile: File) =&gt; {
-<span class="cstat-no" title="statement not covered" >      setSelectedFile(file);</span>
-<span class="cstat-no" title="statement not covered" >      setError(null);</span>
-<span class="cstat-no" title="statement not covered" >      setIsValidating(true);</span>
-<span class="cstat-no" title="statement not covered" >      setPreview(null);</span>
+  const processFile = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (f</span>ile: File) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setSelectedFile(file);</span>
+<span class="cstat-no" title="statement not covered" >    setError(null);</span>
+<span class="cstat-no" title="statement not covered" >    setIsValidating(true);</span>
+<span class="cstat-no" title="statement not covered" >    setPreview(null);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      try {</span>
-        const importer = <span class="cstat-no" title="statement not covered" >createImporter();</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const importer = <span class="cstat-no" title="statement not covered" >createImporter();</span>
 &nbsp;
-        // Validate ZIP
-        const validation = <span class="cstat-no" title="statement not covered" >await importer.validateZip(file);</span>
+      // Validate ZIP
+      const validation = <span class="cstat-no" title="statement not covered" >await importer.validateZip(file);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (!validation.valid) {</span>
-<span class="cstat-no" title="statement not covered" >          setError(validation.errors.join(', '));</span>
-<span class="cstat-no" title="statement not covered" >          setIsValidating(false);</span>
-<span class="cstat-no" title="statement not covered" >          return;</span>
-        }
-&nbsp;
-        // Show warnings if any
-<span class="cstat-no" title="statement not covered" >        if (validation.warnings &amp;&amp; validation.warnings.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >          logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });</span>
-        }
-&nbsp;
-        // Generate preview
-        const previewData = <span class="cstat-no" title="statement not covered" >await importer.previewZip(file);</span>
-<span class="cstat-no" title="statement not covered" >        setPreview(previewData);</span>
+<span class="cstat-no" title="statement not covered" >      if (!validation.valid) {</span>
+<span class="cstat-no" title="statement not covered" >        setError(validation.errors.join(', '));</span>
 <span class="cstat-no" title="statement not covered" >        setIsValidating(false);</span>
-      } catch (err) {
-        const errorMessage = <span class="cstat-no" title="statement not covered" >err instanceof Error ? err.message : 'Failed to validate file';</span>
-<span class="cstat-no" title="statement not covered" >        setError(errorMessage);</span>
-<span class="cstat-no" title="statement not covered" >        setIsValidating(false);</span>
+<span class="cstat-no" title="statement not covered" >        return;</span>
       }
-    },
-    [createImporter]
-  );
+&nbsp;
+      // Show warnings if any
+<span class="cstat-no" title="statement not covered" >      if (validation.warnings &amp;&amp; validation.warnings.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >        logger.warn('ImportProjectModal', 'Import warnings', { warnings: validation.warnings });</span>
+      }
+&nbsp;
+      // Generate preview
+      const previewData = <span class="cstat-no" title="statement not covered" >await importer.previewZip(file);</span>
+<span class="cstat-no" title="statement not covered" >      setPreview(previewData);</span>
+<span class="cstat-no" title="statement not covered" >      setIsValidating(false);</span>
+    } catch (err) {
+      const errorMessage = <span class="cstat-no" title="statement not covered" >err instanceof Error ? err.message : 'Failed to validate file';</span>
+<span class="cstat-no" title="statement not covered" >      setError(errorMessage);</span>
+<span class="cstat-no" title="statement not covered" >      setIsValidating(false);</span>
+    }
+  };
 &nbsp;
   // Handle file drop
-  const <span class="cstat-no" title="statement not covered" >handleDrop = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (e</span>: React.DragEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >      e.stopPropagation();</span>
-<span class="cstat-no" title="statement not covered" >      setIsDragging(false);</span>
-&nbsp;
-      const files = <span class="cstat-no" title="statement not covered" >Array.from(e.dataTransfer.files);</span>
-<span class="cstat-no" title="statement not covered" >      if (files.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >        await processFile(files[0]);</span>
-      }
-    },
-    [processFile]
-  );
-&nbsp;
-  // Handle file selection
-  const <span class="cstat-no" title="statement not covered" >handleFileSelect = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
-      const files = <span class="cstat-no" title="statement not covered" >e.target.files;</span>
-<span class="cstat-no" title="statement not covered" >      if (files &amp;&amp; files.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >        await processFile(files[0]);</span>
-      }
-    },
-    [processFile]
-  );
-&nbsp;
-  // Handle drag events
-  const <span class="cstat-no" title="statement not covered" >handleDragOver = useCallback(<span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
-  }, []);
-&nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleDragEnter = useCallback(<span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
-<span class="cstat-no" title="statement not covered" >    setIsDragging(true);</span>
-  }, []);
-&nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleDragLeave = useCallback(<span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
+  const handleDrop = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (e</span>: React.DragEvent) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
 <span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
 <span class="cstat-no" title="statement not covered" >    setIsDragging(false);</span>
-  }, []);
+&nbsp;
+    const files = <span class="cstat-no" title="statement not covered" >Array.from(e.dataTransfer.files);</span>
+<span class="cstat-no" title="statement not covered" >    if (files.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      await processFile(files[0]);</span>
+    }
+  };
+&nbsp;
+  // Handle file selection
+  const handleFileSelect = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {</span>
+    const files = <span class="cstat-no" title="statement not covered" >e.target.files;</span>
+<span class="cstat-no" title="statement not covered" >    if (files &amp;&amp; files.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      await processFile(files[0]);</span>
+    }
+  };
+&nbsp;
+  // Handle drag events
+  const handleDragOver = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
+  };
+&nbsp;
+  const handleDragEnter = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
+<span class="cstat-no" title="statement not covered" >    setIsDragging(true);</span>
+  };
+&nbsp;
+  const handleDragLeave = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.DragEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >    e.stopPropagation();</span>
+<span class="cstat-no" title="statement not covered" >    setIsDragging(false);</span>
+  };
 &nbsp;
   // Handle click to browse
-  const <span class="cstat-no" title="statement not covered" >handleBrowseClick = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleBrowseClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    fileInputRef.current?.click();</span>
-  }, []);
+  };
 &nbsp;
   // Reset and close
-  const <span class="cstat-no" title="statement not covered" >handleClose = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleClose = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!isImporting) {</span>
 <span class="cstat-no" title="statement not covered" >      setSelectedFile(null);</span>
 <span class="cstat-no" title="statement not covered" >      setPreview(null);</span>
@@ -880,10 +853,10 @@ export function <span class="fstat-no" title="function not covered" >ImportProje
       }
 <span class="cstat-no" title="statement not covered" >      onClose();</span>
     }
-  }, [isImporting, onClose]);
+  };
 &nbsp;
   // Handle import
-  const <span class="cstat-no" title="statement not covered" >handleImport = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+  const handleImport = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (!selectedFile) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    setIsImporting(true);</span>
@@ -915,7 +888,7 @@ export function <span class="fstat-no" title="function not covered" >ImportProje
 <span class="cstat-no" title="statement not covered" >      setIsImporting(false);</span>
 <span class="cstat-no" title="statement not covered" >      setProgress(0);</span>
     }
-  }, [selectedFile, onImport, handleClose, createImporter]);
+  };
 &nbsp;
   const footerContent =
 <span class="cstat-no" title="statement not covered" >    selectedFile &amp;&amp; preview ? (</span>
@@ -1087,7 +1060,7 @@ export function <span class="fstat-no" title="function not covered" >ImportProje
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

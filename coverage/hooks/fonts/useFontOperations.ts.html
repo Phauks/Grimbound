@@ -186,18 +186,7 @@
 <a name='L121'></a><a href='#L121'>121</a>
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
-<a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a>
-<a name='L126'></a><a href='#L126'>126</a>
-<a name='L127'></a><a href='#L127'>127</a>
-<a name='L128'></a><a href='#L128'>128</a>
-<a name='L129'></a><a href='#L129'>129</a>
-<a name='L130'></a><a href='#L130'>130</a>
-<a name='L131'></a><a href='#L131'>131</a>
-<a name='L132'></a><a href='#L132'>132</a>
-<a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a>
-<a name='L135'></a><a href='#L135'>135</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -256,7 +245,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -269,10 +257,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -295,10 +280,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -318,11 +300,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -340,7 +318,7 @@
  * @module hooks/fonts/useFontOperations
  */
 &nbsp;
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FontDefinition } from '@/ts/types/fonts.js';
 import { logger } from '@/ts/utils/logger.js';
 &nbsp;
@@ -389,70 +367,61 @@ export function <span class="fstat-no" title="function not covered" >useFontOper
   const [loadingFonts, setLoadingFonts<span class="cstat-no" title="statement not covered" >] = useState&lt;Set&lt;string&gt;&gt;(new Set());</span>
 &nbsp;
   // Handle font selection
-  const <span class="cstat-no" title="statement not covered" >handleFontSelect = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (f</span>ont: FontDefinition) =&gt; {
-<span class="cstat-no" title="statement not covered" >      try {</span>
-        // Load font if not yet loaded
-<span class="cstat-no" title="statement not covered" >        if (font.status !== 'loaded') {</span>
-<span class="cstat-no" title="statement not covered" >          await loadFont(font.family);</span>
-        }
-<span class="cstat-no" title="statement not covered" >        onFontSelect(font.family);</span>
-      } catch (error) {
-<span class="cstat-no" title="statement not covered" >        logger.error('useFontOperations', 'Failed to load font', error);</span>
+  const handleFontSelect = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (f</span>ont: FontDefinition) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      // Load font if not yet loaded
+<span class="cstat-no" title="statement not covered" >      if (font.status !== 'loaded') {</span>
+<span class="cstat-no" title="statement not covered" >        await loadFont(font.family);</span>
       }
-    },
-    [loadFont, onFontSelect]
-  );
+<span class="cstat-no" title="statement not covered" >      onFontSelect(font.family);</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      logger.error('useFontOperations', 'Failed to load font', error);</span>
+    }
+  };
 &nbsp;
   // Handle font hover for preview preloading
-  const <span class="cstat-no" title="statement not covered" >handleFontHover = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (f</span>ont: FontDefinition) =&gt; {
-      // Skip if already loaded or currently loading
-<span class="cstat-no" title="statement not covered" >      if (font.status === 'loaded' || loadingFonts.has(font.family)) {</span>
-<span class="cstat-no" title="statement not covered" >        return;</span>
-      }
+  const handleFontHover = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (f</span>ont: FontDefinition) =&gt; {</span>
+    // Skip if already loaded or currently loading
+<span class="cstat-no" title="statement not covered" >    if (font.status === 'loaded' || loadingFonts.has(font.family)) {</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+    }
 &nbsp;
-      // Mark as loading
-<span class="cstat-no" title="statement not covered" >      setLoadingFonts(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; <span class="cstat-no" title="statement not covered" >new Set(prev).add(font.family))</span>;</span>
+    // Mark as loading
+<span class="cstat-no" title="statement not covered" >    setLoadingFonts(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; <span class="cstat-no" title="statement not covered" >new Set(prev).add(font.family))</span>;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      try {</span>
-<span class="cstat-no" title="statement not covered" >        await loadFont(font.family);</span>
-      } catch {
-        // Silent fail - font will show fallback
-      } finally {
-<span class="cstat-no" title="statement not covered" >        setLoadingFonts(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; {</span>
-          const next = <span class="cstat-no" title="statement not covered" >new Set(prev);</span>
-<span class="cstat-no" title="statement not covered" >          next.delete(font.family);</span>
-<span class="cstat-no" title="statement not covered" >          return next;</span>
-        });
-      }
-    },
-    [loadFont, loadingFonts]
-  );
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      await loadFont(font.family);</span>
+    } catch {
+      // Silent fail - font will show fallback
+    } finally {
+<span class="cstat-no" title="statement not covered" >      setLoadingFonts(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; {</span>
+        const next = <span class="cstat-no" title="statement not covered" >new Set(prev);</span>
+<span class="cstat-no" title="statement not covered" >        next.delete(font.family);</span>
+<span class="cstat-no" title="statement not covered" >        return next;</span>
+      });
+    }
+  };
 &nbsp;
   // Handle file upload
-  const <span class="cstat-no" title="statement not covered" >handleUpload = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    async (e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
-      const file = <span class="cstat-no" title="statement not covered" >e.target.files?.[0];</span>
-<span class="cstat-no" title="statement not covered" >      if (!file) <span class="cstat-no" title="statement not covered" >return;</span></span>
+  const handleUpload = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {</span>
+    const file = <span class="cstat-no" title="statement not covered" >e.target.files?.[0];</span>
+<span class="cstat-no" title="statement not covered" >    if (!file) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      setIsUploading(true);</span>
-<span class="cstat-no" title="statement not covered" >      try {</span>
-        const font = <span class="cstat-no" title="statement not covered" >await uploadFont(file);</span>
-<span class="cstat-no" title="statement not covered" >        onFontSelect(font.family);</span>
-<span class="cstat-no" title="statement not covered" >        onSourceChange?.('custom');</span>
-      } catch (error) {
-<span class="cstat-no" title="statement not covered" >        logger.error('useFontOperations', 'Failed to upload font', error);</span>
-      } finally {
-<span class="cstat-no" title="statement not covered" >        setIsUploading(false);</span>
-        // Reset file input for re-upload of same file
-<span class="cstat-no" title="statement not covered" >        if (fileInputRef.current) {</span>
-<span class="cstat-no" title="statement not covered" >          fileInputRef.current.value = '';</span>
-        }
+<span class="cstat-no" title="statement not covered" >    setIsUploading(true);</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const font = <span class="cstat-no" title="statement not covered" >await uploadFont(file);</span>
+<span class="cstat-no" title="statement not covered" >      onFontSelect(font.family);</span>
+<span class="cstat-no" title="statement not covered" >      onSourceChange?.('custom');</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      logger.error('useFontOperations', 'Failed to upload font', error);</span>
+    } finally {
+<span class="cstat-no" title="statement not covered" >      setIsUploading(false);</span>
+      // Reset file input for re-upload of same file
+<span class="cstat-no" title="statement not covered" >      if (fileInputRef.current) {</span>
+<span class="cstat-no" title="statement not covered" >        fileInputRef.current.value = '';</span>
       }
-    },
-    [uploadFont, onFontSelect, onSourceChange]
-  );
+    }
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return {</span>
     loadingFonts,
@@ -463,8 +432,6 @@ export function <span class="fstat-no" title="function not covered" >useFontOper
     fileInputRef,
   };
 }
-&nbsp;
-export default useFontOperations;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -472,7 +439,7 @@ export default useFontOperations;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

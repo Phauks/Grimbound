@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -142,13 +142,7 @@
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a>
-<a name='L81'></a><a href='#L81'>81</a>
-<a name='L82'></a><a href='#L82'>82</a>
-<a name='L83'></a><a href='#L83'>83</a>
-<a name='L84'></a><a href='#L84'>84</a>
-<a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,9 +164,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -230,9 +221,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Unified Checkbox Component
  *
@@ -240,7 +228,7 @@
  * Supports standard HTML checkbox attributes plus custom styling options.
  */
 &nbsp;
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode, Ref } from 'react';
 import styles from '@/styles/components/shared/Form.module.css';
 &nbsp;
 export interface CheckboxProps
@@ -257,67 +245,61 @@ export interface CheckboxProps
   indeterminate?: boolean;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >Checkbox = forwardRef&lt;HTMLInputElement, CheckboxProps&gt;(</span>
-<span class="fstat-no" title="function not covered" >  (</span>
-    {
-      size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
-      label,
-      description,
-      error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      indeterminate = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-      className,
-      disabled,
-      id,
-      ...props
-    },
-    ref
-  ) =&gt; {
-    const checkboxId = <span class="cstat-no" title="statement not covered" >id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;</span>
+export function <span class="fstat-no" title="function not covered" >Checkbox({</span>
+  size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
+  label,
+  description,
+  error = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  indeterminate = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  className,
+  disabled,
+  id,
+  ref,
+  ...props
+}: CheckboxProps &amp; { ref?: Ref&lt;HTMLInputElement&gt; }) {
+  const checkboxId = <span class="cstat-no" title="statement not covered" >id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;</span>
 &nbsp;
-    const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.checkboxWrapper, disabled &amp;&amp; styles.checkboxDisabled, className]</span>
-      .filter(Boolean)
-      .join(' ');
+  const wrapperClasses = <span class="cstat-no" title="statement not covered" >[styles.checkboxWrapper, disabled &amp;&amp; styles.checkboxDisabled, className]</span>
+    .filter(Boolean)
+    .join(' ');
 &nbsp;
-    const checkboxClasses = <span class="cstat-no" title="statement not covered" >[</span>
-      styles.checkbox,
-      styles[`checkbox${size.charAt(0).toUpperCase()}${size.slice(1)}`],
-      error &amp;&amp; styles.checkboxError,
-    ]
-      .filter(Boolean)
-      .join(' ');
+  const checkboxClasses = <span class="cstat-no" title="statement not covered" >[</span>
+    styles.checkbox,
+    styles[`checkbox${size.charAt(0).toUpperCase()}${size.slice(1)}`],
+    error &amp;&amp; styles.checkboxError,
+  ]
+    .filter(Boolean)
+    .join(' ');
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;label className={wrapperClasses} htmlFor={checkboxId}&gt;
-        &lt;input
-          ref={<span class="fstat-no" title="function not covered" >(n</span>ode) =&gt; {
-<span class="cstat-no" title="statement not covered" >            if (node) {</span>
-<span class="cstat-no" title="statement not covered" >              node.indeterminate = indeterminate;</span>
-            }
-<span class="cstat-no" title="statement not covered" >            if (typeof ref === 'function') {</span>
-<span class="cstat-no" title="statement not covered" >              ref(node);</span>
-<span class="cstat-no" title="statement not covered" >            } else if (ref) {</span>
-<span class="cstat-no" title="statement not covered" >              ref.current = node;</span>
-            }
-          }}
-          type="checkbox"
-          id={checkboxId}
-          className={checkboxClasses}
-          disabled={disabled}
-          aria-invalid={error}
-          {...props}
-        /&gt;
-        {(label || description) &amp;&amp; (
-          &lt;div className={styles.checkboxContent}&gt;
-            {label &amp;&amp; &lt;span className={styles.checkboxLabel}&gt;{label}&lt;/span&gt;}
-            {description &amp;&amp; &lt;span className={styles.checkboxDescription}&gt;{description}&lt;/span&gt;}
-          &lt;/div&gt;
-        )}
-      &lt;/label&gt;
-    );
-  }
-);
-&nbsp;
-<span class="cstat-no" title="statement not covered" >Checkbox.displayName = 'Checkbox';</span>
+<span class="cstat-no" title="statement not covered" >  return (</span>
+    &lt;label className={wrapperClasses} htmlFor={checkboxId}&gt;
+      &lt;input
+        ref={<span class="fstat-no" title="function not covered" >(n</span>ode) =&gt; {
+<span class="cstat-no" title="statement not covered" >          if (node) {</span>
+<span class="cstat-no" title="statement not covered" >            node.indeterminate = indeterminate;</span>
+          }
+<span class="cstat-no" title="statement not covered" >          if (typeof ref === 'function') {</span>
+<span class="cstat-no" title="statement not covered" >            ref(node);</span>
+<span class="cstat-no" title="statement not covered" >          } else if (ref) {</span>
+<span class="cstat-no" title="statement not covered" >            ref.current = node;</span>
+          }
+        }}
+        type="checkbox"
+        id={checkboxId}
+        className={checkboxClasses}
+        disabled={disabled}
+        aria-invalid={error}
+        {...props}
+      /&gt;
+      {(label || description) &amp;&amp; (
+        &lt;div className={styles.checkboxContent}&gt;
+          {label &amp;&amp; &lt;span className={styles.checkboxLabel}&gt;{label}&lt;/span&gt;}
+          {description &amp;&amp; &lt;span className={styles.checkboxDescription}&gt;{description}&lt;/span&gt;}
+        &lt;/div&gt;
+      )}
+    &lt;/label&gt;
+  );
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -325,7 +307,7 @@ export const <span class="cstat-no" title="statement not covered" >Checkbox = fo
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

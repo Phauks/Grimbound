@@ -229,5 +229,3 @@ export function useAssetEffectState(
     clear,
   };
 }
-
-export default useAssetEffectState;

@@ -382,14 +382,7 @@ vi.mock('@/ts/ui/detailViewUtils.js', () => ({
   }),
 }));
 
-vi.mock('@/ts/utils/logger.js', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
+// Note: Logger mock is defined earlier in the file with child() method support
 
 // ============================================================================
 // Test Helpers

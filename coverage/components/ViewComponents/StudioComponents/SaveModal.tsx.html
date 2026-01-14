@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/24</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -156,16 +156,7 @@
 <a name='L91'></a><a href='#L91'>91</a>
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a>
-<a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L94'></a><a href='#L94'>94</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,12 +169,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -209,11 +194,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -273,7 +255,7 @@
  * Simple modal for naming assets when saving.
  */
 &nbsp;
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/studio/Studio.module.css';
 import { cn } from '@/ts/utils/classNames.js';
 &nbsp;
@@ -285,13 +267,7 @@ export interface SaveModalProps {
   onCancel: () =&gt; void;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >SaveModal = memo(function <span class="fstat-no" title="function not covered" >SaveModal({</span></span>
-  isOpen,
-  saveAsNew,
-  initialName,
-  onSave,
-  onCancel,
-}: SaveModalProps) {
+export function <span class="fstat-no" title="function not covered" >SaveModal({</span> isOpen, saveAsNew, initialName, onSave, onCancel }: SaveModalProps) {
   const <span class="cstat-no" title="statement not covered" >inputRef = useRef&lt;HTMLInputElement&gt;(null);</span>
   const [name, setName<span class="cstat-no" title="statement not covered" >] = useState(initialName);</span>
 &nbsp;
@@ -304,19 +280,16 @@ export const <span class="cstat-no" title="statement not covered" >SaveModal = m
     }
   }, [isOpen, initialName]);
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleConfirm = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const handleConfirm = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (name.trim()) {</span>
 <span class="cstat-no" title="statement not covered" >      onSave(name.trim());</span>
     }
-  }, [name, onSave]);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleKeyDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>: React.KeyboardEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (e.key === 'Enter') <span class="cstat-no" title="statement not covered" >handleConfirm();</span></span>
-<span class="cstat-no" title="statement not covered" >      if (e.key === 'Escape') <span class="cstat-no" title="statement not covered" >onCancel();</span></span>
-    },
-    [handleConfirm, onCancel]
-  );
+  const handleKeyDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.KeyboardEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (e.key === 'Enter') <span class="cstat-no" title="statement not covered" >handleConfirm();</span></span>
+<span class="cstat-no" title="statement not covered" >    if (e.key === 'Escape') <span class="cstat-no" title="statement not covered" >onCancel();</span></span>
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (!isOpen) <span class="cstat-no" title="statement not covered" >return null;</span></span>
 &nbsp;
@@ -368,7 +341,7 @@ export const <span class="cstat-no" title="statement not covered" >SaveModal = m
       &lt;/div&gt;
     &lt;/div&gt;
   );
-});
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -376,7 +349,7 @@ export const <span class="cstat-no" title="statement not covered" >SaveModal = m
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

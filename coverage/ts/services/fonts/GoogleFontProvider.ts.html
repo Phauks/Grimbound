@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.45% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/165</span>
+                <span class='fraction'>9/165</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">3.03% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/33</span>
+                <span class='fraction'>1/33</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.84% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/154</span>
+                <span class='fraction'>9/154</span>
             </div>
         
             
@@ -754,13 +754,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -813,7 +813,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -993,19 +993,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1404,7 +1404,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Google Fonts Provider
  *
@@ -1425,13 +1425,13 @@ import type { IGoogleFontProvider } from './IFontServices.js';
 // ============================================================================
 &nbsp;
 /** Cache duration for the Google Fonts catalog (7 days) */
-const CATALOG_CACHE_DURATION = <span class="cstat-no" title="statement not covered" >7 * 24 * 60 * 60 * 1000;</span>
+const CATALOG_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000;
 &nbsp;
 /**
  * Curated list of Google Fonts suitable for token generation.
  * These fonts are pre-loaded into the catalog for offline use.
  */
-const CURATED_FONTS = <span class="cstat-no" title="statement not covered" >[</span>
+const CURATED_FONTS = [
   // Display fonts (Dumbledor alternatives)
   'Cinzel',
   'Cinzel Decorative',
@@ -1484,7 +1484,7 @@ const CURATED_FONTS = <span class="cstat-no" title="statement not covered" >[</s
  * Static font catalog with curated fonts.
  * Format matches Google Fonts API response for consistency.
  */
-const STATIC_FONT_CATALOG: Partial&lt;GoogleFontItem&gt;[] = <span class="cstat-no" title="statement not covered" >[</span>
+const STATIC_FONT_CATALOG: Partial&lt;GoogleFontItem&gt;[] = [
   // Display
   { family: 'Cinzel', category: 'serif', variants: ['400', '500', '600', '700', '800', '900'] },
   { family: 'Cinzel Decorative', category: 'display', variants: ['400', '700', '900'] },
@@ -1663,20 +1663,20 @@ function <span class="fstat-no" title="function not covered" >hasItalicVariant(v
  * Loads fonts on-demand via the Google Fonts CSS2 API.
  * Maintains a catalog of available fonts with caching.
  */
-export <span class="fstat-no" title="function not covered" >class G</span>oogleFontProvider implements IGoogleFontProvider {
-<span class="cstat-no" title="statement not covered" >  readonly source = 'google' as const;</span>
+export class GoogleFontProvider implements IGoogleFontProvider {
+  readonly source = 'google' as const;
 &nbsp;
   /** Font catalog indexed by family name */
-<span class="cstat-no" title="statement not covered" >  private catalog: Map&lt;string, FontDefinition&gt; = new Map();</span>
+  private catalog: Map&lt;string, FontDefinition&gt; = new Map();
 &nbsp;
   /** Fonts that have been loaded into the document */
-<span class="cstat-no" title="statement not covered" >  private loadedFonts: Set&lt;string&gt; = new Set();</span>
+  private loadedFonts: Set&lt;string&gt; = new Set();
 &nbsp;
   /** When the catalog was last fetched */
-<span class="cstat-no" title="statement not covered" >  private catalogFetchedAt: Date | null = null;</span>
+  private catalogFetchedAt: Date | null = null;
 &nbsp;
   /** Link elements for loaded fonts (for potential cleanup) */
-<span class="cstat-no" title="statement not covered" >  private fontLinks: Map&lt;string, HTMLLinkElement&gt; = new Map();</span>
+  private fontLinks: Map&lt;string, HTMLLinkElement&gt; = new Map();
 &nbsp;
   /**
    * Get all available Google fonts from the catalog
@@ -2075,7 +2075,7 @@ export <span class="fstat-no" title="function not covered" >class G</span>oogleF
 /**
  * Singleton instance of GoogleFontProvider
  */
-export const googleFontProvider = <span class="cstat-no" title="statement not covered" >new GoogleFontProvider();</span>
+export const googleFontProvider = new GoogleFontProvider();
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -2083,7 +2083,7 @@ export const googleFontProvider = <span class="cstat-no" title="statement not co
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

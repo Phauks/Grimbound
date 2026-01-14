@@ -7,14 +7,13 @@
  */
 
 // ============================================================================
-// Asset Types (DEPRECATED - use tags instead)
+// Asset Types
 // ============================================================================
 
 /**
- * @deprecated Use tags with type:* prefix instead
- * Kept for migration compatibility only
- *
- * Types of assets that can be uploaded and managed
+ * Types of assets that can be uploaded and managed.
+ * Note: The tag system (type:* prefix) is the newer approach,
+ * but AssetType is still used in many places during migration.
  */
 export type AssetType =
   | 'character-icon'
@@ -28,7 +27,7 @@ export type AssetType =
   | 'studio-project'; // Complete Studio project (multi-layer)
 
 /**
- * @deprecated Alias for AssetType - kept for migration compatibility
+ * Alias for AssetType
  */
 export type LegacyAssetType = AssetType;
 

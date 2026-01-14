@@ -28,6 +28,7 @@ import type {
   PlayerScriptSettings,
   ScriptPdfSettings,
 } from '@/ts/scriptPdf/types.js';
+import { createAssetReference } from '@/ts/services/upload/assetResolver.js';
 import type {
   BackgroundSourceType,
   GradientType,
@@ -206,7 +207,9 @@ export function ScriptPdfDrawer({
 
   /** Handle image selection from modal */
   const handleImageSelect = (assetId: string) => {
-    updateBackground({ sourceType: 'image', imageUrl: assetId });
+    // Create proper asset reference format (asset:uuid) for storage
+    const assetRef = createAssetReference(assetId);
+    updateBackground({ sourceType: 'image', imageUrl: assetRef });
     setIsImageModalOpen(false);
   };
 
@@ -872,7 +875,7 @@ export function ScriptPdfDrawer({
           isOpen={isImageModalOpen}
           onClose={() => setIsImageModalOpen(false)}
           projectId={projectId}
-          initialAssetType="token-background"
+          initialAssetType="script-background"
           selectionMode={true}
           onSelectAsset={handleImageSelect}
           includeBuiltIn={true}

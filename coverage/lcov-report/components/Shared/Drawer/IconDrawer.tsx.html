@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -157,12 +157,20 @@
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L95'></a><a href='#L95'>95</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -203,22 +211,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -246,8 +238,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -272,7 +262,7 @@
  * @module components/Shared/Drawer/IconDrawer
  */
 &nbsp;
-import { memo, type ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { DrawerTokenTabs, type TabGroup } from '@/components/Shared/Controls';
 import { SettingsDrawer } from './SettingsDrawer';
 &nbsp;
@@ -301,7 +291,7 @@ export interface IconDrawerProps {
   onLinkToggle?: () =&gt; void;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >IconDrawer = memo(function <span class="fstat-no" title="function not covered" >IconDrawer({</span></span>
+export function <span class="fstat-no" title="function not covered" >IconDrawer({</span>
   isOpen,
   onClose,
   onApply,
@@ -314,27 +304,24 @@ export const <span class="cstat-no" title="statement not covered" >IconDrawer = 
   onLinkToggle,
 }: IconDrawerProps) {
   // Build tab groups with optional link toggle
-  const <span class="cstat-no" title="statement not covered" >groups = useMemo(</span>
-<span class="fstat-no" title="function not covered" >    (): TabGroup[] =&gt; <span class="cstat-no" title="statement not covered" >[</span></span>
-      {
-        tabs: [
-          { id: 'character', label: 'Character' },
-          { id: 'meta', label: 'Meta' },
-        ],
-        link: onLinkToggle
-          ? {
-              isLinked,
-              onToggle: onLinkToggle,
-              ariaLabel: 'Link Character and Meta icon settings',
-            }
-          : undefined,
-      },
-      {
-        tabs: [{ id: 'reminder', label: 'Reminder' }],
-      },
-    ],
-    [isLinked, onLinkToggle]
-  );
+  const groups: TabGroup[] = <span class="cstat-no" title="statement not covered" >[</span>
+    {
+      tabs: [
+        { id: 'character', label: 'Character' },
+        { id: 'meta', label: 'Meta' },
+      ],
+      link: onLinkToggle
+        ? {
+            isLinked,
+            onToggle: onLinkToggle,
+            ariaLabel: 'Link Character and Meta icon settings',
+          }
+        : undefined,
+    },
+    {
+      tabs: [{ id: 'reminder', label: 'Reminder' }],
+    },
+  ];
 &nbsp;
   const headerSlot = (
 <span class="cstat-no" title="statement not covered" >    &lt;DrawerTokenTabs</span>
@@ -357,9 +344,7 @@ export const <span class="cstat-no" title="statement not covered" >IconDrawer = 
       {children}
     &lt;/SettingsDrawer&gt;
   );
-});
-&nbsp;
-export default IconDrawer;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -367,7 +352,7 @@ export default IconDrawer;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -38,7 +38,8 @@ describe('TokenFactory', () => {
   beforeEach(() => {
     resetCharacterFactory();
     mockCallback = vi.fn();
-    factory = new TokenFactory(TEST_DPI, mockCallback);
+    // TokenFactory only takes an optional callback - DPI is read from CONFIG
+    factory = new TokenFactory(mockCallback);
   });
 
   // ==========================================================================
@@ -46,28 +47,29 @@ describe('TokenFactory', () => {
   // ==========================================================================
 
   describe('constructor', () => {
-    it('should create factory with DPI and callback', () => {
-      const testFactory = new TokenFactory(150, mockCallback);
+    it('should create factory with callback', () => {
+      // TokenFactory takes optional callback - DPI is read from CONFIG
+      const testFactory = new TokenFactory(mockCallback);
 
       expect(testFactory).toBeDefined();
     });
 
-    it('should create factory with DPI only (no callback)', () => {
-      const testFactory = new TokenFactory(300);
+    it('should create factory without callback', () => {
+      const testFactory = new TokenFactory();
 
       expect(testFactory).toBeDefined();
     });
 
     it('should create factory with null callback', () => {
-      const testFactory = new TokenFactory(300, null);
+      const testFactory = new TokenFactory(null);
 
       expect(testFactory).toBeDefined();
     });
 
-    it('should calculate character diameter from DPI', () => {
-      const testDPI = 150;
-      const expectedDiameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * testDPI;
-      const testFactory = new TokenFactory(testDPI);
+    it('should calculate character diameter from CONFIG.PDF.DPI', () => {
+      // Factory uses CONFIG.PDF.DPI for diameter calculation
+      const expectedDiameter = CONFIG.TOKEN.ROLE_DIAMETER_INCHES * CONFIG.PDF.DPI;
+      const testFactory = new TokenFactory();
 
       const character = createCharacter();
       const canvas = createMockCanvas();
@@ -81,10 +83,10 @@ describe('TokenFactory', () => {
       expect(token.diameter).toBe(expectedDiameter);
     });
 
-    it('should calculate reminder diameter from DPI', () => {
-      const testDPI = 150;
-      const expectedDiameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * testDPI;
-      const testFactory = new TokenFactory(testDPI);
+    it('should calculate reminder diameter from CONFIG.PDF.DPI', () => {
+      // Factory uses CONFIG.PDF.DPI for diameter calculation
+      const expectedDiameter = CONFIG.TOKEN.REMINDER_DIAMETER_INCHES * CONFIG.PDF.DPI;
+      const testFactory = new TokenFactory();
 
       const character = createCharacter();
       const canvas = createMockCanvas();
@@ -705,7 +707,7 @@ describe('TokenFactory', () => {
     });
 
     it('should not throw when callback is null', () => {
-      const factoryNoCallback = new TokenFactory(TEST_DPI, null);
+      const factoryNoCallback = new TokenFactory(null);
       const character = createCharacter();
       const canvas = createMockCanvas();
       const token = factoryNoCallback.createCharacterToken({
@@ -719,7 +721,7 @@ describe('TokenFactory', () => {
     });
 
     it('should not throw when callback is undefined', () => {
-      const factoryNoCallback = new TokenFactory(TEST_DPI);
+      const factoryNoCallback = new TokenFactory();
       const character = createCharacter();
       const canvas = createMockCanvas();
       const token = factoryNoCallback.createCharacterToken({
@@ -797,7 +799,7 @@ describe('TokenFactory', () => {
     });
 
     it('should not throw when callback is null', () => {
-      const factoryNoCallback = new TokenFactory(TEST_DPI, null);
+      const factoryNoCallback = new TokenFactory(null);
       const character = createCharacter();
       const canvas = createMockCanvas();
       const token = factoryNoCallback.createCharacterToken({
@@ -813,7 +815,7 @@ describe('TokenFactory', () => {
     });
 
     it('should not throw when callback is undefined', () => {
-      const factoryNoCallback = new TokenFactory(TEST_DPI);
+      const factoryNoCallback = new TokenFactory();
       const character = createCharacter();
       const canvas = createMockCanvas();
       const token = factoryNoCallback.createCharacterToken({

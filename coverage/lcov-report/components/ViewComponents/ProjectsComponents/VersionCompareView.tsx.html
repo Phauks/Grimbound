@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/60</span>
+                <span class='fraction'>0/57</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/28</span>
+                <span class='fraction'>0/25</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/55</span>
+                <span class='fraction'>0/53</span>
             </div>
         
             
@@ -613,13 +613,7 @@
 <a name='L548'></a><a href='#L548'>548</a>
 <a name='L549'></a><a href='#L549'>549</a>
 <a name='L550'></a><a href='#L550'>550</a>
-<a name='L551'></a><a href='#L551'>551</a>
-<a name='L552'></a><a href='#L552'>552</a>
-<a name='L553'></a><a href='#L553'>553</a>
-<a name='L554'></a><a href='#L554'>554</a>
-<a name='L555'></a><a href='#L555'>555</a>
-<a name='L556'></a><a href='#L556'>556</a>
-<a name='L557'></a><a href='#L557'>557</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L551'></a><a href='#L551'>551</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -686,15 +680,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1186,7 +1174,7 @@
  * differences including inline word-level diffs for text fields.
  */
 &nbsp;
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import styles from '@/styles/components/projects/VersionCompareView.module.css';
 import { getTeamHexColor, TEAM_LABELS } from '@/ts/config.js';
 import type { Character, Team } from '@/ts/types/index';
@@ -1241,21 +1229,15 @@ export function <span class="fstat-no" title="function not covered" >VersionComp
   const [expandedCharacters, setExpandedCharacters<span class="cstat-no" title="statement not covered" >] = useState&lt;Set&lt;string&gt;&gt;(new Set());</span>
 &nbsp;
   // Calculate the detailed diff between current and version states
-  const <span class="cstat-no" title="statement not covered" >detailedDiff = useMemo(</span>
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >    () =&gt; c</span>alculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState),</span>
-    [currentState, compareVersion.stateSnapshot]
-  );
+  const <span class="cstat-no" title="statement not covered" >detailedDiff = calculateProjectDiffDetailed(compareVersion.stateSnapshot, currentState);</span>
 &nbsp;
   // Also calculate simple diff for summary (reuses existing logic)
-  const <span class="cstat-no" title="statement not covered" >diff = useMemo(</span>
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >    () =&gt; c</span>alculateProjectDiff(compareVersion.stateSnapshot, currentState),</span>
-    [currentState, compareVersion.stateSnapshot]
-  );
+  const <span class="cstat-no" title="statement not covered" >diff = calculateProjectDiff(compareVersion.stateSnapshot, currentState);</span>
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >summary = useMemo(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; g</span>etDiffSummary(diff), [</span>diff]);</span>
+  const <span class="cstat-no" title="statement not covered" >summary = getDiffSummary(diff);</span>
 &nbsp;
   // Toggle expanded state for a character
-  const <span class="cstat-no" title="statement not covered" >toggleExpanded = useCallback(<span class="fstat-no" title="function not covered" >(c</span>haracterId: string) =&gt; {</span>
+  const toggleExpanded = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>haracterId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setExpandedCharacters(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; {</span>
       const next = <span class="cstat-no" title="statement not covered" >new Set(prev);</span>
 <span class="cstat-no" title="statement not covered" >      if (next.has(characterId)) {</span>
@@ -1265,7 +1247,7 @@ export function <span class="fstat-no" title="function not covered" >VersionComp
       }
 <span class="cstat-no" title="statement not covered" >      return next;</span>
     });
-  }, []);
+  };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className={styles.container}&gt;
@@ -1738,7 +1720,7 @@ function <span class="fstat-no" title="function not covered" >formatOptionName(k
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

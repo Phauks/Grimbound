@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -165,14 +165,7 @@
 <a name='L100'></a><a href='#L100'>100</a>
 <a name='L101'></a><a href='#L101'>101</a>
 <a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L103'></a><a href='#L103'>103</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -241,9 +234,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -254,17 +244,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -304,7 +292,6 @@
  * ```
  */
 &nbsp;
-import { useCallback, useMemo } from 'react';
 import type { MeasurementConfig, MeasurementUnit } from '@/ts/types/measurement';
 import {
   convertConfigToDisplayUnit,
@@ -348,26 +335,20 @@ export function <span class="fstat-no" title="function not covered" >Measurement
   className,
 }: MeasurementSliderProps) {
   // Convert config bounds and step to display unit
-  const <span class="cstat-no" title="statement not covered" >displayConfig = useMemo(</span>
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >    () =&gt; c</span>onvertConfigToDisplayUnit(config, displayUnit),</span>
-    [config, displayUnit]
-  );
+  const <span class="cstat-no" title="statement not covered" >displayConfig = convertConfigToDisplayUnit(config, displayUnit);</span>
 &nbsp;
   // Convert canonical inches value to display unit value
-  const <span class="cstat-no" title="statement not covered" >displayValue = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const <span class="cstat-no" title="statement not covered" >displayValue = (<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const <span class="cstat-no" title="statement not covered" >converted = fromCanonicalInches(value, displayUnit);</span>
     const decimals = <span class="cstat-no" title="statement not covered" >DECIMAL_PLACES[displayUnit];</span>
 <span class="cstat-no" title="statement not covered" >    return Number(converted.toFixed(decimals));</span>
-  }, [value, displayUnit]);
+  })();
 &nbsp;
   // Handle slider change: convert from display unit back to inches
-  const <span class="cstat-no" title="statement not covered" >handleChange = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (n</span>ewDisplayValue: number) =&gt; {
-      const <span class="cstat-no" title="statement not covered" >canonicalInches = toCanonicalInches(newDisplayValue, displayUnit);</span>
-<span class="cstat-no" title="statement not covered" >      onChange(canonicalInches);</span>
-    },
-    [displayUnit, onChange]
-  );
+  const handleChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(n</span>ewDisplayValue: number) =&gt; {</span>
+    const <span class="cstat-no" title="statement not covered" >canonicalInches = toCanonicalInches(newDisplayValue, displayUnit);</span>
+<span class="cstat-no" title="statement not covered" >    onChange(canonicalInches);</span>
+  };
 &nbsp;
   // Get the unit suffix for display
   const <span class="cstat-no" title="statement not covered" >unitSuffix = getUnitSuffix(displayUnit);</span>
@@ -384,6 +365,7 @@ export function <span class="fstat-no" title="function not covered" >Measurement
       defaultValue={displayConfig.defaultValue}
       ariaLabel={ariaLabel || config.ariaLabel}
       className={className}
+      decimals={DECIMAL_PLACES[displayUnit]}
     /&gt;
   );
 }
@@ -394,7 +376,7 @@ export function <span class="fstat-no" title="function not covered" >Measurement
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

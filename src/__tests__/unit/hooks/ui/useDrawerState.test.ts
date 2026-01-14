@@ -46,9 +46,21 @@ describe('useDrawerState', () => {
     const onChange = vi.fn();
     const { result } = renderHook(() => useDrawerState({ value: 'initial', onChange }));
 
+    // Open drawer first
     act(() => {
       result.current.open();
+    });
+
+    // Update pending value (needs its own act to process state update)
+    act(() => {
       result.current.updatePending('modified');
+    });
+
+    // Verify pending value was updated
+    expect(result.current.pendingValue).toBe('modified');
+
+    // Apply changes (uses the updated pendingValue after rerender)
+    act(() => {
       result.current.apply();
     });
 

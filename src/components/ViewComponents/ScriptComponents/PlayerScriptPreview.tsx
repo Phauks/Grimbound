@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useEffect, useState } from 'react';
 import { useScriptPdf } from '@/contexts/ScriptPdfContext';
+import { useBackgroundImageUrl } from '@/hooks/characters/useBackgroundImageUrl.js';
 import { usePlayerScriptOrder } from '@/hooks/scripts/usePlayerScriptOrder';
 import nightOrderStyles from '@/styles/components/script/NightOrderView.module.css';
 import styles from '@/styles/components/script/PlayerScriptPreview.module.css';
@@ -29,15 +30,120 @@ import { TEAM_COLORS, TEAM_LABELS } from '@/ts/scriptPdf/constants.js';
 import { PlayerCountTable } from '@/ts/scriptPdf/playerScript/PlayerCountTable.js';
 import type { JinxIconInfo } from '@/ts/scriptPdf/playerScript/PlayerScriptEntry';
 import type {
+  BackgroundStyle,
   NightOrderIcon,
   PlayerScriptCharacter,
   PlayerScriptJinx,
 } from '@/ts/scriptPdf/types.js';
-import { extractActiveJinxes, SCRIPT_TEAM_ORDER } from '@/ts/scriptPdf/utils.js';
+import {
+  extractActiveJinxes,
+  getBackgroundImageStyles,
+  SCRIPT_TEAM_ORDER,
+} from '@/ts/scriptPdf/utils.js';
 import type { ScriptMeta, Team } from '@/ts/types/index.js';
 import { resolveCharacterImageUrl } from '@/ts/utils/characterImageResolver.js';
 import { ScaledPage } from './ScaledPage';
 import { SortablePlayerScriptEntry } from './SortablePlayerScriptEntry';
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Build bootlegger data from scriptMeta.bootlegger
+ * Entries can be either character IDs (look up) or rule text strings (display directly)
+ */
+function buildBootleggerData(
+  scriptMeta: ScriptMeta | null,
+  characters: PlayerScriptCharacter[]
+): { characters: PlayerScriptCharacter[]; rules: string[] } {
+  if (!scriptMeta?.bootlegger || scriptMeta.bootlegger.length === 0) {
+    return { characters: [], rules: [] };
+  }
+
+  const bootleggerChars: PlayerScriptCharacter[] = [];
+  const bootleggerRules: string[] = [];
+
+  for (const entry of scriptMeta.bootlegger) {
+    // If it contains spaces or is longer than typical ID, treat as rule text
+    if (entry.includes(' ') || entry.length > 30) {
+      bootleggerRules.push(entry);
+    } else {
+      // Try to look up as character ID
+      const char = characters.find((c) => c.id.toLowerCase() === entry.toLowerCase());
+      if (char) {
+        bootleggerChars.push(char);
+      } else {
+        // Couldn't find character, treat as rule text
+        bootleggerRules.push(entry);
+      }
+    }
+  }
+
+  return { characters: bootleggerChars, rules: bootleggerRules };
+}
+
+/**
+ * Build CSS background style from settings
+ * Supports image backgrounds, gradients, and solid colors
+ */
+function buildPageBackgroundStyle(
+  background: BackgroundStyle,
+  margins?: { top: number; right: number; bottom: number; left: number },
+  resolvedImageUrl?: string | null
+): React.CSSProperties {
+  // Handle image backgrounds using the shared utility
+  if (background.sourceType === 'image') {
+    const imageStyles = getBackgroundImageStyles(background, resolvedImageUrl);
+    return {
+      ...imageStyles,
+      ...(margins && {
+        padding: `${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in`,
+      }),
+    };
+  }
+
+  // Handle gradient and solid color backgrounds
+  const baseStyle: React.CSSProperties = {};
+
+  if (background.mode === 'gradient') {
+    const { type, colorStart, colorEnd, rotation } = background.gradient;
+    let gradientCss: string;
+    switch (type) {
+      case 'radial':
+        gradientCss = `radial-gradient(circle, ${colorStart}, ${colorEnd})`;
+        break;
+      case 'conic':
+        gradientCss = `conic-gradient(from ${rotation}deg, ${colorStart}, ${colorEnd})`;
+        break;
+      default:
+        gradientCss = `linear-gradient(${rotation}deg, ${colorStart}, ${colorEnd})`;
+    }
+    baseStyle.background = gradientCss;
+  } else {
+    baseStyle.backgroundColor = background.solidColor;
+  }
+
+  if (margins) {
+    baseStyle.padding = `${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in`;
+  }
+
+  return baseStyle;
+}
+
+/**
+ * Get night order icons based on settings
+ */
+function getNightOrderIcons(
+  showNightOrderOnBack: boolean,
+  firstNightIcons: NightOrderIcon[],
+  otherNightIcons: NightOrderIcon[]
+): { firstNight: NightOrderIcon[]; otherNight: NightOrderIcon[] } {
+  if (showNightOrderOnBack) {
+    return { firstNight: firstNightIcons, otherNight: otherNightIcons };
+  }
+  return { firstNight: [], otherNight: [] };
+}
 
 // ============================================================================
 // TYPES
@@ -214,99 +320,24 @@ export function PlayerScriptPreview({
   // Backing sheet icon scale style - for CSS transform-based scaling
   const backingIconScaleStyle = { '--icon-scale': backingSheetIconScale } as React.CSSProperties;
 
-  // Build bootlegger data from scriptMeta.bootlegger
-  // Can be either character IDs (look up) or rule text strings (display directly)
-  const bootleggerData: {
-    characters: PlayerScriptCharacter[];
-    rules: string[];
-  } = (() => {
-    if (!scriptMeta?.bootlegger || scriptMeta.bootlegger.length === 0) {
-      return { characters: [], rules: [] };
-    }
+  // Build bootlegger data using extracted helper
+  const bootleggerData = buildBootleggerData(scriptMeta, characters);
 
-    const bootleggerChars: PlayerScriptCharacter[] = [];
-    const bootleggerRules: string[] = [];
+  // Resolve background image URLs if using image backgrounds
+  const { resolvedUrl: resolvedFrontBgUrl } = useBackgroundImageUrl({
+    imageUrl: background?.sourceType === 'image' ? background.imageUrl : undefined,
+  });
+  const { resolvedUrl: resolvedBackBgUrl } = useBackgroundImageUrl({
+    imageUrl: backingBackground?.sourceType === 'image' ? backingBackground.imageUrl : undefined,
+  });
 
-    for (const entry of scriptMeta.bootlegger) {
-      // If it contains spaces or is longer than typical ID, treat as rule text
-      if (entry.includes(' ') || entry.length > 30) {
-        bootleggerRules.push(entry);
-      } else {
-        // Try to look up as character ID
-        const char = characters.find((c) => c.id.toLowerCase() === entry.toLowerCase());
-        if (char) {
-          bootleggerChars.push(char);
-        } else {
-          // Couldn't find character, treat as rule text
-          bootleggerRules.push(entry);
-        }
-      }
-    }
-
-    return { characters: bootleggerChars, rules: bootleggerRules };
-  })();
-
-  // Build background style from settings (for front page)
-  const backgroundStyle: React.CSSProperties = (() => {
-    const baseStyle: React.CSSProperties = {};
-
-    // Apply background
-    if (background.mode === 'gradient') {
-      const { type, colorStart, colorEnd, rotation } = background.gradient;
-      let gradientCss: string;
-      switch (type) {
-        case 'radial':
-          gradientCss = `radial-gradient(circle, ${colorStart}, ${colorEnd})`;
-          break;
-        case 'conic':
-          gradientCss = `conic-gradient(from ${rotation}deg, ${colorStart}, ${colorEnd})`;
-          break;
-        default:
-          gradientCss = `linear-gradient(${rotation}deg, ${colorStart}, ${colorEnd})`;
-      }
-      baseStyle.background = gradientCss;
-    } else {
-      baseStyle.backgroundColor = background.solidColor;
-    }
-
-    // Apply margins (padding on the page content)
-    if (ps.margins) {
-      baseStyle.padding = `${ps.margins.top}in ${ps.margins.right}in ${ps.margins.bottom}in ${ps.margins.left}in`;
-    }
-
-    return baseStyle;
-  })();
-
-  // Build background style for backing sheet (can be different from front)
-  const backingBackgroundStyle: React.CSSProperties = (() => {
-    const baseStyle: React.CSSProperties = {};
-
-    // Apply background
-    if (backingBackground.mode === 'gradient') {
-      const { type, colorStart, colorEnd, rotation } = backingBackground.gradient;
-      let gradientCss: string;
-      switch (type) {
-        case 'radial':
-          gradientCss = `radial-gradient(circle, ${colorStart}, ${colorEnd})`;
-          break;
-        case 'conic':
-          gradientCss = `conic-gradient(from ${rotation}deg, ${colorStart}, ${colorEnd})`;
-          break;
-        default:
-          gradientCss = `linear-gradient(${rotation}deg, ${colorStart}, ${colorEnd})`;
-      }
-      baseStyle.background = gradientCss;
-    } else {
-      baseStyle.backgroundColor = backingBackground.solidColor;
-    }
-
-    // Apply margins (padding on the page content)
-    if (bs.margins) {
-      baseStyle.padding = `${bs.margins.top}in ${bs.margins.right}in ${bs.margins.bottom}in ${bs.margins.left}in`;
-    }
-
-    return baseStyle;
-  })();
+  // Build background styles using extracted helper (with resolved image URLs)
+  const backgroundStyle = buildPageBackgroundStyle(background, ps.margins, resolvedFrontBgUrl);
+  const backingBackgroundStyle = buildPageBackgroundStyle(
+    backingBackground,
+    bs.margins,
+    resolvedBackBgUrl
+  );
 
   // Handle order changes
   const handleOrderChange = (newOrder: string[]) => {
@@ -339,9 +370,11 @@ export function PlayerScriptPreview({
   const jinxes = bs.showJinxes ? extractActiveJinxes(characters) : [];
 
   // Use pre-computed night order icons from props
-  const nightOrderIcons = bs.showNightOrderOnBack
-    ? { firstNight: firstNightIcons, otherNight: otherNightIcons }
-    : { firstNight: [] as NightOrderIcon[], otherNight: [] as NightOrderIcon[] };
+  const nightOrderIcons = getNightOrderIcons(
+    bs.showNightOrderOnBack,
+    firstNightIcons,
+    otherNightIcons
+  );
 
   // Determine column layout
   const totalMainChars = Array.from(charactersByTeam.values()).reduce(

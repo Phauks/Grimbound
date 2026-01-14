@@ -27,12 +27,19 @@ vi.mock('jszip', () => ({
   },
 }));
 
-// Mock CONFIG
-vi.mock('@/ts/config.js', () => ({
-  CONFIG: {
+// Mock CONFIG (needs both named export and default export)
+vi.mock('@/ts/config.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@/ts/config.js')>();
+  const CONFIG = {
+    ...original.CONFIG,
     VERSION: '0.3.0',
-  },
-}));
+  };
+  return {
+    ...original,
+    CONFIG,
+    default: CONFIG,
+  };
+});
 
 // Mock generateUuid
 vi.mock('@/ts/utils/nameGenerator.js', () => ({

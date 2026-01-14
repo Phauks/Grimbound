@@ -147,7 +147,14 @@ export function DownloadsDrawer() {
   };
 
   // Cleanup timeout on unmount
-  useEffect(() => () => clearCloseTimeout(), [clearCloseTimeout]);
+  useEffect(
+    () => () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   // Handle escape key to close
   useEffect(() => {

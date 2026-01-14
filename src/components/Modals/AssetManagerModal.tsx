@@ -714,5 +714,3 @@ export function AssetManagerModal({
     </Modal>
   );
 }
-
-export default AssetManagerModal;

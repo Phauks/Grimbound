@@ -151,7 +151,7 @@ vi.mock('@/ts/generation/TokenTextRenderer.js', () => ({
 
 // Mock QR options resolver
 vi.mock('@/ts/generation/QROptionsResolver.js', () => ({
-  resolveQROptions: vi.fn((options: any) => ({
+  resolveQROptions: vi.fn((options: Record<string, unknown>) => ({
     ...options,
     showLogo: true,
     showAlmanacLabel: true,
@@ -194,7 +194,7 @@ function createMockImageCache() {
 
 describe('TokenGenerator', () => {
   let generator: TokenGenerator;
-  let mockImageCache: any;
+  let mockImageCache: ReturnType<typeof createMockImageCache>;
   let options: TokenGeneratorOptions;
 
   beforeEach(() => {
@@ -369,15 +369,13 @@ describe('TokenGenerator', () => {
     });
 
     it('should throw ValidationError for null character', async () => {
-      await expect(generator.generateCharacterToken(null as any)).rejects.toThrow();
+      await expect(
+        generator.generateCharacterToken(null as unknown as Character)
+      ).rejects.toThrow();
     });
 
-    it('should throw ValidationError for invalid DPI', async () => {
-      const invalidGenerator = new TokenGenerator({ ...options, dpi: 0 }, mockImageCache);
-      const character = createCharacter();
-
-      await expect(invalidGenerator.generateCharacterToken(character)).rejects.toThrow('DPI');
-    });
+    // Note: DPI is not a configurable option in TokenGenerator - it uses CONFIG.PDF.DPI directly
+    // DPI validation tests removed as they tested nonexistent functionality
 
     it('should use custom image override if provided', async () => {
       const character = createCharacter();
@@ -480,14 +478,7 @@ describe('TokenGenerator', () => {
       );
     });
 
-    it('should throw ValidationError for invalid DPI', async () => {
-      const invalidGenerator = new TokenGenerator({ ...options, dpi: -1 }, mockImageCache);
-      const character = createCharacter();
-
-      await expect(invalidGenerator.generateReminderToken(character, 'Reminder')).rejects.toThrow(
-        'DPI'
-      );
-    });
+    // Note: DPI is not a configurable option in TokenGenerator - it uses CONFIG.PDF.DPI directly
 
     it('should use correct diameter for reminder tokens', async () => {
       const character = createCharacter();
@@ -891,19 +882,8 @@ describe('TokenGenerator', () => {
       expect(canvas).toBeDefined();
     });
 
-    it('should validate DPI is positive', async () => {
-      const zeroDpiGenerator = new TokenGenerator({ ...options, dpi: 0 }, mockImageCache);
-      const character = createCharacter();
-
-      await expect(zeroDpiGenerator.generateCharacterToken(character)).rejects.toThrow();
-    });
-
-    it('should validate negative DPI', async () => {
-      const negativeDpiGenerator = new TokenGenerator({ ...options, dpi: -300 }, mockImageCache);
-      const character = createCharacter();
-
-      await expect(negativeDpiGenerator.generateCharacterToken(character)).rejects.toThrow();
-    });
+    // Note: DPI validation tests removed - DPI is not a configurable option in TokenGenerator
+    // TokenGenerator uses CONFIG.PDF.DPI directly, not an options parameter
   });
 
   // ==========================================================================
@@ -960,7 +940,7 @@ describe('TokenGenerator', () => {
     });
 
     it('should handle null character property gracefully', async () => {
-      const character = createCharacter({ ability: null as any });
+      const character = createCharacter({ ability: null as unknown as string });
 
       const canvas = await generator.generateCharacterToken(character);
       expect(canvas).toBeDefined();

@@ -1233,21 +1233,8 @@ describe('AssetStorageService', () => {
     });
   });
 
-  describe('streamExportableAssets()', () => {
-    // NOTE: These tests are skipped because they require complex Dexie mock chains
-    // that are difficult to maintain. The functionality is better tested via
-    // integration tests using the actual IndexedDB.
-
-    it.skip('should stream exportable assets', async () => {
-      // Requires mocking compound index [type+projectId].equals chain
-      // which is complex and brittle. Integration test preferred.
-    });
-
-    it.skip('should filter out unused assets when includeUnused is false', async () => {
-      // Requires mocking compound index [type+projectId].equals chain
-      // which is complex and brittle. Integration test preferred.
-    });
-  });
+  // NOTE: streamExportableAssets() tests omitted - require complex Dexie mock chains.
+  // Functionality is better tested via integration tests using actual IndexedDB.
 
   // =========================================================================
   // Statistics

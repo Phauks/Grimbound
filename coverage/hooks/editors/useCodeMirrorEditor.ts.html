@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/103</span>
+                <span class='fraction'>0/96</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/50</span>
+                <span class='fraction'>0/48</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/94</span>
+                <span class='fraction'>0/88</span>
             </div>
         
             
@@ -455,18 +455,7 @@
 <a name='L390'></a><a href='#L390'>390</a>
 <a name='L391'></a><a href='#L391'>391</a>
 <a name='L392'></a><a href='#L392'>392</a>
-<a name='L393'></a><a href='#L393'>393</a>
-<a name='L394'></a><a href='#L394'>394</a>
-<a name='L395'></a><a href='#L395'>395</a>
-<a name='L396'></a><a href='#L396'>396</a>
-<a name='L397'></a><a href='#L397'>397</a>
-<a name='L398'></a><a href='#L398'>398</a>
-<a name='L399'></a><a href='#L399'>399</a>
-<a name='L400'></a><a href='#L400'>400</a>
-<a name='L401'></a><a href='#L401'>401</a>
-<a name='L402'></a><a href='#L402'>402</a>
-<a name='L403'></a><a href='#L403'>403</a>
-<a name='L404'></a><a href='#L404'>404</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L393'></a><a href='#L393'>393</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -603,7 +592,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -616,7 +604,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -627,7 +614,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -641,7 +627,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -811,19 +796,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -912,7 +890,7 @@ import {
   placeholder as placeholderExtension,
   rectangularSelection,
 } from '@codemirror/view';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { createCodeMirrorTheme } from '@/ts/ui/codemirrorTheme.js';
 &nbsp;
@@ -1003,44 +981,40 @@ export function <span class="fstat-no" title="function not covered" >useCodeMirr
   const { currentThemeId <span class="cstat-no" title="statement not covered" >} = useTheme();</span>
 &nbsp;
   // Create the update listener extension - uses refs to avoid stale closures
-  const <span class="cstat-no" title="statement not covered" >updateListener = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >    return EditorView.updateListener.of(<span class="fstat-no" title="function not covered" >(u</span>pdate) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      if (update.docChanged &amp;&amp; !isExternalUpdate.current) {</span>
-        const newValue = <span class="cstat-no" title="statement not covered" >update.state.doc.toString();</span>
-        // Use ref to always call current onChange
-<span class="cstat-no" title="statement not covered" >        onChangeRef.current?.(newValue);</span>
+  const updateListener = <span class="cstat-no" title="statement not covered" >EditorView.updateListener.of(<span class="fstat-no" title="function not covered" >(u</span>pdate) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (update.docChanged &amp;&amp; !isExternalUpdate.current) {</span>
+      const newValue = <span class="cstat-no" title="statement not covered" >update.state.doc.toString();</span>
+      // Use ref to always call current onChange
+<span class="cstat-no" title="statement not covered" >      onChangeRef.current?.(newValue);</span>
 &nbsp;
-        // Debounced JSON validation
-<span class="cstat-no" title="statement not covered" >        if (onValidJsonRef.current) {</span>
-<span class="cstat-no" title="statement not covered" >          if (debounceTimerRef.current) {</span>
-<span class="cstat-no" title="statement not covered" >            clearTimeout(debounceTimerRef.current);</span>
-          }
-<span class="cstat-no" title="statement not covered" >          debounceTimerRef.current = setTimeout(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >            try {</span>
-              const parsed = <span class="cstat-no" title="statement not covered" >JSON.parse(newValue);</span>
-<span class="cstat-no" title="statement not covered" >              onValidJsonRef.current?.(parsed);</span>
-            } catch {
-              // Invalid JSON, don't call onValidJson
-            }
-          }, debounceMs);
+      // Debounced JSON validation
+<span class="cstat-no" title="statement not covered" >      if (onValidJsonRef.current) {</span>
+<span class="cstat-no" title="statement not covered" >        if (debounceTimerRef.current) {</span>
+<span class="cstat-no" title="statement not covered" >          clearTimeout(debounceTimerRef.current);</span>
         }
+<span class="cstat-no" title="statement not covered" >        debounceTimerRef.current = setTimeout(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >          try {</span>
+            const parsed = <span class="cstat-no" title="statement not covered" >JSON.parse(newValue);</span>
+<span class="cstat-no" title="statement not covered" >            onValidJsonRef.current?.(parsed);</span>
+          } catch {
+            // Invalid JSON, don't call onValidJson
+          }
+        }, debounceMs);
       }
-    });
-  }, [debounceMs]); // Only depends on debounceMs now, callbacks accessed via refs
+    }
+  });
 &nbsp;
   // Create a custom JSON linter that doesn't show errors for empty content
-  const <span class="cstat-no" title="statement not covered" >customJsonLinter = useMemo(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >    return linter(</span>
-<span class="fstat-no" title="function not covered" >      (v</span>iew) =&gt; {
-        const content = <span class="cstat-no" title="statement not covered" >view.state.doc.toString().trim();</span>
-        // Don't lint empty content - no annoying errors when editor is empty
-<span class="cstat-no" title="statement not covered" >        if (!content) <span class="cstat-no" title="statement not covered" >return [];</span></span>
-        // Use the built-in JSON parser for non-empty content
-<span class="cstat-no" title="statement not covered" >        return jsonParseLinter()(view);</span>
-      },
-      { delay: debounceMs }
-    );
-  }, [debounceMs]);
+  const <span class="cstat-no" title="statement not covered" >customJsonLinter = linter(</span>
+<span class="fstat-no" title="function not covered" >    (v</span>iew) =&gt; {
+      const content = <span class="cstat-no" title="statement not covered" >view.state.doc.toString().trim();</span>
+      // Don't lint empty content - no annoying errors when editor is empty
+<span class="cstat-no" title="statement not covered" >      if (!content) <span class="cstat-no" title="statement not covered" >return [];</span></span>
+      // Use the built-in JSON parser for non-empty content
+<span class="cstat-no" title="statement not covered" >      return jsonParseLinter()(view);</span>
+    },
+    { delay: debounceMs }
+  );
 &nbsp;
   // Create the editor - intentionally runs only on mount
   // Updates to value, theme, disabled, and placeholder are handled via compartments in separate useEffects
@@ -1208,46 +1182,39 @@ export function <span class="fstat-no" title="function not covered" >useCodeMirr
     });
   }, [currentThemeId]);
 &nbsp;
-  // Update disabled state
+  // Update disabled state and placeholder (consolidated into single effect)
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const view = <span class="cstat-no" title="statement not covered" >viewRef.current;</span>
 <span class="cstat-no" title="statement not covered" >    if (!view) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    view.dispatch({</span>
-      effects: readOnlyCompartment.current.reconfigure([
-        EditorState.readOnly.of(disabled),
-        EditorView.editable.of(!disabled),
-      ]),
+      effects: [
+        readOnlyCompartment.current.reconfigure([
+          EditorState.readOnly.of(disabled),
+          EditorView.editable.of(!disabled),
+        ]),
+        placeholderCompartment.current.reconfigure(
+          placeholder ? placeholderExtension(placeholder) : []
+        ),
+      ],
     });
-  }, [disabled]);
-&nbsp;
-  // Update placeholder
-<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-    const view = <span class="cstat-no" title="statement not covered" >viewRef.current;</span>
-<span class="cstat-no" title="statement not covered" >    if (!view) <span class="cstat-no" title="statement not covered" >return;</span></span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    view.dispatch({</span>
-      effects: placeholderCompartment.current.reconfigure(
-        placeholder ? placeholderExtension(placeholder) : []
-      ),
-    });
-  }, [placeholder]);
+  }, [disabled, placeholder]);
 &nbsp;
   // Undo/redo handlers
-  const <span class="cstat-no" title="statement not covered" >triggerUndo = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const triggerUndo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const view = <span class="cstat-no" title="statement not covered" >viewRef.current;</span>
 <span class="cstat-no" title="statement not covered" >    if (!view) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 <span class="cstat-no" title="statement not covered" >    return undo(view);</span>
-  }, []);
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >triggerRedo = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const triggerRedo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const view = <span class="cstat-no" title="statement not covered" >viewRef.current;</span>
 <span class="cstat-no" title="statement not covered" >    if (!view) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 <span class="cstat-no" title="statement not covered" >    return redo(view);</span>
-  }, []);
+  };
 &nbsp;
   // Open search panel programmatically
-  const <span class="cstat-no" title="statement not covered" >openSearch = useCallback(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  const openSearch = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const view = <span class="cstat-no" title="statement not covered" >viewRef.current;</span>
 <span class="cstat-no" title="statement not covered" >    if (!view) <span class="cstat-no" title="statement not covered" >return;</span></span>
     // The search keymap includes openSearchPanel
@@ -1255,7 +1222,7 @@ export function <span class="fstat-no" title="function not covered" >useCodeMirr
 <span class="cstat-no" title="statement not covered" >    import('@codemirror/search').then(({ openSearchPanel }) =&gt; <span class="fstat-no" title="function not covered" >{</span></span>
 <span class="cstat-no" title="statement not covered" >      openSearchPanel(view);</span>
     });
-  }, []);
+  };
 &nbsp;
   // Check undo/redo availability (simplified - always return true if view exists)
   // CodeMirror manages this internally, but we expose it for UI consistency
@@ -1279,7 +1246,7 @@ export function <span class="fstat-no" title="function not covered" >useCodeMirr
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

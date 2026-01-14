@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
@@ -157,12 +157,7 @@
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L95'></a><a href='#L95'>95</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,8 +173,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -258,11 +251,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { memo } from 'react';
-import styles from '@/styles/components/shared/ImageSelector.module.css';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import styles from '@/styles/components/shared/ImageSelector.module.css';
 import type { ImageOption } from '@/ts/types/index';
 &nbsp;
 export type ImageSelectorShape = 'square' | 'circle';
@@ -278,88 +267,84 @@ interface ImageSelectorProps {
   ariaLabel?: string;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >ImageSelector = memo(</span>
-<span class="fstat-no" title="function not covered" >  ({</span>
-    options,
-    value,
-    onChange,
-    shape = <span class="branch-0 cbranch-no" title="branch not covered" >'square',</span>
-    showNone = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-    showAddCustom = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-    noneLabel = <span class="branch-0 cbranch-no" title="branch not covered" >'None',</span>
-    ariaLabel = <span class="branch-0 cbranch-no" title="branch not covered" >'Image selector',</span>
-  }: ImageSelectorProps) =&gt; {
-    const shapeClass = <span class="cstat-no" title="statement not covered" >shape === 'circle' ? styles.circle : styles.square;</span>
+export function <span class="fstat-no" title="function not covered" >ImageSelector({</span>
+  options,
+  value,
+  onChange,
+  shape = <span class="branch-0 cbranch-no" title="branch not covered" >'square',</span>
+  showNone = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+  showAddCustom = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
+  noneLabel = <span class="branch-0 cbranch-no" title="branch not covered" >'None',</span>
+  ariaLabel = <span class="branch-0 cbranch-no" title="branch not covered" >'Image selector',</span>
+}: ImageSelectorProps) {
+  const shapeClass = <span class="cstat-no" title="statement not covered" >shape === 'circle' ? styles.circle : styles.square;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
-      &lt;div className={styles.container} role="radiogroup" aria-label={ariaLabel}&gt;
-        {/* None option */}
-        {showNone &amp;&amp; (
-          &lt;label
-            className={`${styles.thumbnail} ${shapeClass} ${value === 'none' ? styles.selected : ''}`}
-            title={noneLabel}
-          &gt;
-            &lt;input
-              type="radio"
-              name="image-selector"
-              value="none"
-              checked={value === 'none'}
-              onChange={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nChange('none')}</span>
-              style={{ display: 'none' }}
-              aria-label={noneLabel}
-            /&gt;
-            &lt;span className={styles.noneIcon}&gt;∅&lt;/span&gt;
-          &lt;/label&gt;
-        )}
+<span class="cstat-no" title="statement not covered" >  return (</span>
+    &lt;div className={styles.container} role="radiogroup" aria-label={ariaLabel}&gt;
+      {/* None option */}
+      {showNone &amp;&amp; (
+        &lt;label
+          className={`${styles.thumbnail} ${shapeClass} ${value === 'none' ? styles.selected : ''}`}
+          title={noneLabel}
+        &gt;
+          &lt;input
+            type="radio"
+            name="image-selector"
+            value="none"
+            checked={value === 'none'}
+            onChange={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nChange('none')}</span>
+            style={{ display: 'none' }}
+            aria-label={noneLabel}
+          /&gt;
+          &lt;span className={styles.noneIcon}&gt;∅&lt;/span&gt;
+        &lt;/label&gt;
+      )}
 &nbsp;
-        {/* Image options */}
-        {options.map(<span class="fstat-no" title="function not covered" >(o</span>ption) =&gt; (
-<span class="cstat-no" title="statement not covered" >          &lt;label</span>
-            key={option.id}
-            className={`${styles.thumbnail} ${shapeClass} ${value === option.id ? styles.selected : ''}`}
-            title={option.label}
-          &gt;
-            &lt;input
-              type="radio"
-              name="image-selector"
-              value={option.id}
-              checked={value === option.id}
-              onChange={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nChange(option.id)}</span>
-              style={{ display: 'none' }}
-              aria-label={option.label}
-            /&gt;
-            &lt;img
-              src={option.thumbnail || option.src}
-              alt={option.label}
-              className={styles.image}
-              loading="lazy"
-            /&gt;
-            {option.source !== 'builtin' &amp;&amp; (
-              &lt;span className={`${styles.sourceBadge} ${styles[option.source]}`}&gt;
-                {option.source === 'user' ? '★' : '◆'}
-              &lt;/span&gt;
-            )}
-          &lt;/label&gt;
-        ))}
+      {/* Image options */}
+      {options.map(<span class="fstat-no" title="function not covered" >(o</span>ption) =&gt; (
+<span class="cstat-no" title="statement not covered" >        &lt;label</span>
+          key={option.id}
+          className={`${styles.thumbnail} ${shapeClass} ${value === option.id ? styles.selected : ''}`}
+          title={option.label}
+        &gt;
+          &lt;input
+            type="radio"
+            name="image-selector"
+            value={option.id}
+            checked={value === option.id}
+            onChange={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nChange(option.id)}</span>
+            style={{ display: 'none' }}
+            aria-label={option.label}
+          /&gt;
+          &lt;img
+            src={option.thumbnail || option.src}
+            alt={option.label}
+            className={styles.image}
+            loading="lazy"
+          /&gt;
+          {option.source !== 'builtin' &amp;&amp; (
+            &lt;span className={`${styles.sourceBadge} ${styles[option.source]}`}&gt;
+              {option.source === 'user' ? '★' : '◆'}
+            &lt;/span&gt;
+          )}
+        &lt;/label&gt;
+      ))}
 &nbsp;
-        {/* Add Custom placeholder */}
-        {showAddCustom &amp;&amp; (
-          &lt;button
-            type="button"
-            className={`${styles.thumbnail} ${shapeClass} ${styles.addCustom}`}
-            disabled
-            title="Add Custom (coming soon)"
-            aria-label="Add custom image (coming soon)"
-          &gt;
-            &lt;span className={styles.addIcon}&gt;+&lt;/span&gt;
-          &lt;/button&gt;
-        )}
-      &lt;/div&gt;
-    );
-  }
-);
-&nbsp;
-<span class="cstat-no" title="statement not covered" >ImageSelector.displayName = 'ImageSelector';</span>
+      {/* Add Custom placeholder */}
+      {showAddCustom &amp;&amp; (
+        &lt;button
+          type="button"
+          className={`${styles.thumbnail} ${shapeClass} ${styles.addCustom}`}
+          disabled
+          title="Add Custom (coming soon)"
+          aria-label="Add custom image (coming soon)"
+        &gt;
+          &lt;span className={styles.addIcon}&gt;+&lt;/span&gt;
+        &lt;/button&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -367,7 +352,7 @@ export const <span class="cstat-no" title="statement not covered" >ImageSelector
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

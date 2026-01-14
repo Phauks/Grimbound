@@ -25,7 +25,7 @@ vi.mock('@/components/Shared/Json/CodeMirrorEditor', () => ({
   CodeMirrorEditor: vi.fn(
     ({
       value,
-      onChange,
+      onChange: _onChange,
       onValidJson,
       placeholder,
       debounceMs,

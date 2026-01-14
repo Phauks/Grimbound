@@ -296,9 +296,11 @@ describe('useAssetFolders', () => {
 
       const { result } = renderHook(() => useAssetFolders({ assets }));
 
-      await expect(result.current.moveToFolder('asset-123', 'folder')).rejects.toThrow(
-        'Update failed'
-      );
+      await act(async () => {
+        await expect(result.current.moveToFolder('asset-123', 'folder')).rejects.toThrow(
+          'Update failed'
+        );
+      });
     });
   });
 });

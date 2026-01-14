@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/111</span>
+                <span class='fraction'>0/110</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/101</span>
+                <span class='fraction'>0/100</span>
             </div>
         
             
@@ -425,12 +425,7 @@
 <a name='L360'></a><a href='#L360'>360</a>
 <a name='L361'></a><a href='#L361'>361</a>
 <a name='L362'></a><a href='#L362'>362</a>
-<a name='L363'></a><a href='#L363'>363</a>
-<a name='L364'></a><a href='#L364'>364</a>
-<a name='L365'></a><a href='#L365'>365</a>
-<a name='L366'></a><a href='#L366'>366</a>
-<a name='L367'></a><a href='#L367'>367</a>
-<a name='L368'></a><a href='#L368'>368</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L363'></a><a href='#L363'>363</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -501,7 +496,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -512,6 +506,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -585,7 +580,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -636,8 +630,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -754,8 +746,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -813,7 +803,7 @@
  * @module components/Shared/FontPreviewSelector
  */
 &nbsp;
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '@/styles/components/shared/FontPreviewSelector.module.css';
 &nbsp;
@@ -868,7 +858,7 @@ interface DropdownPosition {
 // Component
 // ============================================================================
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >FontPreviewSelector = memo(function <span class="fstat-no" title="function not covered" >FontPreviewSelector({</span></span>
+export function <span class="fstat-no" title="function not covered" >FontPreviewSelector({</span>
   value,
   onChange,
   options,
@@ -951,58 +941,55 @@ export const <span class="cstat-no" title="statement not covered" >FontPreviewSe
   }, [isOpen]);
 &nbsp;
   // Keyboard navigation
-  const <span class="cstat-no" title="statement not covered" >handleKeyDown = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>vent: React.KeyboardEvent) =&gt; {
-<span class="cstat-no" title="statement not covered" >      if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
+  const handleKeyDown = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>vent: React.KeyboardEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (disabled) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      switch (event.key) {</span>
-        case 'Enter':
-        case ' ':
-<span class="cstat-no" title="statement not covered" >          event.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >          if (isOpen &amp;&amp; focusedIndex &gt;= 0) {</span>
-<span class="cstat-no" title="statement not covered" >            onChange(options[focusedIndex].value);</span>
-<span class="cstat-no" title="statement not covered" >            setIsOpen(false);</span>
-<span class="cstat-no" title="statement not covered" >            buttonRef.current?.focus();</span>
-          } else {
-<span class="cstat-no" title="statement not covered" >            setIsOpen(!isOpen);</span>
-<span class="cstat-no" title="statement not covered" >            setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
-          }
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'ArrowDown':
-<span class="cstat-no" title="statement not covered" >          event.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >          if (isOpen) {</span>
-<span class="cstat-no" title="statement not covered" >            setFocusedIndex(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >prev &lt; options.length - 1 ? prev + 1 : 0))</span>;</span>
-          } else {
-<span class="cstat-no" title="statement not covered" >            setIsOpen(true);</span>
-<span class="cstat-no" title="statement not covered" >            setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
-          }
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'ArrowUp':
-<span class="cstat-no" title="statement not covered" >          event.preventDefault();</span>
-<span class="cstat-no" title="statement not covered" >          if (isOpen) {</span>
-<span class="cstat-no" title="statement not covered" >            setFocusedIndex(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >prev &gt; 0 ? prev - 1 : options.length - 1))</span>;</span>
-          } else {
-<span class="cstat-no" title="statement not covered" >            setIsOpen(true);</span>
-<span class="cstat-no" title="statement not covered" >            setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
-          }
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'Escape':
-<span class="cstat-no" title="statement not covered" >          event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >    switch (event.key) {</span>
+      case 'Enter':
+      case ' ':
+<span class="cstat-no" title="statement not covered" >        event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >        if (isOpen &amp;&amp; focusedIndex &gt;= 0) {</span>
+<span class="cstat-no" title="statement not covered" >          onChange(options[focusedIndex].value);</span>
 <span class="cstat-no" title="statement not covered" >          setIsOpen(false);</span>
-<span class="cstat-no" title="statement not covered" >          setFocusedIndex(-1);</span>
 <span class="cstat-no" title="statement not covered" >          buttonRef.current?.focus();</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        case 'Tab':
-<span class="cstat-no" title="statement not covered" >          setIsOpen(false);</span>
-<span class="cstat-no" title="statement not covered" >          setFocusedIndex(-1);</span>
-<span class="cstat-no" title="statement not covered" >          break;</span>
-        default:
-          // Other keys are handled by default browser behavior
-<span class="cstat-no" title="statement not covered" >          break;</span>
-      }
-    },
-    [disabled, isOpen, focusedIndex, options, value, onChange]
-  );
+        } else {
+<span class="cstat-no" title="statement not covered" >          setIsOpen(!isOpen);</span>
+<span class="cstat-no" title="statement not covered" >          setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
+        }
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'ArrowDown':
+<span class="cstat-no" title="statement not covered" >        event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >        if (isOpen) {</span>
+<span class="cstat-no" title="statement not covered" >          setFocusedIndex(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >prev &lt; options.length - 1 ? prev + 1 : 0))</span>;</span>
+        } else {
+<span class="cstat-no" title="statement not covered" >          setIsOpen(true);</span>
+<span class="cstat-no" title="statement not covered" >          setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
+        }
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'ArrowUp':
+<span class="cstat-no" title="statement not covered" >        event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >        if (isOpen) {</span>
+<span class="cstat-no" title="statement not covered" >          setFocusedIndex(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >prev &gt; 0 ? prev - 1 : options.length - 1))</span>;</span>
+        } else {
+<span class="cstat-no" title="statement not covered" >          setIsOpen(true);</span>
+<span class="cstat-no" title="statement not covered" >          setFocusedIndex(options.findIndex(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; <span class="cstat-no" title="statement not covered" >opt.value === value)</span>);</span>
+        }
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'Escape':
+<span class="cstat-no" title="statement not covered" >        event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >        setIsOpen(false);</span>
+<span class="cstat-no" title="statement not covered" >        setFocusedIndex(-1);</span>
+<span class="cstat-no" title="statement not covered" >        buttonRef.current?.focus();</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      case 'Tab':
+<span class="cstat-no" title="statement not covered" >        setIsOpen(false);</span>
+<span class="cstat-no" title="statement not covered" >        setFocusedIndex(-1);</span>
+<span class="cstat-no" title="statement not covered" >        break;</span>
+      default:
+        // Other keys are handled by default browser behavior
+<span class="cstat-no" title="statement not covered" >        break;</span>
+    }
+  };
 &nbsp;
   // Handle option selection
   const handleOptionClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(o</span>ptionValue: string) =&gt; {</span>
@@ -1161,9 +1148,7 @@ export const <span class="cstat-no" title="statement not covered" >FontPreviewSe
       {renderDropdown()}
     &lt;/div&gt;
   );
-});
-&nbsp;
-export default FontPreviewSelector;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -1171,7 +1156,7 @@ export default FontPreviewSelector;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">6.94% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/144</span>
+                <span class='fraction'>10/144</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">4.16% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/24</span>
+                <span class='fraction'>1/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">7.19% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/139</span>
+                <span class='fraction'>10/139</span>
             </div>
         
             
@@ -663,16 +663,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -736,7 +736,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -851,16 +851,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1208,7 +1208,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Custom Font Provider
  *
@@ -1236,16 +1236,16 @@ import type { ICustomFontProvider } from './IFontServices.js';
 // ============================================================================
 &nbsp;
 /** Maximum font file size (5MB) */
-const MAX_FONT_SIZE = <span class="cstat-no" title="statement not covered" >5 * 1024 * 1024;</span>
+const MAX_FONT_SIZE = 5 * 1024 * 1024;
 &nbsp;
 /** Maximum number of custom fonts */
-const MAX_CUSTOM_FONTS = <span class="cstat-no" title="statement not covered" >10;</span>
+const MAX_CUSTOM_FONTS = 10;
 &nbsp;
 /** Allowed font file extensions */
-const ALLOWED_EXTENSIONS = <span class="cstat-no" title="statement not covered" >['.ttf', '.otf', '.woff', '.woff2'];</span>
+const ALLOWED_EXTENSIONS = ['.ttf', '.otf', '.woff', '.woff2'];
 &nbsp;
 /** MIME type to format mapping (reserved for future use) */
-const _MIME_TO_FORMAT: Record&lt;string, FontFormat&gt; = <span class="cstat-no" title="statement not covered" >{</span>
+const _MIME_TO_FORMAT: Record&lt;string, FontFormat&gt; = {
   'font/ttf': 'truetype',
   'font/otf': 'opentype',
   'font/woff': 'woff',
@@ -1309,7 +1309,7 @@ function <span class="fstat-no" title="function not covered" >generateUniqueFami
 /**
  * Variable font axis tag names
  */
-const AXIS_NAMES: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{</span>
+const AXIS_NAMES: Record&lt;string, string&gt; = {
   wght: 'Weight',
   wdth: 'Width',
   slnt: 'Slant',
@@ -1423,17 +1423,17 @@ function <span class="fstat-no" title="function not covered" >detectVariableFont
  * Handles font file validation, storage in IndexedDB, and registration
  * with the browser's FontFace API.
  */
-export <span class="fstat-no" title="function not covered" >class C</span>ustomFontProvider implements ICustomFontProvider {
-<span class="cstat-no" title="statement not covered" >  readonly source = 'custom' as const;</span>
+export class CustomFontProvider implements ICustomFontProvider {
+  readonly source = 'custom' as const;
 &nbsp;
   /** Font definitions (without data) indexed by ID */
-<span class="cstat-no" title="statement not covered" >  private fonts: Map&lt;string, FontDefinition&gt; = new Map();</span>
+  private fonts: Map&lt;string, FontDefinition&gt; = new Map();
 &nbsp;
   /** Font families that have been registered with the browser */
-<span class="cstat-no" title="statement not covered" >  private registeredFonts: Set&lt;string&gt; = new Set();</span>
+  private registeredFonts: Set&lt;string&gt; = new Set();
 &nbsp;
   /** Whether initial load from database is complete */
-<span class="cstat-no" title="statement not covered" >  private initialized = false;</span>
+  private initialized = false;
 &nbsp;
   /**
    * Get all available custom fonts
@@ -1781,7 +1781,7 @@ export <span class="fstat-no" title="function not covered" >class C</span>ustomF
 /**
  * Singleton instance of CustomFontProvider
  */
-export const customFontProvider = <span class="cstat-no" title="statement not covered" >new CustomFontProvider();</span>
+export const customFontProvider = new CustomFontProvider();
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -1789,7 +1789,7 @@ export const customFontProvider = <span class="cstat-no" title="statement not co
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:01.569Z
+                at 2026-01-14T06:11:11.041Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>0/30</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/29</span>
             </div>
         
             
@@ -298,23 +298,7 @@
 <a name='L233'></a><a href='#L233'>233</a>
 <a name='L234'></a><a href='#L234'>234</a>
 <a name='L235'></a><a href='#L235'>235</a>
-<a name='L236'></a><a href='#L236'>236</a>
-<a name='L237'></a><a href='#L237'>237</a>
-<a name='L238'></a><a href='#L238'>238</a>
-<a name='L239'></a><a href='#L239'>239</a>
-<a name='L240'></a><a href='#L240'>240</a>
-<a name='L241'></a><a href='#L241'>241</a>
-<a name='L242'></a><a href='#L242'>242</a>
-<a name='L243'></a><a href='#L243'>243</a>
-<a name='L244'></a><a href='#L244'>244</a>
-<a name='L245'></a><a href='#L245'>245</a>
-<a name='L246'></a><a href='#L246'>246</a>
-<a name='L247'></a><a href='#L247'>247</a>
-<a name='L248'></a><a href='#L248'>248</a>
-<a name='L249'></a><a href='#L249'>249</a>
-<a name='L250'></a><a href='#L250'>250</a>
-<a name='L251'></a><a href='#L251'>251</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L236'></a><a href='#L236'>236</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -356,12 +340,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -376,7 +354,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -398,17 +376,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -539,8 +511,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -574,7 +544,6 @@
  * @module components/Shared/ReminderCountSelector
  */
 &nbsp;
-import { memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useExpandablePanel } from '@/hooks';
 import optionStyles from '@/styles/components/options/OptionsPanel.module.css';
@@ -606,13 +575,7 @@ interface PendingCountSettings {
 // Preview Component
 // ============================================================================
 &nbsp;
-const <span class="cstat-no" title="statement not covered" >CountPreview = memo(function <span class="fstat-no" title="function not covered" >CountPreview({</span></span>
-  style,
-  isEnabled,
-}: {
-  style: ReminderCountStyle;
-  isEnabled: boolean;
-}) {
+function <span class="fstat-no" title="function not covered" >CountPreview({</span> style, isEnabled }: { style: ReminderCountStyle; isEnabled: boolean }) {
   const previewText = <span class="cstat-no" title="statement not covered" >style === 'roman' ? 'III' : '3';</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
@@ -620,13 +583,13 @@ const <span class="cstat-no" title="statement not covered" >CountPreview = memo(
       &lt;span className={styles.previewIcon}&gt;{previewText}&lt;/span&gt;
     &lt;/div&gt;
   );
-});
+}
 &nbsp;
 // ============================================================================
 // Component
 // ============================================================================
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >ReminderCountSelector = memo(function <span class="fstat-no" title="function not covered" >ReminderCountSelector({</span></span>
+export function <span class="fstat-no" title="function not covered" >ReminderCountSelector({</span>
   generationOptions,
   onOptionChange,
   size = <span class="branch-0 cbranch-no" title="branch not covered" >'medium',</span>
@@ -647,22 +610,16 @@ export const <span class="cstat-no" title="statement not covered" >ReminderCount
     uniformLayout,
   };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handleToggle = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (e</span>nabled: boolean) =&gt; {
-<span class="cstat-no" title="statement not covered" >      onOptionChange({ tokenCount: enabled });</span>
-    },
-    [onOptionChange]
-  );
+  const handleToggle = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>nabled: boolean) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    onOptionChange({ tokenCount: enabled });</span>
+  };
 &nbsp;
-  const <span class="cstat-no" title="statement not covered" >handlePanelChange = useCallback(</span>
-<span class="fstat-no" title="function not covered" >    (s</span>ettings: PendingCountSettings) =&gt; {
-<span class="cstat-no" title="statement not covered" >      onOptionChange({</span>
-        reminderCountStyle: settings.style,
-        reminderCountUniformLayout: settings.uniformLayout,
-      });
-    },
-    [onOptionChange]
-  );
+  const handlePanelChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>ettings: PendingCountSettings) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    onOptionChange({</span>
+      reminderCountStyle: settings.style,
+      reminderCountUniformLayout: settings.uniformLayout,
+    });
+  };
 &nbsp;
   const <span class="cstat-no" title="statement not covered" >panel = useExpandablePanel&lt;PendingCountSettings&gt;({</span>
     value: currentSettings,
@@ -810,9 +767,7 @@ export const <span class="cstat-no" title="statement not covered" >ReminderCount
       {renderPanel()}
     &lt;/SettingsSelectorBase&gt;
   );
-});
-&nbsp;
-export default ReminderCountSelector;
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -820,7 +775,7 @@ export default ReminderCountSelector;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-01T00:13:02.744Z
+                at 2026-01-14T06:11:12.298Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

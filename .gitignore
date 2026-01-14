@@ -23,3 +23,12 @@ nul
 
 *storybook.log
 storybook-static
+
+# Test outputs
+test-results/
+playwright-report/
+playwright-results.json
+coverage/
+
+# Claude Code temp files
+tmpclaude-*
