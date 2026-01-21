@@ -111,7 +111,7 @@
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.15",
     "workbox-window": "^7.4.0",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.59.1"
   },
   "keywords": [
     "blood-on-the-clocktower",
